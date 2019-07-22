@@ -1,6 +1,7 @@
 package phases
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -27,5 +28,17 @@ func Init(cfg types.PlatformConfig) error {
 		}
 		ioutil.WriteFile("build/"+name, body, 0644)
 	}
+
+	yaml, ok := utils.SafeExec("docker run --rm --entrypoint kubeadm kindest/node:%s config print join-defaults", cfg.Versions.Kubernetes)
+	if !ok {
+		return errors.New(yaml)
+	}
+	os.Mkdir("build/kubeadm", 0750)
+	ioutil.WriteFile("build/kubeadm/join.yml", []byte(yaml), 0644)
+	yaml, ok = utils.SafeExec("docker run --rm --entrypoint kubeadm kindest/node:%s config print init-defaults", cfg.Versions.Kubernetes)
+	if !ok {
+		return errors.New(yaml)
+	}
+	ioutil.WriteFile("build/kubeadm/init.yml", []byte(yaml), 0644)
 	return nil
 }

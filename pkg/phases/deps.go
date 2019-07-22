@@ -17,6 +17,7 @@ var dependency_versions = map[string]string{
 	"sonobuoy":     "0.15.0",
 	"govc":         "v0.20.0",
 	"gojsontoyaml": "master",
+	"kustomize":    "v3.0.2",
 }
 var dependencies_macosx = map[string]string{
 	"gomplate":  "https://github.com/hairyhenderson/gomplate/releases/download/{{.version}}/gomplate_darwin-amd64",
@@ -37,6 +38,7 @@ var dependencies_linux = map[string]string{
 var dependencies_go = map[string]string{
 	"jsonnet":      "github.com/google/go-jsonnet/cmd/jsonnet@{{.version}}",
 	"gojsontoyaml": "github.com/brancz/gojsontoyaml",
+	"kustomize":    "sigs.k8s.io/kustomize/v3/cmd/kustomize",
 }
 
 func Deps(cfg types.PlatformConfig) error {

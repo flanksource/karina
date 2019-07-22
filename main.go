@@ -34,7 +34,7 @@ func main() {
 		},
 	}
 
-	root.AddCommand(cmd.Dependencies, cmd.Images, cmd.MachineImages, cmd.Monitoring, cmd.Init, cmd.Upgrade, cmd.Test, cmd.Build)
+	root.AddCommand(cmd.Dependencies, cmd.Images, cmd.MachineImages, cmd.Monitoring, cmd.Init, cmd.Upgrade, cmd.Test, cmd.Build, cmd.Provision, cmd.Cleanup)
 
 	if len(commit) > 8 {
 		version = fmt.Sprintf("%v, commit %v, built at %v", version, commit[0:8], date)
@@ -48,7 +48,8 @@ func main() {
 		},
 	})
 
-	root.PersistentFlags().StringP("config", "c", "", "Path to config file")
+	root.PersistentFlags().StringP("config", "c", "config.yml", "Path to config file")
+	root.PersistentFlags().Bool("monitoring", true, "Building monitoring stack")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 

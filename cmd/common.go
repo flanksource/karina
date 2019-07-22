@@ -25,5 +25,8 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		log.Fatalf("Failed to parse YAML: %s", err)
 	}
+
+	monitoring, _ := cmd.Flags().GetBool("monitoring")
+	cfg.BuildOptions.Monitoring = monitoring
 	return cfg
 }

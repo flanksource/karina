@@ -1,0 +1,2 @@
+# prometheus operator doesn't explicitly specify the version, so we do it here so that it can be listed and synced
+# image: quay.io/prometheus/prometheus:v2.10.0

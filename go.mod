@@ -3,9 +3,11 @@ module github.com/moshloop/platform-cli
 go 1.12
 
 require (
-	github.com/brancz/gojsontoyaml v0.0.0-20190425155809-e8bd32d46b3d // indirect
-	github.com/google/go-jsonnet v0.13.0 // indirect
+	github.com/google/uuid v1.1.1
+	github.com/moshloop/konfigadm v0.3.6
+	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
+	github.com/vmware/govmomi v0.20.2
 	gopkg.in/yaml.v2 v2.2.2
 )
