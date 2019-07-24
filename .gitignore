@@ -1,3 +1,7 @@
 build/
 .bin/
 .go/
+*_cert.yaml
+*.env
+config*.yaml
+config*.yml

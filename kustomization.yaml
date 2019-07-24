@@ -1,0 +1,11 @@
+configMapGenerator:
+- name: dex
+  files:
+    - build/dex.cfg
+generatorOptions:
+  disableNameSuffixHash: true
+secretGenerator:
+- name: ldap-account
+  envs:
+    - ldap.env
+  type: Opaque
