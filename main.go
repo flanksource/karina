@@ -34,7 +34,16 @@ func main() {
 		},
 	}
 
-	root.AddCommand(cmd.Dependencies, cmd.Images, cmd.MachineImages, cmd.Monitoring, cmd.Init, cmd.Upgrade, cmd.Test, cmd.Build, cmd.Provision, cmd.Cleanup)
+	root.AddCommand(
+		cmd.Dependencies,
+		cmd.Images,
+		cmd.MachineImages,
+		cmd.Upgrade,
+		cmd.Test,
+		cmd.Build,
+		cmd.Provision,
+		cmd.Cleanup,
+		cmd.Access)
 
 	if len(commit) > 8 {
 		version = fmt.Sprintf("%v, commit %v, built at %v", version, commit[0:8], date)
