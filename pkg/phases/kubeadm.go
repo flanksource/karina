@@ -1,12 +1,7 @@
 package phases
 
 import (
-	"fmt"
 	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/utils"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 )
 
 func NewClusterConfig(cfg types.PlatformConfig) ClusterConfiguration {
@@ -97,43 +92,4 @@ type BootstrapToken struct {
 	Token  string   `yaml:"token"`
 	TTL    string   `yaml:"ttl"`
 	Usages []string `yaml:"usages"`
-}
-
-// GenerateBootstrapToken generates a new kubeadm bootstrap token
-func GenerateBootstrapToken() string {
-	return fmt.Sprintf("%s.%s", utils.RandomString(6), utils.RandomString(16))
-}
-
-func GenerateCA(name string) types.Certificate {
-	cert, _ := utils.NewCertificateAuthority(name)
-	return types.Certificate{
-		Key:  string(cert.EncodedPrivateKey()),
-		X509: string(cert.EncodedCertificate()),
-	}
-}
-
-func GetCertificates(platform types.PlatformConfig) *types.Certificates {
-	file := platform.Name + "_cert.yaml"
-	if utils.FileExists(file) {
-		var certs types.Certificates
-		data, _ := ioutil.ReadFile(file)
-		yaml.Unmarshal(data, &certs)
-		log.Infof("Loaded certificates from %s\n", file)
-		return &certs
-	}
-
-	log.Infoln("Generating certificates")
-
-	certs := types.Certificates{
-		Etcd:       GenerateCA("etcd-ca"),
-		FrontProxy: GenerateCA("front-proxy-ca"),
-		CA:         GenerateCA("kubernetes"),
-		SA:         GenerateCA("sa-ca"),
-		OpenID:     GenerateCA("dex." + platform.Domain),
-	}
-
-	data, _ := yaml.Marshal(certs)
-	ioutil.WriteFile(file, data, 0644)
-	log.Infof("Saved certificates to %s\n", file)
-	return &certs
 }

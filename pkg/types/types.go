@@ -1,7 +1,11 @@
 package types
 
 import (
+	"fmt"
 	"github.com/moshloop/platform-cli/pkg/utils"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 type PlatformConfig struct {
@@ -123,4 +127,56 @@ func (p PlatformConfig) GetVMCount() int {
 		count += node.Count
 	}
 	return count
+}
+
+func (platform *PlatformConfig) Init() {
+	if platform.BootstrapToken == "" {
+		platform.BootstrapToken = GenerateBootstrapToken()
+		log.Infof("Created new bootstrap token %s\n", platform.BootstrapToken)
+	}
+	if platform.JoinEndpoint == "" {
+		platform.JoinEndpoint = "localhost:8443"
+	}
+	if platform.Certificates == nil {
+		platform.Certificates = GetCertificates(*platform)
+	}
+}
+
+// GenerateBootstrapToken generates a new kubeadm bootstrap token
+func GenerateBootstrapToken() string {
+	return fmt.Sprintf("%s.%s", utils.RandomString(6), utils.RandomString(16))
+}
+
+func GenerateCA(name string) Certificate {
+	cert, _ := utils.NewCertificateAuthority(name)
+	return Certificate{
+		Key:  string(cert.EncodedPrivateKey()),
+		X509: string(cert.EncodedCertificate()),
+	}
+}
+
+func GetCertificates(platform PlatformConfig) *Certificates {
+	file := platform.Name + "_cert.yaml"
+	if utils.FileExists(file) {
+		var certs Certificates
+		data, _ := ioutil.ReadFile(file)
+		yaml.Unmarshal(data, &certs)
+		log.Infof("Loaded certificates from %s\n", file)
+		return &certs
+	}
+
+	log.Infoln("Generating certificates")
+
+	certs := Certificates{
+		Etcd:       GenerateCA("etcd-ca"),
+		FrontProxy: GenerateCA("front-proxy-ca"),
+		CA:         GenerateCA("kubernetes"),
+		SA:         GenerateCA("sa-ca"),
+		OpenID:     GenerateCA("dex." + platform.Domain),
+	}
+
+	data, _ := yaml.Marshal(certs)
+	ioutil.WriteFile(file, data, 0644)
+	log.Infof("Saved certificates to %s\n", file)
+	return &certs
 }

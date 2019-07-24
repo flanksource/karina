@@ -100,17 +100,12 @@ func NewCertificateAuthority(name string) (*Certificate, error) {
 
 // NewSelfSignedCACert creates a CA certificate.
 func NewSelfSignedCACert(name string, key *rsa.PrivateKey) (*x509.Certificate, error) {
-	cfg := Config{
-		CommonName: name,
-	}
-
 	now := time.Now().UTC()
 
 	tmpl := x509.Certificate{
 		SerialNumber: new(big.Int).SetInt64(0),
 		Subject: pkix.Name{
-			CommonName:   cfg.CommonName,
-			Organization: cfg.Organization,
+			CommonName: name,
 		},
 		NotBefore:             now,
 		NotAfter:              now.Add(duration365d * 10),
@@ -142,6 +137,41 @@ func (c Certificate) EncodedCertificate() []byte {
 		Bytes: c.X509.Raw,
 	}
 	return pem.EncodeToMemory(&block)
+}
+
+// CreateCertificate
+func (c Certificate) CreateCertificate(cn string, org string, altNames ...string) (*Certificate, error) {
+	now := time.Now().UTC()
+
+	key, _ := NewPrivateKey()
+	var max big.Int
+	max.SetInt64(math.MaxInt64)
+	serial, _ := rand.Int(rand.Reader, &max)
+	tmpl := x509.Certificate{
+		SerialNumber: serial,
+		Subject: pkix.Name{
+			CommonName:   cn,
+			Organization: []string{org},
+		},
+		NotBefore:             now,
+		NotAfter:              now.Add(duration365d * 10),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		MaxPathLenZero:        true,
+		BasicConstraintsValid: true,
+		MaxPathLen:            0,
+	}
+
+	b, err := x509.CreateCertificate(rand.Reader, &tmpl, c.X509, key.Public(), c.PrivateKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create self signed CA certificate: %+v", tmpl)
+	}
+
+	cert, _ := x509.ParseCertificate(b)
+
+	return &Certificate{
+		X509:       cert,
+		PrivateKey: key,
+	}, nil
 }
 
 // EncodedPrivateKey returns PEM-encoded private key data.

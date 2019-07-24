@@ -37,16 +37,7 @@ func CreatePrimaryMaster(platform *types.PlatformConfig) (*konfigadm.Config, err
 }
 
 func baseKonfig(platform *types.PlatformConfig) (*konfigadm.Config, error) {
-	if platform.BootstrapToken == "" {
-		platform.BootstrapToken = GenerateBootstrapToken()
-		log.Infof("Created new bootstrap token %s\n", platform.BootstrapToken)
-	}
-	if platform.JoinEndpoint == "" {
-		platform.JoinEndpoint = "localhost:8443"
-	}
-	if platform.Certificates == nil {
-		platform.Certificates = GetCertificates(*platform)
-	}
+	platform.Init()
 	cfg, err := konfigadm.NewConfig().Build()
 	if err != nil {
 		return nil, err

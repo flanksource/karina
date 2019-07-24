@@ -28,5 +28,6 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 
 	monitoring, _ := cmd.Flags().GetBool("monitoring")
 	cfg.BuildOptions.Monitoring = monitoring
+	cfg.Init()
 	return cfg
 }
