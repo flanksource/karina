@@ -12,8 +12,10 @@ import (
 
 var manifests = []string{
 	"https://docs.projectcalico.org/v3.8/manifests/calico.yaml",
+	"https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.9/deploy/local-path-storage.yaml",
 	"https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml",
 	"https://raw.githubusercontent.com/heptiolabs/eventrouter/master/yaml/eventrouter.yaml",
+	"https://download.elastic.co/downloads/eck/0.9.0/all-in-one.yaml",
 }
 
 func Build(cfg types.PlatformConfig) error {

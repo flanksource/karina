@@ -144,11 +144,12 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 		return nil, err
 	}
 	path := fmt.Sprintf("cloud-init/%s.iso", vm.Name)
-	log.Infof("Uploading to %s\n", path)
+	log.Infof("Uploading to [%s] %s\n", datastore.Name(), path)
 	if err = datastore.UploadFile(context.TODO(), iso, path, &soap.DefaultUpload); err != nil {
+		log.Infof("%+v\n", err)
 		return nil, err
 	}
-
+	log.Infof("Uploaded to %s\n", path)
 	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", vm.Datastore, path))
 	devices.Connect(cdrom)
 	return &types.VirtualDeviceConfigSpec{

@@ -18,6 +18,7 @@ var dependency_versions = map[string]string{
 	"govc":         "v0.20.0",
 	"gojsontoyaml": "master",
 	"kustomize":    "v3.0.2",
+	"pgo":          "4.0.1",
 }
 var dependencies_macosx = map[string]string{
 	"gomplate":  "https://github.com/hairyhenderson/gomplate/releases/download/{{.version}}/gomplate_darwin-amd64",
@@ -25,6 +26,7 @@ var dependencies_macosx = map[string]string{
 	"jb":        "https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/{{.version}}/jb-darwin-amd64",
 	"sonobuoy":  "https://github.com/heptio/sonobuoy/releases/download/v{{.version}}/sonobuoy_{{.version}}_darwin_amd64.tar.gz",
 	"govc":      "https://github.com/vmware/govmomi/releases/download/{{.version}}/govc_darwin_amd64.gz",
+	"pgo":       "https://github.com/CrunchyData/postgres-operator/releases/download/{{.version}}/pgo-mac",
 }
 
 var dependencies_linux = map[string]string{
@@ -33,6 +35,7 @@ var dependencies_linux = map[string]string{
 	"jb":        "https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/{{.version}}/jb-linux-amd64",
 	"sonobuoy":  "https://github.com/heptio/sonobuoy/releases/download/v{.version}}/sonobuoy_{{.version}}_linux_amd64.tar.gz",
 	"govc":      "https://github.com/vmware/govmomi/releases/download/{{.version}}/govc_linux_amd64.gz",
+	"pgo":       "https://github.com/CrunchyData/postgres-operator/releases/download/s{{.version}}/pgo",
 }
 
 var dependencies_go = map[string]string{

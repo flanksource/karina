@@ -1,10 +1,10 @@
 package phases
 
 import (
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
-func NewClusterConfig(cfg types.PlatformConfig) ClusterConfiguration {
+func NewClusterConfig(cfg *platform.Platform) ClusterConfiguration {
 	cluster := ClusterConfiguration{
 		APIVersion:        "kubeadm.k8s.io/v1beta2",
 		Kind:              "ClusterConfiguration",
@@ -32,7 +32,7 @@ func NewClusterConfig(cfg types.PlatformConfig) ClusterConfiguration {
 	return cluster
 }
 
-func NewInitConfig(cfg types.PlatformConfig) InitConfiguration {
+func NewInitConfig(cfg *platform.Platform) InitConfiguration {
 	init := InitConfiguration{
 		APIVersion: "kubeadm.k8s.io/v1beta1",
 		Kind:       "InitConfiguration",
