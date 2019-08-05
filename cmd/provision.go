@@ -13,7 +13,7 @@ var Provision = &cobra.Command{
 	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if err := provision.Provision(getConfig(cmd)); err != nil {
+		if err := provision.Provision(getPlatform(cmd)); err != nil {
 			log.Fatalf("Failed to provision cluster, %s", err)
 		}
 	},

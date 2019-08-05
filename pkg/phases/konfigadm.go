@@ -2,12 +2,12 @@ package phases
 
 import (
 	"fmt"
+	"github.com/moshloop/platform-cli/pkg/platform"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	// initialize konfigadm
 	_ "github.com/moshloop/konfigadm/pkg"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 var envVars = map[string]string{
@@ -18,7 +18,7 @@ var envVars = map[string]string{
 	"KUBECONFIG":        "/etc/kubernetes/admin.conf",
 }
 
-func CreatePrimaryMaster(platform *types.PlatformConfig) (*konfigadm.Config, error) {
+func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	log.Infof("Creating new primary master\n")
 	hostname := ""
 	cfg, err := baseKonfig(platform)
@@ -36,7 +36,7 @@ func CreatePrimaryMaster(platform *types.PlatformConfig) (*konfigadm.Config, err
 	return cfg, nil
 }
 
-func baseKonfig(platform *types.PlatformConfig) (*konfigadm.Config, error) {
+func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	platform.Init()
 	cfg, err := konfigadm.NewConfig().Build()
 	if err != nil {
@@ -48,7 +48,7 @@ func baseKonfig(platform *types.PlatformConfig) (*konfigadm.Config, error) {
 	return cfg, nil
 }
 
-func addCerts(platform *types.PlatformConfig, cfg *konfigadm.Config) error {
+func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	cfg.Files["/etc/kubernetes/pki/etcd/ca.crt"] = platform.Certificates.Etcd.X509
 	cfg.Files["/etc/kubernetes/pki/etcd/ca.key"] = platform.Certificates.Etcd.Key
 	cfg.Files["/etc/kubernetes/pki/front-proxy-ca.crt"] = platform.Certificates.FrontProxy.X509
@@ -61,14 +61,14 @@ func addCerts(platform *types.PlatformConfig, cfg *konfigadm.Config) error {
 	return nil
 }
 
-func addInitKubeadmConfig(hostname string, platform *types.PlatformConfig, cfg *konfigadm.Config) error {
-	cluster := NewClusterConfig(*platform)
+func addInitKubeadmConfig(hostname string, platform *platform.Platform, cfg *konfigadm.Config) error {
+	cluster := NewClusterConfig(platform)
 	data, err := yaml.Marshal(cluster)
 	if err != nil {
 		return err
 	}
 	kubeadm := string(data)
-	data, err = yaml.Marshal(NewInitConfig(*platform))
+	data, err = yaml.Marshal(NewInitConfig(platform))
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func addInitKubeadmConfig(hostname string, platform *types.PlatformConfig, cfg *
 	return nil
 }
 
-func createConsulService(hostname string, platform *types.PlatformConfig, cfg *konfigadm.Config) {
+func createConsulService(hostname string, platform *platform.Platform, cfg *konfigadm.Config) {
 	cfg.Files["/etc/kubernetes/consul/api.json"] = fmt.Sprintf(`
 {
 	"leave_on_terminate": true,
@@ -101,7 +101,7 @@ func createConsulService(hostname string, platform *types.PlatformConfig, cfg *k
 	`, hostname, platform.Name)
 }
 
-func createClientSideLoadbalancers(platform *types.PlatformConfig, cfg *konfigadm.Config) {
+func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.Config) {
 	cfg.Containers = append(cfg.Containers, konfigadm.Container{
 		Image: platform.GetImagePath("docker.io/consul:1.3.1"),
 		Env: map[string]string{
@@ -125,7 +125,7 @@ func createClientSideLoadbalancers(platform *types.PlatformConfig, cfg *konfigad
 	})
 }
 
-func CreateSecondaryMaster(platform *types.PlatformConfig) (*konfigadm.Config, error) {
+func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	hostname := ""
 	cfg, err := baseKonfig(platform)
 	if err != nil {
@@ -141,7 +141,7 @@ func CreateSecondaryMaster(platform *types.PlatformConfig) (*konfigadm.Config, e
 	return cfg, nil
 }
 
-func CreateWorker(platform *types.PlatformConfig) (*konfigadm.Config, error) {
+func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 	cfg, err := baseKonfig(platform)
 	if err != nil {
 		return nil, err

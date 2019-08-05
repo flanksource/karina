@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/platform"
 	"io/ioutil"
 	"log"
 
@@ -8,6 +9,16 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
+
+func getPlatform(cmd *cobra.Command) *platform.Platform {
+	platform := platform.Platform{
+		PlatformConfig: getConfig(cmd),
+	}
+	if err := platform.OpenViaEnv(); err != nil {
+		log.Fatalf("Failed to initiliaze platform", err)
+	}
+	return &platform
+}
 
 func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	path, _ := cmd.Flags().GetString("config")

@@ -1,47 +1,4 @@
-package provision
-
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/moshloop/platform-cli/pkg/utils"
-	log "github.com/sirupsen/logrus"
-	"time"
-	// "github.com/moshloop/konfigadm/pkg/utils"
-	"github.com/moshloop/platform-cli/pkg/types"
-)
-
-func WaitForIP(platform types.PlatformConfig, ip string) error {
-	for {
-		for _, healthy := range GetMasterIPs(platform) {
-			if healthy == ip {
-				return nil
-			}
-		}
-		time.Sleep(5 * time.Second)
-	}
-}
-
-func GetMasterIPs(platform types.PlatformConfig) []string {
-	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
-	log.Infof("Finding masters via consul: %s\n", url)
-	response, _ := utils.GET(url)
-	var consul Consul
-	if err := json.Unmarshal(response, &consul); err != nil {
-		fmt.Println(err)
-	}
-	var addresses []string
-node:
-	for _, node := range consul {
-		for _, check := range node.Checks {
-			if check.Status != "passing" {
-				log.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
-				continue node
-			}
-		}
-		addresses = append(addresses, node.Node.Address)
-	}
-	return addresses
-}
+package types
 
 type Consul []struct {
 	Node struct {

@@ -10,27 +10,27 @@ import (
 
 	// konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases"
+	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
-	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 
-func Provision(platform types.PlatformConfig) error {
+func Provision(platform *platform.Platform) error {
 
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
 		return err
 	}
 
-	masters := GetMasterIPs(platform)
+	masters := platform.GetMasterIPs()
 	vmware.LoadGovcEnvVars(&platform.Master)
 	if len(masters) == 0 {
 		vm := platform.Master
 		vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "m", utils.ShortTimestamp())
 
 		log.Infof("No  masters detected, deploying new master %s", vm.Name)
-		config, err := phases.CreatePrimaryMaster(&platform)
+		config, err := phases.CreatePrimaryMaster(platform)
 		if err != nil {
 			log.Fatalf("Failed to create primary master: %s", err)
 		}
@@ -51,12 +51,12 @@ func Provision(platform types.PlatformConfig) error {
 		}
 		log.Infof("Provisioned new master: %s\n", ip)
 
-		if err := WaitForIP(platform, ip); err != nil {
+		if err := platform.WaitFor(); err != nil {
 			log.Fatalf("Primary master failed to come up %s ", err)
 		}
 	}
 
-	masters = GetMasterIPs(platform)
+	masters = platform.GetMasterIPs()
 	log.Infof("Detected %d existing masters: %s", len(masters), masters)
 	wg := sync.WaitGroup{}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
@@ -66,7 +66,7 @@ func Provision(platform types.PlatformConfig) error {
 			vm := platform.Master
 			vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "m", utils.ShortTimestamp())
 			log.Infof("Creating new secondary master %s\n", vm.Name)
-			config, err := phases.CreateSecondaryMaster(&platform)
+			config, err := phases.CreateSecondaryMaster(platform)
 			if err != nil {
 				log.Errorf("Failed to create secondary master: %s", err)
 			} else {
@@ -88,7 +88,7 @@ func Provision(platform types.PlatformConfig) error {
 			wg.Add(1)
 			vm := worker
 			go func() {
-				config, err := phases.CreateWorker(&platform)
+				config, err := phases.CreateWorker(platform)
 				if err != nil {
 					log.Errorf("Failed to create workers %s\n", err)
 				} else {
