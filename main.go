@@ -43,6 +43,7 @@ func main() {
 		cmd.Build,
 		cmd.Provision,
 		cmd.Cleanup,
+		cmd.Status,
 		cmd.Access)
 
 	if len(commit) > 8 {
