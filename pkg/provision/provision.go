@@ -1,14 +1,15 @@
 package provision
 
 import (
-	"gopkg.in/yaml.v2"
+	"fmt"
+	"github.com/moshloop/platform-cli/pkg/types"
 	"io/ioutil"
 	"sync"
 	"time"
-	// "context"
-	"fmt"
 
-	// konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	"gopkg.in/yaml.v2"
+
+	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
@@ -16,7 +17,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Provision(platform *platform.Platform) error {
+func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
+	session, err := vmware.GetSessionFromEnv()
+	if err != nil {
+		return err
+	}
+
+	vmware.LoadGovcEnvVars(vm)
+	konfig, err := konfigadm.NewConfig(konfigs...).Build()
+	if err != nil {
+		return err
+	}
+	ip, err := session.Clone(*vm, konfig)
+
+	if err != nil {
+		return err
+	}
+	log.Infof("Provisioned  %s ->  %s\n", vm.Name, ip)
+	return nil
+}
+
+func Cluster(platform *platform.Platform) error {
 
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
