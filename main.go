@@ -59,6 +59,18 @@ func main() {
 		},
 	})
 
+	root.AddCommand(&cobra.Command{
+		Use:   "docs",
+		Short: "generate documentation",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := doc.GenMarkdownTree(root, "docs")
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Documentation generated at: docs")
+		},
+	})
+
 	root.PersistentFlags().StringP("config", "c", "config.yml", "Path to config file")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
