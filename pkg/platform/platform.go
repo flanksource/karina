@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
+	kapi "k8s.io/client-go/tools/clientcmd/api"
 	"time"
 )
 
@@ -62,7 +63,7 @@ func (platform *Platform) GetMasterIPs() []string {
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
 	log.Infof("Finding masters via consul: %s\n", url)
 	response, _ := utils.GET(url)
-	var consul types.Consul
+	var consul api.Consul
 	if err := json.Unmarshal(response, &consul); err != nil {
 		fmt.Println(err)
 	}
@@ -87,20 +88,20 @@ func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg := api.Config{
-		Clusters: map[string]*api.Cluster{
+	cfg := kapi.Config{
+		Clusters: map[string]*kapi.Cluster{
 			platform.Name: {
 				Server:                   "https://" + endpoint + ":6443",
 				CertificateAuthorityData: []byte(platform.Certificates.CA.X509),
 			},
 		},
-		Contexts: map[string]*api.Context{
+		Contexts: map[string]*kapi.Context{
 			contextName: {
 				Cluster:  platform.Name,
 				AuthInfo: userName,
 			},
 		},
-		AuthInfos: map[string]*api.AuthInfo{
+		AuthInfos: map[string]*kapi.AuthInfo{
 			userName: {
 				ClientKeyData:         cert.EncodedPrivateKey(),
 				ClientCertificateData: cert.EncodedCertificate(),
