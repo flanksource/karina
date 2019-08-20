@@ -153,7 +153,8 @@ func (c Certificate) CreateCertificate(cn string, org string, altNames ...string
 			CommonName:   cn,
 			Organization: []string{org},
 		},
-		NotBefore:             now,
+		// cater for time-zone / timestamp differences and ensure generated certs are immediately usable
+		NotBefore:             now.Add(time.Hour * -24),
 		NotAfter:              now.Add(duration365d * 10),
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		MaxPathLenZero:        true,
