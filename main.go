@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra/doc"
 	"os"
 
 	"github.com/moshloop/platform-cli/cmd"
@@ -59,7 +60,6 @@ func main() {
 	})
 
 	root.PersistentFlags().StringP("config", "c", "config.yml", "Path to config file")
-	root.PersistentFlags().Bool("monitoring", true, "Building monitoring stack")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 
