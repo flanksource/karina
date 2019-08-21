@@ -50,7 +50,7 @@ Whats included:
 
 ## Platform Quickstart
 
-1. Setup [environment variables](#Environment Variables) and [platform configuration](#PlatformConfiguration)
+1. Setup [environment variables](#Environment%20Variables) and [platform configuration](#PlatformConfiguration)
 2. Download platform-cli and install its dependencies: `platform-cli dependencies`
 3. Create the cluster `platform-cli provision cluster -c cluster.yml`see [Cluster Lifecycle](#Cluster Lifecycle)
 4. Check the status of running vms: `platform-cli status`
@@ -140,7 +140,7 @@ export GOVC_URL="$GOVC_USER:$GOVC_PASS@$GOVC_FQDN"
 
 ##### Control Plane Init
 
-The control plane is initialised by:
+The control plane is initialized by:
 
 - Generating all the certificates (to be used to generate access credentials or provision new control plane nodes)
 - Injecting the certificates and configs into a cloud-config file and a provisioning a VM, on boot `kubeadm init` is run to bootstrap the cluster
