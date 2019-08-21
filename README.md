@@ -50,7 +50,7 @@ Whats included:
 
 ## Platform Quickstart
 
-1. Setup [environment variables](#Environment%20Variables) and [platform configuration](#PlatformConfiguration)
+1. Setup [environment variables](#environment-variables) and [platform configuration](#PlatformConfiguration)
 2. Download platform-cli and install its dependencies: `platform-cli dependencies`
 3. Create the cluster `platform-cli provision cluster -c cluster.yml`see [Cluster Lifecycle](#Cluster Lifecycle)
 4. Check the status of running vms: `platform-cli status`
