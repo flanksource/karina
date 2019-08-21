@@ -36,7 +36,7 @@ Whats included:
 * vCenter Cluster and user with admin rights on Datastore, Network and Folder
   * Populate the environment file and source it
 * External Consul Cluster for master service discovery
-  * Configure the `consul` field in the config 
+  * Configure the `consul` field in the config
 * External DNS for wildcard based ingress into namespaces
   * Once deployed, add a wildcard record in the format `*.<domain>` pointing to the F5 VIP and configure `domain` in the config
 * External F5 load balancer to load balance external traffic into the cluster (DNS A records points to a F5 VIP)
@@ -71,19 +71,19 @@ consul:
 # Cluster name
 name:
 ldap:
-	# Domain binding, e.g. DC=local,DC=corp
+  # Domain binding, e.g. DC=local,DC=corp
   dn:
   # LDAPS hostname / IP
   server:
   # LDAP group name that will be granted cluster-admin
   adminGroup:
-specs: # A list of folders of kubernetes specs to apply, these will be templatized 
+specs: # A list of folders of kubernetes specs to apply, these will be templatized
   - ./manifests
 versions:
   kubernetes: v1.15.0
 serviceSubnet: 10.96.0.0/16
 podSubnet: 10.97.0.0/16
-# Prefix to be added to VM hostnames, 
+# Prefix to be added to VM hostnames,
 hostPrefix:
 # The VM configuration for master nodes
 master:
@@ -95,17 +95,17 @@ master:
   network:
   # GOVC_CLUSTER
   cluster:
-  template: 
+  template:
 # The VM configuration for worker nodes, multiple groups can be specified
 workers:
-  worker: 
+  worker:
     count: 8
     cpu: 16
     memory: 64
     disk: 300
-  	# GOVC_NETWORK
- 		network:
- 		# GOVC_CLUSTER
+    # GOVC_NETWORK
+    network:
+    # GOVC_CLUSTER
  	  cluster:
     template:
 ```
@@ -136,7 +136,7 @@ export GOVC_URL="$GOVC_USER:$GOVC_PASS@$GOVC_FQDN"
 
 ### Cluster Lifecycle
 
-![](docs/Cluster Lifecycle.png)
+![](docs/Cluster%20Lifecycle.png)
 
 ##### Control Plane Init
 
