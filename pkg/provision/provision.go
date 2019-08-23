@@ -37,7 +37,7 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 	return nil
 }
 
-func Cluster(platform *platform.Platform) error {
+func Cluster(platform *platform.Platform, dryRun bool) error {
 
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
@@ -65,13 +65,14 @@ func Cluster(platform *platform.Platform) error {
 			log.Fatalf("Error saving config: %s", err)
 		}
 
-		ip, err := session.Clone(vm, config)
+		if !dryRun {
+			ip, err := session.Clone(vm, config)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+			log.Infof("Provisioned new master: %s\n", ip)
 		}
-		log.Infof("Provisioned new master: %s\n", ip)
-
 		if err := platform.WaitFor(); err != nil {
 			log.Fatalf("Primary master failed to come up %s ", err)
 		}
@@ -91,11 +92,13 @@ func Cluster(platform *platform.Platform) error {
 			if err != nil {
 				log.Errorf("Failed to create secondary master: %s", err)
 			} else {
-				ip, err := session.Clone(vm, config)
-				if err != nil {
-					log.Errorf("Failed to Clone secondary master: %s", err)
-				} else {
-					log.Infof("Provisioned new master: %s\n", ip)
+				if !dryRun {
+					ip, err := session.Clone(vm, config)
+					if err != nil {
+						log.Errorf("Failed to Clone secondary master: %s", err)
+					} else {
+						log.Infof("Provisioned new master: %s\n", ip)
+					}
 				}
 			}
 			wg.Done()
@@ -114,12 +117,14 @@ func Cluster(platform *platform.Platform) error {
 					log.Errorf("Failed to create workers %s\n", err)
 				} else {
 					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "w", utils.ShortTimestamp())
-					log.Infof("Creating new worker %s\n", vm.Name)
-					ip, err := session.Clone(vm, config)
-					if err != nil {
-						log.Errorf("Failed to Clone worker: %s", err)
-					} else {
-						log.Infof("Provisioned new worker: %s\n", ip)
+					if !dryRun {
+						log.Infof("Creating new worker %s\n", vm.Name)
+						ip, err := session.Clone(vm, config)
+						if err != nil {
+							log.Errorf("Failed to Clone worker: %s", err)
+						} else {
+							log.Infof("Provisioned new worker: %s\n", ip)
+						}
 					}
 				}
 				wg.Done()

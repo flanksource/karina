@@ -16,7 +16,8 @@ var cluster = &cobra.Command{
 	Short: "Provision a new cluster",
 	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := provision.Cluster(getPlatform(cmd)); err != nil {
+		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		if err := provision.Cluster(getPlatform(cmd), dryRun); err != nil {
 			log.Fatalf("Failed to provision cluster, %s", err)
 		}
 	},
@@ -49,6 +50,7 @@ var vm = &cobra.Command{
 }
 
 func init() {
+	cluster.Flags().Bool("dry-run", false, "Dry run only, don't provision any infrastructure")
 	Provision.AddCommand(cluster, vm)
 	vm.Flags().String("name", "", "Name of vm")
 	vm.Flags().String("template", "", "template to use")
