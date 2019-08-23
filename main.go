@@ -71,7 +71,7 @@ func main() {
 		},
 	})
 
-	root.PersistentFlags().StringP("config", "c", "config.yml", "Path to config file")
+	root.PersistentFlags().StringArrayP("config", "c", []string{"config.yml"}, "Path to config file")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 
