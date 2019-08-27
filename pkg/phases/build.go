@@ -19,7 +19,9 @@ var manifests = []string{
 }
 
 func Build(cfg types.PlatformConfig) error {
-
+	tmp, _ := ioutil.TempFile("", "config*.yml")
+	data, _ := yaml.Marshal(cfg)
+	tmp.WriteString(string(data))
 	os.Mkdir("build", 0750)
 	for _, manifest := range manifests {
 		name := path.Base(manifest)
@@ -37,7 +39,7 @@ func Build(cfg types.PlatformConfig) error {
 
 	for _, spec := range cfg.Specs {
 		log.Infof("Building specs in %s", spec)
-		if err := utils.Exec(".bin/gomplate --input-dir \"%s\" --output-dir build -c \".=%s\"", spec, cfg.Source); err != nil {
+		if err := utils.Exec(".bin/gomplate --input-dir \"%s\" --output-dir build -c \".=%s\"", spec, tmp.Name()); err != nil {
 			return err
 		}
 	}
