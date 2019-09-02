@@ -22,6 +22,16 @@ Whats included:
 - [ ] Authenticating proxy using [OAuth Proxy](https://github.com/pusher/oauth2_proxy) or [SSO Operator](https://github.com/jenkins-x/sso-operator)
 - [ ] Conformance testing using [sonobuoy](https://github.com/heptio/sonobuoy)
 - [ ] Policy Enforcement using [Gatekeeper](https://github.com/open-policy-agent/gatekeeper) (OPA)
+  - [ ] Don't allow overlapping ingress domains
+  - [ ] Only allow the use of whitelisted ingress domain names
+  - [ ] Enforce mem / cpu requests / limits on all pods
+  - [ ] Enforce quotas on all namespaces
+  - [ ] Don't allow latest images
+  - [ ] Force use of private registry
+  - [ ] Pod Security Policies
+  - [ ] Enforce liveness / health probes
+  - [ ] Enforce team-labels
+
 
 #### Management Platform
 - [ ] HashiCorp Vault
@@ -74,7 +84,7 @@ ldap:
   # Domain binding, e.g. DC=local,DC=corp
   dn:
   # LDAPS hostname / IP
-  server:
+  host:
   # LDAP group name that will be granted cluster-admin
   adminGroup:
 specs: # A list of folders of kubernetes specs to apply, these will be templatized
