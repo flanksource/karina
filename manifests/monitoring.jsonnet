@@ -3,6 +3,9 @@ local kp =
   (import 'kube-prometheus/kube-prometheus.libsonnet') +
   (import 'kube-prometheus/kube-prometheus-kubeadm.libsonnet') +
   (import 'kube-prometheus/kube-prometheus-anti-affinity.libsonnet') +
+  // (import 'kube-prometheus/rules/rules.libsonnet') +
+  (import 'kube-prometheus/alerts/alerts.libsonnet') +
+
   // (import 'kube-prometheus/kube-prometheus-managed-cluster.libsonnet') +
   // (import 'kube-prometheus/kube-prometheus-node-ports.libsonnet') +
   // (import 'kube-prometheus/kube-prometheus-static-etcd.libsonnet') +
@@ -29,22 +32,7 @@ local kp =
 
     alertmanager+:: {
       name: 'main',
-      config: |||
-        global:
-          resolve_timeout: 5m
-        route:
-          group_by: ['job']
-          group_wait: 30s
-          group_interval: 5m
-          repeat_interval: 12h
-          receiver: 'null'
-          routes:
-          - match:
-              alertname: Watchdog
-            receiver: 'null'
-        receivers:
-        - name: 'null'
-      |||,
+      config: importstr 'alertmanager-config.yaml.tpl',
       replicas: 3,
     },
 
@@ -52,7 +40,6 @@ local kp =
       collectors: '',  // empty string gets a default set
       scrapeInterval: '30s',
       scrapeTimeout: '30s',
-
       baseCPU: '100m',
       baseMemory: '150Mi',
       cpuPerNode: '2m',
@@ -78,4 +65,6 @@ local kp =
 { ['kube-state-metrics-' + name]: kp.kubeStateMetrics[name] for name in std.objectFields(kp.kubeStateMetrics) } +
 { ['alertmanager-' + name]: kp.alertmanager[name] for name in std.objectFields(kp.alertmanager) } +
 { ['prometheus-' + name]: kp.prometheus[name] for name in std.objectFields(kp.prometheus) } +
+{ ['prometheus-rules-' + name]: kp.prometheusRules[name] for name in std.objectFields(kp.prometheusRules) } +
+{ ['prometheus-adapter-' + name]: kp.prometheusAdapter[name] for name in std.objectFields(kp.prometheusAdapter) } +
 { ['grafana-' + name]: kp.grafana[name] for name in std.objectFields(kp.grafana) }

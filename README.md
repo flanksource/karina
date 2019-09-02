@@ -28,8 +28,8 @@ Whats included:
 - [ ] Postgres Operator
 - [ ] Harbor Registry
 - [ ] Multi-Cluster Log aggregation using ELK
-- [ ] Multi-Cluster Metric aggregation using Thanos
-- [ ] Multi-Cluster Billing using [operator-metering](- https://github.com/operator-framework/operator-metering)
+- [ ] Multi-Cluster Metric aggregation using [Thanos](https://github.com/thanos-io/thanos)
+- [ ] Multi-Cluster Billing using [operator-metering](https://github.com/operator-framework/operator-metering)
 
 ### Prerequisites
 
@@ -52,10 +52,10 @@ Whats included:
 
 1. Setup [environment variables](#environment-variables) and [platform configuration](#PlatformConfiguration)
 2. Download platform-cli and install its dependencies: `platform-cli dependencies`
-3. Create the cluster `platform-cli provision cluster -c cluster.yml`see [Cluster Lifecycle](#Cluster Lifecycle)
+3. Create the cluster `platform-cli provision cluster -c cluster.yml`see [Cluster Lifecycle](#cluster-lifecycle)
 4. Check the status of running vms: `platform-cli status`
 5. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
-6. Export a OIDC based kubeconfig: `platform-cli kubeconfig sso`
+6. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
 7. Build the base platform configuration: `platform-cli build all`
 8. Deploy the platform configuration: `kubectl apply -f build/`
 9. Run conformance tests: `platform-cli test`

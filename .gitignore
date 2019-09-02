@@ -5,3 +5,5 @@ build/
 *.env
 config*.yaml
 config*.yml
+docs/*.md
+.DS_Store

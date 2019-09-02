@@ -14,7 +14,6 @@ import (
 )
 
 func Dex(platform types.PlatformConfig) error {
-
 	openid := platform.Certificates.OpenID.ToCert()
 	log.Infof("Creating dex cert for %s\n", "dex."+platform.Domain)
 	cert, err := openid.CreateCertificate("dex."+platform.Domain, "")

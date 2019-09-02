@@ -2,20 +2,25 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: crontesting
+  name: crontesting2
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  annotations:
   name: hello
   namespace: crontesting
 spec:
-  concurrencyPolicy: Allow
+  concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 1
   jobTemplate:
+    metadata:
+      annotations:
+        name: hello
     spec:
       template:
+        metadata:
+          annotations:
+            name: hello
         spec:
           containers:
           - args:
