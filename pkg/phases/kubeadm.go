@@ -9,7 +9,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster := api.ClusterConfiguration{
 		APIVersion:        "kubeadm.k8s.io/v1beta2",
 		Kind:              "ClusterConfiguration",
-		KubernetesVersion: cfg.Versions.Kubernetes,
+		KubernetesVersion: cfg.Kubernetes.Version,
 		CertificatesDir:   "/etc/kubernetes/pki",
 		ClusterName:       cfg.Name,
 		ImageRepository:   "k8s.gcr.io",
