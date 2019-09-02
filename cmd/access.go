@@ -9,16 +9,15 @@ import (
 )
 
 var Access = &cobra.Command{
-	Use:   "access",
-	Short: "Cleanup a cluster and terminate all VM's and resources associated with it",
+	Use:   "kubeconfig",
+	Short: "Generate kubeconfig files",
 }
 
 func init() {
-	Access.AddCommand(&cobra.Command{
-		Use:   "kubeconfig",
-		Short: "Generate a new kubeconfig file for accessing the cluster",
+	admin := &cobra.Command{
+		Use:   "admin",
+		Short: "Generate a new kubeconfig file for accessing the cluster using an X509 Certificate",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			platform := getPlatform(cmd)
 			ips := platform.GetMasterIPs()
 			data, err := phases.CreateKubeConfig(platform, ips[0])
@@ -27,7 +26,11 @@ func init() {
 			}
 			fmt.Println(string(data))
 		},
-	})
+	}
+
+	admin.Flags().String("group", "system:masters", "The OU (group name) to use in the certificate")
+
+	Access.AddCommand(admin)
 
 	Access.AddCommand(&cobra.Command{
 		Use:   "sso",
