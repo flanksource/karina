@@ -9,6 +9,7 @@ import (
 	vim "github.com/vmware/govmomi/vim25/types"
 )
 
+// VM represents a specific instance of a VM
 type VM struct {
 	types.VM
 	Platform *Platform
@@ -20,13 +21,12 @@ func (vm *VM) String() string {
 	return vm.Name
 }
 
+// WaitForPoweredOff waits until the VM is reported as off by vCenter
 func (vm *VM) WaitForPoweredOff() error {
-	if err := vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff); err != nil {
-		return err
-	}
-	return nil
+	return vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
 }
 
+// WaitForIP waits for a non-local IPv4 address to be reported by vCenter
 func (vm *VM) WaitForIP() (string, error) {
 	log.Debugf("[%s] Waiting for IP\n", vm)
 
@@ -42,6 +42,7 @@ func (vm *VM) WaitForIP() (string, error) {
 
 }
 
+// Terminate deletes a VM and waits for the destruction to complete (or fail)
 func (vm *VM) Terminate() error {
 	log.Infof("[%s] terminating\n", vm)
 	task, err := vm.vm.Destroy(vm.ctx)
@@ -58,6 +59,7 @@ func (vm *VM) Terminate() error {
 	return nil
 }
 
+// PowerOff a VM and wait for shutdown to complete,
 func (vm *VM) PowerOff() error {
 	log.Infof("[%s] powering off\n", vm)
 	task, err := vm.vm.PowerOff(vm.ctx)
@@ -73,6 +75,7 @@ func (vm *VM) PowerOff() error {
 	return nil
 }
 
+// Shutdown a VM and wait for shutdown to complete,
 func (vm *VM) Shutdown() error {
 	log.Infof("[%s] shutdown\n", vm)
 	err := vm.vm.ShutdownGuest(vm.ctx)

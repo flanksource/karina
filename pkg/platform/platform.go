@@ -4,11 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/moshloop/commons/deps"
+	"github.com/moshloop/commons/is"
+	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	kapi "k8s.io/client-go/tools/clientcmd/api"
@@ -21,6 +26,7 @@ type Platform struct {
 	session *vmware.Session
 }
 
+// GetVMs returns a list of all VM's associated with the cluster
 func (platform *Platform) GetVMs() (map[string]*VM, error) {
 	var vms = make(map[string]*VM)
 	list, err := platform.session.Finder.VirtualMachineList(
@@ -40,6 +46,7 @@ func (platform *Platform) GetVMs() (map[string]*VM, error) {
 	return vms, nil
 }
 
+// WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
 	for {
 		if len(platform.GetMasterIPs()) > 0 {
@@ -49,7 +56,15 @@ func (platform *Platform) WaitFor() error {
 	}
 }
 
+func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (string, error) {
+	return platform.session.Clone(vm, config)
+}
+
+// OpenViaEnv opens a new vmware session using environment variables
 func (platform *Platform) OpenViaEnv() error {
+	if platform.session != nil {
+		return nil
+	}
 	platform.ctx = context.TODO()
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
@@ -59,6 +74,7 @@ func (platform *Platform) OpenViaEnv() error {
 	return nil
 }
 
+// GetMasterIPs returns a list of healthy master IP's
 func (platform *Platform) GetMasterIPs() []string {
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
 	log.Infof("Finding masters via consul: %s\n", url)
@@ -81,6 +97,50 @@ node:
 	return addresses
 }
 
+// GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
+func (platform *Platform) GetKubeConfig() (string, error) {
+	name := platform.Name + "-admin.yml"
+	if !is.File(name) {
+		data, err := CreateKubeConfig(platform, platform.GetMasterIPs()[0])
+		if err != nil {
+			return "", err
+		}
+		if err := ioutil.WriteFile(name, data, 0644); err != nil {
+			return "", err
+		}
+	}
+	return name, nil
+}
+
+func (platform *Platform) GetKubectl() deps.BinaryFunc {
+	kubeconfig, err := platform.GetKubeConfig()
+	if err != nil {
+		return func(msg string, args ...interface{}) error {
+			return fmt.Errorf("cannot create kubeconfig %v\n", err)
+		}
+	}
+	log.Infoln(kubeconfig)
+	return deps.BinaryWithEnv("kubectl", platform.Kubernetes.Version, ".bin", map[string]string{
+		"KUBECONFIG": kubeconfig,
+	})
+}
+
+// GetSecret returns the data of a secret or nil for any error
+func (platform *Platform) GetSecret(namespace, name string) *map[string][]byte {
+	k8s, err := platform.GetClientset()
+	if err != nil {
+		log.Tracef("Failed to get client %v", err)
+		return nil
+	}
+	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		log.Tracef("Failed tp get secret %s/%s: %v\n", namespace, name, err)
+		return nil
+	}
+	return &secret.Data
+}
+
+// CreateKubeConfig creates a new kubeconfig for the cluster
 func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 	userName := "kubernetes-admin"
 	contextName := fmt.Sprintf("%s@%s", userName, platform.Name)
@@ -113,8 +173,13 @@ func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 	return clientcmd.Write(cfg)
 }
 
+// GetClientset creates a new k8s client
 func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
-	cfg, err := clientcmd.BuildConfigFromFlags("", platform.Name)
+	kubeconfig, err := platform.GetKubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		return nil, err
 	}
