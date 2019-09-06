@@ -13,7 +13,7 @@ var MachineImages = &cobra.Command{
 func init() {
 	MachineImages.AddCommand(&cobra.Command{
 		Use:   "list",
-		Short: "List all machine images currently uplooded",
+		Short: "List all machine images currently uploaded",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 

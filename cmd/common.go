@@ -5,6 +5,8 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"os"
+	"strings"
 
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/spf13/cobra"
@@ -14,9 +16,6 @@ import (
 func getPlatform(cmd *cobra.Command) *platform.Platform {
 	platform := platform.Platform{
 		PlatformConfig: getConfig(cmd),
-	}
-	if err := platform.OpenViaEnv(); err != nil {
-		log.Fatalf("Failed to initialize platform: %s", err)
 	}
 	return &platform
 }
@@ -55,8 +54,21 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		}
 	}
 
+	base.S3.AccessKey = template(base.S3.AccessKey)
+	base.S3.SecretKey = template(base.S3.SecretKey)
+
 	data, _ := yaml.Marshal(base)
-	log.Debugf("Using configuration: \n%s\n", string(data))
+	log.Tracef("Using configuration: \n%s\n", string(data))
 	base.Init()
 	return base
+}
+
+func template(val string) string {
+	if strings.HasPrefix(val, "$") {
+		env := os.Getenv(val[1:])
+		if env != "" {
+			return env
+		}
+	}
+	return val
 }

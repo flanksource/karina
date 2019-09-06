@@ -2,15 +2,12 @@ package types
 
 import (
 	"fmt"
+	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 	"github.com/moshloop/platform-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	ccm "k8s.io/kube-controller-manager/config/v1alpha1"
-	proxy "k8s.io/kube-proxy/config/v1alpha1"
-	scheduler "k8s.io/kube-scheduler/config/v1alpha1"
-	kubelet "k8s.io/kubelet/config/v1beta1"
 )
 
 type PlatformConfig struct {
@@ -35,8 +32,10 @@ type PlatformConfig struct {
 	Monitoring           Monitoring        `yaml:"monitoring,omitempty"`
 	ELK                  ELK               `yaml:"elk,omitempty"`
 	Versions             map[string]string `yaml:"versions,omitempty"`
+	Resources            map[string]string `yaml:"resources,omitempty"`
 	Master               VM                `yaml:"master,omitempty"`
 	Nodes                map[string]VM     `yaml:"workers,omitempty"`
+	PGO                  PostgresOperator  `yaml:"pgo,omitempty"`
 	HostPrefix           string            `yaml:"hostPrefix,omitempty"`
 	Harbor               Harbor            `yaml:"harbor,omitempty"`
 	S3                   S3                `yaml:"s3,omitempty"`
@@ -67,6 +66,18 @@ type Calico struct {
 }
 
 type Harbor struct {
+	Version string `yaml:"version,omitempty"`
+	DB      *DB    `yaml:"db,omitempty"`
+}
+
+type DB struct {
+	Host     string `yaml:"host,omitempty"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Port     int    `yaml:"port,omitempty"`
+}
+
+type PostgresOperator struct {
 	Version string `yaml:"version,omitempty"`
 }
 
@@ -124,11 +135,12 @@ type HelmChart struct {
 }
 
 type Kubernetes struct {
-	Version           string                       `yaml:"version,omitempty"`
-	Kubelet           kubelet.KubeletConfiguration `yaml:"kubelet,omitempty"`
-	KubeProxy         proxy.KubeProxyConfiguration
-	KubeScheduler     scheduler.KubeSchedulerConfiguration
-	ControllerManager ccm.KubeControllerManagerConfiguration
+	Version           string                          `yaml:"version,omitempty"`
+	APIServer         api.KubeAPIServerConfig         `yaml:"api,omitempty"`
+	Kubelet           api.KubeletConfigSpec           `yaml:"kubelet,omitempty"`
+	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
+	KubeScheduler     api.KubeSchedulerConfig         `yaml:" scheduler,omitempty"`
+	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
 }
 
 type ObjectStorage struct {
@@ -205,7 +217,7 @@ func GenerateCA(name string) Certificate {
 }
 
 func GetCertificates(platform PlatformConfig) *Certificates {
-	file := platform.Name + "_cert.yaml"
+	file := "." + platform.Name + "_cert.yaml"
 	if utils.FileExists(file) {
 		var certs Certificates
 		data, _ := ioutil.ReadFile(file)
