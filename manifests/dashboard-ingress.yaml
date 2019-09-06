@@ -1,23 +1,20 @@
+
+ operatorhubio-catalog
+
+---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: dashboard-ing
-  namespace: kube-system
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/secure-backends: "true"
+  name:  operatorhub-ing
+  namespace: olm
 spec:
-  tls:
-    - hosts:
-      - dashboard.{{.domain}}
   rules:
-    - host: dashboard.{{.domain}}
+    - host:  operatorhub.{{.domain}}
       http:
         paths:
         - backend:
-            serviceName:  kubernetes-dashboard
-            servicePort:  443
+            serviceName: v1-packages-operators-coreos-com
+            servicePort: 443
 
 
 ---
@@ -50,6 +47,26 @@ spec:
             serviceName:  alertmanager-main
             servicePort:  9093
 
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: postgres-operator
+  namespace: pgo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+spec:
+  tls:
+    - hosts:
+      - pgo.{{.domain}}
+  rules:
+    - host: pgo.{{.domain}}
+      http:
+        paths:
+        - backend:
+            serviceName:  postgres-operator
+            servicePort:  8443
 
 ---
 apiVersion: extensions/v1beta1

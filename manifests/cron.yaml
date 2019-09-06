@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: crontesting2
+  name: crontesting
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
