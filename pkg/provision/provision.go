@@ -3,7 +3,6 @@ package provision
 import (
 	"fmt"
 	"github.com/moshloop/platform-cli/pkg/types"
-	"io/ioutil"
 	"sync"
 	"time"
 
@@ -17,18 +16,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// VM provisions a new standalone VM
 func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
-	session, err := vmware.GetSessionFromEnv()
-	if err != nil {
-		return err
-	}
 
 	vmware.LoadGovcEnvVars(vm)
 	konfig, err := konfigadm.NewConfig(konfigs...).Build()
 	if err != nil {
 		return err
 	}
-	ip, err := session.Clone(*vm, konfig)
+	ip, err := platform.Clone(*vm, konfig)
 
 	if err != nil {
 		return err
@@ -37,11 +33,11 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 	return nil
 }
 
+// Cluster provision or create a kubernetes cluster
 func Cluster(platform *platform.Platform, dryRun bool) error {
 
-	session, err := vmware.GetSessionFromEnv()
-	if err != nil {
-		return err
+	if err := platform.OpenViaEnv(); err != nil {
+		log.Fatalf("Failed to initialize platform: %s", err)
 	}
 
 	masters := platform.GetMasterIPs()
@@ -60,13 +56,11 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 		if err != nil {
 			log.Fatalf("Erroring saving config %s", err)
 		}
-		err = ioutil.WriteFile("config_saved.yaml", data, 0644)
-		if err != nil {
-			log.Fatalf("Error saving config: %s", err)
-		}
+
+		log.Tracef("Using configuration: \n%s\n", string(data))
 
 		if !dryRun {
-			ip, err := session.Clone(vm, config)
+			ip, err := platform.Clone(vm, config)
 
 			if err != nil {
 				return err
@@ -93,7 +87,7 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 				log.Errorf("Failed to create secondary master: %s", err)
 			} else {
 				if !dryRun {
-					ip, err := session.Clone(vm, config)
+					ip, err := platform.Clone(vm, config)
 					if err != nil {
 						log.Errorf("Failed to Clone secondary master: %s", err)
 					} else {
@@ -119,7 +113,7 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "w", utils.ShortTimestamp())
 					if !dryRun {
 						log.Infof("Creating new worker %s\n", vm.Name)
-						ip, err := session.Clone(vm, config)
+						ip, err := platform.Clone(vm, config)
 						if err != nil {
 							log.Errorf("Failed to Clone worker: %s", err)
 						} else {
@@ -133,5 +127,11 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 		}
 	}
 	wg.Wait()
+
+	path, err := platform.GetKubeConfig()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: kubectl --kubeconfig %s get nodes\n\n Next deploy the CNI and addons\n\n\n", platform.Name, path)
 	return nil
 }

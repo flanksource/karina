@@ -88,7 +88,7 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (string, error) {
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
-		return "", errors.Wrapf(err, "error trigging clone op for machine %q", ctx)
+		return "", errors.Wrapf(err, "error trigging clone op for machine %s/%s %+v\n\n%+v", folder, vm.Name, err, spec)
 	}
 
 	_, err = task.WaitForResult(context.TODO(), nil)
@@ -166,8 +166,6 @@ func getDiskSpec(vm VM, devices object.VirtualDeviceList) (types.BaseVirtualDevi
 	}
 
 	disk := disks[0].(*types.VirtualDisk)
-
-	log.Tracef("Changing size of %+v to %dGB\n", disk, vm.DiskGB)
 	disk.CapacityInKB = int64(vm.DiskGB) * 1024 * 1024
 
 	return &types.VirtualDeviceConfigSpec{
