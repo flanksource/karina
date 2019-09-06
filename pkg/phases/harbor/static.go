@@ -1,0 +1,259 @@
+package harbor
+
+var harborYml = `expose:
+  type: ingress
+  tls:
+    enabled: true
+    # Fill the name of secret if you want to use your own TLS certificate.
+    # The secret must contain keys named:
+    # "tls.crt" - the certificate
+    # "tls.key" - the private key
+    # "ca.crt" - the certificate of CA
+    # These files will be generated automatically if the "secretName" is not set
+    secretName: ""
+  ingress:
+    hosts:
+      core: harbor.{{.domain}}
+      notary: notary.{{.domain}}
+    controller: default
+    annotations:
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+
+
+externalURL: https://harbor.{{.domain}}
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:
+      # Use the existing PVC which must be created manually before bound,
+      # and specify the "subPath" if the PVC is shared with other components
+      existingClaim: ""
+      # Specify the "storageClass" used to provision the volume. Or the default
+      # StorageClass will be used(the default).
+      # Set it to "-" to disable dynamic provisioning
+      storageClass: ""
+      subPath: ""
+      accessMode: ReadWriteOnce
+      size: 5Gi
+    chartmuseum:
+      existingClaim: ""
+      storageClass: ""
+      subPath: ""
+      accessMode: ReadWriteOnce
+      size: 5Gi
+    jobservice:
+      existingClaim: ""
+      storageClass: ""
+      subPath: ""
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    # If external Redis is used, the following settings for Redis will
+    # be ignored
+    redis:
+      existingClaim: ""
+      storageClass: "local-path"
+      subPath: ""
+      accessMode: ReadWriteOnce
+      size: 1Gi
+  imageChartStorage:
+    disableredirect: false
+    type: s3
+    s3:
+      region: {{.s3.region}}
+      bucket: {{.s3.bucket}}
+      accesskey: {{.s3.access_key}}
+      secretkey: {{.s3.secret_key}}
+      {{ if has .s3 "registry_path" -}}
+      rootdirectory: {{.s3.registry_path}}
+      {{ end -}}
+      regionendpoint: {{.s3.endpoint}}
+      #encrypt: false
+      #keyid: mykeyid
+      secure: false
+      #v4auth: true
+      #chunksize: "5242880"
+
+      #storageclass: STANDARD
+
+
+imagePullPolicy: IfNotPresent
+
+logLevel: debug
+# The initial password of Harbor admin. Change it from portal after launching Harbor
+harborAdminPassword: "Harbor12345"
+# The secret key used for encryption. Must be a string of 16 chars.
+secretKey: "not-a-secure-key"
+portal:
+  image:
+    repository: goharbor/harbor-portal
+    tag: {{.harbor.version}}
+  replicas: 2
+resources:
+ requests:
+   memory: 256Mi
+   cpu: 100m
+
+core:
+  image:
+    repository: goharbor/harbor-core
+    tag: {{.harbor.version}}
+  replicas: 2
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+  # Secret is used when core server communicates with other components.
+  # If a secret key is not specified, Helm will generate one.
+  # Must be a string of 16 chars.
+  secret: ""
+  # Fill the name of a kubernetes secret if you want to use your own
+  # TLS certificate and private key for token encryption/decryption.
+  # The secret must contain keys named:
+  # "tls.crt" - the certificate
+  # "tls.key" - the private key
+  # The default key pair will be used if it isn't set
+  secretName: ""
+
+jobservice:
+  image:
+    repository: goharbor/harbor-jobservice
+    tag: {{.harbor.version}}
+  replicas: 2
+  maxJobWorkers: 10
+  # The logger for jobs: "file", "database" or "stdout"
+  jobLogger: stdout
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+  # Secret is used when job service communicates with other components.
+  # If a secret key is not specified, Helm will generate one.
+  # Must be a string of 16 chars.
+  secret: ""
+
+registry:
+  registry:
+    image:
+      repository: goharbor/registry-photon
+      {{ if .harbor.version | strings.HasPrefix "v1.8" }}
+      tag: v2.7.1-patch-2819-{{.harbor.version}}
+      {{ else }}
+      tag: {{.harbor.version}}
+      {{ end }}
+    resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+  controller:
+    image:
+      repository: goharbor/harbor-registryctl
+      tag: {{.harbor.version}}
+    resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+  replicas: 2
+  # Secret is used to secure the upload state from client
+  # and registry storage backend.
+  # See: https://github.com/docker/distribution/blob/master/docs/configuration.md#http
+  # If a secret key is not specified, Helm will generate one.
+  # Must be a string of 16 chars.
+  secret: ""
+
+
+chartmuseum:
+  enabled: true
+  # Harbor defaults ChartMuseum to returning relative urls, if you want using absolute url you should enable it by change the following value to 'true'
+  absoluteUrl: false
+  image:
+    repository: goharbor/chartmuseum-photon
+    tag: v0.9.0-{{.harbor.version}}
+  replicas: 2
+  resources:
+   requests:
+     memory: 256Mi
+     cpu: 100m
+
+clair:
+  enabled: true
+  image:
+    repository: goharbor/clair-photon
+    tag: v2.0.8-{{.harbor.version}}
+  replicas: 2
+  # The interval of clair updaters, the unit is hour, set to 0 to
+  # disable the updaters
+  updatersInterval: 12
+  resources:
+   requests:
+     memory: 256Mi
+     cpu: 100m
+  affinity: {}
+
+notary:
+  enabled: false
+  server:
+    image:
+      repository: goharbor/notary-server-photon
+      tag: {{.harbor.version}}
+    replicas: 2
+    resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+  signer:
+    image:
+      repository: goharbor/notary-signer-photon
+      tag: {{.harbor.version}}
+    replicas: 2
+    resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+  # Fill the name of a kubernetes secret if you want to use your own
+  # TLS certificate authority, certificate and private key for notary
+  # communications.
+  # The secret must contain keys named ca.crt, tls.crt and tls.key that
+  # contain the CA, certificate and private key.
+  # They will be generated if not set.
+  secretName: ""
+
+database:
+  # if external database is used, set "type" to "external"
+  # and fill the connection informations in "external" section
+  type: external
+  external:
+    host: "{{.harbor.db.host}}"
+    port: "{{.harbor.db.port}}"
+    username: "{{.harbor.db.username}}"
+    password: "{{.harbor.db.password}}"
+    coreDatabase: "registry"
+    clairDatabase: "clair"
+    notaryServerDatabase: "notary_server"
+    notarySignerDatabase: "notary_signer"
+    sslmode: "disable"
+  # The maximum number of connections in the idle connection pool.
+  # If it <=0, no idle connections are retained.
+  maxIdleConns: 50
+  # The maximum number of open connections to the database.
+  # If it <= 0, then there is no limit on the number of open connections.
+  # Note: the default number of connections is 100 for postgre.
+  maxOpenConns: 100
+
+redis:
+  # if external Redis is used, set "type" to "external"
+  # and fill the connection informations in "external" section
+  type: internal
+  internal:
+    image:
+      repository: goharbor/redis-photon
+      tag: {{.harbor.version}}
+    resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+`
