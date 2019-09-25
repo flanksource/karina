@@ -3,14 +3,13 @@ package cmd
 import (
 	"github.com/imdario/mergo"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 func getPlatform(cmd *cobra.Command) *platform.Platform {
@@ -22,6 +21,15 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 
 func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	paths, _ := cmd.Flags().GetStringArray("config")
+	splitPaths := []string{}
+	for _, path := range paths {
+		splitPaths = append(splitPaths, strings.Split(path, ",")...)
+	}
+
+	if len(paths) == 0 {
+		log.Fatalf("Must specify at least 1 config")
+	}
+	paths = splitPaths
 	base := types.PlatformConfig{
 		Source: paths[0],
 	}
@@ -52,6 +60,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		if err := mergo.Merge(&base, cfg); err != nil {
 			log.Fatalf("Failed to merge in %s, %s", path, err)
 		}
+	}
+
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	if dryRun {
+		base.DryRun = true
+		log.Infof("Running a dry-run mode, no changes will be made")
 	}
 
 	base.S3.AccessKey = template(base.S3.AccessKey)

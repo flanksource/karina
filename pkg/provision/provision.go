@@ -34,7 +34,7 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 }
 
 // Cluster provision or create a kubernetes cluster
-func Cluster(platform *platform.Platform, dryRun bool) error {
+func Cluster(platform *platform.Platform) error {
 
 	if err := platform.OpenViaEnv(); err != nil {
 		log.Fatalf("Failed to initialize platform: %s", err)
@@ -59,7 +59,7 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 
 		log.Tracef("Using configuration: \n%s\n", string(data))
 
-		if !dryRun {
+		if !platform.DryRun {
 			ip, err := platform.Clone(vm, config)
 
 			if err != nil {
@@ -86,7 +86,7 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 			if err != nil {
 				log.Errorf("Failed to create secondary master: %s", err)
 			} else {
-				if !dryRun {
+				if !platform.DryRun {
 					ip, err := platform.Clone(vm, config)
 					if err != nil {
 						log.Errorf("Failed to Clone secondary master: %s", err)
@@ -111,7 +111,7 @@ func Cluster(platform *platform.Platform, dryRun bool) error {
 					log.Errorf("Failed to create workers %s\n", err)
 				} else {
 					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "w", utils.ShortTimestamp())
-					if !dryRun {
+					if !platform.DryRun {
 						log.Infof("Creating new worker %s\n", vm.Name)
 						ip, err := platform.Clone(vm, config)
 						if err != nil {

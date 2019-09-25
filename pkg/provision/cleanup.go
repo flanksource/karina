@@ -12,7 +12,7 @@ import (
 )
 
 // Cleanup stops and deletes all VM's for a cluster;
-func Cleanup(platform types.PlatformConfig, dryRun bool) error {
+func Cleanup(platform types.PlatformConfig) error {
 	ctx := context.TODO()
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
@@ -32,7 +32,7 @@ func Cleanup(platform types.PlatformConfig, dryRun bool) error {
 		vm := _vm
 		power, _ := vm.PowerState(ctx)
 		log.Infof("%s\t%s\t%s\n", vm.Name(), power, platform.Name)
-		if dryRun {
+		if platform.DryRun {
 			continue
 		}
 		if power == vim.VirtualMachinePowerStatePoweredOn {

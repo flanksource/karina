@@ -13,7 +13,8 @@ import (
 	"io/ioutil"
 )
 
-func Install(platform types.PlatformConfig) error {
+
+func Install(platform *platform.Platform) error {
 	openid := platform.Certificates.OpenID.ToCert()
 	log.Infof("Creating dex cert for %s\n", "dex."+platform.Domain)
 	cert, err := openid.CreateCertificate("dex."+platform.Domain, "")

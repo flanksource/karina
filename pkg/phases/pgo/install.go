@@ -87,12 +87,12 @@ func ClientSetup(p *platform.Platform, dryRun bool) error {
 	return nil
 }
 
-func Install(p *platform.Platform, dryRun bool) error {
+func Install(p *platform.Platform) error {
 	ENV := getEnv(p)
 	for k, v := range ENV {
 		log.Tracef("export %s=%s\n", k, v)
 	}
-	if dryRun {
+	if p.DryRun {
 		return nil
 	}
 

@@ -2,14 +2,19 @@ package harbor
 
 import (
 	"github.com/moshloop/commons/deps"
+	"github.com/moshloop/commons/files"
+	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/text"
+	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
 
-func Install(p *platform.Platform, dryRun bool) error {
+func Deploy(p *platform.Platform) error {
+	dex.Defaults(p)
+	defaults(p)
 	if p.Harbor.DB == nil {
 		db, err := pgo.GetOrCreateDB(p, "harbor", 3)
 		if err != nil {
@@ -24,12 +29,17 @@ func Install(p *platform.Platform, dryRun bool) error {
 		}
 		p.Harbor.DB = db
 	}
+	if !is.File("build/harbor") {
+		if err := files.Getter("github.com/goharbor/harbor-helm?ref=v1.1.2", "build/harbor"); err != nil {
+			return err
+		}
+	}
 
 	values, err := text.Template(harborYml, p.PlatformConfig)
 	if err != nil {
 		return err
 	}
-	log.Infof("Config: \n%s\n", values)
+	log.Tracef("Config: \n%s\n", values)
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
 		return err
@@ -37,5 +47,9 @@ func Install(p *platform.Platform, dryRun bool) error {
 	helm := deps.BinaryWithEnv("helm", p.Versions["helm"], ".bin", map[string]string{"KUBECONFIG": kubeconfig})
 	valuesFile := text.ToFile(values, ".yml")
 	defer os.Remove(valuesFile)
-	return helm("install build/harbor -f %s -n harbor --namespace harbor", valuesFile)
+	helm("upgrade harbor  build/harbor -f %s --install --namespace harbor", valuesFile)
+
+	client := NewHarborClient(p)
+	return client.UpdateSettings(*p.Harbor.Settings)
+
 }

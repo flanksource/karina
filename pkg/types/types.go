@@ -25,7 +25,7 @@ type PlatformConfig struct {
 	Calico               Calico            `yaml:"calico,omitempty"`
 	DockerRegistry       string            `yaml:"dockerRegistry,omitempty"`
 	Domain               string            `yaml:"domain,omitempty"`
-	Ldap                 Ldap              `yaml:"ldap,omitempty"`
+	Ldap                 *Ldap             `yaml:"ldap,omitempty"`
 	SMTP                 Smtp              `yaml:"smtp,omitempty"`
 	Specs                []string          `yaml:"specs,omitempty"`
 	Policies             []string          `yaml:"policies,omitempty"`
@@ -37,8 +37,9 @@ type PlatformConfig struct {
 	Nodes                map[string]VM     `yaml:"workers,omitempty"`
 	PGO                  PostgresOperator  `yaml:"pgo,omitempty"`
 	HostPrefix           string            `yaml:"hostPrefix,omitempty"`
-	Harbor               Harbor            `yaml:"harbor,omitempty"`
+	Harbor               *Harbor           `yaml:"harbor,omitempty"`
 	S3                   S3                `yaml:"s3,omitempty"`
+	DryRun               bool              `yaml:"-"`
 }
 
 type VM struct {
@@ -66,8 +67,55 @@ type Calico struct {
 }
 
 type Harbor struct {
-	Version string `yaml:"version,omitempty"`
-	DB      *DB    `yaml:"db,omitempty"`
+	Version       string                   `yaml:"version,omitempty"`
+	AdminPassword string                   `yaml:"-"`
+	DB            *DB                      `yaml:"db,omitempty"`
+	URL           string                   `yaml:"url,omitempty"`
+	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings      *HarborSettings          `yaml:settings,omitempty"`
+}
+
+type HarborSettings struct {
+	AuthMode                     string `json:"auth_mode,omitempty" yaml:"auth_mode,omitempty"`
+	EmailFrom                    string `json:"email_from,omitempty" yaml:"email_from,omitempty"`
+	EmailHost                    string `json:"email_host,omitempty" yaml:"email_host,omitempty"`
+	EmailIdentity                string `json:"email_identity,omitempty" yaml:"email_identity,omitempty"`
+	EmailPassword                string `json:"email_password,omitempty" yaml:"email_password,omitempty"`
+	EmailInsecure                string `json:"email_insecure,omitempty" yaml:"email_insecure,omitempty"`
+	EmailPort                    string `json:"email_port,omitempty" yaml:"email_port,omitempty"`
+	EmailSsl                     *bool  `json:"email_ssl,omitempty" yaml:"email_ssl,omitempty"`
+	EmailUsername                string `json:"email_username,omitempty" yaml:"email_username,omitempty"`
+	LdapURL                      string `json:"ldap_url,omitempty" yaml:"ldap_url,omitempty"`
+	LdapBaseDN                   string `json:"ldap_base_dn,omitempty" yaml:"ldap_base_dn,omitempty"`
+	LdapFilter                   string `json:"ldap_filter,omitempty" yaml:"ldap_filter,omitempty"`
+	LdapScope                    string `json:"ldap_scope,omitempty" yaml:"ldap_scope,omitempty"`
+	LdapSearchDN                 string `json:"ldap_search_dn,omitempty" yaml:"ldap_search_dn,omitempty"`
+	LdapSearchPassword           string `json:"ldap_search_password,omitempty" yaml:"ldap_search_password,omitempty"`
+	LdapTimeout                  string `json:"ldap_timeout,omitempty" yaml:"ldap_timeout,omitempty"`
+	LdapUID                      string `json:"ldap_uid,omitempty" yaml:"ldap_uid,omitempty"`
+	LdapVerifyCert               *bool  `json:"ldap_verify_cert,omitempty" yaml:"ldap_verify_cert,omitempty"`
+	LdapGroupAdminDN             string `json:"ldap_group_admin_dn,omitempty" yaml:"ldap_group_admin_dn,omitempty"`
+	LdapGroupAttributeName       string `json:"ldap_group_attribute_name,omitempty" yaml:"ldap_group_attribute_name,omitempty"`
+	LdapGroupBaseDN              string `json:"ldap_group_base_dn,omitempty" yaml:"ldap_group_base_dn,omitempty"`
+	LdapGroupSearchFilter        string `json:"ldap_group_search_filter,omitempty" yaml:"ldap_group_search_filter,omitempty"`
+	LdapGroupSearchScope         string `json:"ldap_group_search_scope,omitempty" yaml:"ldap_group_search_scope,omitempty"`
+	LdapGroupMembershipAttribute string `json:"ldap_group_membership_attribute,omitempty" yaml:"ldap_group_membership_attribute,omitempty"`
+	ProjectCreationRestriction   string `json:"project_creation_restriction,omitempty" yaml:"project_creation_restriction,omitempty"`
+	ReadOnly                     string `json:"read_only,omitempty" yaml:"read_only,omitempty"`
+	SelfRegistration             *bool  `json:"self_registration,omitempty" yaml:"self_registration,omitempty"`
+	TokenExpiration              int    `json:"token_expiration,omitempty" yaml:"token_expiration,omitempty"`
+	OidcName                     string `json:"oidc_name,omitempty" yaml:"oidc_name,omitempty"`
+	OidcEndpoint                 string `json:"oidc_endpoint,omitempty" yaml:"oidc_endpoint,omitempty"`
+	OidcClientID                 string `json:"oidc_client_id,omitempty" yaml:"oidc_client_id,omitempty"`
+	OidcClientSecret             string `json:"oidc_client_secret,omitempty" yaml:"oidc_client_secret,omitempty"`
+	OidcScope                    string `json:"oidc_scope,omitempty" yaml:"oidc_scope,omitempty"`
+	OidcVerifyCert               string `json:"oidc_verify_cert,omitempty" yaml:"oidc_verify_cert,omitempty"`
+	RobotTokenDuration           int    `json:"robot_token_duration,omitempty" yaml:"robot_token_duration,omitempty"`
+}
+
+type HarborProject struct {
+	Name  string            `yaml:"name,omitempty"`
+	Roles map[string]string `yaml:"roles,omitempty"`
 }
 
 type DB struct {
@@ -116,8 +164,8 @@ type S3 struct {
 
 type Ldap struct {
 	Host       string `yaml:"host,omitempty"`
-	Username   string `yaml:"username,omitempty"`
-	Password   string `yaml:"password,omitempty"`
+	Username   string `yaml:"-"`
+	Password   string `yaml:"-"`
 	Domain     string `yaml:"domain,omitempty"`
 	AdminGroup string `yaml:"adminGroup,omitempty"`
 	BindDN     string `yaml:"dn,omitempty"`
@@ -139,7 +187,7 @@ type Kubernetes struct {
 	APIServer         api.KubeAPIServerConfig         `yaml:"api,omitempty"`
 	Kubelet           api.KubeletConfigSpec           `yaml:"kubelet,omitempty"`
 	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
-	KubeScheduler     api.KubeSchedulerConfig         `yaml:" scheduler,omitempty"`
+	KubeScheduler     api.KubeSchedulerConfig         `yaml:"scheduler,omitempty"`
 	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
 }
 
@@ -188,6 +236,11 @@ func (p PlatformConfig) GetVMCount() int {
 		count += node.Count
 	}
 	return count
+}
+
+func (platform *PlatformConfig) String() string {
+	data, _ := yaml.Marshal(platform)
+	return string(data)
 }
 
 func (platform *PlatformConfig) Init() {
