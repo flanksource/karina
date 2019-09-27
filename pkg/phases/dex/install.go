@@ -1,18 +1,16 @@
 package dex
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"github.com/moshloop/platform-cli/pkg/api"
-
-	"github.com/moshloop/platform-cli/pkg/types"
-
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
+const (
+    	Namespace     = "dex"
+	ConfigMapName = "dex"
+	ConfigName    = "dex.cfg"
+)
 
 func Install(platform *platform.Platform) error {
 	openid := platform.Certificates.OpenID.ToCert()
@@ -21,17 +19,21 @@ func Install(platform *platform.Platform) error {
 	if err != nil {
 		return err
 	}
+	platform.CreateOrUpdateSecret("dex-cert", Namespace, map[string][]byte{
+		"tls.crt": cert.EncodedCertificate(),
+		"tls.key": cert.EncodedPrivateKey(),
+	})
 
-	secret := api.Secret{
-		TypeMeta:   meta.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: meta.ObjectMeta{Name: "dex-cert", Namespace: "dex"},
-		Data: map[string]string{
-			"tls.crt": base64.StdEncoding.EncodeToString(cert.EncodedCertificate()),
-			"tls.key": base64.StdEncoding.EncodeToString(cert.EncodedPrivateKey()),
-		},
-		Type: "kubernetes.io/tls",
-	}
+	cfg, _ := platform.Template("dex.cfg")
 
-	data, _ := json.Marshal(secret)
-	return ioutil.WriteFile("build/dex-secrets.json", data, 0644)
+	platform.CreateOrUpdateConfigMap(ConfigMapName, Namespace, map[string]string{
+		ConfigName: cfg,
+	})
+
+	platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
+		"AD_PASSWORD": []byte(platform.Ldap.Password),
+		"AD_USERNAME": []byte(platform.Ldap.Username),
+	})
+
+	return platform.ApplySpecs(Namespace, "dex.yaml")
 }
