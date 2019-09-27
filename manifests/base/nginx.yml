@@ -195,6 +195,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/part-of: ingress-nginx
+
 spec:
   selector:
     matchLabels:
@@ -205,9 +206,7 @@ spec:
       labels:
         app.kubernetes.io/name: ingress-nginx
         app.kubernetes.io/part-of: ingress-nginx
-      annotations:
-        prometheus.io/port: "10254"
-        prometheus.io/scrape: "true"
+        app: ingress-nginx
     spec:
       serviceAccountName: nginx-ingress-serviceaccount
       hostNetwork: true
@@ -245,6 +244,8 @@ spec:
               containerPort: 80
             - name: https
               containerPort: 443
+            - name: metrics
+              containerPort: 10254
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -271,6 +272,12 @@ kind: Service
 metadata:
   name: ingress-nginx
   namespace: ingress-nginx
+  annotations:
+      prometheus.io/port: "10254"
+      prometheus.io/scrape: "true"
+  labels:
+      app.kubernetes.io/name: "ingress-nginx"
+      app: ingress-nginx
 spec:
   ports:
   - name: http
@@ -281,5 +288,32 @@ spec:
     port: 443
     targetPort: 443
     protocol: TCP
+  - name: metrics
+    port: 10254
+    targetPort: 10254
+    protocol: TCP
   selector:
     app: ingress-nginx
+
+
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+     app: ingress-nginx
+  name: nginx-controller
+  namespace: monitoring
+spec:
+  jobLabel: nginx
+  namespaceSelector:
+    matchNames:
+    - ingress-nginx
+  endpoints:
+  - port: metrics
+    interval: 30s
+    honorLabels: true
+  selector:
+    matchLabels:
+      app: ingress-nginx
