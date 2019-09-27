@@ -10,7 +10,6 @@ require (
 	github.com/gobuffalo/packd v0.3.0
 	github.com/gobuffalo/packr/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.0 // indirect
-	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.6
@@ -44,8 +43,5 @@ require (
 	k8s.io/utils v0.0.0-20190923111123-69764acb6e8e // indirect
 )
 
-
-replace (
-	// github.com/moshloop/commons => ../commons
-	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
-)
+// github.com/moshloop/commons => ../commons
+replace github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
