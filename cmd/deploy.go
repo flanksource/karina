@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"log"
+
+	"github.com/spf13/cobra"
+
+	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
+	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
-	"log"
-
-	"github.com/spf13/cobra"
 )
 
 var Deploy = &cobra.Command{
@@ -16,7 +19,6 @@ var Deploy = &cobra.Command{
 }
 
 func init() {
-	Deploy.PersistentFlags().Bool("dry-run", false, "Don't execute anything")
 
 	var _pgo = &cobra.Command{
 		Use:   "pgo",
@@ -28,8 +30,7 @@ func init() {
 		Short: "Install the PostgreOperator into the cluster",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			dryRun, _ := cmd.Flags().GetBool("dry-run")
-			if err := pgo.Install(getPlatform(cmd), dryRun); err != nil {
+			if err := pgo.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deployed postgres operator%s", err)
 			}
 		},
@@ -40,8 +41,7 @@ func init() {
 		Short: "Setup the the pgo client",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			dryRun, _ := cmd.Flags().GetBool("dry-run")
-			if err := pgo.ClientSetup(getPlatform(cmd), dryRun); err != nil {
+			if err := pgo.ClientSetup(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deployed pgo client operator%s", err)
 			}
 		},
@@ -52,17 +52,23 @@ func init() {
 		Short: "Build everything",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			dryRun, _ := cmd.Flags().GetBool("dry-run")
-			if err := pgo.Install(getPlatform(cmd), dryRun); err != nil {
+			p := getPlatform(cmd)
+			if err := deploy_base.Install(p); err != nil {
+				log.Fatalf("Error deploying base %s", err)
+			}
+			if err := pgo.Install(p); err != nil {
 				log.Fatalf("Error deployed postgres operator%s", err)
 			}
-			if err := pgo.ClientSetup(getPlatform(cmd), dryRun); err != nil {
+			if err := pgo.ClientSetup(p); err != nil {
 				log.Fatalf("Error deployed pgo client operator%s", err)
 			}
-			if err := monitoring.Install(getConfig(cmd)); err != nil {
+			if err := monitoring.Install(p); err != nil {
 				log.Fatalf("Error building monitoring stack %s", err)
 			}
-			if err := dex.Install(getConfig(cmd)); err != nil {
+			if err := harbor.Deploy(p); err != nil {
+				log.Fatalf("Error deploying harbor %s", err)
+			}
+			if err := dex.Install(p); err != nil {
 				log.Fatalf("Error initializing dex %s", err)
 			}
 		},
@@ -72,20 +78,8 @@ func init() {
 		Short: "Build and deploy the prometheus/grafana monitoring stack",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := monitoring.Install(getConfig(cmd)); err != nil {
+			if err := monitoring.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error building monitoring stack %s", err)
-			}
-		},
-	})
-
-	Deploy.AddCommand(&cobra.Command{
-		Use:   "harbor",
-		Short: "Build and deploy the harbor registry",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			dryRun, _ := cmd.Flags().GetBool("dry-run")
-			if err := harbor.Install(getPlatform(cmd), dryRun); err != nil {
-				log.Fatalf("Error building harbor %s\n", err)
 			}
 		},
 	})
@@ -95,11 +89,43 @@ func init() {
 		Short: "Build and deploy the dex-ca",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := dex.Install(getConfig(cmd)); err != nil {
+			if err := dex.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error initializing dex %s", err)
 			}
 		},
 	})
 
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "calico",
+		Short: "Build and deploy calico",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := calico.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploy calico dex %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "harbor",
+		Short: "Build and deploy the harbor registry",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := harbor.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error building harbor %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "base",
+		Short: "Build and deploy base dependencies",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := deploy_base.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploy base %s", err)
+			}
+		},
+	})
 	Deploy.AddCommand(_pgo, all)
 }

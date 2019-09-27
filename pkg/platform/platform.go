@@ -4,20 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/gobuffalo/packd"
+	"github.com/gobuffalo/packr/v2"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	kapi "k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/moshloop/commons/deps"
+	"github.com/moshloop/commons/files"
 	"github.com/moshloop/commons/is"
+	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
-	log "github.com/sirupsen/logrus"
-	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	kapi "k8s.io/client-go/tools/clientcmd/api"
-	"time"
 )
 
 type Platform struct {
@@ -119,7 +131,16 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 			return fmt.Errorf("cannot create kubeconfig %v\n", err)
 		}
 	}
-	log.Infoln(kubeconfig)
+	if platform.DryRun {
+		log.Infof("Using mock kubectl")
+
+		return func(msg string, args ...interface{}) error {
+			fmt.Printf("kubectl "+msg+"\n", args...)
+			return nil
+		}
+	}
+
+	log.Infof("Using KUBECONFIG=%s", kubeconfig)
 	return deps.BinaryWithEnv("kubectl", platform.Kubernetes.Version, ".bin", map[string]string{
 		"KUBECONFIG": kubeconfig,
 	})
@@ -184,4 +205,182 @@ func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return kubernetes.NewForConfigOrDie(cfg), nil
+}
+
+func (platform *Platform) Template(file string) (string, error) {
+	// set up a new box by giving it a name and an optional (relative) path to a folder on disk:
+	box := packr.New("manifests", "../../manifests")
+	raw, err := box.FindString(file)
+	if err != nil {
+		return "", err
+	}
+	template, err := text.Template(raw, platform.PlatformConfig)
+	if err != nil {
+		data, _ := yaml.Marshal(platform.PlatformConfig)
+		log.Debugln(string(data))
+		return "", err
+	}
+	return template, nil
+}
+
+func (platform *Platform) TemplateDir(dir string) (string, error) {
+	// set up a new box by giving it a name and an optional (relative) path to a folder on disk:
+	box := packr.New(dir, "../../manifests/"+dir)
+	tmp, _ := ioutil.TempDir("", "template")
+
+	if err := box.Walk(func(path string, file packd.File) error {
+		to := tmp + "/" + path
+		log.Debugf("Extracting %s\n", to)
+		info, _ := file.FileInfo()
+		_, err := files.CopyFromReader(file, to, info.Mode())
+		if err != nil {
+			log.Errorf("Error extracting %s: %v\n", path, err)
+			return err
+		}
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return "", err
+	}
+	dst := ".manifests/" + dir
+	os.RemoveAll(dst)
+	os.MkdirAll(dst, 0775)
+	return dst, text.TemplateDir(tmp, dst, platform.PlatformConfig)
+}
+
+func (platform *Platform) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
+	k8s, err := platform.GetClientset()
+	if err != nil {
+		return err
+	}
+	configs := k8s.CoreV1().Secrets(ns)
+	cm, err := configs.Get(name, metav1.GetOptions{})
+	if cm == nil || err != nil {
+		cm = &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Data:       data,
+		}
+		log.Infof("Creating %s/secret/%s", ns, name)
+		if !platform.DryRun {
+			if _, err := configs.Create(cm); err != nil {
+				return err
+			}
+		}
+	} else {
+		(*cm).Data = data
+		if !platform.DryRun {
+			log.Infof("Updating %s/secret/%s", ns, name)
+			if _, err := configs.Update(cm); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
+	k8s, err := platform.GetClientset()
+	if err != nil {
+		return err
+	}
+	configs := k8s.CoreV1().ConfigMaps(ns)
+	cm, err := configs.Get(name, metav1.GetOptions{})
+	if cm == nil || err != nil {
+		cm = &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Data:       data}
+		log.Infof("Creating %s/cm/%s", ns, name)
+		if !platform.DryRun {
+			if _, err := configs.Create(cm); err != nil {
+				return err
+			}
+		}
+	} else {
+		(*cm).Data = data
+		if !platform.DryRun {
+			log.Infof("Updating %s/cm/%s", ns, name)
+			if _, err := configs.Update(cm); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) error {
+	k8s, err := platform.GetClientset()
+	if err != nil {
+		return err
+	}
+	domain := fmt.Sprintf("%s.%s", service, platform.Domain)
+	ingresses := k8s.NetworkingV1beta1().Ingresses(namespace)
+	ingress, err := ingresses.Get(service, metav1.GetOptions{})
+	if ingress == nil || err != nil {
+		ingress = &v1beta1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      service,
+				Namespace: namespace,
+				Annotations: map[string]string{
+					"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				TLS: []v1beta1.IngressTLS{
+					v1beta1.IngressTLS{
+						Hosts: []string{domain},
+					},
+				},
+				Rules: []v1beta1.IngressRule{
+					v1beta1.IngressRule{
+						Host: domain,
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									v1beta1.HTTPIngressPath{
+										Backend: v1beta1.IngressBackend{
+											ServiceName: service,
+											ServicePort: intstr.FromInt(port),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		log.Infof("Creating %s/ingress/%s", namespace, service)
+		if !platform.DryRun {
+			if _, err := ingresses.Create(ingress); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
+	kubectl := platform.GetKubectl()
+	if namespace != "" {
+		namespace = "-n " + namespace
+	}
+	for _, spec := range specs {
+		if strings.HasSuffix(spec, "/") {
+			dir, err := platform.TemplateDir(spec)
+			if err != nil {
+				return err
+			}
+			if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
+				return err
+			}
+		} else {
+			template, _ := platform.Template(spec)
+			if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
