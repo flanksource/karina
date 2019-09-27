@@ -2,12 +2,14 @@ package types
 
 import (
 	"fmt"
+	"io/ioutil"
+
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 	"github.com/moshloop/platform-cli/pkg/utils"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 )
 
 type PlatformConfig struct {
@@ -39,6 +41,7 @@ type PlatformConfig struct {
 	HostPrefix           string            `yaml:"hostPrefix,omitempty"`
 	Harbor               *Harbor           `yaml:"harbor,omitempty"`
 	S3                   S3                `yaml:"s3,omitempty"`
+	TrustedCA            string            `yaml:"trustedCA,omitempty"`
 	DryRun               bool              `yaml:"-"`
 }
 
@@ -68,6 +71,7 @@ type Calico struct {
 
 type Harbor struct {
 	Version       string                   `yaml:"version,omitempty"`
+	ChartVersion  string                   `yaml:"chartVersion,omitempty"`
 	AdminPassword string                   `yaml:"-"`
 	DB            *DB                      `yaml:"db,omitempty"`
 	URL           string                   `yaml:"url,omitempty"`
@@ -155,17 +159,18 @@ type Smtp struct {
 }
 
 type S3 struct {
-	AccessKey string `yaml:"access_key,omitempty"`
-	SecretKey string `yaml:"secret_key,omitempty"`
-	Bucket    string `yaml:"bucket,omitempty"`
-	Region    string `yaml:"region,omitempty"`
-	Endpoint  string `yaml:"endpoint,omitempty"`
+	AccessKey  string `yaml:"access_key,omitempty"`
+	SecretKey  string `yaml:"secret_key,omitempty"`
+	Bucket     string `yaml:"bucket,omitempty"`
+	Region     string `yaml:"region,omitempty"`
+	Endpoint   string `yaml:"endpoint,omitempty"`
+	CSIVolumes bool   `yaml:"csiVolumes,omitempty"`
 }
 
 type Ldap struct {
 	Host       string `yaml:"host,omitempty"`
-	Username   string `yaml:"-"`
-	Password   string `yaml:"-"`
+	Username   string `yaml:"username,omitempty"`
+	Password   string `yaml:"password,omitempty"`
 	Domain     string `yaml:"domain,omitempty"`
 	AdminGroup string `yaml:"adminGroup,omitempty"`
 	BindDN     string `yaml:"dn,omitempty"`
@@ -215,6 +220,9 @@ type ELK struct {
 	Version      string `yaml:"version,omitempty"`
 	Replicas     int    `yaml:"replicas,omitempty"`
 	LogRetention string `yaml:"logRetention,omitempty"`
+}
+
+type Dex struct {
 }
 
 type Versions struct {

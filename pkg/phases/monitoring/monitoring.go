@@ -1,14 +1,15 @@
 package monitoring
 
 import (
+	"os"
+
 	"github.com/moshloop/commons/deps"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
-	"os"
 )
 
-func Install(cfg types.PlatformConfig) error {
+func Install(cfg *platform.Platform) error {
 
 	jb := deps.Binary("jb", cfg.Versions["jb"], ".bin")
 	jsonnet := deps.Binary("jsonnet", cfg.Versions["jsonnet"], ".bin")

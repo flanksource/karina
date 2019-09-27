@@ -2,6 +2,13 @@ package pgo
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/exec"
 	"github.com/moshloop/commons/files"
@@ -9,17 +16,18 @@ import (
 	"github.com/moshloop/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
-	"io/ioutil"
-	"os"
-	"strings"
-	"time"
 )
 
 const (
-	PGO     = "pgo"
-	PGOUSER = "PGOUSER"
-	PGOPASS = "PGOPASS"
+	PGO             = "pgo"
+	PGOUSER         = "PGOUSER"
+	PGOPASS         = "PGOPASS"
+	PGO_CLIENT_CERT = "PGO_CLIENT_CERT"
+	PGO_CLIENT_KEY  = "PGO_CLIENT_KEY"
+	CO_CLIENT_CERT  = "CO_CLIENT_CERT"
+	CO_CLIENT_KEY   = "CO_CLIENT_KEY"
+	CO_CA_CERT      = "CO_CA_CERT"
+	PGO_CA_CERT     = "PGO_CA_CERT"
 )
 
 func getPgoAuth(p *platform.Platform) (user, pass string) {
@@ -41,7 +49,7 @@ func getEnv(p *platform.Platform) map[string]string {
 		// 4.0.0 vars
 		"PGO_OPERATOR_NAMESPACE": PGO,
 		"NAMESPACE":              "pgo-databases",
-		"PGO_APISERVER_URL":      fmt.Sprintf("https://pgo.%s", p.Domain),
+		"PGO_APISERVER_URL":      fmt.Sprintf("https://postgres-operator.%s", p.Domain),
 		"PGO_CMD":                ".bin/kubectl",
 		"PGOROOT":                "build/pgo",
 		"PGO_IMAGE_PREFIX":       "crunchydata",
@@ -49,8 +57,8 @@ func getEnv(p *platform.Platform) map[string]string {
 		"PGO_VERSION":            "3.5.4",
 		"PGO_IMAGE_TAG":          "centos7-4.0.1",
 		"PGO_CA_CERT":            "build/pgo/conf/postgres-operator/server.crt",
-		"PGO_CLIENT_CERT":        "build/pgo/conf/postgres-operator/server.crt",
-		"PGO_CLIENT_KEY":         "build/pgo/conf/postgres-operator/server.key",
+		PGO_CLIENT_CERT:          "build/pgo/conf/postgres-operator/server.crt",
+		PGO_CLIENT_KEY:           "build/pgo/conf/postgres-operator/server.key",
 
 		// 3.5.4 vars
 		"CO_IMAGE_PREFIX":  "crunchydata",
@@ -58,20 +66,18 @@ func getEnv(p *platform.Platform) map[string]string {
 		"CO_NAMESPACE":     PGO,
 		"COROOT":           "build/pgo",
 		"CO_IMAGE_TAG":     "centos7-3.5.4",
-		"CO_APISERVER_URL": fmt.Sprintf("https://pgo.%s", p.Domain),
+		"CO_APISERVER_URL": fmt.Sprintf("https://postgres-operator.%s", p.Domain),
 		"CO_CA_CERT":       "build/pgo/conf/postgres-operator/server.crt",
-		"CO_CLIENT_CERT":   "build/pgo/conf/postgres-operator/server.crt",
-		"CO_CLIENT_KEY":    "build/pgo/conf/postgres-operator/server.key",
+		CO_CLIENT_CERT:     "build/pgo/conf/postgres-operator/server.crt",
+		CO_CLIENT_KEY:      "build/pgo/conf/postgres-operator/server.key",
 		PGOUSER:            os.Getenv("HOME") + "/.pgouser",
 	}
 }
 
-func ClientSetup(p *platform.Platform, dryRun bool) error {
+func ClientSetup(p *platform.Platform) error {
 	ENV := getEnv(p)
-	for k, v := range ENV {
-		fmt.Printf("export %s=%s\n", k, v)
-	}
-	if dryRun {
+
+	if p.DryRun {
 		return nil
 	}
 
@@ -84,6 +90,31 @@ func ClientSetup(p *platform.Platform, dryRun bool) error {
 		return err
 	}
 
+	if !is.File(ENV["PGO_CLIENT_CERT"]) {
+		secrets := *p.GetSecret("pgo", "pgo-auth-secret")
+
+		crt := home + "/.pgoserver.crt"
+		key := home + "/.pgoserver.key"
+		log.Debugf("Writing %s", crt)
+		if err := ioutil.WriteFile(crt, secrets["server.crt"], 0644); err != nil {
+			return err
+		}
+
+		log.Debugf("Writing %s", key)
+		if err := ioutil.WriteFile(key, secrets["server.key"], 0644); err != nil {
+			return err
+		}
+		ENV[PGO_CLIENT_CERT] = crt
+		ENV[PGO_CA_CERT] = crt
+		ENV[PGO_CLIENT_KEY] = key
+		ENV[CO_CLIENT_CERT] = crt
+		ENV[CO_CLIENT_KEY] = key
+		ENV[CO_CA_CERT] = crt
+
+	}
+	for k, v := range ENV {
+		fmt.Printf("export %s=%s\n", k, v)
+	}
 	return nil
 }
 
@@ -91,9 +122,6 @@ func Install(p *platform.Platform) error {
 	ENV := getEnv(p)
 	for k, v := range ENV {
 		log.Tracef("export %s=%s\n", k, v)
-	}
-	if p.DryRun {
-		return nil
 	}
 
 	if !is.File("build/pgo") {
@@ -118,7 +146,15 @@ func Install(p *platform.Platform) error {
 	ioutil.WriteFile(pgouser, []byte(passwd), 0644)
 	exec.ExecfWithEnv("cp -R overlays/pgo/ $PGOROOT", ENV)
 	kubectl("create ns " + PGO)
+
+	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
+		return err
+	}
+
 	kubectl("create ns pgo-databases")
+	if p.DryRun {
+		return nil
+	}
 	if err := exec.ExecfWithEnv("/bin/bash  build/pgo/deploy/install-rbac.sh", ENV); err != nil {
 		return err
 	}

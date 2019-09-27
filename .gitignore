@@ -7,3 +7,7 @@ config*.yaml
 config*.yml
 docs/*.md
 .DS_Store
+*-packr.go
+packrd/
+dist/
+hack/

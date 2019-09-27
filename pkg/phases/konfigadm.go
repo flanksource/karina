@@ -149,7 +149,7 @@ func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 	createClientSideLoadbalancers(platform, cfg)
 	cfg.AddCommand("dhclient")
 	cfg.AddCommand(fmt.Sprintf(
-		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s   > /var/log/kubeadm.log",
+		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s > /var/log/kubeadm.log",
 		platform.BootstrapToken, platform.JoinEndpoint))
 	return cfg, nil
 }

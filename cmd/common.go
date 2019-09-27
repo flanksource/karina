@@ -1,15 +1,19 @@
 package cmd
 
 import (
-	"github.com/imdario/mergo"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/imdario/mergo"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+
+	"github.com/moshloop/commons/is"
+	"github.com/moshloop/commons/text"
+	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 func getPlatform(cmd *cobra.Command) *platform.Platform {
@@ -70,6 +74,15 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 
 	base.S3.AccessKey = template(base.S3.AccessKey)
 	base.S3.SecretKey = template(base.S3.SecretKey)
+
+	ldap := base.Ldap
+	ldap.Username = template(ldap.Username)
+	ldap.Password = template(ldap.Password)
+	base.Ldap = ldap
+
+	if base.TrustedCA != "" && !is.File(base.TrustedCA) {
+		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
+	}
 
 	data, _ := yaml.Marshal(base)
 	log.Tracef("Using configuration: \n%s\n", string(data))
