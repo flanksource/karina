@@ -1,6 +1,4 @@
-package harbor
-
-var harborYml = `expose:
+expose:
   type: ingress
   tls:
     enabled: true
@@ -23,7 +21,7 @@ var harborYml = `expose:
       nginx.ingress.kubernetes.io/proxy-body-size: "0"
 
 
-externalURL: https://harbor.{{.domain}}
+externalURL: {{.harbor.url}}
 
 persistence:
   enabled: true
@@ -140,11 +138,7 @@ registry:
   registry:
     image:
       repository: goharbor/registry-photon
-      {{ if .harbor.version | strings.HasPrefix "v1.8" }}
       tag: v2.7.1-patch-2819-{{.harbor.version}}
-      {{ else }}
-      tag: {{.harbor.version}}
-      {{ end }}
     resources:
      requests:
        memory: 256Mi
@@ -183,7 +177,12 @@ clair:
   enabled: true
   image:
     repository: goharbor/clair-photon
+  {{ if .harbor.version | strings.HasPrefix "v1.9" }}
+    tag: v2.0.9-{{.harbor.version}}
+  {{else}}
     tag: v2.0.8-{{.harbor.version}}
+  {{end}}
+
   replicas: 2
   # The interval of clair updaters, the unit is hour, set to 0 to
   # disable the updaters
@@ -256,4 +255,3 @@ redis:
      requests:
        memory: 256Mi
        cpu: 100m
-`

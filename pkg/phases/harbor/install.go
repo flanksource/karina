@@ -1,19 +1,19 @@
 package harbor
 
 import (
+	"fmt"
+	"os"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/files"
-	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/text"
-	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
-	"os"
 )
 
 func Deploy(p *platform.Platform) error {
-	dex.Defaults(p)
 	defaults(p)
 	if p.Harbor.DB == nil {
 		db, err := pgo.GetOrCreateDB(p, "harbor", 3)
@@ -29,13 +29,12 @@ func Deploy(p *platform.Platform) error {
 		}
 		p.Harbor.DB = db
 	}
-	if !is.File("build/harbor") {
-		if err := files.Getter("github.com/goharbor/harbor-helm?ref=v1.1.2", "build/harbor"); err != nil {
-			return err
-		}
+
+	if err := files.Getter(fmt.Sprintf("github.com/goharbor/harbor-helm?ref=%s", p.Harbor.ChartVersion), "build/harbor"); err != nil {
+		return err
 	}
 
-	values, err := text.Template(harborYml, p.PlatformConfig)
+	values, err := p.Template("harbor.yml")
 	if err != nil {
 		return err
 	}
@@ -44,10 +43,29 @@ func Deploy(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	helm := deps.BinaryWithEnv("helm", p.Versions["helm"], ".bin", map[string]string{"KUBECONFIG": kubeconfig})
+	helm := deps.BinaryWithEnv("helm", p.Versions["helm"], ".bin", map[string]string{
+		"KUBECONFIG": kubeconfig,
+		"HOME":       os.ExpandEnv("$HOME"),
+		"HELM_HOME":  ".helm",
+	})
 	valuesFile := text.ToFile(values, ".yml")
-	defer os.Remove(valuesFile)
-	helm("upgrade harbor  build/harbor -f %s --install --namespace harbor", valuesFile)
+	if !log.IsLevelEnabled(log.TraceLevel) {
+		defer os.Remove(valuesFile)
+	}
+	ca := p.TrustedCA
+	if p.TrustedCA != "" {
+		ca = fmt.Sprintf("--ca-file \"%s\"", p.TrustedCA)
+	}
+
+	helm("init -c --skip-refresh=true")
+	debug := ""
+	if log.IsLevelEnabled((log.TraceLevel)) {
+		debug = "--debug"
+	}
+	helm("init --service-account tiller --upgrade --wait")
+	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s", valuesFile, ca, debug); err != nil {
+		return err
+	}
 
 	client := NewHarborClient(p)
 	return client.UpdateSettings(*p.Harbor.Settings)
