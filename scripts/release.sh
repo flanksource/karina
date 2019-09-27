@@ -21,7 +21,7 @@ fi
 
 git stash
 git clean -fd
-goreleaser --rm-dist
+goreleaser --rm-dist -skip-validate
 
 GO111MODULE=off go get github.com/aktau/github-release
 go get github.com/aktau/github-release
