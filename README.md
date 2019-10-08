@@ -2,23 +2,31 @@
 
 Whats included:
 
-#### Core Platform
+### Core Platform / Data Plane
+- [x] Kubeadm config generation for control plane and worker nodes
+- [x] [Nginx]((https://github.com/kubernetes/ingress-nginx)) based ingress
+- [ ] [Contour](https://github.com/projectcontour/contour) based ingress
+- [x] Calico CNI
+- [ ] NSX-T CNI
+- [ ] Multi-Cluster Calico BGP Peering
+- [ ] Multi-Cluster Load Balancing using [Gimbal](https://github.com/vmware-tanzu/gimbal)
+- [ ] Multi-Cluster Load Balancing using NSX-T
+
+### Control Plane
+
+- [x] Master Service Discvovery using [consul](https://github.com/hashicorp/consul-template)
 - [x] LocalPersistent Volumes using [local-path-provisioner](https://github.com/rancher/local-path-provisioner)
 - [x] OIDC based authentication using [Dex](https://github.com/dexidp/dex) and LDAP
 - [x] Monitoring stack powered by [Prometheus, Grafana and Alert Manager](https://github.com/coreos/kube-prometheus)
-- [x] Kubeadm config generation for control plane and worker nodes
-- [x] Nginx based [Ingress](https://github.com/kubernetes/ingress-nginx)
 - [x] Cloud-init generation using [konfigadm](https://github.com/moshloop/konfigadm)
 - [x] Provisioning clusters on vSphere using [govmomi](https://github.com/vmware/govmomi), heavily based on [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere)
 - [ ] Namespace templating using [namespace-configuration-operator](https://github.com/redhat-cop/namespace-configuration-operator/tree/master)
 - [ ] In cluster templating [quack](https://github.com/pusher/quack) for dynamic ingress domain names
-- [ ] BGP Peering
-- [ ] Multi-Cluster load balancing using F5
 - [ ] Per Namespace log shipping using [fluent-operator](https://github.com/vmware/kube-fluentd-operator)
 - [ ] DNS Integration via [external-dns](https://github.com/kubernetes-incubator/external-dns)
 - [ ] Backups using [velero](https://github.com/heptio/velero)
 - [ ] Certificate Management using [cert-manager](https://github.com/jetstack/cert-manager)
-- [ ] GitOps using [faros](https://github.com/pusher/faros)
+- [ ] GitOps using [faros](https://github.com/pusher/faros) or [flux](https://fluxcd.io)
 - [ ] Authenticating proxy using [OAuth Proxy](https://github.com/pusher/oauth2_proxy) or [SSO Operator](https://github.com/jenkins-x/sso-operator)
 - [ ] Conformance testing using [sonobuoy](https://github.com/heptio/sonobuoy)
 - [ ] Policy Enforcement using [Gatekeeper](https://github.com/open-policy-agent/gatekeeper) (OPA)
@@ -34,10 +42,11 @@ Whats included:
 
 
 #### Management Platform
+- [x] [Postgres Operator](https://github.com/CrunchyData/postgres-operator)
+- [x] Harbor Registry
 - [ ] HashiCorp Vault
-- [ ] Postgres Operator
-- [ ] Harbor Registry
-- [ ] Multi-Cluster Log aggregation using ELK
+- [ ] Redis Operator
+- [x] Multi-Cluster Log aggregation using [ELK/ECK](https://github.com/elastic/cloud-on-k8s)
 - [ ] Multi-Cluster Metric aggregation using [Thanos](https://github.com/thanos-io/thanos)
 - [ ] Multi-Cluster Billing using [operator-metering](https://github.com/operator-framework/operator-metering)
 
@@ -60,14 +69,14 @@ Whats included:
 
 ## Platform Quickstart
 
-1. Setup [environment variables](#environment-variables) and [platform configuration](#PlatformConfiguration)
-2. Download platform-cli and install its dependencies: `platform-cli dependencies`
+1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
+2. Download and install the platform-cli binary
 3. Create the cluster `platform-cli provision cluster -c cluster.yml`see [Cluster Lifecycle](#cluster-lifecycle)
 4. Check the status of running vms: `platform-cli status`
 5. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
 6. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
 7. Build the base platform configuration: `platform-cli build all`
-8. Deploy the platform configuration: `kubectl apply -f build/`
+8. Deploy the platform configuration: `platform-cli deploy all`
 9. Run conformance tests: `platform-cli test`
 10. Tear down the cluster: `platform-cli cleanup`
 
