@@ -2,28 +2,31 @@ package provision
 
 import (
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/types"
 	"sync"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
+	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
-	log "github.com/sirupsen/logrus"
 )
 
 // VM provisions a new standalone VM
 func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 
-	vmware.LoadGovcEnvVars(vm)
+	if err := platform.OpenViaEnv(); err != nil {
+		return err
+	}
 	konfig, err := konfigadm.NewConfig(konfigs...).Build()
 	if err != nil {
 		return err
 	}
+	log.Infof("Using konfigadm spec: %s\n", konfigs)
 	ip, err := platform.Clone(*vm, konfig)
 
 	if err != nil {

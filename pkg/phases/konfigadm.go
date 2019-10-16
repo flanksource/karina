@@ -2,12 +2,14 @@ package phases
 
 import (
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	// initialize konfigadm
+
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	// initialize konfigadm
+
 	_ "github.com/moshloop/konfigadm/pkg"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 var envVars = map[string]string{

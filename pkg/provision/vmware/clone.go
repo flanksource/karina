@@ -3,14 +3,16 @@ package vmware
 import (
 	"context"
 	"fmt"
-	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
-	. "github.com/moshloop/platform-cli/pkg/types"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
+
+	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
+	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	. "github.com/moshloop/platform-cli/pkg/types"
 )
 
 const (
@@ -69,7 +71,7 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (string, error) {
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			Annotation:   "Created by platform-cli",
+			Annotation:   "Created by platform-cli from " + vm.Template,
 			Flags:        newVMFlagInfo(),
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
