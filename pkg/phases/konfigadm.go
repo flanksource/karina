@@ -107,7 +107,7 @@ func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.C
 			"CONSUL_CLIENT_INTERFACE": "ens160",
 			"CONSUL_BIND_INTERFACE":   "ens160",
 		},
-		Args:       fmt.Sprintf("agent -join=%s:8301 -datacenter=dc1 -data-dir=/consul/data -domain=consul -config-dir=/consul-configs", platform.Consul),
+		Args:       fmt.Sprintf("agent -join=%s:8301 -datacenter=%s -data-dir=/consul/data -domain=consul -config-dir=/consul-configs", platform.Consul, platform.Datacenter),
 		DockerOpts: "--net host",
 		Volumes: []string{
 			"/etc/kubernetes/consul:/consul-configs",

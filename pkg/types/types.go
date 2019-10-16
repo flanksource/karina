@@ -22,6 +22,7 @@ type PlatformConfig struct {
 	BootstrapToken       string            `yaml:"token,omitempty"`
 	Name                 string            `yaml:"name,omitempty"`
 	Consul               string            `yaml:"consul,omitempty"`
+	Datacenter           string            `yaml:"datacenter,omitempty"`
 	PodSubnet            string            `yaml:"podSubnet,omitempty"`
 	ServiceSubnet        string            `yaml:"serviceSubnet,omitempty"`
 	Calico               Calico            `yaml:"calico,omitempty"`
