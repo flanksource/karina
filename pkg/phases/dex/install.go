@@ -7,7 +7,7 @@ import (
 )
 
 const (
-    	Namespace     = "dex"
+	Namespace     = "dex"
 	ConfigMapName = "dex"
 	ConfigName    = "dex.cfg"
 )
@@ -19,21 +19,28 @@ func Install(platform *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	platform.CreateOrUpdateSecret("dex-cert", Namespace, map[string][]byte{
+
+	if err := platform.CreateOrUpdateSecret("dex-cert", Namespace, map[string][]byte{
 		"tls.crt": cert.EncodedCertificate(),
 		"tls.key": cert.EncodedPrivateKey(),
-	})
+	}); err != nil {
+		return err
+	}
 
 	cfg, _ := platform.Template("dex.cfg")
 
-	platform.CreateOrUpdateConfigMap(ConfigMapName, Namespace, map[string]string{
+	if err := platform.CreateOrUpdateConfigMap(ConfigMapName, Namespace, map[string]string{
 		ConfigName: cfg,
-	})
+	}); err != nil {
+		return err
+	}
 
-	platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
+	if err := platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
 		"AD_PASSWORD": []byte(platform.Ldap.Password),
 		"AD_USERNAME": []byte(platform.Ldap.Username),
-	})
+	}); err != nil {
+		return err
+	}
 
 	return platform.ApplySpecs(Namespace, "dex.yaml")
 }
