@@ -31,7 +31,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	addCerts(platform, cfg)
-	cfg.AddCommand("dhclient")
 	cfg.AddCommand("kubeadm init --upload-certs --config /etc/kubernetes/kubeadm.conf > /var/log/kubeadm.log")
 	return cfg, nil
 }
@@ -134,7 +133,6 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	addCerts(platform, cfg)
-	cfg.AddCommand("dhclient")
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --control-plane --token %s --discovery-token-unsafe-skip-ca-verification %s   > /var/log/kubeadm.log",
 		platform.BootstrapToken, platform.JoinEndpoint))
@@ -147,7 +145,6 @@ func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 		return nil, err
 	}
 	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand("dhclient")
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s > /var/log/kubeadm.log",
 		platform.BootstrapToken, platform.JoinEndpoint))
