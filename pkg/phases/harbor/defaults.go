@@ -5,6 +5,9 @@ import (
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 
+var dbCluster = "harbor"
+var dbNames = []string{"registry", "clair", "notary_server", "notary_signer"}
+
 func defaults(p *platform.Platform) {
 	harbor := p.Harbor
 	if harbor.AdminPassword == "" {
