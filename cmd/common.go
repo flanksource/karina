@@ -76,9 +76,11 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	base.S3.SecretKey = template(base.S3.SecretKey)
 
 	ldap := base.Ldap
-	ldap.Username = template(ldap.Username)
-	ldap.Password = template(ldap.Password)
-	base.Ldap = ldap
+	if ldap != nil {
+		ldap.Username = template(ldap.Username)
+		ldap.Password = template(ldap.Password)
+		base.Ldap = ldap
+	}
 
 	if base.TrustedCA != "" && !is.File(base.TrustedCA) {
 		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
