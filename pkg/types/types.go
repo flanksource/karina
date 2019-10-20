@@ -42,6 +42,7 @@ type PlatformConfig struct {
 	HostPrefix           string            `yaml:"hostPrefix,omitempty"`
 	Harbor               *Harbor           `yaml:"harbor,omitempty"`
 	S3                   S3                `yaml:"s3,omitempty"`
+	NFS                  *NFS              `yaml:"nfs,omitempty"`
 	TrustedCA            string            `yaml:"trustedCA,omitempty"`
 	DryRun               bool              `yaml:"-"`
 }
@@ -166,6 +167,11 @@ type S3 struct {
 	Region     string `yaml:"region,omitempty"`
 	Endpoint   string `yaml:"endpoint,omitempty"`
 	CSIVolumes bool   `yaml:"csiVolumes,omitempty"`
+}
+
+type NFS struct {
+	Host string `yaml:"host,omitempty"`
+	Path string `yaml:"path,omitempty"`
 }
 
 type Ldap struct {
