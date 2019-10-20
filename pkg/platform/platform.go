@@ -27,6 +27,7 @@ import (
 	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
@@ -34,10 +35,14 @@ import (
 
 type Platform struct {
 	types.PlatformConfig
+	k8s.Client
 	ctx     context.Context
 	session *vmware.Session
 }
 
+func (platform *Platform) Init() {
+	platform.Client.GetKubeConfig = platform.GetKubeConfig
+}
 // GetVMs returns a list of all VM's associated with the cluster
 func (platform *Platform) GetVMs() (map[string]*VM, error) {
 	var vms = make(map[string]*VM)

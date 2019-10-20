@@ -20,6 +20,7 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 	platform := platform.Platform{
 		PlatformConfig: getConfig(cmd),
 	}
+	platform.Init()
 	return &platform
 }
 
