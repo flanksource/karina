@@ -10,6 +10,7 @@ require (
 	github.com/gobuffalo/packd v0.3.0
 	github.com/gobuffalo/packr/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.0 // indirect
+	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.6
