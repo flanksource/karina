@@ -25,6 +25,7 @@ type PlatformConfig struct {
 	PodSubnet            string            `yaml:"podSubnet,omitempty"`
 	ServiceSubnet        string            `yaml:"serviceSubnet,omitempty"`
 	Calico               Calico            `yaml:"calico,omitempty"`
+	OPA                  OPA               `yaml:"opa,omitempty"`
 	DockerRegistry       string            `yaml:"dockerRegistry,omitempty"`
 	Domain               string            `yaml:"domain,omitempty"`
 	Ldap                 *Ldap             `yaml:"ldap,omitempty"`
@@ -67,6 +68,11 @@ type Calico struct {
 	BGPPeers  []calico.BGPPeer        `yaml:"bgpPeers,omitempty"`
 	BGPConfig calico.BGPConfiguration `yaml:"bgpConfig,omitempty"`
 	IPPools   []calico.IPPool         `yaml:"ipPools,omitempty"`
+}
+
+type OPA struct {
+	KubeMgmtVersion string             `yaml:"kubeMgmtVersion,omitempty"`
+	Version string 										 `yaml:"version,omitempty"`
 }
 
 type Harbor struct {

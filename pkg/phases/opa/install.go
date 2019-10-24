@@ -20,9 +20,7 @@ func Install(platform *platform.Platform) error {
 
 	log.Infof("Creating a CA for %s\n", "opa.")
 	opaCA, err := utils.NewCertificateAuthority("opa")
-	if err != nil {
-		return err
-	}
+	
 	platform.CreateOrUpdateSecret(SecretNameCA, Namespace, map[string][]byte{
 		"ca.crt": opaCA.EncodedCertificate(),
 		"ca.key": opaCA.EncodedPrivateKey(),
