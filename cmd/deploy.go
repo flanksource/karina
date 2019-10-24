@@ -10,6 +10,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
+	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 )
 
@@ -71,6 +72,9 @@ func init() {
 			if err := dex.Install(p); err != nil {
 				log.Fatalf("Error initializing dex %s", err)
 			}
+			if err := opa.Install(p); err != nil {
+				log.Fatalf("Error deploying opa %s", err)
+			}
 		},
 	}
 	Deploy.AddCommand(&cobra.Command{
@@ -116,7 +120,16 @@ func init() {
 			}
 		},
 	})
-
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "opa",
+		Short: "Build and deploy opa aka gatekeeper",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := opa.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error initializing opa %s", err)
+			}
+		},
+	})
 	Deploy.AddCommand(&cobra.Command{
 		Use:   "base",
 		Short: "Build and deploy base dependencies",
