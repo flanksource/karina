@@ -28,12 +28,12 @@ $BIN deploy calico -vvv
 $BIN deploy stubs -vvv
 
 
-# wait for base to be up for up to +- 50 seconds
+# wait for base to be up for up to +- 200 seconds
 for i in {1..10}; do
  if $BIN test base; then
     break
   fi
-  sleep 5
+  sleep 20
 done
 
 $BIN deploy all -vvv
