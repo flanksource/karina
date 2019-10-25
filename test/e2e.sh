@@ -23,9 +23,9 @@ kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.ku
 ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
 export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 $BIN version
-$BIN deploy base -vvv
-$BIN deploy calico -vvv
-$BIN deploy stubs -vvv
+$BIN deploy base -v
+$BIN deploy calico -v
+$BIN deploy stubs -v
 
 
 # wait for base to be up for up to +- 200 seconds
@@ -36,5 +36,16 @@ for i in {1..10}; do
   sleep 20
 done
 
-$BIN deploy all -vvv
-$BIN test all -vvv
+$BIN deploy pgo -v
+
+# wait for postgres operator  to be up for up to +- 200 seconds
+for i in {1..10}; do
+ if $BIN test pgo; then
+    break
+  fi
+  sleep 20
+done
+
+$BIN deploy all -v
+
+$BIN test all -v
