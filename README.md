@@ -1,5 +1,7 @@
 ##  Platform
 
+[![CircleCI](https://circleci.com/gh/moshloop/platform-cli.svg?style=svg&circle-token=f9032c3ab55333568caf07bac25c9c59f5bbf7a3)](https://circleci.com/gh/moshloop/platform-cli)
+
 Whats included:
 
 ### Core Platform / Data Plane
@@ -25,11 +27,11 @@ Whats included:
 - [ ] Per Namespace log shipping using [fluent-operator](https://github.com/vmware/kube-fluentd-operator)
 - [ ] DNS Integration via [external-dns](https://github.com/kubernetes-incubator/external-dns)
 - [ ] Backups using [velero](https://github.com/heptio/velero)
-- [ ] Certificate Management using [cert-manager](https://github.com/jetstack/cert-manager)
+- [x] Certificate Management using [cert-manager](https://github.com/jetstack/cert-manager)
 - [ ] GitOps using [faros](https://github.com/pusher/faros) or [flux](https://fluxcd.io)
 - [ ] Authenticating proxy using [OAuth Proxy](https://github.com/pusher/oauth2_proxy) or [SSO Operator](https://github.com/jenkins-x/sso-operator)
 - [ ] Conformance testing using [sonobuoy](https://github.com/heptio/sonobuoy)
-- [ ] Policy Enforcement using [Gatekeeper](https://github.com/open-policy-agent/gatekeeper) (OPA)
+- [x] Policy Enforcement using [OPA](https://github.com/open-policy-agent/kube-mgmt) (OPA)
   - [ ] Don't allow overlapping ingress domains
   - [ ] Only allow the use of whitelisted ingress domain names
   - [ ] Enforce mem / cpu requests / limits on all pods
