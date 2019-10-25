@@ -14,6 +14,7 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.6
+	github.com/miekg/dns v1.1.22
 	github.com/moshloop/commons v0.0.3-0.20190927103313-f70a98651fc4
 	github.com/moshloop/konfigadm v0.3.6
 	github.com/pkg/errors v0.8.1

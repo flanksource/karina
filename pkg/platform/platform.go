@@ -27,6 +27,7 @@ import (
 	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
@@ -70,6 +71,15 @@ func (platform *Platform) WaitFor() error {
 			return nil
 		}
 		time.Sleep(5 * time.Second)
+	}
+}
+
+func (platform *Platform) GetDNSClient() dns.DNSClient {
+	return dns.DNSClient{
+		KeyName:    platform.DNS.KeyName,
+		Nameserver: platform.DNS.Nameserver,
+		Key:        platform.DNS.Key,
+		Algorithm:  platform.DNS.Algorithm,
 	}
 }
 
