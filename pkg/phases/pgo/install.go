@@ -158,7 +158,7 @@ func Install(p *platform.Platform) error {
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
 		return err
 	}
-	exec.ExecfWithEnv("cp -R overlays/pgo/ $PGOROOT", ENV)
+	exec.ExecfWithEnv("cp -R overlays/pgo $PGOROOT", ENV)
 	kubectl("create ns " + PGO)
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
