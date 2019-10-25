@@ -2,6 +2,7 @@ build/
 .bin/
 .go/
 *_cert.yaml
+*-admin.yml
 *.env
 config*.yaml
 config*.yml
@@ -11,3 +12,6 @@ docs/*.md
 packrd/
 dist/
 hack/
+.kube/
+.helm/
+.manifests/
