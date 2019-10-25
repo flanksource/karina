@@ -116,6 +116,10 @@ node:
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
+	if os.Getenv("KUBECONFIG") != "" {
+		log.Debugf("Using KUBECONFIG from ENV\n")
+		return os.Getenv("KUBECONFIG"), nil
+	}
 	name := platform.Name + "-admin.yml"
 	if !is.File(name) {
 		data, err := CreateKubeConfig(platform, platform.GetMasterIPs()[0])

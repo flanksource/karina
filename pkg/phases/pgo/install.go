@@ -43,9 +43,10 @@ func getPgoAuth(p *platform.Platform) (user, pass string) {
 }
 
 func getEnv(p *platform.Platform) map[string]string {
+	kubeconfig, _ := p.GetKubeConfig()
 	return map[string]string{
 		"PATH":       ".bin:" + os.Getenv("PATH"),
-		"KUBECONFIG": p.Name + "-admin.yml",
+		"KUBECONFIG": kubeconfig,
 
 		// 4.0.0 vars
 		"PGO_OPERATOR_NAMESPACE": PGO,
@@ -66,7 +67,7 @@ func getEnv(p *platform.Platform) map[string]string {
 		// 3.5.4 vars
 		"CO_IMAGE_PREFIX":  "crunchydata",
 		"CO_CMD":           "kubectl",
-		"CO_UI":            "true",
+		"CO_UI":            "false",
 		"CO_NAMESPACE":     PGO,
 		"COROOT":           "build/pgo",
 		"CO_IMAGE_TAG":     "centos7-" + strings.ReplaceAll(p.PGO.Version, "v", ""),
@@ -129,7 +130,11 @@ func Install(p *platform.Platform) error {
 		log.Tracef("export %s=%s\n", k, v)
 	}
 
-	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref=v"+strings.ReplaceAll(p.PGO.Version, "v", ""), "build/pgo"); err != nil {
+	gitTag := p.PGO.Version
+	if strings.Contains(gitTag, "3.5.4") {
+		gitTag = strings.ReplaceAll(gitTag, "v", "")
+	}
+	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+gitTag, "build/pgo"); err != nil {
 		return err
 	}
 
