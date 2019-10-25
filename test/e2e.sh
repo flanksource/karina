@@ -14,7 +14,7 @@ fi
 if ! which expenv 2>&1 > /dev/null; then
   wget https://github.com/CrunchyData/postgres-operator/releases/download/v4.1.0/expenv
   chmod +x expenv
-  mv expenv /usr/local/bin
+  sudo mv expenv /usr/local/bin
 fi
 
 docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make golang:1.12 setup pack
