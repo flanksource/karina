@@ -9,4 +9,6 @@ import (
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "kube-system", test)
+	k8s.TestNamespace(client, "ingress-nginx", test)
+	k8s.TestNamespace(client, "local-path-storage", test)
 }
