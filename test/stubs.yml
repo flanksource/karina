@@ -1,0 +1,6 @@
+s3:
+  endpoint: minio.127.0.0.1.nip.io
+  bucket: harbor
+  access_key: minio
+  secret_key: minio123
+  region: dc

@@ -1,0 +1,32 @@
+domain: 127.0.0.1.nip.io
+ldap:
+  adminGroup: NA1
+kubernetes:
+  version: v1.15.3
+versions:
+  gomplate: v3.5.0
+  konfigadm: v0.3.6
+  jb: v0.1.0
+  jsonnet: 0.14
+  sonobuoy: 0.15.0
+  govc: v0.20.0
+  gojsontoyaml: master
+  kustomize: v3.0.2
+  kubectl: v1.15.3
+  pgo: 3.5.4
+  helm: v2.13.0
+  velero: v1.1.0
+  expenv: v1.2.0
+podSubnet: 100.200.0.0/16
+serviceSubnet: 100.100.0.0/16
+calico:
+  ipip: Never
+  vxlan: Never
+  version: v3.8.2
+monitoring:
+  kube-prometheus: dfb626837f04756ed5a8805845f51ebd29d342ec
+pgo:
+  version: 3.5.4
+harbor:
+  version: v1.8.2
+  chartVersion: v1.1.0
