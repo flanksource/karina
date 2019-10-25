@@ -83,6 +83,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.Ldap = ldap
 	}
 
+	dns := base.DNS
+	if dns != nil {
+		dns.Key = template(dns.Key)
+		base.DNS = dns
+	}
+
 	if base.TrustedCA != "" && !is.File(base.TrustedCA) {
 		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
 	}

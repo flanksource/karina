@@ -44,6 +44,7 @@ type PlatformConfig struct {
 	S3                   S3                `yaml:"s3,omitempty"`
 	NFS                  *NFS              `yaml:"nfs,omitempty"`
 	TrustedCA            string            `yaml:"trustedCA,omitempty"`
+	DNS                  *DynamicDNS       `yaml:"dns,omitempty"`
 	DryRun               bool              `yaml:"-"`
 }
 
@@ -210,7 +211,16 @@ type ObjectStorage struct {
 	Bucket       string `yaml:"bucket,omitempty"`
 	RegistryPath string `yaml:"registry_path,omitempty"`
 }
+
+type DynamicDNS struct {
+	Nameserver string `yaml:"nameserver,omitempty"`
+	Key        string `yaml:"key,omitempty"`
+	KeyName    string `yaml:"keyName,omitempty"`
+	Algorithm  string `yaml:"algorithm,omitempty"`
+}
+
 type Monitoring struct {
+	Version    string     `yaml:"version,omitempty"`
 	Prometheus Prometheus `yaml:"prometheus,omitempty"`
 	Grafana    Grafana    `yaml:"grafana,omitempty"`
 }
