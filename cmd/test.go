@@ -63,7 +63,7 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			test := console.TestResults{}
-			pgo.Test(getPlatform(cmd), &test)
+			base.Test(getPlatform(cmd), &test)
 			test.Done()
 			if test.FailCount > 0 {
 				os.Exit(1)
