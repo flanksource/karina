@@ -17,7 +17,7 @@ kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.ku
 KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 
 $BIN version
-$BIN deploy base  -vvv
-$BIN deploy stubs  -vvv
-$BIN deploy all  -vvv
-$BIN test all -vvv
+$BIN deploy base -c $PLATFORM_CONFIG -vvv
+$BIN deploy stubs -c $PLATFORM_CONFIG -vvv
+$BIN deploy all -c $PLATFORM_CONFIG -vvv
+$BIN test all -c $PLATFORM_CONFIG -vvv
