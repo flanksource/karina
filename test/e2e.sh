@@ -1,4 +1,5 @@
 #!/bin/bash
+alias go="docker run --rm -it -v $PWD:$PWD -w $PWD golang:1.13.1"
 go version
 
 if [[ ! -e ./kind ]]; then
