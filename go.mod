@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.6
 	github.com/miekg/dns v1.1.22
-	github.com/moshloop/commons v0.0.3-0.20190927103313-f70a98651fc4
+	github.com/moshloop/commons v0.0.3-0.20191025080213-ecd77f29bf20
 	github.com/moshloop/konfigadm v0.3.6
 	github.com/pkg/errors v0.8.1
 	github.com/rogpeppe/go-internal v1.4.0 // indirect
@@ -25,11 +25,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vmware/govmomi v0.20.2
 	go.opencensus.io v0.22.1 // indirect
-	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/exp v0.0.0-20190919035709-81c71964d733 // indirect
-	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20190924154521-2837fb4f24fe // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	golang.org/x/tools v0.0.0-20190925020647-22afafe3322a // indirect
 	google.golang.org/api v0.10.0 // indirect
@@ -45,5 +42,7 @@ require (
 	k8s.io/utils v0.0.0-20190923111123-69764acb6e8e // indirect
 )
 
-// github.com/moshloop/commons => ../commons
+// replace github.com/moshloop/commons => ../commons
+// replace github.com/moshloop/konfigadm => ../konfigadm
+
 replace github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
