@@ -9,6 +9,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
+	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 )
@@ -124,6 +125,16 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := deploy_base.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploy base %s", err)
+			}
+		},
+	})
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "stubs",
+		Short: "Build and deploy stubs for integration testing",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := stubs.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploy stubs %s", err)
 			}
 		},
 	})
