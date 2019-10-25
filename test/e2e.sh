@@ -36,7 +36,7 @@ for i in {1..10}; do
   sleep 20
 done
 
-$BIN deploy pgo -v
+$BIN deploy pgo install -v
 
 # wait for postgres operator  to be up for up to +- 200 seconds
 for i in {1..10}; do
