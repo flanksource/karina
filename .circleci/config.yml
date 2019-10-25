@@ -12,6 +12,8 @@ jobs:
     steps:
       - checkout
       - run: ./test/e2e.sh
+      - store_test_results:
+          path: test-results
 
   release:
     <<: *go

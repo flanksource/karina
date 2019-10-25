@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.6
 	github.com/miekg/dns v1.1.22
-	github.com/moshloop/commons v0.0.3-0.20191025080213-ecd77f29bf20
+	github.com/moshloop/commons v0.0.3-0.20191025113427-254e5e699d44
 	github.com/moshloop/konfigadm v0.3.6
 	github.com/pkg/errors v0.8.1
 	github.com/rogpeppe/go-internal v1.4.0 // indirect

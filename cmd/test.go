@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,16 @@ var Test = &cobra.Command{
 	Use: "test",
 }
 
+func end(test console.TestResults) {
+	test.Done()
+	os.Mkdir("test-results", 0755)
+	xml, _ := test.ToXML()
+	ioutil.WriteFile("test-results/results.xml", []byte(xml), 0644)
+	if test.FailCount > 0 {
+		os.Exit(1)
+	}
+}
+
 func init() {
 	Test.AddCommand(&cobra.Command{
 		Use:   "harbor",
@@ -25,10 +36,8 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			test := console.TestResults{}
 			harbor.Test(getPlatform(cmd), &test)
-			test.Done()
-			if test.FailCount > 0 {
-				os.Exit(1)
-			}
+			end(test)
+
 		},
 	})
 
@@ -39,10 +48,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			test := console.TestResults{}
 			dex.Test(getPlatform(cmd), &test)
-			test.Done()
-			if test.FailCount > 0 {
-				os.Exit(1)
-			}
+			end(test)
 		},
 	})
 
@@ -53,7 +59,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			test := console.TestResults{}
 			pgo.Test(getPlatform(cmd), &test)
-			test.Done()
+			end(test)
 		},
 	})
 
@@ -64,10 +70,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			test := console.TestResults{}
 			base.Test(getPlatform(cmd), &test)
-			test.Done()
-			if test.FailCount > 0 {
-				os.Exit(1)
-			}
+			end(test)
 		},
 	})
 
@@ -78,10 +81,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			test := console.TestResults{}
 			monitoring.Test(getPlatform(cmd), &test)
-			test.Done()
-			if test.FailCount > 0 {
-				os.Exit(1)
-			}
+			end(test)
 		},
 	})
 	Test.AddCommand(&cobra.Command{
@@ -95,10 +95,7 @@ func init() {
 			pgo.Test(p, &test)
 			harbor.Test(p, &test)
 			dex.Test(p, &test)
-			test.Done()
-			if test.FailCount > 0 {
-				os.Exit(1)
-			}
+			end(test)
 		},
 	})
 }
