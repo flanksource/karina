@@ -19,6 +19,9 @@ func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResult
 		return
 	}
 
+	if len(list.Items) == 0 {
+		t.Failf(ns, "Expected pods but none running - did you deploy?")
+	}
 	for _, pod := range list.Items {
 		if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
 			t.Passf(ns, "%s => %s", pod.Name, pod.Status.Phase)

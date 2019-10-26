@@ -3,7 +3,10 @@ package cmd
 import (
 	"io/ioutil"
 	"os"
+	"path"
+	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/moshloop/commons/console"
@@ -12,32 +15,62 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
+
+var wait int
+var waitInterval int
+var junitPath string
+var p *platform.Platform
 
 var Test = &cobra.Command{
 	Use: "test",
 }
 
 func end(test console.TestResults) {
-	test.Done()
-	os.Mkdir("test-results", 0755)
-	xml, _ := test.ToXML()
-	ioutil.WriteFile("test-results/results.xml", []byte(xml), 0644)
+	if junitPath != "" {
+		xml, _ := test.ToXML()
+		os.MkdirAll(path.Dir(junitPath), 0755)
+		ioutil.WriteFile(junitPath, []byte(xml), 0644)
+	}
 	if test.FailCount > 0 {
 		os.Exit(1)
 	}
 }
 
+func run(fn func(p *platform.Platform, test *console.TestResults)) {
+	start := time.Now()
+	for {
+		test := console.TestResults{}
+		fn(p, &test)
+		test.Done()
+		elapsed := time.Now().Sub(start)
+		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
+			end(test)
+			return
+		} else {
+			log.Debugf("Waiting to re-run tests\n")
+			time.Sleep(time.Duration(waitInterval) * time.Second)
+			log.Infof("Re-running tests\n")
+
+		}
+	}
+}
+
 func init() {
+	Test.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		p = getPlatform(cmd)
+	}
+	Test.PersistentFlags().IntVar(&wait, "wait", 0, "Time in seconds to wait for tests to pass")
+	Test.PersistentFlags().IntVar(&waitInterval, "wait-interval", 5, "Time in seconds to wait between repeated tests")
+
+	Test.PersistentFlags().StringVar(&junitPath, "junit-path", "", "Path to export JUnit formatted test results")
 	Test.AddCommand(&cobra.Command{
 		Use:   "harbor",
 		Short: "Test harbor installation",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			test := console.TestResults{}
-			harbor.Test(getPlatform(cmd), &test)
-			end(test)
-
+			run(harbor.Test)
 		},
 	})
 
@@ -46,9 +79,7 @@ func init() {
 		Short: "Test dex ",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			test := console.TestResults{}
-			dex.Test(getPlatform(cmd), &test)
-			end(test)
+			run(dex.Test)
 		},
 	})
 
@@ -57,9 +88,7 @@ func init() {
 		Short: "Test postgres operator ",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			test := console.TestResults{}
-			pgo.Test(getPlatform(cmd), &test)
-			end(test)
+			run(pgo.Test)
 		},
 	})
 
@@ -68,9 +97,7 @@ func init() {
 		Short: "Test base installation",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			test := console.TestResults{}
-			base.Test(getPlatform(cmd), &test)
-			end(test)
+			run(base.Test)
 		},
 	})
 
@@ -79,9 +106,7 @@ func init() {
 		Short: "Test monitoring stack installation",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			test := console.TestResults{}
-			monitoring.Test(getPlatform(cmd), &test)
-			end(test)
+			run(monitoring.Test)
 		},
 	})
 	Test.AddCommand(&cobra.Command{
@@ -89,13 +114,13 @@ func init() {
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			test := console.TestResults{}
-			p := getPlatform(cmd)
-			base.Test(p, &test)
-			pgo.Test(p, &test)
-			harbor.Test(p, &test)
-			dex.Test(p, &test)
-			end(test)
+			run(func(p *platform.Platform, test *console.TestResults) {
+				base.Test(p, test)
+				pgo.Test(p, test)
+				harbor.Test(p, test)
+				dex.Test(p, test)
+				monitoring.Test(p, test)
+			})
 		},
 	})
 }

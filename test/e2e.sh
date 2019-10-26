@@ -27,25 +27,12 @@ $BIN deploy base -v
 $BIN deploy calico -v
 $BIN deploy stubs -v
 
-
-# wait for base to be up for up to +- 200 seconds
-for i in {1..10}; do
- if $BIN test base; then
-    break
-  fi
-  sleep 20
-done
+$BIN test base --wait 200
 
 $BIN deploy pgo install -v
 
-# wait for postgres operator  to be up for up to +- 200 seconds
-for i in {1..10}; do
- if $BIN test pgo; then
-    break
-  fi
-  sleep 20
-done
+$BIN test pgo --wait 200
 
 $BIN deploy all -v
 
-$BIN test all -v
+$BIN test all -v --wait 240 --junit-path test-results/results.xml
