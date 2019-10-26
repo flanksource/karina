@@ -8,7 +8,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
-	"github.com/moshloop/platform-cli/pkg/phases/jx"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
@@ -114,17 +113,6 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := harbor.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error building harbor %s\n", err)
-			}
-		},
-	})
-
-	Deploy.AddCommand(&cobra.Command{
-		Use:   "jx",
-		Short: "Build and deploy Jenkins-X build platform",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := jx.Install(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deploying jx %s\n", err)
 			}
 		},
 	})
