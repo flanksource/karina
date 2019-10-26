@@ -24,7 +24,7 @@ calico:
   vxlan: Never
   version: v3.8.2
 monitoring:
-  kube-prometheus: dfb626837f04756ed5a8805845f51ebd29d342ec
+  version: dfb626837f04756ed5a8805845f51ebd29d342ec
 pgo:
   version: 3.5.4
 harbor:
