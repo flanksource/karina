@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -158,7 +159,12 @@ func Install(p *platform.Platform) error {
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
 		return err
 	}
-	exec.ExecfWithEnv("cp -R overlays/pgo $PGOROOT", ENV)
+	if runtime.GOOS == "darwin" {
+		// cp -R behavior seems to handle directories differently on macosx and linux?
+		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/pgo", ENV)
+	} else {
+		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/", ENV)
+	}
 	kubectl("create ns " + PGO)
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
