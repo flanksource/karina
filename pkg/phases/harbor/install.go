@@ -20,7 +20,7 @@ func Deploy(p *platform.Platform) error {
 		if err != nil {
 			return err
 		}
-		if err := pgo.WaitForDB(p, dbCluster); err != nil {
+		if err := pgo.WaitForDB(p, dbCluster, 120); err != nil {
 			return err
 		}
 

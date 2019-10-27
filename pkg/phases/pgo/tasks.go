@@ -40,11 +40,15 @@ func PSQL(p *platform.Platform, cluster string, sql string) error {
 	return kubectl(" -n pgo exec svc/%s bash -c database -- -c \"psql -c '%s';\"", cluster, sql)
 }
 
-func WaitForDB(p *platform.Platform, db string) error {
+func WaitForDB(p *platform.Platform, db string, timeout int) error {
 	kubectl := p.GetKubectl()
+	start := time.Now()
 	for {
 		if err := kubectl(" -n pgo exec svc/%s bash -c database -- -c \"psql -c 'SELECT 1';\"", db); err == nil {
 			return nil
+		}
+		if time.Now().Sub(start) > time.Duration(timeout)*time.Second {
+			return fmt.Errorf("Timeout waiting for database after %d seconds", time.Now().Sub(start))
 		}
 		time.Sleep(5 * time.Second)
 	}
