@@ -29,6 +29,8 @@ workflows:
     jobs:
       - test
       - release:
+          requires:
+            - test
           context: Github
           filters:
             branches:
