@@ -13,6 +13,9 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
+
+	platform.GetKubectl()("create ns dex")
+
 	openid := platform.Certificates.OpenID.ToCert()
 	log.Infof("Creating dex cert for %s\n", "dex."+platform.Domain)
 	cert, err := openid.CreateCertificate("dex."+platform.Domain, "")
