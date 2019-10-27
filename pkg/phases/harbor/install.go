@@ -16,7 +16,7 @@ import (
 func Deploy(p *platform.Platform) error {
 	defaults(p)
 	if p.Harbor.DB == nil {
-		db, err := pgo.GetOrCreateDB(p, dbCluster, 3)
+		db, err := pgo.GetOrCreateDB(p, dbCluster, p.Harbor.Replicas)
 		if err != nil {
 			return err
 		}

@@ -28,5 +28,6 @@ monitoring:
 pgo:
   version: 3.5.4
 harbor:
+  replicas: 1
   version: v1.8.2
   chartVersion: v1.1.0

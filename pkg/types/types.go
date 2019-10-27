@@ -79,7 +79,8 @@ type Harbor struct {
 	DB            *DB                      `yaml:"db,omitempty"`
 	URL           string                   `yaml:"url,omitempty"`
 	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings      *HarborSettings          `yaml:settings,omitempty"`
+	Settings      *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas      int                      `yaml:"replicas,omitempty"`
 }
 
 type HarborSettings struct {

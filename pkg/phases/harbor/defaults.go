@@ -17,6 +17,9 @@ func defaults(p *platform.Platform) {
 		harbor.URL = "https://harbor." + p.Domain
 	}
 
+	if harbor.Replicas == 0 {
+		harbor.Replicas = 1
+	}
 	if p.Ldap != nil {
 		settings := harbor.Settings
 		if settings == nil {
