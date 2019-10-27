@@ -25,6 +25,7 @@ export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 $BIN version
 $BIN deploy base -v
 $BIN deploy calico -v
+.bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 $BIN deploy stubs -v
 
 $BIN test base --wait 200
