@@ -1,7 +1,7 @@
 #!/bin/bash
 BIN=./.bin/platform-cli
 mkdir -p .bin
-export PLATFORM_CONFIG=test/common.yml,test/stubs.yml
+export PLATFORM_CONFIG=test/common.yml
 if [[ ! -e ./kind ]]; then
   curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
   chmod +x ./kind
