@@ -7,7 +7,7 @@ if [[ ! -e ./kind ]]; then
   chmod +x ./kind
 fi
 
-if ! which gojsontoyaml 2>&1 /dev/null; then
+if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
 fi
 
@@ -17,11 +17,17 @@ if ! which expenv 2>&1 > /dev/null; then
   sudo mv expenv /usr/local/bin
 fi
 
-docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make golang:1.12 setup pack
+if go version | grep  go1.12; then
+  make setup pack
+else
+  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make golang:1.12 setup pack
+fi
 
 kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
-./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
-export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
+if "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ; then
+  ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
+  export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
+fi
 $BIN version
 $BIN deploy base -v
 $BIN deploy calico -v
@@ -33,6 +39,8 @@ $BIN test base --wait 200
 $BIN deploy pgo install -v
 
 $BIN test pgo --wait 200
+
+$BIN deploy harbor -v
 
 $BIN deploy all -v
 
