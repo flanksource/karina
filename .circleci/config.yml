@@ -2,6 +2,7 @@ version: 2
 go: &go
   environment:
     GO111MODULE: "on"
+    GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.12
   working_directory: /go/src/github.com/moshloop/platform-cli
@@ -34,7 +35,5 @@ workflows:
             - test
           context: Github
           filters:
-            branches:
-              only: master
             tags:
               only: /.*/
