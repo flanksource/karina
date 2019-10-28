@@ -20,7 +20,7 @@ fi
 if go version | grep  go1.12; then
   make setup pack
 else
-  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://goproxy.io golang:1.12 setup pack
+  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:1.12 setup pack
 fi
 
 kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
