@@ -7,6 +7,7 @@ go: &go
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
   test:
+    resource_class: large
     machine:
       image: ubuntu-1604:201903-01
     steps:
