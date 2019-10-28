@@ -24,7 +24,7 @@ else
 fi
 
 kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
-if "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ; then
+if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
