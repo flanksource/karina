@@ -3,9 +3,11 @@ package phases
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/platform"
+
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func CreateOIDCKubeConfig(platform *platform.Platform, endpoint string) ([]byte, error) {
@@ -45,7 +47,7 @@ func CreateOIDCKubeConfig(platform *platform.Platform, endpoint string) ([]byte,
 func CreateKubeConfig(platform *platform.Platform, endpoint string) ([]byte, error) {
 	userName := "kubernetes-admin"
 	contextName := fmt.Sprintf("%s@%s", userName, platform.Name)
-	cert, err := platform.Certificates.CA.ToCert().CreateCertificate("kubernetes-admin", "system:masters")
+	cert, err := platform.Certificates.CA.ToCert().CreateCertificate(userName, "system:masters")
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +61,11 @@ func CreateKubeConfig(platform *platform.Platform, endpoint string) ([]byte, err
 		Contexts: map[string]*api.Context{
 			contextName: {
 				Cluster:  platform.Name,
-				AuthInfo: userName,
+				AuthInfo: contextName,
 			},
 		},
 		AuthInfos: map[string]*api.AuthInfo{
-			userName: {
+			contextName: {
 				ClientKeyData:         cert.EncodedPrivateKey(),
 				ClientCertificateData: cert.EncodedCertificate(),
 			},

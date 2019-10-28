@@ -2,20 +2,38 @@ version: 2
 go: &go
   environment:
     GO111MODULE: "on"
+    GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.12
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
+  test:
+    resource_class: large
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run: ./test/e2e.sh
+      - store_test_results:
+          path: test-results
+
   release:
-      <<: *go
-      steps:
-        - checkout
-        - setup_remote_docker
-        - run: go mod download
-        - run: ./scripts/release.sh
+    <<: *go
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: go mod download
+      - run: ./scripts/release.sh
+
 workflows:
   version: 2
   build:
     jobs:
+      - test
       - release:
+          requires:
+            - test
           context: Github
+          filters:
+            tags:
+              only: /.*/

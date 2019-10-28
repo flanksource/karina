@@ -20,6 +20,7 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 	platform := platform.Platform{
 		PlatformConfig: getConfig(cmd),
 	}
+	platform.Init()
 	return &platform
 }
 
@@ -80,6 +81,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		ldap.Username = template(ldap.Username)
 		ldap.Password = template(ldap.Password)
 		base.Ldap = ldap
+	}
+
+	dns := base.DNS
+	if dns != nil {
+		dns.Key = template(dns.Key)
+		base.DNS = dns
 	}
 
 	if base.TrustedCA != "" && !is.File(base.TrustedCA) {

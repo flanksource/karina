@@ -2,12 +2,14 @@ package phases
 
 import (
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	// initialize konfigadm
+
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	// initialize konfigadm
+
 	_ "github.com/moshloop/konfigadm/pkg"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 var envVars = map[string]string{
@@ -31,7 +33,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	addCerts(platform, cfg)
-	cfg.AddCommand("dhclient")
 	cfg.AddCommand("kubeadm init --upload-certs --config /etc/kubernetes/kubeadm.conf > /var/log/kubeadm.log")
 	return cfg, nil
 }
@@ -108,7 +109,7 @@ func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.C
 			"CONSUL_CLIENT_INTERFACE": "ens160",
 			"CONSUL_BIND_INTERFACE":   "ens160",
 		},
-		Args:       fmt.Sprintf("agent -join=%s:8301 -datacenter=dc1 -data-dir=/consul/data -domain=consul -config-dir=/consul-configs", platform.Consul),
+		Args:       fmt.Sprintf("agent -join=%s:8301 -datacenter=%s -data-dir=/consul/data -domain=consul -config-dir=/consul-configs", platform.Consul, platform.Datacenter),
 		DockerOpts: "--net host",
 		Volumes: []string{
 			"/etc/kubernetes/consul:/consul-configs",
@@ -134,7 +135,6 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	addCerts(platform, cfg)
-	cfg.AddCommand("dhclient")
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --control-plane --token %s --discovery-token-unsafe-skip-ca-verification %s   > /var/log/kubeadm.log",
 		platform.BootstrapToken, platform.JoinEndpoint))
@@ -147,7 +147,6 @@ func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 		return nil, err
 	}
 	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand("dhclient")
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s > /var/log/kubeadm.log",
 		platform.BootstrapToken, platform.JoinEndpoint))

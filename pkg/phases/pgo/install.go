@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -15,7 +15,6 @@ import (
 	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 const (
@@ -31,8 +30,12 @@ const (
 )
 
 func getPgoAuth(p *platform.Platform) (user, pass string) {
-	secret := p.GetSecret("pgo", "pgo-auth-secret")
-	if secret != nil {
+	if secret := p.GetSecret("pgo", "pgouser-pgoadmin"); secret != nil {
+		user = string((*secret)["username"])
+		pass = string((*secret)["password"])
+		return
+	}
+	if secret := p.GetSecret("pgo", "pgo-auth-secret"); secret != nil {
 		pgouser := string((*secret)["pgouser"])
 		user = strings.Split(pgouser, ":")[0]
 		pass = strings.Split(pgouser, ":")[1]
@@ -41,21 +44,23 @@ func getPgoAuth(p *platform.Platform) (user, pass string) {
 }
 
 func getEnv(p *platform.Platform) map[string]string {
-
+	kubeconfig, _ := p.GetKubeConfig()
 	return map[string]string{
 		"PATH":       ".bin:" + os.Getenv("PATH"),
-		"KUBECONFIG": p.Name + "-admin.yml",
+		"KUBECONFIG": kubeconfig,
 
 		// 4.0.0 vars
 		"PGO_OPERATOR_NAMESPACE": PGO,
-		"NAMESPACE":              "pgo-databases",
+		"NAMESPACE":              "pgo",
 		"PGO_APISERVER_URL":      fmt.Sprintf("https://postgres-operator.%s", p.Domain),
 		"PGO_CMD":                ".bin/kubectl",
 		"PGOROOT":                "build/pgo",
 		"PGO_IMAGE_PREFIX":       "crunchydata",
 		"PGO_BASEOS":             "centos7",
-		"PGO_VERSION":            "3.5.4",
-		"PGO_IMAGE_TAG":          "centos7-4.0.1",
+		"PGO_INSTALLATION_NAME":  "pgo",
+		"PGO_NAMESPACE":          "pgo",
+		"PGO_VERSION":            strings.ReplaceAll(p.PGO.Version, "v", ""),
+		"PGO_IMAGE_TAG":          "centos7-" + strings.ReplaceAll(p.PGO.Version, "v", ""),
 		"PGO_CA_CERT":            "build/pgo/conf/postgres-operator/server.crt",
 		PGO_CLIENT_CERT:          "build/pgo/conf/postgres-operator/server.crt",
 		PGO_CLIENT_KEY:           "build/pgo/conf/postgres-operator/server.key",
@@ -63,14 +68,15 @@ func getEnv(p *platform.Platform) map[string]string {
 		// 3.5.4 vars
 		"CO_IMAGE_PREFIX":  "crunchydata",
 		"CO_CMD":           "kubectl",
+		"CO_UI":            "false",
 		"CO_NAMESPACE":     PGO,
 		"COROOT":           "build/pgo",
-		"CO_IMAGE_TAG":     "centos7-3.5.4",
+		"CO_IMAGE_TAG":     "centos7-" + strings.ReplaceAll(p.PGO.Version, "v", ""),
 		"CO_APISERVER_URL": fmt.Sprintf("https://postgres-operator.%s", p.Domain),
 		"CO_CA_CERT":       "build/pgo/conf/postgres-operator/server.crt",
 		CO_CLIENT_CERT:     "build/pgo/conf/postgres-operator/server.crt",
 		CO_CLIENT_KEY:      "build/pgo/conf/postgres-operator/server.key",
-		PGOUSER:            os.Getenv("HOME") + "/.pgouser",
+		PGOUSER:            os.Getenv("HOME") + "/.pgouser-" + p.Name,
 	}
 }
 
@@ -83,10 +89,10 @@ func ClientSetup(p *platform.Platform) error {
 
 	user, pass := getPgoAuth(p)
 
-	passwd := fmt.Sprintf("%s:%s:pgoadmin", user, pass)
-	home, _ := os.UserHomeDir()
-	log.Debugf("Writing %s/.pgouser", home)
-	if err := ioutil.WriteFile(home+"/.pgouser", []byte(passwd), 0644); err != nil {
+	passwd := fmt.Sprintf("%s:%s", user, pass)
+	home, _ := getEnv(p)["PGOUSER"]
+	log.Debugf("Writing %s", home)
+	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
 		return err
 	}
 
@@ -115,6 +121,7 @@ func ClientSetup(p *platform.Platform) error {
 	for k, v := range ENV {
 		fmt.Printf("export %s=%s\n", k, v)
 	}
+	deps.InstallDependency("pgo", p.PGO.Version, ".bin")
 	return nil
 }
 
@@ -124,10 +131,12 @@ func Install(p *platform.Platform) error {
 		log.Tracef("export %s=%s\n", k, v)
 	}
 
-	if !is.File("build/pgo") {
-		if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+p.PGO.Version, "build/pgo"); err != nil {
-			return err
-		}
+	gitTag := p.PGO.Version
+	if strings.Contains(gitTag, "3.5.4") {
+		gitTag = strings.ReplaceAll(gitTag, "v", "")
+	}
+	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+gitTag, "build/pgo"); err != nil {
+		return err
 	}
 
 	var passwd string
@@ -144,14 +153,24 @@ func Install(p *platform.Platform) error {
 	kubectl := deps.Binary("kubectl", "", ".bin")
 
 	ioutil.WriteFile(pgouser, []byte(passwd), 0644)
-	exec.ExecfWithEnv("cp -R overlays/pgo/ $PGOROOT", ENV)
+
+	home, _ := getEnv(p)["PGOUSER"]
+	log.Debugf("Writing %s", home)
+	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
+		return err
+	}
+	if runtime.GOOS == "darwin" {
+		// cp -R behavior seems to handle directories differently on macosx and linux?
+		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/pgo", ENV)
+	} else {
+		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/", ENV)
+	}
 	kubectl("create ns " + PGO)
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
 		return err
 	}
 
-	kubectl("create ns pgo-databases")
 	if p.DryRun {
 		return nil
 	}
@@ -164,55 +183,4 @@ func Install(p *platform.Platform) error {
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env := getEnv(p)
 	return deps.BinaryWithEnv(PGO, p.PGO.Version, ".bin", env), nil
-}
-
-// GetOrCreateDB creates a new postgres cluster and returns access details
-func GetOrCreateDB(p *platform.Platform, name string, replicas int, databases ...string) (*types.DB, error) {
-	pgo, err := GetPGO(p)
-	if err != nil {
-		return nil, err
-	}
-
-	secret := p.GetSecret(PGO, name+"-postgres-secret")
-	var passwd string
-	if secret != nil {
-		log.Infof("Reusing database %s\n", name)
-		passwd = string((*secret)["password"])
-	} else {
-		log.Infof("Creating new database %s\n", name)
-		passwd = utils.RandomString(10)
-		if err := pgo("create cluster %s -w %s --replica-count %d --debug", name, passwd, replicas); err != nil {
-			return nil, err
-		}
-	}
-
-	return &types.DB{
-		Host:     fmt.Sprintf("%s.%s.svc.cluster.local", name, PGO),
-		Username: "postgres",
-		Password: passwd,
-		Port:     5432,
-	}, nil
-}
-
-func WaitForDB(p *platform.Platform, db string) error {
-	kubectl := p.GetKubectl()
-	for {
-		if err := kubectl(" -n pgo exec svc/%s bash -c database -- -c \"psql -c 'SELECT 1';\"", db); err == nil {
-			return nil
-		}
-		time.Sleep(5 * time.Second)
-	}
-	return nil
-}
-
-func CreateDatabase(p *platform.Platform, db string, databases ...string) error {
-	kubectl := p.GetKubectl()
-	for _, database := range databases {
-		if err := kubectl("-n pgo exec svc/%s bash -c database -- -c \"psql -c 'create database %s'\"", db, database); err != nil {
-			if !strings.Contains(err.Error(), "already exists") {
-				return err
-			}
-		}
-	}
-	return nil
 }

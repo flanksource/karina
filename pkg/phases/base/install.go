@@ -12,6 +12,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.S3.CSIVolumes {
+		log.Infof("Deploying S3 Volume Provisioner")
 		platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
 			"accessKeyID":     []byte(platform.S3.AccessKey),
 			"secretAccessKey": []byte(platform.S3.SecretKey),
@@ -22,5 +23,13 @@ func Install(platform *platform.Platform) error {
 			return err
 		}
 	}
+
+	if platform.NFS != nil {
+		log.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
+		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
+			log.Errorf("Failed to deploy NFS %+v", err)
+		}
+	}
+
 	return nil
 }

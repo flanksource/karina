@@ -5,6 +5,9 @@ import (
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 
+var dbCluster = "harbor"
+var dbNames = []string{"registry", "clair", "notary_server", "notary_signer"}
+
 func defaults(p *platform.Platform) {
 	harbor := p.Harbor
 	if harbor.AdminPassword == "" {
@@ -14,6 +17,9 @@ func defaults(p *platform.Platform) {
 		harbor.URL = "https://harbor." + p.Domain
 	}
 
+	if harbor.Replicas == 0 {
+		harbor.Replicas = 1
+	}
 	if p.Ldap != nil {
 		settings := harbor.Settings
 		if settings == nil {

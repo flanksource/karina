@@ -22,6 +22,7 @@ type PlatformConfig struct {
 	BootstrapToken       string            `yaml:"token,omitempty"`
 	Name                 string            `yaml:"name,omitempty"`
 	Consul               string            `yaml:"consul,omitempty"`
+	Datacenter           string            `yaml:"datacenter,omitempty"`
 	PodSubnet            string            `yaml:"podSubnet,omitempty"`
 	ServiceSubnet        string            `yaml:"serviceSubnet,omitempty"`
 	Calico               Calico            `yaml:"calico,omitempty"`
@@ -42,7 +43,9 @@ type PlatformConfig struct {
 	HostPrefix           string            `yaml:"hostPrefix,omitempty"`
 	Harbor               *Harbor           `yaml:"harbor,omitempty"`
 	S3                   S3                `yaml:"s3,omitempty"`
+	NFS                  *NFS              `yaml:"nfs,omitempty"`
 	TrustedCA            string            `yaml:"trustedCA,omitempty"`
+	DNS                  *DynamicDNS       `yaml:"dns,omitempty"`
 	DryRun               bool              `yaml:"-"`
 }
 
@@ -82,7 +85,8 @@ type Harbor struct {
 	DB            *DB                      `yaml:"db,omitempty"`
 	URL           string                   `yaml:"url,omitempty"`
 	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings      *HarborSettings          `yaml:settings,omitempty"`
+	Settings      *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas      int                      `yaml:"replicas,omitempty"`
 }
 
 type HarborSettings struct {
@@ -173,6 +177,11 @@ type S3 struct {
 	CSIVolumes bool   `yaml:"csiVolumes,omitempty"`
 }
 
+type NFS struct {
+	Host string `yaml:"host,omitempty"`
+	Path string `yaml:"path,omitempty"`
+}
+
 type Ldap struct {
 	Host       string `yaml:"host,omitempty"`
 	Username   string `yaml:"username,omitempty"`
@@ -209,7 +218,16 @@ type ObjectStorage struct {
 	Bucket       string `yaml:"bucket,omitempty"`
 	RegistryPath string `yaml:"registry_path,omitempty"`
 }
+
+type DynamicDNS struct {
+	Nameserver string `yaml:"nameserver,omitempty"`
+	Key        string `yaml:"key,omitempty"`
+	KeyName    string `yaml:"keyName,omitempty"`
+	Algorithm  string `yaml:"algorithm,omitempty"`
+}
+
 type Monitoring struct {
+	Version    string     `yaml:"version,omitempty"`
 	Prometheus Prometheus `yaml:"prometheus,omitempty"`
 	Grafana    Grafana    `yaml:"grafana,omitempty"`
 }

@@ -3,12 +3,14 @@ package provision
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	vim "github.com/vmware/govmomi/vim25/types"
-	"sync"
 )
 
 // Cleanup stops and deletes all VM's for a cluster;
@@ -26,6 +28,9 @@ func Cleanup(platform types.PlatformConfig) error {
 	if len(list) > platform.GetVMCount()*2 {
 		log.Fatalf("Too many VM's found, expecting +- %d but found %d", platform.GetVMCount(), len(list))
 	}
+
+	//pausing to give time for user to terminate
+	time.Sleep(100 * time.Second)
 
 	var wg sync.WaitGroup
 	for _, _vm := range list {

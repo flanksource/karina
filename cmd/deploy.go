@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"log"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
@@ -12,6 +11,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
+	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 )
 
 var Deploy = &cobra.Command{
@@ -58,19 +58,19 @@ func init() {
 				log.Fatalf("Error deploying base %s", err)
 			}
 			if err := pgo.Install(p); err != nil {
-				log.Fatalf("Error deployed postgres operator%s", err)
+				log.Warnf("Error deployed postgres operator %v", err)
 			}
 			if err := pgo.ClientSetup(p); err != nil {
-				log.Fatalf("Error deployed pgo client operator%s", err)
+				log.Warnf("Error deployed pgo client %v", err)
 			}
 			if err := monitoring.Install(p); err != nil {
-				log.Fatalf("Error building monitoring stack %s", err)
+				log.Warnf("Error building monitoring stack %v", err)
 			}
 			if err := harbor.Deploy(p); err != nil {
-				log.Fatalf("Error deploying harbor %s", err)
+				log.Warnf("Error deploying harbor %v", err)
 			}
 			if err := dex.Install(p); err != nil {
-				log.Fatalf("Error initializing dex %s", err)
+				log.Warnf("Error initializing dex %v", err)
 			}
 			if err := opa.Install(p); err != nil {
 				log.Fatalf("Error deploying opa %s", err)
@@ -140,5 +140,17 @@ func init() {
 			}
 		},
 	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "stubs",
+		Short: "Build and deploy stubs for integration testing",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := stubs.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploy stubs %s", err)
+			}
+		},
+	})
+
 	Deploy.AddCommand(_pgo, all)
 }

@@ -16,15 +16,15 @@ import (
 func Deploy(p *platform.Platform) error {
 	defaults(p)
 	if p.Harbor.DB == nil {
-		db, err := pgo.GetOrCreateDB(p, "harbor", 3)
+		db, err := pgo.GetOrCreateDB(p, dbCluster, p.Harbor.Replicas)
 		if err != nil {
 			return err
 		}
-		if err := pgo.WaitForDB(p, "harbor"); err != nil {
+		if err := pgo.WaitForDB(p, dbCluster, 120); err != nil {
 			return err
 		}
 
-		if err := pgo.CreateDatabase(p, "harbor", "registry", "clair", "notary_server", "notary_signer"); err != nil {
+		if err := pgo.CreateDatabase(p, dbCluster, dbNames...); err != nil {
 			return err
 		}
 		p.Harbor.DB = db
@@ -63,7 +63,7 @@ func Deploy(p *platform.Platform) error {
 		debug = "--debug"
 	}
 	helm("init --service-account tiller --upgrade --wait")
-	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s", valuesFile, ca, debug); err != nil {
+	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
 		return err
 	}
 

@@ -17,6 +17,7 @@ import (
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	kapi "k8s.io/client-go/tools/clientcmd/api"
@@ -27,6 +28,8 @@ import (
 	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/client/dns"
+	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
@@ -34,8 +37,13 @@ import (
 
 type Platform struct {
 	types.PlatformConfig
+	k8s.Client
 	ctx     context.Context
 	session *vmware.Session
+}
+
+func (platform *Platform) Init() {
+	platform.Client.GetKubeConfig = platform.GetKubeConfig
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
@@ -65,6 +73,15 @@ func (platform *Platform) WaitFor() error {
 			return nil
 		}
 		time.Sleep(5 * time.Second)
+	}
+}
+
+func (platform *Platform) GetDNSClient() dns.DNSClient {
+	return dns.DNSClient{
+		KeyName:    platform.DNS.KeyName,
+		Nameserver: platform.DNS.Nameserver,
+		Key:        platform.DNS.Key,
+		Algorithm:  platform.DNS.Algorithm,
 	}
 }
 
@@ -111,6 +128,10 @@ node:
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
+	if os.Getenv("KUBECONFIG") != "" {
+		log.Debugf("Using KUBECONFIG from ENV\n")
+		return os.Getenv("KUBECONFIG"), nil
+	}
 	name := platform.Name + "-admin.yml"
 	if !is.File(name) {
 		data, err := CreateKubeConfig(platform, platform.GetMasterIPs()[0])
@@ -132,12 +153,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 		}
 	}
 	if platform.DryRun {
-		log.Infof("Using mock kubectl")
-
-		return func(msg string, args ...interface{}) error {
-			fmt.Printf("kubectl "+msg+"\n", args...)
-			return nil
-		}
+		return platform.GetBinary("kubectl")
 	}
 
 	log.Infof("Using KUBECONFIG=%s", kubeconfig)
@@ -159,6 +175,21 @@ func (platform *Platform) GetSecret(namespace, name string) *map[string][]byte {
 		return nil
 	}
 	return &secret.Data
+}
+
+// GetSecret returns the data of a secret or nil for any error
+func (platform *Platform) GetConfigMap(namespace, name string) *map[string]string {
+	k8s, err := platform.GetClientset()
+	if err != nil {
+		log.Tracef("Failed to get client %v", err)
+		return nil
+	}
+	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		log.Tracef("Failed tp get secret %s/%s: %v\n", namespace, name, err)
+		return nil
+	}
+	return &cm.Data
 }
 
 // CreateKubeConfig creates a new kubeconfig for the cluster
@@ -192,6 +223,19 @@ func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 	}
 
 	return clientcmd.Write(cfg)
+}
+
+// GetDynamicClient creates a new k8s client
+func (platform *Platform) GetDynamicClient() (dynamic.Interface, error) {
+	kubeconfig, err := platform.GetKubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	return dynamic.NewForConfig(cfg)
 }
 
 // GetClientset creates a new k8s client
@@ -383,6 +427,43 @@ func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) 
 	return nil
 }
 
+func (platform *Platform) Apply(namespace string, specs ...k8s.CRD) error {
+	kubectl := platform.GetKubectl()
+	if namespace != "" {
+		namespace = "-n " + namespace
+	}
+
+	for _, spec := range specs {
+		data, err := yaml.Marshal(spec)
+		if err != nil {
+			return err
+		}
+
+		log.Debugf("Applying %s\n", string(data))
+
+		file := text.ToFile(string(data), ".yml")
+		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) ApplyText(namespace string, specs ...string) error {
+	kubectl := platform.GetKubectl()
+	if namespace != "" {
+		namespace = "-n " + namespace
+	}
+
+	for _, spec := range specs {
+		file := text.ToFile(spec, ".yml")
+		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	kubectl := platform.GetKubectl()
 	if namespace != "" {
@@ -398,11 +479,34 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 				return err
 			}
 		} else {
-			template, _ := platform.Template(spec)
+			template, err := platform.Template(spec)
+			if err != nil {
+				return err
+			}
 			if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func (p *Platform) GetBinaryWithEnv(name string, env map[string]string) deps.BinaryFunc {
+	if p.DryRun {
+		return func(msg string, args ...interface{}) error {
+			fmt.Printf("CMD: "+fmt.Sprintf("%s", env)+" .bin/"+name+" "+msg+"\n", args...)
+			return nil
+		}
+	}
+	return deps.BinaryWithEnv(name, p.Versions[name], ".bin", env)
+}
+
+func (p *Platform) GetBinary(name string) deps.BinaryFunc {
+	if p.DryRun {
+		return func(msg string, args ...interface{}) error {
+			fmt.Printf("CMD: .bin/"+name+" "+msg+"\n", args...)
+			return nil
+		}
+	}
+	return deps.Binary(name, p.Versions[name], ".bin")
 }

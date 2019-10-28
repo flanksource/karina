@@ -1,10 +1,15 @@
 .PHONY: setup
+setup:
 	go get -u github.com/gobuffalo/packr/v2/packr2
 
 .PHONY: build
 build:
-	packr2 build -o ./.bin/platform-cli -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
+	go build -o ./.bin/platform-cli -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
 
+.PHONY: pack
+pack:
+	packr2 build -o ./.bin/platform-cli -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
+	cp ./.bin/platform-cli /usr/local/bin/
 
 .PHONY: install
 install: build
