@@ -32,8 +32,9 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/miekg/dns v1.1.22
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/moshloop/commons v0.0.3-0.20191025113427-254e5e699d44
-	github.com/moshloop/konfigadm v0.3.6
+	github.com/moshloop/konfigadm v0.4.6
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pkg/errors v0.8.1
