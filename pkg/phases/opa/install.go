@@ -16,17 +16,19 @@ const (
 
 func Install(platform *platform.Platform) error {
 
-	annotations := map[string]string{"cert-manager.io/allow-direct-injection": "true"}
+	platform.GetKubectl()("create ns opa")
+	platform.GetKubectl()("label ns opa app=opa")
 
 	log.Infof("Creating a CA for %s\n", "opa.")
 	opaCA, err := utils.NewCertificateAuthority("opa")
-	
+
 	platform.CreateOrUpdateSecret(SecretNameCA, Namespace, map[string][]byte{
 		"ca.crt": opaCA.EncodedCertificate(),
 		"ca.key": opaCA.EncodedPrivateKey(),
 	})
 
 	log.Infof("Updating secret %s\n", "opa.")
+	annotations := map[string]string{"cert-manager.io/allow-direct-injection": "true"}
 	platform.Annotate("secrets", SecretNameCA, Namespace, annotations)
 
 	log.Infof("Creating tls creds for %s\n", "opa.")

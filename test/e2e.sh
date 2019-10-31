@@ -32,6 +32,7 @@ $BIN version
 $BIN deploy base -v
 $BIN deploy calico -v
 .bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+
 $BIN deploy stubs -v
 
 $BIN test base --wait 200
@@ -44,4 +45,8 @@ $BIN deploy harbor -v
 
 $BIN deploy all -v
 
+$BIN deploy opa policies test/opa/policies -v
+
 $BIN test all -v --wait 240 --junit-path test-results/results.xml
+
+$BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.xml

@@ -48,6 +48,32 @@ func init() {
 		},
 	})
 
+	var _opa = &cobra.Command{
+		Use:   "opa",
+		Short: "Build and deploy opa aka gatekeeper",
+	}	
+	_opa.AddCommand(&cobra.Command{
+		Use:   "install",
+		Short: "Install opa control plane into the cluster",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := opa.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error initializing opa %s", err)
+			}
+		},
+	})
+
+	_opa.AddCommand(	&cobra.Command{
+		Use:   "policies",
+		Short: "deploy opa policies into the cluster",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := opa.Deploy(getPlatform(cmd), args[0]); err != nil {
+				log.Fatalf("Error deploying opa policies %s", err)
+			}
+		},
+	})
+
 	var all = &cobra.Command{
 		Use:   "all",
 		Short: "Build everything",
@@ -73,7 +99,7 @@ func init() {
 				log.Warnf("Error initializing dex %v", err)
 			}
 			if err := opa.Install(p); err != nil {
-				log.Fatalf("Error deploying opa %s", err)
+				log.Fatalf("Error installing opa control plane%s", err)
 			}
 		},
 	}
@@ -120,16 +146,7 @@ func init() {
 			}
 		},
 	})
-	Deploy.AddCommand(&cobra.Command{
-		Use:   "opa",
-		Short: "Build and deploy opa aka gatekeeper",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := opa.Install(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error initializing opa %s", err)
-			}
-		},
-	})
+
 	Deploy.AddCommand(&cobra.Command{
 		Use:   "base",
 		Short: "Build and deploy base dependencies",
@@ -152,5 +169,5 @@ func init() {
 		},
 	})
 
-	Deploy.AddCommand(_pgo, all)
+	Deploy.AddCommand(_pgo,_opa, all)
 }

@@ -1,29 +1,56 @@
 package opa
 
+import (
+	// "fmt"
+	"io/ioutil"
 
+	"github.com/moshloop/commons/console"
+	"github.com/moshloop/platform-cli/pkg/k8s"
+	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
+)
 
-//
-// func Test(p *platform.Platform, test *console.TestResults) {
+func generateFixtures(kind, attribute string) {
 
-func Test() {
+}
+
+func TestNamespace(p *platform.Platform, test *console.TestResults) {
+	client, _ := p.GetClientset()
+	k8s.TestNamespace(client, "opa", test)
+}
+
+func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestResults) {
 	kubectl := p.GetKubectl()
-	var folders []string
-	for _, folder := range folders {
-		pass := fmt.Sprintf("%s/pass.yml", folder )
+	kubectl("apply -f test/opa/namespaces/")
+	kubectl("apply -f test/opa/ingress-duplicate.yaml")
+	// time.Sleep(60 * time.Second)
+	rejectedFixturesPath := fixturesPath + "/rejected"
+	acceptedFixturesPath := fixturesPath + "/accepted"
 
-		if err := kubectl("apply -f %s", pass); err != nil {
-			test.Passf("%s applied correctly", pass)
+	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, rejectedFixture := range rejectedFixtureFiles {
+		if err := kubectl("apply -f %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name()); err != nil {
+			test.Passf(rejectedFixture.Name(), "%s rejected by Gatekeeper as expected", rejectedFixture.Name())
 		} else {
-			test.Failf("%s should have applied, but did not %v", folder, err)
-		}
+			test.Failf(rejectedFixture.Name(), "%s accepted by Gatekeeper as not expected", rejectedFixture.Name())
 
-		fail := fmt.Sprintf("%s/fail.yml", folder )
-
-		if err := kubectl("apply -f %s", fail); err != nil {
-			test.Failf("%s should not have applied, but did", fail)
-				} else {
-			test.Passf("%s was not applied correctly", fail)
 		}
 	}
 
+	for _, acceptedFixture := range acceptedFixtureFiles {
+		if err := kubectl("apply -f %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name()); err != nil {
+			test.Failf(acceptedFixture.Name(), "%s rejected by Gatekeeper as not expected", acceptedFixture.Name())
+		} else {
+			test.Passf(acceptedFixture.Name(), "%s accepted by Gatekeeper as expected", acceptedFixture.Name())
+		}
+	}
 }
