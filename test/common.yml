@@ -19,6 +19,9 @@ versions:
   expenv: v1.2.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
+opa:
+  version: 0.13.5
+  kubeMgmtVersion: 0.8
 calico:
   ipip: Never
   vxlan: Never
