@@ -15,3 +15,5 @@ hack/
 .kube/
 .helm/
 .manifests/
+kind
+test-results/

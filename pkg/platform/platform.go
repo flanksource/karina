@@ -294,6 +294,28 @@ func (platform *Platform) TemplateDir(dir string) (string, error) {
 	return dst, text.TemplateDir(tmp, dst, platform.PlatformConfig)
 }
 
+func (platform *Platform) Annotate(objectType, name, namespace string, annotations map[string]string) error {
+	if len(annotations) == 0 {
+		return nil
+	}
+	kubectl := platform.GetKubectl()
+	if namespace != "" {
+		namespace = "-n " + namespace
+	}
+
+	var (
+		line  string
+		lines []string
+	)
+
+	for k, v := range annotations {
+		line = fmt.Sprintf("%s=\"%s\"", k, v)
+		lines = append(lines, line)
+	}
+
+	return kubectl("annotate %s %s %s %s", objectType, name, strings.Join(lines, " "), namespace)
+}
+
 func (platform *Platform) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
 	k8s, err := platform.GetClientset()
 	if err != nil {

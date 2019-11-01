@@ -11,4 +11,5 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "kube-system", test)
 	k8s.TestNamespace(client, "ingress-nginx", test)
 	k8s.TestNamespace(client, "local-path-storage", test)
+	k8s.TestNamespace(client, "cert-manager", test)
 }

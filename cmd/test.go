@@ -14,6 +14,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
+	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -84,6 +85,17 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "opa",
+		Short: "test opa",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(func(p *platform.Platform, test *console.TestResults) {
+				opa.TestPolicies(p, args[0], test)
+			})
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "pgo",
 		Short: "Test postgres operator ",
 		Args:  cobra.MinimumNArgs(0),
@@ -116,6 +128,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			run(func(p *platform.Platform, test *console.TestResults) {
 				base.Test(p, test)
+				opa.TestNamespace(p, test)
 				pgo.Test(p, test)
 				harbor.Test(p, test)
 				dex.Test(p, test)
