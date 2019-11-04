@@ -12,6 +12,7 @@ import (
 
 	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/text"
+	"github.com/moshloop/commons/lookup"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -93,10 +94,48 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
 	}
 
+	extras, _ := cmd.Flags().GetStringArray("extra")
+	for _, extra := range extras {
+		key := strings.Split(extra, "=")[0]
+		val := extra[len(key)+1:]
+		log.Debugf("Looking up %s to set it to: %s", key, val)
+
+		value, err := lookup.LookupString(&base, key)
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+		log.Infof("Overriding %s %v => %v", key, value, val)
+		switch value.Interface().(type) {
+		case string:
+			value.SetString(val)
+		case int:
+			i, err := strconv.ParseInt(val, 10, 64)
+			if err != nil {
+				log.Fatalf("Cannot convert %s to int", val)
+			}
+			value.SetInt(i)
+		case bool:
+			b, err := strconv.ParseBool(val)
+			if err != nil {
+				log.Fatalf("Cannot convert %s to a boolean", val)
+			}
+			value.SetBool(b)
+		}
+	}
 	data, _ := yaml.Marshal(base)
 	log.Tracef("Using configuration: \n%s\n", string(data))
 	base.Init()
 	return base
+}
+
+var Render = &cobra.Command{
+	Use:   "render",
+	Short: "Generate kubeconfig files",
+	Run: func(cmd *cobra.Command, args []string) {
+		base := getConfig(cmd)
+		data, _ := yaml.Marshal(base)
+		fmt.Println(string(data))
+	},
 }
 
 func template(val string) string {

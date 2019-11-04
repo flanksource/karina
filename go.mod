@@ -18,7 +18,7 @@ require (
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/miekg/dns v1.1.22
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-	github.com/moshloop/commons v0.0.3-0.20191025113427-254e5e699d44
+	github.com/moshloop/commons v0.0.3-0.20191104124838-faba5f315c26
 	github.com/moshloop/konfigadm v0.4.6
 	github.com/pkg/errors v0.8.1
 	github.com/rogpeppe/go-internal v1.5.0 // indirect
