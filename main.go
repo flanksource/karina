@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra/doc"
 	"os"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 
 	"github.com/moshloop/commons/utils"
 	"github.com/moshloop/platform-cli/cmd"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -45,7 +46,8 @@ func main() {
 		cmd.Status,
 		cmd.Access,
 		cmd.Deploy,
-		cmd.Harbor)
+		cmd.Harbor,
+		cmd.DNS)
 
 	if len(commit) > 8 {
 		version = fmt.Sprintf("%v, commit %v, built at %v", version, commit[0:8], date)

@@ -77,7 +77,9 @@ func (platform *Platform) WaitFor() error {
 }
 
 func (platform *Platform) GetDNSClient() dns.DNSClient {
+
 	return dns.DNSClient{
+		Zone:       platform.DNS.Zone,
 		KeyName:    platform.DNS.KeyName,
 		Nameserver: platform.DNS.Nameserver,
 		Key:        platform.DNS.Key,

@@ -2,13 +2,13 @@ package dns
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 )
 
-// Map of supported TSIG algorithms
 var tsigAlgs = map[string]string{
 	"hmac-md5":    dns.HmacMD5,
 	"hmac-sha1":   dns.HmacSHA1,
@@ -18,41 +18,33 @@ var tsigAlgs = map[string]string{
 
 type DNSClient struct {
 	KeyName    string
+	Zone       string
 	Nameserver string
 	Key        string
 	Algorithm  string
 	Insecure   bool
 }
 
-func (client DNSClient) Append(zone, domain string, records ...string) error {
-
+func (client DNSClient) Append(domain string, records ...string) error {
+	log.Debugf("Appending %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
-	m.SetUpdate(zone)
-
-	if !dns.IsFqdn(zone) {
-		return fmt.Errorf("zone is not a fqdn")
-	}
+	m.SetUpdate(client.Zone + ".")
 
 	for _, record := range records {
-		RR := fmt.Sprintf("%s %d %s %s", domain, 60, "IN A", record)
-		log.Infof("Adding RR: %s to %s", RR, zone)
-
-		rr, err := dns.NewRR(RR)
-		if err != nil {
-			return fmt.Errorf("failed to build RR: %v", err)
+		if rr, err := newRR(domain, client.Zone, 60, "A", record); err != nil {
+			return err
+		} else {
+			m.Insert([]dns.RR{*rr})
 		}
-
-		m.Insert([]dns.RR{rr})
 	}
-
-	return client.sendMessage(zone, m)
+	return client.sendMessage(client.Zone, m)
 }
 
 func (client DNSClient) Get(domain string) ([]string, error) {
 
 	m := new(dns.Msg)
 	m.SetAxfr(domain)
-	if client.Insecure {
+	if !client.Insecure {
 		m.SetTsig(client.KeyName, tsigAlgs[client.Algorithm], 300, time.Now().Unix())
 	}
 
@@ -98,17 +90,57 @@ func (client DNSClient) Get(domain string) ([]string, error) {
 	return records, nil
 }
 
+func (client DNSClient) Update(domain string, records ...string) error {
+	log.Debugf("Updating %s.%s %s", domain, client.Zone, records)
+	m := new(dns.Msg)
+	m.SetUpdate(client.Zone + ".")
+
+	if rr, err := newRR(domain, client.Zone, 0, "ANY", ""); err != nil {
+		return err
+	} else {
+		m.RemoveRRset([]dns.RR{*rr})
+	}
+
+	for _, record := range records {
+		if rr, err := newRR(domain, client.Zone, 60, "A", record); err != nil {
+			return err
+		} else {
+			m.Insert([]dns.RR{*rr})
+		}
+	}
+	return client.sendMessage(client.Zone, m)
+}
+
+func (client DNSClient) Delete(domain string, records ...string) error {
+	log.Debugf("Removing %s.%s %s", domain, client.Zone, records)
+
+	m := new(dns.Msg)
+	m.SetUpdate(client.Zone + ".")
+
+	for _, record := range records {
+		if record == "*" {
+			if rr, err := newRR(domain, client.Zone, 0, "ANY", ""); err != nil {
+				return err
+			} else {
+				m.RemoveRRset([]dns.RR{*rr})
+			}
+		} else {
+			if rr, err := newRR(domain, client.Zone, 0, "A", record); err != nil {
+				return err
+			} else {
+				m.Remove([]dns.RR{*rr})
+			}
+		}
+	}
+	return client.sendMessage(client.Zone, m)
+}
+
 func (client DNSClient) sendMessage(zone string, msg *dns.Msg) error {
-
-	log.Debugf("KeyName=%s, Key=%s, Algorithm=%s\n Zone=%s, Nameserver=%s", client.KeyName, client.Key, client.Algorithm, msg.Question, client.Nameserver)
-
 	c := new(dns.Client)
 	c.SingleInflight = true
 
-	if !client.Insecure {
-		c.TsigSecret = map[string]string{zone: client.Key}
-		msg.SetTsig(zone, tsigAlgs[client.Algorithm], 7500, time.Now().Unix())
-	}
+	c.TsigSecret = map[string]string{client.KeyName: client.Key}
+	msg.SetTsig(client.KeyName, tsigAlgs[client.Algorithm], 300, time.Now().Unix())
 
 	resp, _, err := c.Exchange(msg, client.Nameserver)
 	if err != nil {
@@ -121,6 +153,12 @@ func (client DNSClient) sendMessage(zone string, msg *dns.Msg) error {
 	return nil
 }
 
-func (client DNSClient) Update(domain string, records ...string) error {
-	return nil
+func newRR(domain string, zone string, ttl int, resourceType string, record string) (*dns.RR, error) {
+	RR := strings.Trim(fmt.Sprintf("%s.%s %d %s %s", domain, zone, ttl, resourceType, record), " ")
+	log.Tracef(RR)
+	rr, err := dns.NewRR(RR)
+	if err != nil {
+		return nil, err
+	}
+	return &rr, nil
 }
