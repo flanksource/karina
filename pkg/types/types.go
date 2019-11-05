@@ -74,11 +74,12 @@ type Calico struct {
 }
 
 type OPA struct {
-	KubeMgmtVersion string             `yaml:"kubeMgmtVersion,omitempty"`
-	Version string 										 `yaml:"version,omitempty"`
+	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
+	Version         string `yaml:"version,omitempty"`
 }
 
 type Harbor struct {
+	Disabled      bool                     `yaml:"disabled,omitempty"`
 	Version       string                   `yaml:"version,omitempty"`
 	ChartVersion  string                   `yaml:"chartVersion,omitempty"`
 	AdminPassword string                   `yaml:"-"`
@@ -140,7 +141,8 @@ type DB struct {
 }
 
 type PostgresOperator struct {
-	Version string `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version,omitempty"`
 }
 
 type Certificates struct {
@@ -220,6 +222,7 @@ type ObjectStorage struct {
 }
 
 type DynamicDNS struct {
+	Disabled   bool   `yaml:"disabled,omitempty"`
 	Nameserver string `yaml:"nameserver,omitempty"`
 	Key        string `yaml:"key,omitempty"`
 	KeyName    string `yaml:"keyName,omitempty"`

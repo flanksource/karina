@@ -10,6 +10,9 @@ var dbNames = []string{"registry", "clair", "notary_server", "notary_signer"}
 
 func defaults(p *platform.Platform) {
 	harbor := p.Harbor
+	if harbor == nil {
+		return
+	}
 	if harbor.AdminPassword == "" {
 		harbor.AdminPassword = "Harbor12345"
 	}

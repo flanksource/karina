@@ -13,6 +13,10 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.Harbor == nil || p.Harbor.Disabled {
+		test.Skipf("Harbor", "Harbor is not configured")
+		return
+	}
 	defaults(p)
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "harbor", test)
