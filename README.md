@@ -10,6 +10,7 @@ Whats included:
 - [ ] [Contour](https://github.com/projectcontour/contour) based ingress
 - [x] Calico CNI
 - [ ] NSX-T CNI
+- [ ] Istio
 - [ ] Multi-Cluster Calico BGP Peering
 - [ ] Multi-Cluster Load Balancing using [Gimbal](https://github.com/vmware-tanzu/gimbal)
 - [ ] Multi-Cluster Load Balancing using NSX-T
@@ -22,7 +23,7 @@ Whats included:
 - [x] Monitoring stack powered by [Prometheus, Grafana and Alert Manager](https://github.com/coreos/kube-prometheus)
 - [x] Cloud-init generation using [konfigadm](https://github.com/moshloop/konfigadm)
 - [x] Provisioning clusters on vSphere using [govmomi](https://github.com/vmware/govmomi), heavily based on [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere)
-- [ ] Namespace templating using [namespace-configuration-operator](https://github.com/redhat-cop/namespace-configuration-operator/tree/master)
+- [x] Namespace templating using [namespace-configuration-operator](https://github.com/redhat-cop/namespace-configuration-operator/tree/master)
 - [ ] In cluster templating [quack](https://github.com/pusher/quack) for dynamic ingress domain names
 - [ ] Per Namespace log shipping using [fluent-operator](https://github.com/vmware/kube-fluentd-operator)
 - [ ] DNS Integration via [external-dns](https://github.com/kubernetes-incubator/external-dns)

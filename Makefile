@@ -9,7 +9,11 @@ build:
 .PHONY: pack
 pack:
 	packr2 build -o ./.bin/platform-cli -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
-	cp ./.bin/platform-cli /usr/local/bin/
+
+
+.PHONY: linux
+linux:
+	GOOS=linux packr2 build -o ./.bin/platform-cli -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
 
 .PHONY: install
 install: build
