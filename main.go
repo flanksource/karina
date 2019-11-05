@@ -47,6 +47,7 @@ func main() {
 		cmd.Access,
 		cmd.Deploy,
 		cmd.Harbor,
+		cmd.DNS,
 		cmd.Render)
 
 	if len(commit) > 8 {

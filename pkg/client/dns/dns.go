@@ -16,7 +16,36 @@ var tsigAlgs = map[string]string{
 	"hmac-sha512": dns.HmacSHA512,
 }
 
-type DNSClient struct {
+type DNSClient interface {
+	Append(domain string, records ...string) error
+	Get(domain string) ([]string, error)
+	Update(domain string, records ...string) error
+	Delete(domain string, records ...string) error
+}
+
+type DummyDNSClient struct {
+	Zone string
+}
+
+func (d DummyDNSClient) Append(domain string, records ...string) error {
+	domain = subdomain(domain, d.Zone)
+	log.Debugf("[DNS Stub] Append %s.%s %v", domain, d.Zone, records)
+	return nil
+}
+func (d DummyDNSClient) Get(domain string) ([]string, error) { return nil, nil }
+func (d DummyDNSClient) Update(domain string, records ...string) error {
+	domain = subdomain(domain, d.Zone)
+
+	log.Debugf("[DNS Stub] Update %s.%s %v", domain, d.Zone, records)
+	return nil
+}
+func (d DummyDNSClient) Delete(domain string, records ...string) error {
+	domain = subdomain(domain, d.Zone)
+	log.Debugf("[DNS Stub] Delete %s.%s %v", domain, d.Zone, records)
+	return nil
+}
+
+type DynamicDNSClient struct {
 	KeyName    string
 	Zone       string
 	Nameserver string
@@ -25,7 +54,8 @@ type DNSClient struct {
 	Insecure   bool
 }
 
-func (client DNSClient) Append(domain string, records ...string) error {
+func (client DynamicDNSClient) Append(domain string, records ...string) error {
+	domain = subdomain(domain, client.Zone)
 	log.Debugf("Appending %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
@@ -40,7 +70,7 @@ func (client DNSClient) Append(domain string, records ...string) error {
 	return client.sendMessage(client.Zone, m)
 }
 
-func (client DNSClient) Get(domain string) ([]string, error) {
+func (client DynamicDNSClient) Get(domain string) ([]string, error) {
 
 	m := new(dns.Msg)
 	m.SetAxfr(domain)
@@ -90,7 +120,8 @@ func (client DNSClient) Get(domain string) ([]string, error) {
 	return records, nil
 }
 
-func (client DNSClient) Update(domain string, records ...string) error {
+func (client DynamicDNSClient) Update(domain string, records ...string) error {
+	domain = subdomain(domain, client.Zone)
 	log.Debugf("Updating %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
@@ -111,7 +142,8 @@ func (client DNSClient) Update(domain string, records ...string) error {
 	return client.sendMessage(client.Zone, m)
 }
 
-func (client DNSClient) Delete(domain string, records ...string) error {
+func (client DynamicDNSClient) Delete(domain string, records ...string) error {
+	domain = subdomain(domain, client.Zone)
 	log.Debugf("Removing %s.%s %s", domain, client.Zone, records)
 
 	m := new(dns.Msg)
@@ -135,7 +167,7 @@ func (client DNSClient) Delete(domain string, records ...string) error {
 	return client.sendMessage(client.Zone, m)
 }
 
-func (client DNSClient) sendMessage(zone string, msg *dns.Msg) error {
+func (client DynamicDNSClient) sendMessage(zone string, msg *dns.Msg) error {
 	c := new(dns.Client)
 	c.SingleInflight = true
 
@@ -161,4 +193,8 @@ func newRR(domain string, zone string, ttl int, resourceType string, record stri
 		return nil, err
 	}
 	return &rr, nil
+}
+
+func subdomain(domain, zone string) string {
+	return strings.ReplaceAll(domain, "."+zone, "")
 }
