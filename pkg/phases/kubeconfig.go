@@ -44,10 +44,9 @@ func CreateOIDCKubeConfig(platform *platform.Platform, endpoint string) ([]byte,
 	return clientcmd.Write(cfg)
 }
 
-func CreateKubeConfig(platform *platform.Platform, endpoint string) ([]byte, error) {
-	userName := "kubernetes-admin"
-	contextName := fmt.Sprintf("%s@%s", userName, platform.Name)
-	cert, err := platform.Certificates.CA.ToCert().CreateCertificate(userName, "system:masters")
+func CreateKubeConfig(platform *platform.Platform, endpoint, group, user string) ([]byte, error) {
+	contextName := fmt.Sprintf("%s@%s", user, platform.Name)
+	cert, err := platform.Certificates.CA.ToCert().CreateCertificate(user, group)
 	if err != nil {
 		return nil, err
 	}

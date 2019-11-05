@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/moshloop/platform-cli/pkg/phases"
-	"github.com/spf13/cobra"
 )
 
 var Access = &cobra.Command{
@@ -20,7 +21,9 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
 			ips := platform.GetMasterIPs()
-			data, err := phases.CreateKubeConfig(platform, ips[0])
+			group, _ := cmd.Flags().GetString("group")
+			name, _ := cmd.Flags().GetString("name")
+			data, err := phases.CreateKubeConfig(platform, ips[0], group, name)
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}
@@ -28,6 +31,7 @@ func init() {
 		},
 	}
 
+	admin.Flags().String("name", "kubernetes-admin", "The name to use in the certificate")
 	admin.Flags().String("group", "system:masters", "The OU (group name) to use in the certificate")
 
 	Access.AddCommand(admin)
