@@ -170,6 +170,7 @@ func (client DynamicDNSClient) Delete(domain string, records ...string) error {
 func (client DynamicDNSClient) sendMessage(zone string, msg *dns.Msg) error {
 	c := new(dns.Client)
 	c.SingleInflight = true
+	c.Net = "tcp"
 
 	c.TsigSecret = map[string]string{client.KeyName: client.Key}
 	msg.SetTsig(client.KeyName, tsigAlgs[client.Algorithm], 300, time.Now().Unix())

@@ -280,10 +280,6 @@ func (platform *PlatformConfig) String() string {
 }
 
 func (platform *PlatformConfig) Init() {
-	if platform.BootstrapToken == "" {
-		platform.BootstrapToken = GenerateBootstrapToken()
-		log.Infof("Created new bootstrap token %s\n", platform.BootstrapToken)
-	}
 	if platform.JoinEndpoint == "" {
 		platform.JoinEndpoint = "localhost:8443"
 	}

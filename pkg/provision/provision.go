@@ -55,7 +55,7 @@ func Cluster(platform *platform.Platform) error {
 			log.Fatalf("Failed to create primary master: %s", err)
 		}
 
-		data, err := yaml.Marshal(platform)
+		data, err := yaml.Marshal(platform.PlatformConfig)
 		if err != nil {
 			log.Fatalf("Erroring saving config %s", err)
 		}
@@ -68,12 +68,19 @@ func Cluster(platform *platform.Platform) error {
 			if err != nil {
 				return err
 			}
+			if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), ip); err != nil {
+				return err
+			}
 			log.Infof("Provisioned new master: %s\n", ip)
+
 		}
 		if err := platform.WaitFor(); err != nil {
 			log.Fatalf("Primary master failed to come up %s ", err)
 		}
 	}
+
+	// make sure admin kubeconfig is available
+	platform.GetKubeConfig()
 
 	masters = platform.GetMasterIPs()
 	log.Infof("Detected %d existing masters: %s", len(masters), masters)
@@ -94,7 +101,11 @@ func Cluster(platform *platform.Platform) error {
 					if err != nil {
 						log.Errorf("Failed to Clone secondary master: %s", err)
 					} else {
-						log.Infof("Provisioned new master: %s\n", ip)
+						if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), ip); err != nil {
+							log.Warnf("Failed to update DNS for %s", ip)
+						} else {
+							log.Infof("Provisioned new master: %s\n", ip)
+						}
 					}
 				}
 			}
@@ -120,7 +131,11 @@ func Cluster(platform *platform.Platform) error {
 						if err != nil {
 							log.Errorf("Failed to Clone worker: %s", err)
 						} else {
-							log.Infof("Provisioned new worker: %s\n", ip)
+							if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), ip); err != nil {
+								log.Warnf("Failed to update DNS for %s", ip)
+							} else {
+								log.Infof("Provisioned new worker: %s\n", ip)
+							}
 						}
 					}
 				}

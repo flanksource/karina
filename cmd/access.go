@@ -21,9 +21,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
 			ips := platform.GetMasterIPs()
+
+			var endpoint string
+			if platform.DNS != nil && !platform.DNS.Disabled {
+				endpoint = fmt.Sprintf("k8s-api.%s.%s", platform.Name, platform.Domain)
+			} else {
+				// No DNS available using the first masters IP as an endpoint
+				endpoint = ips[0]
+			}
 			group, _ := cmd.Flags().GetString("group")
 			name, _ := cmd.Flags().GetString("name")
-			data, err := phases.CreateKubeConfig(platform, ips[0], group, name)
+			data, err := phases.CreateKubeConfig(platform, endpoint, group, name)
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}

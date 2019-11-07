@@ -77,7 +77,7 @@ func (platform *Platform) WaitFor() error {
 }
 
 func (platform *Platform) GetDNSClient() dns.DNSClient {
-	if platform.DNS != nil || platform.DNS.Disabled {
+	if platform.DNS == nil || platform.DNS.Disabled {
 		return dns.DummyDNSClient{Zone: platform.DNS.Zone}
 	}
 	return dns.DynamicDNSClient{
