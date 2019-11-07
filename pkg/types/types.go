@@ -13,45 +13,45 @@ import (
 )
 
 type PlatformConfig struct {
-	Source                string            `yaml:"-"`
-	ControlPlaneEndpoint  string            `yaml:"-"`
-	JoinEndpoint          string            `yaml:"-"`
-	Certificates          *Certificates     `yaml:"-"`
+	BootstrapToken        string            `yaml:"-"`
 	BuildOptions          BuildOptions      `yaml:"-"`
-	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
-	BootstrapToken        string            `yaml:"token,omitempty"`
-	Name                  string            `yaml:"name,omitempty"`
-	Consul                string            `yaml:"consul,omitempty"`
-	Datacenter            string            `yaml:"datacenter,omitempty"`
-	PodSubnet             string            `yaml:"podSubnet,omitempty"`
-	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
 	Calico                Calico            `yaml:"calico,omitempty"`
-	OPA                   OPA               `yaml:"opa,omitempty"`
+	Certificates          *Certificates     `yaml:"-"`
+	CertManager           Enabled           `yaml:"certManager,omitempty"`
+	Consul                string            `yaml:"consul,omitempty"`
+	ControlPlaneEndpoint  string            `yaml:"-"`
+	Datacenter            string            `yaml:"datacenter,omitempty"`
+	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
 	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
 	Domain                string            `yaml:"domain,omitempty"`
-	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
-	SMTP                  Smtp              `yaml:"smtp,omitempty"`
-	Specs                 []string          `yaml:"specs,omitempty"`
-	Policies              []string          `yaml:"policies,omitempty"`
-	Monitoring            Monitoring        `yaml:"monitoring,omitempty"`
-	ELK                   ELK               `yaml:"elk,omitempty"`
-	Versions              map[string]string `yaml:"versions,omitempty"`
-	Resources             map[string]string `yaml:"resources,omitempty"`
-	Master                VM                `yaml:"master,omitempty"`
-	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	PGO                   PostgresOperator  `yaml:"pgo,omitempty"`
-	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
-	Harbor                *Harbor           `yaml:"harbor,omitempty"`
-	S3                    S3                `yaml:"s3,omitempty"`
-	NFS                   *NFS              `yaml:"nfs,omitempty"`
-	TrustedCA             string            `yaml:"trustedCA,omitempty"`
-	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
 	DryRun                bool              `yaml:"-"`
-	LocalPath             Enabled           `yaml:"localPath,omitempty"`
-	NamespaceConfigurator Enabled           `yaml:"namespaceConfigurator,omitempty"`
-	Quack                 Enabled           `yaml:"quack,omitempty"`
-	CertManager           Enabled           `yaml:"certManager,omitempty"`
+	ELK                   ELK               `yaml:"elk,omitempty"`
 	EventRouter           Enabled           `yaml:"eventRouter,omitempty"`
+	Harbor                *Harbor           `yaml:"harbor,omitempty"`
+	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
+	JoinEndpoint          string            `yaml:"-"`
+	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
+	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
+	LocalPath             Enabled           `yaml:"localPath,omitempty"`
+	Master                VM                `yaml:"master,omitempty"`
+	Monitoring            Monitoring        `yaml:"monitoring,omitempty"`
+	Name                  string            `yaml:"name,omitempty"`
+	NamespaceConfigurator Enabled           `yaml:"namespaceConfigurator,omitempty"`
+	NFS                   *NFS              `yaml:"nfs,omitempty"`
+	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
+	OPA                   OPA               `yaml:"opa,omitempty"`
+	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
+	PodSubnet             string            `yaml:"podSubnet,omitempty"`
+	Policies              []string          `yaml:"policies,omitempty"`
+	Quack                 Enabled           `yaml:"quack,omitempty"`
+	Resources             map[string]string `yaml:"resources,omitempty"`
+	S3                    S3                `yaml:"s3,omitempty"`
+	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
+	SMTP                  Smtp              `yaml:"smtp,omitempty"`
+	Source                string            `yaml:"-"`
+	Specs                 []string          `yaml:"specs,omitempty"`
+	TrustedCA             string            `yaml:"trustedCA,omitempty"`
+	Versions              map[string]string `yaml:"versions,omitempty"`
 }
 
 type Enabled struct {
