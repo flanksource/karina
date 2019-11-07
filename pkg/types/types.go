@@ -13,40 +13,49 @@ import (
 )
 
 type PlatformConfig struct {
-	Source               string            `yaml:"-"`
-	ControlPlaneEndpoint string            `yaml:"-"`
-	JoinEndpoint         string            `yaml:"-"`
-	Certificates         *Certificates     `yaml:"-"`
-	BuildOptions         BuildOptions      `yaml:"-"`
-	Kubernetes           Kubernetes        `yaml:"kubernetes,omitempty"`
-	BootstrapToken       string            `yaml:"token,omitempty"`
-	Name                 string            `yaml:"name,omitempty"`
-	Consul               string            `yaml:"consul,omitempty"`
-	Datacenter           string            `yaml:"datacenter,omitempty"`
-	PodSubnet            string            `yaml:"podSubnet,omitempty"`
-	ServiceSubnet        string            `yaml:"serviceSubnet,omitempty"`
-	Calico               Calico            `yaml:"calico,omitempty"`
-	OPA                  OPA               `yaml:"opa,omitempty"`
-	DockerRegistry       string            `yaml:"dockerRegistry,omitempty"`
-	Domain               string            `yaml:"domain,omitempty"`
-	Ldap                 *Ldap             `yaml:"ldap,omitempty"`
-	SMTP                 Smtp              `yaml:"smtp,omitempty"`
-	Specs                []string          `yaml:"specs,omitempty"`
-	Policies             []string          `yaml:"policies,omitempty"`
-	Monitoring           Monitoring        `yaml:"monitoring,omitempty"`
-	ELK                  ELK               `yaml:"elk,omitempty"`
-	Versions             map[string]string `yaml:"versions,omitempty"`
-	Resources            map[string]string `yaml:"resources,omitempty"`
-	Master               VM                `yaml:"master,omitempty"`
-	Nodes                map[string]VM     `yaml:"workers,omitempty"`
-	PGO                  PostgresOperator  `yaml:"pgo,omitempty"`
-	HostPrefix           string            `yaml:"hostPrefix,omitempty"`
-	Harbor               *Harbor           `yaml:"harbor,omitempty"`
-	S3                   S3                `yaml:"s3,omitempty"`
-	NFS                  *NFS              `yaml:"nfs,omitempty"`
-	TrustedCA            string            `yaml:"trustedCA,omitempty"`
-	DNS                  *DynamicDNS       `yaml:"dns,omitempty"`
-	DryRun               bool              `yaml:"-"`
+	Source                string            `yaml:"-"`
+	ControlPlaneEndpoint  string            `yaml:"-"`
+	JoinEndpoint          string            `yaml:"-"`
+	Certificates          *Certificates     `yaml:"-"`
+	BuildOptions          BuildOptions      `yaml:"-"`
+	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
+	BootstrapToken        string            `yaml:"token,omitempty"`
+	Name                  string            `yaml:"name,omitempty"`
+	Consul                string            `yaml:"consul,omitempty"`
+	Datacenter            string            `yaml:"datacenter,omitempty"`
+	PodSubnet             string            `yaml:"podSubnet,omitempty"`
+	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
+	Calico                Calico            `yaml:"calico,omitempty"`
+	OPA                   OPA               `yaml:"opa,omitempty"`
+	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
+	Domain                string            `yaml:"domain,omitempty"`
+	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
+	SMTP                  Smtp              `yaml:"smtp,omitempty"`
+	Specs                 []string          `yaml:"specs,omitempty"`
+	Policies              []string          `yaml:"policies,omitempty"`
+	Monitoring            Monitoring        `yaml:"monitoring,omitempty"`
+	ELK                   ELK               `yaml:"elk,omitempty"`
+	Versions              map[string]string `yaml:"versions,omitempty"`
+	Resources             map[string]string `yaml:"resources,omitempty"`
+	Master                VM                `yaml:"master,omitempty"`
+	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
+	PGO                   PostgresOperator  `yaml:"pgo,omitempty"`
+	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
+	Harbor                *Harbor           `yaml:"harbor,omitempty"`
+	S3                    S3                `yaml:"s3,omitempty"`
+	NFS                   *NFS              `yaml:"nfs,omitempty"`
+	TrustedCA             string            `yaml:"trustedCA,omitempty"`
+	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
+	DryRun                bool              `yaml:"-"`
+	LocalPath             Enabled           `yaml:"localPath,omitempty"`
+	NamespaceConfigurator Enabled           `yaml:"namespaceConfigurator,omitempty"`
+	Quack                 Enabled           `yaml:"quack,omitempty"`
+	CertManager           Enabled           `yaml:"certManager,omitempty"`
+	EventRouter           Enabled           `yaml:"eventRouter,omitempty"`
+}
+
+type Enabled struct {
+	Enabled *bool `yaml:"enabled"`
 }
 
 type VM struct {
@@ -231,9 +240,17 @@ type DynamicDNS struct {
 }
 
 type Monitoring struct {
-	Version    string     `yaml:"version,omitempty"`
-	Prometheus Prometheus `yaml:"prometheus,omitempty"`
-	Grafana    Grafana    `yaml:"grafana,omitempty"`
+	Disabled         bool       `yaml:"disabled,omitempty"`
+	Version          string     `yaml:"version,omitempty" json:"version,omitempty"`
+	Prometheus       Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Grafana          Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
+	AlertManager     string     `yaml:"alertMmanager,omitempty"`
+	KubeStateMetrics string     `yaml:"kubeStateMetrics,omitempty"`
+	KubeRbacProxy    string     `yaml:"kubeRbacProxy,omitempty"`
+	NodeExporter     string     `yaml:"nodeExporter,omitempty"`
+	AddonResizer     string     `yaml:"addonResizer,omitempty"`
+	// Prometheus         string     `yaml:"prometheus,omitempty"`
+	PrometheusOperator string `yaml:"prometheus_operator,omitempty"`
 }
 
 type Prometheus struct {

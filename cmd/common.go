@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/imdario/mergo"
@@ -11,8 +13,8 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/commons/is"
-	"github.com/moshloop/commons/text"
 	"github.com/moshloop/commons/lookup"
+	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -84,9 +86,23 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.Ldap = ldap
 	}
 
+	base.Master.Network = template(base.Master.Network)
+	base.Master.Cluster = template(base.Master.Cluster)
+	base.Master.Template = template(base.Master.Template)
+
+	nodes := base.Nodes
+	for name, vm := range base.Nodes {
+		vm.Network = template(vm.Network)
+		vm.Cluster = template(vm.Cluster)
+		vm.Template = template(vm.Template)
+		nodes[name] = vm
+	}
+	base.Nodes = nodes
+
 	dns := base.DNS
 	if dns != nil {
 		dns.Key = template(dns.Key)
+		dns.KeyName = template(dns.KeyName)
 		base.DNS = dns
 	}
 
@@ -122,6 +138,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 			value.SetBool(b)
 		}
 	}
+
 	data, _ := yaml.Marshal(base)
 	log.Tracef("Using configuration: \n%s\n", string(data))
 	base.Init()

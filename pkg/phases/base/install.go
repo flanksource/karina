@@ -1,12 +1,15 @@
 package base
 
 import (
+	"os"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {
+	os.Mkdir(".bin", 0755)
 	if err := platform.ApplySpecs("", "base/"); err != nil {
 		log.Errorf("Error deploying base stack: %s\n", err)
 	}
