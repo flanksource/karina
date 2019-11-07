@@ -1,6 +1,8 @@
 package phases
 
 import (
+	"time"
+
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
@@ -9,7 +11,6 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
-	"time"
 )
 
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
@@ -38,21 +39,6 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		"oidc-groups-claim":   "groups",
 	}
 	return cluster
-}
-
-func NewInitConfig(cfg *platform.Platform) api.InitConfiguration {
-	init := api.InitConfiguration{
-		APIVersion: "kubeadm.k8s.io/v1beta1",
-		Kind:       "InitConfiguration",
-	}
-
-	init.BootstrapTokens = []api.BootstrapToken{api.BootstrapToken{
-		Groups: []string{"system:bootstrappers:kubeadm:default-node-token"},
-		TTL:    "240h",
-		Token:  cfg.BootstrapToken,
-		Usages: []string{"signing", "authentication"},
-	}}
-	return init
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go

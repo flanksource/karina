@@ -1,6 +1,7 @@
 package phases
 
 import (
+	"errors"
 	"fmt"
 	// initialize konfigadm
 
@@ -21,6 +22,13 @@ var envVars = map[string]string{
 }
 
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
+	if platform.Name == "" {
+		return nil, errors.New("Must specify a platform name")
+	}
+	if platform.Datacenter == "" {
+		return nil, errors.New("Must specify a platform datacenter")
+	}
+
 	log.Infof("Creating new primary master\n")
 	hostname := ""
 	cfg, err := baseKonfig(platform)
@@ -68,14 +76,7 @@ func addInitKubeadmConfig(hostname string, platform *platform.Platform, cfg *kon
 	if err != nil {
 		return err
 	}
-	kubeadm := string(data)
-	data, err = yaml.Marshal(NewInitConfig(platform))
-	if err != nil {
-		return err
-	}
-	kubeadm += "\n---\n" + string(data)
-
-	cfg.Files["/etc/kubernetes/kubeadm.conf"] = kubeadm
+	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	return nil
 }
 
@@ -126,9 +127,30 @@ func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.C
 	})
 }
 
+func getOrCreateBootstrapToken(platform *platform.Platform) (string, error) {
+	if platform.BootstrapToken != "" {
+		return platform.BootstrapToken, nil
+	}
+	client, err := platform.GetClientset()
+	if err != nil {
+		return "", err
+	}
+	token, err := createBootstrapToken(client.CoreV1().Secrets("kube-system"))
+	if err != nil {
+		return "", err
+	}
+	platform.BootstrapToken = token
+
+	return platform.BootstrapToken, nil
+}
+
 func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	hostname := ""
 	cfg, err := baseKonfig(platform)
+	if err != nil {
+		return nil, err
+	}
+	token, err := getOrCreateBootstrapToken(platform)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +159,7 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	addCerts(platform, cfg)
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --control-plane --token %s --discovery-token-unsafe-skip-ca-verification %s   > /var/log/kubeadm.log",
-		platform.BootstrapToken, platform.JoinEndpoint))
+		token, platform.JoinEndpoint))
 	return cfg, nil
 }
 
@@ -146,9 +168,13 @@ func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	token, err := getOrCreateBootstrapToken(platform)
+	if err != nil {
+		return nil, err
+	}
 	createClientSideLoadbalancers(platform, cfg)
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s > /var/log/kubeadm.log",
-		platform.BootstrapToken, platform.JoinEndpoint))
+		token, platform.JoinEndpoint))
 	return cfg, nil
 }
