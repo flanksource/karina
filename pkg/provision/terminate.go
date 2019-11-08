@@ -55,7 +55,6 @@ func Cleanup(platform *platform.Platform) error {
 }
 
 func terminate(ctx context.Context, platform *platform.Platform, vm *object.VirtualMachine) {
-
 	ips, err := vm.WaitForNetIP(context.TODO(), true)
 	ip := []string{}
 	for _, _ip := range ips {

@@ -93,6 +93,10 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (string, 
 	return platform.session.Clone(vm, config)
 }
 
+func (platform *Platform) GetSession() *vmware.Session {
+	return platform.session
+}
+
 // OpenViaEnv opens a new vmware session using environment variables
 func (platform *Platform) OpenViaEnv() error {
 	if platform.session != nil {
@@ -132,7 +136,7 @@ node:
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
-	if os.Getenv("KUBECONFIG") != "" {
+	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
 		log.Debugf("Using KUBECONFIG from ENV\n")
 		return os.Getenv("KUBECONFIG"), nil
 	}

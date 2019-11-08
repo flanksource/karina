@@ -60,6 +60,7 @@ type Enabled struct {
 
 type VM struct {
 	Name         string `yaml:"name,omitempty"`
+	Prefix       string `yaml:"prefix,omitempty"`
 	Count        int    `yaml:"count,omitempty"`
 	Template     string `yaml:"template,omitempty"`
 	Cluster      string `yaml:"cluster,omitempty"`

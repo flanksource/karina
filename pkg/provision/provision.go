@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -90,7 +91,7 @@ func Cluster(platform *platform.Platform) error {
 		wg.Add(1)
 		go func() {
 			vm := platform.Master
-			vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "m", utils.ShortTimestamp())
+			vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
 			log.Infof("Creating new secondary master %s\n", vm.Name)
 			config, err := phases.CreateSecondaryMaster(platform)
 			if err != nil {
@@ -115,7 +116,13 @@ func Cluster(platform *platform.Platform) error {
 
 	for _, worker := range platform.Nodes {
 		vmware.LoadGovcEnvVars(&worker)
-		for i := 0; i < worker.Count; i++ {
+		prefix := fmt.Sprintf("%s-%s-%s*", platform.HostPrefix, platform.Name, worker.Prefix)
+		list, err := platform.GetSession().Finder.VirtualMachineList(context.TODO(), prefix)
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < worker.Count-len(list); i++ {
 			time.Sleep(1 * time.Second)
 			wg.Add(1)
 			vm := worker
@@ -124,7 +131,7 @@ func Cluster(platform *platform.Platform) error {
 				if err != nil {
 					log.Errorf("Failed to create workers %s\n", err)
 				} else {
-					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "w", utils.ShortTimestamp())
+					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, worker.Prefix, utils.ShortTimestamp())
 					if !platform.DryRun {
 						log.Infof("Creating new worker %s\n", vm.Name)
 						ip, err := platform.Clone(vm, config)
@@ -141,6 +148,20 @@ func Cluster(platform *platform.Platform) error {
 				}
 				wg.Done()
 			}()
+
+		}
+
+		if worker.Count < len(list) {
+			terminateCount := len(list) - worker.Count
+			log.Infof("Downscaling %d extra worker nodes", terminateCount)
+			time.Sleep(3 * time.Second)
+			for i := 0; i < terminateCount; i++ {
+				wg.Add(1)
+				go func() {
+					terminate(context.TODO(), platform, list[worker.Count+i-1]) //terminate oldest first
+					wg.Done()
+				}()
+			}
 
 		}
 	}
