@@ -1,6 +1,6 @@
 
 default: build
-NAME:=$(shell basename $(PWD))
+NAME:=platform-cli
 
 VERSION:=v$(shell git tag --points-at HEAD ) $(shell date "+%Y-%m-%d %H:%M:%S")
 .PHONY: setup
