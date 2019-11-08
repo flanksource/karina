@@ -15,20 +15,23 @@ func Install(platform *platform.Platform) error {
 		log.Errorf("Error deploying base rbac: %s\n", err)
 	}
 
-	if platform.Quack == nil || !platform.Quack.Disabled {
-		log.Infof("Installing Quack")
-		if err := platform.ApplySpecs("", "quack.yml"); err != nil {
-			log.Errorf("Error deploying quack: %s\n", err)
-		}
-	}
-
 	if platform.CertManager == nil || !platform.CertManager.Disabled {
 		log.Infof("Installing CertMananager")
 		if err := platform.ApplySpecs("", "cert-manager-crd.yml"); err != nil {
 			log.Errorf("Error deploying cert manager CRDs: %s\n", err)
 		}
+
+		//deploy cert-manager twice due to: Internal error occurred: failed calling webhook "webhook.cert-manager.io": the server could not find the requested resource
+		var _ = platform.ApplySpecs("", "cert-manager-deploy.yml")
 		if err := platform.ApplySpecs("", "cert-manager-deploy.yml"); err != nil {
 			log.Errorf("Error deploying cert manager: %s\n", err)
+		}
+	}
+
+	if platform.Quack == nil || !platform.Quack.Disabled {
+		log.Infof("Installing Quack")
+		if err := platform.ApplySpecs("", "quack.yml"); err != nil {
+			log.Errorf("Error deploying quack: %s\n", err)
 		}
 	}
 
