@@ -23,9 +23,9 @@ kind: ClusterRole
 metadata:
   name: eventrouter
 rules:
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["get", "watch", "list"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "watch", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
@@ -36,9 +36,9 @@ roleRef:
   kind: ClusterRole
   name: eventrouter
 subjects:
-- kind: ServiceAccount
-  name: eventrouter
-  namespace: kube-system
+  - kind: ServiceAccount
+    name: eventrouter
+    namespace: kube-system
 ---
 apiVersion: v1
 data:
@@ -74,8 +74,15 @@ spec:
           image: gcr.io/heptio-images/eventrouter:latest
           imagePullPolicy: IfNotPresent
           volumeMounts:
-          - name: config-volume
-            mountPath: /etc/eventrouter
+            - name: config-volume
+              mountPath: /etc/eventrouter
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
       serviceAccount: eventrouter
       volumes:
         - name: config-volume

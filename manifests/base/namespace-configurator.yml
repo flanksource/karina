@@ -108,3 +108,10 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "namespace-configuration-operator"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
