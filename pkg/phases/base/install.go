@@ -10,8 +10,68 @@ import (
 
 func Install(platform *platform.Platform) error {
 	os.Mkdir(".bin", 0755)
-	if err := platform.ApplySpecs("", "base/"); err != nil {
-		log.Errorf("Error deploying base stack: %s\n", err)
+
+	if err := platform.ApplySpecs("", "rbac.yml"); err != nil {
+		log.Errorf("Error deploying base rbac: %s\n", err)
+	}
+
+	if platform.Quack == nil || !platform.Quack.Disabled {
+		log.Infof("Installing Quack")
+		if err := platform.ApplySpecs("", "quack.yml"); err != nil {
+			log.Errorf("Error deploying quack: %s\n", err)
+		}
+	}
+
+	if platform.CertManager == nil || !platform.CertManager.Disabled {
+		log.Infof("Installing CertMananager")
+		if err := platform.ApplySpecs("", "cert-manager-crd.yml"); err != nil {
+			log.Errorf("Error deploying cert manager CRDs: %s\n", err)
+		}
+		if err := platform.ApplySpecs("", "cert-manager-deploy.yml"); err != nil {
+			log.Errorf("Error deploying cert manager: %s\n", err)
+		}
+	}
+
+	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
+		log.Infof("Installing local path volumes")
+		if err := platform.ApplySpecs("", "local-path.yml"); err != nil {
+			log.Errorf("Error deploying local path volumes: %s\n", err)
+		}
+	}
+
+	if platform.Dashboard == nil || !platform.Dashboard.Disabled {
+		log.Infof("Installing K8s dashboard")
+		if err := platform.ApplySpecs("", "k8s-dashboard.yml"); err != nil {
+			log.Errorf("Error K8s dashboard: %s\n", err)
+		}
+	}
+
+	if platform.NamespaceConfigurator == nil || !platform.NamespaceConfigurator.Disabled {
+		log.Infof("Installing namespace configurator")
+		if err := platform.ApplySpecs("", "namespace-configurator.yml"); err != nil {
+			log.Errorf("Error deploying namespace configurator: %s\n", err)
+		}
+	}
+
+	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
+		log.Infof("Installing platform operator")
+		if err := platform.ApplySpecs("", "platform-operator.yml"); err != nil {
+			log.Errorf("Error deploying platform-operator: %s\n", err)
+		}
+	}
+
+	if platform.Nginx == nil || !platform.Nginx.Disabled {
+		log.Infof("Installing Nginx Ingress Controller")
+		if err := platform.ApplySpecs("", "nginx.yml"); err != nil {
+			log.Errorf("Error deploying nginx: %s\n", err)
+		}
+	}
+
+	if platform.Minio == nil || !platform.Minio.Disabled {
+		log.Infof("Installing minio")
+		if err := platform.ApplySpecs("", "minio.yml"); err != nil {
+			log.Errorf("Error deploying minio: %s\n", err)
+		}
 	}
 
 	if platform.S3.CSIVolumes {
@@ -31,6 +91,20 @@ func Install(platform *platform.Platform) error {
 		log.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
 		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
 			log.Errorf("Failed to deploy NFS %+v", err)
+		}
+	}
+
+	if platform.Flux != nil && !platform.Flux.Disabled {
+		if platform.Flux.Version == "" {
+			platform.Flux.Version = "1.15.0"
+
+		}
+		if platform.Flux.Image == "" {
+			platform.Flux.Image = "docker.io/fluxcd/flux"
+		}
+		log.Infof("Deploying Flux %s", platform.Flux.Version)
+		if err := platform.ApplySpecs("", "flux.yml"); err != nil {
+			log.Errorf("Failed to deploy flux %+v", err)
 		}
 	}
 

@@ -17,33 +17,35 @@ type PlatformConfig struct {
 	BuildOptions          BuildOptions      `yaml:"-"`
 	Calico                Calico            `yaml:"calico,omitempty"`
 	Certificates          *Certificates     `yaml:"-"`
-	CertManager           Enabled           `yaml:"certManager,omitempty"`
+	CertManager           *Enabled          `yaml:"certManager,omitempty"`
 	Consul                string            `yaml:"consul,omitempty"`
 	ControlPlaneEndpoint  string            `yaml:"-"`
+	Dashboard             *Enabled          `yaml:"dashboard,omitempty"`
 	Datacenter            string            `yaml:"datacenter,omitempty"`
 	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
 	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
 	Domain                string            `yaml:"domain,omitempty"`
 	DryRun                bool              `yaml:"-"`
 	ELK                   ELK               `yaml:"elk,omitempty"`
-	EventRouter           Enabled           `yaml:"eventRouter,omitempty"`
+	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
+	Flux                  *Flux             `yaml:"flux,omitempty"`
 	Harbor                *Harbor           `yaml:"harbor,omitempty"`
 	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
 	JoinEndpoint          string            `yaml:"-"`
 	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
 	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
-	LocalPath             Enabled           `yaml:"localPath,omitempty"`
+	LocalPath             *Enabled          `yaml:"localPath,omitempty"`
 	Master                VM                `yaml:"master,omitempty"`
 	Monitoring            Monitoring        `yaml:"monitoring,omitempty"`
 	Name                  string            `yaml:"name,omitempty"`
-	NamespaceConfigurator Enabled           `yaml:"namespaceConfigurator,omitempty"`
+	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS              `yaml:"nfs,omitempty"`
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
 	OPA                   OPA               `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet,omitempty"`
 	Policies              []string          `yaml:"policies,omitempty"`
-	Quack                 Enabled           `yaml:"quack,omitempty"`
+	Quack                 *Enabled          `yaml:"quack,omitempty"`
 	Resources             map[string]string `yaml:"resources,omitempty"`
 	S3                    S3                `yaml:"s3,omitempty"`
 	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
@@ -52,10 +54,22 @@ type PlatformConfig struct {
 	Specs                 []string          `yaml:"specs,omitempty"`
 	TrustedCA             string            `yaml:"trustedCA,omitempty"`
 	Versions              map[string]string `yaml:"versions,omitempty"`
+	PlatformOperator      *Enabled          `yaml:"platformOperator"`
+	Nginx                 *Enabled          `yaml:"nginx"`
+	Minio                 *Enabled          `yaml:"minio"`
 }
 
+type Flux struct {
+	Disabled   bool   `yaml:"disabled,omitempty"`
+	Image      string `yaml:"image,omitempty" `
+	Version    string `yaml:"version,omitempty"`
+	GitUrl     string `yaml:"gitUrl,omitempty"`
+	GitPath    string `yaml:"gitPath,omitempty"`
+	GitKey     string `yaml:"gitKey,omitempty"`
+	KnownHosts string `yaml:"knownHosts,omitempty"`
+}
 type Enabled struct {
-	Enabled *bool `yaml:"enabled"`
+	Disabled bool `yaml:"disabled"`
 }
 
 type VM struct {
