@@ -150,7 +150,7 @@ func Install(p *platform.Platform) error {
 	}
 
 	pgouser := "build/pgo/conf/postgres-operator/pgouser"
-	kubectl := deps.Binary("kubectl", "", ".bin")
+	kubectl := p.GetKubectl()
 
 	ioutil.WriteFile(pgouser, []byte(passwd), 0644)
 
