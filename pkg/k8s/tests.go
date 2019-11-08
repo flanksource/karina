@@ -20,7 +20,7 @@ func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResult
 	}
 
 	if len(list.Items) == 0 {
-		t.Failf(ns, "Expected pods but none running - did you deploy?")
+		t.Failf(ns, "[%s] Expected pods but none running - did you deploy?", ns)
 	}
 	for _, pod := range list.Items {
 		if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
@@ -40,7 +40,7 @@ func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResult
 				}
 				msg += fmt.Sprintf("%s: %s ", event.Reason, event.Message)
 			}
-			t.Failf(ns, "%s=%s %s ", pod.Name, pod.Status.Phase, msg)
+			t.Failf(ns, "%s/%s=%s %s ", ns, pod.Name, pod.Status.Phase, msg)
 		}
 	}
 	// check all pods running or completed with < 3 restarts
