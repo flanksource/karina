@@ -15,6 +15,10 @@ pack:
 linux:
 	GOOS=linux packr2 build -o ./.bin/platform-cli -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
 
+.PHONY: darwin
+linux:
+	GOOS=darwin packr2 build -o ./.bin/platform-cli_osx -ldflags "-X \"main.version=$(shell date "+%Y-%m-%d %H:%M:%S")\""  main.go
+
 .PHONY: install
 install: build
 	cp ./.bin/platform-cli /usr/local/bin/
