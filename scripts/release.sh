@@ -8,10 +8,14 @@ if [[ "$TAG" == "" ]];  then
   exit 0
 fi
 
-make setup linux darwin
+go get -u github.com/gobuffalo/packr/v2/packr2
+
+GOOS=linux packr2 build -o $NAME -ldflags "-X \"main.version=v$TAG built $(date "+%Y-%m-%d %H:%M:%S")\""  main.go
+
+GOOS=darwin packr2 build -o ${NAME}_osx -ldflags "-X \"main.version=v$TAG built $(date "+%Y-%m-%d %H:%M:%S")\""  main.go
 
 GO111MODULE=off go get github.com/aktau/github-release
 go get github.com/aktau/github-release
 github-release release -u $GITHUB_USER -r ${NAME} --tag $TAG
-github-release upload -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME} -f .bin/${NAME}
-github-release upload -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME}_osx -f .bin/${NAME}_osx
+github-release upload -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME} -f ${NAME}_osx
+github-release upload -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME}_osx -f ${NAME}_osx
