@@ -117,10 +117,8 @@ func Cluster(platform *platform.Platform) error {
 	for _, worker := range platform.Nodes {
 		vmware.LoadGovcEnvVars(&worker)
 		prefix := fmt.Sprintf("%s-%s-%s*", platform.HostPrefix, platform.Name, worker.Prefix)
-		list, err := platform.GetSession().Finder.VirtualMachineList(context.TODO(), prefix)
-		if err != nil {
-			return err
-		}
+		// ignore vm not found errors
+		list, _ := platform.GetSession().Finder.VirtualMachineList(context.TODO(), prefix)
 
 		for i := 0; i < worker.Count-len(list); i++ {
 			time.Sleep(1 * time.Second)
