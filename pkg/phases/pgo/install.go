@@ -126,6 +126,9 @@ func ClientSetup(p *platform.Platform) error {
 }
 
 func Install(p *platform.Platform) error {
+	if p.PGO == nil || p.PGO.Disabled {
+		return nil
+	}
 	ENV := getEnv(p)
 	for k, v := range ENV {
 		log.Tracef("export %s=%s\n", k, v)

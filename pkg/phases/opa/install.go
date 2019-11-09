@@ -15,6 +15,9 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
+	if platform.OPA == nil || platform.OPA.Disabled {
+		return nil
+	}
 
 	platform.GetKubectl()("create ns opa")
 	platform.GetKubectl()("label ns opa app=opa")

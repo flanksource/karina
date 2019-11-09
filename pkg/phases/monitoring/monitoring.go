@@ -13,6 +13,10 @@ import (
 
 func Install(p *platform.Platform) error {
 
+	if p.Monitoring == nil || p.Monitoring.Disabled {
+		return nil
+	}
+
 	jb := p.GetBinary("jb")
 	jsonnet := p.GetBinary("jsonnet")
 	kubectl := p.GetKubectl()

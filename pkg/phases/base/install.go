@@ -2,6 +2,7 @@ package base
 
 import (
 	"os"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -21,8 +22,10 @@ func Install(platform *platform.Platform) error {
 			log.Errorf("Error deploying cert manager CRDs: %s\n", err)
 		}
 
-		//deploy cert-manager twice due to: Internal error occurred: failed calling webhook "webhook.cert-manager.io": the server could not find the requested resource
+		// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
+		// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
 		var _ = platform.ApplySpecs("", "cert-manager-deploy.yml")
+		platform.WaitForNamespace("cert-manager", 180*time.Second)
 		if err := platform.ApplySpecs("", "cert-manager-deploy.yml"); err != nil {
 			log.Errorf("Error deploying cert manager: %s\n", err)
 		}
@@ -72,7 +75,7 @@ func Install(platform *platform.Platform) error {
 
 	if platform.Minio == nil || !platform.Minio.Disabled {
 		log.Infof("Installing minio")
-		if err := platform.ApplySpecs("", "minio.yml"); err != nil {
+		if err := platform.ApplySpecs("", "minio.yaml"); err != nil {
 			log.Errorf("Error deploying minio: %s\n", err)
 		}
 	}

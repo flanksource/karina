@@ -51,7 +51,7 @@ func init() {
 	var _opa = &cobra.Command{
 		Use:   "opa",
 		Short: "Build and deploy opa aka gatekeeper",
-	}	
+	}
 	_opa.AddCommand(&cobra.Command{
 		Use:   "install",
 		Short: "Install opa control plane into the cluster",
@@ -63,7 +63,7 @@ func init() {
 		},
 	})
 
-	_opa.AddCommand(	&cobra.Command{
+	_opa.AddCommand(&cobra.Command{
 		Use:   "policies",
 		Short: "deploy opa policies into the cluster",
 		Args:  cobra.MinimumNArgs(1),
@@ -169,5 +169,5 @@ func init() {
 		},
 	})
 
-	Deploy.AddCommand(_pgo,_opa, all)
+	Deploy.AddCommand(_pgo, _opa, all)
 }

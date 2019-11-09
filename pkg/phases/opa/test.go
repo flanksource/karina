@@ -3,10 +3,11 @@ package opa
 import (
 	"io/ioutil"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/moshloop/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
 )
 
 func TestNamespace(p *platform.Platform, test *console.TestResults) {
@@ -15,6 +16,10 @@ func TestNamespace(p *platform.Platform, test *console.TestResults) {
 }
 
 func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestResults) {
+	if p.OPA == nil || p.OPA.Disabled {
+		test.Skipf("opa", "OPA is not configured")
+		return
+	}
 	kubectl := p.GetKubectl()
 	kubectl("apply -f test/opa/namespaces/")
 	kubectl("apply -f test/opa/ingress-duplicate.yaml")

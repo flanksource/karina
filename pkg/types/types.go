@@ -36,12 +36,12 @@ type PlatformConfig struct {
 	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
 	LocalPath             *Enabled          `yaml:"localPath,omitempty"`
 	Master                VM                `yaml:"master,omitempty"`
-	Monitoring            Monitoring        `yaml:"monitoring,omitempty"`
+	Monitoring            *Monitoring       `yaml:"monitoring,omitempty"`
 	Name                  string            `yaml:"name,omitempty"`
 	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS              `yaml:"nfs,omitempty"`
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	OPA                   OPA               `yaml:"opa,omitempty"`
+	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet,omitempty"`
 	Policies              []string          `yaml:"policies,omitempty"`
@@ -98,6 +98,7 @@ type Calico struct {
 }
 
 type OPA struct {
+	Disabled        bool   `yaml:"disabled,omitempty"`
 	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
 	Version         string `yaml:"version,omitempty"`
 }
