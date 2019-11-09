@@ -5,7 +5,7 @@ NAME:=platform-cli
 VERSION:=v$(shell git tag --points-at HEAD ) $(shell date "+%Y-%m-%d %H:%M:%S")
 .PHONY: setup
 setup:
-	which packr2 2>&1 > /dev/null || go get -u github.com/gobuffalo/packr/v2/packr2
+	which packr2 2>&1 > /dev/null || go get github.com/gobuffalo/packr/v2/packr2
 
 .PHONY: build
 build: setup
