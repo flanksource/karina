@@ -29,9 +29,12 @@ if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
 $BIN version
-$BIN deploy base -v
+
 $BIN deploy calico -v
+
 .bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+
+$BIN deploy base -v
 
 $BIN deploy stubs -v
 
