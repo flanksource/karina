@@ -18,7 +18,7 @@ if ! which expenv 2>&1 > /dev/null; then
 fi
 
 if go version | grep  go1.12; then
-  make setup pack
+  make pack
 else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:1.12 setup pack
 fi
@@ -28,21 +28,21 @@ if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
-$BIN version
+# $BIN version
 
-$BIN deploy calico -v
+# $BIN deploy calico -v
 
-.bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+# .bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 
-$BIN deploy base -v
+# $BIN deploy base -v
 
-$BIN deploy stubs -v
+# $BIN deploy stubs -v
 
-$BIN test base --wait 200
+# $BIN test base --wait 200
 
-$BIN deploy pgo install -v
+# $BIN deploy pgo install -v
 
-$BIN test pgo --wait 200
+# $BIN test pgo --wait 200
 
 $BIN deploy harbor -v
 
@@ -59,7 +59,7 @@ if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.x
   failed=true
 fi
 
-if [[ "$failed" = false ]]; then
+if [[ "$failed" = true ]]; then
   exit 1
 fi
 
