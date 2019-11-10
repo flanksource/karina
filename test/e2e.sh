@@ -28,21 +28,21 @@ if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
-# $BIN version
+$BIN version
 
-# $BIN deploy calico -v
+$BIN deploy calico -v
 
-# .bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+.bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 
-# $BIN deploy base -v
+$BIN deploy base -v
 
-# $BIN deploy stubs -v
+$BIN deploy stubs -v
 
-# $BIN test base --wait 200
+$BIN test base --wait 200
 
-# $BIN deploy pgo install -v
+$BIN deploy pgo install -v
 
-# $BIN test pgo --wait 200
+$BIN test pgo --wait 200
 
 $BIN deploy harbor -v
 
