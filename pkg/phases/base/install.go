@@ -16,6 +16,10 @@ func Install(platform *platform.Platform) error {
 		log.Errorf("Error deploying base rbac: %s\n", err)
 	}
 
+	if err := platform.ApplySpecs("", "tiller.yml"); err != nil {
+		log.Errorf("Error deploying tiller: %s\n", err)
+	}
+
 	if platform.CertManager == nil || !platform.CertManager.Disabled {
 		log.Infof("Installing CertMananager")
 		if err := platform.ApplySpecs("", "cert-manager-crd.yml"); err != nil {

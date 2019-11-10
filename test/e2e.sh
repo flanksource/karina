@@ -50,6 +50,16 @@ $BIN deploy all -v
 
 $BIN deploy opa policies test/opa/policies -v
 
-$BIN test all -v --wait 240 --junit-path test-results/results.xml
+failed=false
+if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
+  failed=true
+fi
 
-$BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.xml
+if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.xml; then
+  failed=true
+fi
+
+if [[ "$failed" = false ]]; then
+  exit 1
+fi
+

@@ -11,8 +11,8 @@ fi
 
 VERSION="v$TAG built $(date)"
 
-which packr2 2>&1 > /dev/null || go get -u github.com/gobuffalo/packr/v2/packr2
-which github-release 2>&1 > /dev/null || go get -u github.com/aktau/github-release
+which packr2 2>&1 > /dev/null || go get github.com/gobuffalo/packr/v2/packr2
+which github-release 2>&1 > /dev/null || go get github.com/aktau/github-release
 
 echo Building $NAME $VERSION
 GOOS=linux packr2 build -o $NAME -ldflags "-X \"main.version=$VERSION\""  main.go
