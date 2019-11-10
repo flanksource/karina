@@ -62,7 +62,7 @@ func Deploy(p *platform.Platform) error {
 	if log.IsLevelEnabled((log.TraceLevel)) {
 		debug = "--debug"
 	}
-	helm("init --service-account tiller --upgrade --wait")
+
 	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
 		return err
 	}

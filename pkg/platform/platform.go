@@ -164,7 +164,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 		return platform.GetBinary("kubectl")
 	}
 
-	log.Infof("Using KUBECONFIG=%s", kubeconfig)
+	log.Tracef("Using KUBECONFIG=%s", kubeconfig)
 	return deps.BinaryWithEnv("kubectl", platform.Kubernetes.Version, ".bin", map[string]string{
 		"KUBECONFIG": kubeconfig,
 	})
@@ -471,7 +471,6 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 	}
 	return nil
 }
-
 
 func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	client, err := platform.GetClientset()
