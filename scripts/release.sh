@@ -13,6 +13,7 @@ VERSION="v$TAG built $(date)"
 
 which packr2 2>&1 > /dev/null || go get github.com/gobuffalo/packr/v2/packr2
 which github-release 2>&1 > /dev/null || go get github.com/aktau/github-release
+which upx 2>&1 >  /dev/null  || (sudo apt-get update && sudo apt-get install -y upx-ucl)
 
 echo Building $NAME $VERSION
 GOOS=linux packr2 build -o $NAME -ldflags "-X \"main.version=$VERSION\""  main.go
