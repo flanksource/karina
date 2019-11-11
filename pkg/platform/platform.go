@@ -140,7 +140,8 @@ func (platform *Platform) GetKubeConfig() (string, error) {
 		log.Tracef("Using KUBECONFIG from ENV\n")
 		return os.Getenv("KUBECONFIG"), nil
 	}
-	name := platform.Name + "-admin.yml"
+	cwd, _ := os.Getwd()
+	name := cwd + "/" + platform.Name + "-admin.yml"
 	if !is.File(name) {
 		data, err := CreateKubeConfig(platform, platform.GetMasterIPs()[0])
 		if err != nil {
@@ -167,6 +168,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 	log.Tracef("Using KUBECONFIG=%s", kubeconfig)
 	return deps.BinaryWithEnv("kubectl", platform.Kubernetes.Version, ".bin", map[string]string{
 		"KUBECONFIG": kubeconfig,
+		"PATH":       os.Getenv("PATH"),
 	})
 }
 
@@ -259,10 +261,19 @@ func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
 	return kubernetes.NewForConfigOrDie(cfg), nil
 }
 
-func (platform *Platform) Template(file string) (string, error) {
+func (platform *Platform) GetResourceByName(file string) (string, error) {
+
 	// set up a new box by giving it a name and an optional (relative) path to a folder on disk:
 	box := packr.New("manifests", "../../manifests")
 	raw, err := box.FindString(file)
+	if err != nil {
+		return "", err
+	}
+	return raw, nil
+}
+
+func (platform *Platform) Template(file string) (string, error) {
+	raw, err := platform.GetResourceByName(file)
 	if err != nil {
 		return "", err
 	}
