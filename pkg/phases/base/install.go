@@ -113,7 +113,7 @@ func Install(platform *platform.Platform) error {
 			platform.Flux.Image = "docker.io/fluxcd/flux"
 		}
 		log.Infof("Deploying Flux %s", platform.Flux.Version)
-		if err := platform.ApplySpecs("", "flux.yml"); err != nil {
+		if err := platform.ApplySpecs("", "flux.yaml"); err != nil {
 			log.Errorf("Failed to deploy flux %+v", err)
 		}
 	}
