@@ -4,10 +4,9 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.47.0 // indirect
-	cloud.google.com/go/bigquery v1.1.0 // indirect
-	cloud.google.com/go/storage v1.1.2 // indirect
+	cloud.google.com/go/bigquery v1.2.0 // indirect
+	cloud.google.com/go/storage v1.2.1 // indirect
 	github.com/dghubble/sling v1.3.0
-	github.com/gobuffalo/packd v0.3.0
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
@@ -15,7 +14,7 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.6
-	github.com/jstemmer/go-junit-report v0.9.1 // indirect
+	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/miekg/dns v1.1.22
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/moshloop/commons v0.0.3-0.20191104124838-faba5f315c26
@@ -28,16 +27,15 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vmware/govmomi v0.20.2
 	go.opencensus.io v0.22.1 // indirect
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/exp v0.0.0-20191024150812-c286b889502e // indirect
-	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
-	golang.org/x/sys v0.0.0-20191027211539-f8518d3b3627 // indirect
+	golang.org/x/crypto v0.0.0-20191107222254-f4817d981bb6 // indirect
+	golang.org/x/net v0.0.0-20191108063844-7e6e90b9ea88 // indirect
+	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	golang.org/x/tools v0.0.0-20191026034945-b2104f82a97d // indirect
+	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
-	google.golang.org/grpc v1.24.0 // indirect
+	google.golang.org/grpc v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.5
 	k8s.io/api v0.0.0-20190831074750-7364b6bdad65
 	k8s.io/apimachinery v0.0.0-20190831074630-461753078381
 	k8s.io/client-go v0.0.0-20190819141724-e14f31a72a77

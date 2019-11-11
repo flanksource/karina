@@ -9,7 +9,7 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 	kubectl := p.GetKubectl()
-	dir, err := p.TemplateDir("monitoring/")
+	dir, err := p.TemplateDir("/monitoring")
 	if err != nil {
 		return err
 	}

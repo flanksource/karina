@@ -5,26 +5,33 @@ NAME:=platform-cli
 VERSION:=v$(shell git tag --points-at HEAD ) $(shell date "+%Y-%m-%d %H:%M:%S")
 .PHONY: setup
 setup:
-	which packr2 2>&1 > /dev/null || go get github.com/gobuffalo/packr/v2/packr2
+	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
+	which github-release 2>&1 > /dev/null || go get github.com/aktau/github-release
+
 
 .PHONY: build
-build: setup
+build:
 	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
 
 .PHONY: pack
-pack:
-	packr2 build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
+pack: setup
+	esc --prefix "manifests/" --ignore "static.go" -o manifests/static.go --pkg manifests manifests
 
 .PHONY: linux
-linux: setup
-	GOOS=linux packr2 build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
+linux:
+	GOOS=linux go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
 
 .PHONY: darwin
-darwin: setup
-	GOOS=darwin packr2 build -o ./.bin/$(NAME)_osx -ldflags "-X \"main.version=$(VERSION)\""  main.go
+darwin:
+	GOOS=darwin go build -o ./.bin/$(NAME)_osx -ldflags "-X \"main.version=$(VERSION)\""  main.go
+
+.PHONY: compress
+compress:
+	which upx 2>&1 >  /dev/null  || (sudo apt-get update && sudo apt-get install -y upx-ucl)
+	upx ./.bin/$(NAME) ./.bin/$(NAME)_osx
 
 .PHONY: install
-install: build
+install:
 	cp ./.bin/$(NAME) /usr/local/bin/
 
 .PHONY: docker

@@ -17,3 +17,4 @@ hack/
 .manifests/
 kind
 test-results/
+manifests/static.go

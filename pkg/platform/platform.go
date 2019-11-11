@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/gobuffalo/packd"
-	"github.com/gobuffalo/packr/v2"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
@@ -23,10 +22,10 @@ import (
 	kapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/moshloop/commons/deps"
-	"github.com/moshloop/commons/files"
 	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
@@ -262,10 +261,10 @@ func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
 }
 
 func (platform *Platform) GetResourceByName(file string) (string, error) {
-
-	// set up a new box by giving it a name and an optional (relative) path to a folder on disk:
-	box := packr.New("manifests", "../../manifests")
-	raw, err := box.FindString(file)
+	if !strings.HasPrefix(file, "/") {
+		file = "/" + file
+	}
+	raw, err := manifests.FSString(false, file)
 	if err != nil {
 		return "", err
 	}
@@ -286,28 +285,38 @@ func (platform *Platform) Template(file string) (string, error) {
 	return template, nil
 }
 
-func (platform *Platform) TemplateDir(dir string) (string, error) {
-	// set up a new box by giving it a name and an optional (relative) path to a folder on disk:
-	box := packr.New(dir, "../../manifests/"+dir)
+func (platform *Platform) TemplateDir(path string) (string, error) {
+	fs := manifests.FS(false)
+
 	tmp, _ := ioutil.TempDir("", "template")
 
-	if err := box.Walk(func(path string, file packd.File) error {
-		to := tmp + "/" + path
-		log.Debugf("Extracting %s\n", to)
-		info, _ := file.FileInfo()
-		_, err := files.CopyFromReader(file, to, info.Mode())
-		if err != nil {
-			log.Errorf("Error extracting %s: %v\n", path, err)
-			return err
-		}
-		if err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
+	dir, err := fs.Open(path)
+	if err != nil {
 		return "", err
 	}
-	dst := ".manifests/" + dir
+	files, err := dir.Readdir(-1)
+	if err != nil {
+		return "", err
+	}
+
+	for _, info := range files {
+		to := tmp + "/" + info.Name()
+		log.Debugf("Extracting %s\n", to)
+		destination, err := os.Create(to)
+		if err != nil {
+			return "", err
+		}
+		defer destination.Close()
+		file, err := fs.Open(path + "/" + info.Name())
+		if err != nil {
+			return "", err
+		}
+		_, err = io.Copy(destination, file)
+		if err != nil {
+			return "", err
+		}
+	}
+	dst := ".manifests/" + path
 	os.RemoveAll(dst)
 	os.MkdirAll(dst, 0775)
 	return dst, text.TemplateDir(tmp, dst, platform.PlatformConfig)
