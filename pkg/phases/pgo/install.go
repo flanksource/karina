@@ -81,6 +81,9 @@ func getEnv(p *platform.Platform) map[string]string {
 }
 
 func ClientSetup(p *platform.Platform) error {
+	if p.PGO == nil || p.PGO.Disabled {
+		return nil
+	}
 	ENV := getEnv(p)
 
 	if p.DryRun {

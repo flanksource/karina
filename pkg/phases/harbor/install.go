@@ -14,6 +14,12 @@ import (
 )
 
 func Deploy(p *platform.Platform) error {
+	if p.Harbor == nil || p.Harbor.Disabled {
+		log.Infof("Skipping deployment of harbor, it is disabled")
+		return nil
+	} else {
+		log.Infof("Deploying harbor %s", p.Harbor.Version)
+	}
 	defaults(p)
 	if p.Harbor.DB == nil {
 		db, err := pgo.GetOrCreateDB(p, dbCluster, p.Harbor.Replicas)

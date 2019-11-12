@@ -180,7 +180,7 @@ func (platform *Platform) GetSecret(namespace, name string) *map[string][]byte {
 	}
 	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("Failed tp get secret %s/%s: %v\n", namespace, name, err)
+		log.Tracef("Failed to get secret %s/%s: %v\n", namespace, name, err)
 		return nil
 	}
 	return &secret.Data

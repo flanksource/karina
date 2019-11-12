@@ -28,9 +28,12 @@ if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
+
 $BIN version
 
 $BIN deploy calico -v
+
+[[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 .bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 
@@ -51,6 +54,9 @@ $BIN deploy all -v
 $BIN deploy opa install -v
 
 $BIN deploy opa policies test/opa/policies -v
+
+echo "Sleeping for 30s, waiting for OPA policies to load"
+sleep 30
 
 failed=false
 if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
