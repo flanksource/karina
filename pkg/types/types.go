@@ -54,9 +54,9 @@ type PlatformConfig struct {
 	Specs                 []string          `yaml:"specs,omitempty"`
 	TrustedCA             string            `yaml:"trustedCA,omitempty"`
 	Versions              map[string]string `yaml:"versions,omitempty"`
-	PlatformOperator      *Enabled          `yaml:"platformOperator"`
-	Nginx                 *Enabled          `yaml:"nginx"`
-	Minio                 *Enabled          `yaml:"minio"`
+	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
+	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
+	Minio                 *Enabled          `yaml:"minio,omitempty"`
 }
 
 type Flux struct {

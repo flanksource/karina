@@ -86,7 +86,7 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (string, error) {
 		PowerOn: true,
 	}
 
-	log.Infof("Cloning %s to %s\n", vm.Template, vm.Name)
+	log.Infof("Cloning %s to %s", vm.Template, vm.Name)
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
@@ -102,7 +102,7 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Infof("Cloned VM: %s\n", obj.UUID(ctx))
+	log.Infof("Cloned VM: %s", obj.UUID(ctx))
 	ips, err := obj.WaitForNetIP(context.TODO(), true)
 	if err != nil {
 		return "", nil
@@ -140,18 +140,18 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 		}
 		op = types.VirtualDeviceConfigSpecOperationAdd
 	}
-	log.Infof("Creating ISO for %s\n", vm.Name)
+	log.Infof("Creating ISO for %s", vm.Name)
 	iso, err := cloudinit.CreateISO(vm.Name, config.ToCloudInit().String())
 	if err != nil {
 		return nil, err
 	}
 	path := fmt.Sprintf("cloud-init/%s.iso", vm.Name)
-	log.Infof("Uploading to [%s] %s\n", datastore.Name(), path)
+	log.Infof("Uploading to [%s] %s", datastore.Name(), path)
 	if err = datastore.UploadFile(context.TODO(), iso, path, &soap.DefaultUpload); err != nil {
 		log.Infof("%+v\n", err)
 		return nil, err
 	}
-	log.Infof("Uploaded to %s\n", path)
+	log.Tracef("Uploaded to %s", path)
 	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", vm.Datastore, path))
 	devices.Connect(cdrom)
 	return &types.VirtualDeviceConfigSpec{
