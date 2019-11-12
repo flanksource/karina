@@ -12,7 +12,7 @@ import (
 )
 
 func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *console.TestResults) {
-	if p.OPA != nil && !p.OPA.Disabled {
+	if p.OPA != nil && p.OPA.Disabled {
 		test.Skipf("opa", "OPA is not configured")
 		return
 	}
@@ -20,7 +20,7 @@ func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *cons
 }
 
 func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestResults) {
-	if p.OPA != nil && !p.OPA.Disabled {
+	if p.OPA != nil && p.OPA.Disabled {
 		test.Skipf("opa", "OPA is not configured")
 		return
 	}

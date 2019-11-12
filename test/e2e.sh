@@ -48,6 +48,8 @@ $BIN deploy harbor -v
 
 $BIN deploy all -v
 
+$BIN deploy opa install -v
+
 $BIN deploy opa policies test/opa/policies -v
 
 failed=false

@@ -16,7 +16,7 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.OPA != nil && !platform.OPA.Disabled {
+	if platform.OPA != nil && platform.OPA.Disabled {
 		return nil
 	} else if platform.OPA == nil {
 		platform.OPA = &types.OPA{
