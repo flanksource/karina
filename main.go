@@ -48,7 +48,7 @@ func main() {
 		cmd.Deploy,
 		cmd.Harbor,
 		cmd.DNS,
-		cmd.Render)
+		cmd.Render, cmd.Snapshot)
 
 	if len(commit) > 8 {
 		version = fmt.Sprintf("%v, commit %v, built at %v", version, commit[0:8], date)
