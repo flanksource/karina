@@ -64,11 +64,10 @@ func init() {
 	}
 	Test.PersistentFlags().IntVar(&wait, "wait", 0, "Time in seconds to wait for tests to pass")
 	Test.PersistentFlags().IntVar(&waitInterval, "wait-interval", 5, "Time in seconds to wait between repeated tests")
-
 	Test.PersistentFlags().StringVar(&junitPath, "junit-path", "", "Path to export JUnit formatted test results")
 	Test.AddCommand(&cobra.Command{
 		Use:   "harbor",
-		Short: "Test harbor installation",
+		Short: "Test harbor",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(harbor.Test)
@@ -77,7 +76,7 @@ func init() {
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "dex",
-		Short: "Test dex ",
+		Short: "Test dex",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(dex.Test)
@@ -86,7 +85,7 @@ func init() {
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "opa",
-		Short: "test opa",
+		Short: "Test opa policies using a fixtures director",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(func(p *platform.Platform, test *console.TestResults) {
@@ -97,7 +96,7 @@ func init() {
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "pgo",
-		Short: "Test postgres operator ",
+		Short: "Test postgres operator",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(pgo.Test)
@@ -106,7 +105,7 @@ func init() {
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "base",
-		Short: "Test base installation",
+		Short: "Test base",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(base.Test)
@@ -115,7 +114,7 @@ func init() {
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "monitoring",
-		Short: "Test monitoring stack installation",
+		Short: "Test monitoring stack",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(monitoring.Test)
@@ -127,8 +126,9 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(func(p *platform.Platform, test *console.TestResults) {
+				client, _ := p.GetClientset()
 				base.Test(p, test)
-				opa.TestNamespace(p, test)
+				opa.TestNamespace(p, client, test)
 				pgo.Test(p, test)
 				harbor.Test(p, test)
 				dex.Test(p, test)

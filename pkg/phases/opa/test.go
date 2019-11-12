@@ -4,22 +4,27 @@ import (
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/moshloop/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
-func TestNamespace(p *platform.Platform, test *console.TestResults) {
-	client, _ := p.GetClientset()
+func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *console.TestResults) {
+	if p.OPA != nil && !p.OPA.Disabled {
+		test.Skipf("opa", "OPA is not configured")
+		return
+	}
 	k8s.TestNamespace(client, "opa", test)
 }
 
 func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestResults) {
-	if p.OPA == nil || p.OPA.Disabled {
+	if p.OPA != nil && !p.OPA.Disabled {
 		test.Skipf("opa", "OPA is not configured")
 		return
 	}
+
 	kubectl := p.GetKubectl()
 	kubectl("apply -f test/opa/namespaces/")
 	kubectl("apply -f test/opa/ingress-duplicate.yaml")

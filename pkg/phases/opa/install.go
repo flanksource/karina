@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
@@ -15,8 +16,12 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.OPA == nil || platform.OPA.Disabled {
+	if platform.OPA != nil && !platform.OPA.Disabled {
 		return nil
+	} else if platform.OPA == nil {
+		platform.OPA = &types.OPA{
+			Version:         "0.13.5",
+			KubeMgmtVersion: "0.8"}
 	}
 
 	platform.GetKubectl()("create ns opa")
