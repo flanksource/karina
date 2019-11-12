@@ -3,7 +3,6 @@ package opa
 import (
 	"io/ioutil"
 
-	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/moshloop/commons/console"
@@ -26,20 +25,27 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 	}
 
 	kubectl := p.GetKubectl()
-	kubectl("apply -f test/opa/namespaces/")
-	kubectl("apply -f test/opa/ingress-duplicate.yaml")
+	if err := kubectl("apply -f test/opa/namespaces/"); err != nil {
+		test.Failf("opa", "Failed to setup namespaces: %v", err)
+		return
+	}
+	if err := kubectl("apply -f test/opa/ingress-duplicate.yaml"); err != nil {
+		test.Failf("opa", "Failed to create ingress: %v", err)
+		return
+	}
 
 	rejectedFixturesPath := fixturesPath + "/rejected"
 	acceptedFixturesPath := fixturesPath + "/accepted"
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-		log.Fatal(err)
+
 	}
 
 	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)
 	if err != nil {
-		log.Fatal(err)
+		test.Failf("opa", "Failed to list accepted fixtures: %v", err)
+		return
 	}
 
 	for _, rejectedFixture := range rejectedFixtureFiles {
