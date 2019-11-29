@@ -3,14 +3,15 @@ package phases
 import (
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
+
+	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
@@ -29,7 +30,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.Networking.PodSubnet = cfg.PodSubnet
 	cluster.DNS.Type = "CoreDNS"
 	cluster.Etcd.Local.DataDir = "/var/lib/etcd"
-	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1"}
+	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = map[string]string{
 		"oidc-issuer-url":     "https://dex." + cfg.Domain,
