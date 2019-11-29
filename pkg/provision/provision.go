@@ -29,11 +29,12 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 	}
 	log.Infof("Using konfigadm spec: %s\n", konfigs)
 	ip, err := platform.Clone(*vm, konfig)
+	vm.IP = ip
 
 	if err != nil {
 		return err
 	}
-	log.Infof("Provisioned  %s ->  %s\n", vm.Name, ip)
+	log.Infof("Provisioned  %s ->  %s\n", vm.Name, vm.IP)
 	return nil
 }
 
