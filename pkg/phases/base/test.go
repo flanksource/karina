@@ -27,8 +27,4 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 		k8s.TestNamespace(client, "minio", test)
 	}
 
-	if platform.Flux != nil && !platform.Flux.Disabled {
-		k8s.TestNamespace(client, "flux", test)
-	}
-
 }

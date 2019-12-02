@@ -28,9 +28,9 @@ type PlatformConfig struct {
 	DryRun                bool              `yaml:"-"`
 	ELK                   ELK               `yaml:"elk,omitempty"`
 	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
-	Flux                  *Flux             `yaml:"flux,omitempty"`
 	Harbor                *Harbor           `yaml:"harbor,omitempty"`
 	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
+	GitOps                []GitOps          `yaml:"gitops,omitempty"`
 	JoinEndpoint          string            `yaml:"-"`
 	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
 	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
@@ -59,15 +59,6 @@ type PlatformConfig struct {
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
 }
 
-type Flux struct {
-	Disabled   bool   `yaml:"disabled,omitempty"`
-	Image      string `yaml:"image,omitempty" `
-	Version    string `yaml:"version,omitempty"`
-	GitUrl     string `yaml:"gitUrl,omitempty"`
-	GitPath    string `yaml:"gitPath,omitempty"`
-	GitKey     string `yaml:"gitKey,omitempty"`
-	KnownHosts string `yaml:"knownHosts,omitempty"`
-}
 type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
@@ -85,6 +76,7 @@ type VM struct {
 	MemoryGB     int64  `yaml:"memory,omitempty"`
 	Network      string `yaml:"network,omitempty"`
 	DiskGB       int    `yaml:"disk,omitempty"`
+	IP           string `yaml:"-"`
 }
 
 type Calico struct {
@@ -284,6 +276,45 @@ type ELK struct {
 }
 
 type Dex struct {
+}
+
+type GitOps struct {
+
+	// The name of the gitops deployment, defaults to namespace name
+	Name string `yaml:"name,omitempty"`
+
+	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
+	Namespace string `yaml:"namespace,omitempty"`
+
+	// The URL to git repository to clone (required).
+	GitUrl string `yaml:"gitUrl,omitempty"`
+
+	// The git branch to use (default: master).
+	GitBranch string `yaml:"gitBranch,omitempty"`
+
+	// The path with in the git repository to look for YAML in (default: .).
+	GitPath string `yaml:"gitPath,omitempty"`
+
+	// The frequency with which to fetch the git repository (default: 5m0s).
+	GitPollInterval string `yaml:"gitPollInterval,omitempty"`
+
+	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s).
+	SyncInterval string `yaml:"syncInterval,omitempty"`
+
+	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME).
+	GitKey string `yaml:"gitKey,omitempty"`
+
+	// The contents of the known_hosts file to mount into Flux and helm-operator.
+	KnownHosts string `yaml:"knownHosts,omitempty"`
+
+	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator.
+	SSHConfig string `yaml:"sshConfig,omitempty"`
+
+	// The version to use for flux (default: 1.4.0 or $FLUX_VERSION)
+	FluxVersion string `yaml:"fluxVersion,omitempty"`
+
+	// a map of args to pass to flux without -- prepended.
+	Args map[string]string `yaml:"args,omitempty"`
 }
 
 type Versions struct {
