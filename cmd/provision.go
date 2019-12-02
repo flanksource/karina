@@ -38,6 +38,7 @@ var vm = &cobra.Command{
 		network, _ := cmd.Flags().GetString("network")
 		datastore, _ := cmd.Flags().GetString("datastore")
 		pool, _ := cmd.Flags().GetString("resource-pool")
+		dns, _ := cmd.Flags().GetString("dns")
 		platform := getPlatform(cmd)
 		//copy master config
 		vm := platform.Master
@@ -46,13 +47,13 @@ var vm = &cobra.Command{
 		vm.DiskGB = disk
 		vm.CPUs = int32(cpu)
 		vm.Name = platform.HostPrefix + name
-		if vm.Datastore != "" {
+		if datastore != "" {
 			vm.Datastore = datastore
 		}
-		if vm.Network != "" {
+		if network != "" {
 			vm.Network = network
 		}
-		if vm.ResourcePool != "" {
+		if pool != "" {
 			vm.ResourcePool = pool
 		}
 		if template != "" {
@@ -62,12 +63,19 @@ var vm = &cobra.Command{
 		if err := provision.VM(platform, &vm, specs...); err != nil {
 			log.Fatalf("Failed to provision vm, %s", err)
 		}
+		if dns != "" {
+			if err := platform.GetDNSClient().Append(dns, vm.IP); err != nil {
+				log.Fatalf("Failed to update DNS %s => %s: %v", dns, vm.IP, err)
+			}
+		}
+
 	},
 }
 
 func init() {
 	Provision.AddCommand(cluster, vm)
 	vm.Flags().String("name", "", "Name of vm")
+	vm.Flags().String("dns", "", "DNS entry to add")
 	vm.Flags().String("template", "", "template to use")
 	vm.Flags().String("network", "", "network to use")
 	vm.Flags().String("datastore", "", "datastore to")

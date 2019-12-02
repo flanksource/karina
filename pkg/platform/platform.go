@@ -12,10 +12,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -43,6 +40,7 @@ type Platform struct {
 
 func (platform *Platform) Init() {
 	platform.Client.GetKubeConfig = platform.GetKubeConfig
+	platform.Client.ApplyDryRun = platform.DryRun
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
@@ -344,118 +342,11 @@ func (platform *Platform) Annotate(objectType, name, namespace string, annotatio
 	return kubectl("annotate %s %s %s %s", objectType, name, strings.Join(lines, " "), namespace)
 }
 
-func (platform *Platform) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
-	k8s, err := platform.GetClientset()
-	if err != nil {
-		return err
-	}
-	configs := k8s.CoreV1().Secrets(ns)
-	cm, err := configs.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data,
-		}
-		log.Infof("Creating %s/secret/%s", ns, name)
-		if !platform.DryRun {
-			if _, err := configs.Create(cm); err != nil {
-				return err
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !platform.DryRun {
-			log.Infof("Updating %s/secret/%s", ns, name)
-			if _, err := configs.Update(cm); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (platform *Platform) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
-	k8s, err := platform.GetClientset()
-	if err != nil {
-		return err
-	}
-	configs := k8s.CoreV1().ConfigMaps(ns)
-	cm, err := configs.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data}
-		log.Infof("Creating %s/cm/%s", ns, name)
-		if !platform.DryRun {
-			if _, err := configs.Create(cm); err != nil {
-				return err
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !platform.DryRun {
-			log.Infof("Updating %s/cm/%s", ns, name)
-			if _, err := configs.Update(cm); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) error {
-	k8s, err := platform.GetClientset()
-	if err != nil {
-		return err
-	}
-	domain := fmt.Sprintf("%s.%s", service, platform.Domain)
-	ingresses := k8s.NetworkingV1beta1().Ingresses(namespace)
-	ingress, err := ingresses.Get(service, metav1.GetOptions{})
-	if ingress == nil || err != nil {
-		ingress = &v1beta1.Ingress{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      service,
-				Namespace: namespace,
-				Annotations: map[string]string{
-					"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				TLS: []v1beta1.IngressTLS{
-					v1beta1.IngressTLS{
-						Hosts: []string{domain},
-					},
-				},
-				Rules: []v1beta1.IngressRule{
-					v1beta1.IngressRule{
-						Host: domain,
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									v1beta1.HTTPIngressPath{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: service,
-											ServicePort: intstr.FromInt(port),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-		log.Infof("Creating %s/ingress/%s", namespace, service)
-		if !platform.DryRun {
-			if _, err := ingresses.Create(ingress); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return platform.Client.ExposeIngressTLS(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port)
 }
 
-func (platform *Platform) Apply(namespace string, specs ...k8s.CRD) error {
+func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 	kubectl := platform.GetKubectl()
 	if namespace != "" {
 		namespace = "-n " + namespace

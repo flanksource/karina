@@ -6,6 +6,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -123,7 +125,7 @@ func Restore(p *platform.Platform, cluster, db string) error {
 	return p.Apply("pgo", task)
 }
 
-func newTask(p *platform.Platform, cluster, db, task string, params map[string]string) k8s.CRD {
+func newTask(p *platform.Platform, cluster, db, task string, params map[string]string) runtime.Object {
 	name := fmt.Sprintf("%s-%s-%s", task, cluster, utils.ShortTimestamp())
 	if _, ok := params["ccp-image-tag"]; !ok {
 		params["ccp-image-tag"] = "centos7-11.4-2.3.3"
@@ -134,10 +136,8 @@ func newTask(p *platform.Platform, cluster, db, task string, params map[string]s
 	params[task+"-host"] = cluster
 	params[task+"-port"] = "5432"
 	params[task+"-user"] = cluster + "-postgres-secret"
-	return k8s.CRD{
-		Kind:       "Pgtask",
-		ApiVersion: getGroup(p),
-		Metadata: k8s.Metadata{
+	obj := PgoTask{
+		Metadata: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "pgo",
 		},
@@ -148,4 +148,22 @@ func newTask(p *platform.Platform, cluster, db, task string, params map[string]s
 			"tasktype":   task,
 		},
 	}
+
+	obj.Kind = "Pgtask"
+	obj.APIVersion = getGroup(p)
+	return obj
+}
+
+type PgoTask struct {
+	metav1.TypeMeta `json:",inline"`
+	Metadata        metav1.ObjectMeta `json:"metadata"`
+	Spec            map[string]interface{}
+}
+
+func (in PgoTask) DeepCopyObject() runtime.Object {
+	return in
+}
+
+func (in PgoTask) GetObjectKind() schema.ObjectKind {
+	return in.GetObjectKind()
 }

@@ -104,19 +104,5 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Flux != nil && !platform.Flux.Disabled {
-		if platform.Flux.Version == "" {
-			platform.Flux.Version = "1.15.0"
-
-		}
-		if platform.Flux.Image == "" {
-			platform.Flux.Image = "docker.io/fluxcd/flux"
-		}
-		log.Infof("Deploying Flux %s", platform.Flux.Version)
-		if err := platform.ApplySpecs("", "flux.yaml"); err != nil {
-			log.Errorf("Failed to deploy flux %+v", err)
-		}
-	}
-
 	return nil
 }

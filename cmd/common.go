@@ -110,6 +110,11 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
 	}
 
+	gitops := base.GitOps
+	for i := range gitops {
+		gitops[i].GitKey = template(gitops[i].GitKey)
+	}
+	base.GitOps = gitops
 	extras, _ := cmd.Flags().GetStringArray("extra")
 	for _, extra := range extras {
 		key := strings.Split(extra, "=")[0]

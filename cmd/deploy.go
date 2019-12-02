@@ -7,6 +7,7 @@ import (
 	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
+	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
@@ -81,25 +82,28 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
 			if err := deploy_base.Install(p); err != nil {
-				log.Fatalf("Error deploying base %s", err)
+				log.Fatalf("Error deploying base: %s", err)
 			}
 			if err := pgo.Install(p); err != nil {
-				log.Warnf("Error deployed postgres operator %v", err)
+				log.Warnf("Error deployed postgres operator: %v", err)
 			}
 			if err := pgo.ClientSetup(p); err != nil {
-				log.Warnf("Error deployed pgo client %v", err)
+				log.Warnf("Error deployed pgo client: %v", err)
 			}
 			if err := monitoring.Install(p); err != nil {
-				log.Warnf("Error building monitoring stack %v", err)
+				log.Warnf("Error building monitoring stack: %v", err)
 			}
 			if err := harbor.Deploy(p); err != nil {
-				log.Warnf("Error deploying harbor %v", err)
+				log.Warnf("Error deploying harbor: %v", err)
 			}
 			if err := dex.Install(p); err != nil {
-				log.Warnf("Error initializing dex %v", err)
+				log.Warnf("Error initializing dex: %v", err)
 			}
 			if err := opa.Install(p); err != nil {
-				log.Fatalf("Error installing opa control plane%s", err)
+				log.Fatalf("Error installing opa control plane: %s", err)
+			}
+			if err := flux.Install(p); err != nil {
+				log.Fatalf("Error installing flux: %s", err)
 			}
 		},
 	}
@@ -165,6 +169,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := stubs.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploy stubs %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "gitops",
+		Short: "Build and deploy Flux gitops agents",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := flux.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploy flux %s", err)
 			}
 		},
 	})
