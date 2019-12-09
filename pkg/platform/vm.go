@@ -2,11 +2,16 @@ package platform
 
 import (
 	"context"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"time"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/property"
+	"github.com/vmware/govmomi/vim25/mo"
 	vim "github.com/vmware/govmomi/vim25/types"
+
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 // VM represents a specific instance of a VM
@@ -27,19 +32,69 @@ func (vm *VM) WaitForPoweredOff() error {
 }
 
 // WaitForIP waits for a non-local IPv4 address to be reported by vCenter
-func (vm *VM) WaitForIP() (string, error) {
-	log.Debugf("[%s] Waiting for IP\n", vm)
-
-	ips, err := vm.vm.WaitForNetIP(vm.ctx, true)
+func (vm *VM) GetIP(timeout time.Duration) (string, error) {
+	deadline, cancel := context.WithDeadline(context.TODO(), time.Now().Add(timeout))
+	defer cancel()
+	ips, err := vm.vm.WaitForNetIP(deadline, true)
 	if err != nil {
 		return "", nil
 	}
-	log.Debugf("[%s] Found %s\n", vm, ips)
+	log.Tracef("[%s] Found %s\n", vm, ips)
 	for _, ip := range ips {
 		return ip[0], nil
 	}
 	return "", errors.New("Failed to find IP")
+}
 
+func (vm *VM) SetAttribtues(attributes map[string]string) error {
+	ctx := context.TODO()
+	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
+	if err != nil {
+		return err
+	}
+	for k, v := range attributes {
+		key, err := fields.FindKey(ctx, k)
+		if err != nil {
+			return err
+		}
+		if err := fields.Set(ctx, vm.vm.Reference(), key, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (vm *VM) GetAttributes() (map[string]string, error) {
+	attributes := make(map[string]string)
+	ctx := context.TODO()
+	refs := []vim.ManagedObjectReference{vm.vm.Reference()}
+	var objs []mo.ManagedEntity
+	if err := property.DefaultCollector(vm.vm.Client()).Retrieve(ctx, refs, []string{"name", "customValue"}, &objs); err != nil {
+		return nil, err
+	}
+
+	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
+	if err != nil {
+		return nil, err
+	}
+	field, err := fields.Field(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, obj := range objs {
+		for i := range obj.CustomValue {
+			val := obj.CustomValue[i].(*vim.CustomFieldStringValue)
+			attributes[field.ByKey(val.Key).Name] = val.Value
+		}
+	}
+
+	return attributes, nil
+}
+
+// WaitForIP waits for a non-local IPv4 address to be reported by vCenter
+func (vm *VM) WaitForIP() (string, error) {
+	return vm.GetIP(5 * time.Minute)
 }
 
 // Terminate deletes a VM and waits for the destruction to complete (or fail)
