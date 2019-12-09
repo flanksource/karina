@@ -62,7 +62,12 @@ func terminate(ctx context.Context, platform *platform.Platform, vm *object.Virt
 	}
 	if err != nil {
 		log.Warnf("Failed to get IP for %s: %v", vm.Name(), err)
-	} else if len(ips) > 0 {
+	}
+	if platform.DryRun {
+		log.Infof("Not terminating in dry-run mode %s", vm.Name())
+		return
+	}
+	if len(ips) > 0 {
 		if err := platform.GetDNSClient().Delete(fmt.Sprintf("*.%s", platform.Domain), ip...); err != nil {
 			log.Warnf("Failed to de-register wildcard DNS %s for %s", vm.Name, err)
 		}
