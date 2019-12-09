@@ -9,7 +9,7 @@ versions:
   konfigadm: v0.3.6
   jb: v0.1.0
   jsonnet: 0.14
-  sonobuoy: 0.15.0
+  sonobuoy: 0.16.4
   govc: v0.20.0
   gojsontoyaml: master
   kustomize: v3.0.2
