@@ -7,8 +7,22 @@ go: &go
     - image: circleci/golang:1.12
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
-  test:
+  test15:
     resource_class: large
+    environment:
+      VERSION: 1.15.3
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run: ./test/e2e.sh
+      - store_test_results:
+          path: test-results
+
+  test16:
+    resource_class: large
+    environment:
+      VERSION: 1.16.3
     machine:
       image: ubuntu-1604:201903-01
     steps:
@@ -29,10 +43,12 @@ workflows:
   version: 2
   build:
     jobs:
-      - test
+      - test15
+      - test16
       - release:
           requires:
-            - test
+            - test15
+            - test16
           context: Github
           filters:
             tags:
