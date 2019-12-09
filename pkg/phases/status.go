@@ -2,24 +2,40 @@ package phases
 
 import (
 	"fmt"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/moshloop/commons/console"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/utils"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Status(p *platform.Platform) error {
 
-	vms, err := p.GetVMs()
+	if err := p.OpenViaEnv(); err != nil {
+		return err
+	}
+
+	vmList, err := p.GetVMs()
 	if err != nil {
 		return err
 	}
-	for _, vm := range vms {
-		ip, err := vm.WaitForIP()
+
+	vms := make(map[string]map[string]string)
+	for _, vm := range vmList {
+		attributes, err := vm.GetAttributes()
 		if err != nil {
-			fmt.Printf("%s: %s\n", vm.Name, err)
-		} else {
-			fmt.Printf("%s: %s\n", vm.Name, ip)
+			attributes["error"] = fmt.Sprintf("%s", err)
 		}
+		ip, err := vm.GetIP(1 * time.Second)
+		if err != nil {
+			attributes["ip"] = fmt.Sprintf("Error: %v", err)
+		} else {
+			attributes["ip"] = ip
+		}
+		vms[vm.Name] = attributes
 	}
 
 	client, err := p.GetClientset()
@@ -28,14 +44,16 @@ func Status(p *platform.Platform) error {
 		return nil
 	}
 
+	log.Infof("Listing nodes")
 	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("%+v", err)
 		return err
 	}
 	for _, node := range list.Items {
-
-		resources := fmt.Sprintf("%s cpu: %d/%d  mem: %s/%s", node.Name,
+		attributes := vms[node.Name]
+		delete(vms, node.Name)
+		resources := fmt.Sprintf("%s (%s) cpu: %d/%d  mem: %s/%s", console.Greenf("%s", node.Name), attributes["ip"],
 			node.Status.Allocatable.Cpu().Value(), node.Status.Capacity.Cpu().Value(),
 			gb(node.Status.Allocatable.Memory().Value()),
 			gb(node.Status.Capacity.Memory().Value()))
@@ -44,6 +62,9 @@ func Status(p *platform.Platform) error {
 			node.Status))
 	}
 
+	for vm, _ := range vms {
+		fmt.Printf("%s VM not in cluster\n", console.Redf(vm))
+	}
 	return nil
 }
 
