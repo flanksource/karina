@@ -86,8 +86,28 @@ func (platform *Platform) GetDNSClient() dns.DNSClient {
 	}
 }
 
-func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (string, error) {
-	return platform.session.Clone(vm, config)
+func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, error) {
+	obj, err := platform.session.Clone(vm, config)
+	if err != nil {
+		return nil, err
+	}
+
+	VM := &VM{
+		VM:       vm,
+		Platform: platform,
+		ctx:      platform.ctx,
+		vm:       obj,
+	}
+	ip, err := VM.WaitForIP()
+	if err != nil {
+		return nil, err
+	}
+	VM.IP = ip
+	VM.SetAttribtues(map[string]string{
+		"Template":    vm.Template,
+		"CreatedDate": time.Now().Format("02Jan06-15:04:05"),
+	})
+	return VM, nil
 }
 
 func (platform *Platform) GetSession() *vmware.Session {
@@ -149,6 +169,23 @@ func (platform *Platform) GetKubeConfig() (string, error) {
 		}
 	}
 	return name, nil
+}
+
+func (platform *Platform) GetBinaryWithKubeConfig(binary string) deps.BinaryFunc {
+	kubeconfig, err := platform.GetKubeConfig()
+	if err != nil {
+		return func(msg string, args ...interface{}) error {
+			return fmt.Errorf("cannot create kubeconfig %v\n", err)
+		}
+	}
+	if platform.DryRun {
+		return platform.GetBinary(binary)
+	}
+
+	return deps.BinaryWithEnv(binary, platform.Versions[binary], ".bin", map[string]string{
+		"KUBECONFIG": kubeconfig,
+		"PATH":       os.Getenv("PATH"),
+	})
 }
 
 func (platform *Platform) GetKubectl() deps.BinaryFunc {
