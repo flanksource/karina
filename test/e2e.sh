@@ -23,9 +23,9 @@ else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:1.12 pack build
 fi
 
-kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
+# kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
-  ./kind create cluster --image kindest/node:${kubernetes_version} --config test/kind.config.yaml
+  ./kind create cluster --image kindest/node:${VERSION} --config test/kind.config.yaml
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
 
