@@ -10,7 +10,7 @@ jobs:
   test15:
     resource_class: large
     environment:
-      VERSION: 1.15.3
+      VERSION: v1.15.3
     machine:
       image: ubuntu-1604:201903-01
     steps:
@@ -22,7 +22,7 @@ jobs:
   test16:
     resource_class: large
     environment:
-      VERSION: 1.16.3
+      VERSION: v1.16.3
     machine:
       image: ubuntu-1604:201903-01
     steps:
