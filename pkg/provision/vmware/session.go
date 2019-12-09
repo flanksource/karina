@@ -18,12 +18,13 @@ package vmware
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 	"net/url"
 	"os"
 	"sync"
+
+	"github.com/google/uuid"
+	"github.com/moshloop/platform-cli/pkg/types"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
@@ -186,5 +187,4 @@ func GetSessionFromEnv() (*Session, error) {
 		os.Getenv("GOVC_USER"),
 		os.Getenv("GOVC_PASS"),
 		os.Getenv("GOVC_FQDN"))
-
 }

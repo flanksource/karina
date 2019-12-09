@@ -20,58 +20,59 @@ const (
 )
 
 // Clone kicks off a clone operation on vCenter to create a new virtual machine.
-func (s Session) Clone(vm VM, config *konfigadm.Config) (string, error) {
+func (s Session) Clone(vm VM, config *konfigadm.Config) (*object.VirtualMachine, error) {
 	ctx := context.TODO()
 
 	tpl, err := s.FindVM(vm.Template)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	folder, err := s.Finder.FolderOrDefault(ctx, vm.Folder)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to get folder for %q", ctx)
+		return nil, errors.Wrapf(err, "unable to get folder for %q", ctx)
 	}
 
 	datastore, err := s.Finder.DatastoreOrDefault(ctx, vm.Datastore)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to get datastore for %q", ctx)
+		return nil, errors.Wrapf(err, "unable to get datastore for %q", ctx)
 	}
 
 	pool, err := s.Finder.ResourcePoolOrDefault(ctx, vm.ResourcePool)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to get resource pool for %q", ctx)
+		return nil, errors.Wrapf(err, "unable to get resource pool for %q", ctx)
 	}
 
 	devices, err := tpl.Device(ctx)
 	if err != nil {
-		return "", errors.Wrapf(err, "error getting devices for %q", ctx)
+		return nil, errors.Wrapf(err, "error getting devices for %q", ctx)
 	}
 	deviceSpecs := []types.BaseVirtualDeviceConfigSpec{}
 	if vm.DiskGB > 0 {
 		diskSpec, err := getDiskSpec(vm, devices)
 		if err != nil {
-			return "", errors.Wrapf(err, "error getting disk spec for %q", ctx)
+			return nil, errors.Wrapf(err, "error getting disk spec for %q", ctx)
 		}
 		deviceSpecs = append(deviceSpecs, diskSpec)
 	}
 
 	networkSpecs, err := getNetworkSpecs(s, vm, devices)
 	if err != nil {
-		return "", errors.Wrapf(err, "error getting network specs for %q", ctx)
+		return nil, errors.Wrapf(err, "error getting network specs for %q", ctx)
 	}
 	deviceSpecs = append(deviceSpecs, networkSpecs...)
 
 	cdrom, err := getCdrom(datastore, vm, devices, config)
 	if err != nil {
-		return "", errors.Wrapf(err, "error getting cdrom")
+		return nil, errors.Wrapf(err, "error getting cdrom")
 	}
 
 	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			Annotation:   "Created by platform-cli from " + vm.Template,
+			Annotation: "Created by platform-cli from " + vm.Template,
+
 			Flags:        newVMFlagInfo(),
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
@@ -90,27 +91,20 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (string, error) {
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
-		return "", errors.Wrapf(err, "error trigging clone op for machine %s/%s %+v\n\n%+v", folder, vm.Name, err, spec)
+		return nil, errors.Wrapf(err, "error trigging clone op for machine %s/%s %+v\n\n%+v", folder, vm.Name, err, spec)
 	}
 
 	_, err = task.WaitForResult(context.TODO(), nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	obj, err := s.FindVM(vm.Name)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	log.Infof("Cloned VM: %s", obj.UUID(ctx))
-	ips, err := obj.WaitForNetIP(context.TODO(), true)
-	if err != nil {
-		return "", nil
-	}
-	for _, ip := range ips {
-		return ip[0], nil
-	}
-	return "", errors.New("No ips returned")
+	return obj, nil
 }
 
 func newVMFlagInfo() *types.VirtualMachineFlagInfo {

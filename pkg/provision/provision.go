@@ -28,13 +28,12 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 		return err
 	}
 	log.Infof("Using konfigadm spec: %s\n", konfigs)
-	ip, err := platform.Clone(*vm, konfig)
-	vm.IP = ip
+	_vm, err := platform.Clone(*vm, konfig)
 
 	if err != nil {
 		return err
 	}
-	log.Infof("Provisioned  %s ->  %s\n", vm.Name, vm.IP)
+	log.Infof("Provisioned  %s ->  %s\n", vm.Name, _vm.IP)
 	return nil
 }
 
@@ -65,15 +64,15 @@ func Cluster(platform *platform.Platform) error {
 		log.Tracef("Using configuration: \n%s\n", string(data))
 
 		if !platform.DryRun {
-			ip, err := platform.Clone(vm, config)
+			vm, err := platform.Clone(vm, config)
 
 			if err != nil {
 				return err
 			}
-			if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), ip); err != nil {
+			if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), vm.IP); err != nil {
 				return err
 			}
-			log.Infof("Provisioned new master: %s\n", ip)
+			log.Infof("Provisioned new master: %s\n", vm.IP)
 
 		}
 		if err := platform.WaitFor(); err != nil {
@@ -99,14 +98,14 @@ func Cluster(platform *platform.Platform) error {
 				log.Errorf("Failed to create secondary master: %s", err)
 			} else {
 				if !platform.DryRun {
-					ip, err := platform.Clone(vm, config)
+					vm, err := platform.Clone(vm, config)
 					if err != nil {
 						log.Errorf("Failed to Clone secondary master: %s", err)
 					} else {
-						if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), ip); err != nil {
-							log.Warnf("Failed to update DNS for %s", ip)
+						if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), vm.IP); err != nil {
+							log.Warnf("Failed to update DNS for %s", vm.IP)
 						} else {
-							log.Infof("Provisioned new master: %s\n", ip)
+							log.Infof("Provisioned new master: %s\n", vm.IP)
 						}
 					}
 				}
@@ -133,14 +132,14 @@ func Cluster(platform *platform.Platform) error {
 					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, worker.Prefix, utils.ShortTimestamp())
 					if !platform.DryRun {
 						log.Infof("Creating new worker %s\n", vm.Name)
-						ip, err := platform.Clone(vm, config)
+						vm, err := platform.Clone(vm, config)
 						if err != nil {
 							log.Errorf("Failed to Clone worker: %s", err)
 						} else {
-							if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), ip); err != nil {
-								log.Warnf("Failed to update DNS for %s", ip)
+							if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), vm.IP); err != nil {
+								log.Warnf("Failed to update DNS for %s", vm.IP)
 							} else {
-								log.Infof("Provisioned new worker: %s\n", ip)
+								log.Infof("Provisioned new worker: %s\n", vm.IP)
 							}
 						}
 					}
