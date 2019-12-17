@@ -76,7 +76,7 @@ func Install(p *platform.Platform) error {
 
 	log.Trace(string(s))
 
-	if p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
+	if err := p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
 		"ncp.ini": string(s),
 	}); err != nil {
 		return err
