@@ -38,9 +38,6 @@ func (c *NSXClient) Init() error {
 		Scheme:     "https",
 		UserAgent:  "platform-cli",
 		RemoteAuth: c.RemoteAuth,
-		// ClientAuthCertFile: certFile,
-		// ClientAuthKeyFile:  keyFile,
-		// CAFile:               caFile,
 		DefaultHeader: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(c.Username+":"+c.Password)),
 		},
@@ -60,7 +57,6 @@ func (c *NSXClient) Ping() (string, error) {
 	if c.api == nil {
 		return "", fmt.Errorf("need to called .Init() first")
 	}
-	// _, resp, err := c.api.LogicalSwitchingApi.ListLogicalSwitches(c.api.Context, nil)
 	props, resp, err := c.api.NsxComponentAdministrationApi.ReadNodeProperties(c.api.Context)
 	if err != nil {
 		return "", fmt.Errorf("Error pinging: %v: resp: %v, req: %v", err, resp.Header, resp.Request.Header)

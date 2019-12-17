@@ -8,9 +8,9 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
-	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
+	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
@@ -152,6 +152,7 @@ func init() {
 			}
 		},
 	})
+
 	Deploy.AddCommand(&cobra.Command{
 		Use:   "harbor",
 		Short: "Build and deploy the harbor registry",
