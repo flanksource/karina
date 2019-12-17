@@ -1,0 +1,640 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: nsxerrors.nsx.vmware.com
+spec:
+  group: nsx.vmware.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Cluster
+  names:
+    plural: nsxerrors
+    singular: nsxerror
+    kind: NSXError
+    shortNames:
+      - ne
+  additionalPrinterColumns:
+    - name: Messages
+      type: string
+      description: NSX error messages. Messages are sorted by timestamp on which the error occurs.
+      JSONPath: .spec.message
+    - name: ErrorObjectID
+      type: string
+      description: The identifier of the k8s object which has the errors.
+      JSONPath: .spec.error-object-id
+    - name: ErrorObjectType
+      type: string
+      description: The type of the k8s object which has the errors.
+      JSONPath: .spec.error-object-type
+    - name: ErrorObjectName
+      type: string
+      description: The name of the k8s object which has the errors.
+      JSONPath: .spec.error-object-name
+    - name: ErrorObjectNamespace
+      type: string
+      description: The namespace of the k8s object if it is namespaced. None by default
+      JSONPath: .spec.error-object-ns
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: nsxlocks.nsx.vmware.com
+spec:
+  group: nsx.vmware.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Cluster
+  names:
+    plural: nsxlocks
+    singular: nsxlock
+    kind: NSXLock
+    shortNames:
+      - nsxlo
+
+---
+# Create Namespace for NSX owned resources
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: nsx-system
+
+---
+# Create a ServiceAccount for NCP namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ncp-svc-account
+  namespace: nsx-system
+---
+# Create ClusterRole for NCP
+kind: ClusterRole
+# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ncp-cluster-role
+rules:
+  - apiGroups:
+      - ""
+      - extensions
+      - networking.k8s.io
+    resources:
+      - deployments
+      - endpoints
+      - pods
+      - pods/log
+      - networkpolicies
+      - nodes
+      - replicationcontrollers
+      # Remove 'secrets' if not using Native Load Balancer.
+      - secrets
+
+    verbs:
+      - get
+      - watch
+      - list
+
+---
+# Create ClusterRole for NCP to edit resources
+kind: ClusterRole
+# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ncp-patch-role
+rules:
+  - apiGroups:
+      - ""
+      - extensions
+    resources:
+      # NCP needs to annotate the SNAT errors on namespaces
+      - namespaces
+      - ingresses
+      - services
+
+    verbs:
+      - get
+      - watch
+      - list
+      - update
+      - patch
+  # NCP needs permission to CRUD custom resource nsxerrors
+  - apiGroups:
+      # The api group is specified in custom resource definition for nsxerrors
+      - nsx.vmware.com
+    resources:
+      - nsxerrors
+
+      - nsxlocks
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - delete
+
+      - update
+  - apiGroups:
+      - ""
+      - extensions
+
+    resources:
+      - ingresses/status
+      - services/status
+
+    verbs:
+      - replace
+      - update
+      - patch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ncp-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ncp-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: ncp-svc-account
+    namespace: nsx-system
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ncp-patch-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+
+  kind: ClusterRole
+  name: ncp-patch-role
+subjects:
+  - kind: ServiceAccount
+    name: ncp-svc-account
+    namespace: nsx-system
+
+---
+# Create a ServiceAccount for nsx-node-agent
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nsx-node-agent-svc-account
+  namespace: nsx-system
+---
+# Create ClusterRole for nsx-node-agent
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nsx-node-agent-cluster-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+      - services
+    verbs:
+      - get
+      - watch
+      - list
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nsx-node-agent-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+
+  kind: ClusterRole
+  name: nsx-node-agent-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: nsx-node-agent-svc-account
+    namespace: nsx-system
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nsx-ncp
+  namespace: nsx-system
+  labels:
+    tier: nsx-networking
+    component: nsx-ncp
+    version: v1
+spec:
+  # Active-Standby is supported from NCP 2.4.0 release,
+  # so replica can be more than 1 if NCP HA is enabled.
+  # replica *must be* 1 if NCP HA is disabled.
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        tier: nsx-networking
+        component: nsx-ncp
+        version: v1
+    spec:
+      # NCP shares the host management network.
+      hostNetwork: true
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      serviceAccountName: ncp-svc-account
+      containers:
+        - name: nsx-ncp
+          image: {{.nsx.image}}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NCP_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NCP_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - timeout 5 check_pod_liveness nsx-ncp
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+          volumeMounts:
+            - name: config-volume
+              # NCP expects ncp.ini is present in /etc/nsx-ujo
+              mountPath: /etc/nsx-ujo/ncp.ini
+              subPath: ncp.ini
+              readOnly: true
+            - name: nsx-cert
+              mountPath: /etc/nsx-ujo/nsx-cert
+              readOnly: true
+          # To add default LB cert, uncomment the volumeMount
+          # Update ncp.ini with the mounted cert and key file paths
+          #- name: lb-cert
+          #  mountPath: /etc/nsx-ujo/lb-cert
+          #  readOnly: true
+      volumes:
+        - name: config-volume
+          # ConfigMap nsx-ncp-config is expected to supply ncp.ini
+          configMap:
+            name: nsx-ncp-config
+        - name: nsx-cert
+          secret:
+            secretName: nsx-secret
+        # To add default LB cert, uncomment and update the secretName
+        #- name: lb-cert
+        #  secret:
+        #    secretName: lb-secret
+
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: nsx-ncp-bootstrap
+  namespace: nsx-system
+  labels:
+    tier: nsx-networking
+    component: nsx-ncp-bootstrap
+    version: v1
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        tier: nsx-networking
+        component: nsx-ncp-bootstrap
+        version: v1
+    spec:
+      hostNetwork: true
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node.kubernetes.io/not-ready
+          effect: NoSchedule
+        - key: node.kubernetes.io/unreachable
+          effect: NoSchedule
+      hostPID: true
+      # If configured with ServiceAccount, update the ServiceAccount
+      # name below.
+      serviceAccountName: nsx-node-agent-svc-account
+      initContainers:
+        - name: nsx-ncp-bootstrap
+          # Docker image for NCP
+          image: {{.nsx.image}}
+          imagePullPolicy: IfNotPresent
+          # override NCP image entrypoint
+          command: ["init_k8s_node"]
+
+          securityContext:
+            # privilege mode required to load apparmor on ubuntu
+            privileged: true
+            runAsUser: 0
+
+          volumeMounts:
+            # required to read the ovs_uplink_port
+            - name: config-volume
+              mountPath: /etc/nsx-ujo/ncp.ini
+              subPath: ncp.ini
+            # mounts to which NSX-CNI are copied BEGIN
+            - name: host-etc
+              mountPath: /host/etc
+            - name: host-opt
+              mountPath: /host/opt
+            - name: host-var
+              mountPath: /host/var
+            # mounts to which NSX-CNI are copied END
+            # mount host's OS info to identify host OS
+            - name: host-os-release
+              mountPath: /host/etc/os-release
+            # mount host lib modules to install OVS kernel module if needed
+            - name: host-modules
+              mountPath: /lib/modules
+            # mount openvswitch database
+            - name: host-config-openvswitch
+              mountPath: /etc/openvswitch
+            # mount ovs runtime files
+            - name: openvswitch
+              mountPath: /var/run/openvswitch
+            - name: dir-tmp-usr-ovs-kmod-backup
+              # we move the usr kmod files to this dir temporarily before installing
+              # new OVS kmod and/or backing up existing OVS kmod backup
+              mountPath: /tmp/nsx_usr_ovs_kmod_backup
+
+            # mount apparmor files to load the node-agent-apparmor
+            - name: app-armor-cache
+              mountPath: /var/cache/apparmor
+              subPath: apparmor
+            - name: apparmor-d
+              mountPath: /etc/apparmor.d
+            # mount linux headers for compiling OVS kmod
+            - name: host-usr-src
+              mountPath: /usr/src
+            # mount host's deb package database to remove nsx-cni if installed
+            - name: dpkg-lib
+              mountPath: /host/var/lib/dpkg
+            # mount for uninstalling NSX-CNI old doc
+            - name: usr-share-doc
+              mountPath: /usr/share/doc
+            - name: snap-confine
+              mountPath: /var/lib/snapd/apparmor/snap-confine
+
+      containers:
+        - name: nsx-dummy
+          # This container is of no use.
+          # Docker image for NCP
+          image: {{.nsx.image}}
+          imagePullPolicy: IfNotPresent
+          # override NCP image entrypoint
+          command: ["/bin/bash", "-c", "while true; do sleep 5; done"]
+      volumes:
+        - name: config-volume
+          configMap:
+            name: nsx-node-agent-config
+        - name: host-etc
+          hostPath:
+            path: /etc
+        - name: host-opt
+          hostPath:
+            path: /opt
+        - name: host-var
+          hostPath:
+            path: /var
+        - name: host-os-release
+          hostPath:
+            path: /etc/os-release
+        - name: host-modules
+          hostPath:
+            path: /lib/modules
+        - name: host-config-openvswitch
+          hostPath:
+            path: /etc/openvswitch
+        - name: openvswitch
+          hostPath:
+            path: /var/run/openvswitch
+        - name: dir-tmp-usr-ovs-kmod-backup
+          hostPath:
+            path: /tmp/nsx_usr_ovs_kmod_backup
+
+        - name: app-armor-cache
+          hostPath:
+            path: /var/cache/apparmor
+        - name: apparmor-d
+          hostPath:
+            path: /etc/apparmor.d
+        - name: host-usr-src
+          hostPath:
+            path: /usr/src
+        - name: dpkg-lib
+          hostPath:
+            path: /var/lib/dpkg
+        - name: usr-share-doc
+          hostPath:
+            path: /usr/share/doc
+        - name: snap-confine
+          hostPath:
+            path: /var/lib/snapd/apparmor/snap-confine
+
+---
+# nsx-node-agent DaemonSet
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: nsx-node-agent
+  namespace: nsx-system
+  labels:
+    tier: nsx-networking
+    component: nsx-node-agent
+    version: v1
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/nsx-node-agent: localhost/node-agent-apparmor
+
+      labels:
+        tier: nsx-networking
+        component: nsx-node-agent
+        version: v1
+    spec:
+      hostNetwork: true
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node.kubernetes.io/not-ready
+          effect: NoSchedule
+        - key: node.kubernetes.io/unreachable
+          effect: NoSchedule
+      # If configured with ServiceAccount, update the ServiceAccount
+      # name below.
+      serviceAccountName: nsx-node-agent-svc-account
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: nsx-node-agent
+          # Docker image for NCP
+          image: {{.nsx.image}}
+          imagePullPolicy: IfNotPresent
+          # override NCP image entrypoint
+          command: ["start_node_agent"]
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - timeout 5 check_pod_liveness nsx-node-agent
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 2
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+                - SYS_PTRACE
+                - DAC_READ_SEARCH
+          volumeMounts:
+            # ncp.ini
+            - name: config-volume
+              mountPath: /etc/nsx-ujo/ncp.ini
+              subPath: ncp.ini
+              readOnly: true
+            # mount openvswitch dir
+            - name: openvswitch
+              mountPath: /var/run/openvswitch
+            # mount CNI socket path
+            - name: cni-sock
+              mountPath: /var/run/nsx-ujo
+            # mount container namespace
+            - name: netns
+              mountPath: /var/run/netns
+            # mount host proc
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+
+        - name: nsx-kube-proxy
+          # Docker image for NCP
+          image: {{.nsx.image}}
+          imagePullPolicy: IfNotPresent
+          # override NCP image entrypoint
+          command: ["start_kube_proxy"]
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - timeout 5 check_pod_liveness nsx-kube-proxy
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+                - SYS_PTRACE
+                - DAC_READ_SEARCH
+
+          volumeMounts:
+            # ncp.ini
+            - name: config-volume
+              mountPath: /etc/nsx-ujo/ncp.ini
+              subPath: ncp.ini
+              readOnly: true
+
+            # mount openvswitch dir
+            - name: openvswitch
+              mountPath: /var/run/openvswitch
+
+        # nsx-ovs is not needed on BAREMETAL
+        - name: nsx-ovs
+          # Docker image for NCP
+          image: {{.nsx.image}}
+          imagePullPolicy: IfNotPresent
+          # override NCP image entrypoint
+          command: ["start_ovs"]
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+                - SYS_NICE
+                - SYS_MODULE
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                # You must pass --allowOVSOnHost if you are running OVS on the
+                # host before the installation. This allows livelinessProbe to
+                # succeed and container won't restart frequently.
+                - timeout 5 check_pod_liveness nsx-ovs
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            # ncp.ini
+            - name: config-volume
+              mountPath: /etc/nsx-ujo/ncp.ini
+              subPath: ncp.ini
+              readOnly: true
+            # mount openvswitch dir
+            - name: openvswitch
+              mountPath: /var/run/openvswitch
+            # mount host sys dir
+            - name: host-sys
+              mountPath: /sys
+              readOnly: true
+            # mount host config openvswitch dir
+            - name: host-config-openvswitch
+              mountPath: /etc/openvswitch
+            # mount host lib modules to insert OVS kernel module if needed
+            - name: host-modules
+              mountPath: /lib/modules
+              readOnly: true
+            # mount host's OS info to identify host OS
+            - name: host-os-release
+              mountPath: /host/etc/os-release
+              readOnly: true
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: nsx-node-agent-config
+
+        - name: openvswitch
+          hostPath:
+            path: /var/run/openvswitch
+        - name: cni-sock
+          hostPath:
+            path: /var/run/nsx-ujo
+        - name: netns
+          hostPath:
+            path: /var/run/netns
+        - name: proc
+          hostPath:
+            path: /proc
+
+        - name: host-sys
+          hostPath:
+            path: /sys
+        - name: host-modules
+          hostPath:
+            path: /lib/modules
+        - name: host-config-openvswitch
+          hostPath:
+            path: /etc/openvswitch
+        - name: host-os-release
+          hostPath:
+            path: /etc/os-release

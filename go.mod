@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/storage v1.2.1 // indirect
 	github.com/apex/log v1.1.0
 	github.com/dghubble/sling v1.3.0
+	github.com/fatih/structs v1.1.0
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
@@ -27,6 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.20.2
 	go.opencensus.io v0.22.1 // indirect
 	golang.org/x/crypto v0.0.0-20191107222254-f4817d981bb6 // indirect
@@ -37,6 +39,7 @@ require (
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/grpc v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.5
 	k8s.io/api v0.0.0-20190831074750-7364b6bdad65
 	k8s.io/apimachinery v0.0.0-20190831074630-461753078381
