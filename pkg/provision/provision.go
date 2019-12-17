@@ -1,8 +1,8 @@
 package provision
 
 import (
-	"context"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -116,11 +116,13 @@ func Cluster(platform *platform.Platform) error {
 
 	for _, worker := range platform.Nodes {
 		vmware.LoadGovcEnvVars(&worker)
-		prefix := fmt.Sprintf("%s-%s-%s*", platform.HostPrefix, platform.Name, worker.Prefix)
-		// ignore vm not found errors
-		list, _ := platform.GetSession().Finder.VirtualMachineList(context.TODO(), prefix)
 
-		for i := 0; i < worker.Count-len(list); i++ {
+		vms, err := platform.GetVMsByPrefix(worker.Prefix)
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < worker.Count-len(vms); i++ {
 			time.Sleep(1 * time.Second)
 			wg.Add(1)
 			vm := worker
@@ -149,14 +151,23 @@ func Cluster(platform *platform.Platform) error {
 
 		}
 
-		if worker.Count < len(list) {
-			terminateCount := len(list) - worker.Count
+		if worker.Count < len(vms) {
+			terminateCount := len(vms) - worker.Count
+			var vmNames []string
+			for k := range vms {
+				vmNames = append(vmNames, k)
+			}
+			sort.Strings(vmNames)
 			log.Infof("Downscaling %d extra worker nodes", terminateCount)
 			time.Sleep(3 * time.Second)
 			for i := 0; i < terminateCount; i++ {
+				name := vmNames[worker.Count+i-1]
 				wg.Add(1)
 				go func() {
-					terminate(context.TODO(), platform, list[worker.Count+i-1]) //terminate oldest first
+					//terminate oldest first
+					if err := vms[name].Terminate(); err != nil {
+						log.Warnf("Failed to terminate %s: %v", name, err)
+					}
 					wg.Done()
 				}()
 			}

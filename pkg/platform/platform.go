@@ -3,6 +3,7 @@ package platform
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,6 +28,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
+	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/utils"
@@ -37,6 +39,7 @@ type Platform struct {
 	k8s.Client
 	ctx     context.Context
 	session *vmware.Session
+	nsx     *nsx.NSXClient
 }
 
 func (platform *Platform) Init() {
@@ -45,12 +48,12 @@ func (platform *Platform) Init() {
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
-func (platform *Platform) GetVMs() (map[string]*VM, error) {
+func (platform *Platform) GetVMsByPrefix(prefix string) (map[string]*VM, error) {
 	var vms = make(map[string]*VM)
 	list, err := platform.session.Finder.VirtualMachineList(
-		platform.ctx, fmt.Sprintf("%s-%s-*", platform.HostPrefix, platform.Name))
+		platform.ctx, fmt.Sprintf("%s-%s-%s*", platform.HostPrefix, platform.Name, prefix))
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 	for _, vm := range list {
 		item := &VM{
@@ -62,6 +65,11 @@ func (platform *Platform) GetVMs() (map[string]*VM, error) {
 		vms[vm.Name()] = item
 	}
 	return vms, nil
+}
+
+// GetVMs returns a list of all VM's associated with the cluster
+func (platform *Platform) GetVMs() (map[string]*VM, error) {
+	return platform.GetVMsByPrefix("")
 }
 
 // WaitFor at least 1 master IP to be reachable
@@ -87,7 +95,38 @@ func (platform *Platform) GetDNSClient() dns.DNSClient {
 	}
 }
 
+func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
+	if platform.nsx != nil {
+		return platform.nsx, nil
+	}
+	if platform.NSX == nil || platform.NSX.Disabled {
+		return nil, fmt.Errorf("NSX not configured or disabled")
+	}
+	if platform.NSX.NsxV3 == nil || len(platform.NSX.NsxV3.NsxApiManagers) == 0 {
+		return nil, fmt.Errorf("nsx_v3.nsx_api_managers not configured")
+	}
+
+	client := &nsx.NSXClient{
+		Host:     platform.NSX.NsxV3.NsxApiManagers[0],
+		Username: platform.NSX.NsxV3.NsxApiUser,
+		Password: platform.NSX.NsxV3.NsxApiPass,
+	}
+	log.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
+
+	if err := client.Init(); err != nil {
+		return nil, err
+	}
+	platform.nsx = client
+	version, err := platform.nsx.Ping()
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
+	return platform.nsx, nil
+}
+
 func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, error) {
+	ctx := context.TODO()
 	obj, err := platform.session.Clone(vm, config)
 	if err != nil {
 		return nil, err
@@ -99,15 +138,32 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 		ctx:      platform.ctx,
 		vm:       obj,
 	}
-	ip, err := VM.WaitForIP()
-	if err != nil {
-		return nil, err
-	}
-	VM.IP = ip
-	VM.SetAttribtues(map[string]string{
+	if err := VM.SetAttributes(map[string]string{
 		"Template":    vm.Template,
 		"CreatedDate": time.Now().Format("02Jan06-15:04:05"),
-	})
+	}); err != nil {
+		log.Warnf("Failed to set attributes for %s: %v", vm.Name, err)
+	}
+	log.Debugf("Waiting for IP: %s", vm.Name)
+	ip, err := VM.WaitForIP()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get IP for %s: %v", vm.Name, err)
+	}
+	vm.IP = ip
+	log.Tracef("Found IP %s: %s", vm.Name, ip)
+	if platform.NSX != nil && !platform.NSX.Disabled {
+		nsxClient, err := platform.GetNSXClient()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get NSX client: %v", err)
+		}
+		// Tag the infra NIC (2nd)
+		if err := nsxClient.TagNics(ctx, vm.Name, map[string]string{
+			"ncp/node_name": vm.Name,
+			"ncp/cluster":   platform.Name,
+		}); err != nil {
+			return nil, fmt.Errorf("Failed to tag nics for %s: %+v", vm.Name, err)
+		}
+	}
 	return VM, nil
 }
 
@@ -154,6 +210,7 @@ node:
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
+
 	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
 		log.Tracef("Using KUBECONFIG from ENV\n")
 		return os.Getenv("KUBECONFIG"), nil
@@ -161,7 +218,11 @@ func (platform *Platform) GetKubeConfig() (string, error) {
 	cwd, _ := os.Getwd()
 	name := cwd + "/" + platform.Name + "-admin.yml"
 	if !is.File(name) {
-		data, err := CreateKubeConfig(platform, platform.GetMasterIPs()[0])
+		masters := platform.GetMasterIPs()
+		if len(masters) == 0 {
+			return "", errors.New("No masters found")
+		}
+		data, err := CreateKubeConfig(platform, masters[0])
 		if err != nil {
 			return "", err
 		}

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -51,7 +53,7 @@ var vm = &cobra.Command{
 			vm.Datastore = datastore
 		}
 		if network != "" {
-			vm.Network = network
+			vm.Network = strings.Split(network, ",")
 		}
 		if pool != "" {
 			vm.ResourcePool = pool

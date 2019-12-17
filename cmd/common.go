@@ -86,13 +86,13 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.Ldap = ldap
 	}
 
-	base.Master.Network = template(base.Master.Network)
+	base.Master.Network = templateSlice(base.Master.Network)
 	base.Master.Cluster = template(base.Master.Cluster)
 	base.Master.Template = template(base.Master.Template)
 
 	nodes := base.Nodes
 	for name, vm := range base.Nodes {
-		vm.Network = template(vm.Network)
+		vm.Network = templateSlice(vm.Network)
 		vm.Cluster = template(vm.Cluster)
 		vm.Template = template(vm.Template)
 		nodes[name] = vm
@@ -108,6 +108,11 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 
 	if base.TrustedCA != "" && !is.File(base.TrustedCA) {
 		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
+	}
+
+	if base.NSX != nil && base.NSX.NsxV3 != nil {
+		base.NSX.NsxV3.NsxApiUser = template(base.NSX.NsxV3.NsxApiUser)
+		base.NSX.NsxV3.NsxApiPass = template(base.NSX.NsxV3.NsxApiPass)
 	}
 
 	gitops := base.GitOps
@@ -158,6 +163,19 @@ var Render = &cobra.Command{
 		data, _ := yaml.Marshal(base)
 		fmt.Println(string(data))
 	},
+}
+
+func templateSlice(vals []string) []string {
+	var out []string
+	for _, val := range vals {
+		if strings.HasPrefix(val, "$") {
+			env := os.Getenv(val[1:])
+			out = append(out, strings.Split(env, ",")...)
+		} else {
+			out = append(out, strings.Split(val, ",")...)
+		}
+	}
+	return out
 }
 
 func template(val string) string {

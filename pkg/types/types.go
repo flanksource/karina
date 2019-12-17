@@ -14,7 +14,7 @@ import (
 
 type PlatformConfig struct {
 	BootstrapToken        string            `yaml:"-"`
-	BuildOptions          BuildOptions      `yaml:"-"`
+	Backups               *Backups          `yaml:"backups,omitempty"`
 	Calico                Calico            `yaml:"calico,omitempty"`
 	Certificates          *Certificates     `yaml:"-"`
 	CertManager           *Enabled          `yaml:"certManager,omitempty"`
@@ -41,6 +41,7 @@ type PlatformConfig struct {
 	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS              `yaml:"nfs,omitempty"`
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
+	NSX                   *NSX              `yaml:"nsx,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet,omitempty"`
@@ -164,7 +165,13 @@ type PostgresOperator struct {
 	Version  string `yaml:"version,omitempty"`
 }
 
+type KubeDB struct {
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version,omitempty"`
+}
+
 type Certificates struct {
+	Root       Certificate `yaml:"root,omitempty"`
 	OpenID     Certificate `yaml:"open_id,omitempty"`
 	Etcd       Certificate `yaml:"etcd,omitempty"`
 	FrontProxy Certificate `yaml:"front_proxy,omitempty"`
@@ -211,17 +218,6 @@ type Ldap struct {
 	AdminGroup string `yaml:"adminGroup,omitempty"`
 	BindDN     string `yaml:"dn,omitempty"`
 }
-type BuildOptions struct {
-	Monitoring bool
-}
-
-type HelmChart struct {
-	Repo       string            `yaml:"repo,omitempty"`
-	Chart      string            `yaml:"chart,omitempty"`
-	Version    string            `yaml:"version,omitempty"`
-	Values     map[string]string `yaml:"values,omitempty"`
-	ValuesFile string            `yaml:"valuesFile,omitempty"`
-}
 
 type Kubernetes struct {
 	Version           string                          `yaml:"version,omitempty"`
@@ -230,14 +226,6 @@ type Kubernetes struct {
 	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
 	KubeScheduler     api.KubeSchedulerConfig         `yaml:"scheduler,omitempty"`
 	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
-}
-
-type ObjectStorage struct {
-	AccessKey    string `yaml:"accessKey,omitempty"`
-	SecretKey    string `yaml:"secretKey,omitempty"`
-	Endpoint     string `yaml:"endpoint,omitempty"`
-	Bucket       string `yaml:"bucket,omitempty"`
-	RegistryPath string `yaml:"registry_path,omitempty"`
 }
 
 type DynamicDNS struct {
@@ -265,11 +253,13 @@ type Monitoring struct {
 }
 
 type Prometheus struct {
-	Version string `yaml:"version,omitempty"`
+	Version  string `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
 type Grafana struct {
-	Version string `yaml:"version,omitempty"`
+	Version  string `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
 type ELK struct {
@@ -324,6 +314,13 @@ type Versions struct {
 	Kubernetes       string            `yaml:"kubernetes,omitempty"`
 	ContainerRuntime string            `yaml:"containerRuntime,omitempty"`
 	Dependencies     map[string]string `yaml:"dependencies,omitempty"`
+}
+
+type Backups struct {
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Schedule string `yaml:"schedule,omitempty"`
+	Bucket   string `yaml:"bucket,omitempty"`
+	Volumes  bool   `yaml:"volumes"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
@@ -381,6 +378,7 @@ func GetCertificates(platform PlatformConfig) *Certificates {
 	log.Infoln("Generating certificates")
 
 	certs := Certificates{
+		Root:       GenerateCA("Root CA"),
 		Etcd:       GenerateCA("etcd-ca"),
 		FrontProxy: GenerateCA("front-proxy-ca"),
 		CA:         GenerateCA("kubernetes"),

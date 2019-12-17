@@ -184,30 +184,34 @@ func getNetworkSpecs(s Session, vm VM, devices object.VirtualDeviceList) ([]type
 		})
 	}
 
-	ref, err := s.Finder.Network(context.TODO(), vm.Network)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to find network %q", vm.Network)
-	}
-	backing, err := ref.EthernetCardBackingInfo(ctx)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to create new ethernet card backing info for network %q on %q", vm.Network, ctx)
-	}
-	dev, err := object.EthernetCardTypes().CreateEthernetCard(ethCardType, backing)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to create new ethernet card %q for network %q on %q", ethCardType, vm.Network, ctx)
-	}
+	id := int32(-100)
+	for _, net := range vm.Network {
+		ref, err := s.Finder.Network(context.TODO(), net)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to find network %q", net)
+		}
+		backing, err := ref.EthernetCardBackingInfo(ctx)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to create new ethernet card backing info for network %q on %q", net, ctx)
+		}
+		dev, err := object.EthernetCardTypes().CreateEthernetCard(ethCardType, backing)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to create new ethernet card %q for network %q on %q", ethCardType, net, ctx)
+		}
 
-	// Get the actual NIC object. This is safe to assert without a check
-	// because "object.EthernetCardTypes().CreateEthernetCard" returns a
-	// "types.BaseVirtualEthernetCard" as a "types.BaseVirtualDevice".
-	nic := dev.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
+		// Get the actual NIC object. This is safe to assert without a check
+		// because "object.EthernetCardTypes().CreateEthernetCard" returns a
+		// "types.BaseVirtualEthernetCard" as a "types.BaseVirtualDevice".
+		nic := dev.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
 
-	// Assign a temporary device key to ensure that a unique one will be
-	// generated when the device is created.
-	nic.Key = -100
-	deviceSpecs = append(deviceSpecs, &types.VirtualDeviceConfigSpec{
-		Device:    dev,
-		Operation: types.VirtualDeviceConfigSpecOperationAdd,
-	})
+		// Assign a temporary device key to ensure that a unique one will be
+		// generated when the device is created.
+		nic.Key = id
+		id++
+		deviceSpecs = append(deviceSpecs, &types.VirtualDeviceConfigSpec{
+			Device:    dev,
+			Operation: types.VirtualDeviceConfigSpecOperationAdd,
+		})
+	}
 	return deviceSpecs, nil
 }

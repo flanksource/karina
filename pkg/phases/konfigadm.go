@@ -54,6 +54,9 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	for k, v := range envVars {
 		cfg.Environment[k] = v
 	}
+
+	// update hosts file with hostname
+	cfg.AddCommand("echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts")
 	return cfg, nil
 }
 
