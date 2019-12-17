@@ -83,7 +83,7 @@ func (vm *VM) GetIP(timeout time.Duration) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if mo.Guest.IpAddress != "" &&  net.ParseIP(ip.IpAddress).To4() != nil  {
+		if mo.Guest.IpAddress != "" && net.ParseIP(mo.Guest.IpAddress).To4() != nil {
 			return mo.Guest.IpAddress, nil
 		}
 		time.Sleep(5 * time.Second)
