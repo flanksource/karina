@@ -9,7 +9,7 @@ Whats included:
 - [x] [Nginx]((https://github.com/kubernetes/ingress-nginx)) based ingress
 - [ ] [Contour](https://github.com/projectcontour/contour) based ingress
 - [x] Calico CNI
-- [ ] NSX-T CNI
+- [x] NSX-T CNI
 - [ ] Istio
 - [ ] Multi-Cluster Calico BGP Peering
 - [ ] Multi-Cluster Load Balancing using [Gimbal](https://github.com/vmware-tanzu/gimbal)
@@ -24,12 +24,12 @@ Whats included:
 - [x] Cloud-init generation using [konfigadm](https://github.com/moshloop/konfigadm)
 - [x] Provisioning clusters on vSphere using [govmomi](https://github.com/vmware/govmomi), heavily based on [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere)
 - [x] Namespace templating using [namespace-configuration-operator](https://github.com/redhat-cop/namespace-configuration-operator/tree/master)
-- [ ] In cluster templating [quack](https://github.com/pusher/quack) for dynamic ingress domain names
+- [x] In cluster templating [quack](https://github.com/pusher/quack) for dynamic ingress domain names
 - [ ] Per Namespace log shipping using [fluent-operator](https://github.com/vmware/kube-fluentd-operator)
 - [ ] DNS Integration via [external-dns](https://github.com/kubernetes-incubator/external-dns)
 - [ ] Backups using [velero](https://github.com/heptio/velero)
 - [x] Certificate Management using [cert-manager](https://github.com/jetstack/cert-manager)
-- [ ] GitOps using [faros](https://github.com/pusher/faros) or [flux](https://fluxcd.io)
+- [ ] GitOps using [flux](https://fluxcd.io)
 - [ ] Authenticating proxy using [OAuth Proxy](https://github.com/pusher/oauth2_proxy) or [SSO Operator](https://github.com/jenkins-x/sso-operator)
 - [ ] Conformance testing using [sonobuoy](https://github.com/heptio/sonobuoy)
 - [x] Policy Enforcement using [OPA](https://github.com/open-policy-agent/kube-mgmt) (OPA)
@@ -49,7 +49,7 @@ Whats included:
 - [x] Harbor Registry
 - [ ] HashiCorp Vault
 - [ ] Redis Operator
-- [x] Multi-Cluster Log aggregation using [ELK/ECK](https://github.com/elastic/cloud-on-k8s)
+- [ ] Multi-Cluster Log aggregation using [ELK/ECK](https://github.com/elastic/cloud-on-k8s)
 - [ ] Multi-Cluster Metric aggregation using [Thanos](https://github.com/thanos-io/thanos)
 - [ ] Multi-Cluster Billing using [operator-metering](https://github.com/operator-framework/operator-metering)
 

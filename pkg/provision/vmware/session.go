@@ -23,14 +23,14 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/moshloop/platform-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
+
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 var sessionCache = map[string]Session{}
@@ -166,8 +166,8 @@ func LoadGovcEnvVars(vm *types.VM) {
 	if vm.Datastore == "" {
 		vm.Datastore = os.Getenv("GOVC_DATASTORE")
 	}
-	if vm.Network == "" {
-		vm.Network = os.Getenv("GOVC_NETWORK")
+	if len(vm.Network) == 0 {
+		vm.Network = []string{os.Getenv("GOVC_NETWORK")}
 	}
 
 	if vm.Folder == "" {
