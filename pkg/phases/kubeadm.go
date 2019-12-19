@@ -1,6 +1,7 @@
 package phases
 
 import (
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -38,6 +39,18 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		"oidc-ca-file":        "/etc/ssl/certs/openid-ca.pem",
 		"oidc-username-claim": "email",
 		"oidc-groups-claim":   "groups",
+	}
+	if strings.HasPrefix(cluster.APIVersion, "1.16") {
+		runtimeConfigs := []string{
+			"apps/v1beta1=true",
+			"apps/v1beta2=true",
+			"extensions/v1beta1/daemonsets=true",
+			"extensions/v1beta1/deployments=true",
+			"extensions/v1beta1/replicasets=true",
+			"extensions/v1beta1/networkpolicies=true",
+			"extensions/v1beta1/podsecuritypolicies=true",
+		}
+		cluster.APIServer.ExtraArgs["runtime-config"] = strings.Join(runtimeConfigs, ",")
 	}
 	return cluster
 }
