@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -34,12 +35,23 @@ func Take(p *platform.Platform, dst string, since time.Duration) error {
 		}
 
 		for _, pod := range list.Items {
-			for _, container := range pod.Spec.Containers {
+			for _, container := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
 				path := dst + "/" + namespace.Name
-				logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
-					Container: container.Name,
-					SinceTime: &sinceTime,
-				})
+
+				log.Infof("Looking for %s/%s/%s", namespace.Name, pod.Name, container.Name)
+
+				var logs *rest.Request
+				if since.Seconds() > 0 {
+					logs = pods.GetLogs(pod.Name, &v1.PodLogOptions{
+						Container: container.Name,
+						SinceTime: &sinceTime,
+					})
+				} else {
+					logs = pods.GetLogs(pod.Name, &v1.PodLogOptions{
+						Container: container.Name,
+					})
+				}
+
 				podLogs, err := logs.Stream()
 				if err != nil {
 					log.Errorf("Failed to stream logs %v", err)
@@ -63,7 +75,6 @@ func Take(p *platform.Platform, dst string, since time.Duration) error {
 					log.Infof("Saving logs for %s/%s-%s (%dkb)", namespace.Name, pod.Name, container.Name, count/1024)
 				}
 			}
-
 		}
 	}
 	return nil
