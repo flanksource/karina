@@ -51,19 +51,19 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	// cert := p.Certificates.Root.ToCert()
-	// log.Infof("Creating  NSX cert for %s\n", "nsx."+p.Domain)
-	// cert, err := cert.CreateCertificate("nsx."+p.Domain, "")
-	// if err != nil {
-	// 	return err
-	// }
+	cert := p.Certificates.Root.ToCert()
+	log.Infof("Creating  NSX cert for %s\n", "nsx."+p.Domain)
+	cert, err := cert.CreateCertificate("nsx."+p.Domain, "")
+	if err != nil {
+		return err
+	}
 
-	// if err := p.CreateOrUpdateSecret("nsx-secret", Namespace, map[string][]byte{
-	// 	"tls.crt": cert.EncodedCertificate(),
-	// 	"tls.key": cert.EncodedPrivateKey(),
-	// }); err != nil {
-	// 	return err
-	// }
+	if err := p.CreateOrUpdateSecret("nsx-secret", Namespace, map[string][]byte{
+		"tls.crt": cert.EncodedCertificate(),
+		"tls.key": cert.EncodedPrivateKey(),
+	}); err != nil {
+		return err
+	}
 	// p.NSX.NsxV3.NsxApiCertFile = "/etc/nsx-ujo/nsx-cert/tls.crt"
 	// p.NSX.NsxV3.NsxApiPrivateKeyFile = "/etc/nsx-ujo/nsx-cert/tls.key"
 	yes := true
