@@ -74,7 +74,7 @@ type VM struct {
 	ResourcePool string            `yaml:"resourcePool,omitempty"`
 	CPUs         int32             `yaml:"cpu,omitempty"`
 	MemoryGB     int64             `yaml:"memory,omitempty"`
-	Network      []string          `yaml:"networks,omitempty"`
+	Network      string            `yaml:"network,omitempty"`
 	DiskGB       int               `yaml:"disk,omitempty"`
 	Tags         map[string]string `yaml:"tags,omitempty"`
 	Commands     []string          `yaml:"commands,omitempty"`
