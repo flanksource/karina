@@ -210,7 +210,7 @@ func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string
 	return nil
 }
 
-func (c *Client) ExposeIngressTLS(namespace, service string, domain string, port int) error {
+func (c *Client) ExposeIngress(namespace, service string, domain string, port int, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return err
@@ -220,11 +220,9 @@ func (c *Client) ExposeIngressTLS(namespace, service string, domain string, port
 	if ingress == nil || err != nil {
 		ingress = &v1beta1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      service,
-				Namespace: namespace,
-				Annotations: map[string]string{
-					"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
-				},
+				Name:        service,
+				Namespace:   namespace,
+				Annotations: annotations,
 			},
 			Spec: v1beta1.IngressSpec{
 				TLS: []v1beta1.IngressTLS{
