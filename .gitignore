@@ -18,3 +18,4 @@ hack/
 kind
 test-results/
 manifests/static.go
+snapshot/

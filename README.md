@@ -1,6 +1,6 @@
 ##  Platform
 
-[![CircleCI](https://circleci.com/gh/moshloop/platform-cli.svg?style=svg&circle-token=f9032c3ab55333568caf07bac25c9c59f5bbf7a3)](https://circleci.com/gh/moshloop/platform-cli)
+[![CircleCI](https://circleci.com/gh/flanksource/platform-cli.svg?style=svg)](https://circleci.com/gh/flanksource/platform-cli)
 
 Whats included:
 
