@@ -1,10 +1,12 @@
 package monitoring
 
 import (
+	"encoding/json"
 	"fmt"
-"encoding/json"
+
+	"github.com/grafana-tools/sdk"
 	log "github.com/sirupsen/logrus"
-"github.com/grafana-tools/sdk"
+
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -17,6 +19,9 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
+	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yml"); err != nil {
+		log.Warnf("Failed to deploy prometheus operator %v", err)
+	}
 	data, err := p.Template("monitoring/alertmanager.yaml")
 	if err != nil {
 		return err
@@ -27,9 +32,6 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yml"); err != nil {
-		log.Warnf("Failed to deploy prometheus operator %v", err)
-	}
 	for _, spec := range specs {
 		log.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
