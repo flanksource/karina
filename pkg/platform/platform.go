@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -370,7 +371,10 @@ func (platform *Platform) GetResourceByName(file string) (string, error) {
 func (platform *Platform) Template(file string) (string, error) {
 	raw, err := platform.GetResourceByName(file)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Could not find %s: %v", file, err)
+	}
+	if strings.HasSuffix(file, ".raw") {
+		return raw, nil
 	}
 	template, err := text.Template(raw, platform.PlatformConfig)
 	if err != nil {
@@ -379,6 +383,29 @@ func (platform *Platform) Template(file string) (string, error) {
 		return "", err
 	}
 	return template, nil
+}
+
+func (platform *Platform) GetResourcesByDir(path string) (map[string]http.File, error) {
+	out := make(map[string]http.File)
+	fs := manifests.FS(false)
+
+	dir, err := fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	files, err := dir.Readdir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, info := range files {
+		file, err := fs.Open(path + "/" + info.Name())
+		if err != nil {
+			return nil, err
+		}
+		out[info.Name()] = file
+	}
+	return out, nil
 }
 
 func (platform *Platform) TemplateDir(path string) (string, error) {
@@ -394,9 +421,12 @@ func (platform *Platform) TemplateDir(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
+	dst := ".manifests/" + path
 	for _, info := range files {
 		to := tmp + "/" + info.Name()
+		if strings.HasSuffix(info.Name(), ".raw") {
+			to = dst + "/" + info.Name()
+		}
 		log.Debugf("Extracting %s\n", to)
 		destination, err := os.Create(to)
 		if err != nil {
@@ -441,7 +471,13 @@ func (platform *Platform) Annotate(objectType, name, namespace string, annotatio
 }
 
 func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) error {
-	return platform.Client.ExposeIngressTLS(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port)
+	return platform.Client.ExposeIngress(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port, map[string]string{
+		"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
+	})
+}
+
+func (platform *Platform) ExposeIngress(namespace, service string, port int, annotations map[string]string) error {
+	return platform.Client.ExposeIngress(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port, annotations)
 }
 
 func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
