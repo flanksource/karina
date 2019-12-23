@@ -126,6 +126,9 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 }
 
 func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, error) {
+	for _, cmd := range vm.Commands {
+		config.AddCommand(cmd)
+	}
 	ctx := context.TODO()
 	obj, err := platform.session.Clone(vm, config)
 	if err != nil {
