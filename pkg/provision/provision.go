@@ -49,7 +49,7 @@ func Cluster(platform *platform.Platform) error {
 	if len(masters) == 0 {
 		vm := platform.Master
 		vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "m", utils.ShortTimestamp())
-
+		vm.Tags["Role"] = "master"
 		log.Infof("No  masters detected, deploying new master %s", vm.Name)
 		config, err := phases.CreatePrimaryMaster(platform)
 		if err != nil {
@@ -92,6 +92,7 @@ func Cluster(platform *platform.Platform) error {
 		go func() {
 			vm := platform.Master
 			vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
+			vm.Tags["Role"] = "master"
 			log.Infof("Creating new secondary master %s\n", vm.Name)
 			config, err := phases.CreateSecondaryMaster(platform)
 			if err != nil {
@@ -132,6 +133,7 @@ func Cluster(platform *platform.Platform) error {
 					log.Errorf("Failed to create workers %s\n", err)
 				} else {
 					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, worker.Prefix, utils.ShortTimestamp())
+					vm.Tags["Role"] = "worker"
 					if !platform.DryRun {
 						log.Infof("Creating new worker %s\n", vm.Name)
 						vm, err := platform.Clone(vm, config)

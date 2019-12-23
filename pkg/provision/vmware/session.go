@@ -23,8 +23,8 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -178,6 +178,9 @@ func LoadGovcEnvVars(vm *types.VM) {
 	}
 	if vm.ResourcePool == "" {
 		vm.ResourcePool = os.Getenv("GOVC_RESOURCE_POOL")
+	}
+	if vm.Tags == nil {
+		vm.Tags = make(map[string]string)
 	}
 }
 
