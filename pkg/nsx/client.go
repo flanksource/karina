@@ -183,25 +183,6 @@ func (client *NSXClient) CreateOrUpdateNSGroup(name string, targetType string, t
 	}
 }
 
-// func (lb *LoadBalancer) AddMember(ips ...string) error {
-// 	ctx := lb.client.api.Context
-
-// 	for _, ip := range ips {
-
-// 		if err != nil {
-// 			return fmt.Errorf("Unable to create virtual server (lb member) %s: %s", ip, errorString(resp, err))
-// 		}
-
-// 	}
-// 	return nil
-// }
-// func (lb *LoadBalancer) RemoveMember(ip ...string) error {
-// 	return nil
-// }
-// func (client *NSXClient) GetLoadBalancer(name string) (*LoadBalancer, error) {
-// 	return nil, nil
-// }
-
 func (client *NSXClient) AllocateIP(pool string) (string, error) {
 	addr, resp, err := client.api.PoolManagementApi.AllocateOrReleaseFromIpPool(client.api.Context, pool, manager.AllocationIpAddress{}, "ALLOCATE")
 	if err != nil {

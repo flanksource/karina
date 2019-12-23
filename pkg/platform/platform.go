@@ -159,11 +159,11 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get NSX client: %v", err)
 		}
-		// Tag the infra NIC (2nd)
-		if err := nsxClient.TagNics(ctx, vm.Name, map[string]string{
-			"ncp/node_name": vm.Name,
-			"ncp/cluster":   platform.Name,
-		}); err != nil {
+		tags := vm.Tags
+		tags["ncp/node_name"] = vm.Name
+		tags["ncp/cluster"] = platform.Name
+		// Tag all the NICS for the VM
+		if err := nsxClient.TagNics(ctx, vm.Name, tags); err != nil {
 			return nil, fmt.Errorf("Failed to tag nics for %s: %+v", vm.Name, err)
 		}
 	}
