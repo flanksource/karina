@@ -64,19 +64,21 @@ type Enabled struct {
 }
 
 type VM struct {
-	Name         string `yaml:"name,omitempty"`
-	Prefix       string `yaml:"prefix,omitempty"`
-	Count        int    `yaml:"count,omitempty"`
-	Template     string `yaml:"template,omitempty"`
-	Cluster      string `yaml:"cluster,omitempty"`
-	Folder       string `yaml:"folder,omitempty"`
-	Datastore    string `yaml:"datastore,omitempty"`
-	ResourcePool string `yaml:"resourcePool,omitempty"`
-	CPUs         int32  `yaml:"cpu,omitempty"`
-	MemoryGB     int64  `yaml:"memory,omitempty"`
-	Network      string `yaml:"network,omitempty"`
-	DiskGB       int    `yaml:"disk,omitempty"`
-	IP           string `yaml:"-"`
+	Name         string            `yaml:"name,omitempty"`
+	Prefix       string            `yaml:"prefix,omitempty"`
+	Count        int               `yaml:"count,omitempty"`
+	Template     string            `yaml:"template,omitempty"`
+	Cluster      string            `yaml:"cluster,omitempty"`
+	Folder       string            `yaml:"folder,omitempty"`
+	Datastore    string            `yaml:"datastore,omitempty"`
+	ResourcePool string            `yaml:"resourcePool,omitempty"`
+	CPUs         int32             `yaml:"cpu,omitempty"`
+	MemoryGB     int64             `yaml:"memory,omitempty"`
+	Network      []string          `yaml:"networks,omitempty"`
+	DiskGB       int               `yaml:"disk,omitempty"`
+	Tags         map[string]string `yaml:"tags,omitempty"`
+	Commands     []string          `yaml:"commands,omitempty"`
+	IP           string            `yaml:"-"`
 }
 
 type Calico struct {
@@ -249,6 +251,7 @@ type DynamicDNS struct {
 
 type Monitoring struct {
 	Disabled         bool       `yaml:"disabled,omitempty"`
+	AlertEmail       string     `yaml:"alert_email,omitempty"`
 	Version          string     `yaml:"version,omitempty" json:"version,omitempty"`
 	Prometheus       Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
 	Grafana          Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
