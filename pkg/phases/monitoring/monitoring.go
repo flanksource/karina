@@ -22,6 +22,7 @@ func Install(p *platform.Platform) error {
 	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yml"); err != nil {
 		log.Warnf("Failed to deploy prometheus operator %v", err)
 	}
+
 	data, err := p.Template("monitoring/alertmanager.yaml")
 	if err != nil {
 		return err
@@ -39,9 +40,6 @@ func Install(p *platform.Platform) error {
 		}
 	}
 
-	if err := p.ExposeIngress("monitoring", "grafana-service", 3000, nil); err != nil {
-		return err
-	}
 	dashboards, err := p.GetResourcesByDir("/monitoring/dashboards")
 	if err != nil {
 		return fmt.Errorf("Unable to find dashboards: %v", err)
@@ -74,14 +72,3 @@ func Install(p *platform.Platform) error {
 
 	return nil
 }
-
-// type Dashboard struct {
-
-// metadata:
-//   name: dashboard-with-plugins
-//   labels:
-//     app: grafana
-// spec:
-//   name: dashboard-with-plugins.json
-//   json: >
-// }
