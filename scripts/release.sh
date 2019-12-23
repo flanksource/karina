@@ -3,19 +3,27 @@ set -x
 NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_USER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
 GITHUB_USER=${GITHUB_USER##*:}
-TAG=$(git tag --points-at HEAD )
+TAG=$(git describe --tags --abbrev=0 --exact-match)
+SNAPSHOT=false
 if [[ "$TAG" == "" ]];  then
-  echo "Skipping release of untagged commit"
-  exit 0
+  TAG=$(git describe --tags --abbrev=0)-snapshot
+  SNAPSHOT=true
 fi
 
 VERSION="v$TAG built $(date)"
 
 make pack linux darwin compress
 
-echo Releasing
-github-release release -u $GITHUB_USER -r ${NAME} --tag $TAG
+
+if [[ "$SNAPSHOT" == "true "]]; then
+  echo Releasing pre-release
+  github-release release -u $GITHUB_USER -r ${NAME} --tag $TAG --pre-release
+else
+  echo Releasing final release
+  github-release release -u $GITHUB_USER -r ${NAME} --tag $TAG
+fi
+
 echo Uploading $NAME
-github-release upload -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME} -f .bin/${NAME}
+github-release upload -R -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME} -f .bin/${NAME}
 echo Uploading ${NAME}_osx
-github-release upload -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME}_osx -f .bin/${NAME}_osx
+github-release upload -R -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME}_osx -f .bin/${NAME}_osx
