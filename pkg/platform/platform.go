@@ -344,7 +344,6 @@ func (platform *Platform) TemplateDir(path string) (string, error) {
 			return "", err
 		}
 	}
-	dst := ".manifests/" + path
 	os.RemoveAll(dst)
 	os.MkdirAll(dst, 0775)
 	return dst, text.TemplateDir(tmp, dst, platform.PlatformConfig)
