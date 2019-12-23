@@ -14,6 +14,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
+	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -113,6 +114,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "nsx",
+		Short: "Test NSX-T CNI",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(nsx.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "monitoring",
 		Short: "Test monitoring stack",
 		Args:  cobra.MinimumNArgs(0),
@@ -133,6 +143,7 @@ func init() {
 				harbor.Test(p, test)
 				dex.Test(p, test)
 				monitoring.Test(p, test)
+				nsx.Test(p, test)
 			})
 		},
 	})

@@ -9,6 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	nsxt "github.com/vmware/go-vmware-nsxt"
 	"github.com/vmware/go-vmware-nsxt/common"
+	"github.com/vmware/go-vmware-nsxt/loadbalancer"
+	"github.com/vmware/go-vmware-nsxt/manager"
 )
 
 type NSXClient struct {
@@ -113,5 +115,205 @@ func (c *NSXClient) TagNics(ctx context.Context, id string, tags map[string]stri
 		}
 	}
 	return nil
+}
 
+type LoadBalancer struct {
+	client *NSXClient
+	name   string
+	Id     string
+}
+
+type NSGroup struct {
+	client   *NSXClient
+	Name, Id string
+}
+
+func (group *NSGroup) Add(ips ...string) error {
+	return nil
+}
+
+func (group *NSGroup) Remove(ips ...string) error {
+	return nil
+}
+func (group *NSGroup) List() ([]string, error) {
+	return nil, nil
+}
+
+func (client *NSXClient) CreateOrUpdateNSGroup(name string, targetType string, tags map[string]string) (*NSGroup, error) {
+	ctx := client.api.Context
+	var criteria []manager.NsGroupTagExpression
+	for k, v := range tags {
+		criteria = append(criteria, manager.NsGroupTagExpression{
+			ResourceType: "NSGroupTagExpression",
+			TargetType:   targetType,
+			Tag:          v,
+			Scope:        k,
+		})
+	}
+
+	_, resp, err := client.api.GroupingObjectsApi.ReadNSGroup(ctx, name, map[string]interface{}{})
+	if err != nil || resp != nil && resp.StatusCode == http.StatusNotFound {
+		group, resp, err := client.api.GroupingObjectsApi.CreateNSGroup(client.api.Context, manager.NsGroup{
+			Id:                 name,
+			ResourceType:       "NSGroupTagExpression",
+			MembershipCriteria: criteria,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Unable to create/update NSGroup %s: %s", name, errorString(resp, err))
+		}
+		return &NSGroup{
+			client: client,
+			Name:   group.DisplayName,
+			Id:     group.Id,
+		}, nil
+	} else {
+		group, resp, err := client.api.GroupingObjectsApi.UpdateNSGroup(ctx, name, manager.NsGroup{
+			Id:                 name,
+			ResourceType:       "NSGroupTagExpression",
+			MembershipCriteria: criteria,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Unable to create/update NSGroup %s: %s", name, errorString(resp, err))
+		}
+		return &NSGroup{
+			client: client,
+			Name:   group.DisplayName,
+			Id:     group.Id,
+		}, nil
+	}
+}
+
+// func (lb *LoadBalancer) AddMember(ips ...string) error {
+// 	ctx := lb.client.api.Context
+
+// 	for _, ip := range ips {
+
+// 		if err != nil {
+// 			return fmt.Errorf("Unable to create virtual server (lb member) %s: %s", ip, errorString(resp, err))
+// 		}
+
+// 	}
+// 	return nil
+// }
+// func (lb *LoadBalancer) RemoveMember(ip ...string) error {
+// 	return nil
+// }
+// func (client *NSXClient) GetLoadBalancer(name string) (*LoadBalancer, error) {
+// 	return nil, nil
+// }
+
+func (client *NSXClient) AllocateIP(pool string) (string, error) {
+	addr, resp, err := client.api.PoolManagementApi.AllocateOrReleaseFromIpPool(client.api.Context, pool, manager.AllocationIpAddress{}, "ALLOCATE")
+	if err != nil {
+		return "", fmt.Errorf("Unable to allocate IP from %s: %s", pool, errorString(resp, err))
+	}
+	log.Infof("Allocated IP: %s %s %s", addr.AllocationId, addr.Id, addr.DisplayName)
+	return addr.AllocationId, nil
+}
+
+type LoadBalancerOptions struct {
+	Name       string
+	IPPool     string
+	Protocol   string
+	Ports      []string
+	Tier0      string
+	MemberTags map[string]string
+}
+
+func (client *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error) {
+	ctx := client.api.Context
+	api := client.api.ServicesApi
+	routing := client.api.LogicalRoutingAndServicesApi
+
+	t0, resp, err := routing.ReadLogicalRouter(ctx, opts.Tier0)
+	if err != nil {
+		return "", fmt.Errorf("Failed to read T0 router %s: %s", opts.Tier0, errorString(resp, err))
+	}
+
+	t0Port, resp, err := routing.CreateLogicalRouterLinkPortOnTier0(ctx, manager.LogicalRouterLinkPortOnTier0{
+		LogicalRouterId: t0.Id,
+		DisplayName:     "lb-" + opts.Name + "-T1",
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("Unable to create T0 Local router port %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	t1, resp, err := routing.CreateLogicalRouter(ctx, manager.LogicalRouter{
+		RouterType:    "TIER1",
+		DisplayName:   "lb-" + opts.Name,
+		EdgeClusterId: t0.EdgeClusterId,
+	})
+	if err != nil {
+		return "", fmt.Errorf("Unable to create T1 router %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	log.Infof("Created T1 router %s/%s", t1.DisplayName, t1.Id)
+
+	_, resp, err = routing.CreateLogicalRouterLinkPortOnTier1(ctx, manager.LogicalRouterLinkPortOnTier1{
+		LogicalRouterId: t1.Id,
+		DisplayName:     t0.DisplayName + "-uplink",
+		LinkedLogicalRouterPortId: &common.ResourceReference{
+			TargetType: "LogicalPort",
+			TargetId:   t0Port.Id,
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("Failed to link T1 (%s) to T0 (%s): %s", t1.Id, t0Port.Id, errorString(resp, err))
+	}
+
+	group, err := client.CreateOrUpdateNSGroup(opts.Name, "LogicalPort", opts.MemberTags)
+	if err != nil {
+		return "", err
+	}
+	pool, resp, err := api.CreateLoadBalancerPool(ctx, loadbalancer.LbPool{
+		Id: opts.Name,
+		MemberGroup: &loadbalancer.PoolMemberGroup{
+			GroupingObject: &common.ResourceReference{
+				TargetType: "NSGroup",
+				TargetId:   group.Id,
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("Unable to create load balancer pool %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	ip, err := client.AllocateIP(opts.IPPool)
+	if err != nil {
+		return "", fmt.Errorf("Unable to allocate VIP %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	server, resp, err := api.CreateLoadBalancerVirtualServer(ctx, loadbalancer.LbVirtualServer{
+		Id:         opts.Name,
+		Enabled:    true,
+		IpAddress:  ip,
+		IpProtocol: opts.Protocol,
+		Ports:      opts.Ports,
+		PoolId:     pool.Id,
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("Unable to create virtual server %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	lb := loadbalancer.LbService{
+		DisplayName: opts.Name,
+		Attachment: &common.ResourceReference{
+			TargetType: "LogicalRouter",
+			TargetId:   t1.Id,
+		},
+		Enabled:          true,
+		ErrorLogLevel:    "INFO",
+		Size:             "SMALL",
+		VirtualServerIds: []string{server.Id},
+	}
+
+	lb, resp, err = api.CreateLoadBalancerService(client.api.Context, lb)
+	if err != nil {
+		return "", fmt.Errorf("Unable to create load balancer %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	log.Infof("Created LoadBalancer service: %s/%s", server.Id, ip)
+	return ip, nil
 }

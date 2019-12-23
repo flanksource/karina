@@ -1,9 +1,11 @@
 package types
 
 type NSX struct {
-	Disabled bool   `structs:"-" yaml:"disabled"`
-	Image    string `structs:"-" yaml:""`
-	Version  string `structs:"-" yaml:"version"`
+	LoadBalancerIPPool string `yaml:"loadbalancer_ip_pool,omitempty"`
+	Tier0              string `yaml:"tier0,omitempty"`
+	Disabled           bool   `structs:"-" yaml:"disabled"`
+	Image              string `structs:"-" yaml:""`
+	Version            string `structs:"-" yaml:"version"`
 	// If set to true, the logging level will be set to DEBUG instead of the
 	// default INFO level.
 	Debug *bool `structs:"debug,omitempty" yaml:"debug,omitempty"`
