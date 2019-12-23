@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.47.0 // indirect
 	cloud.google.com/go/bigquery v1.2.0 // indirect
 	cloud.google.com/go/storage v1.2.1 // indirect
+	github.com/apex/log v1.1.0
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/gobuffalo/packr/v2 v2.7.1
@@ -14,9 +15,11 @@ require (
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
+	github.com/grafana-tools/sdk v0.0.0-20191214173017-690a0c6bec7b
 	github.com/imdario/mergo v0.3.6
 	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/miekg/dns v1.1.22
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/moshloop/commons v0.0.3-0.20191104124838-faba5f315c26
 	github.com/moshloop/konfigadm v0.4.6
 	github.com/pkg/errors v0.8.1
