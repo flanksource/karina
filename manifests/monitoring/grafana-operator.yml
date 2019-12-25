@@ -203,9 +203,8 @@ rules:
     resources:
       - grafanadashboards
       - grafanadashboards/status
-    verbs: ['get', 'list', 'update', 'watch']
+    verbs: ["get", "list", "update", "watch"]
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -215,9 +214,9 @@ roleRef:
   kind: ClusterRole
   name: grafana-operator
 subjects:
-- kind: ServiceAccount
-  name: grafana-operator
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: grafana-operator
+    namespace: monitoring
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -237,7 +236,7 @@ rules:
       - secrets
       - serviceaccounts
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - apps
     resources:
@@ -247,13 +246,13 @@ rules:
       - replicasets
       - statefulsets
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - route.openshift.io
     resources:
       - routes
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - monitoring.coreos.com
     resources:
@@ -266,7 +265,7 @@ rules:
     resources:
       - ingresses
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - integreatly.org
     resources:
@@ -278,16 +277,17 @@ rules:
       - grafanadatasources
       - grafanadatasources/status
     verbs:
-      - '*'
+      - "*"
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: grafana-operator
-subjects:
-- kind: ServiceAccount
-  name: grafana-operator
   namespace: monitoring
+subjects:
+  - kind: ServiceAccount
+    name: grafana-operator
+    namespace: monitoring
 roleRef:
   kind: Role
   name: grafana-operator
@@ -319,13 +319,13 @@ spec:
         - name: grafana-operator
           image: quay.io/integreatly/grafana-operator:latest
           args:
-            - '--grafana-image=grafana/grafana'
-            - '--grafana-image-tag=6.4.3'
+            - "--grafana-image=grafana/grafana"
+            - "--grafana-image-tag=6.4.3"
           ports:
-          - containerPort: 60000
-            name: metrics
+            - containerPort: 60000
+              name: metrics
           command:
-          - grafana-operator
+            - grafana-operator
           imagePullPolicy: Always
           readinessProbe:
             exec:
