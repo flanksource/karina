@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
@@ -49,7 +50,7 @@ func Cluster(platform *platform.Platform) error {
 	if len(masters) == 0 {
 		vm := platform.Master
 		vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "m", utils.ShortTimestamp())
-		vm.Tags["Role"] = "master"
+		vm.Tags["Role"] = platform.Name + "-masters"
 		log.Infof("No  masters detected, deploying new master %s", vm.Name)
 		config, err := phases.CreatePrimaryMaster(platform)
 		if err != nil {
@@ -92,7 +93,7 @@ func Cluster(platform *platform.Platform) error {
 		go func() {
 			vm := platform.Master
 			vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
-			vm.Tags["Role"] = "master"
+			vm.Tags["Role"] = platform.Name + "-masters"
 			log.Infof("Creating new secondary master %s\n", vm.Name)
 			config, err := phases.CreateSecondaryMaster(platform)
 			if err != nil {
@@ -133,7 +134,7 @@ func Cluster(platform *platform.Platform) error {
 					log.Errorf("Failed to create workers %s\n", err)
 				} else {
 					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, worker.Prefix, utils.ShortTimestamp())
-					vm.Tags["Role"] = "worker"
+					vm.Tags["Role"] = platform.Name + "-workers"
 					if !platform.DryRun {
 						log.Infof("Creating new worker %s\n", vm.Name)
 						vm, err := platform.Clone(vm, config)
@@ -183,5 +184,51 @@ func Cluster(platform *platform.Platform) error {
 		return err
 	}
 	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: kubectl --kubeconfig %s get nodes\n\n Next deploy the CNI and addons\n\n\n", platform.Name, path)
+	masterLB, workerLB, err := provisionLoadbalancers(platform)
+	if err != nil {
+		log.Errorf("Failed to provision load balancers: %v", err)
+	}
+	fmt.Printf("Provisioned LoadBalancers:\n Masters: %s\nWorkers: %s\n", masterLB, workerLB)
 	return nil
+}
+
+func provisionLoadbalancers(p *platform.Platform) (masters string, workers string, err error) {
+
+	if p.NSX == nil || p.NSX.Disabled {
+		return "", "", nil
+	}
+
+	nsxClient, err := p.GetNSXClient()
+	if err != nil {
+		return "", "", err
+	}
+
+	masters, err = nsxClient.CreateLoadBalancer(nsx.LoadBalancerOptions{
+		Name:     p.Name + "-masters",
+		IPPool:   p.NSX.LoadBalancerIPPool,
+		Protocol: "TCP",
+		Ports:    []string{"6443"},
+		Tier0:    p.NSX.Tier0,
+		MemberTags: map[string]string{
+			"Role": p.Name + "-masters",
+		},
+	})
+	if err != nil {
+		return "", "", err
+	}
+	workers, err = nsxClient.CreateLoadBalancer(nsx.LoadBalancerOptions{
+		Name:     p.Name + "-workers",
+		IPPool:   p.NSX.LoadBalancerIPPool,
+		Protocol: "TCP",
+		Ports:    []string{"80", "443"},
+		Tier0:    p.NSX.Tier0,
+		MemberTags: map[string]string{
+			"Role": p.Name + "-workers",
+		},
+	})
+	if err != nil {
+		return "", "", err
+	}
+	return masters, workers, nil
+
 }
