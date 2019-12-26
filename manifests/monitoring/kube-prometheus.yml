@@ -26,9 +26,9 @@ metadata:
   namespace: monitoring
 spec:
   ports:
-  - name: web
-    port: 9093
-    targetPort: web
+    - name: web
+      port: 9093
+      targetPort: web
   selector:
     alertmanager: main
     app: alertmanager
@@ -46,27 +46,27 @@ kind: ClusterRole
 metadata:
   name: prometheus-k8s
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes/metrics
-  verbs:
-  - get
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - services
-  - endpoints
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/metrics
+    verbs:
+      - get
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -77,9 +77,9 @@ roleRef:
   kind: ClusterRole
   name: prometheus-k8s
 subjects:
-- kind: ServiceAccount
-  name: prometheus-k8s
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: prometheus-k8s
+    namespace: monitoring
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
@@ -91,9 +91,9 @@ metadata:
 spec:
   alerting:
     alertmanagers:
-    - name: alertmanager-main
-      namespace: monitoring
-      port: web
+      - name: alertmanager-main
+        namespace: monitoring
+        port: web
   baseImage: quay.io/prometheus/prometheus
   nodeSelector:
     kubernetes.io/os: linux
@@ -125,9 +125,9 @@ metadata:
   namespace: monitoring
 spec:
   ports:
-  - name: web
-    port: 9090
-    targetPort: web
+    - name: web
+      port: 9090
+      targetPort: web
   selector:
     app: prometheus
     prometheus: k8s
@@ -166,13 +166,14 @@ spec:
       enabled: True
   dashboardLabelSelector:
     - matchExpressions:
-        - {key: app, operator: In, values: [grafana]}
+        - { key: app, operator: In, values: [grafana] }
 
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
   name: datasources
+  namespace: monitoring
 spec:
   name: prometheus.yaml
   datasources:
@@ -192,6 +193,7 @@ apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
 metadata:
   name: dashboard-with-plugins
+  namespace: monitoring
   labels:
     app: grafana
 spec:
@@ -235,7 +237,6 @@ spec:
       version: "1.0.16"
     - name: "kubernetes-app"
       version: "1.0.1"
-
 
 ---
 apiVersion: extensions/v1beta1
@@ -289,4 +290,3 @@ spec:
           - backend:
               serviceName: alertmanager-main
               servicePort: 9093
-
