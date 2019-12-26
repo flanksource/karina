@@ -11,6 +11,11 @@ import (
 
 // Cleanup stops and deletes all VM's for a cluster;
 func Cleanup(platform *platform.Platform) error {
+
+	if err := platform.OpenViaEnv(); err != nil {
+		return err
+	}
+
 	vms, err := platform.GetVMs()
 	if err != nil {
 		return err
@@ -27,7 +32,6 @@ func Cleanup(platform *platform.Platform) error {
 	var wg sync.WaitGroup
 	for _, _vm := range vms {
 		vm := _vm
-		log.Infof("Terminating %s", vm.Name)
 		if platform.DryRun {
 			continue
 		}
