@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -72,10 +73,20 @@ func (platform *Platform) GetVMs() (map[string]*VM, error) {
 	return platform.GetVMsByPrefix("")
 }
 
+func ping(host string, port int, timeout int) bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), time.Duration(timeout)*time.Second)
+	if conn != nil {
+		conn.Close()
+	}
+
+	return err == nil
+}
+
 // WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
 	for {
-		if len(platform.GetMasterIPs()) > 0 {
+		masters := platform.GetMasterIPs()
+		if len(masters) > 0 && ping(masters[0], 6443, 3) {
 			return nil
 		}
 		time.Sleep(5 * time.Second)
@@ -152,7 +163,7 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get IP for %s: %v", vm.Name, err)
 	}
-	vm.IP = ip
+	VM.IP = ip
 	log.Tracef("Found IP %s: %s", vm.Name, ip)
 	if platform.NSX != nil && !platform.NSX.Disabled {
 		nsxClient, err := platform.GetNSXClient()
