@@ -7,7 +7,7 @@ go: &go
     - image: circleci/golang:1.12
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
-  test15:
+  test:
     resource_class: large
     environment:
       VERSION: v1.15.3
@@ -19,7 +19,7 @@ jobs:
       - store_test_results:
           path: test-results
 
-  test16:
+  test-next:
     resource_class: large
     environment:
       VERSION: v1.16.3
@@ -43,12 +43,12 @@ workflows:
   version: 2
   build:
     jobs:
-      - test15
-      - test16
+      - test
+      - test-next
       - release:
           requires:
-            - test15
-            - test16
+            - test
+            - test-next
           context: Github
           filters:
             tags:
