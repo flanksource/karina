@@ -11,7 +11,7 @@ GITHUB_USER=${GITHUB_USER##*:}
 TAG=$(git describe --tags --abbrev=0 --exact-match)
 SNAPSHOT=false
 if [[ "$TAG" == "" ]];  then
-  TAG=$(git describe --tags --abbrev=0)-snapshot
+  TAG=$(git describe --tags)
   SNAPSHOT=true
 fi
 
