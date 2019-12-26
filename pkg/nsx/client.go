@@ -2,9 +2,13 @@ package nsx
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	nsxt "github.com/vmware/go-vmware-nsxt"
@@ -15,6 +19,7 @@ import (
 
 type NSXClient struct {
 	api                      *nsxt.APIClient
+	cfg                      *nsxt.Configuration
 	Username, Password, Host string
 	RemoteAuth               bool
 }
@@ -32,7 +37,6 @@ func (c *NSXClient) Init() error {
 	}
 
 	cfg := nsxt.Configuration{
-
 		UserName:   c.Username,
 		Password:   c.Password,
 		BasePath:   "/api/v1",
@@ -52,7 +56,34 @@ func (c *NSXClient) Init() error {
 		return err
 	}
 	c.api = client
+	c.cfg = &cfg
 	return nil
+}
+
+func (c *NSXClient) GET(path string) ([]byte, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	url := fmt.Sprintf("%s://%s%s%s", c.cfg.Scheme, c.cfg.Host, c.cfg.BasePath, path)
+	req, _ := http.NewRequest("GET", url, nil)
+	for k, v := range c.cfg.DefaultHeader {
+		req.Header.Add(k, v)
+	}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list virtual servers: %s", errorString(resp, err))
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return body, fmt.Errorf(resp.Status)
+	}
+	return body, nil
 }
 
 func (c *NSXClient) Ping() (string, error) {
@@ -85,17 +116,22 @@ func (c *NSXClient) TagNics(ctx context.Context, id string, tags map[string]stri
 		return fmt.Errorf("Cannot get vifs for %s: %v", id, errorString(resp, err))
 	}
 	log.Tracef("Found %d vms\n", vms.ResultCount)
-	for _, vm := range vms.Results {
-		fmt.Printf("vm: %v\n", vm)
-	}
-
 	vifs, resp, err := c.api.FabricApi.ListVifs(c.api.Context, map[string]interface{}{"ownerVmId": vms.Results[0].ExternalId})
 	if err != nil {
 		return fmt.Errorf("Cannot get vifs for %s: %v", id, errorString(resp, err))
 	}
 	log.Tracef("Found %d vifs\n", vifs.ResultCount)
+	foundTransportNic := false
+	foundManagementNic := false
 	for _, vif := range vifs.Results {
+
 		ports, resp, err := c.api.LogicalSwitchingApi.ListLogicalPorts(c.api.Context, map[string]interface{}{"attachmentId": vif.LportAttachmentId})
+		isTransportNic := len(vif.IpAddressInfo) == 0
+		if isTransportNic {
+			foundTransportNic = true
+		} else {
+			foundManagementNic = true
+		}
 
 		if err != nil {
 			return fmt.Errorf("Unable to get port %s: %s", vif.LportAttachmentId, errorString(resp, err))
@@ -103,16 +139,31 @@ func (c *NSXClient) TagNics(ctx context.Context, id string, tags map[string]stri
 
 		for _, port := range ports.Results {
 			for k, v := range tags {
+				if isTransportNic && !strings.HasPrefix(k, "ncp/") {
+					// transport nic should only get ncp/ tags
+					continue
+				} else if !isTransportNic && strings.HasPrefix(k, "ncp/") {
+					// management nic should not get any ncp tags
+					continue
+				}
 				port.Tags = append(port.Tags, common.Tag{
 					Scope: k,
 					Tag:   v,
 				})
 			}
+			log.Debugf("Tagging %v (%s): %v", vif.IpAddressInfo, port.Id, port.Tags)
 			_, resp, err = c.api.LogicalSwitchingApi.UpdateLogicalPort(context.TODO(), port.Id, port)
 			if err != nil {
 				return fmt.Errorf("Unable to update port %s: %s", port.Id, errorString(resp, err))
 			}
 		}
+	}
+
+	if !foundManagementNic {
+		return fmt.Errorf("Did not find management nic")
+	}
+	if !foundTransportNic {
+		return fmt.Errorf("Did not find transport nic")
 	}
 	return nil
 }
@@ -201,10 +252,33 @@ type LoadBalancerOptions struct {
 	MemberTags map[string]string
 }
 
+type virtualServersList struct {
+	Results []loadbalancer.LbVirtualServer `json:"results,omitempty"`
+}
+
 func (client *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error) {
 	ctx := client.api.Context
 	api := client.api.ServicesApi
 	routing := client.api.LogicalRoutingAndServicesApi
+
+	// ServicesApi.GetVirtualServers() is not implemented
+	body, err := client.GET("/loadbalancer/virtual-servers")
+	if err != nil {
+		return "", fmt.Errorf("failed to list existing virtual servers: %v", err)
+	}
+
+	var virtualServers virtualServersList
+
+	if err := json.Unmarshal(body, &virtualServers); err != nil {
+		return "", fmt.Errorf("failed to unmarshall existing virtual server list: %v", err)
+	}
+
+	for _, server := range virtualServers.Results {
+		if server.DisplayName == opts.Name {
+			log.Infof("LoadBalancer %s found, returning its IP %s ", opts.Name, server.IpAddress)
+			return server.IpAddress, nil
+		}
+	}
 
 	t0, resp, err := routing.ReadLogicalRouter(ctx, opts.Tier0)
 	if err != nil {
@@ -227,6 +301,15 @@ func (client *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, e
 	})
 	if err != nil {
 		return "", fmt.Errorf("Unable to create T1 router %s: %s", opts.Name, errorString(resp, err))
+	}
+
+	_, resp, err = routing.UpdateAdvertisementConfig(ctx, t1.Id, manager.AdvertisementConfig{
+		AdvertiseLbVip:    true,
+		AdvertiseLbSnatIp: true,
+		Enabled:           true,
+	})
+	if err != nil {
+		return "", fmt.Errorf("Unable to update advertisement config %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	log.Infof("Created T1 router %s/%s", t1.DisplayName, t1.Id)
