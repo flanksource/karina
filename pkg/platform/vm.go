@@ -198,15 +198,11 @@ func (vm *VM) Shutdown() error {
 	return nil
 }
 
-func (vm *VM) Terminate() error {
-	log.Debugf("Terminating %s", vm.Name)
-	ip, err := vm.WaitForIP()
+func removeDNS(vm *VM) {
+	ip, err := vm.GetIP(time.Second * 5)
 	if err != nil {
-		log.Warnf("Failed to get IP for %s: %v", vm.Name, err)
-	}
-	if vm.Platform.DryRun {
-		log.Infof("Not terminating in dry-run mode %s", vm.Name)
-		return nil
+		log.Warnf("Failed to get IP for %s, unable to remove DNS: %v", vm.Name, err)
+		return
 	}
 	if ip != "" {
 		if err := vm.Platform.GetDNSClient().Delete(fmt.Sprintf("*.%s", vm.Platform.Domain), ip); err != nil {
@@ -216,8 +212,16 @@ func (vm *VM) Terminate() error {
 			log.Warnf("Failed to de-register wildcard DNS %s for %s", vm.Name, err)
 		}
 	}
-	power, _ := vm.vm.PowerState(vm.ctx)
+}
 
+func (vm *VM) Terminate() error {
+	log.Debugf("Terminating %s", vm.Name)
+	if vm.Platform.DryRun {
+		log.Infof("Not terminating in dry-run mode %s", vm.Name)
+		return nil
+	}
+
+	power, _ := vm.vm.PowerState(vm.ctx)
 	if power == vim.VirtualMachinePowerStatePoweredOn {
 		err := vm.Shutdown()
 		if err != nil {
@@ -231,6 +235,7 @@ func (vm *VM) Terminate() error {
 			log.Warnf("Failed to power off %s: %v", vm.Name, err)
 		}
 	}
+	vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
 	task, err := vm.vm.Destroy(vm.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete %s", vm)
