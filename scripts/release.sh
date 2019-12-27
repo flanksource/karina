@@ -11,14 +11,13 @@ GITHUB_USER=${GITHUB_USER##*:}
 TAG=$(git describe --tags --abbrev=0 --exact-match)
 SNAPSHOT=false
 if [[ "$TAG" == "" ]];  then
-  TAG=$(git describe --tags)
+  TAG=$(git describe --tags --exclude "*-g*")
   SNAPSHOT=true
 fi
 
 VERSION="v$TAG built $(date)"
 
 make pack linux darwin compress
-
 
 if [[ "$SNAPSHOT" == "true" ]]; then
   echo Releasing pre-release
