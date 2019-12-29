@@ -110,7 +110,7 @@ func errorString(resp *http.Response, err error) string {
 
 }
 func (c *NSXClient) TagNics(ctx context.Context, id string, tags map[string]string) error {
-	log.Debugf("Tagging %s: %v", id, tags)
+	log.Debugf("[%s] tagging nics: %v", id, tags)
 	vms, resp, err := c.api.FabricApi.ListVirtualMachines(c.api.Context, map[string]interface{}{"displayName": id})
 	if err != nil {
 		return fmt.Errorf("Cannot get vifs for %s: %v", id, errorString(resp, err))
@@ -151,7 +151,7 @@ func (c *NSXClient) TagNics(ctx context.Context, id string, tags map[string]stri
 					Tag:   v,
 				})
 			}
-			log.Debugf("Tagging %v (%s): %v", vif.IpAddressInfo, port.Id, port.Tags)
+			log.Debugf("[%s] tagging %v (%s): %v", id, vif.IpAddressInfo, port.Id, port.Tags)
 			_, resp, err = c.api.LogicalSwitchingApi.UpdateLogicalPort(context.TODO(), port.Id, port)
 			if err != nil {
 				return fmt.Errorf("Unable to update port %s: %s", port.Id, errorString(resp, err))

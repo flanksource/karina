@@ -158,19 +158,22 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	}); err != nil {
 		log.Warnf("Failed to set attributes for %s: %v", vm.Name, err)
 	}
-	log.Debugf("Waiting for IP: %s", vm.Name)
+	log.Debugf("[%s] Waiting for IP", vm.Name)
 	ip, err := VM.WaitForIP()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get IP for %s: %v", vm.Name, err)
 	}
 	VM.IP = ip
-	log.Tracef("Found IP %s: %s", vm.Name, ip)
+	log.Tracef("[%s] Found IP: %s", vm.Name, ip)
 	if platform.NSX != nil && !platform.NSX.Disabled {
 		nsxClient, err := platform.GetNSXClient()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get NSX client: %v", err)
 		}
-		tags := vm.Tags
+		tags := make(map[string]string)
+		for k, v := range vm.Tags {
+			tags[k] = v
+		}
 		tags["ncp/node_name"] = vm.Name
 		tags["ncp/cluster"] = platform.Name
 		// Tag all the NICS for the VM
