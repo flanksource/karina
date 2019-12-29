@@ -11,6 +11,7 @@ import (
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 func Deploy(p *platform.Platform) error {
@@ -44,7 +45,7 @@ func Deploy(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	log.Tracef("Config: \n%s\n", values)
+	log.Tracef("Config: \n%s\n", utils.StripSecrets(values))
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
 		return err

@@ -416,3 +416,29 @@ func RandomString(length int) string {
 
 	return string(token)
 }
+
+func StripSecrets(text string) string {
+	out := ""
+	for _, line := range strings.Split(text, "\n") {
+		var k, v, sep string
+		if strings.Contains(line, ":") {
+			k = strings.Split(line, ":")[0]
+			v = strings.Split(line, ":")[1]
+			sep = ":"
+		} else if strings.Contains(line, "=") {
+			k = strings.Split(line, "=")[0]
+			v = strings.Split(line, "=")[1]
+			sep = "="
+		} else {
+			v = line
+		}
+
+		if strings.Contains(k, "pass") || strings.Contains(k, "secret") || strings.TrimSpace(k) == "key" {
+			out += k + sep + "****" + v[len(v)-1:] + "\n"
+		} else {
+			out += k + sep + v + "\n"
+		}
+	}
+	return out
+
+}
