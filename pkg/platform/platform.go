@@ -393,7 +393,7 @@ func (platform *Platform) Template(file string) (string, error) {
 	template, err := text.Template(raw, platform.PlatformConfig)
 	if err != nil {
 		data, _ := yaml.Marshal(platform.PlatformConfig)
-		log.Debugln(string(data))
+		log.Debugln("Error templating %s: %s", file, utils.StripSecrets(string(data)))
 		return "", err
 	}
 	return template, nil

@@ -17,6 +17,7 @@ import (
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
+		"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 func getPlatform(cmd *cobra.Command) *platform.Platform {
@@ -150,7 +151,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	}
 
 	data, _ := yaml.Marshal(base)
-	log.Tracef("Using configuration: \n%s\n", string(data))
+	log.Tracef("Using configuration: \n%s\n", utils.StripSecrets(string(data)))
 	base.Init()
 	return base
 }

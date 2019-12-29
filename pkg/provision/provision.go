@@ -62,7 +62,7 @@ func Cluster(platform *platform.Platform) error {
 			log.Fatalf("Erroring saving config %s", err)
 		}
 
-		log.Tracef("Using configuration: \n%s\n", string(data))
+		log.Tracef("Using configuration: \n%s\n", utils.StripSecrets(string(data)))
 
 		if !platform.DryRun {
 			vm, err := platform.Clone(vm, config)

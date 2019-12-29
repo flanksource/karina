@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/fatih/structs"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 const (
@@ -52,7 +53,7 @@ func Install(p *platform.Platform) error {
 	}
 
 	cert := p.Certificates.Root.ToCert()
-	log.Infof("Creating  NSX cert for %s\n", "nsx."+p.Domain)
+	log.Infof("Creating NSX cert for %s\n", "nsx."+p.Domain)
 	cert, err := cert.CreateCertificate("nsx."+p.Domain, "")
 	if err != nil {
 		return err
@@ -74,7 +75,7 @@ func Install(p *platform.Platform) error {
 
 	s := "[Defaults]\n" + mapToINI(ini)
 
-	log.Trace(string(s))
+	log.Tracef("Using NSX config: %s", utils.StripSecrets(string(s)))
 
 	if err := p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
 		"ncp.ini": string(s),
