@@ -164,21 +164,34 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 		return nil, fmt.Errorf("Failed to get IP for %s: %v", vm.Name, err)
 	}
 	VM.IP = ip
-	log.Tracef("[%s] Found IP: %s", vm.Name, ip)
 	if platform.NSX != nil && !platform.NSX.Disabled {
 		nsxClient, err := platform.GetNSXClient()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get NSX client: %v", err)
 		}
-		tags := make(map[string]string)
-		for k, v := range vm.Tags {
-			tags[k] = v
+
+		ports, err := nsxClient.GetLogicalPorts(ctx, vm.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find ports for %s: %v", vm.Name, err)
 		}
-		tags["ncp/node_name"] = vm.Name
-		tags["ncp/cluster"] = platform.Name
-		// Tag all the NICS for the VM
-		if err := nsxClient.TagNics(ctx, vm.Name, tags); err != nil {
-			return nil, fmt.Errorf("Failed to tag nics for %s: %+v", vm.Name, err)
+		if len(ports) != 2 {
+			return nil, fmt.Errorf("expected to find 2 ports, found %d", len(ports))
+		}
+		managementNic := make(map[string]string)
+		transportNic := make(map[string]string)
+
+		for k, v := range vm.Tags {
+			managementNic[k] = v
+		}
+
+		transportNic["ncp/node_name"] = vm.Name
+		transportNic["ncp/cluster"] = platform.Name
+
+		if err := nsxClient.TagLogicalPort(ctx, ports[0].Id, managementNic); err != nil {
+			return nil, fmt.Errorf("failed to tag management nic %s: %v", ports[0].Id, err)
+		}
+		if err := nsxClient.TagLogicalPort(ctx, ports[1].Id, transportNic); err != nil {
+			return nil, fmt.Errorf("failed to tag transport nic %s: %v", ports[1].Id, err)
 		}
 	}
 	return VM, nil
