@@ -505,7 +505,11 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 			return err
 		}
 
-		log.Debugf("Applying %s\n", string(data))
+		if log.IsLevelEnabled(log.TraceLevel) {
+			log.Tracef("Applying %s/%s/%s:\n%s", namespace, spec.Kind, spec.Metadata.Name, string(data))
+		} else {
+			log.Debugf("Applying  %s/%s/%s", namespace, spec.Kind, spec.Metadata.Name)
+		}
 
 		file := text.ToFile(string(data), ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
