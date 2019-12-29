@@ -2,7 +2,10 @@
 default: build
 NAME:=platform-cli
 
-VERSION:=v$(shell git tag --points-at HEAD ) $(shell date "+%Y-%m-%d %H:%M:%S")
+ifeq ($(VERSION),)
+VERSION := v$(shell git describe --tags --exclude "*-g*" ) built $(shell date)
+endif
+
 .PHONY: setup
 setup:
 	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
