@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	nsxt "github.com/vmware/go-vmware-nsxt"
@@ -109,61 +108,54 @@ func errorString(resp *http.Response, err error) string {
 	return s
 
 }
-func (c *NSXClient) TagNics(ctx context.Context, id string, tags map[string]string) error {
-	log.Debugf("[%s] tagging nics: %v", id, tags)
-	vms, resp, err := c.api.FabricApi.ListVirtualMachines(c.api.Context, map[string]interface{}{"displayName": id})
+
+func (c *NSXClient) GetLogicalPorts(ctx context.Context, vm string) ([]manager.LogicalPort, error) {
+	var results []manager.LogicalPort
+	vms, resp, err := c.api.FabricApi.ListVirtualMachines(c.api.Context, map[string]interface{}{"displayName": vm})
 	if err != nil {
-		return fmt.Errorf("Cannot get vifs for %s: %v", id, errorString(resp, err))
+		return nil, fmt.Errorf("Cannot get vifs for %s: %v", vm, errorString(resp, err))
 	}
-	log.Tracef("Found %d vms\n", vms.ResultCount)
+
+	if vms.ResultCount == 0 {
+		return nil, fmt.Errorf("vm %s not found", vm)
+	}
 	vifs, resp, err := c.api.FabricApi.ListVifs(c.api.Context, map[string]interface{}{"ownerVmId": vms.Results[0].ExternalId})
 	if err != nil {
-		return fmt.Errorf("Cannot get vifs for %s: %v", id, errorString(resp, err))
+		return nil, fmt.Errorf("Cannot get vifs for %s: %v", vm, errorString(resp, err))
 	}
-	log.Tracef("Found %d vifs\n", vifs.ResultCount)
-	foundTransportNic := false
-	foundManagementNic := false
-	for _, vif := range vifs.Results {
 
+	for _, vif := range vifs.Results {
 		ports, resp, err := c.api.LogicalSwitchingApi.ListLogicalPorts(c.api.Context, map[string]interface{}{"attachmentId": vif.LportAttachmentId})
-		isTransportNic := len(vif.IpAddressInfo) == 0
-		if isTransportNic {
-			foundTransportNic = true
-		} else {
-			foundManagementNic = true
-		}
 
 		if err != nil {
-			return fmt.Errorf("Unable to get port %s: %s", vif.LportAttachmentId, errorString(resp, err))
+			return nil, fmt.Errorf("Unable to get port %s: %s", vif.LportAttachmentId, errorString(resp, err))
 		}
+		results = append(results, ports.Results...)
+	}
+	if len(results) == 0 {
+		return nil, fmt.Errorf("No vifs/logical ports found for vm: %s, externalId: %s", vm, vms.Results[0].ExternalId)
+	}
+	return results, nil
 
-		for _, port := range ports.Results {
-			for k, v := range tags {
-				if isTransportNic && !strings.HasPrefix(k, "ncp/") {
-					// transport nic should only get ncp/ tags
-					continue
-				} else if !isTransportNic && strings.HasPrefix(k, "ncp/") {
-					// management nic should not get any ncp tags
-					continue
-				}
-				port.Tags = append(port.Tags, common.Tag{
-					Scope: k,
-					Tag:   v,
-				})
-			}
-			log.Debugf("[%s] tagging %v (%s): %v", id, vif.IpAddressInfo, port.Id, port.Tags)
-			_, resp, err = c.api.LogicalSwitchingApi.UpdateLogicalPort(context.TODO(), port.Id, port)
-			if err != nil {
-				return fmt.Errorf("Unable to update port %s: %s", port.Id, errorString(resp, err))
-			}
-		}
+}
+
+func (c *NSXClient) TagLogicalPort(ctx context.Context, id string, tags map[string]string) error {
+	port, resp, err := c.api.LogicalSwitchingApi.GetLogicalPort(ctx, id)
+	if err != nil {
+		return fmt.Errorf("Unable to get port %s: %s", id, errorString(resp, err))
 	}
 
-	if !foundManagementNic {
-		return fmt.Errorf("Did not find management nic")
+	for k, v := range tags {
+		port.Tags = append(port.Tags, common.Tag{
+			Scope: k,
+			Tag:   v,
+		})
 	}
-	if !foundTransportNic {
-		return fmt.Errorf("Did not find transport nic")
+
+	log.Tracef("[%s/%s] tagging: %v", port.Id, port.Attachment.Id, port.Tags)
+	_, resp, err = c.api.LogicalSwitchingApi.UpdateLogicalPort(context.TODO(), port.Id, port)
+	if err != nil {
+		return fmt.Errorf("Unable to update port %s: %s", port.Id, errorString(resp, err))
 	}
 	return nil
 }
