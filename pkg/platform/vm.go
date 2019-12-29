@@ -84,6 +84,7 @@ func (vm *VM) GetIP(timeout time.Duration) (string, error) {
 			return "", err
 		}
 		if mo.Guest.IpAddress != "" && net.ParseIP(mo.Guest.IpAddress).To4() != nil {
+			log.Debugf("[%s] Found IP: %s", vm.Name, mo.Guest.IpAddress)
 			return mo.Guest.IpAddress, nil
 		}
 		time.Sleep(5 * time.Second)
@@ -215,7 +216,7 @@ func removeDNS(vm *VM) {
 }
 
 func (vm *VM) Terminate() error {
-	log.Debugf("Terminating %s", vm.Name)
+	log.Infof("Terminating %s", vm.Name)
 	if vm.Platform.DryRun {
 		log.Infof("Not terminating in dry-run mode %s", vm.Name)
 		return nil
