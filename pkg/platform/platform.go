@@ -21,8 +21,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	kapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/is"
+	"github.com/moshloop/commons/net"
 	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
@@ -73,20 +75,11 @@ func (platform *Platform) GetVMs() (map[string]*VM, error) {
 	return platform.GetVMsByPrefix("")
 }
 
-func ping(host string, port int, timeout int) bool {
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), time.Duration(timeout)*time.Second)
-	if conn != nil {
-		conn.Close()
-	}
-
-	return err == nil
-}
-
 // WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
 	for {
 		masters := platform.GetMasterIPs()
-		if len(masters) > 0 && ping(masters[0], 6443, 3) {
+		if len(masters) > 0 && net.Ping(masters[0], 6443, 3) {
 			return nil
 		}
 		time.Sleep(5 * time.Second)
@@ -219,7 +212,7 @@ func (platform *Platform) OpenViaEnv() error {
 func (platform *Platform) GetMasterIPs() []string {
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
 	log.Infof("Finding masters via consul: %s\n", url)
-	response, _ := utils.GET(url)
+	response, _ := net.GET(url)
 	var consul api.Consul
 	if err := json.Unmarshal(response, &consul); err != nil {
 		fmt.Println(err)
@@ -409,7 +402,7 @@ func (platform *Platform) Template(file string) (string, error) {
 	template, err := text.Template(raw, platform.PlatformConfig)
 	if err != nil {
 		data, _ := yaml.Marshal(platform.PlatformConfig)
-		log.Debugln("Error templating %s: %s", file, utils.StripSecrets(string(data)))
+		log.Debugln("Error templating %s: %s", file, console.StripSecrets(string(data)))
 		return "", err
 	}
 	return template, nil

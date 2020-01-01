@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/utils"
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"strings"
+
+	"github.com/moshloop/commons/exec"
 )
 
 var Images = &cobra.Command{
@@ -22,7 +24,7 @@ func init() {
 
 			images := []string{}
 			for _, prefix := range []string{"image:", "image=="} {
-				stdout, ok := utils.SafeExec("cat build/*.yaml | grep -i %s | cut -d: -f2 -f3 | sort | uniq", prefix)
+				stdout, ok := exec.SafeExec("cat build/*.yaml | grep -i %s | cut -d: -f2 -f3 | sort | uniq", prefix)
 				if !ok {
 					log.Fatalf("Failed to list images %s", stdout)
 				}
