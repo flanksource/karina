@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -15,8 +14,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	kapi "k8s.io/client-go/tools/clientcmd/api"
@@ -34,7 +31,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 type Platform struct {
@@ -354,19 +350,6 @@ func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 	return clientcmd.Write(cfg)
 }
 
-// GetDynamicClient creates a new k8s client
-func (platform *Platform) GetDynamicClient() (dynamic.Interface, error) {
-	kubeconfig, err := platform.GetKubeConfig()
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-	return dynamic.NewForConfig(cfg)
-}
-
 // GetClientset creates a new k8s client
 func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
 	kubeconfig, err := platform.GetKubeConfig()
@@ -468,28 +451,6 @@ func (platform *Platform) TemplateDir(path string) (string, error) {
 	os.RemoveAll(dst)
 	os.MkdirAll(dst, 0775)
 	return dst, text.TemplateDir(tmp, dst, platform.PlatformConfig)
-}
-
-func (platform *Platform) Annotate(objectType, name, namespace string, annotations map[string]string) error {
-	if len(annotations) == 0 {
-		return nil
-	}
-	kubectl := platform.GetKubectl()
-	if namespace != "" {
-		namespace = "-n " + namespace
-	}
-
-	var (
-		line  string
-		lines []string
-	)
-
-	for k, v := range annotations {
-		line = fmt.Sprintf("%s=\"%s\"", k, v)
-		lines = append(lines, line)
-	}
-
-	return kubectl("annotate %s %s %s %s", objectType, name, strings.Join(lines, " "), namespace)
 }
 
 func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) error {
