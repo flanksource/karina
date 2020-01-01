@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/moshloop/commons/certs"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -32,7 +33,7 @@ func CreateOIDCKubeConfig(platform *platform.Platform, endpoint string) ([]byte,
 						"client-id":                      "kubernetes",
 						"client-secret":                  "ZXhhbXBsZS1hcHAtc2VjcmV0",
 						"extra-scopes":                   "offline_access openid profile email groups",
-						"idp-certificate-authority-data": string(base64.StdEncoding.EncodeToString([]byte(platform.Certificates.OpenID.X509))),
+						"idp-certificate-authority-data": string(base64.StdEncoding.EncodeToString([]byte(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate()))),
 						"idp-issuer-url":                 "https://dex." + platform.Domain,
 					},
 				},
@@ -46,15 +47,17 @@ func CreateOIDCKubeConfig(platform *platform.Platform, endpoint string) ([]byte,
 
 func CreateKubeConfig(platform *platform.Platform, endpoint, group, user string) ([]byte, error) {
 	contextName := fmt.Sprintf("%s@%s", user, platform.Name)
-	cert, err := platform.Certificates.CA.ToCert().CreateCertificate(user, group)
+	cert := certs.NewCertificateBuilder(group).Client().Certificate
+	cert, err := platform.GetCA().SignCertificate(cert, 1)
 	if err != nil {
 		return nil, err
 	}
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
 			platform.Name: {
-				Server:                   "https://" + endpoint + ":6443",
-				CertificateAuthorityData: []byte(platform.Certificates.CA.X509),
+				Server:                "https://" + endpoint + ":6443",
+				InsecureSkipTLSVerify: true,
+				// CertificateAuthorityData: []byte(platform.Certificates.CA.X509),
 			},
 		},
 		Contexts: map[string]*api.Context{

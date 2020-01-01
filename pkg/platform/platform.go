@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	kapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/moshloop/commons/certs"
 	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/is"
@@ -36,14 +37,30 @@ import (
 type Platform struct {
 	types.PlatformConfig
 	k8s.Client
-	ctx     context.Context
-	session *vmware.Session
-	nsx     *nsx.NSXClient
+	ctx       context.Context
+	session   *vmware.Session
+	nsx       *nsx.NSXClient
+	ca        certs.CertificateAuthority
+	ingressCA certs.CertificateAuthority
 }
 
 func (platform *Platform) Init() {
 	platform.Client.GetKubeConfig = platform.GetKubeConfig
 	platform.Client.ApplyDryRun = platform.DryRun
+}
+
+func (platform *Platform) GetCA() certs.CertificateAuthority {
+	if platform.ca != nil {
+		return platform.ca
+	}
+	return nil
+}
+
+func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
+	if platform.ingressCA != nil {
+		return platform.ingressCA
+	}
+	return nil
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
@@ -287,41 +304,17 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 	})
 }
 
-// GetSecret returns the data of a secret or nil for any error
-func (platform *Platform) GetSecret(namespace, name string) *map[string][]byte {
-	k8s, err := platform.GetClientset()
-	if err != nil {
-		log.Tracef("Failed to get client %v", err)
-		return nil
-	}
-	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		log.Tracef("Failed to get secret %s/%s: %v\n", namespace, name, err)
-		return nil
-	}
-	return &secret.Data
-}
-
-// GetSecret returns the data of a secret or nil for any error
-func (platform *Platform) GetConfigMap(namespace, name string) *map[string]string {
-	k8s, err := platform.GetClientset()
-	if err != nil {
-		log.Tracef("Failed to get client %v", err)
-		return nil
-	}
-	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		log.Tracef("Failed tp get secret %s/%s: %v\n", namespace, name, err)
-		return nil
-	}
-	return &cm.Data
+func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Certificate, error) {
+	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
+	return platform.GetIngressCA().SignCertificate(cert, 3)
 }
 
 // CreateKubeConfig creates a new kubeconfig for the cluster
 func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 	userName := "kubernetes-admin"
 	contextName := fmt.Sprintf("%s@%s", userName, platform.Name)
-	cert, err := platform.Certificates.CA.ToCert().CreateCertificate("system:masters", "system:masters")
+	cert, err := platform.GetCA().SignCertificate(certs.NewCertificateBuilder("system:masters").Certificate, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +322,7 @@ func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
 		Clusters: map[string]*kapi.Cluster{
 			platform.Name: {
 				Server:                   "https://" + endpoint + ":6443",
-				CertificateAuthorityData: []byte(platform.Certificates.CA.X509),
+				CertificateAuthorityData: []byte(platform.GetCA().GetPublicChain()[0].EncodedCertificate()),
 			},
 		},
 		Contexts: map[string]*kapi.Context{
