@@ -25,6 +25,36 @@ type Client struct {
 	ApplyDryRun   bool
 }
 
+// GetSecret returns the data of a secret or nil for any error
+func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
+	k8s, err := c.GetClientset()
+	if err != nil {
+		log.Tracef("Failed to get client %v", err)
+		return nil
+	}
+	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		log.Tracef("Failed to get secret %s/%s: %v\n", namespace, name, err)
+		return nil
+	}
+	return &secret.Data
+}
+
+// GetConfigMap returns the data of a secret or nil for any error
+func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
+	k8s, err := c.GetClientset()
+	if err != nil {
+		log.Tracef("Failed to get client %v", err)
+		return nil
+	}
+	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		log.Tracef("Failed tp get secret %s/%s: %v\n", namespace, name, err)
+		return nil
+	}
+	return &cm.Data
+}
+
 // GetDynamicClient creates a new k8s client
 func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
 	kubeconfig, err := c.GetKubeConfig()
@@ -59,58 +89,67 @@ func GetGVR(v interface{}) schema.GroupVersionResource {
 	}
 }
 
+func getDynamicClient(dynamicClient dynamic.Interface, namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
+
+	resource := schema.GroupVersionResource{
+		Group:    obj.GetObjectKind().GroupVersionKind().Group,
+		Version:  obj.GetObjectKind().GroupVersionKind().Version,
+		Resource: strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind) + "s",
+	}
+
+	if resource.Group == "" {
+		resource = GetGVR(obj)
+	}
+
+	convertedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	unstructuredObj := &unstructured.Unstructured{Object: convertedObj}
+
+	if strings.HasPrefix(resource.Resource, "cluster") {
+		return dynamicClient.Resource(resource), &resource, unstructuredObj, nil
+	} else {
+		if namespace == "" {
+			namespace = unstructuredObj.GetNamespace()
+		}
+		return dynamicClient.Resource(resource).Namespace(namespace), &resource, unstructuredObj, nil
+	}
+
+}
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	dynamicClient, err := c.GetDynamicClient()
 	if err != nil {
 		return err
 	}
-
-	var results []*unstructured.Unstructured
-
 	for _, obj := range objects {
-		// convert the runtime.Object to unstructured.Unstructured
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		client, resource, unstructuredObj, err := getDynamicClient(dynamicClient, namespace, obj)
 		if err != nil {
 			return err
 		}
-		data, err := yaml.Marshal(unstructuredObj)
-		resource := schema.GroupVersionResource{
-			Group:    obj.GetObjectKind().GroupVersionKind().Group,
-			Version:  obj.GetObjectKind().GroupVersionKind().Version,
-			Resource: strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind) + "s",
-		}
-
-		if resource.Group == "" {
-			resource = GetGVR(obj)
-		}
 
 		if log.IsLevelEnabled(log.TraceLevel) {
+			data, _ := yaml.Marshal(unstructuredObj)
 			log.Tracef("Applying resource: %s/%s/%s \n%s", resource.Group, resource.Version, resource.Resource, string(data))
 		} else {
 			log.Debugf("Applying resource: %s/%s/%s", resource.Group, resource.Version, resource.Resource)
 		}
-		var client dynamic.ResourceInterface
-		if strings.HasPrefix(resource.Resource, "cluster") {
-			client = dynamicClient.Resource(resource)
-		} else {
-			client = dynamicClient.Resource(resource).Namespace(namespace)
-		}
-		metadata := unstructuredObj["metadata"].(map[string]interface{})
 
 		if c.ApplyDryRun {
-			log.Infof("Not applying resource in dry-run mode: \n%s", string(data))
+			log.Infof("[dry-run] %s/%s/%s created/configured", resource.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
-			result, err := client.Create(&unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
+			_, err := client.Create(unstructuredObj, metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
-				result, err = client.Update(&unstructured.Unstructured{Object: unstructuredObj}, metav1.UpdateOptions{})
-				log.Infof("%s/%s/%s configured", resource.Resource, metadata["namespace"], metadata["name"])
+				_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else if err == nil {
-				log.Infof("%s/%s/%s created", resource.Resource, metadata["namespace"], metadata["name"])
+				log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			}
 			if err != nil {
 				log.Errorf("error handling: %s/%s/%s : %v", resource.Group, resource.Version, resource.Resource, err)
 			}
-			results = append(results, result)
 		}
 	}
 	return nil
@@ -129,35 +168,92 @@ func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
 	return kubernetes.NewForConfigOrDie(cfg), nil
 }
 
-// func (c *Client) Annotate(objectType, name, namespace string, annotations map[string]string) error {
-// 	if len(annotations) == 0 {
-// 		return nil
-// 	}
-// 	kubectl := platform.GetKubectl()
-// 	if namespace != "" {
-// 		namespace = "-n " + namespace
-// 	}
+func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
+	dynamicClient, err := c.GetDynamicClient()
+	if err != nil {
+		return err
+	}
+	client, resource, unstructuredObj, err := getDynamicClient(dynamicClient, "", obj)
+	if err != nil {
+		return err
+	}
+	existing := unstructuredObj.GetAnnotations()
+	for k, v := range annotations {
+		existing[k] = v
+	}
+	unstructuredObj.SetAnnotations(existing)
+	_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+	log.Infof("%s/%s/%s annotated", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+	return nil
+}
 
-// 	var (
-// 		line  string
-// 		lines []string
-// 	)
+func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
+	dynamicClient, err := c.GetDynamicClient()
+	if err != nil {
+		return err
+	}
+	client, resource, unstructuredObj, err := getDynamicClient(dynamicClient, "", obj)
+	if err != nil {
+		return err
+	}
+	existing := unstructuredObj.GetLabels()
+	for k, v := range labels {
+		existing[k] = v
+	}
+	unstructuredObj.SetLabels(existing)
+	_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+	log.Infof("%s/%s/%s labelled", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+	return nil
+}
 
-// 	for k, v := range annotations {
-// 		line = fmt.Sprintf("%s=\"%s\"", k, v)
-// 		lines = append(lines, line)
-// 	}
+func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	k8s, err := c.GetClientset()
+	if err != nil {
+		return err
+	}
+	ns := k8s.CoreV1().Namespaces()
+	if _, err := ns.Get(name, metav1.GetOptions{}); errors.IsNotFound(err) {
+		namespace := v1.Namespace{}
+		namespace.Name = name
+		namespace.Labels = labels
+		namespace.Annotations = annotations
+		if _, err := ns.Create(&namespace); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
 
-// 	return kubectl("annotate %s %s %s %s", objectType, name, strings.Join(lines, " "), namespace)
-// }
+func (c *Client) HasSecret(ns, name string) bool {
+	client, err := c.GetClientset()
+	if err != nil {
+		return false
+	}
+	secrets := client.CoreV1().Secrets(ns)
+	cm, err := secrets.Get(name, metav1.GetOptions{})
+	return cm != nil && err == nil
+
+}
+
+func (c *Client) HasConfigMap(ns, name string) bool {
+	client, err := c.GetClientset()
+	if err != nil {
+		return false
+	}
+	configmaps := client.CoreV1().ConfigMaps(ns)
+	cm, err := configmaps.Get(name, metav1.GetOptions{})
+	return cm != nil && err == nil
+}
 
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
 	client, err := c.GetClientset()
 	if err != nil {
 		return err
 	}
-	configs := client.CoreV1().Secrets(ns)
-	cm, err := configs.Get(name, metav1.GetOptions{})
+	secrets := client.CoreV1().Secrets(ns)
+	cm, err := secrets.Get(name, metav1.GetOptions{})
 	if cm == nil || err != nil {
 		cm = &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
@@ -165,7 +261,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 		}
 		log.Infof("Creating %s/secret/%s", ns, name)
 		if !c.ApplyDryRun {
-			if _, err := configs.Create(cm); err != nil {
+			if _, err := secrets.Create(cm); err != nil {
 				return err
 			}
 		}
@@ -173,7 +269,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 		(*cm).Data = data
 		if !c.ApplyDryRun {
 			log.Infof("Updating %s/secret/%s", ns, name)
-			if _, err := configs.Update(cm); err != nil {
+			if _, err := secrets.Update(cm); err != nil {
 				return err
 			}
 		}
