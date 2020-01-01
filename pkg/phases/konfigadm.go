@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
+	"github.com/moshloop/commons/certs"
 	_ "github.com/moshloop/konfigadm/pkg"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -61,15 +62,15 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 }
 
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
-	cfg.Files["/etc/kubernetes/pki/etcd/ca.crt"] = platform.Certificates.Etcd.X509
-	cfg.Files["/etc/kubernetes/pki/etcd/ca.key"] = platform.Certificates.Etcd.Key
-	cfg.Files["/etc/kubernetes/pki/front-proxy-ca.crt"] = platform.Certificates.FrontProxy.X509
-	cfg.Files["/etc/kubernetes/pki/front-proxy-ca.key"] = platform.Certificates.FrontProxy.Key
-	cfg.Files["/etc/kubernetes/pki/sa.key"] = platform.Certificates.SA.Key
-	cfg.Files["/etc/kubernetes/pki/sa.pub"] = string(platform.Certificates.SA.ToCert().EncodedPublicKey())
-	cfg.Files["/etc/kubernetes/pki/ca.crt"] = platform.Certificates.CA.X509
-	cfg.Files["/etc/kubernetes/pki/ca.key"] = platform.Certificates.CA.Key
-	cfg.Files["/etc/ssl/certs/openid-ca.pem"] = platform.Certificates.OpenID.X509
+	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
+
+	// any cert signed by the global CA should be allowed
+	crt := string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
+	// plus any cert signed by this cluster specific CA
+	crt += string(clusterCA.EncodedCertificate())
+	cfg.Files["/etc/kubernetes/pki/ca.crt"] = crt
+	cfg.Files["/etc/kubernetes/pki/ca.key"] = string(clusterCA.EncodedPrivateKey())
+	cfg.Files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
 	return nil
 }
 
@@ -161,7 +162,7 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	createClientSideLoadbalancers(platform, cfg)
 	addCerts(platform, cfg)
 	cfg.AddCommand(fmt.Sprintf(
-		"kubeadm join --control-plane --token %s --discovery-token-unsafe-skip-ca-verification %s   > /var/log/kubeadm.log",
+		"kubeadm join --control-plane --token %s --discovery-token-unsafe-skip-ca-verification %s  > /var/log/kubeadm.log",
 		token, platform.JoinEndpoint))
 	return cfg, nil
 }
