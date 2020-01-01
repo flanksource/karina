@@ -149,7 +149,11 @@ func Install(p *platform.Platform) error {
 	_, pass := getPgoAuth(p)
 
 	if pass != "" {
-		log.Infof("Using existing admin password \"%s\"", pass)
+		if log.IsLevelEnabled(log.TraceLevel) {
+			log.Tracef("Using existing admin password \"%s\"", pass)
+		} else {
+			log.Infof("Using existing admin password")
+		}
 		passwd = fmt.Sprintf("admin:%s:pgoadmin", pass)
 	} else {
 		passwd = fmt.Sprintf("admin:%s:pgoadmin", utils.RandomString(10))
