@@ -14,6 +14,7 @@ import (
 
 type PlatformConfig struct {
 	BootstrapToken        string            `yaml:"-"`
+	Version               string            `yaml:"version,omitempty"`
 	Backups               *Backups          `yaml:"backups,omitempty"`
 	Calico                Calico            `yaml:"calico,omitempty"`
 	Certificates          *Certificates     `yaml:"-"`
