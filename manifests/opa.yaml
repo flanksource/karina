@@ -40,6 +40,29 @@ subjects:
     apiGroup: rbac.authorization.k8s.io
 
 ---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: opa-server
+  namespace: opa
+spec:
+  secretName: opa-server
+  dnsNames:
+    - opa.opa.svc
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opa-server
+  namespace: opa
+  annotations:
+    cert-manager.io/allow-direct-injection: "true"
+
+---
 kind: Service
 apiVersion: v1
 metadata:
@@ -55,7 +78,7 @@ spec:
       targetPort: 443
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
