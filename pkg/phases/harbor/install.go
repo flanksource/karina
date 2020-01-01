@@ -6,12 +6,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/files"
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 func Deploy(p *platform.Platform) error {
@@ -45,7 +45,7 @@ func Deploy(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	log.Tracef("Config: \n%s\n", utils.StripSecrets(values))
+	log.Tracef("Config: \n%s\n", console.StripSecrets(values))
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
 		return err

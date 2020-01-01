@@ -11,13 +11,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-
+	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/lookup"
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-		"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 func getPlatform(cmd *cobra.Command) *platform.Platform {
@@ -151,8 +150,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	}
 
 	data, _ := yaml.Marshal(base)
-	log.Tracef("Using configuration: \n%s\n", utils.StripSecrets(string(data)))
-	base.Init()
+	log.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
 	return base
 }
 

@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/commons/console"
+	"github.com/moshloop/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 func Status(p *platform.Platform) error {

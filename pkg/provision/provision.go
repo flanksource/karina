@@ -9,13 +9,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
+	"github.com/moshloop/commons/console"
+	"github.com/moshloop/commons/utils"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 // VM provisions a new standalone VM
@@ -62,7 +63,7 @@ func Cluster(platform *platform.Platform) error {
 			log.Fatalf("Erroring saving config %s", err)
 		}
 
-		log.Tracef("Using configuration: \n%s\n", utils.StripSecrets(string(data)))
+		log.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
 
 		if !platform.DryRun {
 			vm, err := platform.Clone(vm, config)

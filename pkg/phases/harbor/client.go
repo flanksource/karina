@@ -9,10 +9,10 @@ import (
 	"github.com/dghubble/sling"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/utils"
 )
 
 type HarborClient struct {
@@ -58,7 +58,7 @@ func (harbor *HarborClient) TriggerReplication(id int) (*Replication, error) {
 
 func (harbor *HarborClient) UpdateSettings(settings types.HarborSettings) error {
 	data, _ := json.Marshal(settings)
-	log.Tracef("Harbor settings: \n%s\n", utils.StripSecrets(string(data)))
+	log.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
 	log.Infof("Updating harbor using: %s \n", harbor.url)
 	r, err := harbor.sling.New().
 		Put("api/configurations").
