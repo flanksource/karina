@@ -14,6 +14,7 @@ import (
 
 type PlatformConfig struct {
 	BootstrapToken        string            `yaml:"-"`
+	Brand                 Brand             `yaml:"brand,omitempty"`
 	Version               string            `yaml:"version,omitempty"`
 	Backups               *Backups          `yaml:"backups,omitempty"`
 	Calico                Calico            `yaml:"calico,omitempty"`
@@ -270,6 +271,12 @@ type ELK struct {
 }
 
 type Dex struct {
+}
+
+type Brand struct {
+	Name string `yaml:"name,omitempty"`
+	URL  string `yaml:"url,omitempty"`
+	Logo string `yaml:"logo,omitempty"`
 }
 
 type GitOps struct {
