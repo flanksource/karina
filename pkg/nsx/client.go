@@ -324,6 +324,9 @@ func (client *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, e
 	}
 	pool, resp, err := api.CreateLoadBalancerPool(ctx, loadbalancer.LbPool{
 		Id: opts.Name,
+		SnatTranslation: &loadbalancer.LbSnatTranslation{
+			Type_: "LbSnatAutoMap",
+		},
 		MemberGroup: &loadbalancer.PoolMemberGroup{
 			GroupingObject: &common.ResourceReference{
 				TargetType: "NSGroup",
