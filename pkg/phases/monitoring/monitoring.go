@@ -12,11 +12,19 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
+const (
+	Namespace = "monitoring"
+)
+
 var specs = []string{"grafana-operator.yml", "kube-prometheus.yml", "prometheus-adapter.yml", "kube-state-metrics.yml", "node-exporter.yml", "alertmanager-rules.yml.raw", "service-monitors.yml"}
 
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
 		return nil
+	}
+
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		return err
 	}
 
 	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yml"); err != nil {
@@ -27,7 +35,7 @@ func Install(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	if err := p.CreateOrUpdateSecret("alertmanager-main", "monitoring", map[string][]byte{
+	if err := p.CreateOrUpdateSecret("alertmanager-main", Namespace, map[string][]byte{
 		"alertmanager.yaml": []byte(data),
 	}); err != nil {
 		return err
@@ -56,7 +64,7 @@ func Install(p *platform.Platform) error {
 			Kind:       "GrafanaDashboard",
 			Metadata: k8s.Metadata{
 				Name:      name,
-				Namespace: "monitoring",
+				Namespace: Namespace,
 				Labels: map[string]string{
 					"app": "grafana",
 				},

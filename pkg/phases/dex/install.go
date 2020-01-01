@@ -1,33 +1,30 @@
 package dex
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 const (
 	Namespace     = "dex"
 	ConfigMapName = "dex"
+	CertName      = "dex-cert"
 	ConfigName    = "dex.cfg"
 )
 
 func Install(platform *platform.Platform) error {
 
-	platform.GetKubectl()("create ns dex")
-
-	openid := platform.Certificates.OpenID.ToCert()
-	log.Infof("Creating dex cert for %s\n", "dex."+platform.Domain)
-	cert, err := openid.CreateCertificate("dex."+platform.Domain, "")
-	if err != nil {
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 
-	if err := platform.CreateOrUpdateSecret("dex-cert", Namespace, map[string][]byte{
-		"tls.crt": cert.EncodedCertificate(),
-		"tls.key": cert.EncodedPrivateKey(),
-	}); err != nil {
-		return err
+	if !platform.HasSecret(Namespace, CertName) {
+		cert, err := platform.CreateIngressCertificate("dex")
+		if err != nil {
+			return err
+		}
+		if err := platform.CreateOrUpdateSecret(CertName, Namespace, cert.AsTLSSecret()); err != nil {
+			return err
+		}
 	}
 
 	cfg, _ := platform.Template("dex.cfg")
