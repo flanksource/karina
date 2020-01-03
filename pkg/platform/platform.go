@@ -86,6 +86,13 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 	if platform.ingressCA != nil {
 		return platform.ingressCA
 	}
+
+	if platform.IngressCA == nil {
+		log.Infof("Creating self-signed CA for ingress")
+		ca := certs.NewCertificateBuilder("ingress-ca").CA().Certificate
+		platform.ingressCA, _ = ca.SignCertificate(ca, 1)
+		return platform.ingressCA
+	}
 	ca, err := readCA(platform.IngressCA)
 	if err != nil {
 		log.Fatalf("Unable to open Ingress CA: %v", err)
