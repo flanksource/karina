@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
 	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/lookup"
@@ -113,6 +114,13 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	if base.NSX != nil && base.NSX.NsxV3 != nil {
 		base.NSX.NsxV3.NsxApiUser = template(base.NSX.NsxV3.NsxApiUser)
 		base.NSX.NsxV3.NsxApiPass = template(base.NSX.NsxV3.NsxApiPass)
+	}
+
+	if base.CA != nil {
+		base.CA.Password = template(base.CA.Password)
+	}
+	if base.IngressCA != nil {
+		base.IngressCA.Password = template(base.IngressCA.Password)
 	}
 
 	gitops := base.GitOps

@@ -3,7 +3,6 @@ package platform
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,11 +15,11 @@ import (
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	kapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/moshloop/commons/certs"
 	"github.com/moshloop/commons/console"
 	"github.com/moshloop/commons/deps"
+	"github.com/moshloop/commons/files"
 	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/net"
 	"github.com/moshloop/commons/text"
@@ -37,30 +36,64 @@ import (
 type Platform struct {
 	types.PlatformConfig
 	k8s.Client
-	ctx       context.Context
-	session   *vmware.Session
-	nsx       *nsx.NSXClient
-	ca        certs.CertificateAuthority
-	ingressCA certs.CertificateAuthority
+	ctx        context.Context
+	session    *vmware.Session
+	nsx        *nsx.NSXClient
+	kubeConfig []byte
+	ca         certs.CertificateAuthority
+	ingressCA  certs.CertificateAuthority
 }
 
 func (platform *Platform) Init() {
-	platform.Client.GetKubeConfig = platform.GetKubeConfig
+	platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
 	platform.Client.ApplyDryRun = platform.DryRun
+}
+
+func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
+	if platform.kubeConfig != nil {
+		return platform.kubeConfig, nil
+	}
+
+	if platform.CA == nil && os.Getenv("KUBECONFIG") != "" {
+		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
+	}
+
+	masters := platform.GetMasterIPs()
+	if len(masters) > 0 {
+		return nil, fmt.Errorf("Could not find any master ips")
+	}
+
+	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "admin", "system:masters")
 }
 
 func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
 	}
-	return nil
+	ca, err := readCA(platform.CA)
+	if err != nil {
+		log.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
+	}
+	platform.ca = ca
+	return ca
+}
+
+func readCA(ca *types.CA) (*certs.Certificate, error) {
+	cert := files.SafeRead(ca.Cert)
+	privateKey := files.SafeRead(ca.PrivateKey)
+	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
 func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 	if platform.ingressCA != nil {
 		return platform.ingressCA
 	}
-	return nil
+	ca, err := readCA(platform.IngressCA)
+	if err != nil {
+		log.Fatalf("Unable to open Ingress CA: %v", err)
+	}
+	platform.ingressCA = ca
+	return ca
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
@@ -246,19 +279,14 @@ node:
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
-
 	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
-		log.Tracef("Using KUBECONFIG from ENV\n")
+		log.Tracef("Using KUBECONFIG from ENV")
 		return os.Getenv("KUBECONFIG"), nil
 	}
 	cwd, _ := os.Getwd()
 	name := cwd + "/" + platform.Name + "-admin.yml"
 	if !is.File(name) {
-		masters := platform.GetMasterIPs()
-		if len(masters) == 0 {
-			return "", errors.New("No masters found")
-		}
-		data, err := CreateKubeConfig(platform, masters[0])
+		data, err := platform.GetKubeConfigBytes()
 		if err != nil {
 			return "", err
 		}
@@ -310,46 +338,14 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 	return platform.GetIngressCA().SignCertificate(cert, 3)
 }
 
-// CreateKubeConfig creates a new kubeconfig for the cluster
-func CreateKubeConfig(platform *Platform, endpoint string) ([]byte, error) {
-	userName := "kubernetes-admin"
-	contextName := fmt.Sprintf("%s@%s", userName, platform.Name)
-	cert, err := platform.GetCA().SignCertificate(certs.NewCertificateBuilder("system:masters").Certificate, 1)
-	if err != nil {
-		return nil, err
-	}
-	cfg := kapi.Config{
-		Clusters: map[string]*kapi.Cluster{
-			platform.Name: {
-				Server:                   "https://" + endpoint + ":6443",
-				CertificateAuthorityData: []byte(platform.GetCA().GetPublicChain()[0].EncodedCertificate()),
-			},
-		},
-		Contexts: map[string]*kapi.Context{
-			contextName: {
-				Cluster:  platform.Name,
-				AuthInfo: userName,
-			},
-		},
-		AuthInfos: map[string]*kapi.AuthInfo{
-			userName: {
-				ClientKeyData:         cert.EncodedPrivateKey(),
-				ClientCertificateData: cert.EncodedCertificate(),
-			},
-		},
-		CurrentContext: contextName,
-	}
-
-	return clientcmd.Write(cfg)
-}
-
 // GetClientset creates a new k8s client
 func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
-	kubeconfig, err := platform.GetKubeConfig()
+	data, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), platform.GetMasterIPs()[0], "system:masters", "admin")
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +374,7 @@ func (platform *Platform) Template(file string) (string, error) {
 	template, err := text.Template(raw, platform.PlatformConfig)
 	if err != nil {
 		data, _ := yaml.Marshal(platform.PlatformConfig)
-		log.Debugln("Error templating %s: %s", file, console.StripSecrets(string(data)))
+		log.Debugf("Error templating %s: %s", file, console.StripSecrets(string(data)))
 		return "", err
 	}
 	return template, nil

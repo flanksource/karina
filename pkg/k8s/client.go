@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	"encoding/base64"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -18,11 +20,14 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/moshloop/commons/certs"
 )
 
 type Client struct {
-	GetKubeConfig func() (string, error)
-	ApplyDryRun   bool
+	GetKubeConfigBytes func() ([]byte, error)
+	ApplyDryRun        bool
 }
 
 // GetSecret returns the data of a secret or nil for any error
@@ -57,11 +62,11 @@ func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 
 // GetDynamicClient creates a new k8s client
 func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
-	kubeconfig, err := c.GetKubeConfig()
+	data, err := c.GetKubeConfigBytes()
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
 	if err != nil {
 		return nil, err
 	}
@@ -157,11 +162,11 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 
 // GetClientset creates a new k8s client
 func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
-	kubeconfig, err := c.GetKubeConfig()
+	data, err := c.GetKubeConfigBytes()
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
 	if err != nil {
 		return nil, err
 	}
@@ -393,4 +398,76 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 		return nil
 	}
 	return err
+}
+
+func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint string, group string, user string) ([]byte, error) {
+	contextName := fmt.Sprintf("%s@%s", user, clusterName)
+	cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
+	cert, err := ca.SignCertificate(cert, 1)
+	if err != nil {
+		return nil, err
+	}
+	cfg := api.Config{
+		Clusters: map[string]*api.Cluster{
+			clusterName: {
+				Server:                "https://" + endpoint + ":6443",
+				InsecureSkipTLSVerify: true,
+				// The CA used for signing the client certificate is not the same as the
+				// as the CA (kubernetes-ca) that signed the api-server cert. The kubernetes-ca
+				// is ephemeral.
+				// TODO dynamically download CA from master server
+				// CertificateAuthorityData: []byte(platform.Certificates.CA.X509),
+			},
+		},
+		Contexts: map[string]*api.Context{
+			contextName: {
+				Cluster:   clusterName,
+				AuthInfo:  contextName,
+				Namespace: "kube-system",
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			contextName: {
+				ClientKeyData:         cert.EncodedPrivateKey(),
+				ClientCertificateData: cert.EncodedCertificate(),
+			},
+		},
+		CurrentContext: contextName,
+	}
+
+	return clientcmd.Write(cfg)
+}
+
+func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl string) ([]byte, error) {
+	cfg := api.Config{
+		Clusters: map[string]*api.Cluster{
+			clusterName: {
+				Server:                "https://" + endpoint + ":6443",
+				InsecureSkipTLSVerify: true,
+			},
+		},
+		Contexts: map[string]*api.Context{
+			clusterName: {
+				Cluster:  clusterName,
+				AuthInfo: "sso",
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			"sso": {
+				AuthProvider: &api.AuthProviderConfig{
+					Name: "oidc",
+					Config: map[string]string{
+						"client-id":                      "kubernetes",
+						"client-secret":                  "ZXhhbXBsZS1hcHAtc2VjcmV0",
+						"extra-scopes":                   "offline_access openid profile email groups",
+						"idp-certificate-authority-data": string(base64.StdEncoding.EncodeToString([]byte(ca.GetPublicChain()[0].EncodedCertificate()))),
+						"idp-issuer-url":                 idpUrl,
+					},
+				},
+			},
+		},
+		CurrentContext: clusterName,
+	}
+
+	return clientcmd.Write(cfg)
 }

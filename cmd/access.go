@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases"
+	"github.com/moshloop/platform-cli/pkg/k8s"
 )
 
 var Access = &cobra.Command{
@@ -31,7 +31,7 @@ func init() {
 			}
 			group, _ := cmd.Flags().GetString("group")
 			name, _ := cmd.Flags().GetString("name")
-			data, err := phases.CreateKubeConfig(platform, endpoint, group, name)
+			data, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), endpoint, group, name)
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}
@@ -51,7 +51,7 @@ func init() {
 
 			platform := getPlatform(cmd)
 			ips := platform.GetMasterIPs()
-			data, err := phases.CreateOIDCKubeConfig(platform, ips[0])
+			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), ips[0], fmt.Sprintf("https://dex.%s", platform.Domain))
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}

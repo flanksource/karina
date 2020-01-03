@@ -12,6 +12,7 @@ type PlatformConfig struct {
 	Brand                 Brand             `yaml:"brand,omitempty"`
 	Version               string            `yaml:"version,omitempty"`
 	Backups               *Backups          `yaml:"backups,omitempty"`
+	CA                    *CA               `yaml:"ca,omitempty"`
 	Calico                Calico            `yaml:"calico,omitempty"`
 	CertManager           *Enabled          `yaml:"certManager,omitempty"`
 	Consul                string            `yaml:"consul,omitempty"`
@@ -26,6 +27,7 @@ type PlatformConfig struct {
 	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
 	Harbor                *Harbor           `yaml:"harbor,omitempty"`
 	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
+	IngressCA             *CA               `yaml:"ingressCA,omitempty"`
 	GitOps                []GitOps          `yaml:"gitops,omitempty"`
 	JoinEndpoint          string            `yaml:"-"`
 	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
@@ -300,6 +302,12 @@ type Backups struct {
 	Schedule string `yaml:"schedule,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 	Volumes  bool   `yaml:"volumes"`
+}
+
+type CA struct {
+	Cert       string `yaml:"cert,omitempty"`
+	PrivateKey string `yaml:"privateKey,omitempty"`
+	Password   string `yaml:"password,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
