@@ -1,16 +1,19 @@
-package phases
+package kubeadm
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 
+	"github.com/moshloop/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -61,16 +64,16 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go
-func createBootstrapToken(client corev1.SecretInterface) (string, error) {
+func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 	// createToken attempts to create a token with the given ID.
 	token, err := bootstraputil.GenerateBootstrapToken()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to generate bootstrap token")
+		return "", fmt.Errorf("unable to generate bootstrap token: %v", err)
 	}
 
 	substrs := bootstraputil.BootstrapTokenRegexp.FindStringSubmatch(token)
 	if len(substrs) != 3 {
-		return "", errors.Errorf("the bootstrap token %q was not of the form %q", token, bootstrapapi.BootstrapTokenPattern)
+		return "", fmt.Errorf("the bootstrap token %q was not of the form %q", token, bootstrapapi.BootstrapTokenPattern)
 	}
 	tokenID := substrs[1]
 	tokenSecret := substrs[2]
@@ -97,4 +100,62 @@ func createBootstrapToken(client corev1.SecretInterface) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return "", err
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	var masterNode string
+	for _, node := range nodes.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			masterNode = node.Name
+			break
+		}
+	}
+
+	secrets := client.CoreV1().Secrets("kube-system")
+	var key string
+	secret, err := secrets.Get("kubeadm-certs", metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		key = utils.RandomKey(32)
+		log.Infof("Uploading control plane cert from %s", masterNode)
+		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubeadm init phase upload-certs --upload-certs --skip-certificate-key-print --certificate-key %s", key)
+		log.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
+		secret, err = secrets.Get("kubeadm-certs", metav1.GetOptions{})
+		// FIXME storing the encryption key in plain text alongside the certs, kind of defeats the purpose
+		secret.Annotations = map[string]string{"key": key}
+		if _, err := secrets.Update(secret); err != nil {
+			return "", err
+		}
+		return key, nil
+	} else if err == nil {
+		log.Infof("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
+		return secret.Annotations["key"], nil
+	}
+	return "", err
+}
+
+func GetOrCreateBootstrapToken(platform *platform.Platform) (string, error) {
+	if platform.BootstrapToken != "" {
+		return platform.BootstrapToken, nil
+	}
+	client, err := platform.GetClientset()
+	if err != nil {
+		return "", err
+	}
+	token, err := CreateBootstrapToken(client.CoreV1().Secrets("kube-system"))
+	if err != nil {
+		return "", err
+	}
+	platform.BootstrapToken = token
+
+	return platform.BootstrapToken, nil
 }
