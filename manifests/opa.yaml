@@ -189,7 +189,7 @@ metadata:
   name: opa-validating-webhook
   annotations:
     cert-manager.io/inject-apiserver-ca: "true"
-    cert-manager.io/inject-ca-from-secret: opa/opa-ca
+    cert-manager.io/inject-ca-from-secret: opa/opa-server
 webhooks:
   - name: validating-webhook.openpolicyagent.org
     namespaceSelector:
