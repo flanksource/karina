@@ -29,8 +29,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if platform.Datacenter == "" {
 		return nil, errors.New("Must specify a platform datacenter")
 	}
-
-	log.Infof("Creating new primary master\n")
 	hostname := ""
 	cfg, err := baseKonfig(platform)
 	if err != nil {
@@ -63,11 +61,19 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
+	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
+	if err != nil {
+		return err
+	}
 
-	// any cert signed by the global CA should be allowed
-	crt := string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
 	// plus any cert signed by this cluster specific CA
-	crt += string(clusterCA.EncodedCertificate())
+	crt := string(clusterCA.EncodedCertificate()) + "\n"
+	// any cert signed by the global CA should be allowed
+	crt = crt + string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
+	// csrsigning controller doesn't like having more than 1 CA cert passed to it
+	cfg.Files["/etc/kubernetes/pki/csr-ca.crt"] = string(clusterCA.EncodedCertificate())
+	cfg.Files["/etc/kubernetes/pki/csr-ca.key"] = string(clusterCA.EncodedPrivateKey())
+
 	cfg.Files["/etc/kubernetes/pki/ca.crt"] = crt
 	cfg.Files["/etc/kubernetes/pki/ca.key"] = string(clusterCA.EncodedPrivateKey())
 	cfg.Files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
@@ -80,6 +86,7 @@ func addInitKubeadmConfig(hostname string, platform *platform.Platform, cfg *kon
 	if err != nil {
 		return err
 	}
+	log.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	return nil
 }

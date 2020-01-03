@@ -52,7 +52,7 @@ func Cluster(platform *platform.Platform) error {
 		vm := platform.Master
 		vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, "m", utils.ShortTimestamp())
 		vm.Tags["Role"] = platform.Name + "-masters"
-		log.Infof("No  masters detected, deploying new master %s", vm.Name)
+		log.Infof("No masters detected, deploying new master %s", vm.Name)
 		config, err := phases.CreatePrimaryMaster(platform)
 		if err != nil {
 			log.Fatalf("Failed to create primary master: %s", err)
@@ -75,7 +75,6 @@ func Cluster(platform *platform.Platform) error {
 				return err
 			}
 			log.Infof("Provisioned new master: %s\n", vm.IP)
-
 		}
 		if err := platform.WaitFor(); err != nil {
 			log.Fatalf("Primary master failed to come up %s ", err)
@@ -84,6 +83,9 @@ func Cluster(platform *platform.Platform) error {
 
 	// make sure admin kubeconfig is available
 	platform.GetKubeConfig()
+	if platform.JoinEndpoint == "" {
+		platform.JoinEndpoint = "localhost:8443"
+	}
 
 	masters = platform.GetMasterIPs()
 	log.Infof("Detected %d existing masters: %s", len(masters), masters)

@@ -40,7 +40,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		"oidc-username-claim": "email",
 		"oidc-groups-claim":   "groups",
 	}
-	if strings.HasPrefix(cluster.APIVersion, "1.16") {
+	if strings.HasPrefix(cluster.KubernetesVersion, "1.16") {
 		runtimeConfigs := []string{
 			"apps/v1beta1=true",
 			"apps/v1beta2=true",
@@ -52,6 +52,11 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		}
 		cluster.APIServer.ExtraArgs["runtime-config"] = strings.Join(runtimeConfigs, ",")
 	}
+	if cluster.ControllerManager.ExtraArgs == nil {
+		cluster.ControllerManager.ExtraArgs = make(map[string]string)
+	}
+	cluster.ControllerManager.ExtraArgs["cluster-signing-cert-file"] = "/etc/kubernetes/pki/csr-ca.crt"
+	cluster.ControllerManager.ExtraArgs["cluster-signing-key-file"] = "/etc/kubernetes/pki/ca.key"
 	return cluster
 }
 
