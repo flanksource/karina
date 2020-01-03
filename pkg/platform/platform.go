@@ -57,11 +57,11 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	}
 
 	masters := platform.GetMasterIPs()
-	if len(masters) > 0 {
+	if len(masters) == 0 {
 		return nil, fmt.Errorf("Could not find any master ips")
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "admin", "system:masters")
+	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin")
 }
 
 func (platform *Platform) GetCA() certs.CertificateAuthority {
@@ -130,7 +130,7 @@ func (platform *Platform) GetVMs() (map[string]*VM, error) {
 func (platform *Platform) WaitFor() error {
 	for {
 		masters := platform.GetMasterIPs()
-		if len(masters) > 0 && net.Ping(masters[0], 6443, 3) {
+		if len(masters) > 0 && net.Ping(masters[0], 6443, 3) && platform.PingMaster() {
 			return nil
 		}
 		time.Sleep(5 * time.Second)
@@ -262,7 +262,7 @@ func (platform *Platform) OpenViaEnv() error {
 // GetMasterIPs returns a list of healthy master IP's
 func (platform *Platform) GetMasterIPs() []string {
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
-	log.Infof("Finding masters via consul: %s\n", url)
+	log.Tracef("Finding masters via consul: %s\n", url)
 	response, _ := net.GET(url)
 	var consul api.Consul
 	if err := json.Unmarshal(response, &consul); err != nil {

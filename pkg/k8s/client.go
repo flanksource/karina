@@ -3,8 +3,10 @@ package k8s
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -19,10 +21,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/moshloop/commons/certs"
+	"github.com/moshloop/commons/utils"
 )
 
 type Client struct {
@@ -164,7 +168,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
 	data, err := c.GetKubeConfigBytes()
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
 	if err != nil {
@@ -206,7 +210,9 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 		existing[k] = v
 	}
 	unstructuredObj.SetLabels(existing)
-	_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+	if _, err := client.Update(unstructuredObj, metav1.UpdateOptions{}); err != nil {
+		return err
+	}
 	log.Infof("%s/%s/%s labelled", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 	return nil
 }
@@ -470,4 +476,123 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 	}
 
 	return clientcmd.Write(cfg)
+}
+
+func (c *Client) PingMaster() bool {
+	client, err := c.GetClientset()
+	if err != nil {
+		return false
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if nodes == nil && len(nodes.Items) == 0 {
+		return false
+	}
+
+	_, err = client.CoreV1().ServiceAccounts("kube-system").Get("default", metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Duration) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
+	}
+	pods := client.CoreV1().Pods(ns)
+	start := time.Now()
+	for {
+		pod, err := pods.Get(name, metav1.GetOptions{})
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("Timeout exceeded waiting for %s to be %s: is %s, error: %v", name, status, pod.Status.Phase, err)
+		}
+
+		if pod != nil && pod.Status.Phase == status {
+			return nil
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+}
+
+// Execute runs the specified shell common on a node by creating
+// a pre-scheduled pod that runs in the host namespace
+func (c *Client) Executef(node string, timeout time.Duration, command string, args ...interface{}) (string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return "", err
+	}
+	pods := client.CoreV1().Pods("kube-system")
+
+	pod, err := pods.Create(&v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("command-%s-%s", node, utils.ShortTimestamp()),
+		},
+		Spec: NewCommandJob(node, fmt.Sprintf(command, args...)),
+	})
+	if err != nil {
+		return "", err
+	}
+	defer pods.Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
+
+	logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
+		Container: pod.Spec.Containers[0].Name,
+	})
+
+	err = c.WaitForPod("kube-system", pod.ObjectMeta.Name, v1.PodSucceeded, timeout)
+	logString := read(logs)
+	if err != nil {
+		return logString, fmt.Errorf("failed to execute command, pod did not complete: %v", err)
+	} else {
+		return logString, nil
+	}
+}
+
+func read(req *rest.Request) string {
+	stream, err := req.Stream()
+	if err != nil {
+		return fmt.Sprintf("Failed to stream logs %v", err)
+	}
+	data, err := ioutil.ReadAll(stream)
+	if err != nil {
+		return fmt.Sprintf("Failed to stream logs %v", err)
+	}
+	return string(data)
+}
+
+func NewCommandJob(node, command string) v1.PodSpec {
+	yes := true
+	return v1.PodSpec{
+		RestartPolicy: v1.RestartPolicyNever,
+		NodeName:      node,
+		Volumes: []v1.Volume{v1.Volume{
+			Name: "root",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/",
+				},
+			},
+		}},
+		Containers: []v1.Container{v1.Container{
+			Name:  "shell",
+			Image: "docker.io/ubuntu:18.04",
+			Command: []string{
+				"sh",
+				"-c",
+				"chroot /chroot bash -c \"" + command + "\"",
+			},
+			VolumeMounts: []v1.VolumeMount{v1.VolumeMount{
+				Name:      "root",
+				MountPath: "/chroot",
+			}},
+			SecurityContext: &v1.SecurityContext{
+				Privileged: &yes,
+			},
+		}},
+		HostNetwork: true,
+		HostPID:     true,
+		HostIPC:     true,
+	}
 }

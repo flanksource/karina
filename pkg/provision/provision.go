@@ -14,6 +14,7 @@ import (
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases"
+	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
@@ -74,7 +75,7 @@ func Cluster(platform *platform.Platform) error {
 			if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), vm.IP); err != nil {
 				return err
 			}
-			log.Infof("Provisioned new master: %s\n", vm.IP)
+			log.Infof("Provisioned new master: %s, waiting for it to become ready", vm.IP)
 		}
 		if err := platform.WaitFor(); err != nil {
 			log.Fatalf("Primary master failed to come up %s ", err)
@@ -90,6 +91,10 @@ func Cluster(platform *platform.Platform) error {
 	masters = platform.GetMasterIPs()
 	log.Infof("Detected %d existing masters: %s", len(masters), masters)
 	wg := sync.WaitGroup{}
+	if platform.Master.Count != len(masters) {
+		// upload control plane certs first as secondary masters are created concurrently
+		kubeadm.UploadControlPaneCerts(platform)
+	}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		time.Sleep(1 * time.Second)
 		wg.Add(1)
