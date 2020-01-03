@@ -13,8 +13,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/moshloop/commons/certs"
 	"github.com/moshloop/commons/console"
@@ -336,20 +334,6 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 3)
-}
-
-// GetClientset creates a new k8s client
-func (platform *Platform) GetClientset() (*kubernetes.Clientset, error) {
-	data, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), platform.GetMasterIPs()[0], "system:masters", "admin")
-	if err != nil {
-		return nil, err
-	}
-
-	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
-	if err != nil {
-		return nil, err
-	}
-	return kubernetes.NewForConfigOrDie(cfg), nil
 }
 
 func (platform *Platform) GetResourceByName(file string) (string, error) {
