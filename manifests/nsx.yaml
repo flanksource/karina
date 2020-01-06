@@ -219,7 +219,7 @@ subjects:
     namespace: nsx-system
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nsx-ncp
@@ -248,7 +248,7 @@ spec:
       serviceAccountName: ncp-svc-account
       containers:
         - name: nsx-ncp
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           env:
             - name: NCP_NAME
@@ -297,7 +297,7 @@ spec:
         #    secretName: lb-secret
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nsx-ncp-bootstrap
@@ -331,7 +331,7 @@ spec:
       initContainers:
         - name: nsx-ncp-bootstrap
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["init_k8s_node"]
@@ -393,7 +393,7 @@ spec:
         - name: nsx-dummy
           # This container is of no use.
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["/bin/bash", "-c", "while true; do sleep 5; done"]
@@ -447,7 +447,7 @@ spec:
 
 ---
 # nsx-node-agent DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nsx-node-agent
@@ -484,7 +484,7 @@ spec:
       containers:
         - name: nsx-node-agent
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_node_agent"]
@@ -527,7 +527,7 @@ spec:
 
         - name: nsx-kube-proxy
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_kube_proxy"]
@@ -561,7 +561,7 @@ spec:
         # nsx-ovs is not needed on BAREMETAL
         - name: nsx-ovs
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_ovs"]
