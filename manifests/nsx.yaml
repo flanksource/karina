@@ -233,6 +233,9 @@ spec:
   # so replica can be more than 1 if NCP HA is enabled.
   # replica *must be* 1 if NCP HA is disabled.
   replicas: 1
+  selector:
+    matchLabels:
+      component: nsx-ncp
   template:
     metadata:
       labels:
@@ -309,6 +312,9 @@ metadata:
 spec:
   updateStrategy:
     type: RollingUpdate
+  selector:
+    matchLabels:
+      component: nsx-ncp-bootstrap
   template:
     metadata:
       labels:
@@ -370,7 +376,6 @@ spec:
               # we move the usr kmod files to this dir temporarily before installing
               # new OVS kmod and/or backing up existing OVS kmod backup
               mountPath: /tmp/nsx_usr_ovs_kmod_backup
-
             # mount apparmor files to load the node-agent-apparmor
             - name: app-armor-cache
               mountPath: /var/cache/apparmor
@@ -425,7 +430,6 @@ spec:
         - name: dir-tmp-usr-ovs-kmod-backup
           hostPath:
             path: /tmp/nsx_usr_ovs_kmod_backup
-
         - name: app-armor-cache
           hostPath:
             path: /var/cache/apparmor
@@ -459,11 +463,13 @@ metadata:
 spec:
   updateStrategy:
     type: RollingUpdate
+  selector:
+    matchLabels:
+      component: nsx-node-agent
   template:
     metadata:
       annotations:
         container.apparmor.security.beta.kubernetes.io/nsx-node-agent: localhost/node-agent-apparmor
-
       labels:
         tier: nsx-networking
         component: nsx-node-agent
@@ -612,7 +618,6 @@ spec:
         - name: config-volume
           configMap:
             name: nsx-node-agent-config
-
         - name: openvswitch
           hostPath:
             path: /var/run/openvswitch
@@ -625,7 +630,6 @@ spec:
         - name: proc
           hostPath:
             path: /proc
-
         - name: host-sys
           hostPath:
             path: /sys
