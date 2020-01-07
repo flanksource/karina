@@ -39,6 +39,7 @@ type PlatformConfig struct {
 	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS              `yaml:"nfs,omitempty"`
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
+	NodeLocalDNS          *Enabled          `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
