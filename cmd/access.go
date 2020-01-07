@@ -24,7 +24,7 @@ func init() {
 
 			var endpoint string
 			if platform.DNS != nil && !platform.DNS.Disabled {
-				endpoint = fmt.Sprintf("k8s-api.%s.%s", platform.Name, platform.Domain)
+				endpoint = fmt.Sprintf("k8s-api.%s", platform.Domain)
 			} else {
 				// No DNS available using the first masters IP as an endpoint
 				endpoint = ips[0]
