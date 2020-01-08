@@ -14,7 +14,7 @@ versions:
   gojsontoyaml: master
   kustomize: v3.0.2
   kubectl: v1.15.3
-  pgo: 3.5.4
+  pgo: 4.2.0
   helm: v2.13.0
   velero: v1.1.0
   expenv: v1.2.0
