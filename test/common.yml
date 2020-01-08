@@ -30,7 +30,7 @@ calico:
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
 pgo:
-  version: 3.5.4
+  version: 4.2.0
 harbor:
   replicas: 1
   version: v1.8.2
