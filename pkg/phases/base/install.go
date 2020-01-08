@@ -20,6 +20,12 @@ func Install(platform *platform.Platform) error {
 		log.Errorf("Error deploying tiller: %s\n", err)
 	}
 
+	if platform.NodeLocalDNS == nil || !platform.NodeLocalDNS.Disabled {
+		if err := platform.ApplySpecs("", "node-local-dns.yml"); err != nil {
+			log.Errorf("Error deploying node-local-dns: %s\n", err)
+		}
+	}
+
 	if platform.CertManager == nil || !platform.CertManager.Disabled {
 		log.Infof("Installing CertMananager")
 		if err := platform.ApplySpecs("", "cert-manager-crd.yml"); err != nil {

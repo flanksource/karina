@@ -21,8 +21,9 @@ import (
 )
 
 var wait int
+var failOnError bool
 var waitInterval int
-var junitPath string
+var junitPath, suiteName string
 var p *platform.Platform
 
 var Test = &cobra.Command{
@@ -31,11 +32,16 @@ var Test = &cobra.Command{
 
 func end(test console.TestResults) {
 	if junitPath != "" {
+		if suiteName == "" {
+			 test.SuiteName(p.Name)
+		} else {
+			 test.SuiteName(suiteName)
+		}
 		xml, _ := test.ToXML()
 		os.MkdirAll(path.Dir(junitPath), 0755)
 		ioutil.WriteFile(junitPath, []byte(xml), 0644)
 	}
-	if test.FailCount > 0 {
+	if test.FailCount > 0 && failOnError {
 		os.Exit(1)
 	}
 }
@@ -66,6 +72,8 @@ func init() {
 	Test.PersistentFlags().IntVar(&wait, "wait", 0, "Time in seconds to wait for tests to pass")
 	Test.PersistentFlags().IntVar(&waitInterval, "wait-interval", 5, "Time in seconds to wait between repeated tests")
 	Test.PersistentFlags().StringVar(&junitPath, "junit-path", "", "Path to export JUnit formatted test results")
+	Test.PersistentFlags().StringVar(&suiteName, "suite-name", "", "Name of the Test Suite, defaults to platform name")
+	Test.PersistentFlags().BoolVar(&failOnError, "fail-on-error", true, "Return an exit code of 1 if any tests fail")
 	Test.AddCommand(&cobra.Command{
 		Use:   "harbor",
 		Short: "Test harbor",

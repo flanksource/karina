@@ -219,7 +219,7 @@ subjects:
     namespace: nsx-system
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nsx-ncp
@@ -233,6 +233,9 @@ spec:
   # so replica can be more than 1 if NCP HA is enabled.
   # replica *must be* 1 if NCP HA is disabled.
   replicas: 1
+  selector:
+    matchLabels:
+      component: nsx-ncp
   template:
     metadata:
       labels:
@@ -248,7 +251,7 @@ spec:
       serviceAccountName: ncp-svc-account
       containers:
         - name: nsx-ncp
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           env:
             - name: NCP_NAME
@@ -297,7 +300,7 @@ spec:
         #    secretName: lb-secret
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nsx-ncp-bootstrap
@@ -309,6 +312,9 @@ metadata:
 spec:
   updateStrategy:
     type: RollingUpdate
+  selector:
+    matchLabels:
+      component: nsx-ncp-bootstrap
   template:
     metadata:
       labels:
@@ -331,7 +337,7 @@ spec:
       initContainers:
         - name: nsx-ncp-bootstrap
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["init_k8s_node"]
@@ -370,7 +376,6 @@ spec:
               # we move the usr kmod files to this dir temporarily before installing
               # new OVS kmod and/or backing up existing OVS kmod backup
               mountPath: /tmp/nsx_usr_ovs_kmod_backup
-
             # mount apparmor files to load the node-agent-apparmor
             - name: app-armor-cache
               mountPath: /var/cache/apparmor
@@ -393,7 +398,7 @@ spec:
         - name: nsx-dummy
           # This container is of no use.
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["/bin/bash", "-c", "while true; do sleep 5; done"]
@@ -425,7 +430,6 @@ spec:
         - name: dir-tmp-usr-ovs-kmod-backup
           hostPath:
             path: /tmp/nsx_usr_ovs_kmod_backup
-
         - name: app-armor-cache
           hostPath:
             path: /var/cache/apparmor
@@ -447,7 +451,7 @@ spec:
 
 ---
 # nsx-node-agent DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nsx-node-agent
@@ -459,11 +463,13 @@ metadata:
 spec:
   updateStrategy:
     type: RollingUpdate
+  selector:
+    matchLabels:
+      component: nsx-node-agent
   template:
     metadata:
       annotations:
         container.apparmor.security.beta.kubernetes.io/nsx-node-agent: localhost/node-agent-apparmor
-
       labels:
         tier: nsx-networking
         component: nsx-node-agent
@@ -484,7 +490,7 @@ spec:
       containers:
         - name: nsx-node-agent
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_node_agent"]
@@ -527,7 +533,7 @@ spec:
 
         - name: nsx-kube-proxy
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_kube_proxy"]
@@ -561,7 +567,7 @@ spec:
         # nsx-ovs is not needed on BAREMETAL
         - name: nsx-ovs
           # Docker image for NCP
-          image: {{.nsx.image}}
+          image: "{{ .nsx.image }}"
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_ovs"]
@@ -612,7 +618,6 @@ spec:
         - name: config-volume
           configMap:
             name: nsx-node-agent-config
-
         - name: openvswitch
           hostPath:
             path: /var/run/openvswitch
@@ -625,7 +630,6 @@ spec:
         - name: proc
           hostPath:
             path: /proc
-
         - name: host-sys
           hostPath:
             path: /sys

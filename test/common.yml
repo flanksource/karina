@@ -27,6 +27,7 @@ calico:
   ipip: Never
   vxlan: Never
   version: v3.8.2
+nodeLocalDNS:
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
 pgo:
