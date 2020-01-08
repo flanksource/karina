@@ -43,7 +43,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		"oidc-username-claim": "email",
 		"oidc-groups-claim":   "groups",
 	}
-	if strings.HasPrefix(cluster.KubernetesVersion, "1.16") {
+	if strings.HasPrefix(cluster.KubernetesVersion, "v1.16") {
 		runtimeConfigs := []string{
 			"apps/v1beta1=true",
 			"apps/v1beta2=true",
