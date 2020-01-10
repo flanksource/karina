@@ -20,7 +20,7 @@ require (
 	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/miekg/dns v1.1.22
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-	github.com/moshloop/commons v0.0.3-0.20200107154223-71f55c48eff8
+	github.com/moshloop/commons v0.0.3-0.20200110081500-23f9bf073aa2
 	github.com/moshloop/konfigadm v0.4.6
 	github.com/pkg/errors v0.8.1
 	github.com/rogpeppe/go-internal v1.5.0 // indirect
