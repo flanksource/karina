@@ -189,7 +189,7 @@ func Install(p *platform.Platform) error {
 
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env := getEnv(p)
-	return deps.BinaryWithEnv(PGO, p.PGO.Version, ".bin", env), nil
+	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", env), nil
 }
 
 // Takes version coming from config and returns correct git tag
