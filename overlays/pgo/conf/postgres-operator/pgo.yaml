@@ -4,7 +4,7 @@ Cluster:
   CCPImagePrefix: crunchydata
   Metrics: false
   Badger: false
-  CCPImageTag: centos7-11.4-2.3.3
+  CCPImageTag: centos7-12.1-4.2.0
   Port: 5432
   User: testuser
   Database: userdb
@@ -80,5 +80,5 @@ Pgo:
   LoadTemplate: /pgo-config/pgo.load-template.json
   PGOImagePrefix: crunchydata
   COImagePrefix: crunchydata
-  PGOImageTag: centos7-4.1.0
-  COImageTag: centos7-3.5.4
+  PGOImageTag: centos7-4.2.0
+  COImageTag: centos7-4.2.0
