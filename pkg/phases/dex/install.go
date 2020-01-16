@@ -27,7 +27,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	cfg, _ := platform.Template("dex.cfg")
+	cfg, _ := platform.Template("dex.cfg", "manifests")
 
 	if err := platform.CreateOrUpdateConfigMap(ConfigMapName, Namespace, map[string]string{
 		ConfigName: cfg,

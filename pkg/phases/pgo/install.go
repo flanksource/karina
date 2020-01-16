@@ -2,6 +2,7 @@ package pgo
 
 import (
 	"fmt"
+	"github.com/moshloop/commons/text"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -172,6 +173,12 @@ func Install(p *platform.Platform) error {
 	} else {
 		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/", ENV)
 	}
+	template, err := p.Template("pgo.yaml", "templates")
+	if err != nil {
+		log.Warn(err)
+	}
+	templateFile := text.ToFile(template, ".yaml")
+	exec.ExecfWithEnv(fmt.Sprintf("cp -v %s build/pgo/conf/postgres-operator/pgo.yaml", templateFile), ENV)
 	kubectl("create ns " + PGO)
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {

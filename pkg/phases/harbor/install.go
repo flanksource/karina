@@ -41,7 +41,7 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 
-	values, err := p.Template("harbor.yml")
+	values, err := p.Template("harbor.yml", "manifests")
 	if err != nil {
 		return err
 	}
