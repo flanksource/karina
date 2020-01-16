@@ -11,7 +11,7 @@ type PlatformConfig struct {
 	BootstrapToken        string            `yaml:"-"`
 	Brand                 Brand             `yaml:"brand,omitempty"`
 	Version               string            `yaml:"version,omitempty"`
-	Backups               *Backups          `yaml:"backups,omitempty"`
+	Velero                *Velero           `yaml:"velero,omitempty"`
 	CA                    *CA               `yaml:"ca,omitempty"`
 	Calico                Calico            `yaml:"calico,omitempty"`
 	CertManager           *Enabled          `yaml:"certManager,omitempty"`
@@ -218,12 +218,21 @@ type Smtp struct {
 }
 
 type S3 struct {
-	AccessKey  string `yaml:"access_key,omitempty"`
-	SecretKey  string `yaml:"secret_key,omitempty"`
-	Bucket     string `yaml:"bucket,omitempty"`
-	Region     string `yaml:"region,omitempty"`
-	Endpoint   string `yaml:"endpoint,omitempty"`
-	CSIVolumes bool   `yaml:"csiVolumes,omitempty"`
+	AccessKey        string `yaml:"access_key,omitempty"`
+	SecretKey        string `yaml:"secret_key,omitempty"`
+	Bucket           string `yaml:"bucket,omitempty"`
+	Region           string `yaml:"region,omitempty"`
+	Endpoint         string `yaml:"endpoint,omitempty"`
+	ExternalEndpoint string `yaml:"externalEndpoint,omitempty"`
+	CSIVolumes       bool   `yaml:"csiVolumes,omitempty"`
+}
+
+func (s3 S3) GetExternalEndpoint() string {
+	if s3.ExternalEndpoint != "" {
+		return s3.ExternalEndpoint
+	}
+	return s3.Endpoint
+
 }
 
 type NFS struct {
@@ -343,8 +352,9 @@ type Versions struct {
 	Dependencies     map[string]string `yaml:"dependencies,omitempty"`
 }
 
-type Backups struct {
+type Velero struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:version,omitempty"`
 	Schedule string `yaml:"schedule,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 	Volumes  bool   `yaml:"volumes"`

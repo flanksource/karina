@@ -14,6 +14,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
+	"github.com/moshloop/platform-cli/pkg/phases/velero"
 )
 
 var Deploy = &cobra.Command{
@@ -107,6 +108,9 @@ func init() {
 			if err := flux.Install(p); err != nil {
 				log.Fatalf("Error installing flux: %s", err)
 			}
+			if err := velero.Install(p); err != nil {
+				log.Fatalf("Error installing velero: %s", err)
+			}
 		},
 	}
 	Deploy.AddCommand(&cobra.Command{
@@ -182,6 +186,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := stubs.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploy stubs %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "velero",
+		Short: "Deploy velero for backups",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := velero.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying velero %s", err)
 			}
 		},
 	})

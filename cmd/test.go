@@ -17,6 +17,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
+	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -130,6 +131,15 @@ func init() {
 		},
 	})
 
+		Test.AddCommand(&cobra.Command{
+		Use:   "velero",
+		Short: "Test velero",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(velero.Test)
+		},
+	})
+
 	Test.AddCommand(&cobra.Command{
 		Use:   "monitoring",
 		Short: "Test monitoring stack",
@@ -152,6 +162,7 @@ func init() {
 				dex.Test(p, test)
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
+				velero.Test(p, test)
 			})
 		},
 	})
