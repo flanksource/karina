@@ -16,7 +16,7 @@ versions:
   kubectl: v1.15.3
   pgo: 3.5.4
   helm: v2.13.0
-  velero: v1.1.0
+  velero: v1.2.0
   expenv: v1.2.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
@@ -37,8 +37,11 @@ harbor:
   version: v1.8.2
   chartVersion: v1.1.0
 s3:
-  endpoint: minio.127.0.0.1.nip.io
+  endpoint: http://minio.minio.svc:9000
+  externalEndpoint: minio.127.0.0.1.nip.io
   bucket: harbor
   access_key: minio
   secret_key: minio123
-  region: dc
+  region: us-east1
+velero:
+  bucket: velero
