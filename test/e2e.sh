@@ -12,7 +12,7 @@ if ! which gojsontoyaml 2>&1 > /dev/null; then
 fi
 
 if ! which expenv 2>&1 > /dev/null; then
-  wget https://github.com/CrunchyData/postgres-operator/releases/download/v4.1.0/expenv
+  wget https://github.com/CrunchyData/postgres-operator/releases/download/v4.2.0/expenv
   chmod +x expenv
   sudo mv expenv /usr/local/bin
 fi

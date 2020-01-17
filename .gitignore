@@ -18,4 +18,5 @@ hack/
 kind
 test-results/
 manifests/static.go
+templates/static.go
 snapshot/

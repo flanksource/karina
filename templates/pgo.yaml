@@ -4,7 +4,7 @@ Cluster:
   CCPImagePrefix: crunchydata
   Metrics: false
   Badger: false
-  CCPImageTag: centos7-11.4-2.3.3
+  CCPImageTag: centos7-12.1-4.2.0
   Port: 5432
   User: testuser
   Database: userdb
@@ -21,34 +21,13 @@ Cluster:
   AutofailReplaceReplica: false
   LogStatement: none
   LogMinDurationStatement: 60000
-PrimaryStorage: local-path
-XlogStorage: xlogstorage
-BackupStorage: nfs
-ReplicaStorage: local-path
-BackrestStorage: nfs
+PrimaryStorage: {{.pgo.primaryStorage}}
+XlogStorage: {{.pgo.xlogStorage}}
+BackupStorage: {{.pgo.backupStorage}}
+ReplicaStorage: {{.pgo.replicaStorage}}
+BackrestStorage: {{.pgo.backrestStorage}}
 Storage:
-  xlogstorage:
-    AccessMode: ReadWriteOnce
-    Size: 2G
-    StorageType: dynamic
-    StorageClass: local-path
-    Fsgroup: 26
-  local-path:
-    AccessMode: ReadWriteOnce
-    Size: 50G
-    StorageType: dynamic
-    StorageClass: local-path
-    Fsgroup: 26
-  s3:
-    AccessMode: ReadWriteOnce
-    Size: 50G
-    StorageType: dynamic
-    StorageClass: s3
-  nfs:
-    AccessMode: ReadWriteOnce
-    Size: 50G
-    StorageType: dynamic
-    StorageClass: nfs
+{{.pgo.storage | toYAML | strings.Indent 2}}
 DefaultContainerResources:
 DefaultLoadResources:
 DefaultLspvcResources:
@@ -80,5 +59,5 @@ Pgo:
   LoadTemplate: /pgo-config/pgo.load-template.json
   PGOImagePrefix: crunchydata
   COImagePrefix: crunchydata
-  PGOImageTag: centos7-4.1.0
-  COImageTag: centos7-3.5.4
+  PGOImageTag: centos7-4.2.0
+  COImageTag: centos7-4.2.0
