@@ -24,12 +24,12 @@ func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResult
 	}
 	for _, pod := range list.Items {
 		conditions := true
-		for _, condition := range pod.Status.Conditions {
-			if condition.Status == v1.ConditionFalse {
-				t.Failf(ns, "%s => %s: %s", pod.Name, condition.Type, condition.Message)
-				conditions = false
-			}
-		}
+		// for _, condition := range pod.Status.Conditions {
+		// 	if condition.Status == v1.ConditionFalse {
+		// 		t.Failf(ns, "%s => %s: %s", pod.Name, condition.Type, condition.Message)
+		// 		conditions = false
+		// 	}
+		// }
 		if conditions && pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
 			t.Passf(ns, "%s => %s", pod.Name, pod.Status.Phase)
 		} else {
