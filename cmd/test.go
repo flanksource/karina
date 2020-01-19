@@ -34,9 +34,9 @@ var Test = &cobra.Command{
 func end(test console.TestResults) {
 	if junitPath != "" {
 		if suiteName == "" {
-			 test.SuiteName(p.Name)
+			test.SuiteName(p.Name)
 		} else {
-			 test.SuiteName(suiteName)
+			test.SuiteName(suiteName)
 		}
 		xml, _ := test.ToXML()
 		os.MkdirAll(path.Dir(junitPath), 0755)
@@ -131,7 +131,7 @@ func init() {
 		},
 	})
 
-		Test.AddCommand(&cobra.Command{
+	Test.AddCommand(&cobra.Command{
 		Use:   "velero",
 		Short: "Test velero",
 		Args:  cobra.MinimumNArgs(0),
@@ -156,13 +156,13 @@ func init() {
 			run(func(p *platform.Platform, test *console.TestResults) {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
+				velero.Test(p, test)
 				opa.TestNamespace(p, client, test)
 				pgo.Test(p, test)
 				harbor.Test(p, test)
 				dex.Test(p, test)
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
-				velero.Test(p, test)
 			})
 		},
 	})
