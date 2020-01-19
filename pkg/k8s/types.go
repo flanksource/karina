@@ -1,5 +1,9 @@
 package k8s
 
+import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
 type CRD struct {
 	Kind       string                 `yaml:"kind,omitempty"`
 	ApiVersion string                 `yaml:"apiVersion,omitempty"`
@@ -12,4 +16,14 @@ type Metadata struct {
 	Namespace   string            `yaml:"namespace,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty"`
+}
+
+type DynamicKind struct {
+	APIVersion, Kind string
+}
+
+func (dk DynamicKind) SetGroupVersionKind(gvk schema.GroupVersionKind) {}
+
+func (dk DynamicKind) GroupVersionKind() schema.GroupVersionKind {
+	return schema.FromAPIVersionAndKind(dk.APIVersion, dk.Kind)
 }

@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
@@ -21,9 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/moshloop/commons/certs"
 	"github.com/moshloop/commons/utils"
@@ -98,7 +102,59 @@ func GetGVR(v interface{}) schema.GroupVersionResource {
 	}
 }
 
-func getDynamicClient(dynamicClient dynamic.Interface, namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
+func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Duration{time.Duration(5)}) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, err
+	}
+	return metav1.Duration{d}, nil
+}
+
+func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Time{time.Now()}) {
+		return data, nil
+	}
+	d, err := time.Parse(time.RFC3339, data.(string))
+	if err != nil {
+		return data, err
+	}
+	return metav1.Time{d}, nil
+}
+
+func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
+	client, _, _, err := c.GetDynamicClientFor(namespace, obj)
+	unstructuredObj, err := client.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	config := &mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration),
+		Result:           &obj,
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+	return decoder.Decode(unstructuredObj.Object)
+
+}
+func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
+	dynamicClient, err := c.GetDynamicClient()
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	resource := schema.GroupVersionResource{
 		Group:    obj.GetObjectKind().GroupVersionKind().Group,
@@ -129,12 +185,8 @@ func getDynamicClient(dynamicClient dynamic.Interface, namespace string, obj run
 }
 
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
-	dynamicClient, err := c.GetDynamicClient()
-	if err != nil {
-		return err
-	}
 	for _, obj := range objects {
-		client, resource, unstructuredObj, err := getDynamicClient(dynamicClient, namespace, obj)
+		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
 			return err
 		}
@@ -166,23 +218,23 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 
 // GetClientset creates a new k8s client
 func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
-	data, err := c.GetKubeConfigBytes()
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
+	cfg, err := c.GetRESTConfig()
 	if err != nil {
 		return nil, err
 	}
 	return kubernetes.NewForConfigOrDie(cfg), nil
 }
 
-func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
-	dynamicClient, err := c.GetDynamicClient()
+func (c *Client) GetRESTConfig() (*rest.Config, error) {
+	data, err := c.GetKubeConfigBytes()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	client, resource, unstructuredObj, err := getDynamicClient(dynamicClient, "", obj)
+	return clientcmd.RESTConfigFromKubeConfig(data)
+}
+
+func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
+	client, resource, unstructuredObj, err := c.GetDynamicClientFor("", obj)
 	if err != nil {
 		return err
 	}
@@ -197,11 +249,7 @@ func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) err
 }
 
 func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
-	dynamicClient, err := c.GetDynamicClient()
-	if err != nil {
-		return err
-	}
-	client, resource, unstructuredObj, err := getDynamicClient(dynamicClient, "", obj)
+	client, resource, unstructuredObj, err := c.GetDynamicClientFor("", obj)
 	if err != nil {
 		return err
 	}
@@ -515,6 +563,46 @@ func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Du
 		time.Sleep(5 * time.Second)
 	}
 
+}
+
+func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...interface{}) (string, string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return "", "", err
+	}
+	const tty = false
+	req := client.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod).
+		Namespace(namespace).
+		SubResource("exec").
+		Param("container", container)
+	req.VersionedParams(&v1.PodExecOptions{
+		Container: container,
+		Command:   []string{fmt.Sprintf(command, args...)},
+		Stdin:     false,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       tty,
+	}, scheme.ParameterCodec)
+
+	rc, err := c.GetRESTConfig()
+	if err != nil {
+		return "", "", err
+	}
+	exec, err := remotecommand.NewSPDYExecutor(rc, "POST", req.URL())
+	if err != nil {
+		return "", "", err
+	}
+	var stdout, stderr *bytes.Buffer
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdin:  nil,
+		Stdout: stdout,
+		Stderr: stderr,
+		Tty:    tty,
+	})
+
+	return string(stdout.Bytes()), string(stderr.Bytes()), nil
 }
 
 // Execute runs the specified shell common on a node by creating

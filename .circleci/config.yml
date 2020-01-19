@@ -18,6 +18,8 @@ jobs:
       - run: ./test/e2e.sh
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: artifacts
 
   test-next:
     resource_class: large
@@ -30,6 +32,8 @@ jobs:
       - run: ./test/e2e.sh
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: artifacts
 
   release:
     <<: *go

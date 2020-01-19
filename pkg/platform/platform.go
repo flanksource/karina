@@ -2,6 +2,7 @@ package platform
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/minio/minio-go/v6"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
@@ -556,4 +558,25 @@ func (p *Platform) GetBinary(name string) deps.BinaryFunc {
 		}
 	}
 	return deps.Binary(name, p.Versions[name], ".bin")
+}
+
+func (p *Platform) GetS3Client() (*minio.Client, error) {
+	endpoint := p.S3.GetExternalEndpoint()
+	// config := &aws.Config{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", p.S3.Region)
+	}
+
+	s3, err := minio.New(endpoint, p.S3.AccessKey, p.S3.SecretKey, false)
+	if err != nil {
+		return nil, err
+	}
+	s3.SetCustomTransport(client.Transport)
+	return s3, nil
+
 }
