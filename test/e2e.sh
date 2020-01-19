@@ -67,6 +67,10 @@ if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.x
   failed=true
 fi
 
+mkdir -p artifacts
+$BIN snapshot --output-dir snapshot -v
+zip -r artifacts/snapshot.zip snapshot/*
+
 if [[ "$failed" = true ]]; then
   exit 1
 fi
