@@ -55,6 +55,7 @@ aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
 }
 
 func CreateBackup(platform *platform.Platform) (*Backup, error) {
+	no := false
 	name := "backup-" + time.Now().Format("20060102-150405")
 	backup := &Backup{
 		Metadata: metav1.ObjectMeta{
@@ -62,10 +63,10 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 			Name:      name,
 		},
 		Spec: BackupSpec{
-			IncludedNamespaces:      []string{"*"},
-			TTL:                     metav1.Duration{time.Duration(30) * 24 * time.Hour},
-			StorageLocation:         "default",
-			VolumeSnapshotLocations: []string{"default"},
+			IncludedNamespaces: []string{"*"},
+			TTL:                metav1.Duration{time.Duration(30) * 24 * time.Hour},
+			StorageLocation:    "default",
+			SnapshotVolumes:    &no,
 		},
 	}
 	backup.APIVersion = "velero.io/v1"
