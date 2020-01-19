@@ -31,7 +31,7 @@ func Install(p *platform.Platform) error {
 		log.Warnf("Failed to deploy prometheus operator %v", err)
 	}
 
-	data, err := p.Template("monitoring/alertmanager.yaml")
+	data, err := p.Template("monitoring/alertmanager.yaml", "manifests")
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func Install(p *platform.Platform) error {
 		}
 	}
 
-	dashboards, err := p.GetResourcesByDir("/monitoring/dashboards")
+	dashboards, err := p.GetResourcesByDir("/monitoring/dashboards", "manifests")
 	if err != nil {
 		return fmt.Errorf("Unable to find dashboards: %v", err)
 	}

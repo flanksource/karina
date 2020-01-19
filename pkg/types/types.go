@@ -159,9 +159,54 @@ type DB struct {
 	Port     int    `yaml:"port,omitempty"`
 }
 
+/*
+  PrimaryStorage: local-path
+  XlogStorage: xlogstorage
+  BackupStorage: localPath
+  ReplicaStorage: localPath
+  BackrestStorage: localPath
+  storage:
+    xlogstorage:
+      AccessMode: ReadWriteOnce
+      Size: 2G
+      StorageType: dynamic
+      storageClass: local-path
+      Fsgroup: 26
+    localPath:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: local-path
+      Fsgroup: 26
+    s3:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: s3
+    nfs:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: nfs
+*/
+
 type PostgresOperator struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version,omitempty"`
+	PrimaryStorage string `yaml:"primaryStorage,omitempty"`
+	XlogStorage string `yaml:"xlogStorage,omitempty"`
+	BackupStorage string `yaml:"backupStorage,omitempty"`
+	ReplicaStorage string `yaml:"replicaStorage,omitempty"`
+	BackrestStorage string `yaml:"backrestStorage,omitempty"`
+	Storage map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
+}
+
+type PostgresOperatorStorage struct {
+	AccessMode string `yaml:"AccessMode,omitempty"`
+	Size string `yaml:"Size,omitempty"`
+	StorageType string `yaml:"StorageType,omitempty"`
+	StorageClass string `yaml:"StorageClass,omitempty"`
+	Fsgroup string `yaml:"Fsgroup,omitempty"`
 }
 
 type Smtp struct {

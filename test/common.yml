@@ -14,7 +14,7 @@ versions:
   gojsontoyaml: master
   kustomize: v3.0.2
   kubectl: v1.15.3
-  pgo: 3.5.4
+  pgo: 4.2.0
   helm: v2.13.0
   velero: v1.2.0
   expenv: v1.2.0
@@ -31,7 +31,36 @@ nodeLocalDNS:
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
 pgo:
-  version: 3.5.4
+  version: 4.2.0
+  primaryStorage: local-path
+  xlogStorage: local-path
+  backupStorage: local-path
+  replicaStorage: local-path
+  backrestStorage: local-path
+  storage:
+    xlogstorage:
+      AccessMode: ReadWriteOnce
+      Size: 2G
+      StorageType: dynamic
+      storageClass: local-path
+      Fsgroup: 26
+    local-path:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: local-path
+      Fsgroup: 26
+    s3:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: s3
+    nfs:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: nfs
+
 harbor:
   replicas: 1
   version: v1.8.2

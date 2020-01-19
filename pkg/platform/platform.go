@@ -25,6 +25,7 @@ import (
 	"github.com/moshloop/commons/text"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
+	"github.com/moshloop/platform-cli/templates"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
@@ -345,19 +346,26 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 	return platform.GetIngressCA().SignCertificate(cert, 3)
 }
 
-func (platform *Platform) GetResourceByName(file string) (string, error) {
+func (platform *Platform) GetResourceByName(file string, pkg string) (string, error) {
+	var raw string
+	var err error
 	if !strings.HasPrefix(file, "/") {
 		file = "/" + file
 	}
-	raw, err := manifests.FSString(false, file)
+	if pkg == "manifests" {
+		raw, err = manifests.FSString(false, file)
+	} else {
+		raw, err = templates.FSString(false, file)
+	}
 	if err != nil {
+		log.Fatal(err)
 		return "", err
 	}
 	return raw, nil
 }
 
-func (platform *Platform) Template(file string) (string, error) {
-	raw, err := platform.GetResourceByName(file)
+func (platform *Platform) Template(file string, pkg string) (string, error) {
+	raw, err := platform.GetResourceByName(file, pkg)
 	if err != nil {
 		return "", fmt.Errorf("Could not find %s: %v", file, err)
 	}
@@ -373,10 +381,14 @@ func (platform *Platform) Template(file string) (string, error) {
 	return template, nil
 }
 
-func (platform *Platform) GetResourcesByDir(path string) (map[string]http.File, error) {
+func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string]http.File, error) {
 	out := make(map[string]http.File)
-	fs := manifests.FS(false)
-
+	var fs http.FileSystem
+	if pkg == "manifests" {
+		fs = manifests.FS(false)
+	} else {
+		fs = templates.FS(false)
+	}
 	dir, err := fs.Open(path)
 	if err != nil {
 		return nil, err
@@ -396,9 +408,16 @@ func (platform *Platform) GetResourcesByDir(path string) (map[string]http.File, 
 	return out, nil
 }
 
-func (platform *Platform) TemplateDir(path string) (string, error) {
-	fs := manifests.FS(false)
-
+func (platform *Platform) TemplateDir(path string, pkg string) (string, error) {
+	var fs http.FileSystem
+	var dst string
+	if pkg == "manifests" {
+		fs = manifests.FS(false)
+		dst = ".manifests/" + path
+	} else {
+		fs = templates.FS(false)
+		dst = ".templates/" + path
+	}
 	tmp, _ := ioutil.TempDir("", "template")
 
 	dir, err := fs.Open(path)
@@ -409,7 +428,7 @@ func (platform *Platform) TemplateDir(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dst := ".manifests/" + path
+
 	for _, info := range files {
 		to := tmp + "/" + info.Name()
 		if strings.HasSuffix(info.Name(), ".raw") {
@@ -501,7 +520,7 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	}
 	for _, spec := range specs {
 		if strings.HasSuffix(spec, "/") {
-			dir, err := platform.TemplateDir(spec)
+			dir, err := platform.TemplateDir(spec, "manifests")
 			if err != nil {
 				return err
 			}
@@ -509,7 +528,7 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 				return err
 			}
 		} else {
-			template, err := platform.Template(spec)
+			template, err := platform.Template(spec, "manifests")
 			if err != nil {
 				return err
 			}

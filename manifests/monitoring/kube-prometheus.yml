@@ -10,6 +10,7 @@ spec:
   nodeSelector:
     kubernetes.io/os: linux
   replicas: 3
+  externalUrl: alertmanager.{{.domain}}
   securityContext:
     fsGroup: 2000
     runAsNonRoot: true
@@ -95,6 +96,7 @@ spec:
         namespace: monitoring
         port: web
   baseImage: quay.io/prometheus/prometheus
+  externalUrl: prometheus.{{.domain}}
   nodeSelector:
     kubernetes.io/os: linux
   podMonitorNamespaceSelector: {}

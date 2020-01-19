@@ -2,6 +2,7 @@ package pgo
 
 import (
 	"fmt"
+	"github.com/moshloop/commons/text"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -42,6 +43,7 @@ func getPgoAuth(p *platform.Platform) (user, pass string) {
 	}
 	return
 }
+
 
 func getEnv(p *platform.Platform) map[string]string {
 	kubeconfig, _ := p.GetKubeConfig()
@@ -124,7 +126,7 @@ func ClientSetup(p *platform.Platform) error {
 	for k, v := range ENV {
 		fmt.Printf("export %s=%s\n", k, v)
 	}
-	deps.InstallDependency("pgo", p.PGO.Version, ".bin")
+	deps.InstallDependency("pgo", getPGOTag(p.PGO.Version), ".bin")
 	return nil
 }
 
@@ -137,11 +139,7 @@ func Install(p *platform.Platform) error {
 		log.Tracef("export %s=%s\n", k, v)
 	}
 
-	gitTag := p.PGO.Version
-	if strings.Contains(gitTag, "3.5.4") {
-		gitTag = strings.ReplaceAll(gitTag, "v", "")
-	}
-	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+gitTag, "build/pgo"); err != nil {
+	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+getPGOTag(p.PGO.Version), "build/pgo"); err != nil {
 		return err
 	}
 
@@ -175,6 +173,12 @@ func Install(p *platform.Platform) error {
 	} else {
 		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/", ENV)
 	}
+	template, err := p.Template("pgo.yaml", "templates")
+	if err != nil {
+		log.Warn(err)
+	}
+	templateFile := text.ToFile(template, ".yaml")
+	exec.ExecfWithEnv(fmt.Sprintf("cp -v %s build/pgo/conf/postgres-operator/pgo.yaml", templateFile), ENV)
 	kubectl("create ns " + PGO)
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
@@ -192,5 +196,17 @@ func Install(p *platform.Platform) error {
 
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env := getEnv(p)
-	return deps.BinaryWithEnv(PGO, p.PGO.Version, ".bin", env), nil
+	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", env), nil
+}
+
+// Takes version coming from config and returns correct git tag
+// Strips/Adds "v" if required. Supports only 3.5.4, 4.0.0 and 4.2.0 versions
+func getPGOTag(version string) string {
+	var gitTag string
+	if version == "4.0.0" || version == "3.5.4" {
+		gitTag = strings.ReplaceAll(version, "v", "")
+	} else if !strings.HasPrefix(version, "v") { // Append "v" to match release tag
+		gitTag = "v" + version
+	}
+	return gitTag
 }
