@@ -2,7 +2,6 @@ package pgo
 
 import (
 	"fmt"
-	"github.com/moshloop/commons/text"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -14,6 +13,7 @@ import (
 	"github.com/moshloop/commons/exec"
 	"github.com/moshloop/commons/files"
 	"github.com/moshloop/commons/is"
+	"github.com/moshloop/commons/text"
 	"github.com/moshloop/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -43,7 +43,6 @@ func getPgoAuth(p *platform.Platform) (user, pass string) {
 	}
 	return
 }
-
 
 func getEnv(p *platform.Platform) map[string]string {
 	kubeconfig, _ := p.GetKubeConfig()
@@ -95,24 +94,24 @@ func ClientSetup(p *platform.Platform) error {
 	user, pass := getPgoAuth(p)
 
 	passwd := fmt.Sprintf("%s:%s", user, pass)
-	home, _ := getEnv(p)["PGOUSER"]
+	home := getEnv(p)["PGOUSER"]
 	log.Debugf("Writing %s", home)
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
 		return err
 	}
 
 	if !is.File(ENV["PGO_CLIENT_CERT"]) {
-		secrets := *p.GetSecret("pgo", "pgo-auth-secret")
+		secrets := *p.GetSecret("pgo", "pgo.tls")
 
-		crt := home + "/.pgoserver.crt"
-		key := home + "/.pgoserver.key"
+		crt := home + ".crt"
+		key := home + ".key"
 		log.Debugf("Writing %s", crt)
-		if err := ioutil.WriteFile(crt, secrets["server.crt"], 0644); err != nil {
+		if err := ioutil.WriteFile(crt, secrets["tls.crt"], 0644); err != nil {
 			return err
 		}
 
 		log.Debugf("Writing %s", key)
-		if err := ioutil.WriteFile(key, secrets["server.key"], 0644); err != nil {
+		if err := ioutil.WriteFile(key, secrets["tls.key"], 0644); err != nil {
 			return err
 		}
 		ENV[PGO_CLIENT_CERT] = crt
@@ -162,7 +161,7 @@ func Install(p *platform.Platform) error {
 
 	ioutil.WriteFile(pgouser, []byte(passwd), 0644)
 
-	home, _ := getEnv(p)["PGOUSER"]
+	home := getEnv(p)["PGOUSER"]
 	log.Debugf("Writing %s", home)
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
 		return err
