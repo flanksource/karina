@@ -31,3 +31,12 @@ echo Uploading $NAME
 github-release upload -R -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME} -f .bin/${NAME}
 echo Uploading ${NAME}_osx
 github-release upload -R -u $GITHUB_USER -r ${NAME} --tag $TAG -n ${NAME}_osx -f .bin/${NAME}_osx
+
+echo Building docker image
+
+docker build . -t $GITHUB_USER/$NAME:$TAG
+
+echo Pushing docker image
+docker login --username $DOCKER_LOGIN --password $DOCKER_PASS
+docker push $GITHUB_USER/$NAME:$TAG
+
