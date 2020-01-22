@@ -10,11 +10,10 @@ RUN apt-get update && \
 
 RUN wget -nv --no-check-certificate https://github.com/moshloop/systools/releases/download/${SYSTOOLS_VERSION}/systools.deb && dpkg -i systools.deb
 ARG SOPS_VERSION=3.5.0
-RUN install_deb https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops_${SOPS_VERSION}_amd64.deb
+RUN install_deb https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops_${SOPS_VERSION}_amd64.deb
 RUN install_bin https://github.com/CrunchyData/postgres-operator/releases/download/v4.1.0/expenv
 RUN install_bin https://github.com/hongkailiu/gojsontoyaml/releases/download/e8bd32d/gojsontoyaml
 RUN pip install awscli
-
 
 COPY .bin/platform-cli /bin/
 ENTRYPOINT [ "/bin/platform-cli" ]
