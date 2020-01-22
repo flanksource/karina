@@ -12,7 +12,6 @@ import (
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/exec"
 	"github.com/moshloop/commons/files"
-	"github.com/moshloop/commons/is"
 	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -95,19 +94,18 @@ func getEnv(p *platform.Platform) (*map[string]string, error) {
 		return nil, err
 	}
 
-	if !is.File(ENV["PGO_CLIENT_CERT"]) {
-		secrets := *p.GetSecret("pgo", "pgo.tls")
+	secrets := *p.GetSecret("pgo", "pgo.tls")
 
-		log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
-		if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
-			return nil, err
-		}
-
-		log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
-		if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
-			return nil, err
-		}
+	log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
+	if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
+		return nil, err
 	}
+
+	log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
+	if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
+		return nil, err
+	}
+
 	return &ENV, nil
 }
 
