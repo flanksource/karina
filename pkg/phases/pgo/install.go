@@ -2,7 +2,6 @@ package pgo
 
 import (
 	"fmt"
-	"github.com/moshloop/commons/text"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -13,8 +12,7 @@ import (
 	"github.com/moshloop/commons/deps"
 	"github.com/moshloop/commons/exec"
 	"github.com/moshloop/commons/files"
-	"github.com/moshloop/commons/is"
-	"github.com/moshloop/commons/utils"
+	"github.com/moshloop/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -30,23 +28,12 @@ const (
 	PGO_CA_CERT     = "PGO_CA_CERT"
 )
 
-func getPgoAuth(p *platform.Platform) (user, pass string) {
-	if secret := p.GetSecret("pgo", "pgouser-pgoadmin"); secret != nil {
-		user = string((*secret)["username"])
-		pass = string((*secret)["password"])
-		return
-	}
-	if secret := p.GetSecret("pgo", "pgo-auth-secret"); secret != nil {
-		pgouser := string((*secret)["pgouser"])
-		user = strings.Split(pgouser, ":")[0]
-		pass = strings.Split(pgouser, ":")[1]
-	}
-	return
-}
-
-
-func getEnv(p *platform.Platform) map[string]string {
+func getEnvMap(p *platform.Platform) map[string]string {
 	kubeconfig, _ := p.GetKubeConfig()
+	home := os.Getenv("HOME") + "/.pgouser-" + p.Name
+	crt := home + ".crt"
+	key := home + ".key"
+
 	return map[string]string{
 		"PATH":       ".bin:" + os.Getenv("PATH"),
 		"KUBECONFIG": kubeconfig,
@@ -63,9 +50,9 @@ func getEnv(p *platform.Platform) map[string]string {
 		"PGO_NAMESPACE":          "pgo",
 		"PGO_VERSION":            strings.ReplaceAll(p.PGO.Version, "v", ""),
 		"PGO_IMAGE_TAG":          "centos7-" + strings.ReplaceAll(p.PGO.Version, "v", ""),
-		"PGO_CA_CERT":            "build/pgo/conf/postgres-operator/server.crt",
-		PGO_CLIENT_CERT:          "build/pgo/conf/postgres-operator/server.crt",
-		PGO_CLIENT_KEY:           "build/pgo/conf/postgres-operator/server.key",
+		"PGO_CA_CERT":            crt,
+		"PGO_CLIENT_CERT":        crt,
+		"PGO_CLIENT_KEY":         key,
 
 		// 3.5.4 vars
 		"CO_IMAGE_PREFIX":  "crunchydata",
@@ -75,55 +62,67 @@ func getEnv(p *platform.Platform) map[string]string {
 		"COROOT":           "build/pgo",
 		"CO_IMAGE_TAG":     "centos7-" + strings.ReplaceAll(p.PGO.Version, "v", ""),
 		"CO_APISERVER_URL": fmt.Sprintf("https://postgres-operator.%s", p.Domain),
-		"CO_CA_CERT":       "build/pgo/conf/postgres-operator/server.crt",
-		CO_CLIENT_CERT:     "build/pgo/conf/postgres-operator/server.crt",
-		CO_CLIENT_KEY:      "build/pgo/conf/postgres-operator/server.key",
-		PGOUSER:            os.Getenv("HOME") + "/.pgouser-" + p.Name,
+		"CO_CA_CERT":       crt,
+		"CO_CLIENT_CERT":   crt,
+		"CO_CLIENT_KEY":    key,
+		"PGOUSER":          home,
 	}
+}
+
+func getPgoAuth(p *platform.Platform) (user, pass string) {
+	if secret := p.GetSecret("pgo", "pgouser-pgoadmin"); secret != nil {
+		user = string((*secret)["username"])
+		pass = string((*secret)["password"])
+		return
+	}
+	if secret := p.GetSecret("pgo", "pgo-auth-secret"); secret != nil {
+		pgouser := string((*secret)["pgouser"])
+		user = strings.Split(pgouser, ":")[0]
+		pass = strings.Split(pgouser, ":")[1]
+	}
+	return
+}
+
+func getEnv(p *platform.Platform) (*map[string]string, error) {
+
+	ENV := getEnvMap(p)
+	home := ENV["PGOUSER"]
+	user, pass := getPgoAuth(p)
+	passwd := fmt.Sprintf("%s:%s", user, pass)
+	log.Debugf("Writing %s", home)
+	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
+		return nil, err
+	}
+
+	secrets := *p.GetSecret("pgo", "pgo.tls")
+
+	log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
+	if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
+		return nil, err
+	}
+
+	log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
+	if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
+		return nil, err
+	}
+
+	return &ENV, nil
 }
 
 func ClientSetup(p *platform.Platform) error {
 	if p.PGO == nil || p.PGO.Disabled {
 		return nil
 	}
-	ENV := getEnv(p)
+	ENV, err := getEnv(p)
+	if err != nil {
+		return err
+	}
 
 	if p.DryRun {
 		return nil
 	}
 
-	user, pass := getPgoAuth(p)
-
-	passwd := fmt.Sprintf("%s:%s", user, pass)
-	home, _ := getEnv(p)["PGOUSER"]
-	log.Debugf("Writing %s", home)
-	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
-		return err
-	}
-
-	if !is.File(ENV["PGO_CLIENT_CERT"]) {
-		secrets := *p.GetSecret("pgo", "pgo-auth-secret")
-
-		crt := home + "/.pgoserver.crt"
-		key := home + "/.pgoserver.key"
-		log.Debugf("Writing %s", crt)
-		if err := ioutil.WriteFile(crt, secrets["server.crt"], 0644); err != nil {
-			return err
-		}
-
-		log.Debugf("Writing %s", key)
-		if err := ioutil.WriteFile(key, secrets["server.key"], 0644); err != nil {
-			return err
-		}
-		ENV[PGO_CLIENT_CERT] = crt
-		ENV[PGO_CA_CERT] = crt
-		ENV[PGO_CLIENT_KEY] = key
-		ENV[CO_CLIENT_CERT] = crt
-		ENV[CO_CLIENT_KEY] = key
-		ENV[CO_CA_CERT] = crt
-
-	}
-	for k, v := range ENV {
+	for k, v := range *ENV {
 		fmt.Printf("export %s=%s\n", k, v)
 	}
 	deps.InstallDependency("pgo", getPGOTag(p.PGO.Version), ".bin")
@@ -134,39 +133,19 @@ func Install(p *platform.Platform) error {
 	if p.PGO == nil || p.PGO.Disabled {
 		return nil
 	}
-	ENV := getEnv(p)
+	ENV := getEnvMap(p)
+
 	for k, v := range ENV {
 		log.Tracef("export %s=%s\n", k, v)
 	}
 
+	if files.Exists("build/pgo") {
+		exec.Exec("cd build/pgo; git clean -fdx && git reset . ")
+	}
 	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+getPGOTag(p.PGO.Version), "build/pgo"); err != nil {
 		return err
 	}
 
-	var passwd string
-	_, pass := getPgoAuth(p)
-
-	if pass != "" {
-		if log.IsLevelEnabled(log.TraceLevel) {
-			log.Tracef("Using existing admin password \"%s\"", pass)
-		} else {
-			log.Infof("Using existing admin password")
-		}
-		passwd = fmt.Sprintf("admin:%s:pgoadmin", pass)
-	} else {
-		passwd = fmt.Sprintf("admin:%s:pgoadmin", utils.RandomString(10))
-	}
-
-	pgouser := "build/pgo/conf/postgres-operator/pgouser"
-	kubectl := p.GetKubectl()
-
-	ioutil.WriteFile(pgouser, []byte(passwd), 0644)
-
-	home, _ := getEnv(p)["PGOUSER"]
-	log.Debugf("Writing %s", home)
-	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
-		return err
-	}
 	if runtime.GOOS == "darwin" {
 		// cp -R behavior seems to handle directories differently on macosx and linux?
 		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/pgo", ENV)
@@ -179,7 +158,9 @@ func Install(p *platform.Platform) error {
 	}
 	templateFile := text.ToFile(template, ".yaml")
 	exec.ExecfWithEnv(fmt.Sprintf("cp -v %s build/pgo/conf/postgres-operator/pgo.yaml", templateFile), ENV)
-	kubectl("create ns " + PGO)
+	if err := p.CreateOrUpdateNamespace(PGO, nil, nil); err != nil {
+		return err
+	}
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
 		return err
@@ -195,8 +176,11 @@ func Install(p *platform.Platform) error {
 }
 
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
-	env := getEnv(p)
-	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", env), nil
+	env, err := getEnv(p)
+	if err != nil {
+		return nil, err
+	}
+	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", *env), nil
 }
 
 // Takes version coming from config and returns correct git tag
