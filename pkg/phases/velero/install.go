@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/moshloop/commons/text"
+	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 

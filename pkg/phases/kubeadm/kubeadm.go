@@ -13,7 +13,7 @@ import (
 	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 
-	"github.com/moshloop/commons/utils"
+	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )

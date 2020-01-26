@@ -9,8 +9,8 @@ import (
 	"github.com/dghubble/sling"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/commons/console"
-	"github.com/moshloop/commons/text"
+	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
