@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/moshloop/commons/utils"
+	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/cmd"
 )
 

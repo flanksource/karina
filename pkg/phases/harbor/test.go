@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/commons/console"
-	"github.com/moshloop/commons/net"
+	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/net"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )

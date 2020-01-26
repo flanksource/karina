@@ -12,12 +12,12 @@ versions:
   sonobuoy: 0.16.4
   govc: v0.20.0
   gojsontoyaml: master
-  kustomize: v3.0.2
   kubectl: v1.15.3
   pgo: 4.2.0
   helm: v2.13.0
   velero: v1.2.0
   expenv: v1.2.0
+  ketall: v1.3.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 opa:

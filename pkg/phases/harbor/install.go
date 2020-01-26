@@ -6,10 +6,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/commons/console"
-	"github.com/moshloop/commons/deps"
-	"github.com/moshloop/commons/files"
-	"github.com/moshloop/commons/text"
+	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/deps"
+	"github.com/flanksource/commons/files"
+	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )

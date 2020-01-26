@@ -14,7 +14,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/commons/utils"
+	"github.com/flanksource/commons/utils"
 )
 
 func getGroup(p *platform.Platform) string {

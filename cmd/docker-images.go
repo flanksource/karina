@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/commons/exec"
+	"github.com/flanksource/commons/exec"
 )
 
 var Images = &cobra.Command{
