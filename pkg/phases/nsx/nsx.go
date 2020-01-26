@@ -25,10 +25,6 @@ func Install(p *platform.Platform) error {
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
-	p.NSX.Image = p.GetImagePath("library/nsx-ncp-ubuntu:" + p.NSX.Version)
-	if err := p.ApplySpecs(Namespace, "nsx.yaml"); err != nil {
-		return err
-	}
 
 	if !p.HasSecret(Namespace, CertName) {
 		cert := certs.NewCertificateBuilder("kubernetes-client").Certificate
@@ -63,6 +59,11 @@ func Install(p *platform.Platform) error {
 	if err := p.CreateOrUpdateConfigMap("nsx-node-agent-config", Namespace, map[string]string{
 		"ncp.ini": string(s),
 	}); err != nil {
+		return err
+	}
+
+	p.NSX.Image = p.GetImagePath("library/nsx-ncp-ubuntu:" + p.NSX.Version)
+	if err := p.ApplySpecs(Namespace, "nsx.yaml"); err != nil {
 		return err
 	}
 
