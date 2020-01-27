@@ -14,20 +14,29 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
-func Take(p *platform.Platform, dst string, since time.Duration) error {
-
+func Take(p *platform.Platform, dst string, since time.Duration, nsArgs []string, includeSpecs bool) error {
+	var namespaceList *v1.NamespaceList
 	sinceTime := metav1.NewTime(time.Now().Add(-since))
 	k8s, err := p.GetClientset()
 	if err != nil {
 		return err
 	}
-
-	namespaces, err := k8s.CoreV1().Namespaces().List(metav1.ListOptions{})
-	if err != nil {
-		return err
+	if len(nsArgs) == 0 {
+		namespaceList, err = k8s.CoreV1().Namespaces().List(metav1.ListOptions{})
+		if err != nil {
+			return err
+		}
+	} else {
+		var namespaces []v1.Namespace
+		for _, ns := range nsArgs {
+			nsData, _ := k8s.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			namespaces = append(namespaces, *nsData)
+		}
+		namespaceList = &v1.NamespaceList{Items: namespaces, TypeMeta: metav1.TypeMeta{}}
 	}
 
-	for _, namespace := range namespaces.Items {
+
+	for _, namespace := range namespaceList.Items {
 		pods := k8s.CoreV1().Pods(namespace.Name)
 		list, err := pods.List(metav1.ListOptions{})
 		if err != nil {
@@ -36,7 +45,7 @@ func Take(p *platform.Platform, dst string, since time.Duration) error {
 
 		for _, pod := range list.Items {
 			for _, container := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
-				path := dst + "/" + namespace.Name
+				path := fmt.Sprintf("%s/%s/logs", dst, namespace.Name)
 
 				log.Infof("Looking for %s/%s/%s", namespace.Name, pod.Name, container.Name)
 
@@ -58,7 +67,10 @@ func Take(p *platform.Platform, dst string, since time.Duration) error {
 					continue
 				}
 				defer podLogs.Close()
-				os.MkdirAll(path, 0755)
+				err = os.MkdirAll(path, 0755)
+				if err != nil {
+					log.Errorf("Failed to create directory: %v", err)
+				}
 				logFile := fmt.Sprintf("%s/%s-%s.log", path, pod.Name, container.Name)
 				file, err := os.Create(logFile)
 				if err != nil {
@@ -76,7 +88,12 @@ func Take(p *platform.Platform, dst string, since time.Duration) error {
 				}
 			}
 		}
+		if includeSpecs {
+			path := fmt.Sprintf("%s/%s", dst, namespace.Name)
+			err = os.MkdirAll(path, 0755)
+			ketall := p.GetBinaryWithKubeConfig("ketall")
+			_ = ketall(fmt.Sprintf("-n %s -o yaml --exclude= > %s/specs.yaml", namespace.Name, path))
+		}
 	}
-	return nil
-
+	return err
 }

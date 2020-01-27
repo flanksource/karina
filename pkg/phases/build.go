@@ -4,9 +4,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/moshloop/commons/deps"
-	"github.com/moshloop/commons/files"
-	"github.com/moshloop/commons/is"
+	"github.com/flanksource/commons/deps"
+	"github.com/flanksource/commons/files"
+	"github.com/flanksource/commons/is"
 	"github.com/moshloop/platform-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"

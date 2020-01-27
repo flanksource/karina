@@ -16,7 +16,7 @@ var Dependencies = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if err := phases.Deps(getConfig(cmd)); err != nil {
-			log.Fatalf("Failed installign dependencies %s", err)
+			log.Fatalf("Failed installing dependencies %s", err)
 		}
 	},
 }

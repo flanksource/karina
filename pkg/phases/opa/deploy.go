@@ -2,7 +2,7 @@ package opa
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/moshloop/commons/files"
+	"github.com/flanksource/commons/files"
 	"io/ioutil"
 	"os"
 	"github.com/moshloop/platform-cli/pkg/platform"

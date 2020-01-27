@@ -7,8 +7,8 @@ import (
 	"github.com/fatih/structs"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/commons/certs"
-	"github.com/moshloop/commons/console"
+	"github.com/flanksource/commons/certs"
+	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 

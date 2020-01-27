@@ -29,8 +29,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
 
-	"github.com/moshloop/commons/certs"
-	"github.com/moshloop/commons/utils"
+	certs "github.com/flanksource/commons/certs"
+	utils "github.com/flanksource/commons/utils"
 )
 
 type Client struct {

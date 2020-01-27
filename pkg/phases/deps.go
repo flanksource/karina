@@ -1,7 +1,7 @@
 package phases
 
 import (
-	"github.com/moshloop/commons/deps"
+	"github.com/flanksource/commons/deps"
 	"github.com/moshloop/platform-cli/pkg/types"
 
 	"os"

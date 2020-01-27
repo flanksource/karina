@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/moshloop/commons/console"
-	"github.com/moshloop/commons/is"
-	"github.com/moshloop/commons/lookup"
-	"github.com/moshloop/commons/text"
+	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/is"
+	"github.com/flanksource/commons/lookup"
+	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )

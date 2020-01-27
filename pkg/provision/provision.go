@@ -9,8 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
-	"github.com/moshloop/commons/console"
-	"github.com/moshloop/commons/utils"
+	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/utils"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases"
