@@ -7,8 +7,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/moshloop/commons/text"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/flanksource/commons/deps"
@@ -197,14 +195,3 @@ func getPGOTag(version string) string {
 	return gitTag
 }
 
-// Takes version coming from config and returns correct git tag
-// Strips/Adds "v" if required. Supports only 3.5.4, 4.0.0 and 4.2.0 versions
-func getPGOTag(version string) string {
-	var gitTag string
-	if version == "4.0.0" || version == "3.5.4" {
-		gitTag = strings.ReplaceAll(version, "v", "")
-	} else if !strings.HasPrefix(version, "v") { // Append "v" to match release tag
-		gitTag = "v" + version
-	}
-	return gitTag
-}

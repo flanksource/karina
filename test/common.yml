@@ -74,3 +74,7 @@ s3:
   region: us-east1
 velero:
   bucket: velero
+
+fluentd-operator:
+  version: v1.11.0
+  repository: jvassev/kube-fluentd-operator
