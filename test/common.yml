@@ -23,6 +23,9 @@ serviceSubnet: 100.100.0.0/16
 opa:
   version: 0.13.5
   kubeMgmtVersion: 0.8
+  bundle_url: https://discovery-opa-bundles.s3-eu-west-1.amazonaws.com
+  bundle_prefix: bundles
+  bundle_service_name: discovery
 calico:
   ipip: Never
   vxlan: Never

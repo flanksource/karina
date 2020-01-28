@@ -173,12 +173,12 @@ metadata:
 data:
   config.yaml: |
     services:
-      - name: discovery
-        url: https://discovery-opa-bundles.s3-eu-west-1.amazonaws.com
+      - name: {{.opa.bundle_service_name}}
+        url: {{.opa.bundle_url}}
     bundle:
-      name: bundle.tar.gz
-      prefix: bundles
-      service: discovery
+      name: {{.opa.bundle_service_name}}.tar.gz
+      prefix: {{.opa.bundle_prefix}}
+      service: {{.opa.bundle_service_name}}
       polling:
           min_delay_seconds: 10
           max_delay_seconds: 20

@@ -92,9 +92,12 @@ type Calico struct {
 }
 
 type OPA struct {
-	Disabled        bool   `yaml:"disabled,omitempty"`
-	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
-	Version         string `yaml:"version,omitempty"`
+	Disabled          bool   `yaml:"disabled,omitempty"`
+	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty"`
+	Version           string `yaml:"version,omitempty"`
+	BundleUrl         string `yaml:"bundle_url,omitempty"`
+	BundlePrefix      string `yaml:"bundle_prefix,omitempty"`
+	BundleServiceName string `yaml:"bundle_service_name,omitempty"`
 }
 
 type Harbor struct {
@@ -191,22 +194,22 @@ type DB struct {
 */
 
 type PostgresOperator struct {
-	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version,omitempty"`
-	PrimaryStorage string `yaml:"primaryStorage,omitempty"`
-	XlogStorage string `yaml:"xlogStorage,omitempty"`
-	BackupStorage string `yaml:"backupStorage,omitempty"`
-	ReplicaStorage string `yaml:"replicaStorage,omitempty"`
-	BackrestStorage string `yaml:"backrestStorage,omitempty"`
-	Storage map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
+	Disabled        bool                               `yaml:"disabled,omitempty"`
+	Version         string                             `yaml:"version,omitempty"`
+	PrimaryStorage  string                             `yaml:"primaryStorage,omitempty"`
+	XlogStorage     string                             `yaml:"xlogStorage,omitempty"`
+	BackupStorage   string                             `yaml:"backupStorage,omitempty"`
+	ReplicaStorage  string                             `yaml:"replicaStorage,omitempty"`
+	BackrestStorage string                             `yaml:"backrestStorage,omitempty"`
+	Storage         map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
 }
 
 type PostgresOperatorStorage struct {
-	AccessMode string `yaml:"AccessMode,omitempty"`
-	Size string `yaml:"Size,omitempty"`
-	StorageType string `yaml:"StorageType,omitempty"`
+	AccessMode   string `yaml:"AccessMode,omitempty"`
+	Size         string `yaml:"Size,omitempty"`
+	StorageType  string `yaml:"StorageType,omitempty"`
 	StorageClass string `yaml:"StorageClass,omitempty"`
-	Fsgroup string `yaml:"Fsgroup,omitempty"`
+	Fsgroup      string `yaml:"Fsgroup,omitempty"`
 }
 
 type Smtp struct {
