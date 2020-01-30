@@ -574,7 +574,7 @@
           "targetBlank": true,
           "title": "",
           "type": "",
-          "url": "http://alertmanager"
+          "url": "${alertmanager}"
         }
       ],
       "mappingType": 1,
@@ -2628,6 +2628,18 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "http://alertmanager",
+          "value": "http://alertmanager"
+        },
+        "hide": 2,
+        "label": null,
+        "name": "alertmanager",
+        "query": "http://alertmanager",
+        "skipUrlSync": false,
+        "type": "constant"
       }
     ]
   },
