@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
@@ -111,6 +111,9 @@ func init() {
 			}
 			if err := velero.Install(p); err != nil {
 				log.Fatalf("Error installing velero: %s", err)
+			}
+			if err := fluentdOperator.Deploy(p); err != nil {
+				log.Fatalf("Error installing fluentd: %s", err)
 			}
 		},
 	}
