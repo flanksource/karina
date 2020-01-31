@@ -41,6 +41,26 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
+	if p.Thanos == nil && p.Thanos.Disabled {
+		log.Println("Thanos is disabled")
+	} else {
+		s3Client, err := p.GetS3Client()
+		if err != nil {
+			return err
+		}
+
+		exists, err := s3Client.BucketExists(p.Thanos.Bucket)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			if err := s3Client.MakeBucket(p.Thanos.Bucket, p.S3.Region); err != nil {
+				return err
+			}
+		}
+		p.ApplySpecs("", "monitoring/thanosConfig.yaml")
+	}
+
 	for _, spec := range specs {
 		log.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {

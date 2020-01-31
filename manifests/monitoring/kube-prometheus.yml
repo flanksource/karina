@@ -118,6 +118,14 @@ spec:
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
   version: v2.11.0
+  {{- if not (index .thanos "disabled") }}
+  thanos:
+    baseImage: thanosio/thanos
+    version: {{.thanos.tag}}
+    objectStorageConfig:
+      key: thanos.yaml
+      name: thanos-objstore-config
+  {{- end}}
 ---
 apiVersion: v1
 kind: Service
