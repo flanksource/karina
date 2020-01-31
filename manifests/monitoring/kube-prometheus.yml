@@ -96,7 +96,7 @@ spec:
         namespace: monitoring
         port: web
   baseImage: quay.io/prometheus/prometheus
-  externalUrl: prometheus.{{.domain}}
+  externalUrl: https://prometheus.{{.domain}}
   nodeSelector:
     kubernetes.io/os: linux
   podMonitorNamespaceSelector: {}
@@ -106,6 +106,7 @@ spec:
     requests:
       memory: 400Mi
   retention: 240h
+  routePrefix: ""
   ruleSelector:
     matchLabels:
       prometheus: k8s
