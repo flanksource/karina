@@ -71,6 +71,9 @@ mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v
 zip -r artifacts/snapshot.zip snapshot/*
 
+$BIN deploy fluentd
+$BIN test fluentd
+
 if [[ "$failed" = true ]]; then
   exit 1
 fi

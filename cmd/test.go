@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"io/ioutil"
 	"os"
 	"path"
@@ -146,6 +147,14 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(monitoring.Test)
+		},
+	})
+	Test.AddCommand(&cobra.Command{
+		Use:   "fluentd",
+		Short: "Test fluentd",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(fluentdOperator.Test)
 		},
 	})
 	Test.AddCommand(&cobra.Command{

@@ -55,7 +55,7 @@ require (
 	k8s.io/utils v0.0.0-20190923111123-69764acb6e8e // indirect
 )
 
-// replace github.com/moshloop/commons => ../commons
+// replace github.com/flanksource/commons => ../commons
 // replace github.com/moshloop/konfigadm => ../konfigadm
 replace github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 
