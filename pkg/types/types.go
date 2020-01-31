@@ -338,9 +338,11 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled bool    `yaml:"disabled,omitempty"`
-	Version  string  `yaml:"tag,omitempty"`
-	Bucket	 string  `yaml:"bucket,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:"tag,omitempty"`
+	Bucket   string `yaml:"bucket,omitempty"`
+}
+
 type FluentdOperator struct {
 	Disabled      bool                     `yaml:"disabled,omitempty"`
 	Version       string                   `yaml:"version,omitempty"`
