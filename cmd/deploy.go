@@ -7,6 +7,7 @@ import (
 	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
@@ -111,6 +112,9 @@ func init() {
 			if err := velero.Install(p); err != nil {
 				log.Fatalf("Error installing velero: %s", err)
 			}
+			if err := fluentdOperator.Deploy(p); err != nil {
+				log.Fatalf("Error installing fluentd: %s", err)
+			}
 		},
 	}
 	Deploy.AddCommand(&cobra.Command{
@@ -208,6 +212,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := flux.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploy flux %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "fluentd",
+		Short: "Deploy the fluentd operator",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := fluentdOperator.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying fluentd operator %s\n", err)
 			}
 		},
 	})

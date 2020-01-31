@@ -57,7 +57,8 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	Thanos				  *Thanos 			`yaml:"thanos,omitempty"`
+	Thanos				        *Thanos 			    `yaml:"thanos,omitempty"`
+	FluentdOperator 	    *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
 }
 
 type Enabled struct {
@@ -340,6 +341,10 @@ type Thanos struct {
 	Disabled bool    `yaml:"disabled,omitempty"`
 	Version  string  `yaml:"tag,omitempty"`
 	Bucket	 string  `yaml:"bucket,omitempty"`
+type FluentdOperator struct {
+	Disabled      bool                     `yaml:"disabled,omitempty"`
+	Version       string                   `yaml:"version,omitempty"`
+	ImageRepo	  string				    `yaml:"repository,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

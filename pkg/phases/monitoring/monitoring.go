@@ -73,12 +73,34 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("Unable to find dashboards: %v", err)
 	}
 
+	urls := map[string]string {
+		"alertmanager": fmt.Sprintf("https://alertmanager.%s", p.Domain),
+		"grafana": fmt.Sprintf("https://grafana.%s", p.Domain),
+		"prometheus": fmt.Sprintf("https://prometheus.%s", p.Domain),
+	}
+
 	for name, file := range dashboards {
 		contents := text.SafeRead(file)
 		var board sdk.Board
 		if err := json.Unmarshal([]byte(contents), &board); err != nil {
 			log.Warnf("Invalid grafana dashboard %s: %v", name, err)
 		}
+
+		for i := range board.Templating.List {
+			for k, v := range urls {
+				if k == board.Templating.List[i].Name {
+					board.Templating.List[i].Current.Value = v
+					board.Templating.List[i].Current.Text = v
+					board.Templating.List[i].Query = v
+				}
+			}
+		}
+
+		contentsModified, err := json.Marshal(&board)
+		if err != nil {
+			log.Warnf("Failed to marshal dashboard json %s: %v", name, err)
+		}
+
 		if err := p.ApplyCRD("monitoring", k8s.CRD{
 			ApiVersion: "integreatly.org/v1alpha1",
 			Kind:       "GrafanaDashboard",
@@ -91,7 +113,7 @@ func Install(p *platform.Platform) error {
 			},
 			Spec: map[string]interface{}{
 				"name": name,
-				"json": contents,
+				"json": string(contentsModified),
 			},
 		}); err != nil {
 			return err

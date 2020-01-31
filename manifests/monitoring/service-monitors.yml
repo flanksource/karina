@@ -304,6 +304,44 @@ spec:
     matchLabels:
       alertmanager: main
 ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    component: etcd
+    tier: control-plane
+  name: etcd
+  namespace: kube-system
+spec:
+  endpoints:
+    - interval: 30s
+      port: http-metrics
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  selector:
+    matchLabels:
+      component: etcd
+      tier: control-plane
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kube-system
+  name: etcd-discovery
+  labels:
+    component: etcd
+    tier: control-plane
+spec:
+  selector:
+    component: etcd
+    tier: control-plane
+  ports:
+    - name: http-metrics
+      port: 2381
+      targetPort: 2381
+      protocol: TCP
+---
 apiVersion: v1
 kind: Service
 metadata:
