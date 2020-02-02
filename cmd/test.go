@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"io/ioutil"
 	"os"
 	"path"
@@ -158,6 +159,14 @@ func init() {
 		},
 	})
 	Test.AddCommand(&cobra.Command{
+		Use:   "eck",
+		Short: "Test eck",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(eck.Test)
+		},
+	})
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -173,6 +182,7 @@ func init() {
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
 				fluentdOperator.Test(p, test)
+				eck.Test(p, test)
 			})
 		},
 	})

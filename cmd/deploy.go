@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -223,6 +224,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := fluentdOperator.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying fluentd operator %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "eck",
+		Short: "Deploy the eck operator",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := eck.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying eck operator %s\n", err)
 			}
 		},
 	})
