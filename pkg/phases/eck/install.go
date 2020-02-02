@@ -18,7 +18,7 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 	kubectl := p.GetKubectl()
-	kubectl("apply -f build/eck.yaml")
+	return kubectl("apply -f build/eck.yaml")
 	return nil
 }
 
