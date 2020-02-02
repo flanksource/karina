@@ -116,6 +116,9 @@ func init() {
 			if err := fluentdOperator.Deploy(p); err != nil {
 				log.Fatalf("Error installing fluentd: %s", err)
 			}
+			if err := eck.Deploy(p); err != nil {
+				log.Fatalf("Error installing ECK: %s", err)
+			}
 		},
 	}
 	Deploy.AddCommand(&cobra.Command{
