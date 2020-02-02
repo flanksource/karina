@@ -12,7 +12,7 @@ func Deploy(p *platform.Platform) error {
 		log.Infof("Skipping deployment of ECK, it is disabled")
 		return nil
 	} else {
-		log.Infof("Deploying ECK %s", p.FluentdOperator.Version)
+		log.Infof("Deploying ECK %s", p. ECK.Version)
 	}
 	if err := net.Download("https://download.elastic.co/downloads/eck/"+normalizeVersion(p.ECK.Version + "/all-in-one.yaml"), "build/eck.yaml"); err != nil {
 		return err
