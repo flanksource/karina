@@ -8,7 +8,7 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.PGO == nil || p.PGO.Disabled {
+	if p.ECK == nil || p.ECK.Disabled {
 		test.Skipf("ECK", "ECK not configured")
 		return
 	}
