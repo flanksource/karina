@@ -83,6 +83,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		"k8s-secret-name":        secretName,
 		"ssh-keygen-dir":         "/etc/fluxd/ssh",
 		"memcached-hostname":     memcacheName,
+		"manifest-generation":    "true",
 		"registry-exclude-image": "*",
 		// use ClusterIP rather than DNS SRV lookup
 		"memcached-service": "",

@@ -53,8 +53,14 @@ $BIN deploy all -v
 
 $BIN deploy opa install -v
 
-$BIN deploy opa policies test/opa/policies -v
 $BIN deploy velero
+
+$BIN deploy fluentd
+
+$BIN deploy eck
+
+$BIN deploy opa policies test/opa/policies -v
+
 echo "Sleeping for 30s, waiting for OPA policies to load"
 sleep 30
 

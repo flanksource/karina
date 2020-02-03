@@ -57,6 +57,8 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
+	FluentdOperator 	  *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
+	ECK 				  *ECK 				`yaml:"eck,omitempty"`
 }
 
 type Enabled struct {
@@ -161,37 +163,6 @@ type DB struct {
 	Password string `yaml:"password,omitempty"`
 	Port     int    `yaml:"port,omitempty"`
 }
-
-/*
-  PrimaryStorage: local-path
-  XlogStorage: xlogstorage
-  BackupStorage: localPath
-  ReplicaStorage: localPath
-  BackrestStorage: localPath
-  storage:
-    xlogstorage:
-      AccessMode: ReadWriteOnce
-      Size: 2G
-      StorageType: dynamic
-      storageClass: local-path
-      Fsgroup: 26
-    localPath:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: local-path
-      Fsgroup: 26
-    s3:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: s3
-    nfs:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: nfs
-*/
 
 type PostgresOperator struct {
 	Disabled        bool                               `yaml:"disabled,omitempty"`
@@ -367,6 +338,17 @@ type CA struct {
 	Cert       string `yaml:"cert,omitempty"`
 	PrivateKey string `yaml:"privateKey,omitempty"`
 	Password   string `yaml:"password,omitempty"`
+}
+
+type FluentdOperator struct {
+	Disabled      bool                     `yaml:"disabled,omitempty"`
+	Version       string                   `yaml:"version,omitempty"`
+	ImageRepo	  string				   `yaml:"repository,omitempty"`
+}
+
+type ECK struct {
+	Disabled      bool                     `yaml:"disabled,omitempty"`
+	Version       string                   `yaml:"version,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
