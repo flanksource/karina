@@ -138,10 +138,10 @@ registry:
   registry:
     image:
       repository: goharbor/registry-photon
-  {{ if .harbor.version | strings.HasPrefix "v1.9" }}
-      tag: v2.7.1-patch-2819-2553-{{.harbor.version}}
-  {{else}}
+  {{ if .harbor.version | strings.HasPrefix "v1.8" }}
       tag: v2.7.1-patch-2819-{{.harbor.version}}
+  {{else}}
+      tag: v2.7.1-patch-2819-2553-{{.harbor.version}}
   {{end}}
     resources:
      requests:
