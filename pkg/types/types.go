@@ -59,6 +59,7 @@ type PlatformConfig struct {
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
 	Thanos				        *Thanos 			    `yaml:"thanos,omitempty"`
 	FluentdOperator 	    *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
+	ECK 				          *ECK 				      `yaml:"eck,omitempty"`
 }
 
 type Enabled struct {
@@ -346,7 +347,12 @@ type Thanos struct {
 type FluentdOperator struct {
 	Disabled      bool                     `yaml:"disabled,omitempty"`
 	Version       string                   `yaml:"version,omitempty"`
-	ImageRepo	  string				    `yaml:"repository,omitempty"`
+	ImageRepo	  string				   `yaml:"repository,omitempty"`
+}
+
+type ECK struct {
+	Disabled      bool                     `yaml:"disabled,omitempty"`
+	Version       string                   `yaml:"version,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

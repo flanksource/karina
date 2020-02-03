@@ -133,7 +133,6 @@ spec:
           name: https-main
         resources:
           limits:
-            cpu: 100m
             memory: 40Mi
           requests:
             cpu: 10m

@@ -61,7 +61,6 @@ spec:
         name: node-exporter
         resources:
           limits:
-            cpu: 500m
             memory: 180Mi
           requests:
             cpu: 102m
@@ -98,7 +97,6 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 100m
             memory: 40Mi
           requests:
             cpu: 10m
