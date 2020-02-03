@@ -75,7 +75,7 @@ s3:
 velero:
   bucket: velero
 thanos:
-  tag: v0.10.1
+  version: v0.10.1
   bucket: thanos
 fluentd-operator:
   version: v1.11.0

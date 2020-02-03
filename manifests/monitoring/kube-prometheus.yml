@@ -122,7 +122,7 @@ spec:
   {{- if not (index .thanos "disabled") }}
   thanos:
     baseImage: thanosio/thanos
-    version: {{.thanos.tag}}
+    version: {{.thanos.version}}
     objectStorageConfig:
       key: thanos.yaml
       name: thanos-objstore-config
@@ -141,6 +141,7 @@ spec:
       port: 9090
       targetPort: web
   selector:
+    app: prometheus
     app: prometheus
     prometheus: k8s
   sessionAffinity: ClientIP
