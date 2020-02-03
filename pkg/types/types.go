@@ -340,7 +340,7 @@ type CA struct {
 
 type Thanos struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"tag,omitempty"`
+	Version  string `yaml:"version,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 }
 
