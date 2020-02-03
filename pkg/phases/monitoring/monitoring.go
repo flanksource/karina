@@ -58,7 +58,9 @@ func Install(p *platform.Platform) error {
 				return err
 			}
 		}
-		p.ApplySpecs("", "monitoring/thanosConfig.yaml")
+		if err := p.ApplySpecs("", "monitoring/thanosConfig.yaml"); err != nil {
+		      return err
+		}
 	}
 
 	for _, spec := range specs {
