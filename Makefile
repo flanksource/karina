@@ -10,8 +10,6 @@ endif
 setup:
 	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
 	which github-release 2>&1 > /dev/null || go get github.com/aktau/github-release
-	curl -s "https://raw.githubusercontent.com/\
-kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
 
 .PHONY: build
 build:
