@@ -177,6 +177,8 @@ type KubeletConfigSpec struct {
 	RegistryPullQPS *int32 `json:"registryPullQPS,omitempty" flag:"registry-qps"`
 	//RegistryBurst Maximum size of a bursty pulls, temporarily allows pulls to burst to this number, while still not exceeding registry-qps. Only used if --registry-qps > 0 (default 10)
 	RegistryBurst *int32 `json:"registryBurst,omitempty" flag:"registry-burst"`
+	// ExtraArgs for kubeadm
+	ExtraArgs map[string]string `json:"extraArgs,omitempty" yaml:"extraArgs,omitempty"`
 }
 
 // KubeProxyConfig defines the configuration for a proxy
@@ -579,4 +581,9 @@ type CloudConfiguration struct {
 	// Spotinst cloud-config specs
 	SpotinstProduct     *string `json:"spotinstProduct,omitempty"`
 	SpotinstOrientation *string `json:"spotinstOrientation,omitempty"`
+}
+
+// EtcdConfig defined the cluster etcd configuration
+type EtcdConfig struct {
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }

@@ -230,6 +230,7 @@ type Kubernetes struct {
 	Kubelet           api.KubeletConfigSpec           `yaml:"kubelet,omitempty"`
 	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
 	KubeScheduler     api.KubeSchedulerConfig         `yaml:"scheduler,omitempty"`
+	Etcd              api.EtcdConfig                  `yaml:"etcd,omitempty"`
 	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
 }
 

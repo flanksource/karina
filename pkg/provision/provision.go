@@ -310,10 +310,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 		&kubeadmapi.InitConfiguration{
 			TypeMeta: v1.TypeMeta{Kind: "InitConfiguration"},
 			NodeRegistration: kubeadmapi.NodeRegistrationOptions{
-				KubeletExtraArgs: map[string]string{
-					"node-labels":        "ingress-ready=true",
-					"authorization-mode": "AlwaysAllow",
-				},
+				KubeletExtraArgs: platform.Kubernetes.Kubelet.ExtraArgs,
 			},
 		},
 		&kubeadmapi.ClusterConfiguration{
@@ -321,9 +318,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			KubernetesVersion: platform.Kubernetes.Version,
 			Etcd: kubeadmapi.Etcd{
 				Local: &kubeadmapi.LocalEtcd{
-					ExtraArgs: map[string]string{
-						"listen-metrics-urls": "http://0.0.0.0:2381",
-					},
+					ExtraArgs: platform.Kubernetes.Etcd.ExtraArgs,
 				},
 			},
 		},
