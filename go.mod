@@ -35,8 +35,6 @@ require (
 	golang.org/x/tools v0.0.0-20191113232020-e2727e816f5a // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/grpc v1.25.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/ini.v1 v1.51.0 // indirect
 
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.0
@@ -44,7 +42,6 @@ require (
 	k8s.io/client-go v0.17.0
 	k8s.io/cluster-bootstrap v0.17.0
 	sigs.k8s.io/kind v0.7.0
-	sigs.k8s.io/yaml v1.1.0
 )
 
 replace (
