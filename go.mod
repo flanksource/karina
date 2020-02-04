@@ -8,8 +8,6 @@ require (
 	cloud.google.com/go/storage v1.2.1 // indirect
 	github.com/aws/aws-sdk-go v1.16.26
 	github.com/dghubble/sling v1.3.0
-	github.com/evanphx/json-patch v4.5.0+incompatible
-	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.0.2
 	github.com/ghodss/yaml v1.0.0
@@ -18,27 +16,25 @@ require (
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/mux v1.7.3
 	github.com/grafana-tools/sdk v0.0.0-20191214173017-690a0c6bec7b
 	github.com/imdario/mergo v0.3.6
-	github.com/lib/pq v1.1.1
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/moshloop/konfigadm v0.4.6
-	github.com/nsqio/go-nsq v1.0.8
 	github.com/pkg/errors v0.9.0
-	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.20.2
 	go.opencensus.io v0.22.1 // indirect
-	golang.org/x/crypto v0.0.0-20191107222254-f4817d981bb6
+	golang.org/x/crypto v0.0.0-20191107222254-f4817d981bb6 // indirect
 	golang.org/x/net v0.0.0-20191108063844-7e6e90b9ea88 // indirect
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
@@ -54,6 +50,7 @@ require (
 	k8s.io/kubernetes v1.16.0
 	k8s.io/utils v0.0.0-20190923111123-69764acb6e8e // indirect
 	sigs.k8s.io/kind v0.7.0
+	sigs.k8s.io/yaml v1.1.0
 )
 
 replace (

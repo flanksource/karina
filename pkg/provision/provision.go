@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"sort"
 	"sync"
 	"time"
@@ -25,7 +24,8 @@ import (
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
-	ktypes "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
+	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 // VM provisions a new standalone VM
@@ -215,24 +215,24 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to generate kubeadm patches")
 	}
 
-	kindConfig := ktypes.Cluster{
-		TypeMeta: ktypes.TypeMeta{
+	kindConfig := kindapi.Cluster{
+		TypeMeta: kindapi.TypeMeta{
 			Kind:       "Cluster",
 			APIVersion: "kind.x-k8s.io/v1alpha4",
 		},
-		Nodes: []ktypes.Node{
+		Nodes: []kindapi.Node{
 			{
 				Role: "control-plane",
-				ExtraPortMappings: []ktypes.PortMapping{
+				ExtraPortMappings: []kindapi.PortMapping{
 					{
 						ContainerPort: 80,
 						HostPort:      80,
-						Protocol:      ktypes.PortMappingProtocolTCP,
+						Protocol:      kindapi.PortMappingProtocolTCP,
 					},
 					{
 						ContainerPort: 443,
 						HostPort:      443,
-						Protocol:      ktypes.PortMappingProtocolTCP,
+						Protocol:      kindapi.PortMappingProtocolTCP,
 					},
 				},
 				KubeadmConfigPatches: kubeadmPatches,
@@ -249,24 +249,19 @@ func KindCluster(platform *platform.Platform) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create tempfile")
 	}
+	defer os.Remove(tmpfile.Name())
 
 	if err := ioutil.WriteFile(tmpfile.Name(), yml, 0644); err != nil {
 		return errors.Wrap(err, "failed to write kind config file")
 	}
 
-	fmt.Printf("Config file: %s\n", tmpfile.Name())
-
-	if !platform.DryRun {
-		cmd := exec.Command("kind", "create", "cluster", "--config", tmpfile.Name())
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err := cmd.Run()
-		if err != nil {
-			return errors.Wrapf(err, "failed to run kind create cluster --config %s", tmpfile.Name())
-		}
+	if platform.DryRun {
+		fmt.Println(string(yml))
 	}
 
-	return nil
+	kind := platform.GetBinary("kind")
+
+	return kind("create cluster --config %s", tmpfile.Name())
 }
 
 func provisionLoadbalancers(p *platform.Platform) (masters string, workers string, err error) {
@@ -335,7 +330,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 
 	result := make([]string, len(kubeadmPatches))
 	for i, x := range kubeadmPatches {
-		yml, err := yaml.Marshal(x)
+		yml, err := k8syaml.Marshal(x)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to encode yaml for kubeadm patch %v", x)
 		}
