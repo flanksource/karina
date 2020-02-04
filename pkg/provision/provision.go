@@ -2,10 +2,16 @@ package provision
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
 	"sort"
 	"sync"
 	"time"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
@@ -18,6 +24,8 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
+	ktypes "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 )
 
 // VM provisions a new standalone VM
@@ -40,8 +48,8 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 	return nil
 }
 
-// Cluster provision or create a kubernetes cluster
-func Cluster(platform *platform.Platform) error {
+// VsphereCluster provision or create a kubernetes cluster
+func VsphereCluster(platform *platform.Platform) error {
 
 	if err := platform.OpenViaEnv(); err != nil {
 		log.Fatalf("Failed to initialize platform: %s", err)
@@ -200,6 +208,67 @@ func Cluster(platform *platform.Platform) error {
 	return nil
 }
 
+// KindCluster provision or create a kubernetes cluster
+func KindCluster(platform *platform.Platform) error {
+	kubeadmPatches, err := createKubeAdmPatches(platform)
+	if err != nil {
+		return errors.Wrap(err, "failed to generate kubeadm patches")
+	}
+
+	kindConfig := ktypes.Cluster{
+		TypeMeta: ktypes.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: "kind.x-k8s.io/v1alpha4",
+		},
+		Nodes: []ktypes.Node{
+			{
+				Role: "control-plane",
+				ExtraPortMappings: []ktypes.PortMapping{
+					{
+						ContainerPort: 80,
+						HostPort:      80,
+						Protocol:      ktypes.PortMappingProtocolTCP,
+					},
+					{
+						ContainerPort: 443,
+						HostPort:      443,
+						Protocol:      ktypes.PortMappingProtocolTCP,
+					},
+				},
+				KubeadmConfigPatches: kubeadmPatches,
+			},
+		},
+	}
+
+	yml, err := yaml.Marshal(kindConfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal config")
+	}
+
+	tmpfile, err := ioutil.TempFile("", "kind.yml")
+	if err != nil {
+		return errors.Wrap(err, "failed to create tempfile")
+	}
+
+	if err := ioutil.WriteFile(tmpfile.Name(), yml, 0644); err != nil {
+		return errors.Wrap(err, "failed to write kind config file")
+	}
+
+	fmt.Printf("Config file: %s\n", tmpfile.Name())
+
+	if !platform.DryRun {
+		cmd := exec.Command("kind", "create", "cluster", "--config", tmpfile.Name())
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			return errors.Wrapf(err, "failed to run kind create cluster --config %s", tmpfile.Name())
+		}
+	}
+
+	return nil
+}
+
 func provisionLoadbalancers(p *platform.Platform) (masters string, workers string, err error) {
 
 	if p.NSX == nil || p.NSX.Disabled {
@@ -239,4 +308,39 @@ func provisionLoadbalancers(p *platform.Platform) (masters string, workers strin
 	}
 	return masters, workers, nil
 
+}
+
+func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
+	kubeadmPatches := []interface{}{
+		&kubeadmapi.InitConfiguration{
+			TypeMeta: v1.TypeMeta{Kind: "InitConfiguration"},
+			NodeRegistration: kubeadmapi.NodeRegistrationOptions{
+				KubeletExtraArgs: map[string]string{
+					"node-labels":        "ingress-ready=true",
+					"authorization-mode": "AlwaysAllow",
+				},
+			},
+		},
+		&kubeadmapi.ClusterConfiguration{
+			TypeMeta: v1.TypeMeta{Kind: "ClusterConfiguration"},
+			Etcd: kubeadmapi.Etcd{
+				Local: &kubeadmapi.LocalEtcd{
+					ExtraArgs: map[string]string{
+						"listen-metrics-urls": "http://0.0.0.0:2381",
+					},
+				},
+			},
+		},
+	}
+
+	result := make([]string, len(kubeadmPatches))
+	for i, x := range kubeadmPatches {
+		yml, err := yaml.Marshal(x)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to encode yaml for kubeadm patch %v", x)
+		}
+		result[i] = string(yml)
+	}
+
+	return result, nil
 }
