@@ -317,7 +317,8 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			},
 		},
 		&kubeadmapi.ClusterConfiguration{
-			TypeMeta: v1.TypeMeta{Kind: "ClusterConfiguration"},
+			TypeMeta:          v1.TypeMeta{Kind: "ClusterConfiguration"},
+			KubernetesVersion: platform.Kubernetes.Version,
 			Etcd: kubeadmapi.Etcd{
 				Local: &kubeadmapi.LocalEtcd{
 					ExtraArgs: map[string]string{
