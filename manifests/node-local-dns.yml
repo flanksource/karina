@@ -54,54 +54,54 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
 data:
   Corefile: |
-    __PILLAR__DNS__DOMAIN__:53 {
+    {{ .nodeLocalDNS.dnsDomain }}:53 {
         errors
         cache {
-                success 9984 30
-                denial 9984 5
+            success 9984 30
+            denial 9984 5
         }
         reload
         loop
-        bind __PILLAR__LOCAL__DNS__ __PILLAR__DNS__SERVER__
+        bind {{ .nodeLocalDNS.localDNS }} {{ .nodeLocalDNS.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
-                force_tcp
+            force_tcp
         }
         prometheus :9253
-        health __PILLAR__LOCAL__DNS__:8080
-        }
+        health {{ .nodeLocalDNS.localDNS }}:8080
+    }
     in-addr.arpa:53 {
         errors
         cache 30
         reload
         loop
-        bind __PILLAR__LOCAL__DNS__ __PILLAR__DNS__SERVER__
+        bind {{ .nodeLocalDNS.localDNS }} {{ .nodeLocalDNS.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
-                force_tcp
+            force_tcp
         }
         prometheus :9253
-        }
+    }
     ip6.arpa:53 {
         errors
         cache 30
         reload
         loop
-        bind __PILLAR__LOCAL__DNS__ __PILLAR__DNS__SERVER__
+        bind {{ .nodeLocalDNS.localDNS }} {{ .nodeLocalDNS.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
-                force_tcp
+            force_tcp
         }
         prometheus :9253
-        }
+    }
     .:53 {
         errors
         cache 30
         reload
         loop
-        bind __PILLAR__LOCAL__DNS__ __PILLAR__DNS__SERVER__
+        bind {{ .nodeLocalDNS.localDNS }} {{ .nodeLocalDNS.dnsServer }}
         forward . __PILLAR__UPSTREAM__SERVERS__ {
-                force_tcp
+            force_tcp
         }
         prometheus :9253
-        }
+    }
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -141,7 +141,7 @@ spec:
           args:
             [
               "-localip",
-              "__PILLAR__LOCAL__DNS__,__PILLAR__DNS__SERVER__",
+              "{{ .nodeLocalDNS.localDNS }},{{ .nodeLocalDNS.dnsServer }}",
               "-conf",
               "/etc/Corefile",
               "-upstreamsvc",
@@ -161,7 +161,7 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              host: __PILLAR__LOCAL__DNS__
+              host: "{{ .nodeLocalDNS.localDNS }}"
               path: /health
               port: 8080
             initialDelaySeconds: 60

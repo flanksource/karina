@@ -39,7 +39,7 @@ type PlatformConfig struct {
 	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS              `yaml:"nfs,omitempty"`
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	NodeLocalDNS          *Enabled          `yaml:"nodeLocalDNS,omitempty"`
+	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
@@ -57,8 +57,8 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator 	  *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
-	ECK 				  *ECK 				`yaml:"eck,omitempty"`
+	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
+	ECK                   *ECK              `yaml:"eck,omitempty"`
 }
 
 type Enabled struct {
@@ -162,22 +162,22 @@ type DB struct {
 }
 
 type PostgresOperator struct {
-	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version,omitempty"`
-	PrimaryStorage string `yaml:"primaryStorage,omitempty"`
-	XlogStorage string `yaml:"xlogStorage,omitempty"`
-	BackupStorage string `yaml:"backupStorage,omitempty"`
-	ReplicaStorage string `yaml:"replicaStorage,omitempty"`
-	BackrestStorage string `yaml:"backrestStorage,omitempty"`
-	Storage map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
+	Disabled        bool                               `yaml:"disabled,omitempty"`
+	Version         string                             `yaml:"version,omitempty"`
+	PrimaryStorage  string                             `yaml:"primaryStorage,omitempty"`
+	XlogStorage     string                             `yaml:"xlogStorage,omitempty"`
+	BackupStorage   string                             `yaml:"backupStorage,omitempty"`
+	ReplicaStorage  string                             `yaml:"replicaStorage,omitempty"`
+	BackrestStorage string                             `yaml:"backrestStorage,omitempty"`
+	Storage         map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
 }
 
 type PostgresOperatorStorage struct {
-	AccessMode string `yaml:"AccessMode,omitempty"`
-	Size string `yaml:"Size,omitempty"`
-	StorageType string `yaml:"StorageType,omitempty"`
+	AccessMode   string `yaml:"AccessMode,omitempty"`
+	Size         string `yaml:"Size,omitempty"`
+	StorageType  string `yaml:"StorageType,omitempty"`
 	StorageClass string `yaml:"StorageClass,omitempty"`
-	Fsgroup string `yaml:"Fsgroup,omitempty"`
+	Fsgroup      string `yaml:"Fsgroup,omitempty"`
 }
 
 type Smtp struct {
@@ -338,14 +338,21 @@ type CA struct {
 }
 
 type FluentdOperator struct {
-	Disabled      bool                     `yaml:"disabled,omitempty"`
-	Version       string                   `yaml:"version,omitempty"`
-	ImageRepo	  string				   `yaml:"repository,omitempty"`
+	Disabled  bool   `yaml:"disabled,omitempty"`
+	Version   string `yaml:"version,omitempty"`
+	ImageRepo string `yaml:"repository,omitempty"`
 }
 
 type ECK struct {
-	Disabled      bool                     `yaml:"disabled,omitempty"`
-	Version       string                   `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version,omitempty"`
+}
+
+type NodeLocalDNS struct {
+	Disabled  bool   `yaml:"disabled,omitempty"`
+	DNSServer string `yaml:"dnsServer,omitempty"`
+	LocalDNS  string `yaml:"localDNS,omitempty"`
+	DNSDomain string `yaml:"dnsDomain,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

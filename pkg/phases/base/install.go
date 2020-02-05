@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -20,7 +21,23 @@ func Install(platform *platform.Platform) error {
 		log.Errorf("Error deploying tiller: %s\n", err)
 	}
 
-	if platform.NodeLocalDNS == nil || !platform.NodeLocalDNS.Disabled {
+	if !platform.NodeLocalDNS.Disabled {
+		client, err := platform.GetClientset()
+		if err != nil {
+			return err
+		}
+
+		kubeDNS, err := client.CoreV1().Services("kube-system").Get("kube-dns", metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		platform.NodeLocalDNS.DNSServer = kubeDNS.Spec.ClusterIP
+
+		// TODO(mazzy89): make these values configurable
+		platform.NodeLocalDNS.LocalDNS = "169.254.20.10"
+		platform.NodeLocalDNS.DNSDomain = "cluster.local"
+
 		if err := platform.ApplySpecs("", "node-local-dns.yml"); err != nil {
 			log.Errorf("Error deploying node-local-dns: %s\n", err)
 		}
