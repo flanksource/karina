@@ -21,5 +21,13 @@ func Install(platform *platform.Platform) error {
 	}, nil); err != nil {
 		return err
 	}
+	kubectl := platform.GetKubectl()
+	for index := range platform.OPA.NamespaceWhitelist {
+		err := kubectl("get ns %s &> /dev/null", platform.OPA.NamespaceWhitelist[index])
+		if err == nil {
+			kubectl("label ns %s openpolicyagent.org/webhook=ignore --overwrite &> /dev/null", platform.OPA.NamespaceWhitelist[index])
+		}
+	}
+
 	return platform.ApplySpecs(Namespace, "opa.yaml")
 }

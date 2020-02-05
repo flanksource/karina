@@ -57,8 +57,8 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator 	  *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
-	ECK 				  *ECK 				`yaml:"eck,omitempty"`
+	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
+	ECK                   *ECK              `yaml:"eck,omitempty"`
 }
 
 type Enabled struct {
@@ -94,12 +94,15 @@ type Calico struct {
 }
 
 type OPA struct {
-	Disabled          bool   `yaml:"disabled,omitempty"`
-	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty"`
-	Version           string `yaml:"version,omitempty"`
-	BundleUrl         string `yaml:"bundle_url,omitempty"`
-	BundlePrefix      string `yaml:"bundle_prefix,omitempty"`
-	BundleServiceName string `yaml:"bundle_service_name,omitempty"`
+	Disabled           bool     `yaml:"disabled,omitempty"`
+	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
+	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
+	Version            string   `yaml:"version,omitempty"`
+	BundleUrl          string   `yaml:"bundleUrl,omitempty"`
+	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
+	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
+	LogFormat          string   `yaml:"logFormat,omitempty"`
+	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
 }
 
 type Harbor struct {
@@ -341,14 +344,14 @@ type CA struct {
 }
 
 type FluentdOperator struct {
-	Disabled      bool                     `yaml:"disabled,omitempty"`
-	Version       string                   `yaml:"version,omitempty"`
-	ImageRepo	  string				   `yaml:"repository,omitempty"`
+	Disabled  bool   `yaml:"disabled,omitempty"`
+	Version   string `yaml:"version,omitempty"`
+	ImageRepo string `yaml:"repository,omitempty"`
 }
 
 type ECK struct {
-	Disabled      bool                     `yaml:"disabled,omitempty"`
-	Version       string                   `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

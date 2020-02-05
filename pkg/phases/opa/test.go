@@ -3,11 +3,10 @@ package opa
 import (
 	"io/ioutil"
 
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"k8s.io/client-go/kubernetes"
 )
 
 func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *console.TestResults) {

@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: superolo-world-bad
-  labels:
-    company: DISCOVERY-VITALITY
-    service: Disc-Card-Wallet-Service
-    environment: Dev
-

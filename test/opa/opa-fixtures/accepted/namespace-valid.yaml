@@ -1,8 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: superolo-world-good
+  name: valid-namespace
   labels:
-    company: DISCOVERY-VITALITY
-    service: Disc-Vitality-Batch-Services
-    environment: Dev
+    company: company-x
+    service: Company-X-Service-One

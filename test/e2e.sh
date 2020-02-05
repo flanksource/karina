@@ -23,7 +23,7 @@ else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:1.12 pack build
 fi
 
-# kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
+# VERSION=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   ./kind create cluster --image kindest/node:${VERSION} --config test/kind.config.yaml
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
@@ -51,7 +51,9 @@ $BIN deploy harbor -v
 
 $BIN deploy all -v
 
-$BIN deploy opa install -v
+$BIN deploy opa bundles test/opa/bundles -v
+
+$BIN deploy opa install  -v
 
 $BIN deploy velero
 
@@ -60,9 +62,6 @@ $BIN deploy fluentd
 $BIN deploy eck
 
 $BIN deploy opa policies test/opa/policies -v
-
-echo "Sleeping for 30s, waiting for OPA policies to load"
-sleep 30
 
 failed=false
 if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then

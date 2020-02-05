@@ -112,8 +112,6 @@ spec:
             - "--tls-private-key-file=/certs/tls.key"
             - "--addr=0.0.0.0:443"
             - "--addr=http://127.0.0.1:8181"
-            - "--log-format=json-pretty"
-            - "--set=decision_logs.console=true"
           resources:
             requests:
               cpu: 10m
@@ -172,16 +170,19 @@ metadata:
   namespace: opa
 data:
   config.yaml: |
+  {{ if .opa.bundleUrl }}
     services:
-      - name: {{.opa.bundle_service_name}}
-        url: {{.opa.bundle_url}}
+      - name: {{.opa.bundleServiceName}}
+        url: {{.opa.bundleUrl}}
     bundle:
-      name: {{.opa.bundle_service_name}}.tar.gz
-      prefix: {{.opa.bundle_prefix}}
-      service: {{.opa.bundle_service_name}}
+      name: {{.opa.bundleServiceName}}.tar.gz
+      prefix: {{.opa.bundlePrefix}}
+      service: {{.opa.bundleServiceName}}
       polling:
           min_delay_seconds: 10
           max_delay_seconds: 20
+  {{ end }}
+
 ---
 kind: ConfigMap
 apiVersion: v1
