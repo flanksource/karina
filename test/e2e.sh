@@ -68,7 +68,7 @@ if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
   failed=true
 fi
 
-if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.xml; then
+if ! $BIN test opa test/opa/opa-fixtures --wait 180 --junit-path test-results/opa-results.xml; then
   failed=true
 fi
 

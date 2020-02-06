@@ -24,6 +24,7 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 	}
 
 	kubectl := p.GetKubectl()
+
 	if err := kubectl("apply -f test/opa/namespaces/"); err != nil {
 		test.Failf("opa", "Failed to setup namespaces: %v", err)
 		return
@@ -63,4 +64,10 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 			test.Passf(acceptedFixture.Name(), "%s accepted by Gatekeeper as expected", acceptedFixture.Name())
 		}
 	}
+
+	// cleanup old objects
+	_ = kubectl("delete -f test/opa/namespaces/ --force &> /dev/null")
+	_ = kubectl("delete -f test/opa/ingress-duplicate.yaml --force &> /dev/null")
+	_ = kubectl("delete -f test/opa/opa-fixtures/accepted/ --force &> /dev/null")
+	_ = kubectl("delete -f test/opa/opa-fixtures/rejected/ --force &> /dev/null")
 }
