@@ -21,4 +21,3 @@ manifests/static.go
 templates/static.go
 snapshot/
 .idea
-*.tar.gz
