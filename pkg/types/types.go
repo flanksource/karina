@@ -39,7 +39,7 @@ type PlatformConfig struct {
 	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS              `yaml:"nfs,omitempty"`
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	NodeLocalDNS          *Enabled          `yaml:"nodeLocalDNS,omitempty"`
+	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
@@ -352,6 +352,13 @@ type FluentdOperator struct {
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version,omitempty"`
+}
+
+type NodeLocalDNS struct {
+	Disabled  bool   `yaml:"disabled,omitempty"`
+	DNSServer string `yaml:"dnsServer,omitempty"`
+	LocalDNS  string `yaml:"localDNS,omitempty"`
+	DNSDomain string `yaml:"dnsDomain,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
