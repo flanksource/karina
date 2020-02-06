@@ -30,7 +30,6 @@ opa:
   setDecisionLogs: true
   namespaceWhitelist:
     - kube-system
-    - opa
     - nsx-system
     - quack
     - cert-manager

@@ -1,6 +1,8 @@
 package opa
 
 import (
+	"fmt"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -21,11 +23,11 @@ func Install(platform *platform.Platform) error {
 	}, nil); err != nil {
 		return err
 	}
-	kubectl := platform.GetKubectl()
+
 	for index := range platform.OPA.NamespaceWhitelist {
-		err := kubectl("get ns %s &> /dev/null", platform.OPA.NamespaceWhitelist[index])
-		if err == nil {
-			kubectl("label ns %s openpolicyagent.org/webhook=ignore --overwrite &> /dev/null", platform.OPA.NamespaceWhitelist[index])
+		err := platform.CreateOrUpdateNamespace(platform.OPA.NamespaceWhitelist[index], nil, nil)
+		if err != nil {
+			fmt.Println(err)
 		}
 	}
 

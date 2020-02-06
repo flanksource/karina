@@ -59,11 +59,11 @@ func init() {
 	}
 
 	_opa.AddCommand(&cobra.Command{
-		Use:   "bundles",
-		Short: "deploy opa bundles",
+		Use:   "bundle",
+		Short: "deploy opa bundle",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := opa.DeployBundles(getPlatform(cmd), args[0]); err != nil {
+			if err := opa.DeployBundle(getPlatform(cmd), args[0]); err != nil {
 				log.Fatalf("Error deploying  opa bundles: %s", err)
 			}
 		},

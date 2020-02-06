@@ -51,7 +51,7 @@ $BIN deploy harbor -v
 
 $BIN deploy all -v
 
-$BIN deploy opa bundles test/opa/bundles -v
+$BIN deploy opa bundle automobile -v
 
 $BIN deploy opa install  -v
 
