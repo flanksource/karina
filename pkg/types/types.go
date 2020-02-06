@@ -164,6 +164,9 @@ type DB struct {
 type PostgresOperator struct {
 	Disabled        bool                               `yaml:"disabled,omitempty"`
 	Version         string                             `yaml:"version,omitempty"`
+	DBVersion       string                             `yaml:"dbVersion,omitempty"`
+	Password        string                             `yaml:"password,omitempty"`
+	BackupBucket    string                             `yaml:"backupBucket,omitempty"`
 	PrimaryStorage  string                             `yaml:"primaryStorage,omitempty"`
 	XlogStorage     string                             `yaml:"xlogStorage,omitempty"`
 	BackupStorage   string                             `yaml:"backupStorage,omitempty"`
@@ -325,7 +328,7 @@ type Versions struct {
 
 type Velero struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:version,omitempty"`
+	Version  string `yaml:"version,omitempty"`
 	Schedule string `yaml:"schedule,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 	Volumes  bool   `yaml:"volumes"`

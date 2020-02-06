@@ -1,0 +1,493 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-operator
+  namespace: pgo
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pgo-cluster-role
+rules:
+  - verbs:
+      - "list"
+      - "get"
+      - "watch"
+    apiGroups:
+      - "*"
+    resources:
+      - namespaces
+      - serviceaccounts
+      - roles
+      - rolebindings
+      - nodes
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pgo-cluster-role
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pgo-cluster-role
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: system:serviceaccount:pgo:postgres-operator
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pgo-role
+  namespace: pgo
+rules:
+  - verbs:
+      - "*"
+    apiGroups:
+      - "crunchydata.com"
+    resources:
+      - pgclusters
+      - pgpolicies
+      - pgtasks
+      - pgbackups
+      - pgreplicas
+  - verbs:
+      - "*"
+    apiGroups:
+      - "apps"
+    resources:
+      - deployments
+  - verbs:
+      - "*"
+    apiGroups:
+      - ""
+    resources:
+      - secrets
+      - pods
+      - configmaps
+      - pods/exec
+      - pods/log
+      - services
+      - replicasets
+      - endpoints
+      - persistentvolumeclaims
+  - verbs:
+      - get
+      - list
+    apiGroups:
+      - ""
+    resources:
+      - nodes
+      - storageclasses
+  - verbs:
+      - "*"
+    apiGroups:
+      - "batch"
+    resources:
+      - jobs
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pgo-role
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pgo-role
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: system:serviceaccount:pgo:postgres-operator
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pgo-default
+  namespace: "pgo"
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pgo-pg
+  namespace: "pgo"
+  labels:
+    vendor: crunchydata
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pgo-backrest
+  namespace: "pgo"
+  labels:
+    vendor: crunchydata
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pgo-default
+  namespace: pgo
+automountServiceAccountToken: false
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pgo-target
+  namespace: "pgo"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pgo-pg-role
+  namespace: "pgo"
+  labels:
+    vendor: crunchydata
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+      - delete
+      - deletecollection
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pgo-target-role-binding
+  namespace: "pgo"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pgo-target-role
+subjects:
+  - kind: ServiceAccount
+    name: postgres-operator
+    namespace: "pgo"
+  - kind: ServiceAccount
+    name: pgo-target
+    namespace: "pgo"
+  - kind: ServiceAccount
+    name: pgo-backrest
+    namespace: "pgo"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pgo-target-role
+  namespace: "pgo"
+rules:
+  - apiGroups:
+      - crunchydata.com
+    resources:
+      - pgclusters
+      - pgpolicies
+      - pgtasks
+      - pgbackups
+      - pgreplicas
+    verbs:
+      - "*"
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - pods
+      - configmaps
+      - pods/exec
+      - pods/log
+      - services
+      - replicasets
+      - endpoints
+      - persistentvolumeclaims
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - storageclasses
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - "*"
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pgo-pg-role-binding
+  namespace: "pgo"
+  labels:
+    vendor: crunchydata
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pgo-pg-role
+subjects:
+  - kind: ServiceAccount
+    name: pgo-pg
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    pgo-created-by: bootstrap
+    pgo-pgorole: "true"
+    rolename: pgoadmin
+    vendor: crunchydata
+  name: pgorole-pgoadmin
+  namespace: pgo
+stringData:
+  permissions: "*"
+  rolename: pgoadmin
+type: Opaque
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    pgo-created-by: bootstrap
+    pgo-pgorole: "true"
+    rolename: pgoadmin
+    vendor: crunchydata
+  name: pgorole-pgorole-pgoadmin
+  namespace: pgo
+stringData:
+  permissions: "*"
+  rolename: pgoadmin
+type: Opaque
+---
+apiVersion: v1
+stringData:
+  password: "{{.pgo.password}}"
+  username: pgoadmin
+  roles: pgorole-pgoadmin
+kind: Secret
+metadata:
+  labels:
+    pgo-created-by: bootstrap
+    pgo-pgouser: "true"
+    username: pgoadmin
+    vendor: crunchydata
+  name: pgouser-pgoadmin
+  namespace: pgo
+type: Opaque
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-operator
+  namespace: pgo
+  labels:
+    vendor: crunchydata
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: postgres-operator
+      vendor: crunchydata
+  template:
+    metadata:
+      labels:
+        name: postgres-operator
+        vendor: crunchydata
+    spec:
+      serviceAccountName: postgres-operator
+      containers:
+        - name: apiserver
+          image: "crunchydata/pgo-apiserver:centos7-{{.pgo.imageVersion}}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8443
+          readinessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          env:
+            - name: CRUNCHY_DEBUG
+              value: "true"
+            - name: PORT
+              value: "8443"
+            - name: PGO_INSTALLATION_NAME
+              value: pgo
+            - name: PGO_OPERATOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_CA_TRUST
+              value: ""
+            - name: TLS_NO_VERIFY
+              value: "true"
+            - name: DISABLE_TLS
+              value: "false"
+            - name: NOAUTH_ROUTES
+              value: ""
+            - name: ADD_OS_TRUSTSTORE
+              value: "false"
+            - name: DISABLE_EVENTING
+              value: "false"
+            - name: EVENT_ADDR
+              value: localhost:4150
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: operator
+          image: "crunchydata/postgres-operator:centos7-{{.pgo.imageVersion}}"
+          imagePullPolicy: IfNotPresent
+          readinessProbe:
+            exec:
+              command:
+                - ls
+                - "/tmp"
+            initialDelaySeconds: 4
+            periodSeconds: 5
+          env:
+            - name: CRUNCHY_DEBUG
+              value: "true"
+            - name: NAMESPACE
+              value: pgo
+            - name: PGO_INSTALLATION_NAME
+              value: pgo
+            - name: PGO_OPERATOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: DISABLE_EVENTING
+              value: "false"
+            - name: EVENT_ADDR
+              value: localhost:4150
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: scheduler
+          image: "crunchydata/pgo-scheduler:centos7-{{.pgo.imageVersion}}"
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - "-c"
+                - test -n "$(find /tmp/scheduler.hb -newermt '61 sec ago')"
+            failureThreshold: 2
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          env:
+            - name: CRUNCHY_DEBUG
+              value: "true"
+            - name: PGO_OPERATOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PGO_INSTALLATION_NAME
+              value: pgo
+            - name: TIMEOUT
+              value: "3600"
+            - name: EVENT_ADDR
+              value: localhost:4150
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          imagePullPolicy: IfNotPresent
+        - name: event
+          image: "crunchydata/pgo-event:centos7-{{.pgo.imageVersion}}"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: "/ping"
+              port: 4151
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          env:
+            - name: TIMEOUT
+              value: "3600"
+          imagePullPolicy: IfNotPresent
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres-operator
+  namespace: pgo
+  labels:
+    name: postgres-operator
+spec:
+  ports:
+    - name: apiserver
+      protocol: TCP
+      port: 8443
+      targetPort: 8443
+    - name: nsqadmin
+      protocol: TCP
+      port: 4171
+      targetPort: 4171
+    - name: nsqd
+      protocol: TCP
+      port: 4150
+      targetPort: 4150
+  selector:
+    name: postgres-operator
