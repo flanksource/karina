@@ -77,3 +77,9 @@ ingressCA:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
+oauth2Proxy:
+  clientID: aaaa
+  clientSecret: bbbb
+  provider: github
+  cookieSecret: cccc
+  restrictArgs: "--email-domain=*,--github-org=flanksource"

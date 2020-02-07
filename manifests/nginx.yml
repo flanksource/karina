@@ -317,3 +317,71 @@ spec:
   selector:
     matchLabels:
       app: ingress-nginx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: ingress-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        k8s-app: oauth2-proxy
+    spec:
+      containers:
+        - args: ["--provider={{.oauth2Proxy.provider}}", "--upstream=file:///dev/null", "--http-address=0.0.0.0:4180", "--whitelist-domain=.{{.domain}}", "--cookie-domain=.{{.domain}}", {{.oauth2Proxy.restrictArgs}}]
+          env:
+            - name: OAUTH2_PROXY_CLIENT_ID
+              value: {{.oauth2Proxy.clientID}}
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              value: {{.oauth2Proxy.clientSecret}}
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              value: {{.oauth2Proxy.cookieSecret}}
+          image: quay.io/pusher/oauth2_proxy:latest
+          imagePullPolicy: Always
+          name: oauth2-proxy
+          ports:
+            - containerPort: 4180
+              protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: ingress-nginx
+spec:
+  ports:
+    - name: http
+      port: 4180
+      protocol: TCP
+      targetPort: 4180
+  selector:
+    k8s-app: oauth2-proxy
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: oauth2-proxy
+  namespace: ingress-nginx
+spec:
+  rules:
+    - host: oauth2.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: oauth2-proxy
+              servicePort: 4180
+            path: /oauth2
+  tls:
+    - hosts:
+        - oauth2.{{.domain}}

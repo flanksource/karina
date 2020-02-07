@@ -44,6 +44,14 @@ type Calico struct {
 	IPPools   []calico.IPPool         `yaml:"ipPools,omitempty"`
 }
 
+type OAuth2Proxy struct {
+	ClientID     string `yaml:"clientID,omitempty"`
+	ClientSecret string `yaml:"clientSecret,omitempty"`
+	Provider     string `yaml:"provider,omitempty"`
+	CookieSecret string `yaml:"cookieSecret,omitempty"`
+	RestrictArgs string `yaml:"restrictArgs,omitempty"`
+}
+
 type OPA struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`

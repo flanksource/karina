@@ -29,6 +29,7 @@ type PlatformConfig struct {
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
 	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
+	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy",omitempty`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet"`
