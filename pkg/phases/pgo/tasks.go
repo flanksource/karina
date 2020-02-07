@@ -288,14 +288,14 @@ func createSecrets(p *platform.Platform, clusterName, user string, pass string) 
 
 	if err := p.GetOrCreateSecret(RootSecretName, Namespace, map[string][]byte{
 		"username": []byte("postgres"),
-		"password": []byte(utils.RandomString(10)),
+		"password": []byte(pass),
 	}); err != nil {
 		return err
 	}
 
 	if err := p.GetOrCreateSecret(PrimarySecretName, Namespace, map[string][]byte{
 		"username": []byte("primaryuser"),
-		"password": []byte(utils.RandomString(10)),
+		"password": []byte(pass),
 	}); err != nil {
 		return err
 	}
@@ -368,14 +368,14 @@ func createWorkflowTask(p *platform.Platform, clusterName, pgouser string) error
 	}); err != nil {
 		return err
 	}
-
+	id, _ := uuid.NewUUID()
 	if err := p.Apply(Namespace, &pgoapi.Pgtask{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pgtask",
 			APIVersion: "crunchydata.com/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterName,
+			Name:      clusterName + "-" + pgoapi.PgtaskBackrestStanzaCreate,
 			Namespace: Namespace,
 			Labels: map[string]string{
 				pgoapi.LABEL_PGOUSER:    pgouser,
