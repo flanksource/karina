@@ -57,9 +57,9 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	Thanos				        *Thanos 			    `yaml:"thanos,omitempty"`
-	FluentdOperator 	    *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
-	ECK 				          *ECK 				      `yaml:"eck,omitempty"`
+	Thanos				  *Thanos 			`yaml:"thanos,omitempty"`
+	FluentdOperator 	  *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
+	ECK 				  *ECK 				`yaml:"eck,omitempty"`
 }
 
 type Enabled struct {
@@ -339,9 +339,12 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version,omitempty"`
-	Bucket   string `yaml:"bucket,omitempty"`
+	Disabled               bool   `yaml:"disabled,omitempty"`
+	Version                string `yaml:"version,omitempty"`
+	Mode 	               string `yaml:"mode,omitempty"`
+	ThanosSidecarEndpoint  string `yaml:"thanosSidecarEndpoint,omitempty"`
+	ThanosSidecarPort      string `yaml:"thanosSidecarPort,omitempty"`
+	S3                    *S3     `yaml:"s3,omitempty"`
 }
 
 type FluentdOperator struct {
@@ -370,7 +373,7 @@ func (p PlatformConfig) GetVMCount() int {
 	return count
 }
 
-func (platform *PlatformConfig) String() string {
-	data, _ := yaml.Marshal(platform)
+func (p *PlatformConfig) String() string {
+	data, _ := yaml.Marshal(p)
 	return string(data)
 }

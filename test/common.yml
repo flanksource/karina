@@ -75,7 +75,16 @@ velero:
   bucket: velero
 thanos:
   version: v0.10.1
-  bucket: thanos
+  mode: observability
+  thanosSidecarEndpoint: ""
+  thanosSidecarPort: 10901
+  s3:
+    endpoint: http://minio.minio.svc:9000
+    externalEndpoint: minio.127.0.0.1.nip.io
+    bucket: thanos
+    access_key: minio
+    secret_key: minio123
+    region: us-east1
 fluentd-operator:
   version: v1.11.0
   repository: jvassev/kube-fluentd-operator
