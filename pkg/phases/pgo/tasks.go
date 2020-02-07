@@ -368,7 +368,7 @@ func createWorkflowTask(p *platform.Platform, clusterName, pgouser string) error
 	}); err != nil {
 		return err
 	}
-	id, _ := uuid.NewUUID()
+	id, _ = uuid.NewUUID()
 	if err := p.Apply(Namespace, &pgoapi.Pgtask{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pgtask",
