@@ -9,9 +9,9 @@ stringData:
   thanos.yaml: |-
     type: S3
     config:
-      bucket: {{.thanos.bucket}}
-      endpoint: {{.s3.endpoint | strings.TrimPrefix "http://"}}
+      bucket: {{.thanos.s3.bucket}}
+      endpoint: {{.thanos.s3.endpoint | strings.TrimPrefix "http://"}}
       insecure: true
-      access_key: {{.s3.access_key}}
-      secret_key: {{.s3.secret_key}}
+      access_key: {{.thanos.s3.access_key}}
+      secret_key: {{.thanos.s3.secret_key}}
 {{- end}}

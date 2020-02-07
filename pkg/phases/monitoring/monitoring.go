@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/grafana-tools/sdk"
@@ -41,7 +42,7 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	if p.Thanos == nil && p.Thanos.Disabled {
+	if p.Thanos == nil || p.Thanos.Disabled {
 		log.Println("Thanos is disabled")
 	} else {
 		s3Client, err := p.GetS3Client()
@@ -49,18 +50,36 @@ func Install(p *platform.Platform) error {
 			return err
 		}
 
-		exists, err := s3Client.BucketExists(p.Thanos.Bucket)
+		exists, err := s3Client.BucketExists(p.Thanos.S3.Bucket)
 		if err != nil {
 			return err
 		}
 		if !exists {
-			if err := s3Client.MakeBucket(p.Thanos.Bucket, p.S3.Region); err != nil {
+			if err := s3Client.MakeBucket(p.Thanos.S3.Bucket, p.S3.Region); err != nil {
 				return err
 			}
 		}
 		if err := p.ApplySpecs("", "monitoring/thanosConfig.yaml"); err != nil {
-		      return err
+			return err
 		}
+	}
+	if p.Thanos.Mode == "client" {
+		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within Promerheus pod.")
+		p.ApplySpecs("", "monitoring/thanosSidecar.yaml")
+	} else if p.Thanos.Mode == "observability" {
+		log.Info("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
+		if p.Thanos.ThanosSidecarEndpoint == "" || p.Thanos.ThanosSidecarPort == "" {
+			return errors.New("thanosSidecarEndpoint and thanosSidecarPort should not be empty")
+		}
+		thanosSpecs := []string{"thanosCompactor.yaml",  "thanosQuerier.yaml", "thanosStore.yaml"}
+		for _, spec := range thanosSpecs {
+			log.Infof("Applying %s", spec)
+			if err := p.ApplySpecs("", "monitoring/observability/"+spec); err != nil {
+				return err
+			}
+		}
+	} else {
+		log.Printf("Thanos: wrong mode %s. Should be client or observability", p.Thanos.Mode)
 	}
 
 	for _, spec := range specs {

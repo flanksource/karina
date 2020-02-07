@@ -76,9 +76,9 @@ velero:
   bucket: velero
 thanos:
   version: v0.10.1
-  mode: observability
-  thanosSidecarEndpoint: ""
-  thanosSidecarPort: 10901
+  mode: client
+  thanosSidecarEndpoint: thanos-sidecar.127.0.0.1.nip.io
+  thanosSidecarPort: 80
   s3:
     endpoint: http://minio.minio.svc:9000
     externalEndpoint: minio.127.0.0.1.nip.io

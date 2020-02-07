@@ -119,7 +119,7 @@ spec:
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
   version: v2.11.0
-  {{- if not (index .thanos "disabled") }}
+  {{- if and (not (index .thanos "disabled")) (eq .thanos.mode "client") }}
   thanos:
     baseImage: thanosio/thanos
     version: {{.thanos.version}}
