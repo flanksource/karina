@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store
+  namespace: monitoring
+  labels:
+    app: thanos-store
+spec:
+  serviceName: "thanos-store"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-store
+  template:
+    metadata:
+      labels:
+        app: thanos-store
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10902"
+    spec:
+      containers:
+        - name: thanos-store
+          image: thanosio/thanos:{{.thanos.version}}
+          args:
+            - "store"
+            - "--log.level=debug"
+            - "--data-dir=/var/thanos/store"
+            - "--objstore.config-file=/config/thanos.yaml"
+          ports:
+            - name: http
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
+          volumeMounts:
+            - name: config
+              mountPath: /config/
+              readOnly: true
+            - name: data
+              mountPath: /var/thanos/store
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          secret:
+            secretName: thanos-objstore-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-store-grpc
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 10901
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: thanos-store
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-store-http
+spec:
+  type: ClusterIP
+  ports:
+    - port: 10902
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: thanos-store

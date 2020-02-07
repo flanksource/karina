@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query
+  namespace: monitoring
+  labels:
+    app: thanos-query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-query
+  template:
+    metadata:
+      labels:
+        app: thanos-query
+    spec:
+      containers:
+        - name: thanos-query
+          image: thanosio/thanos:{{.thanos.version}}
+          args:
+            - "query"
+            - "--log.level=debug"
+            - "--query.replica-label=replica"
+            - --store=thanos-store-grpc.monitoring.svc.cluster.local:10902
+            - --store={{.thanos.thanosSidecarEndpoint}}:{{.thanos.thanosSidecarPort}}
+          ports:
+            - name: http
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prom-thanos-query
+  namespace: monitoring
+  labels:
+    app: thanos-query
+spec:
+  jobLabel: thanos
+  selector:
+    matchLabels:
+      app: thanos-query
+  namespaceSelector:
+    matchNames:
+      - "monitoring"
+  endpoints:
+    - port: http-query
+      interval: 15s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "10902"
+    prometheus.io/scrape: "true"
+  name: thanos-query
+  labels:
+    app: thanos-query
+    jobLabel: thanos
+  namespace: monitoring
+spec:
+  selector:
+    app: thanos-query
+  ports:
+    - port: 9090
+      protocol: TCP
+      targetPort: http
+      name: http-query

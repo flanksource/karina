@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-compactor
+  namespace: monitoring
+  labels:
+    app: thanos-compactor
+spec:
+  serviceName: "thanos-compactor"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-compactor
+  template:
+    metadata:
+      labels:
+        app: thanos-compactor
+    spec:
+      containers:
+        - name: thanos-compactor
+          image: thanosio/thanos:{{.thanos.version}}
+          args:
+            - "compact"
+            - "--log.level=debug"
+            - "--data-dir=/var/thanos/store"
+            - "--objstore.config-file=/config/thanos.yaml"
+            - "--wait"
+          ports:
+            - name: http
+              containerPort: 10902
+          volumeMounts:
+            - name: config
+              mountPath: /config/
+              readOnly: true
+            - name: data
+              mountPath: /var/thanos/store
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          secret:
+            secretName: thanos-objstore-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-compactor
+  labels:
+    app: thanos-compactor
+  namespace: monitoring
+spec:
+  selector:
+    app: thanos-compactor
+  ports:
+    - port: 10902
+      name: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: thanos-compactor
+  namespace: monitoring
+  labels:
+    app: thanos-compactor
+spec:
+  jobLabel: k8s-app
+  endpoints:
+    - port: http
+      interval: 30s
+  selector:
+    matchLabels:
+      app: thanos-compactor
