@@ -330,7 +330,7 @@ spec:
       serviceAccountName: postgres-operator
       containers:
         - name: apiserver
-          image: "crunchydata/pgo-apiserver:centos7-{{.pgo.imageVersion}}"
+          image: "crunchydata/pgo-apiserver:centos7-{{.pgo.version}}"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8443
@@ -381,7 +381,7 @@ spec:
               cpu: 500m
               memory: 512Mi
         - name: operator
-          image: "crunchydata/postgres-operator:centos7-{{.pgo.imageVersion}}"
+          image: "crunchydata/postgres-operator:centos7-{{.pgo.version}}"
           imagePullPolicy: IfNotPresent
           readinessProbe:
             exec:
@@ -417,7 +417,7 @@ spec:
               cpu: 500m
               memory: 512Mi
         - name: scheduler
-          image: "crunchydata/pgo-scheduler:centos7-{{.pgo.imageVersion}}"
+          image: "crunchydata/pgo-scheduler:centos7-{{.pgo.version}}"
           livenessProbe:
             exec:
               command:
@@ -449,7 +449,7 @@ spec:
               memory: 512Mi
           imagePullPolicy: IfNotPresent
         - name: event
-          image: "crunchydata/pgo-event:centos7-{{.pgo.imageVersion}}"
+          image: "crunchydata/pgo-event:centos7-{{.pgo.version}}"
           resources:
             requests:
               cpu: 10m
