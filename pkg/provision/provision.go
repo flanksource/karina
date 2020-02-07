@@ -327,7 +327,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 
 	result := make([]string, len(kubeadmPatches))
 	for i, x := range kubeadmPatches {
-		yml, err := k8syaml.Marshal(x)
+		yml, err := yaml.Marshal(x)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to encode yaml for kubeadm patch %v", x)
 		}
