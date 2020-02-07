@@ -5,6 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flanksource/commons/utils"
+	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/platform"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -12,10 +15,6 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
-
-	"github.com/flanksource/commons/utils"
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
@@ -34,6 +33,9 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.Networking.PodSubnet = cfg.PodSubnet
 	cluster.DNS.Type = "CoreDNS"
 	cluster.Etcd.Local.DataDir = "/var/lib/etcd"
+	cluster.Etcd.Local.ExtraArgs = map[string]string{
+		"listen-metrics-urls": "http://0.0.0.0:2381",
+	}
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = map[string]string{
@@ -61,6 +63,17 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.ControllerManager.ExtraArgs["cluster-signing-cert-file"] = "/etc/kubernetes/pki/csr-ca.crt"
 	cluster.ControllerManager.ExtraArgs["cluster-signing-key-file"] = "/etc/kubernetes/pki/ca.key"
 	return cluster
+}
+
+func NewInitConfig(cfg *platform.Platform) api.InitConfiguration {
+	config := api.InitConfiguration{
+		Kind: "InitConfiguration",
+		NodeRegistration: api.NodeRegistration{
+			KubeletExtraArgs: cfg.Kubernetes.KubeletExtraArgs,
+		},
+	}
+
+	return config
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go

@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -23,9 +21,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
-	k8syaml "sigs.k8s.io/yaml"
 )
 
 // VM provisions a new standalone VM
@@ -306,27 +302,24 @@ func provisionLoadbalancers(p *platform.Platform) (masters string, workers strin
 }
 
 func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
+	clusterConfig := kubeadm.NewClusterConfig(platform)
+	clusterConfig.ControlPlaneEndpoint = ""
+	clusterConfig.ClusterName = ""
+	clusterConfig.APIServer.CertSANs = nil
+	clusterConfig.APIServer.ExtraArgs = nil
+	clusterConfig.ControllerManager.ExtraArgs = nil
+	clusterConfig.CertificatesDir = ""
+	clusterConfig.Networking.PodSubnet = ""
+	clusterConfig.Networking.ServiceSubnet = ""
+
 	kubeadmPatches := []interface{}{
-		&kubeadmapi.InitConfiguration{
-			TypeMeta: v1.TypeMeta{Kind: "InitConfiguration"},
-			NodeRegistration: kubeadmapi.NodeRegistrationOptions{
-				KubeletExtraArgs: platform.Kubernetes.Kubelet.ExtraArgs,
-			},
-		},
-		&kubeadmapi.ClusterConfiguration{
-			TypeMeta:          v1.TypeMeta{Kind: "ClusterConfiguration"},
-			KubernetesVersion: platform.Kubernetes.Version,
-			Etcd: kubeadmapi.Etcd{
-				Local: &kubeadmapi.LocalEtcd{
-					ExtraArgs: platform.Kubernetes.Etcd.ExtraArgs,
-				},
-			},
-		},
+		clusterConfig,
+		kubeadm.NewInitConfig(platform),
 	}
 
 	result := make([]string, len(kubeadmPatches))
 	for i, x := range kubeadmPatches {
-		yml, err := k8syaml.Marshal(x)
+		yml, err := yaml.Marshal(x)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to encode yaml for kubeadm patch %v", x)
 		}

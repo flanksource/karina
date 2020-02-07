@@ -3,7 +3,6 @@ package types
 import (
 	"gopkg.in/yaml.v2"
 
-	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -225,13 +224,8 @@ type Ldap struct {
 }
 
 type Kubernetes struct {
-	Version           string                          `yaml:"version,omitempty"`
-	APIServer         api.KubeAPIServerConfig         `yaml:"api,omitempty"`
-	Kubelet           api.KubeletConfigSpec           `yaml:"kubelet,omitempty"`
-	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
-	KubeScheduler     api.KubeSchedulerConfig         `yaml:"scheduler,omitempty"`
-	Etcd              api.EtcdConfig                  `yaml:"etcd,omitempty"`
-	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
+	Version          string            `yaml:"version,omitempty"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs"`
 }
 
 type DynamicDNS struct {

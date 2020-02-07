@@ -4,13 +4,9 @@ ldap:
   adminGroup: NA1
 kubernetes:
   version: v1.15.3
-  kubelet:
-    extraArgs:
-      node-labels: "ingress-ready=true"
-      authorization-mode: "AlwaysAllow"
-  etcd:
-    extraArgs:
-      listen-metrics-urls: "http://0.0.0.0:2381"
+  kubeletExtraArgs:
+    node-labels: "ingress-ready=true"
+    authorization-mode: "AlwaysAllow"
 versions:
   gomplate: v3.5.0
   konfigadm: v0.3.6
