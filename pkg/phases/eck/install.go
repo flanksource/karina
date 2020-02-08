@@ -15,6 +15,7 @@ func Deploy(p *platform.Platform) error {
 		log.Infof("Deploying ECK %s", p. ECK.Version)
 	}
 	if err := net.Download("https://download.elastic.co/downloads/eck/"+normalizeVersion(p.ECK.Version + "/all-in-one.yaml"), "build/eck.yaml"); err != nil {
+		log.Tracef("Deploy: Failed to download ECK", err)
 		return err
 	}
 	kubectl := p.GetKubectl()

@@ -18,10 +18,12 @@ func Deploy(p *platform.Platform) error {
 		log.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)
 	}
 	if err := files.Getter("git::https://github.com/vmware/kube-fluentd-operator.git?ref="+normalizeTag(p.FluentdOperator.Version), "build/kube-fluentd-operator"); err != nil {
+		log.Tracef("Deploy: Failed to download fluentd-operator", err)
 		return err
 	}
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
+		log.Tracef("Deploy: Failed to get kubeconfig", err)
 		return err
 	}
 	helm := deps.BinaryWithEnv("helm", p.Versions["helm"], ".bin", map[string]string{
@@ -31,6 +33,7 @@ func Deploy(p *platform.Platform) error {
 	})
 	err = helm("init -c --skip-refresh=true")
 	if err != nil {
+		log.Tracef("Deploy: Failed to init helm", err)
 		return err
 	}
 	debug := ""
@@ -43,6 +46,7 @@ func Deploy(p *platform.Platform) error {
 	}
 	setValues := fmt.Sprintf("--set rbac.create=true --set image.tag=%s --set image.repository=%s", normalizeTag(p.FluentdOperator.Version), p.FluentdOperator.ImageRepo)
 	if err := helm("upgrade kube-fluentd-operator --wait  build/kube-fluentd-operator/log-router --install --namespace kube-fluentd-operator %s %s %s", ca, debug, setValues); err != nil {
+		log.Tracef("Deploy: Failed to deploy/upgrade fluentd-operator helm chart", err)
 		return err
 	}
 	return nil

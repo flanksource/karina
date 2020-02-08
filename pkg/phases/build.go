@@ -33,7 +33,7 @@ func Build(cfg types.PlatformConfig) error {
 		log.Infof("Building specs in %s", spec)
 		absPath, _ := os.Readlink(spec)
 		if err := gomplate("--input-dir \"%s\" --output-dir build -c \".=%s\"", absPath, tmp.Name()); err != nil {
-			log.Tracef("Build: Failed template: %s", err)
+			log.Tracef("Build: Failed to template: %s", err)
 			return err
 		}
 	}

@@ -21,20 +21,24 @@ func Install(platform *platform.Platform) error {
 		return nil
 	}
 	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		log.Tracef("Install: Failed to create/update namespace")
 		return err
 	}
 
 	s3Client, err := platform.GetS3Client()
 	if err != nil {
+		log.Tracef("Install: Failed to get S3 client")
 		return err
 	}
 
 	exists, err := s3Client.BucketExists(platform.Velero.Bucket)
 	if err != nil {
+		log.Tracef("Install: Failed to check S3 bucket")
 		return err
 	}
 	if !exists {
 		if err := s3Client.MakeBucket(platform.Velero.Bucket, platform.S3.Region); err != nil {
+			log.Tracef("Install: Failed to create S3 bucket")
 			return err
 		}
 	}
@@ -48,6 +52,7 @@ aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
 	backupConfig := fmt.Sprintf("region=%s,insecureSkipTLSVerify=true,s3ForcePathStyle=\"true\",s3Url=%s", platform.S3.Region, platform.S3.Endpoint)
 
 	if err := velero("install --provider aws --plugins velero/velero-plugin-for-aws:v1.0.0 --bucket %s --secret-file %s --backup-location-config %s", platform.Velero.Bucket, secret, backupConfig); err != nil {
+		log.Tracef("Install: Failed to install velero")
 		return err
 	}
 	return nil
@@ -73,6 +78,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 	backup.Kind = "Backup"
 	err := platform.Apply(Namespace, backup)
 	if err != nil {
+		log.Tracef("CreateBackup: Failed to apply velero backup %s", err)
 		return nil, err
 	}
 	start := time.Now()
@@ -81,6 +87,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 	for {
 		backup = &Backup{}
 		if err := platform.Get(Namespace, name, backup); err != nil {
+			log.Tracef("CreateBackup: Failed to get velero backup %s", err)
 			return nil, err
 		}
 		if backup.Status.Phase == BackupPhaseCompleted {
