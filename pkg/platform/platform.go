@@ -172,11 +172,13 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	log.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
 
 	if err := client.Init(); err != nil {
+		log.Tracef("GetNSXClient: Failed to init client: %s", err)
 		return nil, err
 	}
 	platform.nsx = client
 	version, err := platform.nsx.Ping()
 	if err != nil {
+		log.Tracef("GetNSXClient: Failed to ping: %s", err)
 		return nil, err
 	}
 	log.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
@@ -190,6 +192,7 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	ctx := context.TODO()
 	obj, err := platform.session.Clone(vm, config)
 	if err != nil {
+		log.Tracef("Clone: Failed to clone session: %s", err)
 		return nil, err
 	}
 
@@ -392,16 +395,19 @@ func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string
 	}
 	dir, err := fs.Open(path)
 	if err != nil {
+		log.Tracef("GetResourcesByDir: Failed to open fs: %s", err)
 		return nil, err
 	}
 	files, err := dir.Readdir(-1)
 	if err != nil {
+		log.Tracef("GetResourcesByDir: Failed to read dir: %s", err)
 		return nil, err
 	}
 
 	for _, info := range files {
 		file, err := fs.Open(path + "/" + info.Name())
 		if err != nil {
+			log.Tracef("GetResourcesByDir: Failed to open fs: %s", err)
 			return nil, err
 		}
 		out[info.Name()] = file
@@ -582,6 +588,7 @@ func (p *Platform) GetS3Client() (*minio.Client, error) {
 
 	s3, err := minio.New(endpoint, p.S3.AccessKey, p.S3.SecretKey, false)
 	if err != nil {
+		log.Tracef("GetS3Client: Failed to create minio client: %s", err)
 		return nil, err
 	}
 	s3.SetCustomTransport(client.Transport)

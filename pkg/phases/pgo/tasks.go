@@ -73,6 +73,7 @@ func GetOrCreateDB(p *platform.Platform, name string, replicas int, databases ..
 		log.Infof("Creating new database %s\n", name)
 		passwd = utils.RandomString(10)
 		if err := pgo("create cluster %s -w %s --replica-count %d --debug", name, passwd, replicas); err != nil {
+			log.Tracef("GetPGO: Failed to create cluster: %s", err)
 			return nil, err
 		}
 	}

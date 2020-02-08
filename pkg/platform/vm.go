@@ -96,6 +96,7 @@ func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	ids := []string{}
 	devices, err := vm.vm.Device(context.TODO())
 	if err != nil {
+		log.Tracef("GetLogicalPortIds: Failed to get devices: %s", err)
 		return nil, err
 	}
 
@@ -138,15 +139,18 @@ func (vm *VM) GetAttributes() (map[string]string, error) {
 	refs := []vim.ManagedObjectReference{vm.vm.Reference()}
 	var objs []mo.ManagedEntity
 	if err := property.DefaultCollector(vm.vm.Client()).Retrieve(ctx, refs, []string{"name", "customValue"}, &objs); err != nil {
+		log.Tracef("GetAttributes: Failed to set default collector: %s", err)
 		return nil, err
 	}
 
 	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
 	if err != nil {
+		log.Tracef("GetAttributes: Failed to get fields: %s", err)
 		return nil, err
 	}
 	field, err := fields.Field(ctx)
 	if err != nil {
+		log.Tracef("GetAttributes: Failed to get field: %s", err)
 		return nil, err
 	}
 
@@ -165,6 +169,7 @@ func (vm *VM) GetVirtualMachine(ctx context.Context) (*mo.VirtualMachine, error)
 	pc := property.DefaultCollector(vm.vm.Client())
 	err := pc.Retrieve(ctx, []vim.ManagedObjectReference{vm.vm.Reference()}, nil, &res)
 	if err != nil {
+		log.Tracef("GetVirtualMachine: Retrieve failed: %s", err)
 		return nil, err
 	}
 	return &(res[0]), nil

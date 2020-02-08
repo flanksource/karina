@@ -91,6 +91,7 @@ func getEnv(p *platform.Platform) (*map[string]string, error) {
 	passwd := fmt.Sprintf("%s:%s", user, pass)
 	log.Debugf("Writing %s", home)
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
+		log.Tracef("getEnv: Failed to write file: %s", err)
 		return nil, err
 	}
 
@@ -98,11 +99,13 @@ func getEnv(p *platform.Platform) (*map[string]string, error) {
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
+		log.Tracef("getEnv: Failed to write file: %s", err)
 		return nil, err
 	}
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
+		log.Tracef("getEnv: Failed to write file: %s", err)
 		return nil, err
 	}
 
@@ -183,6 +186,7 @@ func Install(p *platform.Platform) error {
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env, err := getEnv(p)
 	if err != nil {
+		log.Tracef("GetPGO: Failed to get env: %s", err)
 		return nil, err
 	}
 	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", *env), nil

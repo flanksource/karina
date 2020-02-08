@@ -25,6 +25,7 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (*object.VirtualMachine,
 
 	tpl, err := s.FindVM(vm.Template)
 	if err != nil {
+		log.Tracef("Clone: Failed to find VM: %s", err)
 		return nil, err
 	}
 
@@ -96,11 +97,13 @@ func (s Session) Clone(vm VM, config *konfigadm.Config) (*object.VirtualMachine,
 
 	_, err = task.WaitForResult(context.TODO(), nil)
 	if err != nil {
+		log.Tracef("Clone: Failed create waiter: %s", err)
 		return nil, err
 	}
 
 	obj, err := s.FindVM(vm.Name)
 	if err != nil {
+		log.Tracef("Clone: Failed to find VM: %s", err)
 		return nil, err
 	}
 	log.Infof("Cloned VM: %s", obj.UUID(ctx))
@@ -119,6 +122,7 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 	op := types.VirtualDeviceConfigSpecOperationEdit
 	cdrom, err := devices.FindCdrom("")
 	if err != nil {
+		log.Tracef("getCdrom: Failed to find CD ROM: %s", err)
 		return nil, err
 	}
 
@@ -126,10 +130,12 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 
 		ide, err := devices.FindIDEController("")
 		if err != nil {
+			log.Tracef("getCdrom: Failed to find IDE controller: %s", err)
 			return nil, err
 		}
 		cdrom, err = devices.CreateCdrom(ide)
 		if err != nil {
+			log.Tracef("getCdrom: Failed to create CD ROM: %s", err)
 			return nil, err
 		}
 		op = types.VirtualDeviceConfigSpecOperationAdd
@@ -137,6 +143,7 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 	log.Infof("Creating ISO for %s", vm.Name)
 	iso, err := cloudinit.CreateISO(vm.Name, config.ToCloudInit().String())
 	if err != nil {
+		log.Tracef("getCdrom: Failed to create ISO: %s", err)
 		return nil, err
 	}
 	path := fmt.Sprintf("cloud-init/%s.iso", vm.Name)

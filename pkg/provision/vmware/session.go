@@ -126,6 +126,7 @@ func (s *Session) FindByUUID(ctx context.Context, uuid string) (object.Reference
 func (s Session) FindVM(nameOrId string) (*object.VirtualMachine, error) {
 	tpl, err := s.findVmByUuid(nameOrId)
 	if err != nil {
+		log.Tracef("FindVM: Failed to find VM by UUID: %s", err)
 		return nil, err
 	}
 	if tpl != nil {

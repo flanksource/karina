@@ -50,6 +50,7 @@ func (harbor *HarborClient) TriggerReplication(id int) (*Replication, error) {
 		Post("api/replication/executions").
 		Receive(nil, nil)
 	if err != nil {
+		log.Tracef("TriggerReplication: failed to trigger replication: %s", err)
 		return nil, err
 	}
 	_, err = harbor.sling.New().Get(r.Header["Location"][0]).Receive(&req, &req)
