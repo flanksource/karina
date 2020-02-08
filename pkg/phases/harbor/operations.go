@@ -12,12 +12,14 @@ func ReplicateAll(p *platform.Platform) error {
 	log.Infoln("Listing replication policies")
 	replications, err := client.ListReplicationPolicies()
 	if err != nil {
+		log.Tracef("ReplicateAll: Failed to list replication policies: %s", err)
 		return err
 	}
 	for _, r := range replications {
 		log.Infof("Triggering replication of %s (%d)\n", r.Name, r.ID)
 		req, err := client.TriggerReplication(r.ID)
 		if err != nil {
+			log.Tracef("ReplicateAll: Failed to trigger replication: %s", err)
 			return err
 		}
 		log.Infof("%s %s: %s  pending: %d, success: %d, failed: %d\n", req.StartTime, req.Status, req.StatusText, req.InProgress, req.Succeed, req.Failed)

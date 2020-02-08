@@ -13,11 +13,13 @@ import (
 func Cleanup(platform *platform.Platform) error {
 
 	if err := platform.OpenViaEnv(); err != nil {
+		log.Tracef("Cleanup: Failed to open via env %s", err)
 		return err
 	}
 
 	vms, err := platform.GetVMs()
 	if err != nil {
+		log.Tracef("Cleanup: Failed to get VMs %s", err)
 		return err
 	}
 

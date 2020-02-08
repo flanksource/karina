@@ -256,6 +256,7 @@ func (platform *Platform) OpenViaEnv() error {
 	platform.ctx = context.TODO()
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
+		log.Tracef("OpenViaEnv: Failed to get session from env: %s", err)
 		return err
 	}
 	platform.session = session
@@ -473,6 +474,7 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 	for _, spec := range specs {
 		data, err := yaml.Marshal(spec)
 		if err != nil {
+			log.Tracef("ApplyCRD: Failed to marshal yaml specs: %s", err)
 			return err
 		}
 
@@ -484,6 +486,7 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 
 		file := text.ToFile(string(data), ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
+			log.Tracef("ApplyCRD: Failed to apply CRD: %s", err)
 			return err
 		}
 	}
@@ -499,6 +502,7 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 	for _, spec := range specs {
 		file := text.ToFile(spec, ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
+			log.Tracef("ApplyText: Failed to apply: %s", err)
 			return err
 		}
 	}
@@ -522,17 +526,21 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 		if strings.HasSuffix(spec, "/") {
 			dir, err := platform.TemplateDir(spec, "manifests")
 			if err != nil {
+				log.Tracef("ApplySpecs: Failed to template dir: %s", err)
 				return err
 			}
 			if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
+				log.Tracef("ApplySpecs: Failed to apply specs: %s", err)
 				return err
 			}
 		} else {
 			template, err := platform.Template(spec, "manifests")
 			if err != nil {
+				log.Tracef("ApplySpecs: Failed to template manifests: %s", err)
 				return err
 			}
 			if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
+				log.Tracef("ApplySpecs: Failed to apply specs: %s", err)
 				return err
 			}
 		}

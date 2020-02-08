@@ -62,6 +62,7 @@ func (client DynamicDNSClient) Append(domain string, records ...string) error {
 
 	for _, record := range records {
 		if rr, err := newRR(domain, client.Zone, 60, "A", record); err != nil {
+			log.Tracef("Append: Failed to get new RR: %s", err)
 			return err
 		} else {
 			m.Insert([]dns.RR{*rr})
@@ -127,6 +128,7 @@ func (client DynamicDNSClient) Update(domain string, records ...string) error {
 	m.SetUpdate(client.Zone + ".")
 
 	if rr, err := newRR(domain, client.Zone, 0, "ANY", ""); err != nil {
+		log.Tracef("Update: Failed to get new RR: %s", err)
 		return err
 	} else {
 		m.RemoveRRset([]dns.RR{*rr})
@@ -134,6 +136,7 @@ func (client DynamicDNSClient) Update(domain string, records ...string) error {
 
 	for _, record := range records {
 		if rr, err := newRR(domain, client.Zone, 60, "A", record); err != nil {
+			log.Tracef("Update: Failed to get new RR: %s", err)
 			return err
 		} else {
 			m.Insert([]dns.RR{*rr})
@@ -152,12 +155,14 @@ func (client DynamicDNSClient) Delete(domain string, records ...string) error {
 	for _, record := range records {
 		if record == "*" {
 			if rr, err := newRR(domain, client.Zone, 0, "ANY", ""); err != nil {
+				log.Tracef("Delete: Failed to get new RR: %s", err)
 				return err
 			} else {
 				m.RemoveRRset([]dns.RR{*rr})
 			}
 		} else {
 			if rr, err := newRR(domain, client.Zone, 0, "A", record); err != nil {
+				log.Tracef("Delete: Failed to get new RR: %s", err)
 				return err
 			} else {
 				m.Remove([]dns.RR{*rr})
@@ -191,6 +196,7 @@ func newRR(domain string, zone string, ttl int, resourceType string, record stri
 	log.Tracef(RR)
 	rr, err := dns.NewRR(RR)
 	if err != nil {
+		log.Tracef("newRR failed: %s", err)
 		return nil, err
 	}
 	return &rr, nil

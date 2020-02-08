@@ -23,6 +23,7 @@ func Build(cfg types.PlatformConfig) error {
 	for k, url := range cfg.Resources {
 		if !is.File(k) {
 			if err := files.Getter(url, k); err != nil {
+				log.Tracef("Build: Failed get url: %s", err)
 				return err
 			}
 		}
@@ -32,6 +33,7 @@ func Build(cfg types.PlatformConfig) error {
 		log.Infof("Building specs in %s", spec)
 		absPath, _ := os.Readlink(spec)
 		if err := gomplate("--input-dir \"%s\" --output-dir build -c \".=%s\"", absPath, tmp.Name()); err != nil {
+			log.Tracef("Build: Failed template: %s", err)
 			return err
 		}
 	}
@@ -40,6 +42,7 @@ func Build(cfg types.PlatformConfig) error {
 		log.Infoln("Building with kustomize")
 		os.Remove("build/kustomize.yml")
 		if err := kustomize("build > build/kustomize.yml"); err != nil {
+			log.Tracef("Build: Failed to apply kustomize: %s", err)
 			return err
 		}
 	}

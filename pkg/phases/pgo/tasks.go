@@ -60,6 +60,7 @@ func WaitForDB(p *platform.Platform, db string, timeout int) error {
 func GetOrCreateDB(p *platform.Platform, name string, replicas int, databases ...string) (*types.DB, error) {
 	pgo, err := GetPGO(p)
 	if err != nil {
+		log.Tracef("GetOrCreateDB: Failed to get PGO: %s", err)
 		return nil, err
 	}
 
@@ -88,6 +89,7 @@ func CreateDatabase(p *platform.Platform, cluster string, databases ...string) e
 	for _, database := range databases {
 		if err := kubectl("-n pgo exec svc/%s bash -c database -- -c \"psql -c 'create database %s'\"", cluster, database); err != nil {
 			if !strings.Contains(err.Error(), "already exists") {
+				log.Tracef("CreateDatabase: Failed to create database: %s", err)
 				return err
 			}
 		}
@@ -102,6 +104,7 @@ func GetPVCName(cluster, db string) string {
 func Backup(p *platform.Platform, cluster, db string) error {
 	pvc := GetPVCName(cluster, db)
 	if err := p.GetOrCreatePVC("pgo", pvc, "50Gi", "nfs"); err != nil {
+		log.Tracef("Backup: Failed to get/create PVC: %s", err)
 		return err
 	}
 	task := newTask(p, cluster, db, "pgdump", map[string]string{

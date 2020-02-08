@@ -52,6 +52,7 @@ func (c *NSXClient) Init() error {
 
 	client, err := nsxt.NewAPIClient(&cfg)
 	if err != nil {
+		log.Tracef("Init: Failed to get nsxt API client: %s", err)
 		return err
 	}
 	c.api = client
@@ -77,6 +78,7 @@ func (c *NSXClient) GET(path string) ([]byte, error) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.Tracef("GET: Failed to read response: %s", err)
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {

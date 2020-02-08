@@ -24,6 +24,7 @@ func Install(p *platform.Platform) error {
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		log.Tracef("Install: Failed to create/update namespace: %s", err)
 		return err
 	}
 
@@ -33,17 +34,20 @@ func Install(p *platform.Platform) error {
 
 	data, err := p.Template("monitoring/alertmanager.yaml", "manifests")
 	if err != nil {
+		log.Tracef("Install: Failed to template alertmanager manifests: %s", err)
 		return err
 	}
 	if err := p.CreateOrUpdateSecret("alertmanager-main", Namespace, map[string][]byte{
 		"alertmanager.yaml": []byte(data),
 	}); err != nil {
+		log.Tracef("Install: Failed to create/update secret: %s", err)
 		return err
 	}
 
 	for _, spec := range specs {
 		log.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
+			log.Tracef("Install: Failed to apply monitoring specs: %s", err)
 			return err
 		}
 	}
@@ -96,6 +100,7 @@ func Install(p *platform.Platform) error {
 				"json": string(contentsModified),
 			},
 		}); err != nil {
+			log.Tracef("Install: Failed to apply CRD: %s", err)
 			return err
 		}
 	}

@@ -15,11 +15,13 @@ import (
 func Status(p *platform.Platform) error {
 
 	if err := p.OpenViaEnv(); err != nil {
+		log.Tracef("Status: Failed to open with env: %s", err)
 		return err
 	}
 
 	vmList, err := p.GetVMs()
 	if err != nil {
+		log.Tracef("Status: Failed to get VMs: %s", err)
 		return err
 	}
 
@@ -41,6 +43,7 @@ func Status(p *platform.Platform) error {
 	client, err := p.GetClientset()
 
 	if err != nil {
+		log.Tracef("Status: Failed to get clientset: %s", err)
 		return nil
 	}
 

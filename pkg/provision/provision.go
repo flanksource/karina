@@ -24,16 +24,19 @@ import (
 func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 
 	if err := platform.OpenViaEnv(); err != nil {
+		log.Tracef("VM: Failed to open via env: %s", err)
 		return err
 	}
 	konfig, err := konfigadm.NewConfig(konfigs...).Build()
 	if err != nil {
+		log.Tracef("VM: Failed to get new config: %s", err)
 		return err
 	}
 	log.Infof("Using konfigadm spec: %s\n", konfigs)
 	_vm, err := platform.Clone(*vm, konfig)
 
 	if err != nil {
+		log.Tracef("VM: Failed to clone %s", err)
 		return err
 	}
 	log.Infof("Provisioned  %s ->  %s\n", vm.Name, _vm.IP)

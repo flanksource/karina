@@ -115,14 +115,17 @@ func (vm *VM) SetAttributes(attributes map[string]string) error {
 	ctx := context.TODO()
 	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
 	if err != nil {
+		log.Tracef("SetAttributes: Failed to get custom field manager: %s", err)
 		return err
 	}
 	for k, v := range attributes {
 		key, err := fields.FindKey(ctx, k)
 		if err != nil {
+			log.Tracef("SetAttributes: Failed to find key: %s", err)
 			return err
 		}
 		if err := fields.Set(ctx, vm.vm.Reference(), key, v); err != nil {
+			log.Tracef("SetAttributes: Failed to set fields: %s", err)
 			return err
 		}
 	}

@@ -24,11 +24,13 @@ func Install(platform *platform.Platform) error {
 	if !platform.NodeLocalDNS.Disabled {
 		client, err := platform.GetClientset()
 		if err != nil {
+			log.Tracef("Install: Failed to get clientset: %s", err)
 			return err
 		}
 
 		kubeDNS, err := client.CoreV1().Services("kube-system").Get("kube-dns", metav1.GetOptions{})
 		if err != nil {
+			log.Tracef("Install: Failed to get service: %s", err)
 			return err
 		}
 
@@ -116,6 +118,7 @@ func Install(platform *platform.Platform) error {
 			"region":          []byte(platform.S3.Region),
 		})
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
+			log.Tracef("Install: Failed to apply specs: %s", err)
 			return err
 		}
 	}

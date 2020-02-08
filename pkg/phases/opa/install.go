@@ -2,6 +2,7 @@ package opa
 
 import (
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -19,6 +20,7 @@ func Install(platform *platform.Platform) error {
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{
 		"app": "opa",
 	}, nil); err != nil {
+		log.Tracef("Install: Failed to create/update namespace: %s", err)
 		return err
 	}
 	return platform.ApplySpecs(Namespace, "opa.yaml")

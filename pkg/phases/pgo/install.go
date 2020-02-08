@@ -115,6 +115,7 @@ func ClientSetup(p *platform.Platform) error {
 	}
 	ENV, err := getEnv(p)
 	if err != nil {
+		log.Tracef("ClientSetup: Failed to get env: %s", err)
 		return err
 	}
 
@@ -143,6 +144,7 @@ func Install(p *platform.Platform) error {
 		exec.Exec("cd build/pgo; git clean -fdx && git reset . ")
 	}
 	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+getPGOTag(p.PGO.Version), "build/pgo"); err != nil {
+		log.Tracef("Install: Failed to download pgo: %s", err)
 		return err
 	}
 
@@ -159,10 +161,12 @@ func Install(p *platform.Platform) error {
 	templateFile := text.ToFile(template, ".yaml")
 	exec.ExecfWithEnv(fmt.Sprintf("cp -v %s build/pgo/conf/postgres-operator/pgo.yaml", templateFile), ENV)
 	if err := p.CreateOrUpdateNamespace(PGO, nil, nil); err != nil {
+		log.Tracef("Install: Failed to create/update namespace: %s", err)
 		return err
 	}
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
+		log.Tracef("Install: Failed to expose ingress: %s", err)
 		return err
 	}
 
@@ -170,6 +174,7 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 	if err := exec.ExecfWithEnv("/bin/bash  build/pgo/deploy/install-rbac.sh", ENV); err != nil {
+		log.Tracef("Install: Failed to install rbac: %s", err)
 		return err
 	}
 	return exec.ExecfWithEnv("/bin/bash build/pgo/deploy/deploy.sh", ENV)
