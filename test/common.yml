@@ -76,7 +76,7 @@ velero:
   bucket: velero
 thanos:
   version: v0.10.1
-  mode: client
+  mode: observability
   thanosSidecarEndpoint: thanos-sidecar.127.0.0.1.nip.io
   thanosSidecarPort: 80
   s3:
