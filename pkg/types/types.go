@@ -239,6 +239,9 @@ type DynamicDNS struct {
 	KeyName    string `yaml:"keyName,omitempty"`
 	Algorithm  string `yaml:"algorithm,omitempty"`
 	Zone       string `yaml:"zone,omitempty"`
+	AccessKey  string `yaml:"accessKey,omitempty"`
+	SecretKey  string `yaml:"secretKey,omitempty"`
+	Type       string `yaml:"type,omitempty"`
 }
 
 type Monitoring struct {

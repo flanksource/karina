@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.47.0 // indirect
 	cloud.google.com/go/bigquery v1.2.0 // indirect
 	cloud.google.com/go/storage v1.2.1 // indirect
+	github.com/aws/aws-sdk-go v1.15.78
 	github.com/dghubble/sling v1.3.0
 	github.com/evanphx/json-patch v4.2.0+incompatible
 	github.com/fatih/color v1.7.0
