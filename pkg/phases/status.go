@@ -15,14 +15,12 @@ import (
 func Status(p *platform.Platform) error {
 
 	if err := p.OpenViaEnv(); err != nil {
-		log.Tracef("Status: Failed to open with env: %s", err)
-		return err
+		return fmt.Errorf("status: failed to open with env: %v", err)
 	}
 
 	vmList, err := p.GetVMs()
 	if err != nil {
-		log.Tracef("Status: Failed to get VMs: %s", err)
-		return err
+		return fmt.Errorf("status: failed to get VMs: %v", err)
 	}
 
 	vms := make(map[string]map[string]string)
@@ -43,8 +41,7 @@ func Status(p *platform.Platform) error {
 	client, err := p.GetClientset()
 
 	if err != nil {
-		log.Tracef("Status: Failed to get clientset: %s", err)
-		return nil
+		return fmt.Errorf("status: failed to get clientset: %v", err)
 	}
 
 	log.Infof("Listing nodes")

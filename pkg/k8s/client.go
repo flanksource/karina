@@ -62,7 +62,7 @@ func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 	}
 	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("Failed to get secret %s/%s: %v\n", namespace, name, err)
+		log.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
 		return nil
 	}
 	return &cm.Data
@@ -72,13 +72,11 @@ func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
 	data, err := c.GetKubeConfigBytes()
 	if err != nil {
-		log.Tracef("GetDynamicClient: Failed to get k8s client: %s", err)
-		return nil, nil
+		return nil, fmt.Errorf("getDynamicClient: Failed to get k8s client: %v", err)
 	}
 	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
 	if err != nil {
-		log.Tracef("GetDynamicClient: Failed to get REST config: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getDynamicClient: Failed to get REST config: %v", err)
 	}
 	return dynamic.NewForConfig(cfg)
 }
@@ -113,8 +111,7 @@ func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (i
 	}
 	d, err := time.ParseDuration(data.(string))
 	if err != nil {
-		log.Tracef("decodeStringToDuration: Failed to parse duration: %s", err)
-		return data, err
+		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
 	}
 	return metav1.Duration{d}, nil
 }
@@ -128,8 +125,7 @@ func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (inter
 	}
 	d, err := time.Parse(time.RFC3339, data.(string))
 	if err != nil {
-		log.Tracef("decodeStringToTime: failed to decode to time: %s", err)
-		return data, err
+		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
 	}
 	return metav1.Time{d}, nil
 }
@@ -138,8 +134,7 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	client, _, _, err := c.GetDynamicClientFor(namespace, obj)
 	unstructuredObj, err := client.Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("Get: failed to get client: %s", err)
-		return err
+		return fmt.Errorf("get: failed to get client: %v", err)
 	}
 
 	config := &mapstructure.DecoderConfig{
@@ -150,8 +145,7 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 
 	decoder, err := mapstructure.NewDecoder(config)
 	if err != nil {
-		log.Tracef("Get: failed to decode config: %s", err)
-		return err
+		return fmt.Errorf("get: failed to decode config: %v", err)
 	}
 	return decoder.Decode(unstructuredObj.Object)
 
@@ -159,8 +153,7 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	dynamicClient, err := c.GetDynamicClient()
 	if err != nil {
-		log.Tracef("GetDynamicClientFor: failed to get dynamic client: %s", err)
-		return nil, nil, nil, err
+		return nil, nil, nil, fmt.Errorf("getDynamicClientFor: failed to get dynamic client: %v", err)
 	}
 
 	resource := schema.GroupVersionResource{
@@ -175,8 +168,7 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 
 	convertedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
-		log.Tracef("GetDynamicClientFor: failed to convert object: %s", err)
-		return nil, nil, nil, err
+		return nil, nil, nil, fmt.Errorf("getDynamicClientFor: failed to convert object: %v", err)
 	}
 
 	unstructuredObj := &unstructured.Unstructured{Object: convertedObj}
@@ -196,8 +188,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
-			log.Tracef("Apply: failed to get dynamic client: %s", err)
-			return err
+			return fmt.Errorf("apply: failed to get dynamic client: %v", err)
 		}
 
 		if log.IsLevelEnabled(log.TraceLevel) {
@@ -229,8 +220,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
 	cfg, err := c.GetRESTConfig()
 	if err != nil {
-		log.Tracef("GetClientset: failed to get REST config: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
 	}
 	return kubernetes.NewForConfigOrDie(cfg), nil
 }
@@ -238,8 +228,7 @@ func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
 func (c *Client) GetRESTConfig() (*rest.Config, error) {
 	data, err := c.GetKubeConfigBytes()
 	if err != nil {
-		log.Tracef("GetRESTConfig: failed to get kubeconfig: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
 	}
 	return clientcmd.RESTConfigFromKubeConfig(data)
 }
@@ -247,8 +236,7 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
 	client, resource, unstructuredObj, err := c.GetDynamicClientFor("", obj)
 	if err != nil {
-		log.Tracef("Annotate: failed to get dynamic client: %s", err)
-		return err
+		return fmt.Errorf("annotate: failed to get dynamic client: %s", err)
 	}
 	existing := unstructuredObj.GetAnnotations()
 	for k, v := range annotations {
@@ -263,8 +251,7 @@ func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) err
 func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	client, resource, unstructuredObj, err := c.GetDynamicClientFor("", obj)
 	if err != nil {
-		log.Tracef("Label: failed to get dynamic client: %s", err)
-		return err
+		return fmt.Errorf("label: failed to get dynamic client: %v", err)
 	}
 	existing := unstructuredObj.GetLabels()
 	for k, v := range labels {
@@ -272,8 +259,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	}
 	unstructuredObj.SetLabels(existing)
 	if _, err := client.Update(unstructuredObj, metav1.UpdateOptions{}); err != nil {
-		log.Tracef("Label: failed to update client: %s", err)
-		return err
+		return fmt.Errorf("label: failed to update client: %v", err)
 	}
 	log.Infof("%s/%s/%s labelled", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 	return nil
@@ -282,8 +268,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("CreateOrUpdateNamespace: failed to get client set: %s", err)
-		return err
+		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
 	}
 	ns := k8s.CoreV1().Namespaces()
 	if _, err := ns.Get(name, metav1.GetOptions{}); errors.IsNotFound(err) {
@@ -292,12 +277,10 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		namespace.Labels = labels
 		namespace.Annotations = annotations
 		if _, err := ns.Create(&namespace); err != nil {
-			log.Tracef("CreateOrUpdateNamespace: failed to namespace: %s", err)
-			return err
+			return fmt.Errorf("createOrUpdateNamespace: failed to namespace: %v", err)
 		}
 	} else if err != nil {
-		log.Tracef("CreateOrUpdateNamespace: failed to namespace: %s", err)
-		return err
+		return fmt.Errorf("createOrUpdateNamespace: failed to namespace: %v", err)
 	}
 	return nil
 }
@@ -305,7 +288,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 func (c *Client) HasSecret(ns, name string) bool {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("HasSecret: failed to get client set: %s", err)
+		log.Tracef("hasSecret: failed to get client set: %v", err)
 		return false
 	}
 	secrets := client.CoreV1().Secrets(ns)
@@ -317,7 +300,7 @@ func (c *Client) HasSecret(ns, name string) bool {
 func (c *Client) HasConfigMap(ns, name string) bool {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("HasConfigMap: failed to get client set: %s", err)
+		log.Tracef("hasConfigMap: failed to get client set: %v", err)
 		return false
 	}
 	configmaps := client.CoreV1().ConfigMaps(ns)
@@ -328,8 +311,7 @@ func (c *Client) HasConfigMap(ns, name string) bool {
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("CreateOrUpdateSecret: failed to get clientset: %s", err)
-		return err
+		return fmt.Errorf("createOrUpdateSecret: failed to get clientset: %v", err)
 	}
 	secrets := client.CoreV1().Secrets(ns)
 	cm, err := secrets.Get(name, metav1.GetOptions{})
@@ -341,8 +323,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 		log.Infof("Creating %s/secret/%s", ns, name)
 		if !c.ApplyDryRun {
 			if _, err := secrets.Create(cm); err != nil {
-				log.Tracef("CreateOrUpdateSecret: failed to namespace: %s", err)
-				return err
+				return fmt.Errorf("createOrUpdateSecret: failed to namespace: %v", err)
 			}
 		}
 	} else {
@@ -350,8 +331,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 		if !c.ApplyDryRun {
 			log.Infof("Updating %s/secret/%s", ns, name)
 			if _, err := secrets.Update(cm); err != nil {
-				log.Tracef("CreateOrUpdateSecret: failed to update configmap: %s", err)
-				return err
+				return fmt.Errorf("createOrUpdateSecret: failed to update configmap: %v", err)
 			}
 		}
 	}
@@ -361,8 +341,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("CreateOrUpdateConfigMap: failed to get client set: %s", err)
-		return err
+		return fmt.Errorf("createOrUpdateConfigMap: failed to get client set: %v", err)
 	}
 	configs := client.CoreV1().ConfigMaps(ns)
 	cm, err := configs.Get(name, metav1.GetOptions{})
@@ -373,8 +352,7 @@ func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string
 		log.Infof("Creating %s/cm/%s", ns, name)
 		if !c.ApplyDryRun {
 			if _, err := configs.Create(cm); err != nil {
-				log.Tracef("CreateOrUpdateConfigMap: failed to update configmap: %s", err)
-				return err
+				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
 			}
 		}
 	} else {
@@ -382,8 +360,7 @@ func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string
 		if !c.ApplyDryRun {
 			log.Infof("Updating %s/cm/%s", ns, name)
 			if _, err := configs.Update(cm); err != nil {
-				log.Tracef("CreateOrUpdateConfigMap: failed to update configmap: %s", err)
-				return err
+				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
 			}
 		}
 	}
@@ -393,8 +370,7 @@ func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string
 func (c *Client) ExposeIngress(namespace, service string, domain string, port int, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("ExposeIngress: failed to get client set: %s", err)
-		return err
+		return fmt.Errorf("exposeIngress: failed to get client set: %v", err)
 	}
 	ingresses := k8s.NetworkingV1beta1().Ingresses(namespace)
 	ingress, err := ingresses.Get(service, metav1.GetOptions{})
@@ -433,8 +409,7 @@ func (c *Client) ExposeIngress(namespace, service string, domain string, port in
 		log.Infof("Creating %s/ingress/%s", namespace, service)
 		if !c.ApplyDryRun {
 			if _, err := ingresses.Create(ingress); err != nil {
-				log.Tracef("ExposeIngress: failed to create ingress: %s", err)
-				return err
+				return fmt.Errorf("exposeIngress: failed to create ingress: %v", err)
 			}
 		}
 	}
@@ -444,13 +419,11 @@ func (c *Client) ExposeIngress(namespace, service string, domain string, port in
 func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("GetOrCreatePVC: failed to get client set: %s", err)
-		return err
+		return fmt.Errorf("getOrCreatePVC: failed to get client set: %v", err)
 	}
 	qty, err := resource.ParseQuantity(size)
 	if err != nil {
-		log.Tracef("GetOrCreatePVC: failed to parse quantity: %s", err)
-		return err
+		return fmt.Errorf("getOrCreatePVC: failed to parse quantity: %v", err)
 	}
 	pvcs := client.CoreV1().PersistentVolumeClaims(namespace)
 
@@ -476,8 +449,7 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 			},
 		})
 	} else if err != nil {
-		log.Tracef("GetOrCreatePVC: failed to create PVC: %s", err)
-		return err
+		return fmt.Errorf("getOrCreatePVC: failed to create PVC: %v", err)
 	} else {
 		log.Infof("Found existing PVC %s/%s (%s %s) ==> %s\n", namespace, name, size, class, existing.UID)
 		return nil
@@ -490,8 +462,7 @@ func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoin
 	cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
 	cert, err := ca.SignCertificate(cert, 1)
 	if err != nil {
-		log.Tracef("CreateKubeConfig: failed to sign certificate: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createKubeConfig: failed to sign certificate: %v", err)
 	}
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
@@ -561,7 +532,7 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 func (c *Client) PingMaster() bool {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("PingMaster: Failed to get clientset: %s", err)
+		log.Tracef("pingMaster: Failed to get clientset: %v", err)
 		return false
 	}
 
@@ -572,7 +543,7 @@ func (c *Client) PingMaster() bool {
 
 	_, err = client.CoreV1().ServiceAccounts("kube-system").Get("default", metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("PingMaster: Failed to get service account: %s", err)
+		log.Tracef("pingMaster: Failed to get service account: %v", err)
 		return false
 	}
 	return true
@@ -581,8 +552,7 @@ func (c *Client) PingMaster() bool {
 func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Duration) error {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("WaitForPod: Failed to get clientset: %s", err)
-		return err
+		return fmt.Errorf("waitForPod: Failed to get clientset: %v", err)
 	}
 	pods := client.CoreV1().Pods(ns)
 	start := time.Now()
@@ -603,8 +573,7 @@ func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Du
 func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...interface{}) (string, string, error) {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("ExecutePodf: Failed to get clientset: %s", err)
-		return "", "", err
+		return "", "", fmt.Errorf("executePodf: Failed to get clientset: %v", err)
 	}
 	const tty = false
 	req := client.CoreV1().RESTClient().Post().
@@ -624,13 +593,11 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 
 	rc, err := c.GetRESTConfig()
 	if err != nil {
-		log.Tracef("ExecutePodf: Failed to get REST config: %s", err)
-		return "", "", err
+		return "", "", fmt.Errorf("ExecutePodf: Failed to get REST config: %v", err)
 	}
 	exec, err := remotecommand.NewSPDYExecutor(rc, "POST", req.URL())
 	if err != nil {
-		log.Tracef("ExecutePodf: Failed to get SPDY Executor: %s", err)
-		return "", "", err
+		return "", "", fmt.Errorf("ExecutePodf: Failed to get SPDY Executor: %v", err)
 	}
 	var stdout, stderr *bytes.Buffer
 	err = exec.Stream(remotecommand.StreamOptions{
@@ -648,8 +615,7 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 func (c *Client) Executef(node string, timeout time.Duration, command string, args ...interface{}) (string, error) {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("Executef: Failed to get clientset: %s", err)
-		return "", err
+		return "", fmt.Errorf("executef: Failed to get clientset: %v", err)
 	}
 	pods := client.CoreV1().Pods("kube-system")
 
@@ -660,8 +626,7 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 		Spec: NewCommandJob(node, fmt.Sprintf(command, args...)),
 	})
 	if err != nil {
-		log.Tracef("Executef: Failed to create pod: %s", err)
-		return "", err
+		return "", fmt.Errorf("executef: Failed to create pod: %v", err)
 	}
 	defer pods.Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
 

@@ -34,12 +34,10 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	hostname := ""
 	cfg, err := baseKonfig(platform)
 	if err != nil {
-		log.Tracef("CreatePrimaryMaster: Failed to get baseKonfig: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
 	}
 	if err := addInitKubeadmConfig(hostname, platform, cfg); err != nil {
-		log.Tracef("CreatePrimaryMaster: Failed to add kubeadm config: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createPrimaryMaster: failed to add kubeadm config: %v", err)
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
@@ -52,8 +50,7 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	platform.Init()
 	cfg, err := konfigadm.NewConfig().Build()
 	if err != nil {
-		log.Tracef("baseKonfig: Failed to get config: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
 	}
 	for k, v := range envVars {
 		cfg.Environment[k] = v
@@ -68,8 +65,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
 	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
 	if err != nil {
-		log.Tracef("addCerts: Failed to sign certificate: %s", err)
-		return err
+		return fmt.Errorf("addCerts: failed to sign certificate: %v", err)
 	}
 
 	// plus any cert signed by this cluster specific CA
@@ -90,8 +86,7 @@ func addInitKubeadmConfig(hostname string, platform *platform.Platform, cfg *kon
 	cluster := kubeadm.NewClusterConfig(platform)
 	data, err := yaml.Marshal(cluster)
 	if err != nil {
-		log.Tracef("addInitKubeadmConfig: Failed to marshal cluster config: %s", err)
-		return err
+		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
 	}
 	log.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
@@ -149,18 +144,15 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	hostname := ""
 	cfg, err := baseKonfig(platform)
 	if err != nil {
-		log.Tracef("CreateSecondaryMaster: Failed to get baseKonfig: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
 	}
 	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
 	if err != nil {
-		log.Tracef("CreateSecondaryMaster: Failed to get/create bootstrap token: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createSecondaryMaster: failed to get/create bootstrap token: %v", err)
 	}
 	certKey, err := kubeadm.UploadControlPaneCerts(platform)
 	if err != nil {
-		log.Tracef("CreateSecondaryMaster: Failed to upload control plane certs: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
@@ -174,13 +166,11 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 	cfg, err := baseKonfig(platform)
 	if err != nil {
-		log.Tracef("CreateWorker: Failed to get baseKonfig: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
 	}
 	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
 	if err != nil {
-		log.Tracef("CreateWorker: Failed to get/create bootstrap token: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
 	}
 	createClientSideLoadbalancers(platform, cfg)
 	cfg.AddCommand(fmt.Sprintf(

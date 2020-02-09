@@ -25,36 +25,30 @@ func Deploy(p *platform.Platform) error {
 	if p.Harbor.DB == nil {
 		db, err := pgo.GetOrCreateDB(p, dbCluster, p.Harbor.Replicas)
 		if err != nil {
-			log.Tracef("Deploy: Failed to get/update db: %s", err)
-			return err
+			return fmt.Errorf("deploy: failed to get/update db: %v", err)
 		}
 		if err := pgo.WaitForDB(p, dbCluster, 120); err != nil {
-			log.Tracef("Deploy: Failed to wait for db: %s", err)
-			return err
+			return fmt.Errorf("deploy: failed to wait for db: %v", err)
 		}
 
 		if err := pgo.CreateDatabase(p, dbCluster, dbNames...); err != nil {
-			log.Tracef("Deploy: Failed to create db: %s", err)
-			return err
+			return fmt.Errorf("deploy: failed to create db: %v", err)
 		}
 		p.Harbor.DB = db
 	}
 
 	if err := files.Getter(fmt.Sprintf("github.com/goharbor/harbor-helm?ref=%s", p.Harbor.ChartVersion), "build/harbor"); err != nil {
-		log.Tracef("Deploy: Failed to download Harbor: %s", err)
-		return err
+		return fmt.Errorf("deploy: failed to download Harbor: %v", err)
 	}
 
 	values, err := p.Template("harbor.yml", "manifests")
 	if err != nil {
-		log.Tracef("Deploy: Failed to template Harbor manifests: %s", err)
-		return err
+		return fmt.Errorf("deploy: failed to template Harbor manifests: %v", err)
 	}
 	log.Tracef("Config: \n%s\n", console.StripSecrets(values))
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
-		log.Tracef("Deploy: Failed to get kubeconfig: %s", err)
-		return err
+		return fmt.Errorf("deploy: failed to get kubeconfig: %v", err)
 	}
 	helm := deps.BinaryWithEnv("helm", p.Versions["helm"], ".bin", map[string]string{
 		"KUBECONFIG": kubeconfig,
@@ -77,8 +71,7 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
-		log.Tracef("Deploy: Failed to install/upgrade Harbor chart: %s", err)
-		return err
+		return fmt.Errorf("deploy: failed to install/upgrade Harbor chart: %v", err)
 	}
 
 	client := NewHarborClient(p)

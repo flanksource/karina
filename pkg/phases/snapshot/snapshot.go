@@ -19,14 +19,12 @@ func Take(p *platform.Platform, dst string, since time.Duration, nsArgs []string
 	sinceTime := metav1.NewTime(time.Now().Add(-since))
 	k8s, err := p.GetClientset()
 	if err != nil {
-		log.Tracef("Take: Failed to get clientset: %s", err)
-		return err
+		return fmt.Errorf("take: failed to get clientset: %v", err)
 	}
 	if len(nsArgs) == 0 {
 		namespaceList, err = k8s.CoreV1().Namespaces().List(metav1.ListOptions{})
 		if err != nil {
-			log.Tracef("Take: Failed to list namespaces: %s", err)
-			return err
+			return fmt.Errorf("take: failed to list namespaces: %v", err)
 		}
 	} else {
 		var namespaces []v1.Namespace
@@ -42,8 +40,7 @@ func Take(p *platform.Platform, dst string, since time.Duration, nsArgs []string
 		pods := k8s.CoreV1().Pods(namespace.Name)
 		list, err := pods.List(metav1.ListOptions{})
 		if err != nil {
-			log.Tracef("Take: Failed to list pods: %s", err)
-			return err
+			return fmt.Errorf("take: failed to list pods: %v", err)
 		}
 
 		for _, pod := range list.Items {

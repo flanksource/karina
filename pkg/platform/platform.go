@@ -172,14 +172,12 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	log.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
 
 	if err := client.Init(); err != nil {
-		log.Tracef("GetNSXClient: Failed to init client: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
 	}
 	platform.nsx = client
 	version, err := platform.nsx.Ping()
 	if err != nil {
-		log.Tracef("GetNSXClient: Failed to ping: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
 	}
 	log.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
 	return platform.nsx, nil
@@ -192,8 +190,7 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	ctx := context.TODO()
 	obj, err := platform.session.Clone(vm, config)
 	if err != nil {
-		log.Tracef("Clone: Failed to clone session: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("clone: failed to clone session: %v", err)
 	}
 
 	VM := &VM{
@@ -259,8 +256,7 @@ func (platform *Platform) OpenViaEnv() error {
 	platform.ctx = context.TODO()
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
-		log.Tracef("OpenViaEnv: Failed to get session from env: %s", err)
-		return err
+		return fmt.Errorf("openViaEnv: failed to get session from env: %v", err)
 	}
 	platform.session = session
 	return nil
@@ -395,20 +391,17 @@ func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string
 	}
 	dir, err := fs.Open(path)
 	if err != nil {
-		log.Tracef("GetResourcesByDir: Failed to open fs: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
 	}
 	files, err := dir.Readdir(-1)
 	if err != nil {
-		log.Tracef("GetResourcesByDir: Failed to read dir: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getResourcesByDir: failed to read dir: %v", err)
 	}
 
 	for _, info := range files {
 		file, err := fs.Open(path + "/" + info.Name())
 		if err != nil {
-			log.Tracef("GetResourcesByDir: Failed to open fs: %s", err)
-			return nil, err
+			return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
 		}
 		out[info.Name()] = file
 	}
@@ -480,8 +473,7 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 	for _, spec := range specs {
 		data, err := yaml.Marshal(spec)
 		if err != nil {
-			log.Tracef("ApplyCRD: Failed to marshal yaml specs: %s", err)
-			return err
+			return fmt.Errorf("applyCRD: failed to marshal yaml specs: %v", err)
 		}
 
 		if log.IsLevelEnabled(log.TraceLevel) {
@@ -492,8 +484,7 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 
 		file := text.ToFile(string(data), ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
-			log.Tracef("ApplyCRD: Failed to apply CRD: %s", err)
-			return err
+			return fmt.Errorf("applyCRD: failed to apply CRD: %v", err)
 		}
 	}
 	return nil
@@ -508,8 +499,7 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 	for _, spec := range specs {
 		file := text.ToFile(spec, ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
-			log.Tracef("ApplyText: Failed to apply: %s", err)
-			return err
+			return fmt.Errorf("applyText: failed to apply: %v", err)
 		}
 	}
 	return nil
@@ -532,22 +522,18 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 		if strings.HasSuffix(spec, "/") {
 			dir, err := platform.TemplateDir(spec, "manifests")
 			if err != nil {
-				log.Tracef("ApplySpecs: Failed to template dir: %s", err)
-				return err
+				return fmt.Errorf("applySpecs: failed to template dir: %v", err)
 			}
 			if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
-				log.Tracef("ApplySpecs: Failed to apply specs: %s", err)
-				return err
+				return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 			}
 		} else {
 			template, err := platform.Template(spec, "manifests")
 			if err != nil {
-				log.Tracef("ApplySpecs: Failed to template manifests: %s", err)
-				return err
+				return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
 			}
 			if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
-				log.Tracef("ApplySpecs: Failed to apply specs: %s", err)
-				return err
+				return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 			}
 		}
 	}
@@ -588,7 +574,6 @@ func (p *Platform) GetS3Client() (*minio.Client, error) {
 
 	s3, err := minio.New(endpoint, p.S3.AccessKey, p.S3.SecretKey, false)
 	if err != nil {
-		log.Tracef("GetS3Client: Failed to create minio client: %s", err)
 		return nil, err
 	}
 	s3.SetCustomTransport(client.Transport)

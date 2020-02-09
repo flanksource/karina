@@ -91,22 +91,19 @@ func getEnv(p *platform.Platform) (*map[string]string, error) {
 	passwd := fmt.Sprintf("%s:%s", user, pass)
 	log.Debugf("Writing %s", home)
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
-		log.Tracef("getEnv: Failed to write file: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	secrets := *p.GetSecret("pgo", "pgo.tls")
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
-		log.Tracef("getEnv: Failed to write file: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
-		log.Tracef("getEnv: Failed to write file: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	return &ENV, nil
@@ -118,8 +115,7 @@ func ClientSetup(p *platform.Platform) error {
 	}
 	ENV, err := getEnv(p)
 	if err != nil {
-		log.Tracef("ClientSetup: Failed to get env: %s", err)
-		return err
+		return fmt.Errorf("clientSetup: failed to get env: %v", err)
 	}
 
 	if p.DryRun {
@@ -147,8 +143,7 @@ func Install(p *platform.Platform) error {
 		exec.Exec("cd build/pgo; git clean -fdx && git reset . ")
 	}
 	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+getPGOTag(p.PGO.Version), "build/pgo"); err != nil {
-		log.Tracef("Install: Failed to download pgo: %s", err)
-		return err
+		return fmt.Errorf("install: failed to download pgo: %v", err)
 	}
 
 	if runtime.GOOS == "darwin" {
@@ -164,21 +159,18 @@ func Install(p *platform.Platform) error {
 	templateFile := text.ToFile(template, ".yaml")
 	exec.ExecfWithEnv(fmt.Sprintf("cp -v %s build/pgo/conf/postgres-operator/pgo.yaml", templateFile), ENV)
 	if err := p.CreateOrUpdateNamespace(PGO, nil, nil); err != nil {
-		log.Tracef("Install: Failed to create/update namespace: %s", err)
-		return err
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
 	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
-		log.Tracef("Install: Failed to expose ingress: %s", err)
-		return err
+		return fmt.Errorf("install: failed to expose ingress: %v", err)
 	}
 
 	if p.DryRun {
 		return nil
 	}
 	if err := exec.ExecfWithEnv("/bin/bash  build/pgo/deploy/install-rbac.sh", ENV); err != nil {
-		log.Tracef("Install: Failed to install rbac: %s", err)
-		return err
+		return fmt.Errorf("install: failed to install rbac: %v", err)
 	}
 	return exec.ExecfWithEnv("/bin/bash build/pgo/deploy/deploy.sh", ENV)
 }
@@ -186,8 +178,7 @@ func Install(p *platform.Platform) error {
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env, err := getEnv(p)
 	if err != nil {
-		log.Tracef("GetPGO: Failed to get env: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("getPGO: failed to get env: %v", err)
 	}
 	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", *env), nil
 }

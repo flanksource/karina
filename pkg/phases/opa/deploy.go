@@ -1,11 +1,12 @@
 package opa
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"github.com/flanksource/commons/files"
+	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
-	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func readFile(filename string ) string {
@@ -31,8 +32,7 @@ func Deploy(platform *platform.Platform, policiesPath string) error {
 		if err := platform.CreateOrUpdateConfigMap(files.GetBaseName(policyFile.Name()), Namespace, map[string]string{
 			policyFile.Name(): readFile(policiesPath+"/"+policyFile.Name()),
 		}); err != nil {
-			log.Tracef("Install: Failed to create/update configmap: %s", err)
-			return err
+			return fmt.Errorf("deploy: failed to create/update configmap: %v", err)
 		}	
 	}
 	return err

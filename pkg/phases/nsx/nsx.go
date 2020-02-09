@@ -23,21 +23,18 @@ func Install(p *platform.Platform) error {
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
-		log.Tracef("Install: Failed to create/update namespace: %s", err)
-		return err
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
 	if !p.HasSecret(Namespace, CertName) {
 		cert := certs.NewCertificateBuilder("kubernetes-client").Certificate
 		cert, err := p.GetCA().SignCertificate(cert, 10)
 		if err != nil {
-			log.Tracef("Install: Failed to sign certificate: %s", err)
-			return err
+			return fmt.Errorf("install: failed to sign certificate: %v", err)
 		}
 
 		if err := p.CreateOrUpdateSecret(CertName, Namespace, cert.AsTLSSecret()); err != nil {
-			log.Tracef("Install: Failed to create/update secret: %s", err)
-			return err
+			return fmt.Errorf("install: failed to create/update secret: %v", err)
 		}
 	}
 
@@ -56,21 +53,18 @@ func Install(p *platform.Platform) error {
 	if err := p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
 		"ncp.ini": string(s),
 	}); err != nil {
-		log.Tracef("Install: Failed to create/update configmap: %s", err)
-		return err
+		return fmt.Errorf("install: failed to create/update configmap: %v", err)
 	}
 
 	if err := p.CreateOrUpdateConfigMap("nsx-node-agent-config", Namespace, map[string]string{
 		"ncp.ini": string(s),
 	}); err != nil {
-		log.Tracef("Install: Failed to create/update configmap: %s", err)
-		return err
+		return fmt.Errorf("install: failed to create/update configmap: %v", err)
 	}
 
 	p.NSX.Image = p.GetImagePath("library/nsx-ncp-ubuntu:" + p.NSX.Version)
 	if err := p.ApplySpecs(Namespace, "nsx.yaml"); err != nil {
-		log.Tracef("Install: Failed to apply specs: %s", err)
-		return err
+		return fmt.Errorf("install: failed to apply specs: %v", err)
 	}
 
 	return nil

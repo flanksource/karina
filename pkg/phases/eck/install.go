@@ -1,6 +1,7 @@
 package eck
 
 import (
+	"fmt"
 	"github.com/flanksource/commons/net"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	log "github.com/sirupsen/logrus"
@@ -15,8 +16,7 @@ func Deploy(p *platform.Platform) error {
 		log.Infof("Deploying ECK %s", p. ECK.Version)
 	}
 	if err := net.Download("https://download.elastic.co/downloads/eck/"+normalizeVersion(p.ECK.Version + "/all-in-one.yaml"), "build/eck.yaml"); err != nil {
-		log.Tracef("Deploy: Failed to download ECK", err)
-		return err
+		return fmt.Errorf("deploy: failed to download ECK: %v", err)
 	}
 	kubectl := p.GetKubectl()
 	return kubectl("apply -f build/eck.yaml")
