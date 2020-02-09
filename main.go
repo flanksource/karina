@@ -52,6 +52,7 @@ func main() {
 		cmd.Snapshot,
 		cmd.Conformance,
 		cmd.Backup,
+		cmd.Patch,
 	)
 
 	if len(commit) > 8 {
