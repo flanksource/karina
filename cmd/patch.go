@@ -12,18 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
-
-/*	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
-	"github.com/moshloop/platform-cli/pkg/phases/calico"
-	"github.com/moshloop/platform-cli/pkg/phases/dex"
-	"github.com/moshloop/platform-cli/pkg/phases/flux"
-	"github.com/moshloop/platform-cli/pkg/phases/harbor"
-	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
-	"github.com/moshloop/platform-cli/pkg/phases/nsx"
-	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/pgo"
-	"github.com/moshloop/platform-cli/pkg/phases/stubs"
-	"github.com/moshloop/platform-cli/pkg/phases/velero"*/
 )
 
 func checkErr(err error) {
@@ -92,22 +80,15 @@ var Patch = &cobra.Command{
     		err = ioutil.WriteFile(kustWorkingDir+"/finalPatch.yaml", []byte(finalPatchYaml), 0644)
 			checkErr(err)
     		log.Infof("Patching configs")
-    		//if err := platform.ApplySpecs("", kustWorkingDir+"/finalPatch.yaml"); err != nil {
-			//	log.Errorf("Error in patching: %s\n", err)
-			//}
+    		if err := platform.ApplySpecs("", kustWorkingDir+"/finalPatch.yaml"); err != nil {
+				log.Errorf("Error in patching: %s\n", err)
+			}
     	}
 
-    	//defer os.RemoveAll(kustWorkingDir)
 	},
 }
 
 func init() {
-
-	/*dryRun, _ := cmd.Flags().GetBool("dry-run")
-	if dryRun {
-		base.DryRun = true
-		log.Infof("Running a dry-run mode, no changes will be made")
-	}*/
 
 	Patch.PersistentFlags().StringP("path", "p", "-", "Path to patch files")
 	Patch.MarkFlagRequired("path")

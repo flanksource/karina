@@ -26,9 +26,10 @@ require (
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/moshloop/konfigadm v0.4.6
 	github.com/nsqio/go-nsq v1.0.8
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2
@@ -41,7 +42,7 @@ require (
 	golang.org/x/net v0.0.0-20191108063844-7e6e90b9ea88 // indirect
 	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12 // indirect
+	golang.org/x/tools v0.0.0-20200207224406-61798d64f025 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/grpc v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
