@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/phases/patch"
 )
 
 func checkErr(err error) {
@@ -64,12 +64,11 @@ var Patch = &cobra.Command{
 
     	kustomizationYaml := fmt.Sprintf(string(kustTemplate), patchFiles)
 
-    	fmt.Println(kustomizationYaml)
-
     	err = ioutil.WriteFile(kustWorkingDir+"/kustomization.yaml", []byte(kustomizationYaml), 0644)
     	checkErr(err)
 
     	output, err := exec.Command("kustomize", "build", kustWorkingDir).Output()
+    	fmt.Println("After runnnnnnnnn================")
     	checkErr(err)
     	finalPatchYaml := string(output[:])
 
@@ -80,11 +79,10 @@ var Patch = &cobra.Command{
     		err = ioutil.WriteFile(kustWorkingDir+"/finalPatch.yaml", []byte(finalPatchYaml), 0644)
 			checkErr(err)
     		log.Infof("Patching configs")
-    		if err := platform.ApplySpecs("", kustWorkingDir+"/finalPatch.yaml"); err != nil {
-				log.Errorf("Error in patching: %s\n", err)
+    		if err := patch.Install(getPlatform(cmd), kustWorkingDir+"/finalPatch.yaml"); err != nil {
+				log.Fatalf("Error in patching: %s\n", err)
 			}
     	}
-
 	},
 }
 
