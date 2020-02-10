@@ -12,10 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/minio/minio-go/v6"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
@@ -23,6 +19,10 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
+	"github.com/minio/minio-go/v6"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
@@ -142,9 +142,20 @@ func (platform *Platform) WaitFor() error {
 
 func (platform *Platform) GetDNSClient() dns.DNSClient {
 	if platform.DNS == nil || platform.DNS.Disabled {
-		return dns.DummyDNSClient{Zone: platform.DNS.Zone}
+		return &dns.DummyDNSClient{Zone: platform.DNS.Zone}
 	}
-	return dns.DynamicDNSClient{
+
+	if platform.DNS.Type == "route53" {
+		dns := &dns.Route53Client{
+			HostedZoneID: platform.DNS.Zone,
+			AccessKey:    platform.DNS.AccessKey,
+			SecretKey:    platform.DNS.SecretKey,
+		}
+		dns.Init()
+		return dns
+	}
+
+	return &dns.DynamicDNSClient{
 		Zone:       platform.DNS.Zone,
 		KeyName:    platform.DNS.KeyName,
 		Nameserver: platform.DNS.Nameserver,
@@ -562,7 +573,6 @@ func (p *Platform) GetBinary(name string) deps.BinaryFunc {
 
 func (p *Platform) GetS3Client() (*minio.Client, error) {
 	endpoint := p.S3.GetExternalEndpoint()
-	// config := &aws.Config{}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -578,5 +588,4 @@ func (p *Platform) GetS3Client() (*minio.Client, error) {
 	}
 	s3.SetCustomTransport(client.Transport)
 	return s3, nil
-
 }

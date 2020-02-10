@@ -39,6 +39,22 @@ func init() {
 		},
 	}
 
+	list := &cobra.Command{
+		Use:  "list",
+		Args: cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			dns := getPlatform(cmd).GetDNSClient()
+			list, err := dns.Get(domain)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			for _, record := range list {
+				fmt.Println(record)
+			}
+		},
+	}
+
 	delete := &cobra.Command{
 		Use:  "delete",
 		Args: cobra.MinimumNArgs(1),
@@ -50,6 +66,6 @@ func init() {
 			}
 		},
 	}
-	DNS.AddCommand(append, update, delete)
+	DNS.AddCommand(append, update, delete, list)
 	DNS.PersistentFlags().StringVar(&domain, "domain", "", "The DNS sub-domain (excluding root Zone) to update")
 }
