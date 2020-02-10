@@ -1,13 +1,17 @@
 package cmd
 
 import (
+	"os"
 	"fmt"
 	"bytes"
 	"strings"
 	"io/ioutil"
+	"os/exec"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/moshloop/platform-cli/pkg/platform"
 
 /*	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
@@ -46,6 +50,10 @@ var Patch = &cobra.Command{
 			log.Infof("Running a dry-run mode, no changes will be made")
 		}
 
+		kustWorkingDir := "overlays/patchDir/"
+		os.RemoveAll(kustWorkingDir)
+		err := os.MkdirAll(kustWorkingDir, 0755)
+    	checkErr(err)
 		patchFilePath, _ := cmd.Flags().GetString("path")
 		files, _ := ioutil.ReadDir(patchFilePath)
 		var buffer bytes.Buffer
@@ -54,6 +62,11 @@ var Patch = &cobra.Command{
 	    		buffer.WriteString("  - ")
 	    		buffer.WriteString(file.Name())
 	    		buffer.WriteString("\n")
+	    		fmt.Println(file.Name())
+	    		input, err := ioutil.ReadFile(patchFilePath+"/"+file.Name())
+				checkErr(err)
+				err = ioutil.WriteFile(kustWorkingDir+file.Name(), input, 0644)
+				checkErr(err)
 	    	}
 	    }
 	    patchFiles := buffer.String()
@@ -61,20 +74,30 @@ var Patch = &cobra.Command{
 	    kustTemplate, err := ioutil.ReadFile("overlays/overlays_kustomization_template")
     	checkErr(err)
 
-    	kustomization := fmt.Sprintf(string(kustTemplate), patchFiles)
+    	kustomizationYaml := fmt.Sprintf(string(kustTemplate), patchFiles)
 
-    	fmt.Println(kustomization)
+    	fmt.Println(kustomizationYaml)
 
-    	err = ioutil.WriteFile(patchFilePath+"/kustomization.yaml", []byte(kustomization), 0644)
+    	err = ioutil.WriteFile(kustWorkingDir+"/kustomization.yaml", []byte(kustomizationYaml), 0644)
     	checkErr(err)
 
+    	output, err := exec.Command("kustomize", "build", kustWorkingDir).Output()
+    	checkErr(err)
+    	finalPatchYaml := string(output[:])
+
     	if dryRun{
-    		log.Infof("Running a dry-run mode")
-    		
+    		log.Infof("Yaml to apply")
+    		fmt.Println(finalPatchYaml)
+    	} else{
+    		err = ioutil.WriteFile(kustWorkingDir+"/finalPatch.yaml", []byte(finalPatchYaml), 0644)
+			checkErr(err)
+    		log.Infof("Patching configs")
+    		//if err := platform.ApplySpecs("", kustWorkingDir+"/finalPatch.yaml"); err != nil {
+			//	log.Errorf("Error in patching: %s\n", err)
+			//}
     	}
-    	else{
-    		log.Infof("Running a dry-run mode")
-    	}
+
+    	//defer os.RemoveAll(kustWorkingDir)
 	},
 }
 
