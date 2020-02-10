@@ -104,6 +104,7 @@ type Harbor struct {
 	Version       string                   `yaml:"version,omitempty"`
 	ChartVersion  string                   `yaml:"chartVersion,omitempty"`
 	AdminPassword string                   `yaml:"-"`
+	ClairVersion  string                   `yaml:"clairVersion"`
 	DB            *DB                      `yaml:"db,omitempty"`
 	URL           string                   `yaml:"url,omitempty"`
 	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
