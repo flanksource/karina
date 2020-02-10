@@ -70,7 +70,7 @@ func Deploy(p *platform.Platform) error {
 		debug = "--debug"
 	}
 
-	if err := helm("upgrade harbor build/harbor -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
+	if err := helm("upgrade harbor build/harbor --wait -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
 		return err
 	}
 
