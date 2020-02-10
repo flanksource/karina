@@ -215,6 +215,7 @@ type NFS struct {
 }
 
 type Ldap struct {
+	Disabled   bool   `yaml:"disabled,omitempty"`
 	Host       string `yaml:"host,omitempty"`
 	Username   string `yaml:"username,omitempty"`
 	Password   string `yaml:"password,omitempty"`

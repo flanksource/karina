@@ -216,9 +216,13 @@ func KindCluster(platform *platform.Platform) error {
 			Kind:       "Cluster",
 			APIVersion: "kind.x-k8s.io/v1alpha4",
 		},
+		Networking: kindapi.Networking{
+			DisableDefaultCNI: true,
+		},
 		Nodes: []kindapi.Node{
 			{
-				Role: "control-plane",
+				Role:  "control-plane",
+				Image: fmt.Sprintf("kindest/node:%s", platform.Kubernetes.Version),
 				ExtraPortMappings: []kindapi.PortMapping{
 					{
 						ContainerPort: 80,
@@ -257,7 +261,12 @@ func KindCluster(platform *platform.Platform) error {
 
 	kind := platform.GetBinary("kind")
 
-	return kind("create cluster --config %s", tmpfile.Name())
+	kubeConfig, err := platform.GetKubeConfig()
+	if err != nil {
+		return errors.Wrap(err, "failed to get kube config")
+	}
+
+	return kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), kubeConfig)
 }
 
 func provisionLoadbalancers(p *platform.Platform) (masters string, workers string, err error) {
@@ -306,7 +315,6 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig.ControlPlaneEndpoint = ""
 	clusterConfig.ClusterName = ""
 	clusterConfig.APIServer.CertSANs = nil
-	clusterConfig.APIServer.ExtraArgs = nil
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""

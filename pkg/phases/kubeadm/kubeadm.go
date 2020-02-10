@@ -38,12 +38,13 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	}
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
-	cluster.APIServer.ExtraArgs = map[string]string{
-		"oidc-issuer-url":     "https://dex." + cfg.Domain,
-		"oidc-client-id":      "kubernetes",
-		"oidc-ca-file":        "/etc/ssl/certs/openid-ca.pem",
-		"oidc-username-claim": "email",
-		"oidc-groups-claim":   "groups",
+	cluster.APIServer.ExtraArgs = make(map[string]string)
+	if !cfg.Ldap.Disabled {
+		cluster.APIServer.ExtraArgs["oidc-issuer-url"] = "https://dex." + cfg.Domain
+		cluster.APIServer.ExtraArgs["oidc-client-id"] = "kubernetes"
+		cluster.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/certs/openid-ca.pem"
+		cluster.APIServer.ExtraArgs["oidc-username-claim"] = "email"
+		cluster.APIServer.ExtraArgs["oidc-groups-claim"] = "groups"
 	}
 	if strings.HasPrefix(cluster.KubernetesVersion, "v1.16") {
 		runtimeConfigs := []string{
