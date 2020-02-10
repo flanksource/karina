@@ -5,6 +5,5 @@ import (
 )
 
 func Install(platform *platform.Platform, patchYamlPath string) error {
-	return nil
-	//return platform.ApplySpecs("", patchYamlPath)
+	return platform.ApplySpecs("", patchYamlPath)
 }

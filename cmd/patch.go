@@ -68,7 +68,6 @@ var Patch = &cobra.Command{
     	checkErr(err)
 
     	output, err := exec.Command("kustomize", "build", kustWorkingDir).Output()
-    	fmt.Println("After runnnnnnnnn================")
     	checkErr(err)
     	finalPatchYaml := string(output[:])
 
