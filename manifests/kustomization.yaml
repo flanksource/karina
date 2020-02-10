@@ -2,7 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - calico.yaml
   - cert-manager-crd.yml
   - cert-manager-deploy.yml
   - cron.yaml
@@ -10,10 +9,8 @@ resources:
   - dex.yaml
   - eck.yml
   - eventrouter.yml
-  - harbor.yml
   - images.yaml
   - k8s-dashboard.yml
-  - kustomization.yaml
   - local-path.yml
   - minio.yaml
   - namespace-configurator.yml
@@ -24,9 +21,7 @@ resources:
   - opa.yaml
   - platform-operator.yml
   - quack.yml
-  - rbac.yml
   - tiller.yml
-  - monitoring/alertmanager.yaml
   - monitoring/grafana-operator.yml
   - monitoring/kube-prometheus.yml
   - monitoring/kube-state-metrics.yml
