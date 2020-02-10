@@ -11,11 +11,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -104,6 +104,8 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	if dns != nil {
 		dns.Key = template(dns.Key)
 		dns.KeyName = template(dns.KeyName)
+		dns.AccessKey = template(dns.AccessKey)
+		dns.SecretKey = template(dns.SecretKey)
 		base.DNS = dns
 	}
 

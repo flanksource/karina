@@ -33,6 +33,7 @@ monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
 pgo:
   version: 4.2.0
+  imageVersion: 4.2.0
   primaryStorage: local-path
   xlogStorage: local-path
   backupStorage: local-path

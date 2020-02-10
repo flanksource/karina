@@ -6,13 +6,13 @@ require (
 	cloud.google.com/go v0.47.0 // indirect
 	cloud.google.com/go/bigquery v1.2.0 // indirect
 	cloud.google.com/go/storage v1.2.1 // indirect
-	github.com/crunchydata/postgres-operator v4.2.1+incompatible
+	github.com/aws/aws-sdk-go v1.15.78
 	github.com/dghubble/sling v1.3.0
 	github.com/evanphx/json-patch v4.2.0+incompatible
 	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.0.0
-	github.com/gobuffalo/packr/v2 v2.7.1 // indirect
+	github.com/flanksource/commons v1.0.2
+	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
