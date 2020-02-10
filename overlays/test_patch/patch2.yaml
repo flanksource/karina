@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-client-provisioner
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: nfs-client-provisioner
+          env:
+            - name: CUSTOM_ENV_VARIABLE2
+              value: Value2

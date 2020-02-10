@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+spec:
+  template:
+    spec:
+      containers:
+        - name: node-exporter
+          env:
+            - name: CUSTOM_ENV_VARIABLE
+              value: Value
