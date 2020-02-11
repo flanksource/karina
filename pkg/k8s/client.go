@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	certs "github.com/flanksource/commons/certs"
+	utils "github.com/flanksource/commons/utils"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -28,9 +30,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
-
-	certs "github.com/flanksource/commons/certs"
-	utils "github.com/flanksource/commons/utils"
 )
 
 type Client struct {
@@ -308,6 +307,13 @@ func (c *Client) HasConfigMap(ns, name string) bool {
 	return cm != nil && err == nil
 }
 
+func (c *Client) GetOrCreateSecret(name, ns string, data map[string][]byte) error {
+	if c.HasSecret(name, ns) {
+		return nil
+	}
+	return c.CreateOrUpdateSecret(name, ns, data)
+}
+
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
 	client, err := c.GetClientset()
 	if err != nil {
@@ -438,7 +444,6 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 			Spec: v1.PersistentVolumeClaimSpec{
 				StorageClassName: &class,
 				AccessModes: []v1.PersistentVolumeAccessMode{
-					v1.ReadWriteMany,
 					v1.ReadWriteOnce,
 				},
 				Resources: v1.ResourceRequirements{

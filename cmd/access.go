@@ -27,6 +27,9 @@ func init() {
 				endpoint = fmt.Sprintf("k8s-api.%s", platform.Domain)
 			} else {
 				// No DNS available using the first masters IP as an endpoint
+				if len(ips) == 0 {
+					log.Fatalf("No healthy endpoints")
+				}
 				endpoint = ips[0]
 			}
 			group, _ := cmd.Flags().GetString("group")

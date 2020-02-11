@@ -1,12 +1,28 @@
 package harbor
 
 import (
+	"strings"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 var dbCluster = "harbor"
 var dbNames = []string{"registry", "clair", "notary_server", "notary_signer"}
+
+var clairVersions = map[string]string{
+	"latest": "2.1.1",
+	"v1.9.0": "2.0.9",
+	"v1.9.1": "2.0.9",
+	"v1.9.2": "2.0.9",
+	"v1.9.3": "2.1.0",
+	"v1.9.4": "2.1.0",
+	"v1.8.5": "2.0.8",
+	"v1.8.4": "2.0.8",
+	"v1.8.3": "2.0.8",
+	"v1.8.2": "2.0.8",
+	"v1.8.6": "2.1.0",
+}
 
 func defaults(p *platform.Platform) {
 	harbor := p.Harbor
@@ -18,6 +34,14 @@ func defaults(p *platform.Platform) {
 	}
 	if harbor.URL == "" {
 		harbor.URL = "https://harbor." + p.Domain
+	}
+
+	if harbor.ClairVersion == "" {
+		if version, ok := clairVersions[harbor.Version]; ok {
+			harbor.ClairVersion = version
+		} else {
+			harbor.ClairVersion = clairVersions["latest"]
+		}
 	}
 
 	if harbor.Replicas == 0 {
@@ -41,7 +65,15 @@ func defaults(p *platform.Platform) {
 		harbor.Settings = settings
 	}
 	if harbor.ChartVersion == "" {
-		harbor.ChartVersion = "v1.2.0"
+		if strings.HasPrefix(harbor.Version, "v1.10") {
+			harbor.ChartVersion = "v1.3.0"
+		} else if strings.HasPrefix(harbor.Version, "v1.9") {
+			harbor.ChartVersion = "v1.2.0"
+		} else if strings.HasPrefix(harbor.Version, "v1.8") {
+			harbor.ChartVersion = "v1.1.0"
+		} else {
+			harbor.ChartVersion = "v1.3.0"
+		}
 	}
 	p.Harbor = harbor
 }

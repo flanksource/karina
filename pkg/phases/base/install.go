@@ -53,6 +53,7 @@ func Install(platform *platform.Platform) error {
 		// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
 		// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
 		var _ = platform.ApplySpecs("", "cert-manager-deploy.yml")
+		platform.GetKubectl()("wait --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
 		platform.WaitForNamespace("cert-manager", 180*time.Second)
 		if err := platform.ApplySpecs("", "cert-manager-deploy.yml"); err != nil {
 			log.Errorf("Error deploying cert manager: %s\n", err)
