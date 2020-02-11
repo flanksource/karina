@@ -17,7 +17,7 @@ func Install(p *platform.Platform) error {
 	log.Infof("Deploying %d gitops controllers", len(p.GitOps))
 	for _, gitops := range p.GitOps {
 		if err := p.Apply(gitops.Namespace, NewFluxDeployment(&gitops)...); err != nil {
-			return err
+			return fmt.Errorf("install: failed to apply deployment: %v", err)
 		}
 	}
 	return nil

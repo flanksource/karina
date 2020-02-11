@@ -96,7 +96,7 @@ func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	ids := []string{}
 	devices, err := vm.vm.Device(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getLogicalPortIds: failed to get devices: %v", err)
 	}
 
 	for _, dev := range devices.SelectByType((*vim.VirtualEthernetCard)(nil)) {
@@ -115,15 +115,15 @@ func (vm *VM) SetAttributes(attributes map[string]string) error {
 	ctx := context.TODO()
 	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
 	if err != nil {
-		return err
+		return fmt.Errorf("setAttributes: failed to get custom field manager: %v", err)
 	}
 	for k, v := range attributes {
 		key, err := fields.FindKey(ctx, k)
 		if err != nil {
-			return err
+			return fmt.Errorf("setAttributes: failed to find key: %v", err)
 		}
 		if err := fields.Set(ctx, vm.vm.Reference(), key, v); err != nil {
-			return err
+			return fmt.Errorf("setAttributes: failed to set fields: %v", err)
 		}
 	}
 	return nil
@@ -135,16 +135,16 @@ func (vm *VM) GetAttributes() (map[string]string, error) {
 	refs := []vim.ManagedObjectReference{vm.vm.Reference()}
 	var objs []mo.ManagedEntity
 	if err := property.DefaultCollector(vm.vm.Client()).Retrieve(ctx, refs, []string{"name", "customValue"}, &objs); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getAttributes: failed to set default collector: %v", err)
 	}
 
 	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getAttributes: failed to get fields: %v", err)
 	}
 	field, err := fields.Field(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getAttributes: failed to get field: %v", err)
 	}
 
 	for _, obj := range objs {
@@ -162,7 +162,7 @@ func (vm *VM) GetVirtualMachine(ctx context.Context) (*mo.VirtualMachine, error)
 	pc := property.DefaultCollector(vm.vm.Client())
 	err := pc.Retrieve(ctx, []vim.ManagedObjectReference{vm.vm.Reference()}, nil, &res)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getVirtualMachine: retrieve failed: %v", err)
 	}
 	return &(res[0]), nil
 }
