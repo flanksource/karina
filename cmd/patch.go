@@ -6,10 +6,12 @@ import (
 	"bytes"
 	"strings"
 	"io/ioutil"
-	"os/exec"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"k8s.io/cli-runtime/pkg/kustomize"
+	"sigs.k8s.io/kustomize/pkg/fs"
 
 	"github.com/moshloop/platform-cli/pkg/phases/patch"
 )
@@ -50,7 +52,6 @@ var Patch = &cobra.Command{
 	    		buffer.WriteString("  - ")
 	    		buffer.WriteString(file.Name())
 	    		buffer.WriteString("\n")
-	    		fmt.Println(file.Name())
 	    		input, err := ioutil.ReadFile(patchFilePath+"/"+file.Name())
 				checkErr(err)
 				err = ioutil.WriteFile(kustWorkingDir+file.Name(), input, 0644)
@@ -67,12 +68,12 @@ var Patch = &cobra.Command{
     	err = ioutil.WriteFile(kustWorkingDir+"/kustomization.yaml", []byte(kustomizationYaml), 0644)
     	checkErr(err)
 
-    	output, err := exec.Command("kustomize", "build", kustWorkingDir).Output()
-    	checkErr(err)
-    	finalPatchYaml := string(output[:])
+    	var output bytes.Buffer
+    	kustomize.RunKustomizeBuild(&output, fs.MakeRealFS(), kustWorkingDir)
+    	finalPatchYaml := output.String()
 
     	if dryRun{
-    		log.Infof("Yaml to apply")
+    		log.Infof("Yaml to apply")     		
     		fmt.Println(finalPatchYaml)
     	} else{
     		err = ioutil.WriteFile(kustWorkingDir+"/finalPatch.yaml", []byte(finalPatchYaml), 0644)

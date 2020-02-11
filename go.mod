@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.47.0 // indirect
 	cloud.google.com/go/bigquery v1.2.0 // indirect
 	cloud.google.com/go/storage v1.2.1 // indirect
+	github.com/Azure/go-autorest v11.1.2+incompatible // indirect
 	github.com/crunchydata/postgres-operator v4.2.1+incompatible
 	github.com/dghubble/sling v1.3.0
 	github.com/evanphx/json-patch v4.2.0+incompatible
@@ -20,7 +21,6 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/grafana-tools/sdk v0.0.0-20191214173017-690a0c6bec7b
 	github.com/imdario/mergo v0.3.6
-	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/lib/pq v1.1.1
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
@@ -49,11 +49,12 @@ require (
 	gopkg.in/ini.v1 v1.51.0 // indirect
 
 	gopkg.in/yaml.v2 v2.2.7
-	k8s.io/api v0.0.0-20190831074750-7364b6bdad65
-	k8s.io/apimachinery v0.0.0-20190831074630-461753078381
-	k8s.io/client-go v0.0.0-20190819141724-e14f31a72a77
+	k8s.io/api v0.17.2
+	k8s.io/apimachinery v0.17.2
+	k8s.io/cli-runtime v0.17.2
+	k8s.io/client-go v0.17.2
 	k8s.io/cluster-bootstrap v0.0.0-20190831080953-99cb41cb5d35
-	k8s.io/utils v0.0.0-20190923111123-69764acb6e8e // indirect
+	sigs.k8s.io/kustomize v2.0.3+incompatible
 )
 
 // replace github.com/flanksource/commons => ../commons
