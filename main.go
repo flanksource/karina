@@ -52,7 +52,6 @@ func main() {
 		cmd.Snapshot,
 		cmd.Conformance,
 		cmd.Backup,
-		cmd.Patch,
 	)
 
 	if len(commit) > 8 {
@@ -81,6 +80,7 @@ func main() {
 
 	root.PersistentFlags().StringArrayP("config", "c", []string{utils.GetEnvOrDefault("PLATFORM_CONFIG", "config.yml")}, "Path to config file")
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
+	root.PersistentFlags().StringP("path", "p", "", "Path of patch files")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))

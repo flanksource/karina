@@ -77,6 +77,13 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		log.Infof("Running a dry-run mode, no changes will be made")
 	}
 
+	patchFilePath, _ := cmd.Flags().GetString("path")
+	base.PatchPath = patchFilePath
+	if (patchFilePath != ""){
+		_ , err := ioutil.ReadDir(patchFilePath)
+		log.Fatal(err)
+	}
+
 	base.S3.AccessKey = template(base.S3.AccessKey)
 	base.S3.SecretKey = template(base.S3.SecretKey)
 

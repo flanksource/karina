@@ -51,6 +51,7 @@ type PlatformConfig struct {
 	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
 	SMTP                  Smtp              `yaml:"smtp,omitempty"`
 	Source                string            `yaml:"-"`
+	PatchPath             string            `yaml:"-"`
 	Specs                 []string          `yaml:"specs,omitempty"`
 	TrustedCA             string            `yaml:"trustedCA,omitempty"`
 	Versions              map[string]string `yaml:"versions,omitempty"`

@@ -15,6 +15,8 @@ import (
 	"github.com/minio/minio-go/v6"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	"k8s.io/cli-runtime/pkg/kustomize"
+	"sigs.k8s.io/kustomize/pkg/fs"
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
@@ -513,6 +515,63 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	k8s.WaitForNamespace(client, ns, timeout)
 }
 
+func GenerateBaseYaml(baseYamlContent string) {
+	kustWorkingDir := "overlays/baseDir/"
+	os.RemoveAll(kustWorkingDir)
+	err := os.MkdirAll(kustWorkingDir, 0755)
+   	if err != nil {
+    	log.Fatal(err)
+    }
+    err = ioutil.WriteFile(kustWorkingDir+"base.yaml", baseYamlContent, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func GetFinalPatchYaml(patchFilePath string) string {
+	kustWorkingDir := "overlays/patchDir/"
+	os.RemoveAll(kustWorkingDir)
+	err := os.MkdirAll(kustWorkingDir, 0755)
+   	if err != nil {
+    	log.Fatal(err)
+    }
+	files, _ := ioutil.ReadDir(patchFilePath)
+	var buffer bytes.Buffer
+	for _, file := range files {
+	    if(strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml")){
+	    	buffer.WriteString("  - ")
+	    	buffer.WriteString(file.Name())
+	   		buffer.WriteString("\n")
+	   		input, err := ioutil.ReadFile(patchFilePath+"/"+file.Name())
+			if err != nil {
+		        log.Fatal(err)
+		    }
+			err = ioutil.WriteFile(kustWorkingDir+file.Name(), input, 0644)
+			if err != nil {
+		        log.Fatal(err)
+		    }
+	   	}
+	}
+    patchFiles := buffer.String()
+
+	kustTemplate, err := ioutil.ReadFile("overlays/overlays_kustomization_template")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    kustomizationYaml := fmt.Sprintf(string(kustTemplate), patchFiles)
+
+    err = ioutil.WriteFile(kustWorkingDir+"/kustomization.yaml", []byte(kustomizationYaml), 0644)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    var output bytes.Buffer
+    kustomize.RunKustomizeBuild(&output, fs.MakeRealFS(), kustWorkingDir)
+    finalPatchYaml := output.String()
+    return finalPatchYaml
+}
+
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	kubectl := platform.GetKubectl()
 	if namespace != "" {
@@ -524,16 +583,37 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 			if err != nil {
 				return err
 			}
-			if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
-				return err
+			if(platform.PatchPath != "") {
+				baseYamlContent, err := ioutil.ReadFile(dir)
+				if err != nil {
+			        log.Fatal(err)
+			    }
+				GenerateBaseYaml(baseYamlContent)
+				finalPatchYaml := GetFinalPatchYaml(platform.PatchPath)
+				if err := kubectl("apply %s -f %s", namespace, finalPatchYaml); err != nil {
+					return err
+				}
+			} else {
+				if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
+					return err
+				}
 			}
 		} else {
 			template, err := platform.Template(spec, "manifests")
 			if err != nil {
 				return err
 			}
-			if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
-				return err
+			if(platform.PatchPath != "")
+			{
+				GenerateBaseYaml(template)
+				finalPatchYaml := GetFinalPatchYaml(platform.PatchPath)
+				if err := kubectl("apply %s -f %s", namespace, finalPatchYaml); err != nil {
+					return err
+				}
+			} else {
+				if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
+					return err
+				}
 			}
 		}
 	}
