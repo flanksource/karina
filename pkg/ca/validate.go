@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ValidateCA(name, certPath, privateKeyPath, password string, expiry int) error {
+func ValidateCA(certPath, privateKeyPath, password string) error {
 	certKey := files.SafeRead(certPath)
 	privateKey := files.SafeRead(privateKeyPath)
 
@@ -32,6 +32,8 @@ func ValidateCA(name, certPath, privateKeyPath, password string, expiry int) err
 		return errors.Wrap(err, "failed to get certificate hash")
 	}
 	fmt.Printf("Certificate hash is %s\n", hash)
+
+	fmt.Printf("Expires at: %s\n", cert.X509.NotAfter)
 
 	return nil
 }
