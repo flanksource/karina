@@ -247,6 +247,11 @@ func KindCluster(platform *platform.Platform) error {
 						HostPort:      443,
 						Protocol:      kindapi.PortMappingProtocolTCP,
 					},
+					{
+						ContainerPort: 6443,
+						HostPort:      6443,
+						Protocol:      kindapi.PortMappingProtocolTCP,
+					},
 				},
 				KubeadmConfigPatches: kubeadmPatches,
 				ExtraMounts: []kindapi.Mount{
