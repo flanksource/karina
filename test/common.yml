@@ -4,13 +4,17 @@ ldap:
   adminGroup: NA1
   username: test
   password: secret
-  host: ldap.127.0.0.1.nip.io
+  port: 10636
+  host: apacheds.ldap
   dn: ou=users,dc=example,dc=com
+  bindDN: uid=admin,ou=system
+  bindPW: secret
 kubernetes:
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
+  masterIP: localhost
 versions:
   gomplate: v3.5.0
   konfigadm: v0.3.6

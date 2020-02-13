@@ -217,16 +217,20 @@ type NFS struct {
 type Ldap struct {
 	Disabled   bool   `yaml:"disabled,omitempty"`
 	Host       string `yaml:"host,omitempty"`
+	Port       string `yaml:"port,omitempty"`
 	Username   string `yaml:"username,omitempty"`
 	Password   string `yaml:"password,omitempty"`
 	Domain     string `yaml:"domain,omitempty"`
 	AdminGroup string `yaml:"adminGroup,omitempty"`
-	BindDN     string `yaml:"dn,omitempty"`
+	DN         string `yaml:"dn,omitempty"`
+	BindDN     string `yaml:"bindDN,omitempty"`
+	BindPW     string `yaml:"bindPW,omitempty"`
 }
 
 type Kubernetes struct {
 	Version          string            `yaml:"version,omitempty"`
-	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
+	MasterIP         string            `yaml:"masterIP,omitempty"`
 }
 
 type DynamicDNS struct {
