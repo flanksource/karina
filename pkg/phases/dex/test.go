@@ -33,7 +33,9 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Failf("dex", "failed to get token %v", err)
 	}
 
-	kubeConfig, err := testlib.GenerateKubeConfigOidc(p, token)
+	ca := p.GetIngressCA()
+	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token)
+
 	if err != nil {
 		test.Failf("dex", "failed to generate kube config: %v", err)
 	}
