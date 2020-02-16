@@ -33,6 +33,7 @@ fi
 # kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN provision kind-cluster
+  ls -la ~/.kube
   export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
 
