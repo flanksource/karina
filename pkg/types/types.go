@@ -222,9 +222,7 @@ type Ldap struct {
 	Password   string `yaml:"password,omitempty"`
 	Domain     string `yaml:"domain,omitempty"`
 	AdminGroup string `yaml:"adminGroup,omitempty"`
-	DN         string `yaml:"dn,omitempty"`
-	BindDN     string `yaml:"bindDN,omitempty"`
-	BindPW     string `yaml:"bindPW,omitempty"`
+	BindDN     string `yaml:"dn,omitempty"`
 }
 
 type Kubernetes struct {

@@ -2,13 +2,11 @@ name: test
 domain: 127.0.0.1.nip.io
 ldap:
   adminGroup: NA1
-  username: test
+  username: uid=admin,ou=system
   password: secret
   port: 10636
   host: apacheds.ldap
   dn: ou=users,dc=example,dc=com
-  bindDN: uid=admin,ou=system
-  bindPW: secret
 kubernetes:
   version: v1.15.7
   kubeletExtraArgs:
