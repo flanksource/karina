@@ -40,3 +40,7 @@ echo Pushing docker image
 docker login --username $DOCKER_LOGIN --password $DOCKER_PASS
 docker push $GITHUB_USER/$NAME:$TAG
 
+echo Publishing docs
+
+make deploy-docs
+
