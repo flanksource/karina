@@ -1,43 +1,45 @@
 package api
 
 type ClusterConfiguration struct {
-	APIVersion           string `yaml:"apiVersion"`
+	APIVersion           string `yaml:"apiVersion,omitempty"`
 	Kind                 string `yaml:"kind"`
-	KubernetesVersion    string `yaml:"kubernetesVersion"`
+	KubernetesVersion    string `yaml:"kubernetesVersion,omitempty"`
 	ControlPlaneEndpoint string `yaml:"controlPlaneEndpoint,omitempty"`
 	APIServer            struct {
 		CertSANs               []string          `yaml:"certSANs,omitempty"`
-		TimeoutForControlPlane string            `yaml:"timeoutForControlPlane"`
-		ExtraArgs              map[string]string `yaml:"extraArgs"`
-	} `yaml:"apiServer"`
-	CertificatesDir   string `yaml:"certificatesDir"`
-	ClusterName       string `yaml:"clusterName"`
+		TimeoutForControlPlane string            `yaml:"timeoutForControlPlane,omitempty"`
+		ExtraArgs              map[string]string `yaml:"extraArgs,omitempty"`
+	} `yaml:"apiServer,omitempty"`
+	CertificatesDir   string `yaml:"certificatesDir,omitempty"`
+	ClusterName       string `yaml:"clusterName,omitempty"`
 	ControllerManager struct {
-		ExtraArgs map[string]string `yaml:"extraArgs"`
-	} `yaml:"controllerManager"`
+		ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	} `yaml:"controllerManager,omitempty"`
 	DNS struct {
-		Type string `yaml:"type"`
-	} `yaml:"dns"`
+		Type string `yaml:"type,omitempty"`
+	} `yaml:"dns,omitempty"`
 	Etcd struct {
 		Local struct {
-			DataDir string `yaml:"dataDir"`
-		} `yaml:"local"`
-	} `yaml:"etcd"`
-	ImageRepository string `yaml:"imageRepository"`
+			DataDir   string            `yaml:"dataDir,omitempty"`
+			ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+		} `yaml:"local,omitempty"`
+	} `yaml:"etcd,omitempty"`
+	ImageRepository string `yaml:"imageRepository,omitempty"`
 	Networking      struct {
-		DNSDomain     string `yaml:"dnsDomain"`
-		ServiceSubnet string `yaml:"serviceSubnet"`
-		PodSubnet     string `yaml:"podSubnet"`
-	} `yaml:"networking"`
+		DNSDomain     string `yaml:"dnsDomain,omitempty"`
+		ServiceSubnet string `yaml:"serviceSubnet,omitempty"`
+		PodSubnet     string `yaml:"podSubnet,omitempty"`
+	} `yaml:"networking,omitempty"`
 	Scheduler struct {
-		ExtraArgs map[string]string `yaml:"extraArgs"`
-	} `yaml:"scheduler"`
+		ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	} `yaml:"scheduler,omitempty"`
 }
 
 type InitConfiguration struct {
-	APIVersion      string           `yaml:"apiVersion"`
-	Kind            string           `yaml:"kind"`
-	BootstrapTokens []BootstrapToken `yaml:"bootstrapTokens"`
+	APIVersion       string           `yaml:"apiVersion,omitempty"`
+	Kind             string           `yaml:"kind"`
+	BootstrapTokens  []BootstrapToken `yaml:"bootstrapTokens,omitempty"`
+	NodeRegistration NodeRegistration `yaml:"nodeRegistration,omitempty"`
 }
 
 type BootstrapToken struct {
@@ -45,4 +47,8 @@ type BootstrapToken struct {
 	Token  string   `yaml:"token"`
 	TTL    string   `yaml:"ttl"`
 	Usages []string `yaml:"usages"`
+}
+
+type NodeRegistration struct {
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
 }

@@ -18,6 +18,7 @@ package vmware
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"os"
 	"sync"
@@ -126,7 +127,7 @@ func (s *Session) FindByUUID(ctx context.Context, uuid string) (object.Reference
 func (s Session) FindVM(nameOrId string) (*object.VirtualMachine, error) {
 	tpl, err := s.findVmByUuid(nameOrId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("findVM: failed to find VM by UUID: %v", err)
 	}
 	if tpl != nil {
 		return tpl, nil

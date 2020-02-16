@@ -1,6 +1,7 @@
 package phases
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -23,7 +24,7 @@ func Build(cfg types.PlatformConfig) error {
 	for k, url := range cfg.Resources {
 		if !is.File(k) {
 			if err := files.Getter(url, k); err != nil {
-				return err
+				return fmt.Errorf("build: failed get url: %v", err)
 			}
 		}
 	}
@@ -32,7 +33,7 @@ func Build(cfg types.PlatformConfig) error {
 		log.Infof("Building specs in %s", spec)
 		absPath, _ := os.Readlink(spec)
 		if err := gomplate("--input-dir \"%s\" --output-dir build -c \".=%s\"", absPath, tmp.Name()); err != nil {
-			return err
+			return fmt.Errorf("build: failed to template: %v", err)
 		}
 	}
 
@@ -40,7 +41,7 @@ func Build(cfg types.PlatformConfig) error {
 		log.Infoln("Building with kustomize")
 		os.Remove("build/kustomize.yml")
 		if err := kustomize("build > build/kustomize.yml"); err != nil {
-			return err
+			return fmt.Errorf("build: failed to apply kustomize: %v", err)
 		}
 	}
 
