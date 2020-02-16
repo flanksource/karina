@@ -33,6 +33,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Failf("dex", "failed to get token %v", err)
 	}
 
+	fmt.Printf("Access token is: %s\n", token)
+
 	ca := p.GetIngressCA()
 	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token)
 
