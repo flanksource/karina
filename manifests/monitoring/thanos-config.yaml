@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thanos-objstore-config
+  namespace: monitoring
+type: Opaque
+stringData:
+  thanos.yaml: |-
+    type: S3
+    config:
+      bucket: {{.thanos.bucket}}
+      endpoint: {{.s3.endpoint | strings.TrimPrefix "http://"}}
+      insecure: true
+      access_key: {{.s3.access_key}}
+      secret_key: {{.s3.secret_key}}

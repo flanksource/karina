@@ -43,35 +43,35 @@ func Install(p *platform.Platform) error {
 	}
 
 	if p.Thanos == nil || p.Thanos.Disabled {
-		log.Println("Thanos is disabled")
+		log.Debugln("Thanos is disabled")
 	} else {
 		s3Client, err := p.GetS3Client()
 		if err != nil {
 			return err
 		}
 
-		exists, err := s3Client.BucketExists(p.Thanos.S3.Bucket)
+		exists, err := s3Client.BucketExists(p.Thanos.Bucket)
 		if err != nil {
 			return err
 		}
 		if !exists {
-			if err := s3Client.MakeBucket(p.Thanos.S3.Bucket, p.S3.Region); err != nil {
+			if err := s3Client.MakeBucket(p.Thanos.Bucket, p.S3.Region); err != nil {
 				return err
 			}
 		}
-		if err := p.ApplySpecs("", "monitoring/thanosConfig.yaml"); err != nil {
+		if err := p.ApplySpecs("", "monitoring/thanos-config.yaml"); err != nil {
 			return err
 		}
 	}
 	if p.Thanos.Mode == "client" {
 		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within Promerheus pod.")
-		p.ApplySpecs("", "monitoring/thanosSidecar.yaml")
+		p.ApplySpecs("", "monitoring/thanos-sidecar.yaml")
 	} else if p.Thanos.Mode == "observability" {
 		log.Info("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
 		if p.Thanos.ThanosSidecarEndpoint == "" || p.Thanos.ThanosSidecarPort == "" {
 			return errors.New("thanosSidecarEndpoint and thanosSidecarPort should not be empty")
 		}
-		thanosSpecs := []string{"thanosCompactor.yaml",  "thanosQuerier.yaml", "thanosStore.yaml"}
+		thanosSpecs := []string{"thanos-compactor.yaml", "thanos-querier.yaml", "thanos-store.yaml"}
 		for _, spec := range thanosSpecs {
 			log.Infof("Applying %s", spec)
 			if err := p.ApplySpecs("", "monitoring/observability/"+spec); err != nil {
@@ -79,7 +79,7 @@ func Install(p *platform.Platform) error {
 			}
 		}
 	} else {
-		log.Printf("Thanos: wrong mode %s. Should be client or observability", p.Thanos.Mode)
+		log.Fatalf("Thanos: wrong mode %s. Should be client or observability", p.Thanos.Mode)
 	}
 
 	for _, spec := range specs {
@@ -94,10 +94,10 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("Unable to find dashboards: %v", err)
 	}
 
-	urls := map[string]string {
+	urls := map[string]string{
 		"alertmanager": fmt.Sprintf("https://alertmanager.%s", p.Domain),
-		"grafana": fmt.Sprintf("https://grafana.%s", p.Domain),
-		"prometheus": fmt.Sprintf("https://prometheus.%s", p.Domain),
+		"grafana":      fmt.Sprintf("https://grafana.%s", p.Domain),
+		"prometheus":   fmt.Sprintf("https://prometheus.%s", p.Domain),
 	}
 
 	for name, file := range dashboards {

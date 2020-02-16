@@ -142,7 +142,6 @@ spec:
       targetPort: web
   selector:
     app: prometheus
-    app: prometheus
     prometheus: k8s
   sessionAffinity: ClientIP
 ---

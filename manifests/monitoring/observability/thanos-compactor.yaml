@@ -1,13 +1,17 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: thanos-compactor
   namespace: monitoring
   labels:
     app: thanos-compactor
 spec:
-  serviceName: "thanos-compactor"
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: thanos-compactor
@@ -34,6 +38,13 @@ spec:
               readOnly: true
             - name: data
               mountPath: /var/thanos/store
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi    
       volumes:
         - name: data
           emptyDir: {}

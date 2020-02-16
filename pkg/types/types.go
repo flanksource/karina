@@ -57,7 +57,7 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	Thanos				  *Thanos           `yaml:"thanos,omitempty"`
+	Thanos                *Thanos           `yaml:"thanos,omitempty"`
 	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`
 }
@@ -339,12 +339,12 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled               bool   `yaml:"disabled,omitempty"`
-	Version                string `yaml:"version,omitempty"`
-	Mode 	               string `yaml:"mode,omitempty"`
-	ThanosSidecarEndpoint  string `yaml:"thanosSidecarEndpoint,omitempty"`
-	ThanosSidecarPort      string `yaml:"thanosSidecarPort,omitempty"`
-	S3                    *S3     `yaml:"s3,omitempty"`
+	Disabled              bool   `yaml:"disabled,omitempty"`
+	Version               string `yaml:"version,omitempty"`
+	Mode                  string `yaml:"mode,omitempty"`
+	ThanosSidecarEndpoint string `yaml:"thanosSidecarEndpoint,omitempty"`
+	ThanosSidecarPort     string `yaml:"thanosSidecarPort,omitempty"`
+	Bucket                string `yaml:"bucket,omitempty"`
 }
 
 type FluentdOperator struct {
