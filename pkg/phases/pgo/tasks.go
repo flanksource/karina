@@ -72,7 +72,7 @@ func GetOrCreateDB(p *platform.Platform, name string, replicas int, databases ..
 		log.Infof("Creating new database %s\n", name)
 		passwd = utils.RandomString(10)
 		if _, err := CreateCluster(p, name, passwd, replicas); err != nil {
-			return nil, err
+			return nil,  fmt.Errorf("pgo: failed to create cluster: %v", err)
 		}
 	}
 
@@ -83,12 +83,13 @@ func GetOrCreateDB(p *platform.Platform, name string, replicas int, databases ..
 		Port:     5432,
 	}, nil
 }
+
 func CreateDatabase(p *platform.Platform, cluster string, databases ...string) error {
 	kubectl := p.GetKubectl()
 	for _, database := range databases {
 		if err := kubectl("-n pgo exec svc/%s bash -c database -- -c \"psql -c 'create database %s'\"", cluster, database); err != nil {
 			if !strings.Contains(err.Error(), "already exists") {
-				return err
+				return fmt.Errorf("createDatabase: failed to create database: %v", err)
 			}
 		}
 	}
@@ -102,7 +103,7 @@ func GetPVCName(cluster, db string) string {
 func Backup(p *platform.Platform, cluster, db string) error {
 	pvc := GetPVCName(cluster, db)
 	if err := p.GetOrCreatePVC("pgo", pvc, "50Gi", p.PGO.BackupStorage); err != nil {
-		return err
+		return fmt.Errorf("backup: failed to get/create PVC: %v", err)
 	}
 	task := newTask(p, cluster, db, "pgdump", map[string]string{
 		"containername": "database",

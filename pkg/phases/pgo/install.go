@@ -92,19 +92,19 @@ func getEnv(p *platform.Platform) (*map[string]string, error) {
 	passwd := fmt.Sprintf("%s:%s", user, pass)
 	log.Debugf("Writing %s", home)
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	secrets := *p.GetSecret("pgo", "pgo.tls")
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	return &ENV, nil
@@ -116,7 +116,7 @@ func ClientSetup(p *platform.Platform) error {
 	}
 	ENV, err := getEnv(p)
 	if err != nil {
-		return err
+		return fmt.Errorf("clientSetup: failed to get env: %v", err)
 	}
 
 	if p.DryRun {
@@ -149,6 +149,10 @@ func Install(p *platform.Platform) error {
 		}
 		p.PGO.Password = pass
 	}
+	if err := p.CreateOrUpdateNamespace(PGO, nil, nil); err != nil {
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
+	}
+
 	if err := p.ApplySpecs(Namespace, "pgo-crd.yml"); err != nil {
 		return err
 	}
@@ -158,6 +162,7 @@ func Install(p *platform.Platform) error {
 	if err := p.ApplySpecs(Namespace, "pgo.yml"); err != nil {
 		return err
 	}
+
 	if err := p.Apply(Namespace, &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "pgo-backrest-repo-config",
@@ -181,7 +186,7 @@ func Install(p *platform.Platform) error {
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env, err := getEnv(p)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getPGO: failed to get env: %v", err)
 	}
 	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", *env), nil
 }

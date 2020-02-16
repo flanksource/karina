@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,12 +14,12 @@ import (
 func Cleanup(platform *platform.Platform) error {
 
 	if err := platform.OpenViaEnv(); err != nil {
-		return err
+		return fmt.Errorf("cleanup: failed to open via env %v", err)
 	}
 
 	vms, err := platform.GetVMs()
 	if err != nil {
-		return err
+		return fmt.Errorf("cleanup: failed to get VMs %v", err)
 	}
 
 	if len(vms) > platform.GetVMCount()*2 {
