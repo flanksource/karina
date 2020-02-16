@@ -49,7 +49,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	pods, err := k8s.CoreV1().Pods("dex").List(metav1.ListOptions{})
 	if err != nil {
-		test.Failf("dex", "failed to list pods")
+		test.Failf("dex", "failed to list pods: %v", err)
 	}
 	for _, pod := range pods.Items {
 		test.Passf("dex", "%s => %s", pod.Name, pod.Status.Phase)
