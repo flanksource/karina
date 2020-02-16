@@ -24,6 +24,8 @@ if ! which expenv 2>&1 > /dev/null; then
   fi
 fi
 
+go version
+
 if go version | grep  go$GO_VERSION; then
   make pack build
 else
