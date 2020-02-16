@@ -36,6 +36,7 @@ fi
 
 # kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
+  $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca-crt.pem --private-key-path .certs/ingress-ca-key.pem --password foobar  --expiry 1
   $BIN provision kind-cluster
 fi
 
