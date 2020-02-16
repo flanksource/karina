@@ -53,6 +53,10 @@ $BIN deploy stubs -v
 
 $BIN test base --wait 200
 
+$BIN deploy dex -v
+
+$BIN test dex --wait 200
+
 $BIN deploy pgo install -v
 
 $BIN test pgo --wait 200
