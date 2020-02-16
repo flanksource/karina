@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/text"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -70,7 +70,7 @@ func Deploy(p *platform.Platform) error {
 		debug = "--debug"
 	}
 
-	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
+	if err := helm("upgrade harbor build/harbor --wait -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
 		return err
 	}
 
