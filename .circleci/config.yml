@@ -4,7 +4,7 @@ go: &go
     GO111MODULE: "on"
     GOPROXY: https://proxy.golang.org
   docker:
-    - image: circleci/golang:1.12
+    - image: circleci/golang:1.13
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
   test:

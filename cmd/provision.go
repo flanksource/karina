@@ -14,12 +14,23 @@ var Provision = &cobra.Command{
 	Use:   "provision",
 	Short: "Commands for provisioning clusters and VMs",
 }
-var cluster = &cobra.Command{
-	Use:   "cluster",
-	Short: "Provision a new cluster",
+var vsphereCluster = &cobra.Command{
+	Use:   "vsphere-cluster",
+	Short: "Provision a new vsphere cluster",
 	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := provision.Cluster(getPlatform(cmd)); err != nil {
+		if err := provision.VsphereCluster(getPlatform(cmd)); err != nil {
+			log.Fatalf("Failed to provision cluster, %s", err)
+		}
+	},
+}
+
+var kindCluster = &cobra.Command{
+	Use:   "kind-cluster",
+	Short: "Provision a new kind cluster",
+	Args:  cobra.MinimumNArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := provision.KindCluster(getPlatform(cmd)); err != nil {
 			log.Fatalf("Failed to provision cluster, %s", err)
 		}
 	},
@@ -75,7 +86,7 @@ var vm = &cobra.Command{
 }
 
 func init() {
-	Provision.AddCommand(cluster, vm)
+	Provision.AddCommand(vsphereCluster, kindCluster, vm)
 	vm.Flags().String("name", "", "Name of vm")
 	vm.Flags().String("dns", "", "DNS entry to add")
 	vm.Flags().String("template", "", "template to use")
