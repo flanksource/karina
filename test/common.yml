@@ -1,9 +1,13 @@
 name: test
 domain: 127.0.0.1.nip.io
 ldap:
+  disabled: true
   adminGroup: NA1
 kubernetes:
-  version: v1.15.3
+  version: v1.15.7
+  kubeletExtraArgs:
+    node-labels: "ingress-ready=true"
+    authorization-mode: "AlwaysAllow"
 versions:
   gomplate: v3.5.0
   konfigadm: v0.3.6
