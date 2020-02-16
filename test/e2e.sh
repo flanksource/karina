@@ -3,6 +3,8 @@ BIN=./.bin/platform-cli
 mkdir -p .bin
 export PLATFORM_CONFIG=test/common.yml
 export GO_VERSION=${GO_VERSION:-1.13}
+export KUBECONFIG=~/.kube/config
+
 if [[ ! -e ./kind ]]; then
   curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
   chmod +x ./kind
@@ -35,8 +37,6 @@ fi
 # kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN provision kind-cluster
-  ls -la ~/.kube
-  export KUBECONFIG="$(./kind get kubeconfig-path --name="kind")"
 fi
 
 $BIN version
