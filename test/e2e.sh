@@ -9,7 +9,7 @@ export
 
 git log --name-only -n 1
 
-if git log master..HEAD | grep "skip e2e"; then
+if git log origin/master..HEAD | grep "skip e2e"; then
   circleci-agent step halt
   exit 0
 fi
