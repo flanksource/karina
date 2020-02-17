@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/moshloop/platform-cli/pkg/api"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -22,6 +26,10 @@ import (
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
+)
+
+var (
+	kindCADir = "/etc/flanksource/ingress-ca"
 )
 
 // VM provisions a new standalone VM
@@ -211,6 +219,11 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to generate kubeadm patches")
 	}
 
+	caPath, err := filepath.Abs(platform.IngressCA.Cert)
+	if err != nil {
+		return errors.Wrap(err, "failed to expand ca file path")
+	}
+
 	kindConfig := kindapi.Cluster{
 		TypeMeta: kindapi.TypeMeta{
 			Kind:       "Cluster",
@@ -234,8 +247,20 @@ func KindCluster(platform *platform.Platform) error {
 						HostPort:      443,
 						Protocol:      kindapi.PortMappingProtocolTCP,
 					},
+					{
+						ContainerPort: 6443,
+						HostPort:      6443,
+						Protocol:      kindapi.PortMappingProtocolTCP,
+					},
 				},
 				KubeadmConfigPatches: kubeadmPatches,
+				ExtraMounts: []kindapi.Mount{
+					{
+						ContainerPath: kindCADir,
+						HostPath:      path.Dir(caPath),
+						Readonly:      true,
+					},
+				},
 			},
 		},
 	}
@@ -315,6 +340,16 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig.ControlPlaneEndpoint = ""
 	clusterConfig.ClusterName = ""
 	clusterConfig.APIServer.CertSANs = nil
+	clusterConfig.APIServer.ExtraVolumes = []api.HostPathMount{
+		{
+			Name:      "oidc-certificates",
+			HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
+			MountPath: "/etc/ssl/oidc/ingress-ca.pem",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		},
+	}
+	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""

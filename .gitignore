@@ -21,3 +21,4 @@ manifests/static.go
 templates/static.go
 snapshot/
 .idea
+.certs
