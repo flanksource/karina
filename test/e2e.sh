@@ -5,6 +5,12 @@ export PLATFORM_CONFIG=test/common.yml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 
+
+if git log master..HEAD | grep "skip e2e"; then
+  circleci-agent step halt
+  exit 0
+fi
+
 if [[ ! -e ./kind ]]; then
   curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
   chmod +x ./kind
