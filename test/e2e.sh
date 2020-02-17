@@ -5,6 +5,9 @@ export PLATFORM_CONFIG=test/common.yml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 
+export
+
+git log --name-only -n 1
 
 if git log master..HEAD | grep "skip e2e"; then
   circleci-agent step halt
