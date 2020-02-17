@@ -44,7 +44,7 @@ docker:
 
 .PHONY: serve-docs
 serve-docs:
-	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material
+	docker run --rm -it -p 8000:8000 -v $(PWD):/docs -w $(PWD) squidfunk/mkdocs-material
 
 .PHONY: build-api-docs
 build-api-docs:
@@ -53,7 +53,7 @@ build-api-docs:
 
 .PHONY: build-docs
 build-docs:
-	docker run --rm -it  -v ${PWD}:/docs squidfunk/mkdocs-material build -d build/docs
+	docker run --rm -it  -v $(PWD):/docs -w $(PWD)  squidfunk/mkdocs-material build -d build/docs
 
 .PHONY: deploy-docs
 deploy-docs:  build-api-docs  build-docs
