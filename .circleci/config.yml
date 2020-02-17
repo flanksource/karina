@@ -43,6 +43,13 @@ jobs:
       - run: go mod download
       - run: ./scripts/release.sh
 
+
+  release-docs:
+    steps:
+      - checkout
+      - run: ./scripts/release-docs.sh
+
+
 workflows:
   version: 2
   build:
@@ -57,3 +64,7 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - release-docs:
+          requires:
+            - release
+          context: Github
