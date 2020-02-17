@@ -344,7 +344,7 @@ spec:
               value: {{.oauth2Proxy.clientSecret}}
             - name: OAUTH2_PROXY_COOKIE_SECRET
               value: {{.oauth2Proxy.cookieSecret}}
-          image: quay.io/pusher/oauth2_proxy:latest
+          image: quay.io/pusher/oauth2_proxy:{{.oauth2Proxy.version}}
           imagePullPolicy: Always
           name: oauth2-proxy
           ports:

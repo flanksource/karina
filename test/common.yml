@@ -78,6 +78,7 @@ ingressCA:
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
 oauth2Proxy:
+  version: v5.0.0
   clientID: aaaa
   clientSecret: bbbb
   provider: github

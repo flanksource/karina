@@ -50,6 +50,7 @@ type OAuth2Proxy struct {
 	Provider     string `yaml:"provider,omitempty"`
 	CookieSecret string `yaml:"cookieSecret,omitempty"`
 	RestrictArgs string `yaml:"restrictArgs,omitempty"`
+	Version      string `yaml:"version,omitempty"`
 }
 
 type OPA struct {
