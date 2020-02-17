@@ -58,5 +58,5 @@ build-docs:
 
 .PHONY: deploy-docs
 deploy-docs:
-	which netlify 2>&1 > /dev/null || npm install -g netlify-cli
+	which netlify 2>&1 > /dev/null || sudo npm install -g netlify-cli
 	netlify deploy --site b7d97db0-1bc2-4e8c-903d-6ebf3da18358 --prod --dir build/docs
