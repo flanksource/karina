@@ -31,6 +31,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	token, err := dexClient.GetAccessToken()
 	if err != nil {
 		test.Failf("dex", "failed to get token %v", err)
+		return
 	}
 
 	ca := p.GetIngressCA()
