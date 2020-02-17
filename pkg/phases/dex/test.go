@@ -34,6 +34,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
+	test.Passf("dex", "OIDC Authentication flow")
+
 	ca := p.GetIngressCA()
 	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token.IdToken, token.AccessToken, token.RefreshToken)
 
@@ -61,4 +63,5 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	for _, pod := range pods.Items {
 		test.Passf("dex", "%s => %s", pod.Name, pod.Status.Phase)
 	}
+	test.Passf("dex", "OIDC Kubeconfig access")
 }
