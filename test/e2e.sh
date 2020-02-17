@@ -5,7 +5,11 @@ export PLATFORM_CONFIG=test/common.yml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 
-if git log origin/master..HEAD | grep "skip e2e"; then
+
+LAST_SUCCESSFUL_BUILD_URL="https://circleci.com/api/v1.1/project/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH?filter=completed&limit=1"
+LAST_SUCCESSFUL_COMMIT=`curl -Ss -u "$CIRCLECI_TOKEN:" $LAST_SUCCESSFUL_BUILD_URL | jq -r '.[0]["vcs_revision"]'`
+
+if git log $CIRCLE_SHA1..$LAST_SUCCESSFUL_COMMIT | grep "skip e2e"; then
   circleci-agent step halt
 else
 
