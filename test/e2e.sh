@@ -10,7 +10,6 @@ GITHUB_USER=${GITHUB_USER##*:}
 MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_USER/$NAME/commits/master | jq -r '.sha')
 
 echo "HEAD: $CIRCLE_SHA1 MASTER: $MASTER_HEAD "
-git log $MASTER_HEAD..$CIRCLE_SHA1
 
 if git log $CIRCLE_SHA1..$LAST_SUCCESSFUL_COMMIT | grep "skip e2e"; then
   circleci-agent step halt
