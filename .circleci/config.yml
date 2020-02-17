@@ -57,8 +57,6 @@ workflows:
     jobs:
       - test
       - test-next
-      - build-docs
-      - build-api-docs
       - release:
           requires:
             - test
