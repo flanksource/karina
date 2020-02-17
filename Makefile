@@ -53,7 +53,7 @@ build-api-docs:
 
 .PHONY: build-docs
 build-docs:
-	pip install mkdocs
+	which mkdocs 2>&1 > /dev/null || pip install mkdocs mkdocs-material
 	mkdocs build -d build/docs
 
 .PHONY: deploy-docs

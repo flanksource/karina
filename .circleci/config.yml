@@ -43,12 +43,36 @@ jobs:
       - run: go mod download
       - run: ./scripts/release.sh
 
+
+  release-docs:
+    docker:
+      - image: circleci/node:9.9
+    steps:
+      - checkout
+      - run: ./scripts/release-docs.sh
+
+  build-docs:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run: make build-docs
+
+  build-api-docs:
+    docker:
+      - image: circleci/golang:1.13
+    steps:
+      - checkout
+      - run: make pack build-api-docs
+
 workflows:
   version: 2
   build:
     jobs:
       - test
       - test-next
+      - build-docs
+      - build-api-docs
       - release:
           requires:
             - test
@@ -57,3 +81,9 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - release-docs:
+          requires:
+            - release
+            - build-docs
+            - build-api-docs
+          context: Github
