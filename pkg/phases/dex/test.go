@@ -28,32 +28,34 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		Password:     "secret",
 	}
 
-	token, err := dexClient.GetIDToken()
+	token, err := dexClient.GetAccessToken()
 	if err != nil {
 		test.Failf("dex", "failed to get token %v", err)
 	}
 
-	fmt.Printf("Access token is: %s\n", token)
-
 	ca := p.GetIngressCA()
-	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token)
+	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token.IdToken, token.AccessToken, token.RefreshToken)
 
 	if err != nil {
 		test.Failf("dex", "failed to generate kube config: %v", err)
+		return
 	}
 
 	cfg, err := clientcmd.RESTConfigFromKubeConfig(kubeConfig)
 	if err != nil {
 		test.Failf("dex", "failed to get rest client config: %v", err)
+		return
 	}
 
 	k8s, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		test.Failf("dex", "failed to create k8s config: %v", err)
+		return
 	}
 	pods, err := k8s.CoreV1().Pods("dex").List(metav1.ListOptions{})
 	if err != nil {
 		test.Failf("dex", "failed to list pods: %v", err)
+		return
 	}
 	for _, pod := range pods.Items {
 		test.Passf("dex", "%s => %s", pod.Name, pod.Status.Phase)

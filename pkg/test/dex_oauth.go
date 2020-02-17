@@ -30,52 +30,52 @@ type DexAccessToken struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (d *DexOauth) GetIDToken() (string, error) {
+func (d *DexOauth) GetAccessToken() (*DexAccessToken, error) {
 	ldapURL, err := d.getLdapURL()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get ldap url")
+		return nil, errors.Wrap(err, "failed to get ldap url")
 	}
 	fmt.Printf("Got ldap url: %s\n", ldapURL)
 
 	approvalURL, err := d.getApprovalURL(ldapURL)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get ldap approval url")
+		return nil, errors.Wrap(err, "failed to get ldap approval url")
 	}
 	fmt.Printf("Got approval url: %s\n", approvalURL)
 
 	redirectURL, err := d.approve(approvalURL)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get redirect URL")
+		return nil, errors.Wrap(err, "failed to get redirect URL")
 	}
 	fmt.Printf("Got redirect url: %s\n", redirectURL)
 
 	uri, err := url.Parse(redirectURL)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse redirect URL: %s", redirectURL)
+		return nil, errors.Wrapf(err, "failed to parse redirect URL: %s", redirectURL)
 	}
 	params, err := url.ParseQuery(uri.RawQuery)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse redirect URL query: %s", redirectURL)
+		return nil, errors.Wrapf(err, "failed to parse redirect URL query: %s", redirectURL)
 	}
 	code := params.Get("code")
 	if code == "" {
-		return "", errors.Errorf("could not find code in redirect URL: %s", redirectURL)
+		return nil, errors.Errorf("could not find code in redirect URL: %s", redirectURL)
 	}
 
 	fmt.Printf("Code is: %s\n", code)
 
 	tokenJWT, err := d.getToken(code)
 	if err != nil {
-		return "", errors.Wrap(err, "could not get token")
+		return nil, errors.Wrap(err, "could not get token")
 	}
 
 	token := &DexAccessToken{}
 
 	if err := json.Unmarshal([]byte(tokenJWT), token); err != nil {
-		return "", errors.Wrap(err, "failed to decode jwt")
+		return nil, errors.Wrap(err, "failed to decode jwt")
 	}
 
-	return token.IdToken, nil
+	return token, nil
 }
 
 func (d *DexOauth) getLdapURL() (string, error) {

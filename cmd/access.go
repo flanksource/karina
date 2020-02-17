@@ -54,7 +54,7 @@ func init() {
 
 			platform := getPlatform(cmd)
 			ips := platform.GetMasterIPs()
-			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), ips[0], fmt.Sprintf("https://dex.%s", platform.Domain), "")
+			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), ips[0], fmt.Sprintf("https://dex.%s", platform.Domain), "", "", "")
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}

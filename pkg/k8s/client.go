@@ -500,7 +500,7 @@ func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoin
 	return clientcmd.Write(cfg)
 }
 
-func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl, idToken string) ([]byte, error) {
+func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl, idToken, accessToken, refreshToken string) ([]byte, error) {
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
 			clusterName: {
@@ -525,6 +525,8 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 						"idp-certificate-authority-data": string(base64.StdEncoding.EncodeToString([]byte(ca.GetPublicChain()[0].EncodedCertificate()))),
 						"idp-issuer-url":                 idpUrl,
 						"id-token":                       idToken,
+						"access-token":                   accessToken,
+						"refresh-token":                  refreshToken,
 					},
 				},
 			},
