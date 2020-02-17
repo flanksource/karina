@@ -45,9 +45,16 @@ jobs:
 
 
   release-docs:
+    docker:
+      - image: buildpack-deps:trusty
     steps:
       - checkout
+      - run: make build-docs
+        image: circleci/python:3.7
+      - run: make build-api-docs
+        image: circleci/golang:1.13
       - run: ./scripts/release-docs.sh
+        image: circleci/node:9.9
 
 
 workflows:

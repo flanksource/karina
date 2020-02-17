@@ -1,7 +1,4 @@
 #!/bin/bash
-
-make build-api-docs build-docs
-
 if [[ "$CIRCLE_PR_NUMBER" != "" ]]; then
   echo Skipping release of a PR build
   circleci-agent step halt
