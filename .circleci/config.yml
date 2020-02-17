@@ -63,7 +63,7 @@ jobs:
       - image: circleci/golang:1.13
     steps:
       - checkout
-      - run: make build-api-docs
+      - run: make pack build-api-docs
 
 workflows:
   version: 2
