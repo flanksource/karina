@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imdario/mergo"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
+	"github.com/imdario/mergo"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
@@ -81,6 +81,9 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	base.S3.SecretKey = template(base.S3.SecretKey)
 
 	ldap := base.Ldap
+	if ldap.Port == "" {
+		ldap.Port = "636"
+	}
 	if ldap != nil {
 		ldap.Username = template(ldap.Username)
 		ldap.Password = template(ldap.Password)
