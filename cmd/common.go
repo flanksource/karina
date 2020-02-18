@@ -77,7 +77,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		log.Infof("Running a dry-run mode, no changes will be made")
 	}
 
-	base.PatchPath, _ := cmd.Flags().GetString("path")
+	base.PatchPath, _ = cmd.Flags().GetString("path")
 	if (base.PatchPath != ""){
 		_ , err := ioutil.ReadDir(base.PatchPath)
 		log.Fatal(err)
