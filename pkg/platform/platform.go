@@ -49,7 +49,7 @@ type Platform struct {
 	ingressCA  certs.CertificateAuthority
 }
 
-type OverlayPatchTemplate struct {
+type PatchTemplate struct {
 	PatchFiles []string
 }
 
@@ -521,51 +521,37 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	k8s.WaitForNamespace(client, ns, timeout)
 }
 
-func GenerateBaseYaml(baseYamlContent string) {
-	kustWorkingDir := "overlays/baseDir/"
+func GenerateKustomizeYaml(kustWorkingDir string, kustTemplatePath string, yamls string, isDir bool, isFinal bool) string {
 	os.RemoveAll(kustWorkingDir)
 	err := os.MkdirAll(kustWorkingDir, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
-	input, err := ioutil.ReadFile("overlays/base_kustomization_template")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = ioutil.WriteFile(kustWorkingDir+"kustomization.yaml", input, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = ioutil.WriteFile(kustWorkingDir+"base.yaml", []byte(baseYamlContent), 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func GetFinalPatchYaml(patchFilePath string) string {
-	kustWorkingDir := "overlays/patchDir/"
-	os.RemoveAll(kustWorkingDir)
-	err := os.MkdirAll(kustWorkingDir, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	files, _ := ioutil.ReadDir(patchFilePath)
-	var patchFiles OverlayPatchTemplate
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-			patchFiles.PatchFiles = append(patchFiles.PatchFiles, file.Name())
-			input, err := ioutil.ReadFile(patchFilePath + "/" + file.Name())
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = ioutil.WriteFile(kustWorkingDir+file.Name(), input, 0644)
-			if err != nil {
-				log.Fatal(err)
+	var patchFiles PatchTemplate
+	if isDir == false {
+		err = ioutil.WriteFile(kustWorkingDir+"base.yaml", []byte(yamls), 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		patchFiles.PatchFiles = []string{"base.yaml"}
+	} else {
+		files, _ := ioutil.ReadDir(yamls)
+		for _, file := range files {
+			if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
+				patchFiles.PatchFiles = append(patchFiles.PatchFiles, file.Name())
+				input, err := ioutil.ReadFile(yamls + "/" + file.Name())
+				if err != nil {
+					log.Fatal(err)
+				}
+				err = ioutil.WriteFile(kustWorkingDir+file.Name(), input, 0644)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	}
 
-	kustTemplate, err := ioutil.ReadFile("overlays/overlays_kustomization_template")
+	kustTemplate, err := ioutil.ReadFile(kustTemplatePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -582,10 +568,14 @@ func GetFinalPatchYaml(patchFilePath string) string {
 		log.Fatal(err)
 	}
 
-	var output bytes.Buffer
-	kustomize.RunKustomizeBuild(&output, fs.MakeRealFS(), kustWorkingDir)
-	finalPatchYaml := output.String()
-	return finalPatchYaml
+	if isFinal == true {
+		var output bytes.Buffer
+		kustomize.RunKustomizeBuild(&output, fs.MakeRealFS(), kustWorkingDir)
+		finalPatchYaml := output.String()
+		return finalPatchYaml
+	} else {
+		return ""
+	}
 }
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
@@ -600,13 +590,9 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 				return err
 			}
 			if platform.PatchPath != "" {
-				baseYamlContent, err := ioutil.ReadFile(dir)
-				if err != nil {
-					log.Fatal(err)
-				}
-				GenerateBaseYaml(string(baseYamlContent))
-				finalPatchYaml := GetFinalPatchYaml(platform.PatchPath)
-				if err := kubectl("apply %s -f %s", namespace, finalPatchYaml); err != nil {
+				GenerateKustomizeYaml("overlays/baseDir/", "overlays/base_kustomization_template", dir, true, false)
+				finalPatchYaml := GenerateKustomizeYaml("overlays/patchDir/", "overlays/overlays_kustomization_template", platform.PatchPath, true, true)
+				if err := kubectl("apply %s -f %s", namespace, text.ToFile(finalPatchYaml, ".yaml")); err != nil {
 					return err
 				}
 			} else {
@@ -620,9 +606,9 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 				return err
 			}
 			if platform.PatchPath != "" {
-				GenerateBaseYaml(template)
-				finalPatchYaml := GetFinalPatchYaml(platform.PatchPath)
-				if err := kubectl("apply %s -f %s", namespace, finalPatchYaml); err != nil {
+				GenerateKustomizeYaml("overlays/baseDir/", "overlays/base_kustomization_template", template, false, false)
+				finalPatchYaml := GenerateKustomizeYaml("overlays/patchDir/", "overlays/overlays_kustomization_template", platform.PatchPath, true, true)
+				if err := kubectl("apply %s -f %s", namespace, text.ToFile(finalPatchYaml, ".yaml")); err != nil {
 					return err
 				}
 			} else {
