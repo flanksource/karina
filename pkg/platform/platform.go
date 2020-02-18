@@ -82,6 +82,9 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 func readCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
 	privateKey := files.SafeRead(ca.PrivateKey)
+	if ca.Password == "" {
+		return certs.DecodeCertificate([]byte(cert), []byte(privateKey))
+	}
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
