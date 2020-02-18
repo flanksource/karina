@@ -10,22 +10,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/api"
-
+	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
-	"github.com/flanksource/commons/console"
-	"github.com/flanksource/commons/utils"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
-	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 )
 
 var (
@@ -108,32 +107,27 @@ func VsphereCluster(platform *platform.Platform) error {
 		kubeadm.UploadControlPaneCerts(platform)
 	}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
-		time.Sleep(1 * time.Second)
-		wg.Add(1)
-		go func() {
-			vm := platform.Master
-			vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
-			vm.Tags["Role"] = platform.Name + "-masters"
-			log.Infof("Creating new secondary master %s\n", vm.Name)
-			config, err := phases.CreateSecondaryMaster(platform)
-			if err != nil {
-				log.Errorf("Failed to create secondary master: %s", err)
-			} else {
-				if !platform.DryRun {
-					vm, err := platform.Clone(vm, config)
-					if err != nil {
-						log.Errorf("Failed to Clone secondary master: %s", err)
+		vm := platform.Master
+		vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
+		vm.Tags["Role"] = platform.Name + "-masters"
+		log.Infof("Creating new secondary master %s\n", vm.Name)
+		config, err := phases.CreateSecondaryMaster(platform)
+		if err != nil {
+			log.Errorf("Failed to create secondary master: %s", err)
+		} else {
+			if !platform.DryRun {
+				vm, err := platform.Clone(vm, config)
+				if err != nil {
+					log.Errorf("Failed to Clone secondary master: %s", err)
+				} else {
+					if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), vm.IP); err != nil {
+						log.Warnf("Failed to update DNS for %s", vm.IP)
 					} else {
-						if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), vm.IP); err != nil {
-							log.Warnf("Failed to update DNS for %s", vm.IP)
-						} else {
-							log.Infof("Provisioned new master: %s\n", vm.IP)
-						}
+						log.Infof("Provisioned new master: %s\n", vm.IP)
 					}
 				}
 			}
-			wg.Done()
-		}()
+		}
 	}
 
 	for _, worker := range platform.Nodes {
