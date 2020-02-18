@@ -78,8 +78,8 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	}
 
 	base.PatchPath, _ = cmd.Flags().GetString("path")
-	if (base.PatchPath != ""){
-		_ , err := ioutil.ReadDir(base.PatchPath)
+	if base.PatchPath != "" {
+		_, err := ioutil.ReadDir(base.PatchPath)
 		log.Fatal(err)
 	}
 

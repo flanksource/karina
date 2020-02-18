@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/minio/minio-go/v6"
@@ -45,6 +47,10 @@ type Platform struct {
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
 	ingressCA  certs.CertificateAuthority
+}
+
+type OverlayPatchTemplate struct {
+	PatchFiles []string
 }
 
 func (platform *Platform) Init() {
@@ -522,7 +528,15 @@ func GenerateBaseYaml(baseYamlContent string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = ioutil.WriteFile(kustWorkingDir+"base.yaml", baseYamlContent, 0644)
+	input, err := ioutil.ReadFile("overlays/base_kustomization_template")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ioutil.WriteFile(kustWorkingDir+"kustomization.yaml", input, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ioutil.WriteFile(kustWorkingDir+"base.yaml", []byte(baseYamlContent), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -536,12 +550,10 @@ func GetFinalPatchYaml(patchFilePath string) string {
 		log.Fatal(err)
 	}
 	files, _ := ioutil.ReadDir(patchFilePath)
-	var buffer bytes.Buffer
+	var patchFiles OverlayPatchTemplate
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-			buffer.WriteString("  - ")
-			buffer.WriteString(file.Name())
-			buffer.WriteString("\n")
+			patchFiles.PatchFiles = append(patchFiles.PatchFiles, file.Name())
 			input, err := ioutil.ReadFile(patchFilePath + "/" + file.Name())
 			if err != nil {
 				log.Fatal(err)
@@ -552,16 +564,20 @@ func GetFinalPatchYaml(patchFilePath string) string {
 			}
 		}
 	}
-	patchFiles := buffer.String()
 
 	kustTemplate, err := ioutil.ReadFile("overlays/overlays_kustomization_template")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	kustomizationYaml := fmt.Sprintf(string(kustTemplate), patchFiles)
+	var kustomizationYaml bytes.Buffer
+	overlaysTmpl := template.Must(template.New("overlays-tmpl").Parse(string(kustTemplate)))
+	err = overlaysTmpl.Execute(&kustomizationYaml, patchFiles)
+	if err != nil {
+		panic(err)
+	}
 
-	err = ioutil.WriteFile(kustWorkingDir+"/kustomization.yaml", []byte(kustomizationYaml), 0644)
+	err = ioutil.WriteFile(kustWorkingDir+"/kustomization.yaml", []byte(kustomizationYaml.String()), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -588,7 +604,7 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 				if err != nil {
 					log.Fatal(err)
 				}
-				GenerateBaseYaml(baseYamlContent)
+				GenerateBaseYaml(string(baseYamlContent))
 				finalPatchYaml := GetFinalPatchYaml(platform.PatchPath)
 				if err := kubectl("apply %s -f %s", namespace, finalPatchYaml); err != nil {
 					return err

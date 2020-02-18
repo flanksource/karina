@@ -5,4 +5,6 @@ bases:
   - ../baseDir/
 
 patchesStrategicMerge:
-%s
+{{ range .PatchFiles -}}
+{{ printf "  - %s" . }}
+{{ end }}
