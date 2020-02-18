@@ -27,6 +27,9 @@ func init() {
 				endpoint = fmt.Sprintf("k8s-api.%s", platform.Domain)
 			} else {
 				// No DNS available using the first masters IP as an endpoint
+				if len(ips) == 0 {
+					log.Fatalf("No healthy endpoints")
+				}
 				endpoint = ips[0]
 			}
 			group, _ := cmd.Flags().GetString("group")
@@ -51,7 +54,7 @@ func init() {
 
 			platform := getPlatform(cmd)
 			ips := platform.GetMasterIPs()
-			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), ips[0], fmt.Sprintf("https://dex.%s", platform.Domain))
+			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), ips[0], fmt.Sprintf("https://dex.%s", platform.Domain), "", "", "")
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}

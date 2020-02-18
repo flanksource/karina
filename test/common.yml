@@ -2,8 +2,17 @@ name: test
 domain: 127.0.0.1.nip.io
 ldap:
   adminGroup: NA1
+  username: uid=admin,ou=system
+  password: secret
+  port: 10636
+  host: apacheds.ldap
+  dn: ou=users,dc=example,dc=com
 kubernetes:
-  version: v1.15.3
+  version: v1.15.7
+  kubeletExtraArgs:
+    node-labels: "ingress-ready=true"
+    authorization-mode: "AlwaysAllow"
+  masterIP: localhost
 versions:
   gomplate: v3.5.0
   konfigadm: v0.3.6
@@ -18,6 +27,7 @@ versions:
   velero: v1.2.0
   expenv: v1.2.0
   ketall: v1.3.0
+  apacheds: 0.7.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 opa:
@@ -33,6 +43,7 @@ monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
 pgo:
   version: 4.2.0
+  imageVersion: 4.2.0
   primaryStorage: local-path
   xlogStorage: local-path
   backupStorage: local-path
@@ -79,3 +90,7 @@ fluentd-operator:
   repository: jvassev/kube-fluentd-operator
 eck:
   version: 1.0.0
+ingressCA:
+  cert: .certs/ingress-ca-crt.pem
+  privateKey: .certs/ingress-ca-key.pem
+  password: foobar

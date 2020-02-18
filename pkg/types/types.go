@@ -3,7 +3,6 @@ package types
 import (
 	"gopkg.in/yaml.v2"
 
-	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -105,6 +104,7 @@ type Harbor struct {
 	Version       string                   `yaml:"version,omitempty"`
 	ChartVersion  string                   `yaml:"chartVersion,omitempty"`
 	AdminPassword string                   `yaml:"-"`
+	ClairVersion  string                   `yaml:"clairVersion"`
 	DB            *DB                      `yaml:"db,omitempty"`
 	URL           string                   `yaml:"url,omitempty"`
 	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
@@ -165,6 +165,9 @@ type DB struct {
 type PostgresOperator struct {
 	Disabled        bool                               `yaml:"disabled,omitempty"`
 	Version         string                             `yaml:"version,omitempty"`
+	DBVersion       string                             `yaml:"dbVersion,omitempty"`
+	Password        string                             `yaml:"password,omitempty"`
+	BackupBucket    string                             `yaml:"backupBucket,omitempty"`
 	PrimaryStorage  string                             `yaml:"primaryStorage,omitempty"`
 	XlogStorage     string                             `yaml:"xlogStorage,omitempty"`
 	BackupStorage   string                             `yaml:"backupStorage,omitempty"`
@@ -213,7 +216,9 @@ type NFS struct {
 }
 
 type Ldap struct {
+	Disabled   bool   `yaml:"disabled,omitempty"`
 	Host       string `yaml:"host,omitempty"`
+	Port       string `yaml:"port,omitempty"`
 	Username   string `yaml:"username,omitempty"`
 	Password   string `yaml:"password,omitempty"`
 	Domain     string `yaml:"domain,omitempty"`
@@ -222,12 +227,9 @@ type Ldap struct {
 }
 
 type Kubernetes struct {
-	Version           string                          `yaml:"version,omitempty"`
-	APIServer         api.KubeAPIServerConfig         `yaml:"api,omitempty"`
-	Kubelet           api.KubeletConfigSpec           `yaml:"kubelet,omitempty"`
-	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
-	KubeScheduler     api.KubeSchedulerConfig         `yaml:"scheduler,omitempty"`
-	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
+	Version          string            `yaml:"version,omitempty"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
+	MasterIP         string            `yaml:"masterIP,omitempty"`
 }
 
 type DynamicDNS struct {
@@ -237,6 +239,9 @@ type DynamicDNS struct {
 	KeyName    string `yaml:"keyName,omitempty"`
 	Algorithm  string `yaml:"algorithm,omitempty"`
 	Zone       string `yaml:"zone,omitempty"`
+	AccessKey  string `yaml:"accessKey,omitempty"`
+	SecretKey  string `yaml:"secretKey,omitempty"`
+	Type       string `yaml:"type,omitempty"`
 }
 
 type Monitoring struct {
@@ -326,7 +331,7 @@ type Versions struct {
 
 type Velero struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:version,omitempty"`
+	Version  string `yaml:"version,omitempty"`
 	Schedule string `yaml:"schedule,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 	Volumes  bool   `yaml:"volumes"`

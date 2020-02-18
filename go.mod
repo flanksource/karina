@@ -7,18 +7,15 @@ require (
 	cloud.google.com/go/bigquery v1.2.0 // indirect
 	cloud.google.com/go/storage v1.2.1 // indirect
 	github.com/Azure/go-autorest v11.1.2+incompatible // indirect
+	github.com/aws/aws-sdk-go v1.16.26
 	github.com/crunchydata/postgres-operator v4.2.1+incompatible
 	github.com/dghubble/sling v1.3.0
-	github.com/evanphx/json-patch v4.2.0+incompatible
-	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.0.0
-	github.com/gobuffalo/packr/v2 v2.7.1 // indirect
+	github.com/flanksource/commons v1.0.2
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/mux v1.7.3
 	github.com/grafana-tools/sdk v0.0.0-20191214173017-690a0c6bec7b
 	github.com/imdario/mergo v0.3.6
 	github.com/lib/pq v1.1.1
@@ -33,14 +30,13 @@ require (
 	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/pflag v1.0.5
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
-	github.com/vmware/govmomi v0.20.2
+	github.com/vmware/govmomi v0.20.3
 	go.opencensus.io v0.22.1 // indirect
-	golang.org/x/crypto v0.0.0-20191107222254-f4817d981bb6
+	golang.org/x/crypto v0.0.0-20191107222254-f4817d981bb6 // indirect
 	golang.org/x/net v0.0.0-20191108063844-7e6e90b9ea88 // indirect
-	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20200207224406-61798d64f025 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
@@ -48,20 +44,18 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 
-	gopkg.in/yaml.v2 v2.2.7
+	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2
 	k8s.io/cli-runtime v0.17.2
 	k8s.io/client-go v0.17.2
-	k8s.io/cluster-bootstrap v0.0.0-20190831080953-99cb41cb5d35
+	k8s.io/cluster-bootstrap v0.17.0
+	sigs.k8s.io/kind v0.7.0
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 )
 
-// replace github.com/flanksource/commons => ../commons
-// replace github.com/moshloop/konfigadm => ../konfigadm
-replace github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
-
-// latest golang.org/x/exp has a dependency on dmitri.shuralyov.com which is down
-replace golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
-
-replace github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
+replace (
+	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
+	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
+	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
+)

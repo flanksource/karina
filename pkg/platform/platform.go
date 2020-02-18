@@ -14,12 +14,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/minio/minio-go/v6"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	"k8s.io/cli-runtime/pkg/kustomize"
-	"sigs.k8s.io/kustomize/pkg/fs"
-
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
@@ -27,6 +21,8 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
+
+	minio "github.com/minio/minio-go/v6"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
@@ -36,6 +32,10 @@ import (
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	"k8s.io/cli-runtime/pkg/kustomize"
+	"sigs.k8s.io/kustomize/pkg/fs"
 )
 
 type Platform struct {
@@ -150,9 +150,20 @@ func (platform *Platform) WaitFor() error {
 
 func (platform *Platform) GetDNSClient() dns.DNSClient {
 	if platform.DNS == nil || platform.DNS.Disabled {
-		return dns.DummyDNSClient{Zone: platform.DNS.Zone}
+		return &dns.DummyDNSClient{Zone: platform.DNS.Zone}
 	}
-	return dns.DynamicDNSClient{
+
+	if platform.DNS.Type == "route53" {
+		dns := &dns.Route53Client{
+			HostedZoneID: platform.DNS.Zone,
+			AccessKey:    platform.DNS.AccessKey,
+			SecretKey:    platform.DNS.SecretKey,
+		}
+		dns.Init()
+		return dns
+	}
+
+	return &dns.DynamicDNSClient{
 		Zone:       platform.DNS.Zone,
 		KeyName:    platform.DNS.KeyName,
 		Nameserver: platform.DNS.Nameserver,
@@ -180,12 +191,12 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	log.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
 
 	if err := client.Init(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
 	}
 	platform.nsx = client
 	version, err := platform.nsx.Ping()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
 	}
 	log.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
 	return platform.nsx, nil
@@ -198,7 +209,7 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	ctx := context.TODO()
 	obj, err := platform.session.Clone(vm, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("clone: failed to clone session: %v", err)
 	}
 
 	VM := &VM{
@@ -264,7 +275,7 @@ func (platform *Platform) OpenViaEnv() error {
 	platform.ctx = context.TODO()
 	session, err := vmware.GetSessionFromEnv()
 	if err != nil {
-		return err
+		return fmt.Errorf("openViaEnv: failed to get session from env: %v", err)
 	}
 	platform.session = session
 	return nil
@@ -272,6 +283,9 @@ func (platform *Platform) OpenViaEnv() error {
 
 // GetMasterIPs returns a list of healthy master IP's
 func (platform *Platform) GetMasterIPs() []string {
+	if platform.Kubernetes.MasterIP != "" {
+		return []string{platform.Kubernetes.MasterIP}
+	}
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
 	log.Tracef("Finding masters via consul: %s\n", url)
 	response, _ := net.GET(url)
@@ -399,17 +413,17 @@ func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string
 	}
 	dir, err := fs.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
 	}
 	files, err := dir.Readdir(-1)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getResourcesByDir: failed to read dir: %v", err)
 	}
 
 	for _, info := range files {
 		file, err := fs.Open(path + "/" + info.Name())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
 		}
 		out[info.Name()] = file
 	}
@@ -481,7 +495,7 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 	for _, spec := range specs {
 		data, err := yaml.Marshal(spec)
 		if err != nil {
-			return err
+			return fmt.Errorf("applyCRD: failed to marshal yaml specs: %v", err)
 		}
 
 		if log.IsLevelEnabled(log.TraceLevel) {
@@ -492,7 +506,7 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
 
 		file := text.ToFile(string(data), ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
-			return err
+			return fmt.Errorf("applyCRD: failed to apply CRD: %v", err)
 		}
 	}
 	return nil
@@ -507,7 +521,7 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 	for _, spec := range specs {
 		file := text.ToFile(spec, ".yml")
 		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
-			return err
+			return fmt.Errorf("applyText: failed to apply: %v", err)
 		}
 	}
 	return nil
@@ -587,33 +601,33 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 		if strings.HasSuffix(spec, "/") {
 			dir, err := platform.TemplateDir(spec, "manifests")
 			if err != nil {
-				return err
+				return fmt.Errorf("applySpecs: failed to template dir: %v", err)
 			}
 			if platform.PatchPath != "" {
 				GenerateKustomizeYaml("overlays/baseDir/", "overlays/base_kustomization_template", dir, true, false)
 				finalPatchYaml := GenerateKustomizeYaml("overlays/patchDir/", "overlays/overlays_kustomization_template", platform.PatchPath, true, true)
 				if err := kubectl("apply %s -f %s", namespace, text.ToFile(finalPatchYaml, ".yaml")); err != nil {
-					return err
+					return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 				}
 			} else {
 				if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
-					return err
+					return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 				}
 			}
 		} else {
 			template, err := platform.Template(spec, "manifests")
 			if err != nil {
-				return err
+				return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
 			}
 			if platform.PatchPath != "" {
 				GenerateKustomizeYaml("overlays/baseDir/", "overlays/base_kustomization_template", template, false, false)
 				finalPatchYaml := GenerateKustomizeYaml("overlays/patchDir/", "overlays/overlays_kustomization_template", platform.PatchPath, true, true)
 				if err := kubectl("apply %s -f %s", namespace, text.ToFile(finalPatchYaml, ".yaml")); err != nil {
-					return err
+					return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 				}
 			} else {
 				if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
-					return err
+					return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 				}
 			}
 		}
@@ -643,7 +657,6 @@ func (p *Platform) GetBinary(name string) deps.BinaryFunc {
 
 func (p *Platform) GetS3Client() (*minio.Client, error) {
 	endpoint := p.S3.GetExternalEndpoint()
-	// config := &aws.Config{}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -659,5 +672,4 @@ func (p *Platform) GetS3Client() (*minio.Client, error) {
 	}
 	s3.SetCustomTransport(client.Transport)
 	return s3, nil
-
 }

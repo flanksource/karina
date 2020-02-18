@@ -181,12 +181,7 @@ clair:
   enabled: true
   image:
     repository: goharbor/clair-photon
-  {{ if .harbor.version | strings.HasPrefix "v1.9" }}
-    tag: v2.0.9-{{.harbor.version}}
-  {{else}}
-    tag: v2.0.8-{{.harbor.version}}
-  {{end}}
-
+    tag: v{{.harbor.clairVersion}}-{{.harbor.version}}
   replicas: {{.harbor.replicas}}
   # The interval of clair updaters, the unit is hour, set to 0 to
   # disable the updaters

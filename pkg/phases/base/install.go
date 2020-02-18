@@ -1,6 +1,7 @@
 package base
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -24,12 +25,12 @@ func Install(platform *platform.Platform) error {
 	if !platform.NodeLocalDNS.Disabled {
 		client, err := platform.GetClientset()
 		if err != nil {
-			return err
+			return fmt.Errorf("install: Failed to get clientset: %v", err)
 		}
 
 		kubeDNS, err := client.CoreV1().Services("kube-system").Get("kube-dns", metav1.GetOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("install: Failed to get service: %v", err)
 		}
 
 		platform.NodeLocalDNS.DNSServer = kubeDNS.Spec.ClusterIP
@@ -52,6 +53,7 @@ func Install(platform *platform.Platform) error {
 		// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
 		// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
 		var _ = platform.ApplySpecs("", "cert-manager-deploy.yml")
+		platform.GetKubectl()("wait --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
 		platform.WaitForNamespace("cert-manager", 180*time.Second)
 		if err := platform.ApplySpecs("", "cert-manager-deploy.yml"); err != nil {
 			log.Errorf("Error deploying cert manager: %s\n", err)
@@ -116,7 +118,7 @@ func Install(platform *platform.Platform) error {
 			"region":          []byte(platform.S3.Region),
 		})
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
-			return err
+			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}
 	}
 

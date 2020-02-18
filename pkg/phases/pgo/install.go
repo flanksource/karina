@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/deps"
-	"github.com/flanksource/commons/exec"
-	"github.com/flanksource/commons/files"
-	"github.com/flanksource/commons/text"
+	"github.com/flanksource/commons/utils"
+	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	pgoapi "github.com/moshloop/platform-cli/pkg/api/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -26,6 +26,7 @@ const (
 	CO_CLIENT_KEY   = "CO_CLIENT_KEY"
 	CO_CA_CERT      = "CO_CA_CERT"
 	PGO_CA_CERT     = "PGO_CA_CERT"
+	Namespace       = "pgo"
 )
 
 func getEnvMap(p *platform.Platform) map[string]string {
@@ -91,19 +92,19 @@ func getEnv(p *platform.Platform) (*map[string]string, error) {
 	passwd := fmt.Sprintf("%s:%s", user, pass)
 	log.Debugf("Writing %s", home)
 	if err := ioutil.WriteFile(home, []byte(passwd), 0644); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	secrets := *p.GetSecret("pgo", "pgo.tls")
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_CERT"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_CERT"], secrets["tls.crt"], 0644); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	log.Debugf("Writing %s", ENV["PGO_CLIENT_KEY"])
 	if err := ioutil.WriteFile(ENV["PGO_CLIENT_KEY"], secrets["tls.key"], 0644); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getEnv: failed to write file: %v", err)
 	}
 
 	return &ENV, nil
@@ -115,7 +116,7 @@ func ClientSetup(p *platform.Platform) error {
 	}
 	ENV, err := getEnv(p)
 	if err != nil {
-		return err
+		return fmt.Errorf("clientSetup: failed to get env: %v", err)
 	}
 
 	if p.DryRun {
@@ -133,52 +134,59 @@ func Install(p *platform.Platform) error {
 	if p.PGO == nil || p.PGO.Disabled {
 		return nil
 	}
-	ENV := getEnvMap(p)
 
-	for k, v := range ENV {
-		log.Tracef("export %s=%s\n", k, v)
-	}
-
-	if files.Exists("build/pgo") {
-		exec.Exec("cd build/pgo; git clean -fdx && git reset . ")
-	}
-	if err := files.Getter("git::https://github.com/CrunchyData/postgres-operator.git?ref="+getPGOTag(p.PGO.Version), "build/pgo"); err != nil {
+	if err := p.CreateOrUpdateNamespace(PGO, map[string]string{
+		pgoapi.LABEL_VENDOR:                pgoapi.LABEL_CRUNCHY,
+		pgoapi.LABEL_PGO_INSTALLATION_NAME: "pgo",
+	}, nil); err != nil {
 		return err
 	}
 
-	if runtime.GOOS == "darwin" {
-		// cp -R behavior seems to handle directories differently on macosx and linux?
-		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/pgo", ENV)
-	} else {
-		exec.ExecfWithEnv("cp -Rv overlays/pgo/ build/", ENV)
+	if p.PGO.Password == "" {
+		_, pass := getPgoAuth(p)
+		if pass == "" {
+			pass = utils.RandomString(10)
+		}
+		p.PGO.Password = pass
 	}
-	template, err := p.Template("pgo.yaml", "templates")
-	if err != nil {
-		log.Warn(err)
-	}
-	templateFile := text.ToFile(template, ".yaml")
-	exec.ExecfWithEnv(fmt.Sprintf("cp -v %s build/pgo/conf/postgres-operator/pgo.yaml", templateFile), ENV)
 	if err := p.CreateOrUpdateNamespace(PGO, nil, nil); err != nil {
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
+	}
+
+	if err := p.ApplySpecs(Namespace, "pgo-crd.yml"); err != nil {
+		return err
+	}
+	if err := p.ApplySpecs(Namespace, "pgo-config.yml.raw"); err != nil {
+		return err
+	}
+	if err := p.ApplySpecs(Namespace, "pgo.yml"); err != nil {
 		return err
 	}
 
-	if err := p.ExposeIngressTLS("pgo", "postgres-operator", 8443); err != nil {
+	if err := p.Apply(Namespace, &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "pgo-backrest-repo-config",
+			Labels: map[string]string{
+				pgoapi.LABEL_VENDOR: pgoapi.LABEL_CRUNCHY,
+			},
+		},
+		Data: map[string][]byte{
+			"aws-s3-ca.crt":           []byte{},
+			"aws-s3-credentials.yaml": []byte(fmt.Sprintf("aws-s3-key: %s\n aws-s3-key-secret: %s\n", p.S3.AccessKey, p.S3.SecretKey)),
+			"config":                  []byte(pgoapi.DEFAULT_SSH_CONFIG),
+			"sshd_config":             []byte(pgoapi.DEFAULT_SSHD_CONFIG),
+		},
+	}); err != nil {
 		return err
 	}
 
-	if p.DryRun {
-		return nil
-	}
-	if err := exec.ExecfWithEnv("/bin/bash  build/pgo/deploy/install-rbac.sh", ENV); err != nil {
-		return err
-	}
-	return exec.ExecfWithEnv("/bin/bash build/pgo/deploy/deploy.sh", ENV)
+	return p.ExposeIngressTLS("pgo", "postgres-operator", 8443)
 }
 
 func GetPGO(p *platform.Platform) (deps.BinaryFunc, error) {
 	env, err := getEnv(p)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getPGO: failed to get env: %v", err)
 	}
 	return deps.BinaryWithEnv(PGO, getPGOTag(p.PGO.Version), ".bin", *env), nil
 }
@@ -194,4 +202,3 @@ func getPGOTag(version string) string {
 	}
 	return gitTag
 }
-

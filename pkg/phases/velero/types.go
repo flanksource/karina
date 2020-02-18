@@ -3,8 +3,8 @@ package velero
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-		"github.com/moshloop/platform-cli/pkg/k8s"
-		"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/moshloop/platform-cli/pkg/k8s"
 )
 
 type BackupSpec struct {
@@ -287,7 +287,6 @@ type BackupList struct {
 func (in Backup) DeepCopyObject() runtime.Object {
 	return in
 }
-
 
 func (in Backup) GetObjectKind() schema.ObjectKind {
 	return k8s.DynamicKind{
