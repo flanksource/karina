@@ -45,11 +45,8 @@ type Calico struct {
 }
 
 type OAuth2Proxy struct {
-	ClientID     string `yaml:"clientID,omitempty"`
-	ClientSecret string `yaml:"clientSecret,omitempty"`
-	Provider     string `yaml:"provider,omitempty"`
+	Enabled      bool   `yaml:"enabled",omitempty`
 	CookieSecret string `yaml:"cookieSecret,omitempty"`
-	RestrictArgs string `yaml:"restrictArgs,omitempty"`
 	Version      string `yaml:"version,omitempty"`
 }
 

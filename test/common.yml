@@ -79,8 +79,5 @@ ingressCA:
   password: foobar
 oauth2Proxy:
   version: v5.0.0
-  clientID: aaaa
-  clientSecret: bbbb
-  provider: github
+  enabled: true
   cookieSecret: cccc
-  restrictArgs: "--email-domain=*,--github-org=flanksource"

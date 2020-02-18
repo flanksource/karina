@@ -336,12 +336,25 @@ spec:
         k8s-app: oauth2-proxy
     spec:
       containers:
-        - args: ["--provider={{.oauth2Proxy.provider}}", "--upstream=file:///dev/null", "--http-address=0.0.0.0:4180", "--whitelist-domain=.{{.domain}}", "--cookie-domain=.{{.domain}}", {{.oauth2Proxy.restrictArgs}}]
+        - args:
+           - "--upstream=file:///dev/null"
+           - "--http-address=0.0.0.0:4180"
+           - "--whitelist-domain=.{{.domain}}"
+           - "--cookie-domain=.{{.domain}}"
+           - "-provider=oidc"
+           - "-provider-display-name=Dex"
+           - "-client-id=kubernetes"
+           - "-client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0"
+           - "-redirect-url=https://oauth2.{{.domain}}/oauth2/callback"
+           - "-oidc-issuer-url=https://dex.{{.domain}}"
+           - "-skip-oidc-discovery"
+           - "-login-url=https://dex.{{.domain}}/auth"
+           - "-redeem-url=https://dex.dex.svc:443/token"
+           - "-ssl-insecure-skip-verify"
+           - "-oidc-jwks-url=https://dex.dex.svc/keys"
+           - "-cookie-secure=false"
+           - "-email-domain=*"
           env:
-            - name: OAUTH2_PROXY_CLIENT_ID
-              value: {{.oauth2Proxy.clientID}}
-            - name: OAUTH2_PROXY_CLIENT_SECRET
-              value: {{.oauth2Proxy.clientSecret}}
             - name: OAUTH2_PROXY_COOKIE_SECRET
               value: {{.oauth2Proxy.cookieSecret}}
           image: quay.io/pusher/oauth2_proxy:{{.oauth2Proxy.version}}
