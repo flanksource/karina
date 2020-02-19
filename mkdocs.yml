@@ -6,7 +6,6 @@ theme:
       palette:
             primary: 'royalblue'
       logo: 'img/favicon.png'
-      custom_dir: 'docs/theme'
 extra:
   social:
     - type: 'github'
