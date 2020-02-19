@@ -44,7 +44,7 @@ type PlatformConfig struct {
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
 	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
+	FluentdOperator       *FluentdOperator  `yaml:"fluentd,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`
 
 	BootstrapToken       string `yaml:"-"`

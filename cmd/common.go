@@ -128,6 +128,8 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.IngressCA.Password = template(base.IngressCA.Password)
 	}
 
+	base.FluentdOperator.Elasticsearch.Password = template(base.FluentdOperator.Elasticsearch.Password)
+
 	gitops := base.GitOps
 	for i := range gitops {
 		gitops[i].GitKey = template(gitops[i].GitKey)

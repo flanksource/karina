@@ -278,10 +278,10 @@ type CA struct {
 }
 
 type FluentdOperator struct {
-	Disabled   bool                  `yaml:"disabled,omitempty"`
-	Version    string                `yaml:"version,omitempty"`
-	ImageRepo  string                `yaml:"repository,omitempty"`
-	Connectors map[string]Connection `yaml:"connectors,omitempty"`
+	Disabled             bool       `yaml:"disabled,omitempty"`
+	Version              string     `yaml:"version,omitempty"`
+	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
+	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
 }
 
 type ECK struct {
@@ -300,6 +300,9 @@ type Connection struct {
 	URL      string `yaml:"url,omitempty"`
 	User     string `yaml:"user,omitempty"`
 	Password string `yaml:"password,omitempty"`
+	Port     string `yaml:"port,omitempty"`
+	Scheme   string `yaml:"scheme,omitempty"`
+	Verify   string `yaml:"verify,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

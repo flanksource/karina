@@ -85,9 +85,14 @@ s3:
   region: us-east1
 velero:
   bucket: velero
-fluentd-operator:
+fluentd:
   version: v1.11.0
-  repository: jvassev/kube-fluentd-operator
+  elasticsearch:
+    url: log-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: https
 eck:
   version: 1.0.0
 ingressCA:
