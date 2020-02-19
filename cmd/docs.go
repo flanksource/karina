@@ -36,12 +36,6 @@ var APIDocs = &cobra.Command{
 	},
 }
 
-const (
-	firstParagraph = `<br>
-# API Docs
-`
-)
-
 var (
 	links = map[string]string{
 		"metav1.ObjectMeta":        "https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#objectmeta-v1-meta",
@@ -64,8 +58,6 @@ func toSectionLink(name string) string {
 }
 
 func printAPIDocs(paths []string) {
-	fmt.Println(firstParagraph)
-
 	types := ParseDocumentationFrom(paths)
 	for _, t := range types {
 		strukt := t[0]

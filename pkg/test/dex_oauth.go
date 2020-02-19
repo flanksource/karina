@@ -7,12 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	url "net/url"
 	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type DexOauth struct {
@@ -35,19 +35,19 @@ func (d *DexOauth) GetAccessToken() (*DexAccessToken, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get ldap url")
 	}
-	fmt.Printf("Got ldap url: %s\n", ldapURL)
+	log.Tracef("Got ldap url: %s\n", ldapURL)
 
 	approvalURL, err := d.getApprovalURL(ldapURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get ldap approval url")
 	}
-	fmt.Printf("Got approval url: %s\n", approvalURL)
+	log.Tracef("Got approval url: %s\n", approvalURL)
 
 	redirectURL, err := d.approve(approvalURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get redirect URL")
 	}
-	fmt.Printf("Got redirect url: %s\n", redirectURL)
+	log.Tracef("Got redirect url: %s\n", redirectURL)
 
 	uri, err := url.Parse(redirectURL)
 	if err != nil {
@@ -61,8 +61,7 @@ func (d *DexOauth) GetAccessToken() (*DexAccessToken, error) {
 	if code == "" {
 		return nil, errors.Errorf("could not find code in redirect URL: %s", redirectURL)
 	}
-
-	fmt.Printf("Code is: %s\n", code)
+	log.Tracef("Code is: %s\n", code)
 
 	tokenJWT, err := d.getToken(code)
 	if err != nil {

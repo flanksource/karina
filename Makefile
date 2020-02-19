@@ -44,11 +44,11 @@ docker:
 
 .PHONY: serve-docs
 serve-docs:
-	docker run --rm -it -p 8000:8000 -v $(PWD):/docs -w $(PWD) squidfunk/mkdocs-material
+	docker run --rm -it -p 8000:8000 -v $(PWD):/docs -w /docs squidfunk/mkdocs-material
 
 .PHONY: build-api-docs
 build-api-docs:
-	go run main.go docs api  pkg/types/types.go pkg/types/nsx.go  > docs/reference/config.md
+	go run main.go docs api  pkg/types/config.go pkg/types/types.go pkg/types/nsx.go  > docs/reference/config.md
 	go run main.go docs cli "docs/cli"
 
 .PHONY: build-docs

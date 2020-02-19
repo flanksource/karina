@@ -6,60 +6,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
-type PlatformConfig struct {
-	BootstrapToken        string            `yaml:"-"`
-	Brand                 Brand             `yaml:"brand,omitempty"`
-	Version               string            `yaml:"version,omitempty"`
-	Velero                *Velero           `yaml:"velero,omitempty"`
-	CA                    *CA               `yaml:"ca,omitempty"`
-	Calico                Calico            `yaml:"calico,omitempty"`
-	CertManager           *Enabled          `yaml:"certManager,omitempty"`
-	Consul                string            `yaml:"consul,omitempty"`
-	ControlPlaneEndpoint  string            `yaml:"-"`
-	Dashboard             *Enabled          `yaml:"dashboard,omitempty"`
-	Datacenter            string            `yaml:"datacenter,omitempty"`
-	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
-	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
-	Domain                string            `yaml:"domain,omitempty"`
-	DryRun                bool              `yaml:"-"`
-	ELK                   ELK               `yaml:"elk,omitempty"`
-	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
-	Harbor                *Harbor           `yaml:"harbor,omitempty"`
-	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
-	IngressCA             *CA               `yaml:"ingressCA,omitempty"`
-	GitOps                []GitOps          `yaml:"gitops,omitempty"`
-	JoinEndpoint          string            `yaml:"-"`
-	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
-	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
-	LocalPath             *Enabled          `yaml:"localPath,omitempty"`
-	Master                VM                `yaml:"master,omitempty"`
-	Monitoring            *Monitoring       `yaml:"monitoring,omitempty"`
-	Name                  string            `yaml:"name,omitempty"`
-	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
-	NFS                   *NFS              `yaml:"nfs,omitempty"`
-	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
-	NSX                   *NSX              `yaml:"nsx,omitempty"`
-	OPA                   *OPA              `yaml:"opa,omitempty"`
-	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
-	PodSubnet             string            `yaml:"podSubnet,omitempty"`
-	Policies              []string          `yaml:"policies,omitempty"`
-	Quack                 *Enabled          `yaml:"quack,omitempty"`
-	Resources             map[string]string `yaml:"resources,omitempty"`
-	S3                    S3                `yaml:"s3,omitempty"`
-	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
-	SMTP                  Smtp              `yaml:"smtp,omitempty"`
-	Source                string            `yaml:"-"`
-	Specs                 []string          `yaml:"specs,omitempty"`
-	TrustedCA             string            `yaml:"trustedCA,omitempty"`
-	Versions              map[string]string `yaml:"versions,omitempty"`
-	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
-	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
-	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
-	ECK                   *ECK              `yaml:"eck,omitempty"`
-}
-
 type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
@@ -206,7 +152,6 @@ func (s3 S3) GetExternalEndpoint() string {
 		return s3.ExternalEndpoint
 	}
 	return s3.Endpoint
-
 }
 
 type NFS struct {
@@ -244,18 +189,17 @@ type DynamicDNS struct {
 }
 
 type Monitoring struct {
-	Disabled         bool       `yaml:"disabled,omitempty"`
-	AlertEmail       string     `yaml:"alert_email,omitempty"`
-	Version          string     `yaml:"version,omitempty" json:"version,omitempty"`
-	Prometheus       Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
-	Grafana          Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager     string     `yaml:"alertMmanager,omitempty"`
-	KubeStateMetrics string     `yaml:"kubeStateMetrics,omitempty"`
-	KubeRbacProxy    string     `yaml:"kubeRbacProxy,omitempty"`
-	NodeExporter     string     `yaml:"nodeExporter,omitempty"`
-	AddonResizer     string     `yaml:"addonResizer,omitempty"`
-	// Prometheus         string     `yaml:"prometheus,omitempty"`
-	PrometheusOperator string `yaml:"prometheus_operator,omitempty"`
+	Disabled           bool       `yaml:"disabled,omitempty"`
+	AlertEmail         string     `yaml:"alert_email,omitempty"`
+	Version            string     `yaml:"version,omitempty" json:"version,omitempty"`
+	Prometheus         Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Grafana            Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
+	AlertManager       string     `yaml:"alertMmanager,omitempty"`
+	KubeStateMetrics   string     `yaml:"kubeStateMetrics,omitempty"`
+	KubeRbacProxy      string     `yaml:"kubeRbacProxy,omitempty"`
+	NodeExporter       string     `yaml:"nodeExporter,omitempty"`
+	AddonResizer       string     `yaml:"addonResizer,omitempty"`
+	PrometheusOperator string     `yaml:"prometheus_operator,omitempty"`
 }
 
 type Prometheus struct {
@@ -266,15 +210,6 @@ type Prometheus struct {
 type Grafana struct {
 	Version  string `yaml:"version,omitempty"`
 	Disabled bool   `yaml:"disabled,omitempty"`
-}
-
-type ELK struct {
-	Version      string `yaml:"version,omitempty"`
-	Replicas     int    `yaml:"replicas,omitempty"`
-	LogRetention string `yaml:"logRetention,omitempty"`
-}
-
-type Dex struct {
 }
 
 type Brand struct {
@@ -343,9 +278,10 @@ type CA struct {
 }
 
 type FluentdOperator struct {
-	Disabled  bool   `yaml:"disabled,omitempty"`
-	Version   string `yaml:"version,omitempty"`
-	ImageRepo string `yaml:"repository,omitempty"`
+	Disabled             bool       `yaml:"disabled,omitempty"`
+	Version              string     `yaml:"version,omitempty"`
+	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
+	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
 }
 
 type ECK struct {
@@ -358,6 +294,15 @@ type NodeLocalDNS struct {
 	DNSServer string `yaml:"dnsServer,omitempty"`
 	LocalDNS  string `yaml:"localDNS,omitempty"`
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
+}
+
+type Connection struct {
+	URL      string `yaml:"url,omitempty"`
+	User     string `yaml:"user,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Port     string `yaml:"port,omitempty"`
+	Scheme   string `yaml:"scheme,omitempty"`
+	Verify   string `yaml:"verify,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
