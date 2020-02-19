@@ -1,8 +1,8 @@
-# Configure Kubernetes SSO
+# Setting up SSO
 
 ### Configure LDAP in `config.yml`.
 
-```
+```yaml
 ldap:
   adminGroup: NA1
   username: uid=admin,ou=system
@@ -12,61 +12,49 @@ ldap:
   dn: ou=users,dc=example,dc=com
 ```
 
-### Deploy ApacheDS and Dex using the following command:
+### Deploy ApacheDS and Dex
 
-```
+```shell
 $ platform-cli deploy stubs
 $ platform-cli deploy dex
 ```
 
-### Wait for it to start:
+### Wait for pods to start:
 
 ```
-$ docker -n ldap get po -w
-$ docker -n dex get po -w
+$ kubectl -n ldap get po
+NAME                        READY   STATUS    RESTARTS   AGE
+apacheds-56c656465d-ttgv7   1/1     Running   0          1m
+
+$ kubectl -n dex get po
+NAME                   READY   STATUS    RESTARTS   AGE
+dex-56dd8bff8f-59vkc   1/1     Running   0          1m
+dex-56dd8bff8f-kt8rt   1/1     Running   1          1m
+dex-56dd8bff8f-l4vqg   1/1     Running   0          1m
 ```
 
-### Generate kubectl config:
+### Setup RBAC permissions for users
 
-```
-$ platform-cli kubeconfig sso
-```
-
-### Get access token:
-
-```
-$ kubelogin get-token --oidc-issuer-url=https://dex.127.0.0.1.nip.io --oidc-client-id=kubernetes --oidc-client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0 --insecure-skip-tls-verify --oidc-extra-scope=email,groups,offline_access,profile,openid
-```
-
-### Set access token in ~/.kube/config
-
-```
-apiVersion: v1
-clusters:
-- cluster:
-    insecure-skip-tls-verify: true
-    server:
-  name: cluster
-contexts:
-- context:
-    cluster: cluster
-    user: sso
-  name: cluster
-current-context: cluster
-kind: Config
-preferences: {}
-users:
-- name: cluster
-  user:
-    auth-provider:
-      config:
-        client-id: <...>
-        client-secret: <...>
-        extra-scopes: offline_access openid profile email groups
-        idp-certificate-authority-data: <...>
-        idp-issuer-url: https://dex.{domain}
-        id-token: <...>
-        access-token: <...>
-        refresh-token: <...>
-      name: oidc
+```yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-rbac-ldap
+rules:
+  - apiGroups: ["*"]
+    resources: ["pods", "nodes"]
+    verbs: ["list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-rbac-role
+subjects:
+  - apiGroup: ""
+    kind: User
+    name: test@example.com
+roleRef:
+  apiGroup: ""
+  kind: ClusterRole
+  name: test-rbac-ldap
 ```

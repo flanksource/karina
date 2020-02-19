@@ -23,8 +23,8 @@ nav:
           - Usage: ./user-guide/usage.md
     - Administrator Guide:
           - Authentication:
-                - Setting up SSO: ./admin-guide/index.md
-                - Generating Kubeconfigs: ./admin-guide/index.md
+                - Setting up SSO: ./admin-guide/authentication/sso.md
+                - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md
           - Cluster Lifecycle: ./admin-guide/cluster-lifecycle.md
           - Multi-Tenancy: ./admin-guide/index.md
           - Monitoring:
@@ -35,7 +35,7 @@ nav:
           - Docker Registry (Harbor): ./admin-guide/index.md
           - Provisioning:
                 - vSphere: ./admin-guide/vsphere.md
-                - KIND: ./admin-guide/index.md
+                - KIND: ./admin-guide/provisioning/kind.md
           - Security:
                 - Protecting secrets with SOPS: ./admin-guide/index.md
     - Developer Guide: ./developer-guide/index.md
