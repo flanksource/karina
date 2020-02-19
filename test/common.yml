@@ -86,7 +86,7 @@ s3:
 velero:
   bucket: velero
 fluentd:
-  version: v1.11.0
+  version: 1.11.0
   elasticsearch:
     url: log-es-http.eck.svc.cluster.local
     user: elastic
