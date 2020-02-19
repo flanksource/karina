@@ -1,18 +1,20 @@
-```
-fluentd-config
-```
+GitOps
+
+### Persistent Volumes
+
+### Namespace Configuration
 
 ### Ingress Templating
 
-Annotate your namespace with: 
+Annotate your namespace with:
 
 `quack.pusher.com/enabled`
 
 ### Routing Logs
 
-https://github.com/vmware/kube-fluentd-operator 
+https://github.com/vmware/kube-fluentd-operator
 
-Create a config ap in your namespace called `fluentd-config.conf` 
+Create a config ap in your namespace called `fluentd-config.conf`
 
 ```yaml
 apiVersion: v1
@@ -30,13 +32,10 @@ data:
 
 ```
 
-See https://github.com/uken/fluent-plugin-elasticsearch
-
-
+See [fluent-plugin-elasticsearch](https://github.com/uken/fluent-plugin-elasticsearch) for available elastic search options
 
 See https://github.com/vmware/kube-fluentd-operator#using-the-labels-macro
 
-https://github.com/vmware/kube-fluentd-operator#ingest-logs-from-a-file-in-the-container
+To ingest logs from a container [see](https://github.com/vmware/kube-fluentd-operator#ingest-logs-from-a-file-in-the-container)
 
-https://github.com/vmware/kube-fluentd-operator#ingest-logs-from-a-file-in-the-container
 

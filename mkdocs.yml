@@ -1,7 +1,16 @@
 repo_url: https://github.com/flanksource/platform-cli
 repo_name: platform-cli
 site_name: platform-cli
-theme: material
+theme:
+      name: 'material'
+      palette:
+            primary: 'royalblue'
+      logo: 'img/favicon.png'
+      custom_dir: 'docs/theme'
+extra:
+  social:
+    - type: 'github'
+      link: 'https://github.com/flanksource'
 markdown_extensions:
     - admonition
     - fenced_code
@@ -11,12 +20,13 @@ markdown_extensions:
           linenums: true
 nav:
     - User Guide:
-          - Logging In: ./user-guide/index.md
-          - Available Features: ./user-guide/index.md
+          - Logging In: ./user-guide/login.md
+          - Usage: ./user-guide/usage.md
     - Administrator Guide:
           - Authentication:
                 - Setting up SSO: ./admin-guide/index.md
                 - Generating Kubeconfigs: ./admin-guide/index.md
+          - Cluster Lifecycle: ./admin-guide/cluster-lifecycle.md
           - Multi-Tenancy: ./admin-guide/index.md
           - Monitoring:
                 - Alerting: ./admin-guide/index.md
@@ -25,7 +35,7 @@ nav:
                 - Multi-Cluster (Thanos): ./admin-guide/index.md
           - Docker Registry (Harbor): ./admin-guide/index.md
           - Provisioning:
-                - vSphere: ./admin-guide/index.md
+                - vSphere: ./admin-guide/vsphere.md
                 - KIND: ./admin-guide/index.md
           - Security:
                 - Protecting secrets with SOPS: ./admin-guide/index.md
