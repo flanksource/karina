@@ -1,6 +1,7 @@
 package harbor
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -53,6 +54,12 @@ func defaults(p *platform.Platform) {
 		harbor.Replicas = 1
 	}
 	if p.Ldap != nil {
+		if p.Ldap.GroupNameAttr == "" {
+			p.Ldap.GroupNameAttr = "name"
+		}
+		if p.Ldap.GroupObjectClass == "" {
+			p.Ldap.GroupObjectClass = "group"
+		}
 		settings := harbor.Settings
 		if settings == nil {
 			settings = &types.HarborSettings{}
@@ -65,7 +72,7 @@ func defaults(p *platform.Platform) {
 		settings.LdapUID = "sAMAccountName"
 		settings.LdapSearchPassword = p.Ldap.Password
 		settings.LdapSearchDN = p.Ldap.Username
-		settings.LdapGroupSearchFilter = "objectclass=group"
+		settings.LdapGroupSearchFilter = fmt.Sprintf("objectclass=%s", p.Ldap.GroupObjectClass)
 		settings.LdapGroupAdminDN = p.Ldap.AdminGroup
 		harbor.Settings = settings
 	}
