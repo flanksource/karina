@@ -58,7 +58,7 @@ func defaults(p *platform.Platform) {
 			settings = &types.HarborSettings{}
 		}
 		settings.LdapURL = "ldaps://" + p.Ldap.Host
-		settings.LdapBaseDN = p.Ldap.BindDN
+		settings.LdapBaseDN = p.Ldap.UserDN
 		verify := false
 		settings.LdapVerifyCert = &verify
 		settings.AuthMode = "ldap_auth"

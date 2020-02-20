@@ -180,8 +180,11 @@ type Ldap struct {
 	Password string `yaml:"password,omitempty"`
 	Domain   string `yaml:"domain,omitempty"`
 	// Members of this group will become cluster-admins
-	AdminGroup string `yaml:"adminGroup,omitempty"`
-	BindDN     string `yaml:"dn,omitempty"`
+	AdminGroup       string `yaml:"adminGroup,omitempty"`
+	UserDN           string `yaml:"userDN,omitempty"`
+	GroupDN          string `yaml:"groupDN,omitempty"`
+	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
+	GroupNameAttr    string `yaml:"groupNameAttr,omitempty"`
 }
 
 type Kubernetes struct {

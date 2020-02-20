@@ -107,6 +107,19 @@ data:
     objectClass: groupOfNames
     cn: admin
     member: uid=test,ou=users,dc=example,dc=com
+
+    dn: ou=groups,dc=example,dc=com
+    objectclass: top
+    objectclass: organizationalunit
+    ou: groups
+
+    dn: cn=k8s,ou=groups,dc=example,dc=com
+    objectClass: top
+    objectClass: groupOfNames
+    cn: Kubernetes
+    member: uid=test,ou=users,dc=example,dc=com
+
+
 ---
 apiVersion: apps/v1
 kind: Deployment
