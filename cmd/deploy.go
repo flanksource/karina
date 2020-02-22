@@ -1,20 +1,19 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
+	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 )
@@ -25,34 +24,6 @@ var Deploy = &cobra.Command{
 }
 
 func init() {
-
-	var _pgo = &cobra.Command{
-		Use:   "pgo",
-		Short: "Build and deploy the postgres operator",
-	}
-
-	_pgo.AddCommand(&cobra.Command{
-		Use:   "install",
-		Short: "Install the PostgreOperator into the cluster",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := pgo.Install(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deployed postgres operator%s", err)
-			}
-		},
-	})
-
-	_pgo.AddCommand(&cobra.Command{
-		Use:   "client",
-		Short: "Setup the the pgo client",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := pgo.ClientSetup(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deployed pgo client operator%s", err)
-			}
-		},
-	})
-
 	var _opa = &cobra.Command{
 		Use:   "opa",
 		Short: "Build and deploy opa aka gatekeeper",
@@ -88,12 +59,6 @@ func init() {
 			p := getPlatform(cmd)
 			if err := deploy_base.Install(p); err != nil {
 				log.Fatalf("Error deploying base: %s", err)
-			}
-			if err := pgo.Install(p); err != nil {
-				log.Warnf("Error deployed postgres operator: %v", err)
-			}
-			if err := pgo.ClientSetup(p); err != nil {
-				log.Warnf("Error deployed pgo client: %v", err)
 			}
 			if err := monitoring.Install(p); err != nil {
 				log.Warnf("Error building monitoring stack: %v", err)
@@ -242,5 +207,5 @@ func init() {
 		},
 	})
 
-	Deploy.AddCommand(_pgo, _opa, all)
+	Deploy.AddCommand(_opa, all)
 }
