@@ -11,21 +11,24 @@ type Enabled struct {
 }
 
 type VM struct {
-	Name         string            `yaml:"name,omitempty"`
-	Prefix       string            `yaml:"prefix,omitempty"`
-	Count        int               `yaml:"count,omitempty"`
-	Template     string            `yaml:"template,omitempty"`
-	Cluster      string            `yaml:"cluster,omitempty"`
-	Folder       string            `yaml:"folder,omitempty"`
-	Datastore    string            `yaml:"datastore,omitempty"`
-	ResourcePool string            `yaml:"resourcePool,omitempty"`
-	CPUs         int32             `yaml:"cpu,omitempty"`
-	MemoryGB     int64             `yaml:"memory,omitempty"`
-	Network      []string          `yaml:"networks,omitempty"`
-	DiskGB       int               `yaml:"disk,omitempty"`
-	Tags         map[string]string `yaml:"tags,omitempty"`
-	Commands     []string          `yaml:"commands,omitempty"`
-	IP           string            `yaml:"-"`
+	Name   string `yaml:"name,omitempty"`
+	Prefix string `yaml:"prefix,omitempty"`
+	// Number of VM's to provision
+	Count        int      `yaml:"count"`
+	Template     string   `yaml:"template"`
+	Cluster      string   `yaml:"cluster,omitempty"`
+	Folder       string   `yaml:"folder,omitempty"`
+	Datastore    string   `yaml:"datastore,omitempty"`
+	ResourcePool string   `yaml:"resourcePool,omitempty"`
+	CPUs         int32    `yaml:"cpu"`
+	MemoryGB     int64    `yaml:"memory"`
+	Network      []string `yaml:"networks,omitempty"`
+	// Size in GB of the VM root volume
+	DiskGB int `yaml:"disk"`
+	// Tags to be applied to the VM
+	Tags     map[string]string `yaml:"tags,omitempty"`
+	Commands []string          `yaml:"commands,omitempty"`
+	IP       string            `yaml:"-"`
 }
 
 type Calico struct {
@@ -138,13 +141,19 @@ type Smtp struct {
 }
 
 type S3 struct {
-	AccessKey        string `yaml:"access_key,omitempty"`
-	SecretKey        string `yaml:"secret_key,omitempty"`
-	Bucket           string `yaml:"bucket,omitempty"`
-	Region           string `yaml:"region,omitempty"`
-	Endpoint         string `yaml:"endpoint,omitempty"`
+	AccessKey string `yaml:"access_key,omitempty"`
+	SecretKey string `yaml:"secret_key,omitempty"`
+	Bucket    string `yaml:"bucket,omitempty"`
+	Region    string `yaml:"region,omitempty"`
+	// The endpoint at which the S3-like object storage will be available from inside the cluster
+	// e.g. if minio is deployed inside the cluster, specify: *http://minio.minio.svc:9000*
+	Endpoint string `yaml:"endpoint,omitempty"`
+	// The endpoint at which S3 is accessible outside the cluster,
+	// When deploying locally on kind specify: *minio.127.0.0.1.nip.io*
 	ExternalEndpoint string `yaml:"externalEndpoint,omitempty"`
-	CSIVolumes       bool   `yaml:"csiVolumes,omitempty"`
+	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
+	// S3 buckets
+	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {
@@ -160,18 +169,19 @@ type NFS struct {
 }
 
 type Ldap struct {
-	Disabled   bool   `yaml:"disabled,omitempty"`
-	Host       string `yaml:"host,omitempty"`
-	Port       string `yaml:"port,omitempty"`
-	Username   string `yaml:"username,omitempty"`
-	Password   string `yaml:"password,omitempty"`
-	Domain     string `yaml:"domain,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Host     string `yaml:"host,omitempty"`
+	Port     string `yaml:"port,omitempty"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Domain   string `yaml:"domain,omitempty"`
+	// Members of this group will become cluster-admins
 	AdminGroup string `yaml:"adminGroup,omitempty"`
 	BindDN     string `yaml:"dn,omitempty"`
 }
 
 type Kubernetes struct {
-	Version          string            `yaml:"version,omitempty"`
+	Version          string            `yaml:"version"`
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
 	MasterIP         string            `yaml:"masterIP,omitempty"`
 }
@@ -232,34 +242,34 @@ type GitOps struct {
 	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
 	Namespace string `yaml:"namespace,omitempty"`
 
-	// The URL to git repository to clone (required).
-	GitUrl string `yaml:"gitUrl,omitempty"`
+	// The URL to git repository to clone
+	GitUrl string `yaml:"gitUrl"`
 
-	// The git branch to use (default: master).
+	// The git branch to use (default: master)
 	GitBranch string `yaml:"gitBranch,omitempty"`
 
-	// The path with in the git repository to look for YAML in (default: .).
+	// The path with in the git repository to look for YAML in (default: .)
 	GitPath string `yaml:"gitPath,omitempty"`
 
-	// The frequency with which to fetch the git repository (default: 5m0s).
+	// The frequency with which to fetch the git repository (default: 5m0s)
 	GitPollInterval string `yaml:"gitPollInterval,omitempty"`
 
-	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s).
+	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s)
 	SyncInterval string `yaml:"syncInterval,omitempty"`
 
-	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME).
+	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME)
 	GitKey string `yaml:"gitKey,omitempty"`
 
-	// The contents of the known_hosts file to mount into Flux and helm-operator.
+	// The contents of the known_hosts file to mount into Flux and helm-operator
 	KnownHosts string `yaml:"knownHosts,omitempty"`
 
-	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator.
+	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
 	SSHConfig string `yaml:"sshConfig,omitempty"`
 
 	// The version to use for flux (default: 1.4.0 or $FLUX_VERSION)
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
-	// a map of args to pass to flux without -- prepended.
+	// a map of args to pass to flux without -- prepended
 	Args map[string]string `yaml:"args,omitempty"`
 }
 
@@ -271,7 +281,7 @@ type Versions struct {
 
 type Velero struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version,omitempty"`
+	Version  string `yaml:"version"`
 	Schedule string `yaml:"schedule,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 	Volumes  bool   `yaml:"volumes"`
@@ -295,14 +305,14 @@ type Thanos struct {
 
 type FluentdOperator struct {
 	Disabled             bool       `yaml:"disabled,omitempty"`
-	Version              string     `yaml:"version,omitempty"`
+	Version              string     `yaml:"version"`
 	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
 	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
 }
 
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version,omitempty"`
+	Version  string `yaml:"version"`
 }
 
 type NodeLocalDNS struct {
