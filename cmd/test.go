@@ -10,9 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
+	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
@@ -156,6 +156,16 @@ func init() {
 			run(eck.Test)
 		},
 	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "postgres-operator",
+		Short: "Test postgres-operator",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(postgresOperator.Test)
+		},
+	})
+
 	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
@@ -172,6 +182,7 @@ func init() {
 				nsx.Test(p, test)
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
+				postgresOperator.Test(p, test)
 			})
 		},
 	})

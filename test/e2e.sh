@@ -47,11 +47,11 @@ $BIN deploy dex -v
 
 $BIN test dex --wait 200
 
-$BIN deploy pgo install -v
+$BIN deploy postgres-operator install -v
 
 $BIN test base --wait 200
 
-$BIN test pgo --wait 200
+$BIN test postgres-operator --wait 200
 
 $BIN deploy harbor -v
 
