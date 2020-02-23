@@ -14,6 +14,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 )
@@ -24,6 +25,7 @@ var Deploy = &cobra.Command{
 }
 
 func init() {
+
 	var _opa = &cobra.Command{
 		Use:   "opa",
 		Short: "Build and deploy opa aka gatekeeper",
@@ -83,6 +85,9 @@ func init() {
 			}
 			if err := eck.Deploy(p); err != nil {
 				log.Fatalf("Error installing ECK: %s", err)
+			}
+			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying postgres-operator %s\n", err)
 			}
 		},
 	}
@@ -203,6 +208,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := eck.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying eck operator %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "postgres-operator",
+		Short: "Deploy the zalando postgres-operator",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying postgres-operator %s\n", err)
 			}
 		},
 	})

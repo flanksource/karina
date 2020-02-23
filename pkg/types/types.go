@@ -58,6 +58,8 @@ type Harbor struct {
 	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
 	Settings      *HarborSettings          `yaml:"settings,omitempty"`
 	Replicas      int                      `yaml:"replicas,omitempty"`
+	// S3 bucket for the docker registry to use
+	Bucket string `yaml:"bucket"`
 }
 
 type HarborSettings struct {
@@ -104,32 +106,18 @@ type HarborProject struct {
 }
 
 type DB struct {
-	Host     string `yaml:"host,omitempty"`
-	Username string `yaml:"username,omitempty"`
-	Password string `yaml:"password,omitempty"`
-	Port     int    `yaml:"port,omitempty"`
+	Host     string `yaml:"host"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Port     int    `yaml:"port"`
 }
 
 type PostgresOperator struct {
-	Disabled        bool                               `yaml:"disabled,omitempty"`
-	Version         string                             `yaml:"version,omitempty"`
-	DBVersion       string                             `yaml:"dbVersion,omitempty"`
-	Password        string                             `yaml:"password,omitempty"`
-	BackupBucket    string                             `yaml:"backupBucket,omitempty"`
-	PrimaryStorage  string                             `yaml:"primaryStorage,omitempty"`
-	XlogStorage     string                             `yaml:"xlogStorage,omitempty"`
-	BackupStorage   string                             `yaml:"backupStorage,omitempty"`
-	ReplicaStorage  string                             `yaml:"replicaStorage,omitempty"`
-	BackrestStorage string                             `yaml:"backrestStorage,omitempty"`
-	Storage         map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
-}
-
-type PostgresOperatorStorage struct {
-	AccessMode   string `yaml:"AccessMode,omitempty"`
-	Size         string `yaml:"Size,omitempty"`
-	StorageType  string `yaml:"StorageType,omitempty"`
-	StorageClass string `yaml:"StorageClass,omitempty"`
-	Fsgroup      string `yaml:"Fsgroup,omitempty"`
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Version        string `yaml:"version"`
+	DBVersion      string `yaml:"dbVersion,omitempty"`
+	BackupBucket   string `yaml:"backupBucket,omitempty"`
+	BackupSchedule string `yaml:"backupSchedule,omitempty"`
 }
 
 type Smtp struct {
@@ -235,7 +223,6 @@ type Brand struct {
 }
 
 type GitOps struct {
-
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
 
@@ -323,7 +310,7 @@ type NodeLocalDNS struct {
 }
 
 type Connection struct {
-	URL      string `yaml:"url,omitempty"`
+	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`
 	Password string `yaml:"password,omitempty"`
 	Port     string `yaml:"port,omitempty"`

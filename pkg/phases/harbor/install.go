@@ -10,7 +10,6 @@ import (
 	"github.com/flanksource/commons/text"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/platform-cli/pkg/phases/pgo"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -23,16 +22,9 @@ func Deploy(p *platform.Platform) error {
 	}
 	defaults(p)
 	if p.Harbor.DB == nil {
-		db, err := pgo.GetOrCreateDB(p, dbCluster, p.Harbor.Replicas)
+		db, err := p.GetOrCreateDB(dbCluster, dbNames...)
 		if err != nil {
 			return fmt.Errorf("deploy: failed to get/update db: %v", err)
-		}
-		if err := pgo.WaitForDB(p, dbCluster, 120); err != nil {
-			return fmt.Errorf("deploy: failed to wait for db: %v", err)
-		}
-
-		if err := pgo.CreateDatabase(p, dbCluster, dbNames...); err != nil {
-			return fmt.Errorf("deploy: failed to create db: %v", err)
 		}
 		p.Harbor.DB = db
 	}
@@ -69,7 +61,6 @@ func Deploy(p *platform.Platform) error {
 	if log.IsLevelEnabled((log.TraceLevel)) {
 		debug = "--debug"
 	}
-
 
 	if err := helm("upgrade harbor --wait  build/harbor -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
 		return fmt.Errorf("deploy: failed to install/upgrade Harbor chart: %v", err)
