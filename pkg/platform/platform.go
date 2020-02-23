@@ -19,10 +19,8 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
-	"github.com/minio/minio-go/v6"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
+	minio "github.com/minio/minio-go/v6"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
@@ -32,6 +30,8 @@ import (
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 type Platform struct {
@@ -280,6 +280,9 @@ func (platform *Platform) OpenViaEnv() error {
 
 // GetMasterIPs returns a list of healthy master IP's
 func (platform *Platform) GetMasterIPs() []string {
+	if platform.Kubernetes.MasterIP != "" {
+		return []string{platform.Kubernetes.MasterIP}
+	}
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
 	log.Tracef("Finding masters via consul: %s\n", url)
 	response, _ := net.GET(url)

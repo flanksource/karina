@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: kube-system
+data:
+  fluent.conf: |
+    <match systemd.** kube.kube-system.** k8s.** docker* kube.harbor.** kube.pgo** kube.quack.** kube.opa.** kube.cert-manager.** kube.dex.** kube.monitoring.** kube.velero.** kube.local-path-storage.** kube.elastic-system.** >
+      @include /etc/fluentd/config.d/elasticsearch.conf
+    </match>
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-extra
+  namespace: kube-fluentd-operator
+data:
+  elasticsearch.conf: |
+    @type elasticsearch
+    @log_level warn
+    include_tag_key true
+    ssl_version TLSv1_2
+    host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
+    port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
+    path "#{ENV['FLUENT_ELASTICSEARCH_PATH']}"
+    scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'https'}"
+    ssl_verify "#{ENV['FLUENT_ELASTICSEARCH_SSL_VERIFY'] || 'false'}"
+    user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+    password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+    reload_connections "#{ENV['FLUENT_ELASTICSEARCH_RELOAD_CONNECTIONS'] || 'true'}"
+    logstash_prefix "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX'] || 'logstash'}"
+    logstash_format true
+    type_name fluentd
+    buffer_chunk_limit "#{ENV['FLUENT_ELASTICSEARCH_BUFFER_CHUNK_LIMIT_SIZE'] || '512M'}"
+    buffer_queue_limit "#{ENV['FLUENT_ELASTICSEARCH_BUFFER_QUEUE_LIMIT_LENGTH'] || '32'}"
+    flush_interval "#{ENV['FLUENT_ELASTICSEARCH_BUFFER_FLUSH_INTERVAL'] || '5s'}"
+    max_retry_wait "#{ENV['FLUENT_ELASTICSEARCH_BUFFER_RETRY_MAX_INTERVAL'] || '30'}"
+    num_threads "#{ENV['FLUENT_ELASTICSEARCH_BUFFER_FLUSH_THREAD_COUNT'] || '8'}"
+

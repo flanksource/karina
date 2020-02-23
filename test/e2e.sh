@@ -4,26 +4,18 @@ mkdir -p .bin
 export PLATFORM_CONFIG=test/common.yml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
+NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
+GITHUB_USER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
+GITHUB_USER=${GITHUB_USER##*:}
+MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_USER/$NAME/commits/master | jq -r '.sha')
 
-if [[ ! -e ./kind ]]; then
-  curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
-  chmod +x ./kind
+if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
+  circleci-agent step halt
+  exit 0
 fi
 
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
-fi
-
-if ! which expenv 2>&1 > /dev/null; then
-  if [[ "$OSTYPE" =~ ^darwin ]]; then
-    wget https://github.com/CrunchyData/postgres-operator/releases/download/v4.2.0/expenv-mac
-    chmod +x expenv-mac
-    sudo mv expenv-mac /usr/local/bin/expenv
-  else
-    wget https://github.com/CrunchyData/postgres-operator/releases/download/v4.2.0/expenv
-    chmod +x expenv
-    sudo mv expenv /usr/local/bin
-  fi
 fi
 
 go version
@@ -34,8 +26,8 @@ else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
 fi
 
-# kubernetes_version=$(cat test/common.yml | gojsontoyaml -yamltojson | jq -r '.kubernetes.version')
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
+  $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca-crt.pem --private-key-path .certs/ingress-ca-key.pem --password foobar  --expiry 1
   $BIN provision kind-cluster
 fi
 
@@ -51,9 +43,13 @@ $BIN deploy base -v
 
 $BIN deploy stubs -v
 
-$BIN test base --wait 200
+$BIN deploy dex -v
+
+$BIN test dex --wait 200
 
 $BIN deploy pgo install -v
+
+$BIN test base --wait 200
 
 $BIN test pgo --wait 200
 

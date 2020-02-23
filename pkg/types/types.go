@@ -207,7 +207,6 @@ func (s3 S3) GetExternalEndpoint() string {
 		return s3.ExternalEndpoint
 	}
 	return s3.Endpoint
-
 }
 
 type NFS struct {
@@ -218,6 +217,7 @@ type NFS struct {
 type Ldap struct {
 	Disabled   bool   `yaml:"disabled,omitempty"`
 	Host       string `yaml:"host,omitempty"`
+	Port       string `yaml:"port,omitempty"`
 	Username   string `yaml:"username,omitempty"`
 	Password   string `yaml:"password,omitempty"`
 	Domain     string `yaml:"domain,omitempty"`
@@ -227,7 +227,8 @@ type Ldap struct {
 
 type Kubernetes struct {
 	Version          string            `yaml:"version,omitempty"`
-	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
+	MasterIP         string            `yaml:"masterIP,omitempty"`
 }
 
 type DynamicDNS struct {
@@ -243,18 +244,17 @@ type DynamicDNS struct {
 }
 
 type Monitoring struct {
-	Disabled         bool       `yaml:"disabled,omitempty"`
-	AlertEmail       string     `yaml:"alert_email,omitempty"`
-	Version          string     `yaml:"version,omitempty" json:"version,omitempty"`
-	Prometheus       Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
-	Grafana          Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager     string     `yaml:"alertMmanager,omitempty"`
-	KubeStateMetrics string     `yaml:"kubeStateMetrics,omitempty"`
-	KubeRbacProxy    string     `yaml:"kubeRbacProxy,omitempty"`
-	NodeExporter     string     `yaml:"nodeExporter,omitempty"`
-	AddonResizer     string     `yaml:"addonResizer,omitempty"`
-	// Prometheus         string     `yaml:"prometheus,omitempty"`
-	PrometheusOperator string `yaml:"prometheus_operator,omitempty"`
+	Disabled           bool       `yaml:"disabled,omitempty"`
+	AlertEmail         string     `yaml:"alert_email,omitempty"`
+	Version            string     `yaml:"version,omitempty" json:"version,omitempty"`
+	Prometheus         Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Grafana            Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
+	AlertManager       string     `yaml:"alertMmanager,omitempty"`
+	KubeStateMetrics   string     `yaml:"kubeStateMetrics,omitempty"`
+	KubeRbacProxy      string     `yaml:"kubeRbacProxy,omitempty"`
+	NodeExporter       string     `yaml:"nodeExporter,omitempty"`
+	AddonResizer       string     `yaml:"addonResizer,omitempty"`
+	PrometheusOperator string     `yaml:"prometheus_operator,omitempty"`
 }
 
 type Prometheus struct {
@@ -265,15 +265,6 @@ type Prometheus struct {
 type Grafana struct {
 	Version  string `yaml:"version,omitempty"`
 	Disabled bool   `yaml:"disabled,omitempty"`
-}
-
-type ELK struct {
-	Version      string `yaml:"version,omitempty"`
-	Replicas     int    `yaml:"replicas,omitempty"`
-	LogRetention string `yaml:"logRetention,omitempty"`
-}
-
-type Dex struct {
 }
 
 type Brand struct {
@@ -352,9 +343,10 @@ type Thanos struct {
 }
 
 type FluentdOperator struct {
-	Disabled  bool   `yaml:"disabled,omitempty"`
-	Version   string `yaml:"version,omitempty"`
-	ImageRepo string `yaml:"repository,omitempty"`
+	Disabled             bool       `yaml:"disabled,omitempty"`
+	Version              string     `yaml:"version,omitempty"`
+	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
+	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
 }
 
 type ECK struct {
@@ -367,6 +359,15 @@ type NodeLocalDNS struct {
 	DNSServer string `yaml:"dnsServer,omitempty"`
 	LocalDNS  string `yaml:"localDNS,omitempty"`
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
+}
+
+type Connection struct {
+	URL      string `yaml:"url,omitempty"`
+	User     string `yaml:"user,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Port     string `yaml:"port,omitempty"`
+	Scheme   string `yaml:"scheme,omitempty"`
+	Verify   string `yaml:"verify,omitempty"`
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

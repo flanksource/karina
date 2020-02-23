@@ -3,6 +3,7 @@ set -x
 
 if [[ "$CIRCLE_PR_NUMBER" != "" ]]; then
   echo Skipping release of a PR build
+  circleci-agent step halt
   exit 0
 fi
 NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
@@ -39,4 +40,3 @@ docker build . -t $GITHUB_USER/$NAME:$TAG
 echo Pushing docker image
 docker login --username $DOCKER_LOGIN --password $DOCKER_PASS
 docker push $GITHUB_USER/$NAME:$TAG
-

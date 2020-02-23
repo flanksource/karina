@@ -22,3 +22,4 @@ templates/static.go
 snapshot/
 .idea
 .vscode
+.certs
