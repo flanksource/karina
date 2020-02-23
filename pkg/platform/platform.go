@@ -453,6 +453,7 @@ func (platform *Platform) TemplateDir(path string, pkg string) (string, error) {
 	}
 	files, err := dir.Readdir(-1)
 	if err != nil {
+
 		return "", err
 	}
 
@@ -587,7 +588,8 @@ func (p *Platform) GetBinary(name string) deps.BinaryFunc {
 	return deps.Binary(name, p.Versions[name], ".bin")
 }
 
-func (p *Platform) GetOrCreateDB(clusterName string, dbNames ...string) (*types.DB, error) {
+func (p *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.DB, error) {
+	clusterName := "postgres-" + name
 	databases := make(map[string]string)
 	appUsername := "app"
 	ns := "postgres-operator"
