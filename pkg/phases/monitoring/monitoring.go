@@ -29,7 +29,7 @@ func Install(p *platform.Platform) error {
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
-		return err
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
 	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yml"); err != nil {
@@ -38,12 +38,12 @@ func Install(p *platform.Platform) error {
 
 	data, err := p.Template("monitoring/alertmanager.yaml", "manifests")
 	if err != nil {
-		return err
+		return fmt.Errorf("install: failed to template alertmanager manifests: %v", err)
 	}
 	if err := p.CreateOrUpdateSecret("alertmanager-main", Namespace, map[string][]byte{
 		"alertmanager.yaml": []byte(data),
 	}); err != nil {
-		return err
+		return fmt.Errorf("install: failed to create/update secret: %v", err)
 	}
 
 	if p.Thanos == nil || p.Thanos.Disabled {
@@ -123,7 +123,7 @@ func Install(p *platform.Platform) error {
 	for _, spec := range specs {
 		log.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
-			return err
+			return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
 		}
 	}
 
@@ -175,7 +175,7 @@ func Install(p *platform.Platform) error {
 				"json": string(contentsModified),
 			},
 		}); err != nil {
-			return err
+			return fmt.Errorf("install: failed to apply CRD: %v", err)
 		}
 	}
 
