@@ -46,6 +46,7 @@ type PlatformConfig struct {
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
 	FluentdOperator       *FluentdOperator  `yaml:"fluentd,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`
+	Thanos                *Thanos           `yaml:"thanos,omitempty"`
 
 	BootstrapToken       string `yaml:"-"`
 	DryRun               bool   `yaml:"-"`

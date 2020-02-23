@@ -128,7 +128,9 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.IngressCA.Password = template(base.IngressCA.Password)
 	}
 
-	base.FluentdOperator.Elasticsearch.Password = template(base.FluentdOperator.Elasticsearch.Password)
+	if base.FluentdOperator != nil {
+		base.FluentdOperator.Elasticsearch.Password = template(base.FluentdOperator.Elasticsearch.Password)
+	}
 
 	gitops := base.GitOps
 	for i := range gitops {
