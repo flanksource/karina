@@ -6,7 +6,10 @@ ldap:
   password: secret
   port: 10636
   host: apacheds.ldap
-  dn: ou=users,dc=example,dc=com
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: cn
 kubernetes:
   version: v1.15.7
   kubeletExtraArgs:
