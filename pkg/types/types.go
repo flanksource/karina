@@ -48,6 +48,8 @@ type OAuth2Proxy struct {
 	Enabled      bool   `yaml:"enabled",omitempty`
 	CookieSecret string `yaml:"cookieSecret,omitempty"`
 	Version      string `yaml:"version,omitempty"`
+	DockerImage  string `yaml:"dockerImage,omitempty"`
+	OidcGroup    string `yaml:"oidcGroup,omitempty"`
 }
 
 type OPA struct {

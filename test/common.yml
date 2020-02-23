@@ -78,6 +78,9 @@ ingressCA:
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
 oauth2Proxy:
-  version: v5.0.0
+#  version: v5.0.0
+  version: add-oidc-group
+  dockerImage: "quay.io/toni0/oauth2_proxy"
   enabled: true
   cookieSecret: cccc
+  oidcGroup: Kubernetes
