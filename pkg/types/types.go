@@ -346,12 +346,13 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled              bool   `yaml:"disabled,omitempty"`
-	Version               string `yaml:"version,omitempty"`
-	Mode                  string `yaml:"mode,omitempty"`
-	ThanosSidecarEndpoint string `yaml:"thanosSidecarEndpoint,omitempty"`
-	ThanosSidecarPort     string `yaml:"thanosSidecarPort,omitempty"`
-	Bucket                string `yaml:"bucket,omitempty"`
+	Disabled              bool     `yaml:"disabled,omitempty"`
+	Version               string   `yaml:"version,omitempty"`
+	Mode                  string   `yaml:"mode,omitempty"`
+	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"`
+	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`
+	Bucket                string   `yaml:"bucket,omitempty"`
+	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`
 }
 
 type FluentdOperator struct {

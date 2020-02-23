@@ -22,13 +22,42 @@ spec:
             - "query"
             - "--log.level=debug"
             - "--query.replica-label=replica"
-            - --store=thanos-store-grpc.monitoring.svc.cluster.local:10902
-            - --store={{.thanos.thanosSidecarEndpoint}}:{{.thanos.thanosSidecarPort}}
+            - --store=thanos-store-grpc.monitoring.svc.cluster.local:10901
+            - --store=thanos-sidecar.monitoring.svc.cluster.local:10901
+            {{- range .thanos.clientSidecars}}
+            - --store={{.}}
+            {{- end}}
+            - --grpc-server-tls-cert=/ssl/client/tls.crt
+            - --grpc-server-tls-key=/ssl/client/tls.key
+            - --grpc-server-tls-client-ca=/ssl/ca/ca.crt
+            - --grpc-client-tls-secure
+            - --grpc-client-tls-cert=/ssl/client/tls.crt
+            - --grpc-client-tls-key=/ssl/client/tls.key
+            - --grpc-client-tls-ca=/ssl/ca/ca.crt 
           ports:
             - name: http
               containerPort: 10902
             - name: grpc
               containerPort: 10901
+          resources:    
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - name: thanos-cert
+              mountPath: /ssl/client             
+            - name: thanos-ca-cert
+              mountPath: /ssl/ca       
+      volumes:
+      - name: thanos-cert
+        secret:
+          secretName: thanos-query
+      - name: thanos-ca-cert
+        secret:
+          secretName: thanos-ca-cert     
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -69,3 +98,18 @@ spec:
       protocol: TCP
       targetPort: http
       name: http-query
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: thanos-cluster
+  namespace: monitoring
+spec:
+  rules:
+  - host: thanos.{{.domain}}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: thanos-query
+          servicePort: 9090

@@ -105,7 +105,7 @@ spec:
   resources:
     requests:
       memory: 400Mi
-  retention: 240h
+  disableCompaction: true
   routePrefix: ""
   ruleSelector:
     matchLabels:
@@ -119,14 +119,55 @@ spec:
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
   version: v2.11.0
-  {{- if and (not (index .thanos "disabled")) (eq .thanos.mode "client") }}
-  thanos:
-    baseImage: thanosio/thanos
-    version: {{.thanos.version}}
-    objectStorageConfig:
-      key: thanos.yaml
-      name: thanos-objstore-config
-  {{- end}}
+ {{- if not (index .thanos "disabled")}}
+  secrets:
+    - "thanos-sidecar"
+    - "thanos-ca-cert"
+  containers:
+    - args:
+      - sidecar
+      - --prometheus.url=http://localhost:9090/
+      - --tsdb.path=/prometheus
+      - --grpc-address=[$(POD_IP)]:10901
+      - --http-address=[$(POD_IP)]:10902
+      - --objstore.config=$(OBJSTORE_CONFIG)
+      - --grpc-server-tls-cert=/ssl/client/tls.crt
+      - --grpc-server-tls-key=/ssl/client/tls.key
+      - --grpc-server-tls-client-ca=/ssl/ca/ca.crt
+      env:
+      - name: POD_IP
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: status.podIP
+      - name: OBJSTORE_CONFIG
+        valueFrom:
+          secretKeyRef:
+            key: thanos.yaml
+            name: thanos-objstore-config
+      image: thanosio/thanos:v0.10.1
+      imagePullPolicy: IfNotPresent
+      name: thanos-sidecar
+      ports:
+      - containerPort: 10902
+        name: http
+        protocol: TCP
+      - containerPort: 10901
+        name: grpc
+        protocol: TCP
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: FallbackToLogsOnError
+      volumeMounts:
+      - mountPath: /prometheus
+        name: prometheus-k8s-db
+      - mountPath: /ssl/client
+        name: secret-thanos-sidecar
+        readOnly: true
+      - mountPath: /ssl/ca
+        name: secret-thanos-ca-cert
+        readOnly: true
+ {{- end}}
 ---
 apiVersion: v1
 kind: Service
@@ -150,7 +191,6 @@ kind: ServiceAccount
 metadata:
   name: prometheus-k8s
   namespace: monitoring
-
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: Grafana

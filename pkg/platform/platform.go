@@ -85,6 +85,11 @@ func readCA(ca *types.CA) (*certs.Certificate, error) {
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
+func (platform *Platform) ReadIngressCACertString() string {
+	cert := files.SafeRead(platform.IngressCA.Cert)
+	return cert
+}
+
 func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 	if platform.ingressCA != nil {
 		return platform.ingressCA
@@ -355,6 +360,13 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 3)
+}
+
+func (platform *Platform) CreateInternalCertificate(service string, namespace string, clusterDomain string) (*certs.Certificate, error) {
+	domain := fmt.Sprintf("%s.%s.svc.%s", service, namespace, clusterDomain)
+	log.Infof("Creating new internal certificate %s", domain)
+	cert := certs.NewCertificateBuilder(domain).Server().Certificate
+	return platform.GetIngressCA().SignCertificate(cert, 5)
 }
 
 func (platform *Platform) GetResourceByName(file string, pkg string) (string, error) {

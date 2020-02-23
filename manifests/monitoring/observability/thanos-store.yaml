@@ -27,6 +27,9 @@ spec:
             - "--log.level=debug"
             - "--data-dir=/var/thanos/store"
             - "--objstore.config-file=/config/thanos.yaml"
+            - --grpc-server-tls-cert=/ssl/client/tls.crt
+            - --grpc-server-tls-key=/ssl/client/tls.key
+            - --grpc-server-tls-client-ca=/ssl/ca/ca.crt
           ports:
             - name: http
               containerPort: 10902
@@ -38,17 +41,28 @@ spec:
               readOnly: true
             - name: data
               mountPath: /var/thanos/store
+            - name: thanos-cert
+              mountPath: /ssl/client             
+            - name: thanos-ca-cert
+              mountPath: /ssl/ca     
       volumes:
         - name: data
           emptyDir: {}
         - name: config
           secret:
             secretName: thanos-objstore-config
+        - name: thanos-cert
+          secret:
+            secretName: thanos-store-grpc
+        - name: thanos-ca-cert
+          secret:
+            secretName: thanos-ca-cert     
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: thanos-store-grpc
+  namespace: monitoring
 spec:
   type: ClusterIP
   clusterIP: None
@@ -64,6 +78,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: thanos-store-http
+  namespace: monitoring
 spec:
   type: ClusterIP
   ports:

@@ -14,7 +14,11 @@ import (
 )
 
 const (
-	Namespace = "monitoring"
+	Namespace       = "monitoring"
+	StoreCertName   = "thanos-store-grpc"
+	SidecarCertName = "thanos-sidecar"
+	QueryCertName   = "thanos-query"
+	CaCertName      = "thanos-ca-cert"
 )
 
 var specs = []string{"grafana-operator.yml", "kube-prometheus.yml", "prometheus-adapter.yml", "kube-state-metrics.yml", "node-exporter.yml", "alertmanager-rules.yml.raw", "service-monitors.yml"}
@@ -62,14 +66,48 @@ func Install(p *platform.Platform) error {
 		if err := p.ApplySpecs("", "monitoring/thanos-config.yaml"); err != nil {
 			return err
 		}
+		if err := p.ApplySpecs("", "monitoring/thanos-sidecar.yaml"); err != nil {
+			return err
+		}
+		caCert := p.ReadIngressCACertString()
+		content := map[string][]byte{
+			"ca.crt": []byte(caCert),
+		}
+		if err := p.CreateOrUpdateSecret(CaCertName, Namespace, content); err != nil {
+			return fmt.Errorf("install: failed to create secret with CA certificate: %v", err)
+		}
 	}
 	if p.Thanos.Mode == "client" {
 		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within Promerheus pod.")
+		if p.Thanos.ThanosSidecarEndpoint == "" || p.Thanos.ThanosSidecarPort == "" {
+			return errors.New("thanosSidecarEndpoint and thanosSidecarPort should not be empty in client mode")
+		}
+		if !p.HasSecret(Namespace, SidecarCertName) {
+			cert, err := p.CreateIngressCertificate("thanos-sidecar")
+			if err != nil {
+				return fmt.Errorf("install: failed to create ingress certificate: %v", err)
+			}
+			if err := p.CreateOrUpdateSecret(SidecarCertName, Namespace, cert.AsTLSSecret()); err != nil {
+				return fmt.Errorf("install: failed to create secret with certificate and key: %v", err)
+			}
+		}
 		p.ApplySpecs("", "monitoring/thanos-sidecar.yaml")
 	} else if p.Thanos.Mode == "observability" {
 		log.Info("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
-		if p.Thanos.ThanosSidecarEndpoint == "" || p.Thanos.ThanosSidecarPort == "" {
-			return errors.New("thanosSidecarEndpoint and thanosSidecarPort should not be empty")
+		if p.Thanos.ThanosSidecarEndpoint != "" || p.Thanos.ThanosSidecarPort != "" {
+			return errors.New("thanosSidecarEndpoint and thanosSidecarPort are not empty. Please use clientSidecars to specify client sidecars")
+		}
+		thanosCerts := []string{StoreCertName, SidecarCertName, QueryCertName}
+		for _, certName := range thanosCerts {
+			if !p.HasSecret(Namespace, certName) {
+				cert, err := p.CreateInternalCertificate(certName, "monitoring", "cluster.local")
+				if err != nil {
+					return fmt.Errorf("install: failed to create internal certificate: %v", err)
+				}
+				if err := p.CreateOrUpdateSecret(certName, Namespace, cert.AsTLSSecret()); err != nil {
+					return fmt.Errorf("install: failed to create secret with certificate and key for %s: %v", certName, err)
+				}
+			}
 		}
 		thanosSpecs := []string{"thanos-compactor.yaml", "thanos-querier.yaml", "thanos-store.yaml"}
 		for _, spec := range thanosSpecs {
