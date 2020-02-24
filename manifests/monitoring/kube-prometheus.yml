@@ -105,6 +105,7 @@ spec:
   resources:
     requests:
       memory: 400Mi
+  retention: 240h
   disableCompaction: true
   routePrefix: ""
   ruleSelector:
@@ -145,7 +146,7 @@ spec:
           secretKeyRef:
             key: thanos.yaml
             name: thanos-objstore-config
-      image: thanosio/thanos:v0.10.1
+      image: thanosio/thanos:{{.thanos.version}}
       imagePullPolicy: IfNotPresent
       name: thanos-sidecar
       ports:

@@ -284,8 +284,8 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled              bool     `yaml:"disabled,omitempty"`
-	Version               string   `yaml:"version,omitempty"`
+	Disabled              bool     `yaml:"disabled"`
+	Version               string   `yaml:"version"`
 	Mode                  string   `yaml:"mode,omitempty"`
 	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"`
 	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`

@@ -117,7 +117,7 @@ func Install(p *platform.Platform) error {
 			}
 		}
 	} else {
-		log.Fatalf("Thanos: wrong mode %s. Should be client or observability", p.Thanos.Mode)
+		return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
 	}
 
 	for _, spec := range specs {
