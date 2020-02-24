@@ -38,6 +38,7 @@ $BIN deploy calico -v
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 .bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+.bin/kubectl delete sc standard
 
 $BIN deploy base -v
 
