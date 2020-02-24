@@ -24,6 +24,8 @@ var clairVersions = map[string]string{
 	"v1.8.6": "2.1.0",
 }
 
+const Namespace = "harbor"
+
 func defaults(p *platform.Platform) {
 	harbor := p.Harbor
 	if harbor == nil {
@@ -42,6 +44,9 @@ func defaults(p *platform.Platform) {
 		} else {
 			harbor.ClairVersion = clairVersions["latest"]
 		}
+	}
+	if harbor.RegistryVersion == "" {
+	 	harbor.RegistryVersion = "v2.7.1-patch-2819-2553-"+ harbor.Version
 	}
 
 	if harbor.Replicas == 0 {

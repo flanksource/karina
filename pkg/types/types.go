@@ -1,6 +1,9 @@
 package types
 
 import (
+	"fmt"
+	"net/url"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/api/calico"
@@ -48,16 +51,17 @@ type OPA struct {
 }
 
 type Harbor struct {
-	Disabled      bool                     `yaml:"disabled,omitempty"`
-	Version       string                   `yaml:"version,omitempty"`
-	ChartVersion  string                   `yaml:"chartVersion,omitempty"`
-	AdminPassword string                   `yaml:"-"`
-	ClairVersion  string                   `yaml:"clairVersion"`
-	DB            *DB                      `yaml:"db,omitempty"`
-	URL           string                   `yaml:"url,omitempty"`
-	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings      *HarborSettings          `yaml:"settings,omitempty"`
-	Replicas      int                      `yaml:"replicas,omitempty"`
+	Disabled        bool                     `yaml:"disabled,omitempty"`
+	Version         string                   `yaml:"version,omitempty"`
+	ChartVersion    string                   `yaml:"chartVersion,omitempty"`
+	AdminPassword   string                   `yaml:"-"`
+	ClairVersion    string                   `yaml:"clairVersion"`
+	RegistryVersion string                   `yaml:"registryVersion"`
+	DB              *DB                      `yaml:"db,omitempty"`
+	URL             string                   `yaml:"url,omitempty"`
+	Projects        map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings        *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas        int                      `yaml:"replicas,omitempty"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
@@ -112,12 +116,18 @@ type DB struct {
 	Port     int    `yaml:"port"`
 }
 
+func (db DB) GetConnectionURL(name string) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", db.Username, url.QueryEscape(db.Password), db.Host, db.Port, name)
+}
+
 type PostgresOperator struct {
 	Disabled       bool   `yaml:"disabled,omitempty"`
 	Version        string `yaml:"version"`
 	DBVersion      string `yaml:"dbVersion,omitempty"`
 	BackupBucket   string `yaml:"backupBucket,omitempty"`
 	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+	SpiloImage     string `yaml:"spiloImage,omitempty"`
+	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
 type Smtp struct {
