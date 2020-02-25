@@ -26,7 +26,7 @@ spec:
       # Volumes used by this deployment
       volumes:
         - name: data
-          emptyDir:
+          emptyDir: {}
       containers:
         - name: minio
           # Volume mounts for this container
@@ -49,9 +49,9 @@ spec:
           env:
             # MinIO access key and secret key
             - name: MINIO_ACCESS_KEY
-              value: "minio"
+              value: {{.s3.access_key}}
             - name: MINIO_SECRET_KEY
-              value: "minio123"
+              value: {{.s3.secret_key}}
           ports:
             - containerPort: 9000
           # Readiness probe detects situations when MinIO server instance

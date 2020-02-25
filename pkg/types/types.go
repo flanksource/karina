@@ -212,6 +212,12 @@ type Grafana struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
+type ELK struct {
+	Version      string `yaml:"version,omitempty"`
+	Replicas     int    `yaml:"replicas,omitempty"`
+	LogRetention string `yaml:"logRetention,omitempty"`
+}
+
 type Brand struct {
 	Name string `yaml:"name,omitempty"`
 	URL  string `yaml:"url,omitempty"`
@@ -277,6 +283,16 @@ type CA struct {
 	Password   string `yaml:"password,omitempty"`
 }
 
+type Thanos struct {
+	Disabled              bool     `yaml:"disabled"`
+	Version               string   `yaml:"version"`
+	Mode                  string   `yaml:"mode,omitempty"`
+	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"`
+	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`
+	Bucket                string   `yaml:"bucket,omitempty"`
+	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`
+}
+
 type FluentdOperator struct {
 	Disabled             bool       `yaml:"disabled,omitempty"`
 	Version              string     `yaml:"version,omitempty"`
@@ -320,7 +336,7 @@ func (p PlatformConfig) GetVMCount() int {
 	return count
 }
 
-func (platform *PlatformConfig) String() string {
-	data, _ := yaml.Marshal(platform)
+func (p *PlatformConfig) String() string {
+	data, _ := yaml.Marshal(p)
 	return string(data)
 }

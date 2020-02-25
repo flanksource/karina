@@ -269,6 +269,7 @@ github.com/modern-go/reflect2 v0.0.0-20180320133207-05fbef0ca5da/go.mod h1:bx2lN
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/modern-go/reflect2 v1.0.1 h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9AWI=
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
+github.com/moshloop/commons v0.0.2 h1:TAHjGKIFJbbtS7CuzHh60OM/baF4F+r0cPJ0SxNsW84=
 github.com/moshloop/konfigadm v0.4.6 h1:pVlriBOy6VK92ZEwk756xXjRVwgYbXtwjrJk1XX7Knw=
 github.com/moshloop/konfigadm v0.4.6/go.mod h1:6KEg6VqoD03SbUffh4YUDxpTtC7nFOZJq1VxLnVJUjA=
 github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
