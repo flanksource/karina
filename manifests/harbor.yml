@@ -166,7 +166,7 @@ data:
     auth:
       token:
         issuer: harbor-token-issuer
-        realm: "https://{{.harbor.url}}/service/token"
+        realm: "https://{{ .harbor.url |  strings.TrimPrefix "https://" }}/service/token"
         rootcertbundle: /etc/registry/root.crt
         service: harbor-registry
     validation:
