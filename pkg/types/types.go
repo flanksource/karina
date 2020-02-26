@@ -195,7 +195,7 @@ type Kubernetes struct {
 	MasterIP         string            `yaml:"masterIP,omitempty"`
 }
 
-type KubernetesDashboard struct {
+type Dashboard struct {
 	Enabled
 	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
 }
