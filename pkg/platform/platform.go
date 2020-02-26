@@ -19,19 +19,20 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
-
 	minio "github.com/minio/minio-go/v6"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 type Platform struct {
@@ -452,6 +453,7 @@ func (platform *Platform) TemplateDir(path string, pkg string) (string, error) {
 	}
 	files, err := dir.Readdir(-1)
 	if err != nil {
+
 		return "", err
 	}
 
@@ -584,6 +586,71 @@ func (p *Platform) GetBinary(name string) deps.BinaryFunc {
 		}
 	}
 	return deps.Binary(name, p.Versions[name], ".bin")
+}
+
+func (p *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.DB, error) {
+	clusterName := "postgres-" + name
+	databases := make(map[string]string)
+	appUsername := "app"
+	ns := "postgres-operator"
+	secretName := fmt.Sprintf("%s.%s.credentials", appUsername, clusterName)
+
+	db := &postgres.Postgresql{}
+	if err := p.Get(ns, clusterName, db); err != nil {
+		log.Infof("Creating new cluster: %s", clusterName)
+		for _, db := range dbNames {
+			databases[db] = appUsername
+		}
+		db = postgres.NewPostgresql(clusterName)
+		db.Spec.Databases = databases
+		db.Spec.Users = map[string]postgres.UserFlags{
+			appUsername: postgres.UserFlags{
+				"createdb",
+				"superuser",
+			},
+		}
+
+		if err := p.Apply(ns, db); err != nil {
+			return nil, err
+		}
+	}
+
+	doUntil(func() bool {
+		if err := p.Get(ns, clusterName, db); err != nil {
+			return true
+		}
+		log.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
+		return db.Status.PostgresClusterStatus == postgres.ClusterStatusRunning
+	})
+	if db.Status.PostgresClusterStatus != postgres.ClusterStatusRunning {
+		return nil, fmt.Errorf("Postgres cluster failed to start: %s", db.Status.PostgresClusterStatus)
+	}
+	secret := p.GetSecret("postgres-operator", secretName)
+	if secret == nil {
+		return nil, fmt.Errorf("%s not found", secretName)
+	}
+
+	return &types.DB{
+		Host:     fmt.Sprintf("%s.%s.svc.cluster.local", clusterName, ns),
+		Username: string((*secret)["username"]),
+		Port:     5432,
+		Password: string((*secret)["password"]),
+	}, nil
+}
+
+func doUntil(fn func() bool) bool {
+	start := time.Now()
+
+	for {
+		if fn() {
+			return true
+		}
+		if time.Now().After(start.Add(5 * time.Minute)) {
+			return false
+		} else {
+			time.Sleep(5 * time.Second)
+		}
+	}
 }
 
 func (p *Platform) GetS3Client() (*minio.Client, error) {

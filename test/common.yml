@@ -41,41 +41,10 @@ nodeLocalDNS:
   disabled: false
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
-pgo:
-  version: 4.2.0
-  imageVersion: 4.2.0
-  primaryStorage: local-path
-  xlogStorage: local-path
-  backupStorage: local-path
-  replicaStorage: local-path
-  backrestStorage: local-path
-  storage:
-    xlogstorage:
-      AccessMode: ReadWriteOnce
-      Size: 2G
-      StorageType: dynamic
-      storageClass: local-path
-      Fsgroup: 26
-    local-path:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: local-path
-      Fsgroup: 26
-    s3:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: s3
-    nfs:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: nfs
 harbor:
   replicas: 1
+  bucket: harbor-blobs
   version: v1.10.0
-  chartVersion: v1.3.0
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -103,7 +72,7 @@ fluentd:
     port: 9200
     scheme: https
 eck:
-  version: 1.0.0
+  version: 1.0.1
 ingressCA:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem

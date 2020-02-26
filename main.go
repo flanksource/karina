@@ -54,6 +54,7 @@ func main() {
 		cmd.Backup,
 		cmd.APIDocs,
 		cmd.CA,
+		cmd.DB,
 	)
 
 	if len(commit) > 8 {
