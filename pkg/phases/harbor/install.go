@@ -25,7 +25,7 @@ func Deploy(p *platform.Platform) error {
 	if p.HasSecret(Namespace, "harbor-secret") {
 		nonce = string((*p.GetSecret(Namespace, "harbor-secret"))["secret"])
 	} else {
-		nonce := utils.RandomString(16)
+		nonce = utils.RandomString(16)
 		if err := p.CreateOrUpdateSecret("harbor-secret", Namespace, map[string][]byte{
 			"secret": []byte(nonce),
 		}); err != nil {
@@ -68,7 +68,7 @@ func Deploy(p *platform.Platform) error {
 		"CLAIR_DB_PASSWORD":     []byte(p.Harbor.DB.Password),
 		"tls.key":               []byte(tls["tls.key"]),
 		"tls.crt":               []byte(tls["tls.crt"]),
-		"ca.crt":                []byte(tls["ca.crt"]),
+		"ca.crt":                []byte(tls["tls.crt"]),
 		"secretKey":             []byte("not-a-secure-key"),
 		"secret":                []byte(nonce),
 	}); err != nil {
