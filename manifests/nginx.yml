@@ -212,7 +212,7 @@ spec:
       hostNetwork: true
       containers:
         - name: nginx-ingress-controller
-          image: quay.io/toni0/nginx-ingress-controller:0.25.1
+          image: flanksource/nginx-ingress-controller:0.25.1.flanksource.1
           imagePullPolicy: Always
           args:
             - /nginx-ingress-controller
