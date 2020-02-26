@@ -195,6 +195,17 @@ type Kubernetes struct {
 	MasterIP         string            `yaml:"masterIP,omitempty"`
 }
 
+type KubernetesDashboard struct {
+	Enabled
+	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
+}
+
+type LdapAccessConfig struct {
+	Enabled bool     `yaml:"enabled,omitempty"`
+	Groups  []string `yaml:"groups,omitempty"`
+	Snippet string   `yaml:"snippet,omitempty"`
+}
+
 type DynamicDNS struct {
 	Disabled   bool   `yaml:"disabled,omitempty"`
 	Nameserver string `yaml:"nameserver,omitempty"`

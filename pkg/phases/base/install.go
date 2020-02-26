@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/ingress"
+
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -74,8 +76,9 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Dashboard == nil || !platform.Dashboard.Disabled {
+	if !platform.Dashboard.Disabled {
 		log.Infof("Installing K8s dashboard")
+		platform.Dashboard.AccessRestricted.Snippet = ingress.IngressNginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yml"); err != nil {
 			log.Errorf("Error K8s dashboard: %s\n", err)
 		}

@@ -212,7 +212,7 @@ spec:
       hostNetwork: true
       containers:
         - name: nginx-ingress-controller
-          image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.25.1
+          image: quay.io/toni0/nginx-ingress-controller:0.25.1-debug
           args:
             - /nginx-ingress-controller
             - --configmap=$(POD_NAMESPACE)/nginx-configuration
