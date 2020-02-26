@@ -1,7 +1,6 @@
 package ingress
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/flanksource/commons/text"
@@ -29,14 +28,13 @@ proxy_set_header 'authorization' $authHeader2;
 		return ""
 	}
 
-	groupsJson, err := json.Marshal(c.Groups)
-	if err != nil {
-		log.Fatalf("Failed to json encode ldap groups: %v", c.Groups)
-		return ""
+	groupsEscaped := make([]string, len(c.Groups))
+	for i, group := range c.Groups {
+		groupsEscaped[i] = "\"" + group + "\""
 	}
 
 	data := map[string]string{
-		"groups": string(groupsJson),
+		"groups": strings.Join(groupsEscaped, ","),
 	}
 
 	template, err := text.Template(raw, data)
