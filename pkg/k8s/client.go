@@ -501,21 +501,28 @@ func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoin
 }
 
 func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl, idToken, accessToken, refreshToken string) ([]byte, error) {
+	if !strings.HasPrefix("https://", endpoint) {
+		endpoint = "https://" + endpoint
+	}
+
+	if !strings.HasPrefix("https://", idpUrl) {
+		idpUrl = "https://" + idpUrl
+	}
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
 			clusterName: {
-				Server:                "https://" + endpoint + ":6443",
+				Server:                endpoint + ":6443",
 				InsecureSkipTLSVerify: true,
 			},
 		},
 		Contexts: map[string]*api.Context{
 			clusterName: {
 				Cluster:  clusterName,
-				AuthInfo: "sso",
+				AuthInfo: "sso@" + clusterName,
 			},
 		},
 		AuthInfos: map[string]*api.AuthInfo{
-			"sso": {
+			"sso@" + clusterName: {
 				AuthProvider: &api.AuthProviderConfig{
 					Name: "oidc",
 					Config: map[string]string{
