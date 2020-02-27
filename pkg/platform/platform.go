@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -19,19 +18,20 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
-
 	minio "github.com/minio/minio-go/v6"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 type Platform struct {
@@ -55,7 +55,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return platform.kubeConfig, nil
 	}
 
-	if platform.CA == nil && os.Getenv("KUBECONFIG") != "" {
+	if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
 		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
 	}
 
@@ -434,52 +434,6 @@ func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string
 	return out, nil
 }
 
-func (platform *Platform) TemplateDir(path string, pkg string) (string, error) {
-	var fs http.FileSystem
-	var dst string
-	if pkg == "manifests" {
-		fs = manifests.FS(false)
-		dst = ".manifests/" + path
-	} else {
-		fs = templates.FS(false)
-		dst = ".templates/" + path
-	}
-	tmp, _ := ioutil.TempDir("", "template")
-
-	dir, err := fs.Open(path)
-	if err != nil {
-		return "", err
-	}
-	files, err := dir.Readdir(-1)
-	if err != nil {
-		return "", err
-	}
-
-	for _, info := range files {
-		to := tmp + "/" + info.Name()
-		if strings.HasSuffix(info.Name(), ".raw") {
-			to = dst + "/" + info.Name()
-		}
-		log.Debugf("Extracting %s\n", to)
-		destination, err := os.Create(to)
-		if err != nil {
-			return "", err
-		}
-		defer destination.Close()
-		file, err := fs.Open(path + "/" + info.Name())
-		if err != nil {
-			return "", err
-		}
-		_, err = io.Copy(destination, file)
-		if err != nil {
-			return "", err
-		}
-	}
-	os.RemoveAll(dst)
-	os.MkdirAll(dst, 0775)
-	return dst, text.TemplateDir(tmp, dst, platform.PlatformConfig)
-}
-
 func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) error {
 	return platform.Client.ExposeIngress(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port, map[string]string{
 		"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
@@ -545,22 +499,12 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 		namespace = "-n " + namespace
 	}
 	for _, spec := range specs {
-		if strings.HasSuffix(spec, "/") {
-			dir, err := platform.TemplateDir(spec, "manifests")
-			if err != nil {
-				return fmt.Errorf("applySpecs: failed to template dir: %v", err)
-			}
-			if err := kubectl("apply %s -f %s", namespace, dir); err != nil {
-				return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
-			}
-		} else {
-			template, err := platform.Template(spec, "manifests")
-			if err != nil {
-				return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
-			}
-			if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
-				return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
-			}
+		template, err := platform.Template(spec, "manifests")
+		if err != nil {
+			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
+		}
+		if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
+			return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
 		}
 	}
 	return nil
@@ -584,6 +528,71 @@ func (p *Platform) GetBinary(name string) deps.BinaryFunc {
 		}
 	}
 	return deps.Binary(name, p.Versions[name], ".bin")
+}
+
+func (p *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.DB, error) {
+	clusterName := "postgres-" + name
+	databases := make(map[string]string)
+	appUsername := "app"
+	ns := "postgres-operator"
+	secretName := fmt.Sprintf("%s.%s.credentials", appUsername, clusterName)
+
+	db := &postgres.Postgresql{}
+	if err := p.Get(ns, clusterName, db); err != nil {
+		log.Infof("Creating new cluster: %s", clusterName)
+		for _, db := range dbNames {
+			databases[db] = appUsername
+		}
+		db = postgres.NewPostgresql(clusterName)
+		db.Spec.Databases = databases
+		db.Spec.Users = map[string]postgres.UserFlags{
+			appUsername: postgres.UserFlags{
+				"createdb",
+				"superuser",
+			},
+		}
+
+		if err := p.Apply(ns, db); err != nil {
+			return nil, err
+		}
+	}
+
+	doUntil(func() bool {
+		if err := p.Get(ns, clusterName, db); err != nil {
+			return true
+		}
+		log.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
+		return db.Status.PostgresClusterStatus == postgres.ClusterStatusRunning
+	})
+	if db.Status.PostgresClusterStatus != postgres.ClusterStatusRunning {
+		return nil, fmt.Errorf("Postgres cluster failed to start: %s", db.Status.PostgresClusterStatus)
+	}
+	secret := p.GetSecret("postgres-operator", secretName)
+	if secret == nil {
+		return nil, fmt.Errorf("%s not found", secretName)
+	}
+
+	return &types.DB{
+		Host:     fmt.Sprintf("%s.%s.svc.cluster.local", clusterName, ns),
+		Username: string((*secret)["username"]),
+		Port:     5432,
+		Password: string((*secret)["password"]),
+	}, nil
+}
+
+func doUntil(fn func() bool) bool {
+	start := time.Now()
+
+	for {
+		if fn() {
+			return true
+		}
+		if time.Now().After(start.Add(5 * time.Minute)) {
+			return false
+		} else {
+			time.Sleep(5 * time.Second)
+		}
+	}
 }
 
 func (p *Platform) GetS3Client() (*minio.Client, error) {

@@ -25,6 +25,7 @@ var Conformance = &cobra.Command{
 }
 
 var certification, kubeBench, quick bool
+var outputDir string
 
 // var outputDir string
 
