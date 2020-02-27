@@ -21,12 +21,12 @@ spec:
           args:
             - "query"
             - "--log.level=debug"
-            - "--query.replica-label=replica"
             - --store=thanos-store-grpc.monitoring.svc.cluster.local:10901
             - --store=thanos-sidecar.monitoring.svc.cluster.local:10901
             {{- range .thanos.clientSidecars}}
             - --store={{.}}
             {{- end}}
+            - --query.replica-label=prometheus_replica
             - --grpc-server-tls-cert=/ssl/client/tls.crt
             - --grpc-server-tls-key=/ssl/client/tls.key
             - --grpc-server-tls-client-ca=/ssl/ca/ca.crt

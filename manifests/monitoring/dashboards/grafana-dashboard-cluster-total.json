@@ -85,7 +85,7 @@
                     "format": "time_series",
                     "instant": null,
                     "intervalFactor": 1,
-                    "legendFormat": "{{namespace}}",
+                    {{ `"legendFormat": "{{namespace}}"`}},
                     "refId": "A"
                 }
             ],
@@ -130,7 +130,7 @@
                     "format": "time_series",
                     "instant": null,
                     "intervalFactor": 1,
-                    "legendFormat": "{{namespace}}",
+                    {{ `"legendFormat": "{{namespace}}"`}},
                     "refId": "A"
                 }
             ],
@@ -511,7 +511,7 @@
                             "format": "time_series",
                             "instant": null,
                             "intervalFactor": 1,
-                            "legendFormat": "{{namespace}}",
+                            {{ `"legendFormat": "{{namespace}}"`}},
                             "refId": "A"
                         }
                     ],
@@ -556,7 +556,7 @@
                             "format": "time_series",
                             "instant": null,
                             "intervalFactor": 1,
-                            "legendFormat": "{{namespace}}",
+                            {{ `"legendFormat": "{{namespace}}`}}",
                             "refId": "A"
                         }
                     ],
@@ -648,7 +648,7 @@
                     "expr": "sort_desc(sum(irate(container_network_receive_bytes_total{namespace=~\".+\"}[$interval:$resolution])) by (namespace))",
                     "format": "time_series",
                     "intervalFactor": 1,
-                    "legendFormat": "{{namespace}}",
+                    {{ `"legendFormat": "{{namespace}}"`}},
                     "refId": "A",
                     "step": 10
                 }
@@ -747,7 +747,7 @@
                     "expr": "sort_desc(sum(irate(container_network_transmit_bytes_total{namespace=~\".+\"}[$interval:$resolution])) by (namespace))",
                     "format": "time_series",
                     "intervalFactor": 1,
-                    "legendFormat": "{{namespace}}",
+                    {{ `"legendFormat": "{{namespace}}"`}},
                     "refId": "A",
                     "step": 10
                 }
@@ -857,7 +857,7 @@
                             "expr": "sort_desc(sum(irate(container_network_receive_packets_total{namespace=~\".+\"}[$interval:$resolution])) by (namespace))",
                             "format": "time_series",
                             "intervalFactor": 1,
-                            "legendFormat": "{{namespace}}",
+                            {{ `"legendFormat": "{{namespace}}"`}},
                             "refId": "A",
                             "step": 10
                         }
@@ -956,7 +956,7 @@
                             "expr": "sort_desc(sum(irate(container_network_transmit_packets_total{namespace=~\".+\"}[$interval:$resolution])) by (namespace))",
                             "format": "time_series",
                             "intervalFactor": 1,
-                            "legendFormat": "{{namespace}}",
+                            {{ `"legendFormat": "{{namespace}}"`}},
                             "refId": "A",
                             "step": 10
                         }
@@ -1075,7 +1075,7 @@
                             "expr": "sort_desc(sum(irate(container_network_receive_packets_dropped_total{namespace=~\".+\"}[$interval:$resolution])) by (namespace))",
                             "format": "time_series",
                             "intervalFactor": 1,
-                            "legendFormat": "{{namespace}}",
+                            {{ `"legendFormat": "{{namespace}}"`}},
                             "refId": "A",
                             "step": 10
                         }
@@ -1174,7 +1174,7 @@
                             "expr": "sort_desc(sum(irate(container_network_transmit_packets_dropped_total{namespace=~\".+\"}[$interval:$resolution])) by (namespace))",
                             "format": "time_series",
                             "intervalFactor": 1,
-                            "legendFormat": "{{namespace}}",
+                            {{ `"legendFormat": "{{namespace}}"`}},
                             "refId": "A",
                             "step": 10
                         }
