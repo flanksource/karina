@@ -182,11 +182,13 @@ type Ldap struct {
 	Password string `yaml:"password,omitempty"`
 	Domain   string `yaml:"domain,omitempty"`
 	// Members of this group will become cluster-admins
-	AdminGroup       string `yaml:"adminGroup,omitempty"`
-	UserDN           string `yaml:"userDN,omitempty"`
-	GroupDN          string `yaml:"groupDN,omitempty"`
+	AdminGroup string `yaml:"adminGroup,omitempty"`
+	UserDN     string `yaml:"userDN,omitempty"`
+	GroupDN    string `yaml:"groupDN,omitempty"`
+	// GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS
 	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
-	GroupNameAttr    string `yaml:"groupNameAttr,omitempty"`
+	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
+	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
 }
 
 type Kubernetes struct {
