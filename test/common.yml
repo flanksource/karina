@@ -87,7 +87,7 @@ ingressCA:
   password: foobar
 oauth2Proxy:
   enabled: true
-  version: add-oidc-group
-  dockerImage: "quay.io/toni0/oauth2_proxy"
+  dockerImage: "flanksource/oauth2_proxy"
+  version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
   cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=
