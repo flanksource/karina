@@ -149,6 +149,7 @@ platform-cli ca generate --name ingress-ca \
 # Create the cluster using the config from PLATFORM_CONFIG
 # shellcheck disable=SC2086
 platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
+platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
 
 # Build the base platform configuration
 # shellcheck disable=SC2086
