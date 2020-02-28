@@ -153,7 +153,6 @@ platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
 
 # Build the base platform configuration
 # shellcheck disable=SC2086
-platform-cli build all $PLATFORM_OPTIONS_FLAGS --loglevel 5
 
 # wait all nodes to be up
 # FIXME: For some weird reasons the command above does not complete
