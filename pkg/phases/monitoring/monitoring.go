@@ -8,7 +8,6 @@ import (
 	"github.com/grafana-tools/sdk"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -138,8 +137,11 @@ func Install(p *platform.Platform) error {
 		"prometheus":   fmt.Sprintf("https://prometheus.%s", p.Domain),
 	}
 
-	for name, file := range dashboards {
-		contents := text.SafeRead(file)
+	for name := range dashboards {
+		contents, err := p.Template("/monitoring/dashboards/"+name, "manifests")
+		if err != nil {
+			fmt.Errorf("Failed to template the dashboard: %v ", err)
+		}
 		var board sdk.Board
 		if err := json.Unmarshal([]byte(contents), &board); err != nil {
 			log.Warnf("Invalid grafana dashboard %s: %v", name, err)

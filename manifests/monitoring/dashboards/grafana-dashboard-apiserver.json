@@ -261,7 +261,7 @@
           "expr": "process_resident_memory_bytes{job=\"apiserver\",instance=~\"$instance\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{instance}}",
+          {{ `"legendFormat": "{{instance}}"`}},
           "refId": "A"
         }
       ],
@@ -349,7 +349,7 @@
           "expr": "histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\", instance=~\"$instance\"}[5m])) by (verb, le))",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{verb}}",
+          {{ `"legendFormat": "{{verb}}"`}},
           "refId": "A"
         }
       ],
@@ -442,7 +442,7 @@
           "expr": "histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\", instance=~\"$instance\"}[5m])) by (verb, le))",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{verb}}",
+          {{ `"legendFormat": "{{verb}}"`}},
           "refId": "A"
         }
       ],
@@ -531,7 +531,7 @@
           "expr": "rate(process_cpu_seconds_total{job=\"apiserver\",instance=~\"$instance\"}[5m])",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{instance}}",
+          {{ `"legendFormat": "{{instance}}"`}},
           "refId": "A"
         }
       ],
@@ -615,7 +615,7 @@
           "expr": "go_goroutines{job=\"apiserver\",instance=~\"$instance\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{instance}}",
+          {{ `"legendFormat": "{{instance}}"`}},
           "refId": "A"
         }
       ],

@@ -91,3 +91,6 @@ oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
   cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=
+prometheus: 
+  persistence: 
+    capacity: 10Gi

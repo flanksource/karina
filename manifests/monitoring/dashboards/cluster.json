@@ -98,7 +98,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sort_desc(min(avg(rate(node_cpu_seconds_total{mode=\"idle\", cluster=\"$cluster\"}[2m])) by (instance)))",
+          {{- else }}
           "expr": "sort_desc(min(avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) by (instance)))",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A",
@@ -183,7 +187,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_node_status_capacity_cpu_cores{cluster=\"$cluster\"})  ",
+          {{- else }}
           "expr": "sum(kube_node_status_capacity_cpu_cores)  ",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -269,7 +277,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "min(node_memory_MemAvailable_bytes/node_memory_MemTotal_bytes{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "min(node_memory_MemAvailable_bytes/node_memory_MemTotal_bytes)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A",
@@ -354,7 +366,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_node_status_capacity_memory_bytes{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_node_status_capacity_memory_bytes)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -458,10 +474,14 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\", cluster=\"$cluster\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\", cluster=\"$cluster\"}) by (device, instance)",
+          {{- else }}
           "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}) by (device, instance)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{instance}}",
+          {{ `"legendFormat": "{{instance}}" `}},
           "refId": "A",
           "step": 10
         }
@@ -612,7 +632,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(ALERTS{alertstate=\"firing\",alertname!=\"DeadMansSwitch\", cluster=\"$cluster\"})  ",
+          {{- else }}
           "expr": "sum(ALERTS{alertstate=\"firing\",alertname!=\"DeadMansSwitch\"})  ",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -698,7 +722,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_requests_memory_bytes{cluster=\"$cluster\"}) / sum(:node_memory_MemAvailable_bytes:sum{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_memory_bytes) / sum(:node_memory_MemAvailable_bytes:sum)",
+          {{- end }}
           "refId": "A"
         }
       ],
@@ -782,7 +810,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{cluster=\"$cluster\"}) / sum(node:node_num_cpu:sum{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_cpu_cores) / sum(node:node_num_cpu:sum)",
+          {{- end }}
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -869,7 +901,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_limits_memory_bytes{cluster=\"$cluster\"}) / sum(:node_memory_MemAvailable_bytes:sum{cluster=\"$cluster\"})  ",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_memory_bytes) / sum(:node_memory_MemAvailable_bytes:sum)  ",
+          {{- end }}
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -956,7 +992,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{cluster=\"$cluster\"}) / sum(node:node_num_cpu:sum{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_cpu_cores) / sum(node:node_num_cpu:sum)",
+          {{- end }}
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -1025,28 +1065,44 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_status_phase{phase =\"Running\", cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_status_phase{phase =\"Running\"})",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Running",
           "refId": "A"
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_status_phase{phase!=\"Running\", cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_status_phase{phase!=\"Running\"})",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Not Running",
           "refId": "B"
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_status_phase{phase=\"Pending\", cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_status_phase{phase=\"Pending\"})",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Pending",
           "refId": "C"
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_status_phase{phase=\"Failed\", cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(kube_pod_status_phase{phase=\"Failed\"})",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Failed",
@@ -1158,10 +1214,14 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "count(sum by (pod)(delta(kube_pod_container_status_restarts_total{cluster=\"$cluster\"}[15m]) > 0))",
+          {{- else }}
           "expr": "count(sum by (pod)(delta(kube_pod_container_status_restarts_total[15m]) > 0))",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{pod}}",
+          {{ `"legendFormat": "{{pod}}"`}},
           "refId": "A",
           "step": 40
         }
@@ -1233,10 +1293,14 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum by (pod)(delta(kube_pod_container_status_restarts_total{cluster=\"$cluster\"}[15m]) > 0)",
+          {{- else }}
           "expr": "sum by (pod)(delta(kube_pod_container_status_restarts_total[15m]) > 0)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{pod}}",
+          {{ `"legendFormat": "{{pod}}"`}},
           "refId": "A",
           "step": 10
         }
@@ -1328,10 +1392,14 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "rate(kubelet_pod_start_latency_microseconds_sum{cluster=\"$cluster\"}[5m]) / rate(kubelet_pod_start_latency_microseconds_count{cluster=\"$cluster\"}[5m]) ",
+          {{- else }}
           "expr": "rate(kubelet_pod_start_latency_microseconds_sum[5m]) / rate(kubelet_pod_start_latency_microseconds_count[5m]) ",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{instance}}",
+          {{ `"legendFormat": "{{instance}}"`}},
           "refId": "A"
         }
       ],
@@ -1439,7 +1507,11 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(rate(kubelet_running_pod_count[2m]))  ",
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(rate(kubelet_running_pod_count{cluster=\"$cluster\"}[2m])) ",
+          {{- else }}
+          "expr": "sum(rate(kubelet_running_pod_count[2m]))",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -1507,28 +1579,44 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(node_memory_MemAvailable_bytes{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(node_memory_MemAvailable_bytes)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Free",
           "refId": "A"
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(node_memory_Active_bytes{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(node_memory_Active_bytes)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Used",
           "refId": "B"
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(node_memory_Buffers_bytes{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(node_memory_Buffers_bytes)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Buffers",
           "refId": "C"
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(node_memory_Cached_bytes{cluster=\"$cluster\"})",
+          {{- else }}
           "expr": "sum(node_memory_Cached_bytes)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Cached",
@@ -1640,7 +1728,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(node_memory_Active_bytes{cluster=\"$cluster\"}) / sum(node_memory_MemTotal_bytes{cluster=\"$cluster\"})    ",
+          {{- else }}
           "expr": "sum(node_memory_Active_bytes) / sum(node_memory_MemTotal_bytes)    ",
+          {{- end }}
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -1709,10 +1801,14 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_status_terminated_reason{reason!=\"Completed\", cluster=\"$cluster\"}) by (reason)  ",
+          {{- else }}
           "expr": "sum(kube_pod_container_status_terminated_reason{reason!=\"Completed\"}) by (reason)  ",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{reason}}",
+          {{ `"legendFormat": "{{reason}}"`}},
           "refId": "A"
         }
       ],
@@ -1820,7 +1916,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", cluster=\"$cluster\"}[1m]))",
+          {{- else }}
           "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))",
+          {{- end }}
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -1970,7 +2070,11 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_start_time{cluster=\"$cluster\"})      ",
+          {{- else }}
           "expr": "sum(kube_pod_start_time)      ",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -2069,10 +2173,14 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{namespace}}",
+          {{ `"legendFormat": "{{namespace}}"` }},
           "refId": "A",
           "step": 10
         }
@@ -2250,7 +2358,11 @@
       ],
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2258,7 +2370,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2266,7 +2382,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_requests_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2274,7 +2394,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2282,7 +2406,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2373,10 +2501,14 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace)",
+          {{- end }}
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{namespace}}",
+          {{ `"legendFormat": "{{namespace}}"`}},
           "refId": "A",
           "step": 10
         }
@@ -2554,7 +2686,11 @@
       ],
       "targets": [
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2562,7 +2698,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_requests_memory_bytes{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2570,7 +2710,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_requests_memory_bytes{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace) / sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)",
+          {{- end }}
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2578,7 +2722,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(kube_pod_container_resource_limits_memory_bytes{cluster=\"$cluster\"}) by (namespace)",
+          {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
+          {{- end }}          
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2586,7 +2734,11 @@
           "step": 10
         },
         {
+          {{- if eq .thanos.mode "observability"}}
+          "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
+          {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
+          {{- end }}  
           "format": "table",
           "instant": true,
           "intervalFactor": 2,
@@ -2641,6 +2793,37 @@
         "skipUrlSync": false,
         "type": "constant"
       }
+      {{- if eq .thanos.mode "observability"}}
+      ,{
+        "allFormat": "",
+        "allValue": "",
+        "current": {
+          "selected": false,
+          "tags": [],
+          "text": "green",
+          "value": "green"
+        },
+        "datasource": "prometheus",
+        "definition": "label_values(kube_pod_info, cluster)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "cluster",
+        "multi": false,
+        "multiFormat": "",
+        "name": "cluster",
+        "options": [],
+        "query": "label_values(kube_pod_info, cluster)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+      {{- end }}
     ]
   },
   "time": {

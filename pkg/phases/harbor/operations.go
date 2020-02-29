@@ -2,8 +2,10 @@ package harbor
 
 import (
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/platform"
+
 	log "github.com/sirupsen/logrus"
+
+	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func ReplicateAll(p *platform.Platform) error {
@@ -24,4 +26,12 @@ func ReplicateAll(p *platform.Platform) error {
 		log.Infof("%s %s: %s  pending: %d, success: %d, failed: %d\n", req.StartTime, req.Status, req.StatusText, req.InProgress, req.Succeed, req.Failed)
 	}
 	return nil
+}
+
+func UpdateSettings(p *platform.Platform) error {
+	defaults(p)
+	client := NewHarborClient(p)
+	log.Infof("Platform: %v", p)
+	log.Infof("Settings: %v", *p.Harbor.Settings)
+	return client.UpdateSettings(*p.Harbor.Settings)
 }

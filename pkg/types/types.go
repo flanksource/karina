@@ -235,8 +235,15 @@ type Monitoring struct {
 }
 
 type Prometheus struct {
-	Version  string `yaml:"version,omitempty"`
-	Disabled bool   `yaml:"disabled,omitempty"`
+	Version     string                `yaml:"version,omitempty"`
+	Disabled    bool                  `yaml:"disabled,omitempty"`
+	Persistence PrometheusPersistence `yaml:"persistence,omitempty"` // Persistence settings
+}
+
+type PrometheusPersistence struct {
+	Enabled      bool   `yaml:"enabled,omitempty"`      // Enable persistence for Prometheus
+	StorageClass string `yaml:"storageClass,omitempty"` // Storage class to use. If not set default one will be used
+	Capacity     string `yaml:"capacity,omitempty"`     // Capacity. Required if persistence is enabled
 }
 
 type Grafana struct {
@@ -317,11 +324,11 @@ type CA struct {
 type Thanos struct {
 	Disabled              bool     `yaml:"disabled"`
 	Version               string   `yaml:"version"`
-	Mode                  string   `yaml:"mode,omitempty"`
-	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"`
-	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`
-	Bucket                string   `yaml:"bucket,omitempty"`
-	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`
+	Mode                  string   `yaml:"mode,omitempty"`                  // Mode. Should be client or obeservability.
+	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"` // Only for client mode. Endpoint for thanos sidecar ingress rule.
+	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`     // Only for client mode. Port for thanos sidecar ingress rule.
+	Bucket                string   `yaml:"bucket,omitempty"`                // Bucket to store metrics. Should be the same across all environments
+	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`        // Only for observability mode. List of client sidecars in <hostname>:<port> format
 }
 
 type FluentdOperator struct {

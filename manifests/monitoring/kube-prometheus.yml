@@ -119,8 +119,21 @@ spec:
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
+  externalLabels: 
+    cluster: {{.name}}
   version: v2.11.0
- {{- if not (index .thanos "disabled")}}
+  {{- if and  (index .monitoring.prometheus "persistence") (index .monitoring.prometheus.persistence "enabled") }}
+  storage:
+    volumeClaimTemplate:
+      spec:
+        {{- if (index .monitoring.prometheus.persistence "storageClass")}}
+        storageClassName: {{ .monitoring.prometheus.persistence.storageClass }}
+        {{- end}}
+        resources:
+          requests:
+            storage: {{ .monitoring.prometheus.persistence.capacity }}
+  {{- end }}
+  {{- if not (index .thanos "disabled")}}
   secrets:
     - "thanos-sidecar"
     - "thanos-ca-cert"
@@ -233,7 +246,11 @@ spec:
     - name: prometheus
       type: prometheus
       access: proxy
+      {{- if eq .thanos.mode "observability"}}
+      url: http://thanos-query:9090
+      {{- else }}
       url: http://prometheus-k8s:9090
+      {{- end }}
       isDefault: true
       version: 1
       editable: true
