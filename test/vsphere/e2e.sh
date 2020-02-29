@@ -102,7 +102,7 @@ export PLATFORM_CLUSTER_ID
 export PLATFORM_CA=$PWD/.certs/ca.crt.pem
 export PLATFORM_PRIVATE_KEY=$PWD/.certs/ca.key.pem
 export PLATFORM_CA_CEK=foobar
-export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com"
+export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
 
 export PLATFORM_CONFIG=$PWD/test/vsphere/e2e.yml
 
