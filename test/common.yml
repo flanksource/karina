@@ -77,3 +77,6 @@ ingressCA:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
+prometheus: 
+  persistence: 
+    capacity: 10Gi

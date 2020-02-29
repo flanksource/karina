@@ -58,7 +58,7 @@
                             "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\", namespace=\"$namespace\"}) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -423,7 +423,7 @@
                             "expr": "sum(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", container!=\"\"}) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1163,7 +1163,7 @@
                             "expr": "sum(irate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1261,7 +1261,7 @@
                             "expr": "sum(irate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1359,7 +1359,7 @@
                             "expr": "sum(irate(container_network_receive_packets_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1457,7 +1457,7 @@
                             "expr": "sum(irate(container_network_receive_packets_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1555,7 +1555,7 @@
                             "expr": "sum(irate(container_network_receive_packets_dropped_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1653,7 +1653,7 @@
                             "expr": "sum(irate(container_network_transmit_packets_dropped_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
