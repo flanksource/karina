@@ -62,7 +62,7 @@ decrypt_vpn_certs() {
 
 dump_logs() {
   mkdir -p "$ARTIFACTS"/snapshot
-  platform-cli snapshot --output-dir "$ARTIFACTS"/snapshot
+  platform-cli snapshot --output-dir "$ARTIFACTS"/snapshot || echo "Failed to take cluster snapshot."
 }
 
 on_exit() {
