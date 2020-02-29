@@ -26,20 +26,17 @@ GO_VERSION=${GO_VERSION:-1.12}
 SOPS_VERSION=${SOPS_VERSION:-3.5.0}
 
 install_platformcli() {
-  docker run --rm -it -v "$PWD":"$PWD" -v /go:/go \
-    -w "$PWD" --entrypoint make -e GOPROXY=https://proxy.golang.org \
+  docker run --rm -it -v "$PWD":"$PWD" -v "$PWD"/go:"$PWD"/go \
+    -u "$(id -u)":"$(id -g)" \
+    -w "$PWD" --entrypoint make \
+    -e GOPROXY=https://proxy.golang.org \
+    -e XDG_CACHE_HOME=/tmp/.cache \
     golang:"$GO_VERSION" pack build
 
   sudo mv "$PWD"/.bin/platform-cli /usr/local/bin/platform-cli
   sudo chmod +x /usr/local/bin/platform-cli
   sudo apt-get update
   sudo apt-get install -y genisoimage
-}
-
-install_kubectl() {
-  curl -L https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubectl -o /tmp/kubectl
-  sudo mv /tmp/kubectl /usr/local/bin/kubectl
-  sudo chmod +x /usr/local/bin/kubectl
 }
 
 install_sops() {
@@ -123,8 +120,6 @@ install_platformcli
 
 install_sops
 
-install_kubectl
-
 # Decrypt certs encrypted with SOPS and KMS Key from https://github.com/flanksource/vsphere-lab/blob/master/.sops.yaml
 decrypt_vpn_certs
 
@@ -145,14 +140,13 @@ docker logs vpn
 platform-cli ca generate --name ingress-ca \
   --cert-path "$PLATFORM_CA" --private-key-path "$PLATFORM_PRIVATE_KEY" \
   --password "$PLATFORM_CA_CEK" --expiry 1
-mkdir -p .bin
-if [[ "$CIRCLECI" == "true" ]]; then
-  # .bin directory is owned by root for some reason
-  sudo chown circleci:circleci .bin
-fi
+
 # Create the cluster using the config from PLATFORM_CONFIG
 # shellcheck disable=SC2086
 platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
+
+# Install CNI
+# shellcheck disable=SC2086
 platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
 
 # Build the base platform configuration
