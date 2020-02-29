@@ -45,7 +45,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 
 	for _, path := range paths {
 		cfg := types.PlatformConfig{
-			Source: paths[0],
+			Source: path,
 		}
 
 		data, err := ioutil.ReadFile(path)
@@ -69,6 +69,11 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		if err := mergo.Merge(&base, cfg); err != nil {
 			log.Fatalf("Failed to merge in %s, %s", path, err)
 		}
+	}
+
+	defaultConfig := types.DefaultPlatformConfig()
+	if err := mergo.Merge(&base, defaultConfig); err != nil {
+		log.Fatalf("Failed to merge default config, %v", err)
 	}
 
 	dryRun, _ := cmd.Flags().GetBool("dry-run")

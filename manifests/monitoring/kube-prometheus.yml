@@ -314,6 +314,11 @@ kind: Ingress
 metadata:
   name: prometheus
   namespace: monitoring
+  {{ if .oauth2Proxy.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+  {{ end }}
 spec:
   tls:
     - hosts:
@@ -331,6 +336,11 @@ kind: Ingress
 metadata:
   name: grafana
   namespace: monitoring
+  {{ if .oauth2Proxy.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+  {{ end }}
 spec:
   tls:
     - hosts:
@@ -349,6 +359,11 @@ kind: Ingress
 metadata:
   name: alertmanager
   namespace: monitoring
+  {{ if .oauth2Proxy.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+  {{ end }}
 spec:
   tls:
     - hosts:

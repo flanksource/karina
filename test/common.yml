@@ -6,13 +6,21 @@ ldap:
   password: secret
   port: 10636
   host: apacheds.ldap
-  dn: ou=users,dc=example,dc=com
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: DN
 kubernetes:
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
   masterIP: localhost
+dashboard:
+  accessRestricted:
+    enabled: true
+    groups:
+      - cn=k8s,ou=groups,dc=example,dc=com
 versions:
   gomplate: v3.5.0
   konfigadm: v0.3.6
@@ -77,6 +85,12 @@ ingressCA:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
+oauth2Proxy:
+  enabled: true
+  dockerImage: "flanksource/oauth2_proxy"
+  version: "v5.0.0.flanksource.1"
+  oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
+  cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=
 prometheus: 
   persistence: 
     capacity: 10Gi

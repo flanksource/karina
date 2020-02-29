@@ -44,6 +44,14 @@ type Calico struct {
 	IPPools   []calico.IPPool         `yaml:"ipPools,omitempty"`
 }
 
+type OAuth2Proxy struct {
+	Enabled      bool   `yaml:"enabled",omitempty`
+	CookieSecret string `yaml:"cookieSecret,omitempty"`
+	Version      string `yaml:"version,omitempty"`
+	DockerImage  string `yaml:"dockerImage,omitempty"`
+	OidcGroup    string `yaml:"oidcGroup,omitempty"`
+}
+
 type OPA struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
@@ -175,13 +183,29 @@ type Ldap struct {
 	Domain   string `yaml:"domain,omitempty"`
 	// Members of this group will become cluster-admins
 	AdminGroup string `yaml:"adminGroup,omitempty"`
-	BindDN     string `yaml:"dn,omitempty"`
+	UserDN     string `yaml:"userDN,omitempty"`
+	GroupDN    string `yaml:"groupDN,omitempty"`
+	// GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS
+	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
+	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
+	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
 }
 
 type Kubernetes struct {
 	Version          string            `yaml:"version"`
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
 	MasterIP         string            `yaml:"masterIP,omitempty"`
+}
+
+type Dashboard struct {
+	Enabled
+	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
+}
+
+type LdapAccessConfig struct {
+	Enabled bool     `yaml:"enabled,omitempty"`
+	Groups  []string `yaml:"groups,omitempty"`
+	Snippet string   `yaml:"snippet,omitempty"`
 }
 
 type DynamicDNS struct {
