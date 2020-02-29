@@ -145,7 +145,11 @@ docker logs vpn
 platform-cli ca generate --name ingress-ca \
   --cert-path "$PLATFORM_CA" --private-key-path "$PLATFORM_PRIVATE_KEY" \
   --password "$PLATFORM_CA_CEK" --expiry 1
-
+mkdir -p .bin
+if [[ "$CIRCLECI" == "true" ]]; then
+  # .bin directory is owned by root for some reason
+  sudo chown circleci:circleci .bin
+fi
 # Create the cluster using the config from PLATFORM_CONFIG
 # shellcheck disable=SC2086
 platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
