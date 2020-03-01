@@ -186,5 +186,6 @@ func deployThanos(p *platform.Platform) error {
 	} else {
 		return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
 	}
+	return nil
 
 }
