@@ -53,6 +53,7 @@ func main() {
 		cmd.Backup,
 		cmd.APIDocs,
 		cmd.CA,
+		cmd.Apply,
 		cmd.DB,
 	)
 
