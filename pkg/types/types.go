@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
