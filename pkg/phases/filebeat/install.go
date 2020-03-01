@@ -10,6 +10,7 @@ import (
 func Deploy(p *platform.Platform) error {
 	if p.Filebeat == nil || p.Filebeat.Disabled {
 		log.Infof("Skipping deployment of filebeat, it is disabled")
+		return nil
 	}
 
 	if p.Filebeat.Elasticsearch != nil {

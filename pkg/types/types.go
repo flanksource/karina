@@ -362,11 +362,11 @@ type Connection struct {
 
 func (c Connection) GetURL() string {
 	url := c.URL
-	if c.Scheme != "" && !strings.Contains(url, "://") {
-		url = c.Scheme + "://" + url
-	}
 	if c.Port != "" && !strings.Contains(url, ":") {
 		url = url + ":" + c.Port
+	}
+	if c.Scheme != "" && !strings.Contains(url, "://") {
+		url = c.Scheme + "://" + url
 	}
 	return url
 }
