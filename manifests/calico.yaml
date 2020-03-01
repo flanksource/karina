@@ -567,6 +567,8 @@ spec:
         - name: calico-node
           image: calico/node:{{.calico.version}}
           env:
+            - name: FELIX_IGNORELOOSERPF
+              value: "true"
             # Use Kubernetes API as the backing datastore.
             - name: DATASTORE_TYPE
               value: "kubernetes"
