@@ -8,7 +8,7 @@ type PlatformConfig struct {
 	Calico                Calico            `yaml:"calico,omitempty"`
 	CertManager           *Enabled          `yaml:"certManager,omitempty"`
 	Consul                string            `yaml:"consul"`
-	Dashboard             *Enabled          `yaml:"dashboard,omitempty"`
+	Dashboard             Dashboard         `yaml:"dashboard,omitempty"`
 	Datacenter            string            `yaml:"datacenter"`
 	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
 	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
@@ -29,6 +29,7 @@ type PlatformConfig struct {
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
 	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
+	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy",omitempty`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
 	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet"`
@@ -47,10 +48,13 @@ type PlatformConfig struct {
 	FluentdOperator       *FluentdOperator  `yaml:"fluentd,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`
 	Thanos                *Thanos           `yaml:"thanos,omitempty"`
-
-	BootstrapToken       string `yaml:"-"`
-	DryRun               bool   `yaml:"-"`
-	JoinEndpoint         string `yaml:"-"`
-	Source               string `yaml:"-"`
-	ControlPlaneEndpoint string `yaml:"-"`
+	Filebeat              *Filebeat         `yaml:"filebeat,omitempty"`
+	// If true, terminate operations will return an error. Used to
+	// protect stateful clusters
+	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`
+	BootstrapToken        string `yaml:"-"`
+	DryRun                bool   `yaml:"-"`
+	JoinEndpoint          string `yaml:"-"`
+	Source                string `yaml:"-"`
+	ControlPlaneEndpoint  string `yaml:"-"`
 }

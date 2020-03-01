@@ -37,7 +37,6 @@ $BIN deploy calico -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
-.bin/kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 
 $BIN deploy base -v
 
@@ -47,11 +46,11 @@ $BIN deploy dex -v
 
 $BIN test dex --wait 200
 
-$BIN deploy pgo install -v
+$BIN deploy postgres-operator install -v
 
 $BIN test base --wait 200
 
-$BIN test pgo --wait 200
+$BIN test postgres-operator --wait 200
 
 $BIN deploy harbor -v
 
@@ -80,7 +79,7 @@ if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.x
 fi
 
 mkdir -p artifacts
-$BIN snapshot --output-dir snapshot -v
+$BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
 zip -r artifacts/snapshot.zip snapshot/*
 
 if [[ "$failed" = true ]]; then

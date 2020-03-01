@@ -119,9 +119,22 @@ spec:
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
+  externalLabels:
+    cluster: {{.name}}
   version: v2.11.0
- {{- if index . "thanos" }}
- {{- if not (index .thanos "disabled") }}
+  {{- if and  (index .monitoring "prometheus") (index .monitoring.prometheus "persistence") (index .monitoring.prometheus.persistence "enabled") }}
+  storage:
+    volumeClaimTemplate:
+      spec:
+        {{- if (index .monitoring.prometheus.persistence "storageClass")}}
+        storageClassName: {{ .monitoring.prometheus.persistence.storageClass }}
+        {{- end}}
+        resources:
+          requests:
+            storage: {{ .monitoring.prometheus.persistence.capacity }}
+  {{- end }}
+  {{- if index . "thanos" }}
+  {{- if not (index .thanos "disabled") }}
   secrets:
     - "thanos-sidecar"
     - "thanos-ca-cert"
@@ -235,7 +248,13 @@ spec:
     - name: prometheus
       type: prometheus
       access: proxy
+      {{- if index . "thanos"}}
+      {{- if eq .thanos.mode "observability"}}
+      url: http://thanos-query:9090
+      {{- end}}
+      {{- else }}
       url: http://prometheus-k8s:9090
+      {{- end }}
       isDefault: true
       version: 1
       editable: true
@@ -299,6 +318,11 @@ kind: Ingress
 metadata:
   name: prometheus
   namespace: monitoring
+  {{ if .oauth2Proxy.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+  {{ end }}
 spec:
   tls:
     - hosts:
@@ -316,6 +340,11 @@ kind: Ingress
 metadata:
   name: grafana
   namespace: monitoring
+  {{ if .oauth2Proxy.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+  {{ end }}
 spec:
   tls:
     - hosts:
@@ -334,6 +363,11 @@ kind: Ingress
 metadata:
   name: alertmanager
   namespace: monitoring
+  {{ if .oauth2Proxy.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+  {{ end }}
 spec:
   tls:
     - hosts:

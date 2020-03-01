@@ -34,7 +34,48 @@ import (
 
 type Client struct {
 	GetKubeConfigBytes func() ([]byte, error)
+	client             *kubernetes.Clientset
+	dynamicClient      dynamic.Interface
+	restConfig         *rest.Config
 	ApplyDryRun        bool
+}
+
+// GetDynamicClient creates a new k8s client
+func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
+	if c.dynamicClient != nil {
+		return c.dynamicClient, nil
+	}
+	cfg, err := c.GetRESTConfig()
+	if err != nil {
+		return nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
+	}
+	c.dynamicClient, err = dynamic.NewForConfig(cfg)
+	return c.dynamicClient, err
+}
+
+// GetClientset creates a new k8s client
+func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
+	if c.client != nil {
+		return c.client, nil
+	}
+	cfg, err := c.GetRESTConfig()
+	if err != nil {
+		return nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
+	}
+	c.client, err = kubernetes.NewForConfig(cfg)
+	return c.client, err
+}
+
+func (c *Client) GetRESTConfig() (*rest.Config, error) {
+	if c.restConfig != nil {
+		return c.restConfig, nil
+	}
+	data, err := c.GetKubeConfigBytes()
+	if err != nil {
+		return nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
+	}
+	c.restConfig, err = clientcmd.RESTConfigFromKubeConfig(data)
+	return c.restConfig, err
 }
 
 // GetSecret returns the data of a secret or nil for any error
@@ -65,19 +106,6 @@ func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 		return nil
 	}
 	return &cm.Data
-}
-
-// GetDynamicClient creates a new k8s client
-func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
-	data, err := c.GetKubeConfigBytes()
-	if err != nil {
-		return nil, fmt.Errorf("getDynamicClient: Failed to get k8s client: %v", err)
-	}
-	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
-	if err != nil {
-		return nil, fmt.Errorf("getDynamicClient: Failed to get REST config: %v", err)
-	}
-	return dynamic.NewForConfig(cfg)
 }
 
 func GetGVR(v interface{}) schema.GroupVersionResource {
@@ -213,23 +241,6 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 		}
 	}
 	return nil
-}
-
-// GetClientset creates a new k8s client
-func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
-	cfg, err := c.GetRESTConfig()
-	if err != nil {
-		return nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
-	}
-	return kubernetes.NewForConfigOrDie(cfg), nil
-}
-
-func (c *Client) GetRESTConfig() (*rest.Config, error) {
-	data, err := c.GetKubeConfigBytes()
-	if err != nil {
-		return nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
-	}
-	return clientcmd.RESTConfigFromKubeConfig(data)
 }
 
 func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
@@ -501,21 +512,28 @@ func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoin
 }
 
 func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl, idToken, accessToken, refreshToken string) ([]byte, error) {
+	if !strings.HasPrefix("https://", endpoint) {
+		endpoint = "https://" + endpoint
+	}
+
+	if !strings.HasPrefix("https://", idpUrl) {
+		idpUrl = "https://" + idpUrl
+	}
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
 			clusterName: {
-				Server:                "https://" + endpoint + ":6443",
+				Server:                endpoint + ":6443",
 				InsecureSkipTLSVerify: true,
 			},
 		},
 		Contexts: map[string]*api.Context{
 			clusterName: {
 				Cluster:  clusterName,
-				AuthInfo: "sso",
+				AuthInfo: "sso@" + clusterName,
 			},
 		},
 		AuthInfos: map[string]*api.AuthInfo{
-			"sso": {
+			"sso@" + clusterName: {
 				AuthProvider: &api.AuthProviderConfig{
 					Name: "oidc",
 					Config: map[string]string{

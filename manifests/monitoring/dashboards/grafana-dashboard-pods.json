@@ -82,28 +82,28 @@
                             "expr": "sum by(container) (container_memory_usage_bytes{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", container!=\"POD\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Current: {{ container }}",
+                            {{`"legendFormat": "Current: {{ container }}"`}},
                             "refId": "A"
                         },
                         {
                             "expr": "sum by(container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\", pod=\"$pod\", container=~\"$container\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Requested: {{ container }}",
+                            {{`"legendFormat": "Requested: {{ container }}"`}},
                             "refId": "B"
                         },
                         {
                             "expr": "sum by(container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\", pod=\"$pod\", container=~\"$container\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Limit: {{ container }}",
+                            {{`"legendFormat": "Limit: {{ container }}"`}},
                             "refId": "C"
                         },
                         {
                             "expr": "sum by(container) (container_memory_cache{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", container!=\"POD\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Cache: {{ container }}",
+                            {{`"legendFormat": "Cache: {{ container }}"`}},
                             "refId": "D"
                         }
                     ],
@@ -207,21 +207,21 @@
                             "expr": "sum by (container) (irate(container_cpu_usage_seconds_total{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", image!=\"\", pod=\"$pod\", container=~\"$container\", container!=\"POD\"}[4m]))",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Current: {{ container }}",
+                            {{`"legendFormat": "Current: {{ container }}"`}},
                             "refId": "A"
                         },
                         {
                             "expr": "sum by(container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"cpu\", pod=\"$pod\", container=~\"$container\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Requested: {{ container }}",
+                            {{`"legendFormat": "Requested: {{ container }}"`}},
                             "refId": "B"
                         },
                         {
                             "expr": "sum by(container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"cpu\", pod=\"$pod\", container=~\"$container\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Limit: {{ container }}",
+                            {{`"legendFormat": "Limit: {{ container }}"`}},
                             "refId": "C"
                         }
                     ],
@@ -325,14 +325,14 @@
                             "expr": "sort_desc(sum by (pod) (irate(container_network_receive_bytes_total{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[4m])))",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "RX: {{ pod }}",
+                            {{`"legendFormat": "RX: {{ pod }}"`}},
                             "refId": "A"
                         },
                         {
                             "expr": "sort_desc(sum by (pod) (irate(container_network_transmit_bytes_total{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[4m])))",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "TX: {{ pod }}",
+                            {{`"legendFormat": "TX: {{ pod }}"`}},
                             "refId": "B"
                         }
                     ],
@@ -436,7 +436,7 @@
                             "expr": "max by (container) (kube_pod_container_status_restarts_total{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"})",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "Restarts: {{ container }}",
+                            {{`"legendFormat": "Restarts: {{ container }}"`}},
                             "refId": "A"
                         }
                     ],

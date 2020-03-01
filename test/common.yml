@@ -6,13 +6,21 @@ ldap:
   password: secret
   port: 10636
   host: apacheds.ldap
-  dn: ou=users,dc=example,dc=com
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: DN
 kubernetes:
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
   masterIP: localhost
+dashboard:
+  accessRestricted:
+    enabled: true
+    groups:
+      - cn=k8s,ou=groups,dc=example,dc=com
 versions:
   gomplate: v3.5.0
   konfigadm: v0.3.6
@@ -41,41 +49,10 @@ nodeLocalDNS:
   disabled: false
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
-pgo:
-  version: 4.2.0
-  imageVersion: 4.2.0
-  primaryStorage: local-path
-  xlogStorage: local-path
-  backupStorage: local-path
-  replicaStorage: local-path
-  backrestStorage: local-path
-  storage:
-    xlogstorage:
-      AccessMode: ReadWriteOnce
-      Size: 2G
-      StorageType: dynamic
-      storageClass: local-path
-      Fsgroup: 26
-    local-path:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: local-path
-      Fsgroup: 26
-    s3:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: s3
-    nfs:
-      AccessMode: ReadWriteOnce
-      Size: 50G
-      StorageType: dynamic
-      StorageClass: nfs
 harbor:
   replicas: 1
+  bucket: harbor-blobs
   version: v1.10.0
-  chartVersion: v1.3.0
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -97,14 +74,31 @@ fluentd-operator:
 fluentd:
   version: 1.11.0
   elasticsearch:
-    url: log-es-http.eck.svc.cluster.local
+    url: logs-es-http.eck.svc.cluster.local
     user: elastic
     password: elastic
     port: 9200
     scheme: https
+filebeat:
+  version: 7.6.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: filebeat
+    password: filebeat
+    port: 9200
+    scheme: https
 eck:
-  version: 1.0.0
+  version: 1.0.1
 ingressCA:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
+oauth2Proxy:
+  enabled: true
+  dockerImage: "flanksource/oauth2_proxy"
+  version: "v5.0.0.flanksource.1"
+  oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
+  cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=
+prometheus: 
+  persistence: 
+    capacity: 10Gi
