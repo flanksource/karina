@@ -1,5 +1,3 @@
-name: $PLATFORM_CLUSTER_ID
-domain: $PLATFORM_CLUSTER_ID.lab.flanksource.com
 consul: 10.100.0.13
 hostPrefix: k8s
 datacenter: lab
@@ -34,6 +32,12 @@ nodeLocalDNS:
   disabled: false
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
+thanos:
+  version: v0.10.1
+  mode: client
+  thanosSidecarEndpoint: thanos-sidecar.127.0.0.1.nip.io
+  thanosSidecarPort: 80
+  bucket: thanos
 pgo:
   version: 4.2.0
   imageVersion: 4.2.0

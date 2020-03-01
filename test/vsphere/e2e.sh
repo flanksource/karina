@@ -149,18 +149,10 @@ platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 # shellcheck disable=SC2086
 platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
 
-# Build the base platform configuration
-# shellcheck disable=SC2086
-
-# wait all nodes to be up
-# FIXME: For some weird reasons the command above does not complete
-# like if it was async and the job get stuck here
-# kubectl --kubeconfig "${PWD}/${PLATFORM_CLUSTER_ID}-admin.yml" wait --for=condition=Ready --all --timeout=1h nodes
-
 # Deploy the platform configuration
 # shellcheck disable=SC2086
 platform-cli deploy all $PLATFORM_OPTIONS_FLAGS
 
 # Run conformance tests
 # shellcheck disable=SC2086
-platform-cli test $PLATFORM_OPTIONS_FLAGS
+platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240
