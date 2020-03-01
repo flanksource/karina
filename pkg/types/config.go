@@ -48,6 +48,7 @@ type PlatformConfig struct {
 	FluentdOperator       *FluentdOperator  `yaml:"fluentd,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`
 	Thanos                *Thanos           `yaml:"thanos,omitempty"`
+	Filebeat              *Filebeat         `yaml:"filebeat,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`
