@@ -137,6 +137,10 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.FluentdOperator.Elasticsearch.Password = template(base.FluentdOperator.Elasticsearch.Password)
 	}
 
+	if base.Filebeat != nil && base.Filebeat.Elasticsearch != nil {
+		base.Filebeat.Elasticsearch.Password = template(base.Filebeat.Elasticsearch.Password)
+	}
+
 	gitops := base.GitOps
 	for i := range gitops {
 		gitops[i].GitKey = template(gitops[i].GitKey)

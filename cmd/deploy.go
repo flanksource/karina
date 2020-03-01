@@ -8,6 +8,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
+	"github.com/moshloop/platform-cli/pkg/phases/filebeat"
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
@@ -88,6 +89,9 @@ func init() {
 			}
 			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying postgres-operator %s\n", err)
+			}
+			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying filebeat %s\n", err)
 			}
 		},
 	}
@@ -223,5 +227,15 @@ func init() {
 		},
 	})
 
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "filebeat",
+		Short: "Deploy filebeat",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying filebeat %s\n", err)
+			}
+		},
+	})
 	Deploy.AddCommand(_opa, all)
 }

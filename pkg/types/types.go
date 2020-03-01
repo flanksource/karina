@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
@@ -251,12 +252,6 @@ type Grafana struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
-type ELK struct {
-	Version      string `yaml:"version,omitempty"`
-	Replicas     int    `yaml:"replicas,omitempty"`
-	LogRetention string `yaml:"logRetention,omitempty"`
-}
-
 type Brand struct {
 	Name string `yaml:"name,omitempty"`
 	URL  string `yaml:"url,omitempty"`
@@ -338,6 +333,12 @@ type FluentdOperator struct {
 	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
 }
 
+type Filebeat struct {
+	Version       string      `yaml:"version"`
+	Disabled      bool        `yaml:"disabled,omitempty"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Logstash      *Connection `yaml:"logstash,omitempty"`
+}
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version"`
@@ -357,6 +358,17 @@ type Connection struct {
 	Port     string `yaml:"port,omitempty"`
 	Scheme   string `yaml:"scheme,omitempty"`
 	Verify   string `yaml:"verify,omitempty"`
+}
+
+func (c Connection) GetURL() string {
+	url := c.URL
+	if c.Scheme != "" && !strings.Contains(url, "://") {
+		url = c.Scheme + "://" + url
+	}
+	if c.Port != "" && !strings.Contains(url, ":") {
+		url = url + ":" + c.Port
+	}
+	return url
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {

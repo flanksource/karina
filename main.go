@@ -40,7 +40,6 @@ func main() {
 		cmd.MachineImages,
 		cmd.Upgrade,
 		cmd.Test,
-		cmd.Build,
 		cmd.Provision,
 		cmd.Cleanup,
 		cmd.Status,
@@ -54,6 +53,7 @@ func main() {
 		cmd.Backup,
 		cmd.APIDocs,
 		cmd.CA,
+		cmd.Apply,
 		cmd.DB,
 	)
 

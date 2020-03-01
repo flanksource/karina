@@ -74,9 +74,17 @@ fluentd-operator:
 fluentd:
   version: 1.11.0
   elasticsearch:
-    url: log-es-http.eck.svc.cluster.local
+    url: logs-es-http.eck.svc.cluster.local
     user: elastic
     password: elastic
+    port: 9200
+    scheme: https
+filebeat:
+  version: 7.6.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: filebeat
+    password: filebeat
     port: 9200
     scheme: https
 eck:

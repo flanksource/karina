@@ -90,16 +90,21 @@ func KindCluster(platform *platform.Platform) error {
 
 	if platform.DryRun {
 		fmt.Println(string(yml))
+		return nil
 	}
 
 	kind := platform.GetBinary("kind")
-
 	kubeConfig, err := platform.GetKubeConfig()
 	if err != nil {
 		return errors.Wrap(err, "failed to get kube config")
 	}
 
-	return kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), kubeConfig)
+	if err := kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), kubeConfig); err != nil {
+		return err
+	}
+
+	// delete the default storageclass created by kind as we install our own
+	return platform.GetKubectl()("delete sc standard")
 }
 
 func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
