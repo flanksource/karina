@@ -251,12 +251,6 @@ type Grafana struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
-type ELK struct {
-	Version      string `yaml:"version,omitempty"`
-	Replicas     int    `yaml:"replicas,omitempty"`
-	LogRetention string `yaml:"logRetention,omitempty"`
-}
-
 type Brand struct {
 	Name string `yaml:"name,omitempty"`
 	URL  string `yaml:"url,omitempty"`
