@@ -42,6 +42,8 @@ $BIN deploy base -v
 
 $BIN deploy stubs -v
 
+$BIN deploy dex -v
+
 $BIN test stubs --wait 200
 
 $BIN test dex --wait 200
