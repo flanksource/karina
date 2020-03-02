@@ -149,9 +149,20 @@ platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 # shellcheck disable=SC2086
 platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
 
-# Deploy the platform configuration
+components=("base" "stubs" "dex" "postgres-operator" "harbor" "all" "velero" "fluentd" "eck")
+for component in "${components[@]}"; do
+  # Deploy the platform configuration
+  # shellcheck disable=SC2086
+  platform-cli deploy "$component" $PLATFORM_OPTIONS_FLAGS
+done
+
 # shellcheck disable=SC2086
-platform-cli deploy all $PLATFORM_OPTIONS_FLAGS
+platform-cli deploy opa install $PLATFORM_OPTIONS_FLAGS
+# shellcheck disable=SC2086
+platform-cli deploy opa policies "$PWD"/test/opa/policies $PLATFORM_OPTIONS_FLAGS
+
+echo "Sleeping for 30s, waiting for OPA policies to load"
+sleep 30
 
 # Run conformance tests
 # shellcheck disable=SC2086
