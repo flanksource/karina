@@ -22,8 +22,7 @@ versions:
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 opa:
-  version: 0.13.5
-  kubeMgmtVersion: 0.8
+  disabled: true
 calico:
   ipip: Never
   vxlan: Never
@@ -95,11 +94,11 @@ eck:
   version: 1.0.0
 ca:
   cert: .certs/ca.crt.pem
-  privateKey: .certs/ca.key.pem  
+  privateKey: .certs/ca.key.pem
   password: $PLATFORM_CA_CEK
 ingressCA:
   cert: .certs/ca.crt.pem
-  privateKey: .certs/ca.key.pem  
+  privateKey: .certs/ca.key.pem
   password: $PLATFORM_CA_CEK
 dns:
   type: route53
