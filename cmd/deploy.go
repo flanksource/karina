@@ -244,7 +244,7 @@ func init() {
 		Short: "Deploy nginx",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := nginx.Deploy(getPlatform(cmd)); err != nil {
+			if err := nginx.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying nginx %s\n", err)
 			}
 		},
