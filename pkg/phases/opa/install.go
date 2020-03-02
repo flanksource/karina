@@ -2,6 +2,7 @@ package opa
 
 import (
 	"fmt"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -15,6 +16,10 @@ func Install(platform *platform.Platform) error {
 	}
 	if platform.OPA.KubeMgmtVersion == "" {
 		platform.OPA.KubeMgmtVersion = "0.8"
+	}
+
+	if platform.OPA.LogLevel == "" {
+		platform.OPA.LogLevel = "error"
 	}
 
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{

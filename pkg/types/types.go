@@ -46,7 +46,9 @@ type Calico struct {
 }
 
 type OPA struct {
-	Disabled        bool   `yaml:"disabled,omitempty"`
+	Disabled bool `yaml:"disabled,omitempty"`
+	// Log level for opa server, one of: debug,info,error, defaults to error
+	LogLevel        string `yaml:"logLevel,omitempty"`
 	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
 	Version         string `yaml:"version,omitempty"`
 }
