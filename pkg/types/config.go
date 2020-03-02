@@ -29,9 +29,9 @@ type PlatformConfig struct {
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
 	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
-	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy",omitempty`
+	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
-	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
+	PostgresOperator      *PostgresOperator `yaml:"postgresOperator,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet"`
 	Policies              []string          `yaml:"policies,omitempty"`
 	Quack                 *Enabled          `yaml:"quack,omitempty"`
@@ -43,7 +43,7 @@ type PlatformConfig struct {
 	TrustedCA             string            `yaml:"trustedCA,omitempty"`
 	Versions              map[string]string `yaml:"versions,omitempty"`
 	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
-	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
+	Nginx                 *Nginx            `yaml:"nginx,omitempty"`
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
 	FluentdOperator       *FluentdOperator  `yaml:"fluentd,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`

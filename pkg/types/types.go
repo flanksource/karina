@@ -45,14 +45,6 @@ type Calico struct {
 	IPPools   []calico.IPPool         `yaml:"ipPools,omitempty"`
 }
 
-type OAuth2Proxy struct {
-	Enabled      bool   `yaml:"enabled",omitempty`
-	CookieSecret string `yaml:"cookieSecret,omitempty"`
-	Version      string `yaml:"version,omitempty"`
-	DockerImage  string `yaml:"dockerImage,omitempty"`
-	OidcGroup    string `yaml:"oidcGroup,omitempty"`
-}
-
 type OPA struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
@@ -60,17 +52,19 @@ type OPA struct {
 }
 
 type Harbor struct {
-	Disabled        bool                     `yaml:"disabled,omitempty"`
-	Version         string                   `yaml:"version,omitempty"`
-	ChartVersion    string                   `yaml:"chartVersion,omitempty"`
-	AdminPassword   string                   `yaml:"-"`
-	ClairVersion    string                   `yaml:"clairVersion"`
-	RegistryVersion string                   `yaml:"registryVersion"`
-	DB              *DB                      `yaml:"db,omitempty"`
-	URL             string                   `yaml:"url,omitempty"`
-	Projects        map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings        *HarborSettings          `yaml:"settings,omitempty"`
-	Replicas        int                      `yaml:"replicas,omitempty"`
+	Disabled        bool   `yaml:"disabled,omitempty"`
+	Version         string `yaml:"version,omitempty"`
+	ChartVersion    string `yaml:"chartVersion,omitempty"`
+	AdminPassword   string `yaml:"-"`
+	ClairVersion    string `yaml:"clairVersion"`
+	RegistryVersion string `yaml:"registryVersion"`
+	// Logging level for various components, defaults to warn - valid options are info,warn,debug
+	LogLevel string                   `yaml:"logLevel,omitempty"`
+	DB       *DB                      `yaml:"db,omitempty"`
+	URL      string                   `yaml:"url,omitempty"`
+	Projects map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas int                      `yaml:"replicas,omitempty"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
@@ -173,6 +167,30 @@ func (s3 S3) GetExternalEndpoint() string {
 type NFS struct {
 	Host string `yaml:"host,omitempty"`
 	Path string `yaml:"path,omitempty"`
+}
+
+// Configures the Nginx Ingress Controller, the controller Docker image is forked from upstream
+// to include more LUA packages for OAuth.
+// To configure global settings not available below, override the 'ingress-nginx/nginx-configuration` configmap with
+// settings from https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+type Nginx struct {
+	Disabled bool `yaml:"disabled"`
+	// The version of the nginx controller to deploy, defaults to: 0.25.1.flanksource.1
+	Version string `yaml:"version"`
+	// Disable access logs
+	DisableAccessLog bool `yaml:"disableAccessLog,omitempty"`
+	// Size of request body buffer, defaults to 16M
+	RequestBodyBuffer string `yaml:"requestBodyBuffer,omitempty"`
+	// Max size of request body, defaults to 32M
+	RequestBodyMax string `yaml:"requestBodyMax,omitempty"`
+
+}
+
+type OAuth2Proxy struct {
+	Disabled bool `yaml:"disabled"`
+	CookieSecret string `yaml:"cookieSecret,omitempty"`
+	Version      string `yaml:"version,omitempty"`
+	OidcGroup    string `yaml:"oidcGroup,omitempty"`
 }
 
 type Ldap struct {
