@@ -53,6 +53,10 @@ harbor:
   replicas: 1
   bucket: harbor-blobs
   version: v1.10.0
+postgresOperator:
+  version: v1.3.1
+  spiloImage: registry.opensource.zalan.do/acid/spilo-12:1.6-p2
+  backupImage: registry.opensource.zalan.do/acid/logical-backup
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io

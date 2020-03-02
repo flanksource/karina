@@ -595,6 +595,25 @@ func doUntil(fn func() bool) bool {
 	}
 }
 
+func (p *Platform) GetOrCreateBucket(name string) error {
+	s3Client, err := p.GetS3Client()
+	if err != nil {
+		return fmt.Errorf("failed to get S3 client: %v", err)
+	}
+
+	exists, err := s3Client.BucketExists(name)
+	if err != nil {
+		return fmt.Errorf("failed to check S3 bucket: %v", err)
+	}
+	if !exists {
+		log.Infof("Creating s3://%s", name)
+		if err := s3Client.MakeBucket(name, p.S3.Region); err != nil {
+			return fmt.Errorf("failed to create S3 bucket: %v", err)
+		}
+	}
+	return nil
+}
+
 func (p *Platform) GetS3Client() (*minio.Client, error) {
 	endpoint := p.S3.GetExternalEndpoint()
 	tr := &http.Transport{

@@ -6,7 +6,7 @@ metadata:
 configuration:
   enable_crd_validation: false
   etcd_host: ""
-  docker_image: registry.opensource.zalan.do/acid/spilo-12:1.6-p2
+  docker_image: "{{.postgresOperator.spiloImage}}"
   enable_shm_volume: true
   max_instances: 5
   min_instances: 1
@@ -81,14 +81,14 @@ configuration:
     # log_s3_bucket: ""
     # wal_s3_bucket: ""
   logical_backup:
-    logical_backup_docker_image: "registry.opensource.zalan.do/acid/logical-backup"
-    logical_backup_s3_bucket: "my-bucket-url"
+    logical_backup_docker_image: "{{.postgresOperator.backupImage}}"
+    logical_backup_s3_bucket: "{{.postgresOperator.backupBucket}}"
     logical_backup_s3_endpoint: https://{{.s3.endpoint}}
     logical_backup_s3_region: "{{.s3.region}}"
-    logical_backup_s3_access_key_id: {{.s3.access_key}}
-    logical_backup_s3_secret_access_key:  {{.s3.secret_key}}
+    logical_backup_s3_access_key_id: "{{.s3.access_key}}"
+    logical_backup_s3_secret_access_key: "{{.s3.secret_key}}"
     logical_backup_s3_sse: "AES256"
-    logical_backup_schedule: "30 00 * * *"
+    logical_backup_schedule: "{{.postgresOperator.backupSchedule}}"
   debug:
     debug_logging: true
     enable_database_access: true
@@ -101,7 +101,7 @@ configuration:
     # postgres_superuser_teams:
     # - postgres_superusers
     protected_role_names:
-    - admin
+      - admin
     team_admin_role: admin
     team_api_role_configuration:
       log_statement: all
@@ -110,4 +110,3 @@ configuration:
     api_port: 8008
     cluster_history_entries: 1000
     ring_log_lines: 100
-

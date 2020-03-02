@@ -31,7 +31,7 @@ type PlatformConfig struct {
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
 	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
-	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
+	PostgresOperator      *PostgresOperator `yaml:"postgresOperator,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet"`
 	Policies              []string          `yaml:"policies,omitempty"`
 	Quack                 *Enabled          `yaml:"quack,omitempty"`
