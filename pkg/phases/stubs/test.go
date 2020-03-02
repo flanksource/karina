@@ -19,9 +19,11 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}}
 
-	resp, _ := net.Get("https://" + p.S3.GetExternalEndpoint())
+	resp, err := net.Get("https://" + p.S3.GetExternalEndpoint())
 	// 200 or 403 resoonse from minio is fine, 503 is not.
-	if resp.StatusCode == 200 || resp.StatusCode == 403 {
+	if err != nil {
+		test.Failf("minio", "minio GET / - %v", err)
+	} else if resp.StatusCode == 200 || resp.StatusCode == 403 {
 		test.Passf("minio", "minio GET /")
 	} else {
 		test.Failf("minio", "minio GET / - %v", resp.StatusCode)
