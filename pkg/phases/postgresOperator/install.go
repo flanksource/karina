@@ -25,7 +25,7 @@ func Deploy(platform *platform.Platform) error {
 	}
 
 	if platform.PostgresOperator.BackupSchedule == "" {
-		platform.PostgresOperator.BackupSchedule = "30 0 * * * "
+		platform.PostgresOperator.BackupSchedule = "30 0 * * *"
 	}
 
 	if err := platform.CreateOrUpdateNamespace("postgres-operator", nil, nil); err != nil {
