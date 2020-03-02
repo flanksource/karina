@@ -32,6 +32,9 @@ func defaults(p *platform.Platform) {
 	if harbor == nil {
 		return
 	}
+	if harbor.LogLevel == "" {
+		harbor.LogLevel = "warn"
+	}
 	if harbor.AdminPassword == "" {
 		harbor.AdminPassword = "Harbor12345"
 	}
@@ -47,7 +50,7 @@ func defaults(p *platform.Platform) {
 		}
 	}
 	if harbor.RegistryVersion == "" {
-	 	harbor.RegistryVersion = "v2.7.1-patch-2819-2553-"+ harbor.Version
+		harbor.RegistryVersion = "v2.7.1-patch-2819-2553-" + harbor.Version
 	}
 
 	if harbor.Replicas == 0 {

@@ -119,7 +119,7 @@ data:
     #Loggers for the job service
     loggers:
       - name: "STD_OUTPUT"
-        level: INFO
+        level: "{{.harbor.logLevel | strings.ToUpper }}"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -131,7 +131,7 @@ data:
   config.yml: |+
     version: 0.1
     log:
-      level: info
+      level: "{{.harbor.logLevel}}"
       fields:
         service: registry
     storage:
@@ -190,7 +190,7 @@ data:
   ctl-config.yml: |+
     protocol: "http"
     port: 8080
-    log_level: info
+    log_level: "{{.harbor.logLevel}}"
 ---
 apiVersion: v1
 kind: Service
@@ -388,7 +388,7 @@ spec:
               port: 6061
             initialDelaySeconds: 30
             periodSeconds: 10
-          args: ["-log-level", "info"]
+          args: ["-log-level", "{{.harbor.logLevel}}"]
           env:
             - name: HTTP_PROXY
               value: ""
@@ -432,7 +432,7 @@ spec:
                   name: harbor-clair
                   key: database
             - name: SCANNER_LOG_LEVEL
-              value: "info"
+              value: "{{.harbor.logLevel}}"
           ports:
             - containerPort: 8080
       volumes:
@@ -571,7 +571,7 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 10
           env:
-           - name: CORE_SECRET
+            - name: CORE_SECRET
               valueFrom:
                 secretKeyRef:
                   name: harbor-core
@@ -586,7 +586,7 @@ spec:
             - name: REGISTRY_CONTROLLER_URL
               value: "http://harbor-registry:8080"
             - name: LOG_LEVEL
-              value: info
+              value: "{{.harbor.logLevel}}"
             - name: HTTP_PROXY
               value: ""
             - name: HTTPS_PROXY

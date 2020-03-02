@@ -52,17 +52,19 @@ type OPA struct {
 }
 
 type Harbor struct {
-	Disabled        bool                     `yaml:"disabled,omitempty"`
-	Version         string                   `yaml:"version,omitempty"`
-	ChartVersion    string                   `yaml:"chartVersion,omitempty"`
-	AdminPassword   string                   `yaml:"-"`
-	ClairVersion    string                   `yaml:"clairVersion"`
-	RegistryVersion string                   `yaml:"registryVersion"`
-	DB              *DB                      `yaml:"db,omitempty"`
-	URL             string                   `yaml:"url,omitempty"`
-	Projects        map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings        *HarborSettings          `yaml:"settings,omitempty"`
-	Replicas        int                      `yaml:"replicas,omitempty"`
+	Disabled        bool   `yaml:"disabled,omitempty"`
+	Version         string `yaml:"version,omitempty"`
+	ChartVersion    string `yaml:"chartVersion,omitempty"`
+	AdminPassword   string `yaml:"-"`
+	ClairVersion    string `yaml:"clairVersion"`
+	RegistryVersion string `yaml:"registryVersion"`
+	// Logging level for various components, defaults to warn - valid options are info,warn,debug
+	LogLevel string                   `yaml:"logLevel,omitempty"`
+	DB       *DB                      `yaml:"db,omitempty"`
+	URL      string                   `yaml:"url,omitempty"`
+	Projects map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas int                      `yaml:"replicas,omitempty"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
