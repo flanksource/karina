@@ -12,13 +12,14 @@ func Install(platform *platform.Platform) error {
 		log.Debugf("Skipping nginx deployment")
 		return nil
 	}
-	log.Infof("Installing Nginx Ingress Controller: %s", platform.Nginx.Version)
+
 	if platform.Nginx == nil {
 		platform.Nginx = &types.Nginx{}
 	}
 	if platform.Nginx.Version == "" {
 		platform.Nginx.Version = "0.25.1.flanksource.1"
 	}
+	log.Infof("Installing Nginx Ingress Controller: %s", platform.Nginx.Version)
 
 	if platform.Nginx.RequestBodyBuffer == "" {
 		platform.Nginx.RequestBodyBuffer = "16M"
