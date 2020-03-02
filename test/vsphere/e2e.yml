@@ -73,11 +73,9 @@ harbor:
   version: v1.10.0
   chartVersion: v1.3.0
 s3:
-  endpoint: http://minio.minio.svc:9000
-  externalEndpoint: minio.127.0.0.1.nip.io
-  bucket: harbor
-  access_key: minio
-  secret_key: minio123
+  bucket: flanksource-lab
+  access_key: $AWS_ACCESS_KEY_ID
+  secret_key: $AWS_SECRET_ACCESS_KEY
   region: us-east1
 velero:
   bucket: velero
