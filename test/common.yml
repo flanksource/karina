@@ -94,8 +94,6 @@ ingressCA:
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
 oauth2Proxy:
-  enabled: true
-  dockerImage: "flanksource/oauth2_proxy"
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
   cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=

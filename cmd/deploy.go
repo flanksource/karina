@@ -13,6 +13,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
+	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
@@ -234,6 +235,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying filebeat %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "nginx",
+		Short: "Deploy nginx",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := nginx.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying nginx %s\n", err)
 			}
 		},
 	})
