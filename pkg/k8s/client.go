@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"reflect"
+	"os"
 	"strings"
 	"time"
 
@@ -13,23 +13,28 @@ import (
 	utils "github.com/flanksource/commons/utils"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	cliresource "k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/discovery/cached/disk"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
+
+	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 )
 
 type Client struct {
@@ -38,6 +43,18 @@ type Client struct {
 	dynamicClient      dynamic.Interface
 	restConfig         *rest.Config
 	ApplyDryRun        bool
+	kustomizeManager   *kustomize.Manager
+	restMapper         meta.RESTMapper
+}
+
+func (c *Client) GetKustomize() (*kustomize.Manager, error) {
+	if c.kustomizeManager != nil {
+		return c.kustomizeManager, nil
+	}
+	dir, _ := ioutil.TempDir("", "platform-cli-kustomize")
+	kustomizeManager, err := kustomize.GetManager(dir)
+	c.kustomizeManager = kustomizeManager
+	return c.kustomizeManager, err
 }
 
 // GetDynamicClient creates a new k8s client
@@ -108,57 +125,11 @@ func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 	return &cm.Data
 }
 
-func GetGVR(v interface{}) schema.GroupVersionResource {
-	if reflect.ValueOf(v).Kind() == reflect.Ptr {
-		return GetGVR(reflect.ValueOf(v).Elem().Interface())
-	}
-	typeOf := reflect.TypeOf(v)
-	pkg := strings.Replace(typeOf.PkgPath(), "k8s.io/api/", "", 1)
-	pkg = strings.Replace(pkg, "core/", "", -1)
-	var group, version string
-	if strings.Contains(pkg, "/") {
-		group = strings.Split(pkg, "/")[0]
-		version = strings.Split(pkg, "/")[1]
-	} else {
-		version = pkg
-	}
-	return schema.GroupVersionResource{
-		Group:    group,
-		Version:  version,
-		Resource: strings.ToLower(typeOf.Name()) + "s",
-	}
-}
-
-func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if f.Kind() != reflect.String {
-		return data, nil
-	}
-	if t != reflect.TypeOf(metav1.Duration{time.Duration(5)}) {
-		return data, nil
-	}
-	d, err := time.ParseDuration(data.(string))
-	if err != nil {
-		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
-	}
-	return metav1.Duration{d}, nil
-}
-
-func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if f.Kind() != reflect.String {
-		return data, nil
-	}
-	if t != reflect.TypeOf(metav1.Time{time.Now()}) {
-		return data, nil
-	}
-	d, err := time.Parse(time.RFC3339, data.(string))
-	if err != nil {
-		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
-	}
-	return metav1.Time{d}, nil
-}
-
 func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	client, _, _, err := c.GetDynamicClientFor(namespace, obj)
+	if err != nil {
+		return err
+	}
 	unstructuredObj, err := client.Get(name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("get: failed to get client: %v", err)
@@ -177,21 +148,50 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	return decoder.Decode(unstructuredObj.Object)
 
 }
+
+func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
+	if c.restMapper != nil {
+		return c.restMapper, nil
+	}
+
+	config, _ := c.GetRESTConfig()
+
+	// re-use kubectl cache
+	host := config.Host
+	host = strings.ReplaceAll(host, "https://", "")
+	host = strings.ReplaceAll(host, "-", "_")
+	host = strings.ReplaceAll(host, ":", "_")
+	cacheDir := os.ExpandEnv("$HOME/.kube/cache/discovery/" + host)
+	cache, err := disk.NewCachedDiscoveryClientForConfig(config, cacheDir, "", 10*time.Minute)
+	if err != nil {
+		return nil, err
+	}
+	c.restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cache)
+	return c.restMapper, err
+}
+
 func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	dynamicClient, err := c.GetDynamicClient()
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("getDynamicClientFor: failed to get dynamic client: %v", err)
 	}
 
-	resource := schema.GroupVersionResource{
-		Group:    obj.GetObjectKind().GroupVersionKind().Group,
-		Version:  obj.GetObjectKind().GroupVersionKind().Version,
-		Resource: strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind) + "s",
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
+	rm, _ := c.GetRestMapper()
+	mapping, err := rm.RESTMapping(gk, gvk.Version)
+	if err != nil && meta.IsNoMatchError(err) {
+		// new CRD may still becoming ready, flush caches and retry
+		time.Sleep(5 * time.Second)
+		c.restMapper = nil
+		rm, _ := c.GetRestMapper()
+		mapping, err = rm.RESTMapping(gk, gvk.Version)
+	}
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	if resource.Group == "" {
-		resource = GetGVR(obj)
-	}
+	resource := mapping.Resource
 
 	convertedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
@@ -200,15 +200,73 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 
 	unstructuredObj := &unstructured.Unstructured{Object: convertedObj}
 
-	if strings.HasPrefix(resource.Resource, "cluster") {
-		return dynamicClient.Resource(resource), &resource, unstructuredObj, nil
+	if mapping.Scope == meta.RESTScopeRoot {
+		return dynamicClient.Resource(mapping.Resource), &resource, unstructuredObj, nil
 	} else {
 		if namespace == "" {
 			namespace = unstructuredObj.GetNamespace()
 		}
-		return dynamicClient.Resource(resource).Namespace(namespace), &resource, unstructuredObj, nil
+		return dynamicClient.Resource(mapping.Resource).Namespace(namespace), &resource, unstructuredObj, nil
 	}
 
+}
+
+func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Helper, error) {
+	rm, _ := c.GetRestMapper()
+	restConfig, _ := c.GetRESTConfig()
+	// Get some metadata needed to make the REST request.
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
+	mapping, err := rm.RESTMapping(gk, gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	gv := mapping.GroupVersionKind.GroupVersion()
+	restConfig.ContentConfig = cliresource.UnstructuredPlusDefaultContentConfig()
+	restConfig.GroupVersion = &gv
+	if len(gv.Group) == 0 {
+		restConfig.APIPath = "/api"
+	} else {
+		restConfig.APIPath = "/apis"
+	}
+
+	restClient, err := rest.RESTClientFor(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return cliresource.NewHelper(restClient, mapping), nil
+}
+
+func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
+	for _, unstructuredObj := range objects {
+
+		client, err := c.GetRestClient(*unstructuredObj)
+		if err != nil {
+			return err
+		}
+
+		if c.ApplyDryRun {
+			log.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
+		} else {
+			_, err = client.Create(namespace, true, unstructuredObj, &metav1.CreateOptions{})
+			if errors.IsAlreadyExists(err) {
+				_, err = client.Replace(namespace, unstructuredObj.GetName(), true, unstructuredObj)
+				if err != nil {
+					log.Errorf("error handling: %s : %+v", client.Resource, err)
+				} else {
+					// TODO(moshloop): Diff the old and new objects and log unchanged instead of configured where necessary
+					log.Infof("%s/%s/%s configured", client.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+				}
+			} else if err == nil {
+				log.Infof("%s/%s/%s created", client.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+			} else {
+				log.Errorf("error handling: %s : %+v", client.Resource, err)
+			}
+		}
+	}
+	return nil
 }
 
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
@@ -218,25 +276,18 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			return fmt.Errorf("apply: failed to get dynamic client: %v", err)
 		}
 
-		if log.IsLevelEnabled(log.TraceLevel) {
-			data, _ := yaml.Marshal(unstructuredObj)
-			log.Tracef("Applying resource: %s/%s/%s \n%s", resource.Group, resource.Version, resource.Resource, string(data))
-		} else {
-			log.Debugf("Applying resource: %s/%s/%s", resource.Group, resource.Version, resource.Resource)
-		}
-
 		if c.ApplyDryRun {
 			log.Infof("[dry-run] %s/%s/%s created/configured", resource.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
 			_, err := client.Create(unstructuredObj, metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
 				_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+				// TODO(moshloop): Diff the old and new objects and log unchanged instead of configured where necessary
 				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else if err == nil {
 				log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-			}
-			if err != nil {
-				log.Errorf("error handling: %s/%s/%s : %v", resource.Group, resource.Version, resource.Resource, err)
+			} else {
+				log.Errorf("error handling: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
 			}
 		}
 	}
@@ -555,6 +606,8 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 	return clientcmd.Write(cfg)
 }
 
+// PingMaster attempts to connect to the API server and list nodes and services
+// to ensure the API server is ready to accept any traffic
 func (c *Client) PingMaster() bool {
 	client, err := c.GetClientset()
 	if err != nil {
@@ -575,6 +628,8 @@ func (c *Client) PingMaster() bool {
 	return true
 }
 
+// WaitForPod waits for a pod to be in the specified phase, or returns an
+// error if the timeout is exceeded
 func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Duration) error {
 	client, err := c.GetClientset()
 	if err != nil {
@@ -596,6 +651,7 @@ func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Du
 
 }
 
+// ExecutePodf runs the specified shell command inside a container of the specified pod
 func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...interface{}) (string, string, error) {
 	client, err := c.GetClientset()
 	if err != nil {
@@ -632,11 +688,20 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 		Stderr: stderr,
 		Tty:    tty,
 	})
-
-	return string(stdout.Bytes()), string(stderr.Bytes()), nil
+	if err != nil {
+		return "", "", err
+	}
+	return safeString(stdout), safeString(stderr), nil
 }
 
-// Execute runs the specified shell common on a node by creating
+func safeString(buf *bytes.Buffer) string {
+	if buf == nil || buf.Len() == 0 {
+		return ""
+	}
+	return string(buf.Bytes())
+}
+
+// Executef runs the specified shell command on a node by creating
 // a pre-scheduled pod that runs in the host namespace
 func (c *Client) Executef(node string, timeout time.Duration, command string, args ...interface{}) (string, error) {
 	client, err := c.GetClientset()
