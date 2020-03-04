@@ -79,7 +79,7 @@ s3:
   secret_key: $AWS_SECRET_ACCESS_KEY
   region: us-east1
 velero:
-  bucket: velero
+  bucket: flanksource-lab
 fluentd-operator:
   version: v1.11.0
   repository: jvassev/kube-fluentd-operator
