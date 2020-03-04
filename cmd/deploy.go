@@ -64,6 +64,12 @@ func init() {
 			if err := deploy_base.Install(p); err != nil {
 				log.Fatalf("Error deploying base: %s", err)
 			}
+			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying postgres-operator %s\n", err)
+			}
+			if err := eck.Deploy(p); err != nil {
+				log.Fatalf("Error installing ECK: %s", err)
+			}
 			if err := monitoring.Install(p); err != nil {
 				log.Warnf("Error building monitoring stack: %v", err)
 			}
@@ -84,12 +90,6 @@ func init() {
 			}
 			if err := fluentdOperator.Deploy(p); err != nil {
 				log.Fatalf("Error installing fluentd: %s", err)
-			}
-			if err := eck.Deploy(p); err != nil {
-				log.Fatalf("Error installing ECK: %s", err)
-			}
-			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deploying postgres-operator %s\n", err)
 			}
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying filebeat %s\n", err)
