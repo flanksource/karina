@@ -1,14 +1,17 @@
 package k8s
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	certs "github.com/flanksource/commons/certs"
 	utils "github.com/flanksource/commons/utils"
 	"github.com/mitchellh/mapstructure"
@@ -135,10 +138,22 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 		return fmt.Errorf("get: failed to get client: %v", err)
 	}
 
+	err = runtime.DefaultUnstructuredConverter.
+		FromUnstructured(unstructuredObj.Object, obj)
+	if err == nil {
+		return nil
+	}
+	if log.IsLevelEnabled(log.TraceLevel) {
+		spew.Dump(unstructuredObj.Object)
+	}
+
+	// FIXME(moshloop) getting the zalando operationconfiguration fails with "unrecognized type: int64" so we fall back to brute-force
+	log.Warnf("Using mapstructure to decode %s: %v", obj.GetObjectKind().GroupVersionKind().Kind, err)
 	config := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
-		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration),
-		Result:           &obj,
+		TagName:          "json",
+		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration, decodeStringToTimeDuration),
+		Result:           obj,
 	}
 
 	decoder, err := mapstructure.NewDecoder(config)
@@ -568,6 +583,63 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 	return err
 }
 
+func (c *Client) StreamLogs(namespace, name string) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
+	}
+	pods := client.CoreV1().Pods(namespace)
+	pod, err := pods.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	log.Debugf("Waiting for %s/%s to be running", namespace, name)
+	if err := c.WaitForPod(namespace, name, 120*time.Second, v1.PodRunning, v1.PodSucceeded); err != nil {
+		return err
+	}
+	log.Debugf("%s/%s running, streaming logs", namespace, name)
+	var wg sync.WaitGroup
+	for _, container := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
+		var logs *rest.Request
+		logs = pods.GetLogs(pod.Name, &v1.PodLogOptions{
+			Container: container.Name,
+		})
+
+		prefix := pod.Name
+		if len(pod.Spec.Containers) > 1 {
+			prefix += "/" + container.Name
+		}
+		podLogs, err := logs.Stream()
+		if err != nil {
+			return err
+		}
+		wg.Add(1)
+		go func() {
+			defer podLogs.Close()
+			defer wg.Done()
+
+			scanner := bufio.NewScanner(podLogs)
+			for scanner.Scan() {
+				incoming := scanner.Bytes()
+				buffer := make([]byte, len(incoming))
+				copy(buffer, incoming)
+				fmt.Printf("\x1b[38;5;244m[%s]\x1b[0m %s\n", prefix, string(buffer))
+			}
+		}()
+
+	}
+	wg.Wait()
+	c.WaitForPod(namespace, name, 120*time.Second, v1.PodSucceeded)
+	pod, err = pods.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if pod.Status.Phase == v1.PodSucceeded {
+		return nil
+	}
+	return fmt.Errorf("Pod did not finish successfully %s - %s", pod.Status.Phase, pod.Status.Message)
+}
+
 func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint string, group string, user string) ([]byte, error) {
 	contextName := fmt.Sprintf("%s@%s", user, clusterName)
 	cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
@@ -674,7 +746,7 @@ func (c *Client) PingMaster() bool {
 
 // WaitForPod waits for a pod to be in the specified phase, or returns an
 // error if the timeout is exceeded
-func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Duration) error {
+func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1.PodPhase) error {
 	client, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("waitForPod: Failed to get clientset: %v", err)
@@ -684,23 +756,33 @@ func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Du
 	for {
 		pod, err := pods.Get(name, metav1.GetOptions{})
 		if start.Add(timeout).Before(time.Now()) {
-			return fmt.Errorf("Timeout exceeded waiting for %s to be %s: is %s, error: %v", name, status, pod.Status.Phase, err)
+			return fmt.Errorf("Timeout exceeded waiting for %s is %s, error: %v", name, pod.Status.Phase, err)
 		}
 
-		if pod != nil && pod.Status.Phase == status {
+		if pod == nil || pod.Status.Phase == v1.PodPending {
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		if pod.Status.Phase == v1.PodFailed {
 			return nil
 		}
-		time.Sleep(5 * time.Second)
+
+		for _, phase := range phases {
+			if pod.Status.Phase == phase {
+				return nil
+			}
+		}
 	}
 
 }
 
 // ExecutePodf runs the specified shell command inside a container of the specified pod
-func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...interface{}) (string, string, error) {
+func (c *Client) ExecutePodf(namespace, pod, container string, command ...string) (string, string, error) {
 	client, err := c.GetClientset()
 	if err != nil {
 		return "", "", fmt.Errorf("executePodf: Failed to get clientset: %v", err)
 	}
+	log.Debugf("[%s/%s/%s] %s", namespace, pod, container, command)
 	const tty = false
 	req := client.CoreV1().RESTClient().Post().
 		Resource("pods").
@@ -710,7 +792,7 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 		Param("container", container)
 	req.VersionedParams(&v1.PodExecOptions{
 		Container: container,
-		Command:   []string{fmt.Sprintf(command, args...)},
+		Command:   command,
 		Stdin:     false,
 		Stdout:    true,
 		Stderr:    true,
@@ -721,21 +803,27 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 	if err != nil {
 		return "", "", fmt.Errorf("ExecutePodf: Failed to get REST config: %v", err)
 	}
+
 	exec, err := remotecommand.NewSPDYExecutor(rc, "POST", req.URL())
 	if err != nil {
 		return "", "", fmt.Errorf("ExecutePodf: Failed to get SPDY Executor: %v", err)
 	}
-	var stdout, stderr *bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	err = exec.Stream(remotecommand.StreamOptions{
 		Stdin:  nil,
-		Stdout: stdout,
-		Stderr: stderr,
+		Stdout: &stdout,
+		Stderr: &stderr,
 		Tty:    tty,
 	})
+
+	_stdout := safeString(&stdout)
+	_stderr := safeString(&stderr)
 	if err != nil {
-		return "", "", err
+		return _stdout, _stderr, fmt.Errorf("exec returned an error: %+v", err)
 	}
-	return safeString(stdout), safeString(stderr), nil
+
+	log.Tracef("[%s/%s/%s] %s => %s %s ", namespace, pod, container, command, _stdout, _stderr)
+	return _stdout, _stderr, nil
 }
 
 func safeString(buf *bytes.Buffer) string {
@@ -753,13 +841,14 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 		return "", fmt.Errorf("executef: Failed to get clientset: %v", err)
 	}
 	pods := client.CoreV1().Pods("kube-system")
-
+	command = fmt.Sprintf(command, args...)
 	pod, err := pods.Create(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("command-%s-%s", node, utils.ShortTimestamp()),
 		},
-		Spec: NewCommandJob(node, fmt.Sprintf(command, args...)),
+		Spec: NewCommandJob(node, command),
 	})
+	log.Tracef("[%s] executing '%s' in pod %s", node, command, pod.Name)
 	if err != nil {
 		return "", fmt.Errorf("executef: Failed to create pod: %v", err)
 	}
@@ -769,11 +858,12 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 		Container: pod.Spec.Containers[0].Name,
 	})
 
-	err = c.WaitForPod("kube-system", pod.ObjectMeta.Name, v1.PodSucceeded, timeout)
+	err = c.WaitForPod("kube-system", pod.ObjectMeta.Name, timeout, v1.PodSucceeded)
 	logString := read(logs)
 	if err != nil {
 		return logString, fmt.Errorf("failed to execute command, pod did not complete: %v", err)
 	} else {
+		log.Tracef("[%s] stdout: %s", node, logString)
 		return logString, nil
 	}
 }
@@ -819,6 +909,12 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				Privileged: &yes,
 			},
 		}},
+		Tolerations: []v1.Toleration{
+			v1.Toleration{
+				// tolerate all values
+				Operator: "Exists",
+			},
+		},
 		HostNetwork: true,
 		HostPID:     true,
 		HostIPC:     true,

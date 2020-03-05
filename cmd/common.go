@@ -175,8 +175,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		}
 	}
 
-	data, _ := yaml.Marshal(base)
-	log.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
+	showConfig, _ := cmd.Flags().GetBool("show-config")
+
+	if showConfig {
+		data, _ := yaml.Marshal(base)
+		log.Infof("Using configuration: \n%s\n", console.StripSecrets(string(data)))
+	}
 	return base
 }
 
