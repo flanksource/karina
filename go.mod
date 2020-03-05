@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/aws/aws-sdk-go v1.29.5
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.1.1
@@ -31,7 +32,7 @@ require (
 	k8s.io/apimachinery v0.17.3
 	k8s.io/cli-runtime v0.17.3
 	k8s.io/client-go v11.0.0+incompatible
-	k8s.io/cluster-bootstrap v0.17.0
+	k8s.io/cluster-bootstrap v0.17.3
 	sigs.k8s.io/kind v0.7.0
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.1.0
@@ -42,5 +43,5 @@ replace (
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
 	gopkg.in/hairyhenderson/yaml.v2 => github.com/maxaudron/yaml v0.0.0-20190411130442-27c13492fe3c
-	k8s.io/client-go => k8s.io/client-go v0.17.0
+	k8s.io/client-go => k8s.io/client-go v0.17.3
 )
