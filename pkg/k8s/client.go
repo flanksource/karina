@@ -346,17 +346,61 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
 	}
-	ns := k8s.CoreV1().Namespaces()
-	if _, err := ns.Get(name, metav1.GetOptions{}); errors.IsNotFound(err) {
-		namespace := v1.Namespace{}
-		namespace.Name = name
-		namespace.Labels = labels
-		namespace.Annotations = annotations
-		if _, err := ns.Create(&namespace); err != nil {
-			return fmt.Errorf("createOrUpdateNamespace: failed to namespace: %v", err)
+
+	// set default labels
+	defaultLabels := make(map[string]string)
+	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
+	if labels != nil {
+		for k, v := range defaultLabels {
+			labels[k] = v
 		}
-	} else if err != nil {
-		return fmt.Errorf("createOrUpdateNamespace: failed to namespace: %v", err)
+	} else {
+		labels = defaultLabels
+	}
+
+	ns := k8s.CoreV1().Namespaces()
+	cm, err := ns.Get(name, metav1.GetOptions{})
+
+	if cm == nil || err != nil {
+		cm = &v1.Namespace{}
+		cm.Name = name
+		cm.Labels = labels
+		cm.Annotations = annotations
+
+		log.Infof("Creating namespace %s", name)
+		if !c.ApplyDryRun {
+			if _, err := ns.Create(cm); err != nil {
+				return err
+			}
+		}
+	} else {
+		// update incoming and current labels
+		if cm.ObjectMeta.Labels != nil {
+			for k, v := range labels {
+				cm.ObjectMeta.Labels[k] = v
+			}
+			labels = cm.ObjectMeta.Labels
+		}
+
+		// update incoming and current annotations
+		switch {
+		case cm.ObjectMeta.Annotations != nil && annotations == nil:
+			annotations = cm.ObjectMeta.Annotations
+		case cm.ObjectMeta.Annotations != nil && annotations != nil:
+			for k, v := range annotations {
+				cm.ObjectMeta.Annotations[k] = v
+			}
+			annotations = cm.ObjectMeta.Annotations
+		}
+	}
+	(*cm).Name = name
+	(*cm).Labels = labels
+	(*cm).Annotations = annotations
+	if !c.ApplyDryRun {
+		log.Infof("Updating namespace %s", name)
+		if _, err := ns.Update(cm); err != nil {
+			return err
+		}
 	}
 	return nil
 }

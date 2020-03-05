@@ -46,11 +46,17 @@ type Calico struct {
 }
 
 type OPA struct {
-	Disabled bool `yaml:"disabled,omitempty"`
+	Disabled           bool     `yaml:"disabled,omitempty"`
+	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
+	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
+	Version            string   `yaml:"version,omitempty"`
+	BundleUrl          string   `yaml:"bundleUrl,omitempty"`
+	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
+	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
+	LogFormat          string   `yaml:"logFormat,omitempty"`
+	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
 	// Log level for opa server, one of: debug,info,error, defaults to error
-	LogLevel        string `yaml:"logLevel,omitempty"`
-	KubeMgmtVersion string `yaml:"kubeMgmtVersion,omitempty"`
-	Version         string `yaml:"version,omitempty"`
+	LogLevel string `yaml:"logLevel,omitempty"`
 }
 
 type Harbor struct {
@@ -185,11 +191,10 @@ type Nginx struct {
 	RequestBodyBuffer string `yaml:"requestBodyBuffer,omitempty"`
 	// Max size of request body, defaults to 32M
 	RequestBodyMax string `yaml:"requestBodyMax,omitempty"`
-
 }
 
 type OAuth2Proxy struct {
-	Disabled bool `yaml:"disabled"`
+	Disabled     bool   `yaml:"disabled"`
 	CookieSecret string `yaml:"cookieSecret,omitempty"`
 	Version      string `yaml:"version,omitempty"`
 	OidcGroup    string `yaml:"oidcGroup,omitempty"`

@@ -27,5 +27,13 @@ func Install(platform *platform.Platform) error {
 	}, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
+
+	for index := range platform.OPA.NamespaceWhitelist {
+		err := platform.CreateOrUpdateNamespace(platform.OPA.NamespaceWhitelist[index], nil, nil)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	return platform.ApplySpecs(Namespace, "opa.yaml")
 }
