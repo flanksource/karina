@@ -41,6 +41,23 @@ serviceSubnet: 100.100.0.0/16
 opa:
   version: 0.13.5
   kubeMgmtVersion: 0.8
+  bundleUrl: http://minio.minio.svc:9000
+  bundlePrefix: bundles
+  bundleServiceName: automobile
+  logFormat: json-pretty
+  setDecisionLogs: true
+  namespaceWhitelist:
+    - kube-system
+    - nsx-system
+    - quack
+    - cert-manager
+    - harbor
+    - pgo
+    - dex
+    - local-path-storage
+    - kube-node-lease
+    - monitoring
+    - minio
 calico:
   ipip: Never
   vxlan: Never

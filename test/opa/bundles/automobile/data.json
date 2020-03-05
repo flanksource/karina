@@ -1,0 +1,12 @@
+{
+  "companies": {
+      "company-x": [
+          "Company-X-Service-One",
+          "Company-X-Service-Two"
+      ],
+      "company-y": [
+          "Company-Y-Service-One",
+          "Company-Y-Service-Two"
+      ]    
+      }
+}
