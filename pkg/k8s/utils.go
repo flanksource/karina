@@ -110,6 +110,20 @@ func LowResourceRequirements() v1.ResourceRequirements {
 	}
 }
 
+func decodeStringToTimeDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(time.Duration(5)) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTimeDuration: Failed to parse duration: %v", err)
+	}
+	return d, nil
+}
+
 func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
 	if f.Kind() != reflect.String {
 		return data, nil
