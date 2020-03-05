@@ -1,0 +1,152 @@
+package postgres
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/flanksource/commons/utils"
+	minio "github.com/minio/minio-go/v6"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	api "github.com/moshloop/platform-cli/pkg/api/postgres"
+	"github.com/moshloop/platform-cli/pkg/k8s"
+)
+
+const Namespace = "postgres-operator"
+const OperatorConfig = "default"
+
+type PostgresDB struct {
+	Name      string
+	Namespace string
+	Secret    string
+	version   string
+	Superuser string
+	op        *api.OperatorConfiguration
+	client    *k8s.Client
+	s3        *minio.Client
+}
+
+func GetGenericPostgresDB(client *k8s.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
+	db := PostgresDB{client: client}
+
+	op := api.OperatorConfiguration{TypeMeta: metav1.TypeMeta{
+		Kind:       "operatorconfiguration",
+		APIVersion: "acid.zalan.do/v1",
+	}}
+
+	if err := client.Get(Namespace, OperatorConfig, &op); err != nil {
+		return nil, fmt.Errorf("could not get opconfig %v", err)
+	}
+
+	db.op = &op
+	db.Name = name
+	db.Namespace = namespace
+	db.Secret = secret
+	db.version = version
+	db.Superuser = "postgres"
+	return &db, nil
+}
+
+func GetPostgresDB(client *k8s.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
+	db := PostgresDB{client: client}
+
+	_db := &api.Postgresql{TypeMeta: metav1.TypeMeta{
+		Kind:       "postgresql",
+		APIVersion: "acid.zalan.do",
+	}}
+
+	if err := client.Get(Namespace, name, _db); err != nil {
+		return nil, fmt.Errorf("could not get db %v", err)
+	}
+
+	op := api.OperatorConfiguration{TypeMeta: metav1.TypeMeta{
+		Kind:       "operatorconfiguration",
+		APIVersion: "acid.zalan.do/v1",
+	}}
+	if err := client.Get(Namespace, "default", &op); err != nil {
+		return nil, fmt.Errorf("could not get opconfig %v", err)
+	}
+
+	db.op = &op
+	db.Name = name
+	db.Namespace = _db.Namespace
+	db.version = _db.Spec.PgVersion
+	db.Superuser = db.op.Configuration.PostgresUsersConfiguration.SuperUsername
+	db.Secret = fmt.Sprintf("%s.%s.credentials", db.Superuser, name)
+	return &db, nil
+}
+
+func (db *PostgresDB) String() string {
+	return fmt.Sprintf("%s/%s[version=%s, secret=%s]", db.Namespace, db.Name, db.version, db.Secret)
+}
+
+func (db *PostgresDB) Backup() error {
+	job := db.GenerateBackupJob().AsOneShotJob()
+
+	if err := db.client.Apply(db.Namespace, job); err != nil {
+		return err
+	}
+
+	return db.client.StreamLogs(db.Namespace, job.Name)
+}
+
+func (db *PostgresDB) ListBackups() ([]string, error) {
+	var backups []string
+	return backups, nil
+}
+
+func (db *PostgresDB) Restore(backup string) error {
+	if !strings.HasPrefix(backup, "s3://") {
+		backup = fmt.Sprintf("s3://%s/%s", db.op.Configuration.LogicalBackup.S3Bucket, backup)
+	}
+	job := db.GenerateBackupJob().
+		Command("/restore.sh").
+		EnvVars(map[string]string{
+			"PATH_TO_BACKUP":   backup,
+			"PSQL_BEFORE_HOOK": "",
+			"PSQL_AFTER_HOOK":  "",
+			"PGHOST":           db.Name,
+			"PSQL_OPTS":        "--echo-all",
+		}).AsOneShotJob()
+
+	if err := db.client.Apply(db.Namespace, job); err != nil {
+		return err
+	}
+
+	return db.client.StreamLogs(db.Namespace, job.Name)
+}
+
+func (db *PostgresDB) GenerateBackupJob() *k8s.DeploymentBuilder {
+	op := db.op.Configuration
+
+	builder := k8s.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(),
+		"docker.io/flanksource/postgres-backups:0.1.3")
+	// op.LogicalBackup.DockerImage)
+	return builder.
+		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
+		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").
+		EnvVars(map[string]string{
+			"SCOPE":                      db.Name,
+			"CLUSTER_NAME_LABEL":         op.Kubernetes.ClusterNameLabel,
+			"LOGICAL_BACKUP_S3_BUCKET":   op.LogicalBackup.S3Bucket,
+			"LOGICAL_BACKUP_S3_REGION":   op.LogicalBackup.S3Region,
+			"LOGICAL_BACKUP_S3_ENDPOINT": op.LogicalBackup.S3Endpoint,
+			"LOGICAL_BACKUP_S3_SSE":      op.LogicalBackup.S3SSE,
+			"PGHOST":                     db.Name,
+			"PG_VERSION":                 db.version,
+			"PGPORT":                     "5432",
+			"PGUSER":                     db.Superuser,
+			"AWS_ACCESS_KEY_ID":          op.LogicalBackup.S3AccessKeyID,
+			"AWS_SECRET_ACCESS_KEY":      op.LogicalBackup.S3SecretAccessKey,
+			"PGDATABASE":                 "postgres",
+			"PGSSLMODE":                  "prefer",
+		}).
+		Labels(map[string]string{
+			op.Kubernetes.ClusterNameLabel: db.Name,
+			"application":                  "spilo-logical-backup",
+		}).
+		Annotations(op.Kubernetes.CustomPodAnnotations).
+		// Annotations(db.Spec.PodAnnotations).
+		ServiceAccount(op.Kubernetes.PodServiceAccountName).
+		Ports(8080, 5432, 8008)
+}
