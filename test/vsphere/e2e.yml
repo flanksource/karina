@@ -73,13 +73,13 @@ harbor:
   version: v1.10.0
   chartVersion: v1.3.0
 s3:
-  endpoint: https://s3.us-east1.amazonaws.com
+  endpoint: s3.us-east1.amazonaws.com
   bucket: flanksource-lab
   access_key: $AWS_ACCESS_KEY_ID
   secret_key: $AWS_SECRET_ACCESS_KEY
   region: us-east1
 velero:
-  bucket: flanksource-lab
+  disabled: true
 fluentd-operator:
   version: v1.11.0
   repository: jvassev/kube-fluentd-operator
