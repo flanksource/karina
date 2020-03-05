@@ -108,6 +108,7 @@ spec:
             - "run"
             - "--server"
             - "--config-file=/config/config.yaml"
+            - "--log-level={{.opa.logLevel}}"
             - "--tls-cert-file=/certs/tls.crt"
             - "--tls-private-key-file=/certs/tls.key"
             - "--addr=0.0.0.0:443"

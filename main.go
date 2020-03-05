@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/flanksource/commons/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/cmd"
 )
 
@@ -40,7 +40,6 @@ func main() {
 		cmd.MachineImages,
 		cmd.Upgrade,
 		cmd.Test,
-		cmd.Build,
 		cmd.Provision,
 		cmd.Cleanup,
 		cmd.Status,
@@ -52,6 +51,10 @@ func main() {
 		cmd.Snapshot,
 		cmd.Conformance,
 		cmd.Backup,
+		cmd.APIDocs,
+		cmd.CA,
+		cmd.Apply,
+		cmd.DB,
 	)
 
 	if len(commit) > 8 {
@@ -66,17 +69,26 @@ func main() {
 		},
 	})
 
-	root.AddCommand(&cobra.Command{
+	docs := &cobra.Command{
 		Use:   "docs",
 		Short: "generate documentation",
+	}
+
+	docs.AddCommand(&cobra.Command{
+		Use:   "cli [PATH]",
+		Short: "generate CLI documentation",
+		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := doc.GenMarkdownTree(root, "docs")
+			err := doc.GenMarkdownTree(root, args[0])
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Documentation generated at: docs")
 		},
 	})
+
+	docs.AddCommand(cmd.APIDocs)
+
+	root.AddCommand(docs)
 
 	root.PersistentFlags().StringArrayP("config", "c", []string{utils.GetEnvOrDefault("PLATFORM_CONFIG", "config.yml")}, "Path to config file")
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")

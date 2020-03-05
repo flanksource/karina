@@ -1,12 +1,16 @@
 package base
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/moshloop/platform-cli/pkg/constants"
+	"github.com/moshloop/platform-cli/pkg/phases/ingress"
+	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -24,12 +28,12 @@ func Install(platform *platform.Platform) error {
 	if !platform.NodeLocalDNS.Disabled {
 		client, err := platform.GetClientset()
 		if err != nil {
-			return err
+			return fmt.Errorf("install: Failed to get clientset: %v", err)
 		}
 
 		kubeDNS, err := client.CoreV1().Services("kube-system").Get("kube-dns", metav1.GetOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("install: Failed to get service: %v", err)
 		}
 
 		platform.NodeLocalDNS.DNSServer = kubeDNS.Spec.ClusterIP
@@ -52,10 +56,35 @@ func Install(platform *platform.Platform) error {
 		// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
 		// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
 		var _ = platform.ApplySpecs("", "cert-manager-deploy.yml")
+		platform.GetKubectl()("wait --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
 		platform.WaitForNamespace("cert-manager", 180*time.Second)
 		if err := platform.ApplySpecs("", "cert-manager-deploy.yml"); err != nil {
 			log.Errorf("Error deploying cert manager: %s\n", err)
 		}
+	}
+
+	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
+		"quack.pusher.com/enabled": "true",
+	}, nil); err != nil {
+		return err
+	}
+
+	var secrets = make(map[string][]byte)
+
+	secrets["AWS_ACCESS_KEY_ID"] = []byte(platform.S3.AccessKey)
+	secrets["AWS_SECRET_ACCESS_KEY"] = []byte(platform.S3.SecretKey)
+
+	if platform.Ldap != nil {
+		secrets["LDAP_USERNAME"] = []byte(platform.Ldap.Username)
+		secrets["LDAP_PASSWORD"] = []byte(platform.Ldap.Password)
+	}
+
+	if err := platform.CreateOrUpdateSecret("secrets", constants.PlatformSystem, secrets); err != nil {
+		return err
+	}
+
+	if err := nginx.Install(platform); err != nil {
+		log.Fatalf("Error deploying nginx %s\n", err)
 	}
 
 	if platform.Quack == nil || !platform.Quack.Disabled {
@@ -72,10 +101,11 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Dashboard == nil || !platform.Dashboard.Disabled {
+	if !platform.Dashboard.Disabled {
 		log.Infof("Installing K8s dashboard")
+		platform.Dashboard.AccessRestricted.Snippet = ingress.IngressNginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yml"); err != nil {
-			log.Errorf("Error K8s dashboard: %s\n", err)
+			log.Errorf("Error installing K8s dashboard: %s\n", err)
 		}
 	}
 
@@ -90,13 +120,6 @@ func Install(platform *platform.Platform) error {
 		log.Infof("Installing platform operator")
 		if err := platform.ApplySpecs("", "platform-operator.yml"); err != nil {
 			log.Errorf("Error deploying platform-operator: %s\n", err)
-		}
-	}
-
-	if platform.Nginx == nil || !platform.Nginx.Disabled {
-		log.Infof("Installing Nginx Ingress Controller")
-		if err := platform.ApplySpecs("", "nginx.yml"); err != nil {
-			log.Errorf("Error deploying nginx: %s\n", err)
 		}
 	}
 
@@ -116,7 +139,7 @@ func Install(platform *platform.Platform) error {
 			"region":          []byte(platform.S3.Region),
 		})
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
-			return err
+			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}
 	}
 

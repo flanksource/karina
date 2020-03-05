@@ -171,6 +171,12 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/secure-backends: "true"
+    {{ if .oauth2Proxy.enabled }}
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https://$host$request_uri$is_args$args"
+    nginx.ingress.kubernetes.io/configuration-snippet: "{{ .dashboard.accessRestricted.snippet}}"
+    nginx.ingress.kubernetes.io/auth-response-headers: x-auth-request-user, x-auth-request-email, authorization
+    {{ end }}
 spec:
   tls:
     - hosts:

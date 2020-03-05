@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -12,13 +13,17 @@ import (
 // Cleanup stops and deletes all VM's for a cluster;
 func Cleanup(platform *platform.Platform) error {
 
+	if platform.TerminationProtection {
+		return fmt.Errorf("Termination Protection Enabled, use -e terminationProtection=false to disable")
+	}
+
 	if err := platform.OpenViaEnv(); err != nil {
-		return err
+		return fmt.Errorf("cleanup: failed to open via env %v", err)
 	}
 
 	vms, err := platform.GetVMs()
 	if err != nil {
-		return err
+		return fmt.Errorf("cleanup: failed to get VMs %v", err)
 	}
 
 	if len(vms) > platform.GetVMCount()*2 {

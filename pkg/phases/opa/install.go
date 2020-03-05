@@ -18,10 +18,14 @@ func Install(platform *platform.Platform) error {
 		platform.OPA.KubeMgmtVersion = "0.8"
 	}
 
+	if platform.OPA.LogLevel == "" {
+		platform.OPA.LogLevel = "error"
+	}
+
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{
 		"app": "opa",
 	}, nil); err != nil {
-		return err
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
 	for index := range platform.OPA.NamespaceWhitelist {

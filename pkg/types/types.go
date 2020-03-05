@@ -1,86 +1,38 @@
 package types
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
+
 	"gopkg.in/yaml.v2"
 
-	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
-
-type PlatformConfig struct {
-	BootstrapToken        string            `yaml:"-"`
-	Brand                 Brand             `yaml:"brand,omitempty"`
-	Version               string            `yaml:"version,omitempty"`
-	Velero                *Velero           `yaml:"velero,omitempty"`
-	CA                    *CA               `yaml:"ca,omitempty"`
-	Calico                Calico            `yaml:"calico,omitempty"`
-	CertManager           *Enabled          `yaml:"certManager,omitempty"`
-	Consul                string            `yaml:"consul,omitempty"`
-	ControlPlaneEndpoint  string            `yaml:"-"`
-	Dashboard             *Enabled          `yaml:"dashboard,omitempty"`
-	Datacenter            string            `yaml:"datacenter,omitempty"`
-	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
-	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
-	Domain                string            `yaml:"domain,omitempty"`
-	DryRun                bool              `yaml:"-"`
-	ELK                   ELK               `yaml:"elk,omitempty"`
-	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
-	Harbor                *Harbor           `yaml:"harbor,omitempty"`
-	HostPrefix            string            `yaml:"hostPrefix,omitempty"`
-	IngressCA             *CA               `yaml:"ingressCA,omitempty"`
-	GitOps                []GitOps          `yaml:"gitops,omitempty"`
-	JoinEndpoint          string            `yaml:"-"`
-	Kubernetes            Kubernetes        `yaml:"kubernetes,omitempty"`
-	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
-	LocalPath             *Enabled          `yaml:"localPath,omitempty"`
-	Master                VM                `yaml:"master,omitempty"`
-	Monitoring            *Monitoring       `yaml:"monitoring,omitempty"`
-	Name                  string            `yaml:"name,omitempty"`
-	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
-	NFS                   *NFS              `yaml:"nfs,omitempty"`
-	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
-	NSX                   *NSX              `yaml:"nsx,omitempty"`
-	OPA                   *OPA              `yaml:"opa,omitempty"`
-	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
-	PodSubnet             string            `yaml:"podSubnet,omitempty"`
-	Policies              []string          `yaml:"policies,omitempty"`
-	Quack                 *Enabled          `yaml:"quack,omitempty"`
-	Resources             map[string]string `yaml:"resources,omitempty"`
-	S3                    S3                `yaml:"s3,omitempty"`
-	ServiceSubnet         string            `yaml:"serviceSubnet,omitempty"`
-	SMTP                  Smtp              `yaml:"smtp,omitempty"`
-	Source                string            `yaml:"-"`
-	Specs                 []string          `yaml:"specs,omitempty"`
-	TrustedCA             string            `yaml:"trustedCA,omitempty"`
-	Versions              map[string]string `yaml:"versions,omitempty"`
-	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
-	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
-	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
-	ECK                   *ECK              `yaml:"eck,omitempty"`
-}
 
 type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
 
 type VM struct {
-	Name         string            `yaml:"name,omitempty"`
-	Prefix       string            `yaml:"prefix,omitempty"`
-	Count        int               `yaml:"count,omitempty"`
-	Template     string            `yaml:"template,omitempty"`
-	Cluster      string            `yaml:"cluster,omitempty"`
-	Folder       string            `yaml:"folder,omitempty"`
-	Datastore    string            `yaml:"datastore,omitempty"`
-	ResourcePool string            `yaml:"resourcePool,omitempty"`
-	CPUs         int32             `yaml:"cpu,omitempty"`
-	MemoryGB     int64             `yaml:"memory,omitempty"`
-	Network      []string          `yaml:"networks,omitempty"`
-	DiskGB       int               `yaml:"disk,omitempty"`
-	Tags         map[string]string `yaml:"tags,omitempty"`
-	Commands     []string          `yaml:"commands,omitempty"`
-	IP           string            `yaml:"-"`
+	Name   string `yaml:"name,omitempty"`
+	Prefix string `yaml:"prefix,omitempty"`
+	// Number of VM's to provision
+	Count        int      `yaml:"count"`
+	Template     string   `yaml:"template"`
+	Cluster      string   `yaml:"cluster,omitempty"`
+	Folder       string   `yaml:"folder,omitempty"`
+	Datastore    string   `yaml:"datastore,omitempty"`
+	ResourcePool string   `yaml:"resourcePool,omitempty"`
+	CPUs         int32    `yaml:"cpu"`
+	MemoryGB     int64    `yaml:"memory"`
+	Network      []string `yaml:"networks,omitempty"`
+	// Size in GB of the VM root volume
+	DiskGB int `yaml:"disk"`
+	// Tags to be applied to the VM
+	Tags     map[string]string `yaml:"tags,omitempty"`
+	Commands []string          `yaml:"commands,omitempty"`
+	IP       string            `yaml:"-"`
 }
 
 type Calico struct {
@@ -103,18 +55,26 @@ type OPA struct {
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
 	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
+	// Log level for opa server, one of: debug,info,error, defaults to error
+	LogLevel string `yaml:"logLevel,omitempty"`
 }
 
 type Harbor struct {
-	Disabled      bool                     `yaml:"disabled,omitempty"`
-	Version       string                   `yaml:"version,omitempty"`
-	ChartVersion  string                   `yaml:"chartVersion,omitempty"`
-	AdminPassword string                   `yaml:"-"`
-	DB            *DB                      `yaml:"db,omitempty"`
-	URL           string                   `yaml:"url,omitempty"`
-	Projects      map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings      *HarborSettings          `yaml:"settings,omitempty"`
-	Replicas      int                      `yaml:"replicas,omitempty"`
+	Disabled        bool   `yaml:"disabled,omitempty"`
+	Version         string `yaml:"version,omitempty"`
+	ChartVersion    string `yaml:"chartVersion,omitempty"`
+	AdminPassword   string `yaml:"-"`
+	ClairVersion    string `yaml:"clairVersion"`
+	RegistryVersion string `yaml:"registryVersion"`
+	// Logging level for various components, defaults to warn - valid options are info,warn,debug
+	LogLevel string                   `yaml:"logLevel,omitempty"`
+	DB       *DB                      `yaml:"db,omitempty"`
+	URL      string                   `yaml:"url,omitempty"`
+	Projects map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas int                      `yaml:"replicas,omitempty"`
+	// S3 bucket for the docker registry to use
+	Bucket string `yaml:"bucket"`
 }
 
 type HarborSettings struct {
@@ -161,29 +121,24 @@ type HarborProject struct {
 }
 
 type DB struct {
-	Host     string `yaml:"host,omitempty"`
-	Username string `yaml:"username,omitempty"`
-	Password string `yaml:"password,omitempty"`
-	Port     int    `yaml:"port,omitempty"`
+	Host     string `yaml:"host"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Port     int    `yaml:"port"`
+}
+
+func (db DB) GetConnectionURL(name string) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", db.Username, url.QueryEscape(db.Password), db.Host, db.Port, name)
 }
 
 type PostgresOperator struct {
-	Disabled        bool                               `yaml:"disabled,omitempty"`
-	Version         string                             `yaml:"version,omitempty"`
-	PrimaryStorage  string                             `yaml:"primaryStorage,omitempty"`
-	XlogStorage     string                             `yaml:"xlogStorage,omitempty"`
-	BackupStorage   string                             `yaml:"backupStorage,omitempty"`
-	ReplicaStorage  string                             `yaml:"replicaStorage,omitempty"`
-	BackrestStorage string                             `yaml:"backrestStorage,omitempty"`
-	Storage         map[string]PostgresOperatorStorage `yaml:"storage,omitempty"`
-}
-
-type PostgresOperatorStorage struct {
-	AccessMode   string `yaml:"AccessMode,omitempty"`
-	Size         string `yaml:"Size,omitempty"`
-	StorageType  string `yaml:"StorageType,omitempty"`
-	StorageClass string `yaml:"StorageClass,omitempty"`
-	Fsgroup      string `yaml:"Fsgroup,omitempty"`
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Version        string `yaml:"version"`
+	DBVersion      string `yaml:"dbVersion,omitempty"`
+	BackupBucket   string `yaml:"backupBucket,omitempty"`
+	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+	SpiloImage     string `yaml:"spiloImage,omitempty"`
+	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
 type Smtp struct {
@@ -195,13 +150,19 @@ type Smtp struct {
 }
 
 type S3 struct {
-	AccessKey        string `yaml:"access_key,omitempty"`
-	SecretKey        string `yaml:"secret_key,omitempty"`
-	Bucket           string `yaml:"bucket,omitempty"`
-	Region           string `yaml:"region,omitempty"`
-	Endpoint         string `yaml:"endpoint,omitempty"`
+	AccessKey string `yaml:"access_key,omitempty"`
+	SecretKey string `yaml:"secret_key,omitempty"`
+	Bucket    string `yaml:"bucket,omitempty"`
+	Region    string `yaml:"region,omitempty"`
+	// The endpoint at which the S3-like object storage will be available from inside the cluster
+	// e.g. if minio is deployed inside the cluster, specify: *http://minio.minio.svc:9000*
+	Endpoint string `yaml:"endpoint,omitempty"`
+	// The endpoint at which S3 is accessible outside the cluster,
+	// When deploying locally on kind specify: *minio.127.0.0.1.nip.io*
 	ExternalEndpoint string `yaml:"externalEndpoint,omitempty"`
-	CSIVolumes       bool   `yaml:"csiVolumes,omitempty"`
+	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
+	// S3 buckets
+	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {
@@ -209,7 +170,6 @@ func (s3 S3) GetExternalEndpoint() string {
 		return s3.ExternalEndpoint
 	}
 	return s3.Endpoint
-
 }
 
 type NFS struct {
@@ -217,22 +177,61 @@ type NFS struct {
 	Path string `yaml:"path,omitempty"`
 }
 
+// Configures the Nginx Ingress Controller, the controller Docker image is forked from upstream
+// to include more LUA packages for OAuth.
+// To configure global settings not available below, override the 'ingress-nginx/nginx-configuration` configmap with
+// settings from https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+type Nginx struct {
+	Disabled bool `yaml:"disabled"`
+	// The version of the nginx controller to deploy, defaults to: 0.25.1.flanksource.1
+	Version string `yaml:"version"`
+	// Disable access logs
+	DisableAccessLog bool `yaml:"disableAccessLog,omitempty"`
+	// Size of request body buffer, defaults to 16M
+	RequestBodyBuffer string `yaml:"requestBodyBuffer,omitempty"`
+	// Max size of request body, defaults to 32M
+	RequestBodyMax string `yaml:"requestBodyMax,omitempty"`
+}
+
+type OAuth2Proxy struct {
+	Disabled     bool   `yaml:"disabled"`
+	CookieSecret string `yaml:"cookieSecret,omitempty"`
+	Version      string `yaml:"version,omitempty"`
+	OidcGroup    string `yaml:"oidcGroup,omitempty"`
+}
+
 type Ldap struct {
-	Host       string `yaml:"host,omitempty"`
-	Username   string `yaml:"username,omitempty"`
-	Password   string `yaml:"password,omitempty"`
-	Domain     string `yaml:"domain,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Host     string `yaml:"host,omitempty"`
+	Port     string `yaml:"port,omitempty"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Domain   string `yaml:"domain,omitempty"`
+	// Members of this group will become cluster-admins
 	AdminGroup string `yaml:"adminGroup,omitempty"`
-	BindDN     string `yaml:"dn,omitempty"`
+	UserDN     string `yaml:"userDN,omitempty"`
+	GroupDN    string `yaml:"groupDN,omitempty"`
+	// GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS
+	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
+	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
+	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
 }
 
 type Kubernetes struct {
-	Version           string                          `yaml:"version,omitempty"`
-	APIServer         api.KubeAPIServerConfig         `yaml:"api,omitempty"`
-	Kubelet           api.KubeletConfigSpec           `yaml:"kubelet,omitempty"`
-	KubeProxy         api.KubeProxyConfig             `yaml:"proxy,omitempty"`
-	KubeScheduler     api.KubeSchedulerConfig         `yaml:"scheduler,omitempty"`
-	ControllerManager api.KubeControllerManagerConfig `yaml:"ccm,omitempty"`
+	Version          string            `yaml:"version"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
+	MasterIP         string            `yaml:"masterIP,omitempty"`
+}
+
+type Dashboard struct {
+	Enabled
+	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
+}
+
+type LdapAccessConfig struct {
+	Enabled bool     `yaml:"enabled,omitempty"`
+	Groups  []string `yaml:"groups,omitempty"`
+	Snippet string   `yaml:"snippet,omitempty"`
 }
 
 type DynamicDNS struct {
@@ -242,40 +241,40 @@ type DynamicDNS struct {
 	KeyName    string `yaml:"keyName,omitempty"`
 	Algorithm  string `yaml:"algorithm,omitempty"`
 	Zone       string `yaml:"zone,omitempty"`
+	AccessKey  string `yaml:"accessKey,omitempty"`
+	SecretKey  string `yaml:"secretKey,omitempty"`
+	Type       string `yaml:"type,omitempty"`
 }
 
 type Monitoring struct {
-	Disabled         bool       `yaml:"disabled,omitempty"`
-	AlertEmail       string     `yaml:"alert_email,omitempty"`
-	Version          string     `yaml:"version,omitempty" json:"version,omitempty"`
-	Prometheus       Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
-	Grafana          Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager     string     `yaml:"alertMmanager,omitempty"`
-	KubeStateMetrics string     `yaml:"kubeStateMetrics,omitempty"`
-	KubeRbacProxy    string     `yaml:"kubeRbacProxy,omitempty"`
-	NodeExporter     string     `yaml:"nodeExporter,omitempty"`
-	AddonResizer     string     `yaml:"addonResizer,omitempty"`
-	// Prometheus         string     `yaml:"prometheus,omitempty"`
-	PrometheusOperator string `yaml:"prometheus_operator,omitempty"`
+	Disabled           bool       `yaml:"disabled,omitempty"`
+	AlertEmail         string     `yaml:"alert_email,omitempty"`
+	Version            string     `yaml:"version,omitempty" json:"version,omitempty"`
+	Prometheus         Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Grafana            Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
+	AlertManager       string     `yaml:"alertMmanager,omitempty"`
+	KubeStateMetrics   string     `yaml:"kubeStateMetrics,omitempty"`
+	KubeRbacProxy      string     `yaml:"kubeRbacProxy,omitempty"`
+	NodeExporter       string     `yaml:"nodeExporter,omitempty"`
+	AddonResizer       string     `yaml:"addonResizer,omitempty"`
+	PrometheusOperator string     `yaml:"prometheus_operator,omitempty"`
 }
 
 type Prometheus struct {
-	Version  string `yaml:"version,omitempty"`
-	Disabled bool   `yaml:"disabled,omitempty"`
+	Version     string                `yaml:"version,omitempty"`
+	Disabled    bool                  `yaml:"disabled,omitempty"`
+	Persistence PrometheusPersistence `yaml:"persistence,omitempty"` // Persistence settings
+}
+
+type PrometheusPersistence struct {
+	Enabled      bool   `yaml:"enabled,omitempty"`      // Enable persistence for Prometheus
+	StorageClass string `yaml:"storageClass,omitempty"` // Storage class to use. If not set default one will be used
+	Capacity     string `yaml:"capacity,omitempty"`     // Capacity. Required if persistence is enabled
 }
 
 type Grafana struct {
 	Version  string `yaml:"version,omitempty"`
 	Disabled bool   `yaml:"disabled,omitempty"`
-}
-
-type ELK struct {
-	Version      string `yaml:"version,omitempty"`
-	Replicas     int    `yaml:"replicas,omitempty"`
-	LogRetention string `yaml:"logRetention,omitempty"`
-}
-
-type Dex struct {
 }
 
 type Brand struct {
@@ -285,41 +284,40 @@ type Brand struct {
 }
 
 type GitOps struct {
-
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
 
 	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
 	Namespace string `yaml:"namespace,omitempty"`
 
-	// The URL to git repository to clone (required).
-	GitUrl string `yaml:"gitUrl,omitempty"`
+	// The URL to git repository to clone
+	GitUrl string `yaml:"gitUrl"`
 
-	// The git branch to use (default: master).
+	// The git branch to use (default: master)
 	GitBranch string `yaml:"gitBranch,omitempty"`
 
-	// The path with in the git repository to look for YAML in (default: .).
+	// The path with in the git repository to look for YAML in (default: .)
 	GitPath string `yaml:"gitPath,omitempty"`
 
-	// The frequency with which to fetch the git repository (default: 5m0s).
+	// The frequency with which to fetch the git repository (default: 5m0s)
 	GitPollInterval string `yaml:"gitPollInterval,omitempty"`
 
-	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s).
+	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s)
 	SyncInterval string `yaml:"syncInterval,omitempty"`
 
-	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME).
+	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME)
 	GitKey string `yaml:"gitKey,omitempty"`
 
-	// The contents of the known_hosts file to mount into Flux and helm-operator.
+	// The contents of the known_hosts file to mount into Flux and helm-operator
 	KnownHosts string `yaml:"knownHosts,omitempty"`
 
-	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator.
+	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
 	SSHConfig string `yaml:"sshConfig,omitempty"`
 
 	// The version to use for flux (default: 1.4.0 or $FLUX_VERSION)
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
-	// a map of args to pass to flux without -- prepended.
+	// a map of args to pass to flux without -- prepended
 	Args map[string]string `yaml:"args,omitempty"`
 }
 
@@ -331,7 +329,7 @@ type Versions struct {
 
 type Velero struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:version,omitempty"`
+	Version  string `yaml:"version"`
 	Schedule string `yaml:"schedule,omitempty"`
 	Bucket   string `yaml:"bucket,omitempty"`
 	Volumes  bool   `yaml:"volumes"`
@@ -343,15 +341,32 @@ type CA struct {
 	Password   string `yaml:"password,omitempty"`
 }
 
-type FluentdOperator struct {
-	Disabled  bool   `yaml:"disabled,omitempty"`
-	Version   string `yaml:"version,omitempty"`
-	ImageRepo string `yaml:"repository,omitempty"`
+type Thanos struct {
+	Disabled              bool     `yaml:"disabled"`
+	Version               string   `yaml:"version"`
+	Mode                  string   `yaml:"mode,omitempty"`                  // Mode. Should be client or obeservability.
+	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"` // Only for client mode. Endpoint for thanos sidecar ingress rule.
+	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`     // Only for client mode. Port for thanos sidecar ingress rule.
+	Bucket                string   `yaml:"bucket,omitempty"`                // Bucket to store metrics. Should be the same across all environments
+	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`        // Only for observability mode. List of client sidecars in <hostname>:<port> format
 }
 
+type FluentdOperator struct {
+	Disabled             bool       `yaml:"disabled,omitempty"`
+	Version              string     `yaml:"version"`
+	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
+	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
+}
+
+type Filebeat struct {
+	Version       string      `yaml:"version"`
+	Disabled      bool        `yaml:"disabled,omitempty"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Logstash      *Connection `yaml:"logstash,omitempty"`
+}
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version,omitempty"`
+	Version  string `yaml:"version"`
 }
 
 type NodeLocalDNS struct {
@@ -359,6 +374,26 @@ type NodeLocalDNS struct {
 	DNSServer string `yaml:"dnsServer,omitempty"`
 	LocalDNS  string `yaml:"localDNS,omitempty"`
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
+}
+
+type Connection struct {
+	URL      string `yaml:"url"`
+	User     string `yaml:"user,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Port     string `yaml:"port,omitempty"`
+	Scheme   string `yaml:"scheme,omitempty"`
+	Verify   string `yaml:"verify,omitempty"`
+}
+
+func (c Connection) GetURL() string {
+	url := c.URL
+	if c.Port != "" && !strings.Contains(url, ":") {
+		url = url + ":" + c.Port
+	}
+	if c.Scheme != "" && !strings.Contains(url, "://") {
+		url = c.Scheme + "://" + url
+	}
+	return url
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
@@ -376,7 +411,7 @@ func (p PlatformConfig) GetVMCount() int {
 	return count
 }
 
-func (platform *PlatformConfig) String() string {
-	data, _ := yaml.Marshal(platform)
+func (p *PlatformConfig) String() string {
+	data, _ := yaml.Marshal(p)
 	return string(data)
 }

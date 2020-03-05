@@ -2,30 +2,22 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
-
 ---
-
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: nginx-configuration
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
-
+data:
+  client-body-buffer-size: "{{.nginx.requestBodyBuffer}}"
+  proxy-body-size: "{{.nginx.requestBodyMax}}"
+  disable-access-log: "{{.nginx.disableAccessLog}}"
 ---
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: tcp-services
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
 
 ---
 kind: ConfigMap
@@ -33,28 +25,18 @@ apiVersion: v1
 metadata:
   name: udp-services
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
-
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: nginx-ingress-serviceaccount
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
   name: nginx-ingress-clusterrole
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
 rules:
   - apiGroups:
       - ""
@@ -111,9 +93,6 @@ kind: Role
 metadata:
   name: nginx-ingress-role
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
 rules:
   - apiGroups:
       - ""
@@ -156,9 +135,6 @@ kind: RoleBinding
 metadata:
   name: nginx-ingress-role-nisa-binding
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -173,9 +149,6 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
   name: nginx-ingress-clusterrole-nisa-binding
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -184,35 +157,27 @@ subjects:
   - kind: ServiceAccount
     name: nginx-ingress-serviceaccount
     namespace: ingress-nginx
-
 ---
-
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nginx-ingress-controller
   namespace: ingress-nginx
-  labels:
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
-
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: ingress-nginx
-      app.kubernetes.io/part-of: ingress-nginx
+      app: ingress-nginx
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: ingress-nginx
-        app.kubernetes.io/part-of: ingress-nginx
         app: ingress-nginx
     spec:
       serviceAccountName: nginx-ingress-serviceaccount
       hostNetwork: true
       containers:
         - name: nginx-ingress-controller
-          image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.25.1
+          image: flanksource/nginx-ingress-controller:0.25.1.flanksource.1
+          imagePullPolicy: Always
           args:
             - /nginx-ingress-controller
             - --configmap=$(POD_NAMESPACE)/nginx-configuration
@@ -273,47 +238,45 @@ metadata:
   name: ingress-nginx
   namespace: ingress-nginx
   annotations:
-      prometheus.io/port: "10254"
-      prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"
+    prometheus.io/scrape: "true"
   labels:
-      app.kubernetes.io/name: "ingress-nginx"
-      app: ingress-nginx
+    app.kubernetes.io/name: "ingress-nginx"
+    app: ingress-nginx
 spec:
   ports:
-  - name: http
-    port: 80
-    targetPort: 80
-    protocol: TCP
-  - name: https
-    port: 443
-    targetPort: 443
-    protocol: TCP
-  - name: metrics
-    port: 10254
-    targetPort: 10254
-    protocol: TCP
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+    - name: metrics
+      port: 10254
+      targetPort: 10254
+      protocol: TCP
   selector:
     app: ingress-nginx
-
-
 
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-     app: ingress-nginx
+    app: ingress-nginx
   name: nginx-controller
   namespace: monitoring
 spec:
   jobLabel: nginx
   namespaceSelector:
     matchNames:
-    - ingress-nginx
+      - ingress-nginx
   endpoints:
-  - port: metrics
-    interval: 30s
-    honorLabels: true
+    - port: metrics
+      interval: 30s
+      honorLabels: true
   selector:
     matchLabels:
       app: ingress-nginx

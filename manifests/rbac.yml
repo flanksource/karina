@@ -4,7 +4,7 @@ metadata:
   name: admin-group
 subjects:
   - kind: Group
-    name: {{ .ldap.adminGroup }}
+    name: "{{ .ldap.adminGroup }}"
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole

@@ -2,6 +2,7 @@ package vmware
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/vmware/govmomi/object"
 
@@ -14,7 +15,7 @@ func (s Session) GetVMs(ctx context.Context, prefix string, vm *types.VM) ([]*ob
 	}
 	list, err := s.Finder.VirtualMachineList(ctx, prefix+"*")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getCdrom: getVMs to list VMs: %v", err)
 	}
 	return list, nil
 }

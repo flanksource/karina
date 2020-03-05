@@ -1,24 +1,25 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
+	"github.com/flanksource/commons/console"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/flanksource/commons/console"
 
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
+	"github.com/moshloop/platform-cli/pkg/phases/eck"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/pgo"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -107,15 +108,6 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
-		Use:   "pgo",
-		Short: "Test postgres operator",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(pgo.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
 		Use:   "base",
 		Short: "Test base",
 		Args:  cobra.MinimumNArgs(0),
@@ -166,6 +158,25 @@ func init() {
 			run(eck.Test)
 		},
 	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "postgres-operator",
+		Short: "Test postgres-operator",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(postgresOperator.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "stubs",
+		Short: "Test stubs",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(stubs.Test)
+		},
+	})
+
 	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
@@ -176,13 +187,13 @@ func init() {
 				base.Test(p, test)
 				velero.Test(p, test)
 				opa.TestNamespace(p, client, test)
-				pgo.Test(p, test)
 				harbor.Test(p, test)
 				dex.Test(p, test)
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
+				postgresOperator.Test(p, test)
 			})
 		},
 	})

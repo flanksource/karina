@@ -1,6 +1,7 @@
 package opa
 
 import (
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 
 	"github.com/flanksource/commons/console"
@@ -39,7 +40,7 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-
+		log.Tracef("Install: Failed to read dir: %s", err)
 	}
 
 	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)
