@@ -68,6 +68,24 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 	}
 }
 
+func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string), args []string)  {
+	start := time.Now()
+	for {
+		test := console.TestResults{}
+		fn(p, &test, args)
+		test.Done()
+		elapsed := time.Now().Sub(start)
+		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
+			end(test)
+			return
+		} else {
+			log.Debugf("Waiting to re-run tests\n")
+			time.Sleep(time.Duration(waitInterval) * time.Second)
+			log.Infof("Re-running tests\n")
+		}
+	}
+}
+
 func init() {
 	Test.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		p = getPlatform(cmd)
@@ -164,6 +182,16 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(postgresOperator.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "thanos",
+		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
+		Long: "test thanos [pushgateway] [thanos]",
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			runWithArgs(monitoring.TestThanos, args)
 		},
 	})
 

@@ -324,6 +324,21 @@ spec:
       component: etcd
       tier: control-plane
 ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    k8s-app: pushgateway
+  name: pushgateway
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 30s
+      port: pushgateway
+  selector:
+    matchLabels:
+      k8s-app: pushgateway
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -373,3 +388,4 @@ spec:
       port: 10252
       targetPort: 10252
       protocol: TCP
+

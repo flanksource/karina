@@ -20,7 +20,7 @@ const (
 	CaCertName      = "thanos-ca-cert"
 )
 
-var specs = []string{"grafana-operator.yml", "kube-prometheus.yml", "prometheus-adapter.yml", "kube-state-metrics.yml", "node-exporter.yml", "alertmanager-rules.yml.raw", "service-monitors.yml"}
+var specs = []string{"grafana-operator.yml", "kube-prometheus.yml", "prometheus-adapter.yml", "kube-state-metrics.yml", "node-exporter.yml", "alertmanager-rules.yml.raw", "pushgateway.yaml", "service-monitors.yml"}
 
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
