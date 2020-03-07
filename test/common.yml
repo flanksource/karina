@@ -41,6 +41,23 @@ serviceSubnet: 100.100.0.0/16
 opa:
   version: 0.13.5
   kubeMgmtVersion: 0.8
+  bundleUrl: http://minio.minio.svc:9000
+  bundlePrefix: bundles
+  bundleServiceName: automobile
+  logFormat: json-pretty
+  setDecisionLogs: true
+  namespaceWhitelist:
+    - kube-system
+    - nsx-system
+    - quack
+    - cert-manager
+    - harbor
+    - pgo
+    - dex
+    - local-path-storage
+    - kube-node-lease
+    - monitoring
+    - minio
 calico:
   ipip: Never
   vxlan: Never
@@ -53,6 +70,10 @@ harbor:
   replicas: 1
   bucket: harbor-blobs
   version: v1.10.0
+postgresOperator:
+  version: v1.3.1
+  spiloImage: registry.opensource.zalan.do/acid/spilo-12:1.6-p2
+  backupImage: registry.opensource.zalan.do/acid/logical-backup
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -94,8 +115,6 @@ ingressCA:
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
 oauth2Proxy:
-  enabled: true
-  dockerImage: "flanksource/oauth2_proxy"
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
   cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=

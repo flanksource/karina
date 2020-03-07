@@ -10,6 +10,7 @@ import (
 
 	"github.com/moshloop/platform-cli/pkg/constants"
 	"github.com/moshloop/platform-cli/pkg/phases/ingress"
+	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -82,6 +83,10 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
+	if err := nginx.Install(platform); err != nil {
+		log.Fatalf("Error deploying nginx %s\n", err)
+	}
+
 	if platform.Quack == nil || !platform.Quack.Disabled {
 		log.Infof("Installing Quack")
 		if err := platform.ApplySpecs("", "quack.yml"); err != nil {
@@ -115,13 +120,6 @@ func Install(platform *platform.Platform) error {
 		log.Infof("Installing platform operator")
 		if err := platform.ApplySpecs("", "platform-operator.yml"); err != nil {
 			log.Errorf("Error deploying platform-operator: %s\n", err)
-		}
-	}
-
-	if platform.Nginx == nil || !platform.Nginx.Disabled {
-		log.Infof("Installing Nginx Ingress Controller")
-		if err := platform.ApplySpecs("", "nginx.yml"); err != nil {
-			log.Errorf("Error deploying nginx: %s\n", err)
 		}
 	}
 

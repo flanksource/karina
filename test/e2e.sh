@@ -44,6 +44,8 @@ $BIN deploy stubs -v
 
 $BIN deploy dex -v
 
+$BIN test stubs --wait 200
+
 $BIN test dex --wait 200
 
 $BIN deploy postgres-operator install -v
@@ -56,7 +58,9 @@ $BIN deploy harbor -v
 
 $BIN deploy all -v
 
-$BIN deploy opa install -v
+$BIN deploy opa bundle automobile -v
+
+$BIN deploy opa install  -v
 
 $BIN deploy velero
 
@@ -66,15 +70,12 @@ $BIN deploy eck
 
 $BIN deploy opa policies test/opa/policies -v
 
-echo "Sleeping for 30s, waiting for OPA policies to load"
-sleep 30
-
 failed=false
 if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
   failed=true
 fi
 
-if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.xml; then
+if ! $BIN test opa test/opa/opa-fixtures --wait 180 --junit-path test-results/opa-results.xml; then
   failed=true
 fi
 

@@ -3,12 +3,13 @@ package velero
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/flanksource/commons/text"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -24,20 +25,10 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	s3Client, err := platform.GetS3Client()
-	if err != nil {
-		return fmt.Errorf("install: failed to get S3 client: %v", err)
+	if err := platform.GetOrCreateBucket(platform.Velero.Bucket); err != nil {
+		return err
 	}
 
-	exists, err := s3Client.BucketExists(platform.Velero.Bucket)
-	if err != nil {
-		return fmt.Errorf("install: failed to check S3 bucket: %v", err)
-	}
-	if !exists {
-		if err := s3Client.MakeBucket(platform.Velero.Bucket, platform.S3.Region); err != nil {
-			return fmt.Errorf("install: failed to create S3 bucket: %v", err)
-		}
-	}
 	secret := text.ToFile(fmt.Sprintf(`[default]
 aws_access_key_id=%s
 aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
@@ -45,7 +36,11 @@ aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
 	defer os.Remove(secret)
 
 	velero := platform.GetBinaryWithKubeConfig("velero")
-	backupConfig := fmt.Sprintf("region=%s,insecureSkipTLSVerify=true,s3ForcePathStyle=\"true\",s3Url=%s", platform.S3.Region, platform.S3.Endpoint)
+	endpoint := platform.S3.Endpoint
+	if !strings.HasPrefix(endpoint, "http") {
+		endpoint = "https://" + endpoint
+	}
+	backupConfig := fmt.Sprintf("region=%s,insecureSkipTLSVerify=true,s3ForcePathStyle=\"true\",s3Url=%s", platform.S3.Region, endpoint)
 
 	if err := velero("install --provider aws --plugins velero/velero-plugin-for-aws:v1.0.0 --bucket %s --secret-file %s --backup-location-config %s", platform.Velero.Bucket, secret, backupConfig); err != nil {
 		return fmt.Errorf("install: failed to install velero: %v", err)

@@ -2,6 +2,8 @@ package k8s
 
 import (
 	apps "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,6 +78,18 @@ func (b *Builder) Deployment(name, image string) *DeploymentBuilder {
 	}
 }
 
+func Deployment(name, image string) *DeploymentBuilder {
+	return &DeploymentBuilder{
+		Builder:     &Builder{},
+		Name:        name,
+		Image:       image,
+		replicas:    1,
+		labels:      make(map[string]string),
+		annotations: make(map[string]string),
+		resources:   LowResourceRequirements(),
+	}
+}
+
 type DeploymentBuilder struct {
 	Builder         *Builder
 	Name, Image, sa string
@@ -87,15 +101,189 @@ type DeploymentBuilder struct {
 	volumes         []v1.Volume
 	labels          map[string]string
 	annotations     map[string]string
+	env             []v1.EnvVar
+	nodeAffinity    *v1.Affinity
+	podAffinity     *v1.Affinity
+	cmd             []string
+}
+
+func (d *DeploymentBuilder) Command(cmd ...string) *DeploymentBuilder {
+	d.cmd = append(d.cmd, cmd...)
+	return d
+}
+
+func (d *DeploymentBuilder) EnvVarFromField(env, field string) *DeploymentBuilder {
+	d.env = append(d.env, v1.EnvVar{
+		Name: env,
+		ValueFrom: &v1.EnvVarSource{
+			FieldRef: &v1.ObjectFieldSelector{
+				APIVersion: "v1",
+				FieldPath:  field,
+			},
+		},
+	})
+	return d
+}
+
+func (d *DeploymentBuilder) EnvVarFromSecret(env, secret, key string) *DeploymentBuilder {
+	d.env = append(d.env, v1.EnvVar{
+		Name: env,
+		ValueFrom: &v1.EnvVarSource{
+			SecretKeyRef: &v1.SecretKeySelector{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: secret,
+				},
+				Key: key,
+			},
+		},
+	})
+	return d
+}
+
+func (d *DeploymentBuilder) EnvVarFromConfigMap(env, configmap, key string) *DeploymentBuilder {
+	d.env = append(d.env, v1.EnvVar{
+		Name: env,
+		ValueFrom: &v1.EnvVarSource{
+			ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: configmap,
+				},
+				Key: key,
+			},
+		},
+	})
+	return d
+}
+
+func (d *DeploymentBuilder) AsCronJob(schedule string) *batchv1beta1.CronJob {
+	return &batchv1beta1.CronJob{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "batch/v1beta1",
+			Kind:       "cronjob",
+		},
+		ObjectMeta: d.Builder.ObjectMeta(d.Name),
+		Spec: batchv1beta1.CronJobSpec{
+			Schedule: schedule,
+			JobTemplate: batchv1beta1.JobTemplateSpec{
+				Spec: batchv1.JobSpec{
+					Template: d.PodTemplate(),
+				},
+			},
+			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
+		},
+	}
+}
+
+func (d *DeploymentBuilder) PodSpec() v1.PodSpec {
+	return v1.PodSpec{
+		ServiceAccountName: d.sa,
+		Volumes:            d.volumes,
+		Containers: []v1.Container{
+			{
+				Command:         d.cmd,
+				Name:            d.Name,
+				Image:           d.Image,
+				ImagePullPolicy: v1.PullIfNotPresent,
+				Ports:           d.ports,
+				VolumeMounts:    d.volumeMounts,
+				Env:             d.env,
+				Args:            d.args,
+				Resources:       d.resources,
+			},
+		},
+	}
+}
+
+func (d *DeploymentBuilder) ObjectMeta() metav1.ObjectMeta {
+	return d.Builder.ObjectMeta(d.Name)
+}
+
+func (d *DeploymentBuilder) PodTemplate() v1.PodTemplateSpec {
+	return v1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: d.GetLabels(),
+		},
+		Spec: d.PodSpec(),
+	}
+}
+
+func (d *DeploymentBuilder) AsOneShotJob() *v1.Pod {
+	pod := v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: d.ObjectMeta(),
+		Spec:       d.PodSpec(),
+	}
+	pod.Spec.RestartPolicy = "Never"
+	return &pod
+}
+
+func (d *DeploymentBuilder) EnvVars(env map[string]string) *DeploymentBuilder {
+	for k, v := range env {
+		d.env = append(d.env, v1.EnvVar{
+			Name:  k,
+			Value: v,
+		})
+	}
+	return d
+}
+
+func (d *DeploymentBuilder) NodeAffinity(nodeReadinessLabel map[string]string) *DeploymentBuilder {
+	matchExpressions := make([]v1.NodeSelectorRequirement, 0)
+	if len(nodeReadinessLabel) == 0 {
+		return nil
+	}
+	for k, v := range nodeReadinessLabel {
+		matchExpressions = append(matchExpressions, v1.NodeSelectorRequirement{
+			Key:      k,
+			Operator: v1.NodeSelectorOpIn,
+			Values:   []string{v},
+		})
+	}
+
+	d.nodeAffinity = &v1.Affinity{
+		NodeAffinity: &v1.NodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: &v1.NodeSelector{
+				NodeSelectorTerms: []v1.NodeSelectorTerm{{MatchExpressions: matchExpressions}},
+			},
+		},
+	}
+	return d
+}
+
+func (d *DeploymentBuilder) PodAffinity(labels map[string]string, topologyKey string) *DeploymentBuilder {
+	podAffinity := v1.Affinity{
+		PodAntiAffinity: &v1.PodAntiAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{{
+				LabelSelector: &metav1.LabelSelector{
+					MatchLabels: labels,
+				},
+				TopologyKey: topologyKey,
+			}},
+		},
+	}
+
+	if d.nodeAffinity != nil && d.nodeAffinity.NodeAffinity != nil {
+		podAffinity.NodeAffinity = d.nodeAffinity.NodeAffinity
+	}
+
+	d.podAffinity = &podAffinity
+	return d
 }
 
 func (d *DeploymentBuilder) Labels(labels map[string]string) *DeploymentBuilder {
-	d.labels = labels
+	for k, v := range labels {
+		d.labels[k] = v
+	}
 	return d
 }
 
 func (d *DeploymentBuilder) Annotations(annotations map[string]string) *DeploymentBuilder {
-	d.annotations = annotations
+	for k, v := range annotations {
+		d.annotations[k] = v
+	}
 	return d
 }
 
@@ -148,7 +336,6 @@ func (d *DeploymentBuilder) MountConfigMap(cm, path string) *DeploymentBuilder {
 		Name:      cm,
 		MountPath: path,
 	})
-
 	return d
 }
 
@@ -165,6 +352,16 @@ func (d *DeploymentBuilder) GetLabels() map[string]string {
 	} else {
 		return d.labels
 	}
+}
+
+func (d *DeploymentBuilder) Ports(ports ...int32) *DeploymentBuilder {
+	for _, port := range ports {
+		d.ports = append(d.ports, v1.ContainerPort{
+			ContainerPort: port,
+			Protocol:      v1.ProtocolTCP,
+		})
+	}
+	return d
 }
 
 func (d *DeploymentBuilder) Expose(ports ...int32) *DeploymentBuilder {
@@ -197,26 +394,7 @@ func (d *DeploymentBuilder) Build() *Builder {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: d.GetLabels(),
 			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: d.GetLabels(),
-				},
-				Spec: v1.PodSpec{
-					ServiceAccountName: d.sa,
-					Volumes:            d.volumes,
-					Containers: []v1.Container{
-						{
-							Name:            d.Name,
-							Image:           d.Image,
-							ImagePullPolicy: "IfNotPresent",
-							Ports:           d.ports,
-							VolumeMounts:    d.volumeMounts,
-							Args:            d.args,
-							Resources:       d.resources,
-						},
-					},
-				},
-			},
+			Template: d.PodTemplate(),
 		},
 	})
 	return d.Builder

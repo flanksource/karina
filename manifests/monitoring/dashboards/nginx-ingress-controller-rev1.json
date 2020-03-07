@@ -43,8 +43,10 @@
       {
         "datasource": "prometheus",
         "enable": true,
+        {{- if index . "thanos"}}
         {{- if eq .thanos.mode "observability"}}
         "expr": "sum(changes(nginx_ingress_controller_config_last_reload_successful_timestamp_seconds{instance!=\"unknown\",controller_class=~\"$controller_class\",namespace=~\"$namespace\", cluster=\"$cluster\"}[30s])) by (controller_class)",
+        {{- end}}
         {{- else }}
         "expr": "sum(changes(nginx_ingress_controller_config_last_reload_successful_timestamp_seconds{instance!=\"unknown\",controller_class=~\"$controller_class\",namespace=~\"$namespace\"}[30s])) by (controller_class)",
         {{- end }}
@@ -127,8 +129,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "round(sum(irate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\", cluster=\"$cluster\"}[2m])), 0.001)",
+          {{- end}}
           {{- else }}
           "expr": "round(sum(irate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\"}[2m])), 0.001)",
           {{- end }}
@@ -213,8 +217,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(avg_over_time(nginx_ingress_controller_nginx_process_connections{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",cluster=\"$cluster\"}[2m]))",
+          {{- end}}
           {{- else }}
           "expr": "sum(avg_over_time(nginx_ingress_controller_nginx_process_connections{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\"}[2m]))",
           {{- end }}
@@ -300,8 +306,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",status!~\"[4-5].*\", cluster=\"$cluster\"}[2m])) / sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\", cluster=\"$cluster\"}[2m]))",
+          {{- end}}
           {{- else }}
           "expr": "sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",status!~\"[4-5].*\"}[2m])) / sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\"}[2m]))",
           {{- end }}
@@ -387,8 +395,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "avg(nginx_ingress_controller_success{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\", cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "avg(nginx_ingress_controller_success{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\"})",
           {{- end }}
@@ -475,8 +485,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "count(nginx_ingress_controller_config_last_reload_successful{controller_pod=~\"$controller\",controller_namespace=~\"$namespace\", cluster=\"$cluster\"} == 0)",
+          {{- end}}
           {{- else }}
           "expr": "count(nginx_ingress_controller_config_last_reload_successful{controller_pod=~\"$controller\",controller_namespace=~\"$namespace\"} == 0)",
           {{- end }}
@@ -553,8 +565,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "round(sum(irate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}[2m])) by (ingress), 0.001)",
+          {{- end}}
           {{- else }}
           "expr": "count(nginx_ingress_controller_config_last_reload_successful{controller_pod=~\"$controller\",controller_namespace=~\"$namespace\"} == 0)",
           {{- end }}
@@ -664,8 +678,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",ingress=~\"$ingress\",status!~\"[4-5].*\", cluster=\"$cluster\"}[2m])) by (ingress) / sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (ingress)",
+          {{- end}}
           {{- else }}
           "expr": "sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",ingress=~\"$ingress\",status!~\"[4-5].*\"}[2m])) by (ingress) / sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (ingress)",
           {{- end }}
@@ -768,8 +784,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum (irate (nginx_ingress_controller_request_size_sum{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\", cluster=\"$cluster\"}[2m]))",
+          {{- end}}
           {{- else }}
           "expr": "sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",ingress=~\"$ingress\",status!~\"[4-5].*\"}[2m])) by (ingress) / sum(rate(nginx_ingress_controller_requests{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (ingress)",
           {{- end }}
@@ -783,8 +801,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "- sum (irate (nginx_ingress_controller_response_size_sum{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\", cluster=\"$cluster\"}[2m]))",
+          {{- end}}
           {{- else }}
           "expr": "- sum (irate (nginx_ingress_controller_response_size_sum{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\"}[2m]))",
           {{- end }}
@@ -891,8 +911,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "avg(nginx_ingress_controller_nginx_process_resident_memory_bytes{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\", cluster=\"$cluster\"}) ",
+          {{- end}}
           {{- else }}
           "expr": "avg(nginx_ingress_controller_nginx_process_resident_memory_bytes{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\"}) ",
           {{- end }}
@@ -997,8 +1019,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum (rate (nginx_ingress_controller_nginx_process_cpu_seconds_total{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\", cluster=\"$ingress\"}[2m])) ",
+          {{- end}}
           {{- else }}
           "expr": "sum (rate (nginx_ingress_controller_nginx_process_cpu_seconds_total{controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\"}[2m])) ",
           {{- end }}
@@ -1229,8 +1253,10 @@
       ],
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "histogram_quantile(0.50, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}[2m])) by (le, ingress))",
+          {{- end}}
           {{- else }}
           "expr": "histogram_quantile(0.50, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (le, ingress))",
           {{- end }}
@@ -1242,8 +1268,10 @@
           "refId": "C"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "histogram_quantile(0.90, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}[2m])) by (le, ingress))",
+          {{- end}}
           {{- else }}
           "expr": "histogram_quantile(0.90, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (le, ingress))",
           {{- end }}
@@ -1255,8 +1283,10 @@
           "refId": "D"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "histogram_quantile(0.99, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}[2m])) by (le, ingress))",
+          {{- end}}
           {{- else }}
           "expr": "histogram_quantile(0.99, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (le, ingress))",
           {{- end }}
@@ -1268,8 +1298,10 @@
           "refId": "E"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(irate(nginx_ingress_controller_request_size_sum{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}[2m])) by (ingress)",
+          {{- end}}
           {{- else }}
           "expr": "sum(irate(nginx_ingress_controller_request_size_sum{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (ingress)",
           {{- end }}
@@ -1282,8 +1314,10 @@
           "refId": "F"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(irate(nginx_ingress_controller_response_size_sum{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}[2m])) by (ingress)",
+          {{- end}}
           {{- else }}
           "expr": "sum(irate(nginx_ingress_controller_response_size_sum{ingress!=\"\",controller_pod=~\"$controller\",controller_class=~\"$controller_class\",controller_namespace=~\"$namespace\",ingress=~\"$ingress\"}[2m])) by (ingress)",
           {{- end }}
@@ -1367,8 +1401,10 @@
       ],
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "avg(nginx_ingress_controller_ssl_expire_time_seconds{kubernetes_pod_name=~\"$controller\",namespace=~\"$namespace\",ingress=~\"$ingress\", cluster=\"$cluster\"}) by (host) - time()",
+          {{- end}}
           {{- else }}
           "expr": "avg(nginx_ingress_controller_ssl_expire_time_seconds{kubernetes_pod_name=~\"$controller\",namespace=~\"$namespace\",ingress=~\"$ingress\"}) by (host) - time()",
           {{- end }}
@@ -1481,6 +1517,7 @@
         "type": "query",
         "useTags": false
       }
+      {{- if index . "thanos"}}
       {{- if eq .thanos.mode "observability"}}
       ,{
         "allFormat": "",
@@ -1512,6 +1549,7 @@
         "useTags": false
       }
       {{- end }}
+      {{- end}}
     ]
   },
   "time": {

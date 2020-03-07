@@ -98,11 +98,13 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sort_desc(min(avg(rate(node_cpu_seconds_total{mode=\"idle\", cluster=\"$cluster\"}[2m])) by (instance)))",
-          {{- else }}
+          {{- end}}
+          {{- else}}
           "expr": "sort_desc(min(avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) by (instance)))",
-          {{- end }}
+          {{- end}}
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A",
@@ -187,8 +189,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_node_status_capacity_cpu_cores{cluster=\"$cluster\"})  ",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_node_status_capacity_cpu_cores)  ",
           {{- end }}
@@ -277,8 +281,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "min(node_memory_MemAvailable_bytes/node_memory_MemTotal_bytes{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "min(node_memory_MemAvailable_bytes/node_memory_MemTotal_bytes)",
           {{- end }}
@@ -366,8 +372,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_node_status_capacity_memory_bytes{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_node_status_capacity_memory_bytes)",
           {{- end }}
@@ -474,8 +482,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\", cluster=\"$cluster\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\", cluster=\"$cluster\"}) by (device, instance)",
+          {{- end}}
           {{- else }}
           "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}) by (device, instance)",
           {{- end }}
@@ -632,8 +642,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(ALERTS{alertstate=\"firing\",alertname!=\"DeadMansSwitch\", cluster=\"$cluster\"})  ",
+          {{- end}}
           {{- else }}
           "expr": "sum(ALERTS{alertstate=\"firing\",alertname!=\"DeadMansSwitch\"})  ",
           {{- end }}
@@ -722,8 +734,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_requests_memory_bytes{cluster=\"$cluster\"}) / sum(:node_memory_MemAvailable_bytes:sum{cluster=\"$cluster\"})",
+          {{- end }}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_memory_bytes) / sum(:node_memory_MemAvailable_bytes:sum)",
           {{- end }}
@@ -810,8 +824,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_requests_cpu_cores{cluster=\"$cluster\"}) / sum(node:node_num_cpu:sum{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_cpu_cores) / sum(node:node_num_cpu:sum)",
           {{- end }}
@@ -901,8 +917,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_limits_memory_bytes{cluster=\"$cluster\"}) / sum(:node_memory_MemAvailable_bytes:sum{cluster=\"$cluster\"})  ",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_memory_bytes) / sum(:node_memory_MemAvailable_bytes:sum)  ",
           {{- end }}
@@ -992,8 +1010,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_limits_cpu_cores{cluster=\"$cluster\"}) / sum(node:node_num_cpu:sum{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_cpu_cores) / sum(node:node_num_cpu:sum)",
           {{- end }}
@@ -1065,8 +1085,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_status_phase{phase =\"Running\", cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_status_phase{phase =\"Running\"})",
           {{- end }}
@@ -1076,8 +1098,10 @@
           "refId": "A"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_status_phase{phase!=\"Running\", cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_status_phase{phase!=\"Running\"})",
           {{- end }}
@@ -1087,8 +1111,10 @@
           "refId": "B"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_status_phase{phase=\"Pending\", cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_status_phase{phase=\"Pending\"})",
           {{- end }}
@@ -1098,8 +1124,10 @@
           "refId": "C"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_status_phase{phase=\"Failed\", cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_status_phase{phase=\"Failed\"})",
           {{- end }}
@@ -1214,8 +1242,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "count(sum by (pod)(delta(kube_pod_container_status_restarts_total{cluster=\"$cluster\"}[15m]) > 0))",
+          {{- end}}
           {{- else }}
           "expr": "count(sum by (pod)(delta(kube_pod_container_status_restarts_total[15m]) > 0))",
           {{- end }}
@@ -1293,8 +1323,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum by (pod)(delta(kube_pod_container_status_restarts_total{cluster=\"$cluster\"}[15m]) > 0)",
+          {{- end}}
           {{- else }}
           "expr": "sum by (pod)(delta(kube_pod_container_status_restarts_total[15m]) > 0)",
           {{- end }}
@@ -1392,8 +1424,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "rate(kubelet_pod_start_latency_microseconds_sum{cluster=\"$cluster\"}[5m]) / rate(kubelet_pod_start_latency_microseconds_count{cluster=\"$cluster\"}[5m]) ",
+          {{- end}}
           {{- else }}
           "expr": "rate(kubelet_pod_start_latency_microseconds_sum[5m]) / rate(kubelet_pod_start_latency_microseconds_count[5m]) ",
           {{- end }}
@@ -1507,8 +1541,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(rate(kubelet_running_pod_count{cluster=\"$cluster\"}[2m])) ",
+          {{- end}}
           {{- else }}
           "expr": "sum(rate(kubelet_running_pod_count[2m]))",
           {{- end }}
@@ -1579,8 +1615,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(node_memory_MemAvailable_bytes{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(node_memory_MemAvailable_bytes)",
           {{- end }}
@@ -1590,8 +1628,10 @@
           "refId": "A"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(node_memory_Active_bytes{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(node_memory_Active_bytes)",
           {{- end }}
@@ -1601,8 +1641,10 @@
           "refId": "B"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(node_memory_Buffers_bytes{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(node_memory_Buffers_bytes)",
           {{- end }}
@@ -1612,8 +1654,10 @@
           "refId": "C"
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(node_memory_Cached_bytes{cluster=\"$cluster\"})",
+          {{- end}}
           {{- else }}
           "expr": "sum(node_memory_Cached_bytes)",
           {{- end }}
@@ -1728,8 +1772,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(node_memory_Active_bytes{cluster=\"$cluster\"}) / sum(node_memory_MemTotal_bytes{cluster=\"$cluster\"})    ",
+          {{- end}}
           {{- else }}
           "expr": "sum(node_memory_Active_bytes) / sum(node_memory_MemTotal_bytes)    ",
           {{- end }}
@@ -1801,8 +1847,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_status_terminated_reason{reason!=\"Completed\", cluster=\"$cluster\"}) by (reason)  ",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_status_terminated_reason{reason!=\"Completed\"}) by (reason)  ",
           {{- end }}
@@ -1916,8 +1964,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", cluster=\"$cluster\"}[1m]))",
+          {{- end}}
           {{- else }}
           "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))",
           {{- end }}
@@ -2070,8 +2120,10 @@
       "tableColumn": "",
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_start_time{cluster=\"$cluster\"})      ",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_start_time)      ",
           {{- end }}
@@ -2173,8 +2225,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace)",
           {{- end }}
@@ -2358,8 +2412,10 @@
       ],
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace)",
           {{- end }}
@@ -2370,8 +2426,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_requests_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)",
           {{- end }}
@@ -2382,8 +2440,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_requests_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)",
           {{- end }}
@@ -2394,8 +2454,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_limits_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)",
           {{- end }}
@@ -2406,8 +2468,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(namespace_pod_name_container_name:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)",
           {{- end }}
@@ -2501,8 +2565,10 @@
       "steppedLine": false,
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace)",
           {{- end }}
@@ -2686,8 +2752,10 @@
       ],
       "targets": [
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace)",
           {{- end }}
@@ -2698,8 +2766,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_requests_memory_bytes{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)",
           {{- end }}
@@ -2710,8 +2780,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_requests_memory_bytes{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace) / sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)",
           {{- end }}
@@ -2722,8 +2794,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(kube_pod_container_resource_limits_memory_bytes{cluster=\"$cluster\"}) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
           {{- end }}          
@@ -2734,8 +2808,10 @@
           "step": 10
         },
         {
+          {{- if index . "thanos"}}
           {{- if eq .thanos.mode "observability"}}
           "expr": "sum(container_memory_rss{container_name!=\"\", cluster=\"$cluster\"}) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
+          {{- end}}
           {{- else }}
           "expr": "sum(container_memory_rss{container_name!=\"\"}) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
           {{- end }}  
@@ -2793,6 +2869,7 @@
         "skipUrlSync": false,
         "type": "constant"
       }
+      {{- if index . "thanos"}}
       {{- if eq .thanos.mode "observability"}}
       ,{
         "allFormat": "",
@@ -2824,6 +2901,7 @@
         "useTags": false
       }
       {{- end }}
+      {{- end}}
     ]
   },
   "time": {
