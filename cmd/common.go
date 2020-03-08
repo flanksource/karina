@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imdario/mergo"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
+	"github.com/imdario/mergo"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
@@ -45,7 +45,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 
 	for _, path := range paths {
 		cfg := types.PlatformConfig{
-			Source: paths[0],
+			Source: path,
 		}
 
 		data, err := ioutil.ReadFile(path)
@@ -71,6 +71,11 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		}
 	}
 
+	defaultConfig := types.DefaultPlatformConfig()
+	if err := mergo.Merge(&base, defaultConfig); err != nil {
+		log.Fatalf("Failed to merge default config, %v", err)
+	}
+
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	if dryRun {
 		base.DryRun = true
@@ -81,6 +86,9 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	base.S3.SecretKey = template(base.S3.SecretKey)
 
 	ldap := base.Ldap
+	if ldap.Port == "" {
+		ldap.Port = "636"
+	}
 	if ldap != nil {
 		ldap.Username = template(ldap.Username)
 		ldap.Password = template(ldap.Password)
@@ -125,6 +133,14 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.IngressCA.Password = template(base.IngressCA.Password)
 	}
 
+	if base.FluentdOperator != nil {
+		base.FluentdOperator.Elasticsearch.Password = template(base.FluentdOperator.Elasticsearch.Password)
+	}
+
+	if base.Filebeat != nil && base.Filebeat.Elasticsearch != nil {
+		base.Filebeat.Elasticsearch.Password = template(base.Filebeat.Elasticsearch.Password)
+	}
+
 	gitops := base.GitOps
 	for i := range gitops {
 		gitops[i].GitKey = template(gitops[i].GitKey)
@@ -159,8 +175,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		}
 	}
 
-	data, _ := yaml.Marshal(base)
-	log.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
+	showConfig, _ := cmd.Flags().GetBool("show-config")
+
+	if showConfig {
+		data, _ := yaml.Marshal(base)
+		log.Infof("Using configuration: \n%s\n", console.StripSecrets(string(data)))
+	}
 	return base
 }
 

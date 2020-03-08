@@ -2,15 +2,11 @@ package harbor
 
 import (
 	"fmt"
-	"os"
+	"strings"
 
-	"github.com/flanksource/commons/console"
-	"github.com/flanksource/commons/deps"
-	"github.com/flanksource/commons/files"
-	"github.com/flanksource/commons/text"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/platform-cli/pkg/phases/pgo"
+	"github.com/moshloop/konfigadm/pkg/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -21,63 +17,113 @@ func Deploy(p *platform.Platform) error {
 	} else {
 		log.Infof("Deploying harbor %s", p.Harbor.Version)
 	}
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		return err
+	}
 	defaults(p)
-	if p.Harbor.DB == nil {
-		db, err := pgo.GetOrCreateDB(p, dbCluster, p.Harbor.Replicas)
-		if err != nil {
-			return fmt.Errorf("deploy: failed to create db cluster: %v", err)
+	var nonce string
+	if p.HasSecret(Namespace, "harbor-secret") {
+		nonce = string((*p.GetSecret(Namespace, "harbor-secret"))["secret"])
+	} else {
+		nonce = utils.RandomString(16)
+		if err := p.CreateOrUpdateSecret("harbor-secret", Namespace, map[string][]byte{
+			"secret": []byte(nonce),
+		}); err != nil {
+			return err
 		}
-		if err := pgo.WaitForDB(p, dbCluster, 120); err != nil {
-			return fmt.Errorf("deploy: failed to wait for db, %v", err)
-		}
+	}
 
-		if err := pgo.CreateDatabase(p, dbCluster, dbNames...); err != nil {
-			return fmt.Errorf("deploy: failed to create db: %v", err)
+	if p.Harbor.DB == nil {
+		db, err := p.GetOrCreateDB(dbCluster, dbNames...)
+		if err != nil {
+			return fmt.Errorf("deploy: failed to get/update db: %v", err)
 		}
 		p.Harbor.DB = db
 	}
 
-	if err := files.Getter(fmt.Sprintf("github.com/goharbor/harbor-helm?ref=%s", p.Harbor.ChartVersion), "build/harbor"); err != nil {
-		return fmt.Errorf("deploy: failed to download Harbor: %v", err)
+	if err := p.CreateOrUpdateSecret("harbor-chartmuseum", Namespace, map[string][]byte{
+		"CACHE_REDIS_PASSWORD":  []byte{},
+		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.AccessKey),
+	}); err != nil {
+		return err
 	}
 
-	values, err := p.Template("harbor.yml", "manifests")
+	if err := p.CreateOrUpdateSecret("harbor-clair", Namespace, map[string][]byte{
+		"config.yaml": []byte(getClairConfig(p)),
+		"database":    []byte(p.Harbor.DB.GetConnectionURL("clair")),
+		"redis":       []byte("redis://harbor-redis:6379/4"),
+	}); err != nil {
+		return err
+	}
+
+	coreCert, err := p.CreateIngressCertificate("harbor-core")
 	if err != nil {
-		return fmt.Errorf("deploy: failed to template Harbor manifests: %v", err)
+		return err
 	}
-	log.Tracef("Config: \n%s\n", console.StripSecrets(values))
-	kubeconfig, err := p.GetKubeConfig()
+	tls := coreCert.AsTLSSecret()
+
+	if err := p.CreateOrUpdateSecret("harbor-core", Namespace, map[string][]byte{
+		"HARBOR_ADMIN_PASSWORD": []byte(p.Harbor.AdminPassword),
+		"POSTGRESQL_PASSWORD":   []byte(p.Harbor.DB.Password),
+		"CLAIR_DB_PASSWORD":     []byte(p.Harbor.DB.Password),
+		"tls.key":               []byte(tls["tls.key"]),
+		"tls.crt":               []byte(tls["tls.crt"]),
+		"ca.crt":                []byte(tls["tls.crt"]),
+		"secretKey":             []byte("not-a-secure-key"),
+		"secret":                []byte(nonce),
+	}); err != nil {
+		return err
+	}
+
+	cert, err := p.CreateIngressCertificate("harbor")
 	if err != nil {
-		return fmt.Errorf("deploy: failed to get kubeconfig: %v", err)
-	}
-	helm := deps.BinaryWithEnv("helm", p.Versions["helm"], ".bin", map[string]string{
-		"KUBECONFIG": kubeconfig,
-		"HOME":       os.ExpandEnv("$HOME"),
-		"HELM_HOME":  ".helm",
-	})
-	valuesFile := text.ToFile(values, ".yml")
-	if !log.IsLevelEnabled(log.TraceLevel) {
-		defer os.Remove(valuesFile)
-	}
-	ca := p.TrustedCA
-	if p.TrustedCA != "" {
-		ca = fmt.Sprintf("--ca-file \"%s\"", p.TrustedCA)
+		return err
 	}
 
-	err = helm("init -c --skip-refresh=true")
-	if err != nil {
-		return fmt.Errorf("deploy: failed to init helm %v", err)
-	}
-	debug := ""
-	if log.IsLevelEnabled((log.TraceLevel)) {
-		debug = "--debug"
+	if err := p.CreateOrUpdateSecret("harbor-ingress", Namespace, cert.AsTLSSecret()); err != nil {
+		return err
 	}
 
-	if err := helm("upgrade harbor build/harbor --wait -f %s --install --namespace harbor %s %s", valuesFile, ca, debug); err != nil {
-		return fmt.Errorf("deploy: failed to deploy harbor helm chart %v", err)
+	if err := p.CreateOrUpdateSecret("harbor-registry", Namespace, map[string][]byte{
+		"REGISTRY_HTTP_SECRET":          []byte(nonce),
+		"REGISTRY_REDIS_PASSWORD":       []byte(""),
+		"REGISTRY_STORAGE_S3_ACCESSKEY": []byte(p.S3.AccessKey),
+		"REGISTRY_STORAGE_S3_SECRETKEY": []byte(p.S3.SecretKey),
+	}); err != nil {
+		return err
 	}
 
+	if err := p.CreateOrUpdateSecret("harbor-jobservice", Namespace, map[string][]byte{
+		"secret": []byte(nonce),
+	}); err != nil {
+		return err
+	}
+
+	if err := p.ApplySpecs(Namespace, "harbor.yml"); err != nil {
+		return err
+	}
 	client := NewHarborClient(p)
 	return client.UpdateSettings(*p.Harbor.Settings)
 
+}
+
+func getClairConfig(p *platform.Platform) string {
+	return strings.ReplaceAll(fmt.Sprintf(`
+clair:
+  database:
+    type: pgsql
+    options:
+      source: "%s"
+      # Number of elements kept in the cache
+      # Values unlikely to change (e.g. namespaces) are cached in order to save prevent needless roundtrips to the database.
+      cachesize: 16384
+  api:
+    # API server port
+    port: 6060
+    healthport: 6061
+    # Deadline before an API request will respond with a 503
+    timeout: 300s
+  updater:
+    interval: 12h
+	`, p.Harbor.DB.GetConnectionURL("clair")), "\t", "  ")
 }

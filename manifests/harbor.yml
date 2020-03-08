@@ -1,256 +1,854 @@
-expose:
-  type: ingress
-  tls:
-    enabled: true
-    # Fill the name of secret if you want to use your own TLS certificate.
-    # The secret must contain keys named:
-    # "tls.crt" - the certificate
-    # "tls.key" - the private key
-    # "ca.crt" - the certificate of CA
-    # These files will be generated automatically if the "secretName" is not set
-    secretName: ""
-  ingress:
-    hosts:
-      core: harbor.{{.domain}}
-      notary: notary.{{.domain}}
-    controller: default
-    annotations:
-      ingress.kubernetes.io/ssl-redirect: "true"
-      ingress.kubernetes.io/proxy-body-size: "0"
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-chartmuseum"
+  labels:
+    app: "harbor"
+data:
+  PORT: "9999"
+  CACHE: "redis"
+  CACHE_REDIS_ADDR: "harbor-redis:6379"
+  CACHE_REDIS_DB: "3"
+  BASIC_AUTH_USER: "chart_controller"
+  DEPTH: "1"
+  DEBUG: "false"
+  LOG_JSON: "true"
+  DISABLE_METRICS: "false"
+  DISABLE_API: "false"
+  DISABLE_STATEFILES: "false"
+  ALLOW_OVERWRITE: "true"
+  #CHART_URL: https://core.harbor.domain/chartrepo
+  AUTH_ANONYMOUS_GET: "false"
+  TLS_CERT: ""
+  TLS_KEY: ""
+  CONTEXT_PATH: ""
+  INDEX_LIMIT: "0"
+  MAX_STORAGE_OBJECTS: "0"
+  MAX_UPLOAD_SIZE: "20971520"
+  CHART_POST_FORM_FIELD_NAME: "chart"
+  PROV_POST_FORM_FIELD_NAME: "prov"
+  STORAGE: "amazon"
+  STORAGE_AMAZON_BUCKET: "{{.harbor.bucket}}"
+  STORAGE_AMAZON_REGION: "{{.s3.region}}"
+  STORAGE_AMAZON_ENDPOINT: "{{.s3.endpoint}}"
+  AWS_ACCESS_KEY_ID: "{{.s3.access_key}}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: harbor-core
+  labels:
+    app: "harbor"
+data:
+  app.conf: |+
+    appname = Harbor
+    runmode = dev
+    enablegzip = true
 
-
-externalURL: {{.harbor.url}}
-
-persistence:
-  enabled: true
-  resourcePolicy: "keep"
-  persistentVolumeClaim:
-    registry:
-      # Use the existing PVC which must be created manually before bound,
-      # and specify the "subPath" if the PVC is shared with other components
-      existingClaim: ""
-      # Specify the "storageClass" used to provision the volume. Or the default
-      # StorageClass will be used(the default).
-      # Set it to "-" to disable dynamic provisioning
-      storageClass: ""
-      subPath: ""
-      accessMode: ReadWriteOnce
-      size: 5Gi
-    chartmuseum:
-      existingClaim: ""
-      storageClass: ""
-      subPath: ""
-      accessMode: ReadWriteOnce
-      size: 5Gi
-    jobservice:
-      existingClaim: ""
-      storageClass: ""
-      subPath: ""
-      accessMode: ReadWriteOnce
-      size: 1Gi
-    # If external Redis is used, the following settings for Redis will
-    # be ignored
+    [dev]
+    httpport = 8080
+    EnableXSRF = true
+    XSRFKey = mTYZD8UBh4DstkpUSKTo85c4uRU4eGqJ1bXKvD9J
+    XSRFExpire = 3600
+  DATABASE_TYPE: "postgresql"
+  POSTGRESQL_HOST: "{{.harbor.db.host}}"
+  POSTGRESQL_PORT: "{{.harbor.db.port}}"
+  POSTGRESQL_USERNAME: "{{.harbor.db.username}}"
+  POSTGRESQL_DATABASE: "registry"
+  POSTGRESQL_SSLMODE: "disable"
+  POSTGRESQL_MAX_IDLE_CONNS: "50"
+  POSTGRESQL_MAX_OPEN_CONNS: "100"
+  EXT_ENDPOINT: "{{.harbor.url}}"
+  CORE_URL: "http://harbor-core"
+  JOBSERVICE_URL: "http://harbor-jobservice"
+  REGISTRY_URL: "http://harbor-registry:5000"
+  TOKEN_SERVICE_URL: "http://harbor-core/service/token"
+  WITH_NOTARY: "false"
+  #NOTARY_URL: "http://harbor-notary-server:4443"
+  CFG_EXPIRATION: "5"
+  ADMIRAL_URL: "NA"
+  WITH_CLAIR: "true"
+  CLAIR_DB_HOST: "{{.harbor.db.host}}"
+  CLAIR_DB_PORT: "{{.harbor.db.port}}"
+  CLAIR_DB_USERNAME: "{{.harbor.db.username}}"
+  CLAIR_DB: "clair"
+  CLAIR_DB_SSLMODE: "disable"
+  CLAIR_URL: "http://harbor-clair:6060"
+  CLAIR_ADAPTER_URL: "http://harbor-clair:8080"
+  REGISTRY_STORAGE_PROVIDER_NAME: "s3"
+  WITH_CHARTMUSEUM: "true"
+  CHART_REPOSITORY_URL: "http://harbor-chartmuseum"
+  LOG_LEVEL: "info"
+  CONFIG_PATH: "/etc/core/app.conf"
+  SYNC_REGISTRY: "false"
+  CHART_CACHE_DRIVER: "redis"
+  _REDIS_URL: "harbor-redis:6379,100,"
+  _REDIS_URL_REG: "redis://harbor-redis:6379/2"
+  PORTAL_URL: "http://harbor-portal"
+  REGISTRYCTL_URL: "http://harbor-registry:8080"
+  CLAIR_HEALTH_CHECK_SERVER_URL: "http://harbor-clair:6061"
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-jobservice"
+  labels:
+    app: "harbor"
+data:
+  config.yml: |+
+    protocol: "http"
+    port: 8080
+    worker_pool:
+      workers: 10
+      backend: "redis"
+      redis_pool:
+        redis_url: "harbor-redis:6379/1"
+        namespace: "harbor_job_service_namespace"
+    job_loggers:
+      - name: "FILE"
+        level: INFO
+        settings: # Customized settings of logger
+          base_dir: "/var/log/jobs"
+        sweeper:
+          duration: 14 #days
+          settings: # Customized settings of sweeper
+            work_dir: "/var/log/jobs"
+    #Loggers for the job service
+    loggers:
+      - name: "STD_OUTPUT"
+        level: "{{.harbor.logLevel | strings.ToUpper }}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-registry"
+  labels:
+    app: "harbor"
+data:
+  config.yml: |+
+    version: 0.1
+    log:
+      level: "{{.harbor.logLevel}}"
+      fields:
+        service: registry
+    storage:
+      s3:
+        region: {{.s3.region}}
+        bucket: {{.harbor.bucket}}
+        regionendpoint: {{.s3.endpoint}}
+      cache:
+        layerinfo: redis
+      maintenance:
+        uploadpurging:
+          enabled: false
+      delete:
+        enabled: true
+      redirect:
+        disable: false
     redis:
-      existingClaim: ""
-      storageClass: "local-path"
-      subPath: ""
-      accessMode: ReadWriteOnce
-      size: 1Gi
-  imageChartStorage:
-    disableredirect: false
-    type: s3
-    s3:
-      region: {{.s3.region}}
-      bucket: {{.s3.bucket}}
-      accesskey: {{.s3.access_key}}
-      secretkey: {{.s3.secret_key}}
-      {{ if has .s3 "registry_path" -}}
-      rootdirectory: {{.s3.registry_path}}
-      {{ end -}}
-      regionendpoint: {{.s3.endpoint}}
-      #encrypt: false
-      #keyid: mykeyid
-      secure: false
-      #v4auth: true
-      #chunksize: "5242880"
+      addr: "harbor-redis:6379"
+      db: 2
+    http:
+      relativeurls: false
+      addr: :5000
+      # set via environment variable
+      # secret: placeholder
+      debug:
+        addr: localhost:5001
+        prometheus:
+          enabled: true
+          path: "/metrics"
+    auth:
+      token:
+        issuer: harbor-token-issuer
+        realm: "https://{{ .harbor.url |  strings.TrimPrefix "https://" }}/service/token"
+        rootcertbundle: /etc/registry/root.crt
+        service: harbor-registry
+    validation:
+      disabled: true
+    notifications:
+      endpoints:
+        - name: harbor
+          disabled: false
+          url: http://harbor-core/service/notifications
+          timeout: 3000ms
+          threshold: 5
+          backoff: 1s
+          ignoredmediatypes:
+            - application/vnd.docker.image.rootfs.diff.tar.gzip
+            - application/vnd.docker.image.rootfs.foreign.diff.tar.gzip
+            - application/vnd.oci.image.layer.v1.tar
+            - application/vnd.oci.image.layer.v1.tar+gzip
+            - application/vnd.oci.image.layer.v1.tar+zstd
+            - application/vnd.oci.image.layer.nondistributable.v1.tar
+            - application/vnd.oci.image.layer.nondistributable.v1.tar+gzip
+            - application/vnd.oci.image.layer.nondistributable.v1.tar+zstd
+            - application/octet-stream
+  ctl-config.yml: |+
+    protocol: "http"
+    port: 8080
+    log_level: "{{.harbor.logLevel}}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-chartmuseum"
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 80
+      targetPort: 9999
+  selector:
+    app: "harbor"
+    component: chartmuseum
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-clair"
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - name: adapter
+      port: 8080
+  selector:
+    app: "harbor"
+    component: clair
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: harbor-core
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: "harbor"
+    component: core
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-jobservice"
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: "harbor"
+    component: jobservice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-portal"
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: "harbor"
+    component: portal
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: harbor-redis
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: "harbor"
+    component: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-registry"
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - name: registry
+      port: 5000
+    - name: controller
+      port: 8080
+  selector:
+    app: "harbor"
+    component: registry
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-chartmuseum"
+  labels:
+    app: "harbor"
+    component: chartmuseum
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: chartmuseum
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: chartmuseum
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: chartmuseum
+          image: goharbor/chartmuseum-photon:v0.9.0-{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9999
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9999
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          envFrom:
+            - configMapRef:
+                name: "harbor-chartmuseum"
+            - secretRef:
+                name: "harbor-chartmuseum"
+          env:
+            - name: BASIC_AUTH_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+          ports:
+            - containerPort: 9999
+          volumeMounts:
+            - name: chartmuseum-data
+              mountPath: /chart_storage
+              subPath:
+      volumes:
+        - name: chartmuseum-data
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-clair
+  labels:
+    app: "harbor"
+    component: clair
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: clair
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: clair
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: clair
+          image: goharbor/clair-photon:v{{.harbor.clairVersion}}-{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6061
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6061
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          args: ["-log-level", "{{.harbor.logLevel}}"]
+          env:
+            - name: HTTP_PROXY
+              value: ""
+            - name: HTTPS_PROXY
+              value: ""
+            - name: NO_PROXY
+              value: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
+          ports:
+            - containerPort: 6060
+          volumeMounts:
+            - name: config
+              mountPath: /etc/clair/config.yaml
+              subPath: config.yaml
+        - name: adapter
+          image: goharbor/clair-adapter-photon:v1.0.1-{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /probe/healthy
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /probe/ready
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          env:
+            - name: SCANNER_CLAIR_URL
+              # To avoid a pod cannot reach itself via service IP when the clusters disable hairpin
+              value: "http://127.0.0.1:6060"
+            - name: SCANNER_STORE_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-clair
+                  key: redis
+            - name: SCANNER_CLAIR_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-clair
+                  key: database
+            - name: SCANNER_LOG_LEVEL
+              value: "{{.harbor.logLevel}}"
+          ports:
+            - containerPort: 8080
+      volumes:
+        - name: config
+          secret:
+            secretName: "harbor-clair"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-core
+  labels:
+    app: "harbor"
+    component: core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: core
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: core
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: core
+          image: goharbor/harbor-core:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /api/ping
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/ping
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          envFrom:
+            - configMapRef:
+                name: "harbor-core"
+            - secretRef:
+                name: "harbor-core"
+          env:
+            - name: CORE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+            - name: JOBSERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "harbor-jobservice"
+                  key: secret
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /etc/core/app.conf
+              subPath: app.conf
+            - name: secret-key
+              mountPath: /etc/core/key
+              subPath: key
+            - name: token-service-private-key
+              mountPath: /etc/core/private_key.pem
+              subPath: tls.key
+            - name: ca-download
+              mountPath: /etc/core/ca
+            - name: psc
+              mountPath: /etc/core/token
+      volumes:
+        - name: config
+          configMap:
+            name: harbor-core
+            items:
+              - key: app.conf
+                path: app.conf
+        - name: secret-key
+          secret:
+            secretName: harbor-core
+            items:
+              - key: secretKey
+                path: key
+        - name: token-service-private-key
+          secret:
+            secretName: harbor-core
+        - name: ca-download
+          secret:
+            secretName: "harbor-ingress"
+        - name: psc
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-jobservice"
+  labels:
+    app: "harbor"
+    component: jobservice
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: jobservice
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: jobservice
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: jobservice
+          image: goharbor/harbor-jobservice:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /api/v1/stats
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/stats
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          env:
+            - name: CORE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+            - name: JOBSERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "harbor-jobservice"
+                  key: secret
+            - name: CORE_URL
+              value: "http://harbor-core"
+            - name: REGISTRY_CONTROLLER_URL
+              value: "http://harbor-registry:8080"
+            - name: LOG_LEVEL
+              value: "{{.harbor.logLevel}}"
+            - name: HTTP_PROXY
+              value: ""
+            - name: HTTPS_PROXY
+              value: ""
+            - name: NO_PROXY
+              value: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: jobservice-config
+              mountPath: /etc/jobservice/config.yml
+              subPath: config.yml
+            - name: job-logs
+              mountPath: /var/log/jobs
+              subPath:
+      volumes:
+        - name: jobservice-config
+          configMap:
+            name: "harbor-jobservice"
+        - name: job-logs
+          emptyDir: {}
 
-      #storageclass: STANDARD
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-portal"
+  labels:
+    app: "harbor"
+    component: portal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: portal
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: portal
+    spec:
+      containers:
+        - name: portal
+          image: goharbor/harbor-portal:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-registry"
+  labels:
+    app: "harbor"
+    component: registry
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: registry
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: registry
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: registry
+          image: goharbor/registry-photon:{{.harbor.registryVersion}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          args: ["serve", "/etc/registry/config.yml"]
+          envFrom:
+            - secretRef:
+                name: "harbor-registry"
+          ports:
+            - containerPort: 5000
+            - containerPort: 5001
+          volumeMounts:
+            - name: registry-data
+              mountPath: /storage
+              subPath:
+            - name: registry-root-certificate
+              mountPath: /etc/registry/root.crt
+              subPath: tls.crt
+            - name: registry-config
+              mountPath: /etc/registry/config.yml
+              subPath: config.yml
+        - name: registryctl
+          image: goharbor/harbor-registryctl:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          args: ["serve", "/etc/registry/config.yml"]
+          envFrom:
+            - secretRef:
+                name: "harbor-registry"
+          env:
+            - name: CORE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+            - name: JOBSERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-jobservice
+                  key: secret
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: registry-data
+              mountPath: /storage
+              subPath:
+            - name: registry-config
+              mountPath: /etc/registry/config.yml
+              subPath: config.yml
+            - name: registry-config
+              mountPath: /etc/registryctl/config.yml
+              subPath: ctl-config.yml
+      volumes:
+        - name: registry-root-certificate
+          secret:
+            secretName: harbor-core
+        - name: registry-config
+          configMap:
+            name: "harbor-registry"
+        - name: registry-data
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: harbor-redis
+  labels:
+    app: "harbor"
+    component: redis
+spec:
+  replicas: 1
+  serviceName: harbor-redis
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: redis
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: redis
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: redis
+          image: goharbor/redis-photon:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/redis
+              subPath:
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: "harbor"
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "1Gi"
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "harbor-ingress"
+  labels:
+    app: "harbor"
+  annotations:
+    ingress.kubernetes.io/proxy-body-size: "0"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - secretName: "harbor-ingress"
+      hosts:
+        - "{{ .harbor.url | strings.TrimPrefix  "https://" }}"
 
-
-imagePullPolicy: IfNotPresent
-
-logLevel: debug
-# The initial password of Harbor admin. Change it from portal after launching Harbor
-harborAdminPassword: "Harbor12345"
-# The secret key used for encryption. Must be a string of 16 chars.
-secretKey: "not-a-secure-key"
-portal:
-  image:
-    repository: goharbor/harbor-portal
-    tag: {{.harbor.version}}
-  replicas: {{.harbor.replicas}}
-resources:
- requests:
-   memory: 256Mi
-   cpu: 100m
-
-core:
-  image:
-    repository: goharbor/harbor-core
-    tag: {{.harbor.version}}
-  replicas: {{.harbor.replicas}}
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-  # Secret is used when core server communicates with other components.
-  # If a secret key is not specified, Helm will generate one.
-  # Must be a string of 16 chars.
-  secret: ""
-  # Fill the name of a kubernetes secret if you want to use your own
-  # TLS certificate and private key for token encryption/decryption.
-  # The secret must contain keys named:
-  # "tls.crt" - the certificate
-  # "tls.key" - the private key
-  # The default key pair will be used if it isn't set
-  secretName: ""
-
-jobservice:
-  image:
-    repository: goharbor/harbor-jobservice
-    tag: {{.harbor.version}}
-  replicas: {{.harbor.replicas}}
-  maxJobWorkers: 10
-  # The logger for jobs: "file", "database" or "stdout"
-  jobLogger: stdout
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-  # Secret is used when job service communicates with other components.
-  # If a secret key is not specified, Helm will generate one.
-  # Must be a string of 16 chars.
-  secret: ""
-
-registry:
-  registry:
-    image:
-      repository: goharbor/registry-photon
-  {{ if .harbor.version | strings.HasPrefix "v1.8" }}
-      tag: v2.7.1-patch-2819-{{.harbor.version}}
-  {{else}}
-      tag: v2.7.1-patch-2819-2553-{{.harbor.version}}
-  {{end}}
-    resources:
-     requests:
-       memory: 256Mi
-       cpu: 100m
-  controller:
-    image:
-      repository: goharbor/harbor-registryctl
-      tag: {{.harbor.version}}
-    resources:
-     requests:
-       memory: 256Mi
-       cpu: 100m
-  replicas: {{.harbor.replicas}}
-  # Secret is used to secure the upload state from client
-  # and registry storage backend.
-  # See: https://github.com/docker/distribution/blob/master/docs/configuration.md#http
-  # If a secret key is not specified, Helm will generate one.
-  # Must be a string of 16 chars.
-  secret: ""
-
-
-chartmuseum:
-  enabled: true
-  # Harbor defaults ChartMuseum to returning relative urls, if you want using absolute url you should enable it by change the following value to 'true'
-  absoluteUrl: false
-  image:
-    repository: goharbor/chartmuseum-photon
-    tag: v0.9.0-{{.harbor.version}}
-  replicas: {{.harbor.replicas}}
-  resources:
-   requests:
-     memory: 256Mi
-     cpu: 100m
-
-clair:
-  enabled: true
-  image:
-    repository: goharbor/clair-photon
-    tag: v{{.harbor.clairVersion}}-{{.harbor.version}}
-  replicas: {{.harbor.replicas}}
-  # The interval of clair updaters, the unit is hour, set to 0 to
-  # disable the updaters
-  updatersInterval: 12
-  resources:
-   requests:
-     memory: 256Mi
-     cpu: 100m
-  affinity: {}
-
-notary:
-  enabled: false
-  server:
-    image:
-      repository: goharbor/notary-server-photon
-      tag: {{.harbor.version}}
-    replicas: {{.harbor.replicas}}
-    resources:
-     requests:
-       memory: 256Mi
-       cpu: 100m
-  signer:
-    image:
-      repository: goharbor/notary-signer-photon
-      tag: {{.harbor.version}}
-    replicas: {{.harbor.replicas}}
-    resources:
-     requests:
-       memory: 256Mi
-       cpu: 100m
-  # Fill the name of a kubernetes secret if you want to use your own
-  # TLS certificate authority, certificate and private key for notary
-  # communications.
-  # The secret must contain keys named ca.crt, tls.crt and tls.key that
-  # contain the CA, certificate and private key.
-  # They will be generated if not set.
-  secretName: ""
-
-database:
-  # if external database is used, set "type" to "external"
-  # and fill the connection informations in "external" section
-  type: external
-  external:
-    host: "{{.harbor.db.host}}"
-    port: "{{.harbor.db.port}}"
-    username: "{{.harbor.db.username}}"
-    password: "{{.harbor.db.password}}"
-    coreDatabase: "registry"
-    clairDatabase: "clair"
-    notaryServerDatabase: "notary_server"
-    notarySignerDatabase: "notary_signer"
-    sslmode: "disable"
-  # The maximum number of connections in the idle connection pool.
-  # If it <=0, no idle connections are retained.
-  maxIdleConns: 50
-  # The maximum number of open connections to the database.
-  # If it <= 0, then there is no limit on the number of open connections.
-  # Note: the default number of connections is 100 for postgre.
-  maxOpenConns: 100
-
-redis:
-  # if external Redis is used, set "type" to "external"
-  # and fill the connection informations in "external" section
-  type: internal
-  internal:
-    image:
-      repository: goharbor/redis-photon
-      tag: {{.harbor.version}}
-    resources:
-     requests:
-       memory: 256Mi
-       cpu: 100m
+  rules:
+    - http:
+        paths:
+          - path: /
+            backend:
+              serviceName: harbor-portal
+              servicePort: 80
+          - path: /api/
+            backend:
+              serviceName: harbor-core
+              servicePort: 80
+          - path: /service/
+            backend:
+              serviceName: harbor-core
+              servicePort: 80
+          - path: /v2/
+            backend:
+              serviceName: harbor-core
+              servicePort: 80
+          - path: /chartrepo/
+            backend:
+              serviceName: harbor-core
+              servicePort: 80
+          - path: /c/
+            backend:
+              serviceName: harbor-core
+              servicePort: 80
+      host: "{{ .harbor.url | strings.TrimPrefix  "https://" }}"

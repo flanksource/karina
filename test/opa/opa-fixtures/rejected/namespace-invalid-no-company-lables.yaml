@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: no-company-lables-namespace
+  annotations:
+    ingress-whitelist: "*.acmecorp.com"
+    registry-whitelist: "nginx,grafana,prom"

@@ -4,11 +4,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"k8s.io/client-go/kubernetes"
 )
 
 func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *console.TestResults) {
@@ -26,6 +25,7 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 	}
 
 	kubectl := p.GetKubectl()
+
 	if err := kubectl("apply -f test/opa/namespaces/"); err != nil {
 		test.Failf("opa", "Failed to setup namespaces: %v", err)
 		return
@@ -65,4 +65,10 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 			test.Passf(acceptedFixture.Name(), "%s accepted by Gatekeeper as expected", acceptedFixture.Name())
 		}
 	}
+
+	// cleanup old objects
+	_ = kubectl("delete -f test/opa/namespaces/ --force &> /dev/null")
+	_ = kubectl("delete -f test/opa/ingress-duplicate.yaml --force &> /dev/null")
+	_ = kubectl("delete -f test/opa/opa-fixtures/accepted/ --force &> /dev/null")
+	_ = kubectl("delete -f test/opa/opa-fixtures/rejected/ --force &> /dev/null")
 }

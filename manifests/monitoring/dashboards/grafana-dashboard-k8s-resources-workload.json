@@ -58,7 +58,7 @@
                             "expr": "sum(\n    node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{cluster=\"$cluster\", namespace=\"$namespace\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=\"$namespace\", workload=\"$workload\", workload_type=\"$type\"}\n) by (pod)\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -423,7 +423,7 @@
                             "expr": "sum(\n    container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", container!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=\"$namespace\", workload=\"$workload\", workload_type=\"$type\"}\n) by (pod)\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1082,7 +1082,7 @@
                             "expr": "(sum(irate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1180,7 +1180,7 @@
                             "expr": "(sum(irate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1278,7 +1278,7 @@
                             "expr": "(avg(irate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1376,7 +1376,7 @@
                             "expr": "(avg(irate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1474,7 +1474,7 @@
                             "expr": "(sum(irate(container_network_receive_packets_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1572,7 +1572,7 @@
                             "expr": "(sum(irate(container_network_transmit_packets_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1670,7 +1670,7 @@
                             "expr": "(sum(irate(container_network_receive_packets_dropped_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod)\ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1768,7 +1768,7 @@
                             "expr": "(sum(irate(container_network_transmit_packets_dropped_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$interval])\n* on (namespace,pod) \ngroup_left(workload,workload_type) mixin_pod_workload{cluster=\"$cluster\", namespace=~\"$namespace\", workload=~\"$workload\", workload_type=\"$type\"}) by (pod))\n",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }

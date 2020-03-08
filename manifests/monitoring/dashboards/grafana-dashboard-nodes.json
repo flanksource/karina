@@ -72,7 +72,7 @@
                             "format": "time_series",
                             "interval": "1m",
                             "intervalFactor": 5,
-                            "legendFormat": "{{cpu}}",
+                            {{ `"legendFormat": "{{cpu}}"`}},
                             "refId": "A"
                         }
                     ],
@@ -505,7 +505,7 @@
                             "format": "time_series",
                             "interval": "1m",
                             "intervalFactor": 2,
-                            "legendFormat": "{{device}} read",
+                            {{`"legendFormat": "{{device}} read"`}},
                             "refId": "A"
                         },
                         {
@@ -513,7 +513,7 @@
                             "format": "time_series",
                             "interval": "1m",
                             "intervalFactor": 2,
-                            "legendFormat": "{{device}} written",
+                            {{`"legendFormat": "{{device}} written"`}},
                             "refId": "B"
                         },
                         {
@@ -521,7 +521,7 @@
                             "format": "time_series",
                             "interval": "1m",
                             "intervalFactor": 2,
-                            "legendFormat": "{{device}} io time",
+                            {{`"legendFormat": "{{device}} io time"`}},
                             "refId": "C"
                         }
                     ],
@@ -731,7 +731,7 @@
                             "format": "time_series",
                             "interval": "1m",
                             "intervalFactor": 2,
-                            "legendFormat": "{{device}}",
+                            {{ `"legendFormat": "{{device}}"`}},
                             "refId": "A"
                         }
                     ],
@@ -823,7 +823,7 @@
                             "format": "time_series",
                             "interval": "1m",
                             "intervalFactor": 2,
-                            "legendFormat": "{{device}}",
+                            {{ `"legendFormat": "{{device}}"`}},
                             "refId": "A"
                         }
                     ],

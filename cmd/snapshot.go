@@ -9,24 +9,24 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/snapshot"
 )
 
-var outputDir string
-var since time.Duration
-var includeSpecs bool
+var opts = snapshot.SnapshotOptions{}
 var Snapshot = &cobra.Command{
 	Use:   "snapshot",
 	Short: "Take a snapshot of the running system",
 	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := snapshot.Take(getPlatform(cmd), outputDir, since, args, includeSpecs); err != nil {
+		opts.Namespaces = args
+		if err := snapshot.Take(getPlatform(cmd), opts); err != nil {
 			log.Fatalf("Failed to get cluster snapshot, %s", err)
 		}
 	},
 }
 
 func init() {
-	Snapshot.Flags().StringVarP(&outputDir, "output-dir", "o", "snapshot", "Output directory for snapshot")
+	Snapshot.Flags().StringVarP(&opts.Destination, "output-dir", "o", "snapshot", "Output directory for snapshot")
 	since, _ := time.ParseDuration("4h")
-	Snapshot.Flags().DurationVar(&since, "since", since, "Return logs newer than a relative duration like 5s, 2m, or 3h")
-	Snapshot.Flags().BoolVarP(&includeSpecs, "include-specs", "i", false, "Export yaml specs")
-
+	Snapshot.Flags().DurationVar(&opts.LogsSince, "since", since, "Return logs newer than a relative duration like 5s, 2m, or 3h")
+	Snapshot.Flags().BoolVarP(&opts.IncludeSpecs, "include-specs", "", false, "Export yaml specs")
+	Snapshot.Flags().BoolVarP(&opts.IncludeEvents, "include-events", "", true, "Export events")
+	Snapshot.Flags().BoolVarP(&opts.IncludeLogs, "include-logs", "", true, "Export logs for pods")
 }

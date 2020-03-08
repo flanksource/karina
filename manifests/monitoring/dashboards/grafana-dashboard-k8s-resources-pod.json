@@ -58,7 +58,7 @@
                             "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"$namespace\", pod=\"$pod\", container!=\"POD\", cluster=\"$cluster\"}) by (container)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{container}}",
+                            {{ `"legendFormat": "{{container}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -423,7 +423,7 @@
                             "expr": "sum(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"POD\", container!=\"\"}) by (container)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{container}} (RSS)",
+                            {{`"legendFormat": "{{container}} (RSS)"`}},
                             "legendLink": null,
                             "step": 10
                         },
@@ -431,7 +431,7 @@
                             "expr": "sum(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"POD\", container!=\"\"}) by (container)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{container}} (Cache)",
+                            {{`"legendFormat": "{{container}} (Cache)"`}},
                             "legendLink": null,
                             "step": 10
                         },
@@ -439,7 +439,7 @@
                             "expr": "sum(container_memory_swap{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"POD\", container!=\"\"}) by (container)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{container}} (Swap)",
+                            {{`"legendFormat": "{{container}} (Swap)"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -885,7 +885,7 @@
                             "expr": "sum(irate(container_network_receive_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -983,7 +983,7 @@
                             "expr": "sum(irate(container_network_transmit_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1081,7 +1081,7 @@
                             "expr": "sum(irate(container_network_receive_packets_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1179,7 +1179,7 @@
                             "expr": "sum(irate(container_network_transmit_packets_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1277,7 +1277,7 @@
                             "expr": "sum(irate(container_network_receive_packets_dropped_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }
@@ -1375,7 +1375,7 @@
                             "expr": "sum(irate(container_network_transmit_packets_dropped_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$interval])) by (pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
-                            "legendFormat": "{{pod}}",
+                            {{ `"legendFormat": "{{pod}}"`}},
                             "legendLink": null,
                             "step": 10
                         }

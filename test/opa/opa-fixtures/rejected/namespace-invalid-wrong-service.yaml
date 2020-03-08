@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: invalid-namespace-wrong-service
+  labels:
+    company: company-x
+    service: Company-Y-Service-One
+

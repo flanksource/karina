@@ -1,6 +1,7 @@
 package harbor
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -24,10 +25,15 @@ var clairVersions = map[string]string{
 	"v1.8.6": "2.1.0",
 }
 
+const Namespace = "harbor"
+
 func defaults(p *platform.Platform) {
 	harbor := p.Harbor
 	if harbor == nil {
 		return
+	}
+	if harbor.LogLevel == "" {
+		harbor.LogLevel = "warn"
 	}
 	if harbor.AdminPassword == "" {
 		harbor.AdminPassword = "Harbor12345"
@@ -43,24 +49,33 @@ func defaults(p *platform.Platform) {
 			harbor.ClairVersion = clairVersions["latest"]
 		}
 	}
+	if harbor.RegistryVersion == "" {
+		harbor.RegistryVersion = "v2.7.1-patch-2819-2553-" + harbor.Version
+	}
 
 	if harbor.Replicas == 0 {
 		harbor.Replicas = 1
 	}
 	if p.Ldap != nil {
+		if p.Ldap.GroupNameAttr == "" {
+			p.Ldap.GroupNameAttr = "name"
+		}
+		if p.Ldap.GroupObjectClass == "" {
+			p.Ldap.GroupObjectClass = "group"
+		}
 		settings := harbor.Settings
 		if settings == nil {
 			settings = &types.HarborSettings{}
 		}
 		settings.LdapURL = "ldaps://" + p.Ldap.Host
-		settings.LdapBaseDN = p.Ldap.BindDN
+		settings.LdapBaseDN = p.Ldap.UserDN
 		verify := false
 		settings.LdapVerifyCert = &verify
 		settings.AuthMode = "ldap_auth"
 		settings.LdapUID = "sAMAccountName"
 		settings.LdapSearchPassword = p.Ldap.Password
 		settings.LdapSearchDN = p.Ldap.Username
-		settings.LdapGroupSearchFilter = "objectclass=group"
+		settings.LdapGroupSearchFilter = fmt.Sprintf("objectclass=%s", p.Ldap.GroupObjectClass)
 		settings.LdapGroupAdminDN = p.Ldap.AdminGroup
 		harbor.Settings = settings
 	}

@@ -10,6 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/moshloop/platform-cli/pkg/constants"
+	"github.com/moshloop/platform-cli/pkg/phases/ingress"
+	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -62,6 +65,30 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
+	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
+		"quack.pusher.com/enabled": "true",
+	}, nil); err != nil {
+		return err
+	}
+
+	var secrets = make(map[string][]byte)
+
+	secrets["AWS_ACCESS_KEY_ID"] = []byte(platform.S3.AccessKey)
+	secrets["AWS_SECRET_ACCESS_KEY"] = []byte(platform.S3.SecretKey)
+
+	if platform.Ldap != nil {
+		secrets["LDAP_USERNAME"] = []byte(platform.Ldap.Username)
+		secrets["LDAP_PASSWORD"] = []byte(platform.Ldap.Password)
+	}
+
+	if err := platform.CreateOrUpdateSecret("secrets", constants.PlatformSystem, secrets); err != nil {
+		return err
+	}
+
+	if err := nginx.Install(platform); err != nil {
+		log.Fatalf("Error deploying nginx %s\n", err)
+	}
+
 	if platform.Quack == nil || !platform.Quack.Disabled {
 		log.Infof("Installing Quack")
 		if err := platform.ApplySpecs("", "quack.yml"); err != nil {
@@ -76,10 +103,11 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Dashboard == nil || !platform.Dashboard.Disabled {
+	if !platform.Dashboard.Disabled {
 		log.Infof("Installing K8s dashboard")
+		platform.Dashboard.AccessRestricted.Snippet = ingress.IngressNginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yml"); err != nil {
-			log.Errorf("Error K8s dashboard: %s\n", err)
+			log.Errorf("Error installing K8s dashboard: %s\n", err)
 		}
 	}
 

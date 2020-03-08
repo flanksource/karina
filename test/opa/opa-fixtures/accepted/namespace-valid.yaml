@@ -1,10 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: bendersnatch
-  labels: 
-    team-name: bendersnatch
-    technical-lead: superolo
-  annotations:
-    ingress-whitelist: "*.acmecorp.com"
-    registry-whitelist: "nginx,grafana,prom,k8s.gcr.io"
+  name: valid-namespace
+  labels:
+    company: company-x
+    service: Company-X-Service-One

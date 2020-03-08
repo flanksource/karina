@@ -22,3 +22,7 @@ templates/static.go
 snapshot/
 .idea
 .vscode
+<<<<<<< HEAD
+=======
+.certs
+>>>>>>> upstream/master
