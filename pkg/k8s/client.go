@@ -13,6 +13,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	certs "github.com/flanksource/commons/certs"
+	"github.com/flanksource/commons/files"
 	utils "github.com/flanksource/commons/utils"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
@@ -41,13 +42,15 @@ import (
 )
 
 type Client struct {
-	GetKubeConfigBytes func() ([]byte, error)
-	client             *kubernetes.Clientset
-	dynamicClient      dynamic.Interface
-	restConfig         *rest.Config
-	ApplyDryRun        bool
-	kustomizeManager   *kustomize.Manager
-	restMapper         meta.RESTMapper
+	GetKubeConfigBytes  func() ([]byte, error)
+	ApplyDryRun         bool
+	GetKustomizePatches func() ([]string, error)
+	client              *kubernetes.Clientset
+	dynamicClient       dynamic.Interface
+	restConfig          *rest.Config
+
+	kustomizeManager *kustomize.Manager
+	restMapper       meta.RESTMapper
 }
 
 func (c *Client) GetKustomize() (*kustomize.Manager, error) {
@@ -55,6 +58,26 @@ func (c *Client) GetKustomize() (*kustomize.Manager, error) {
 		return c.kustomizeManager, nil
 	}
 	dir, _ := ioutil.TempDir("", "platform-cli-kustomize")
+	patches, err := c.GetKustomizePatches()
+	if err != nil {
+		return nil, err
+	}
+
+	no := 1
+	for _, patch := range patches {
+		if files.Exists(patch) {
+			if err := files.Copy(patch, dir+"/"+files.GetBaseName(patch)); err != nil {
+				return nil, err
+			}
+		} else {
+			name := fmt.Sprintf("patch-%d.yml", no)
+			no++
+			if _, err := files.CopyFromReader(bytes.NewBufferString(patch), dir+"/"+name, 0644); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	kustomizeManager, err := kustomize.GetManager(dir)
 	c.kustomizeManager = kustomizeManager
 	return c.kustomizeManager, err
@@ -288,7 +311,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
-			return fmt.Errorf("apply: failed to get dynamic client: %v", err)
+			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
 		if c.ApplyDryRun {
