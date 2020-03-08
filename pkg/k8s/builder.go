@@ -51,6 +51,8 @@ func (b *Builder) SetNamespace(namespace string) *Builder {
 
 func (b *Builder) ConfigMap(name string, data map[string]string) *Builder {
 	b.Append(&v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{Kind: "ConfigMap", APIVersion: "v1"},
+
 		ObjectMeta: b.ObjectMeta(name),
 		Data:       data,
 	})
@@ -59,6 +61,7 @@ func (b *Builder) ConfigMap(name string, data map[string]string) *Builder {
 
 func (b *Builder) Secret(name string, data map[string][]byte) *Builder {
 	b.Append(&v1.Secret{
+		TypeMeta:   metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: b.ObjectMeta(name),
 		Type:       "opaque",
 		Data:       data,
@@ -377,6 +380,7 @@ func (d *DeploymentBuilder) Expose(ports ...int32) *DeploymentBuilder {
 		})
 	}
 	d.Builder.Append(&v1.Service{
+		TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
 		ObjectMeta: d.Builder.ObjectMeta(d.Name),
 		Spec: v1.ServiceSpec{
 			Selector: d.GetLabels(),
@@ -388,6 +392,7 @@ func (d *DeploymentBuilder) Expose(ports ...int32) *DeploymentBuilder {
 
 func (d *DeploymentBuilder) Build() *Builder {
 	d.Builder.Append(&apps.Deployment{
+		TypeMeta:   metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
 		ObjectMeta: d.Builder.ObjectMeta(d.Name),
 		Spec: apps.DeploymentSpec{
 			Replicas: &d.replicas,
@@ -402,6 +407,7 @@ func (d *DeploymentBuilder) Build() *Builder {
 
 func (b *Builder) ServiceAccount(name string) *ServiceAccountBuilder {
 	b.Append(&v1.ServiceAccount{
+		TypeMeta:   metav1.TypeMeta{Kind: "ServiceAccount", APIVersion: "v1"},
 		ObjectMeta: b.ObjectMeta(name),
 	})
 	return &ServiceAccountBuilder{
@@ -420,7 +426,7 @@ func (s *ServiceAccountBuilder) AddRole(role string) *ServiceAccountBuilder {
 		ObjectMeta: s.ObjectMeta(s.Name + "-" + role),
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "RoleBinding",
-			APIVersion: " bac.authorization.k8s.io/v1",
+			APIVersion: "rbac.authorization.k8s.io/v1",
 		},
 		Subjects: []rbac.Subject{
 			rbac.Subject{
