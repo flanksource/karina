@@ -1,11 +1,6 @@
 package cmd
 
 import (
-<<<<<<< HEAD
-	"github.com/moshloop/platform-cli/pkg/phases/contour"
-	"github.com/moshloop/platform-cli/pkg/phases/eck"
-=======
->>>>>>> upstream/master
 	"io/ioutil"
 	"os"
 	"path"
@@ -16,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/moshloop/platform-cli/pkg/phases/base"
+	"github.com/moshloop/platform-cli/pkg/phases/contour"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
