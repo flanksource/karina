@@ -385,6 +385,11 @@ type Connection struct {
 	Verify   string `yaml:"verify,omitempty"`
 }
 
+type ConfigMapReloader struct {
+	Version   string  `yaml:"version"`
+	Disabled  bool    `yaml:"disabled,omitempty"`
+}
+
 func (c Connection) GetURL() string {
 	url := c.URL
 	if c.Port != "" && !strings.Contains(url, ":") {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	"io/ioutil"
 	"os"
 	"path"
@@ -178,6 +179,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "configmap-reloader",
+		Short: "Test configmap-reloader",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(configmapReloader.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -194,6 +204,7 @@ func init() {
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
+				configmapReloader.Test(p, test)
 			})
 		},
 	})

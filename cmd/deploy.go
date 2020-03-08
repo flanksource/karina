@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -104,6 +105,9 @@ func init() {
 			}
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying filebeat %s\n", err)
+			}
+			if err := configmapReloader.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying configmap-reloader %s\n", err)
 			}
 		},
 	}
@@ -260,5 +264,17 @@ func init() {
 			}
 		},
 	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "configmap-reloader",
+		Short: "Deploy configmap-reloader",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := configmapReloader.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying configmap-reloader %s\n", err)
+			}
+		},
+	})
+
 	Deploy.AddCommand(_opa, all)
 }

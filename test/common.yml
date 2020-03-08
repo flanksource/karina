@@ -121,3 +121,5 @@ oauth2Proxy:
 prometheus: 
   persistence: 
     capacity: 10Gi
+configmapReloader:
+  version: "v0.0.56"
