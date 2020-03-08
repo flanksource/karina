@@ -59,6 +59,7 @@ type PlatformConfig struct {
 	Minio                 *Enabled          `yaml:"minio,omitempty"`
 	FluentdOperator       *FluentdOperator  `yaml:"fluentd-operator,omitempty"`
 	ECK                   *ECK              `yaml:"eck,omitempty"`
+	Contour               *Contour          `yaml:"contour,omitempty"`
 }
 
 type Enabled struct {
@@ -362,6 +363,11 @@ type NodeLocalDNS struct {
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
 }
 
+type Contour struct {
+	Disabled bool   `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version,omitempty"`
+}
+
 func (p PlatformConfig) GetImagePath(image string) string {
 	if p.DockerRegistry == "" {
 		return image
@@ -380,4 +386,11 @@ func (p PlatformConfig) GetVMCount() int {
 func (platform *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(platform)
 	return string(data)
+}
+
+func (platform *PlatformConfig) GetIngressController() string {
+	if (platform.Nginx == nil && platform.Contour == nil) || (platform.Nginx != nil && !platform.Nginx.Disabled) {
+		return "nginx"
+	}
+	return "contour"
 }

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/contour"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"io/ioutil"
 	"os"
@@ -167,6 +168,14 @@ func init() {
 		},
 	})
 	Test.AddCommand(&cobra.Command{
+		Use:   "contour",
+		Short: "Test contour",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(contour.Test)
+		},
+	})
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -183,6 +192,7 @@ func init() {
 				nsx.Test(p, test)
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
+				contour.Test(p, test)
 			})
 		},
 	})

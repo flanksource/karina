@@ -19,12 +19,14 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 		k8s.TestNamespace(client, "quack", test)
 	}
 
-	if platform.Nginx == nil || !platform.Nginx.Disabled {
-		k8s.TestNamespace(client, "ingress-nginx", test)
-	}
-
 	if platform.Minio == nil || !platform.Minio.Disabled {
 		k8s.TestNamespace(client, "minio", test)
+	}
+
+	if platform.GetIngressController() == "contour" {
+		k8s.TestNamespace(client, "contour", test)
+	} else {
+		k8s.TestNamespace(client, "nginx-ingress", test)
 	}
 
 }

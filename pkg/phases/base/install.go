@@ -1,8 +1,11 @@
 package base
 
 import (
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/moshloop/platform-cli/pkg/phases/contour"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,12 +27,12 @@ func Install(platform *platform.Platform) error {
 	if !platform.NodeLocalDNS.Disabled {
 		client, err := platform.GetClientset()
 		if err != nil {
-			return err
+			return fmt.Errorf("install: Failed to get clientset: %v", err)
 		}
 
 		kubeDNS, err := client.CoreV1().Services("kube-system").Get("kube-dns", metav1.GetOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("install: Failed to get service: %v", err)
 		}
 
 		platform.NodeLocalDNS.DNSServer = kubeDNS.Spec.ClusterIP
@@ -94,10 +97,15 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Nginx == nil || !platform.Nginx.Disabled {
+	if platform.GetIngressController() == "nginx" {
 		log.Infof("Installing Nginx Ingress Controller")
 		if err := platform.ApplySpecs("", "nginx.yml"); err != nil {
 			log.Errorf("Error deploying nginx: %s\n", err)
+		}
+	} else if platform.GetIngressController() == "contour" {
+		log.Infof("Installing Contour Ingress Controller")
+		if err := contour.Deploy(platform); err != nil {
+			log.Errorf("Error installing Contour: %s", err)
 		}
 	}
 
@@ -117,7 +125,7 @@ func Install(platform *platform.Platform) error {
 			"region":          []byte(platform.S3.Region),
 		})
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
-			return err
+			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}
 	}
 

@@ -65,7 +65,6 @@ pgo:
 harbor:
   replicas: 1
   version: v1.10.0
-  chartVersion: v1.3.0
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -80,3 +79,5 @@ fluentd-operator:
   repository: jvassev/kube-fluentd-operator
 eck:
   version: 1.0.0
+contour:
+  version: v0.15.0
