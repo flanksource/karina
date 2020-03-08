@@ -376,11 +376,11 @@ type NodeLocalDNS struct {
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
 }
 
-<<<<<<< HEAD
 type Contour struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version,omitempty"`
-=======
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`
@@ -399,7 +399,6 @@ func (c Connection) GetURL() string {
 		url = c.Scheme + "://" + url
 	}
 	return url
->>>>>>> upstream/master
 }
 
 func (p PlatformConfig) GetImagePath(image string) string {
