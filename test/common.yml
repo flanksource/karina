@@ -1,4 +1,6 @@
 name: test
+patches:
+  - ./test/patch1.yml
 domain: 127.0.0.1.nip.io
 ldap:
   adminGroup: NA1
@@ -71,9 +73,7 @@ harbor:
   bucket: harbor-blobs
   version: v1.10.0
 postgresOperator:
-  version: v1.3.1
-  spiloImage: registry.opensource.zalan.do/acid/spilo-12:1.6-p2
-  backupImage: registry.opensource.zalan.do/acid/logical-backup
+  version: v1.3.4
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -120,6 +120,10 @@ oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
   cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=
-prometheus: 
-  persistence: 
+prometheus:
+  persistence:
     capacity: 10Gi
+ca:
+  cert: .certs/ingress-ca-crt.pem
+  privateKey: .certs/ingress-ca-key.pem
+  password: foobar

@@ -29,6 +29,9 @@ data:
                   # ignore nsx INFO messages
                   message: level="INFO"
               - contains:
+                  # ignore nsx DEBUG messages
+                  message: level="DEBUG"
+              - contains:
                   message: GET / HTTP/1.1" 200
               - contains:
                   # ignore harbor-portal access logging
