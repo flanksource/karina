@@ -71,6 +71,7 @@ harbor:
   bucket: harbor-blobs
   version: v1.10.0
 postgresOperator:
+  version: v1.3.3
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
