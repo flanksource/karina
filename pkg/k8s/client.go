@@ -311,7 +311,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
-			return fmt.Errorf("apply: failed to get dynamic client: %v", err)
+			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
 		if c.ApplyDryRun {
