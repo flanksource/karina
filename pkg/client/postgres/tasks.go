@@ -119,9 +119,7 @@ func (db *PostgresDB) Restore(backup string) error {
 func (db *PostgresDB) GenerateBackupJob() *k8s.DeploymentBuilder {
 	op := db.op.Configuration
 
-	builder := k8s.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(),
-		"docker.io/flanksource/postgres-backups:0.1.3")
-	// op.LogicalBackup.DockerImage)
+	builder := k8s.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), op.LogicalBackup.DockerImage)
 	return builder.
 		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
 		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").
