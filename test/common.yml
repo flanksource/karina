@@ -1,6 +1,6 @@
 name: test
 patches:
-  - ./patch1.yml
+  - ./test/patch1.yml
 domain: 127.0.0.1.nip.io
 ldap:
   adminGroup: NA1
@@ -73,7 +73,7 @@ harbor:
   bucket: harbor-blobs
   version: v1.10.0
 postgresOperator:
-  version: v1.3.3
+  version: v1.3.4
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
