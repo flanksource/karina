@@ -218,9 +218,12 @@ type Ldap struct {
 }
 
 type Kubernetes struct {
-	Version          string            `yaml:"version"`
-	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
-	MasterIP         string            `yaml:"masterIP,omitempty"`
+	Version             string            `yaml:"version"`
+	KubeletExtraArgs    map[string]string `yaml:"kubeletExtraArgs,omitempty"`
+	ControllerExtraArgs map[string]string `yaml:"controllerExtraArgs,omitempty"`
+	SchedulerExtraArgs  map[string]string `yaml:"schedulerExtraArgs,omitempty"`
+	APIServerExtraArgs  map[string]string `yaml:"apiServerExtraArgs,omitempty"`
+	MasterIP            string            `yaml:"masterIP,omitempty"`
 }
 
 type Dashboard struct {

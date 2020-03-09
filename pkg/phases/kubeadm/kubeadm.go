@@ -38,7 +38,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	}
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
-	cluster.APIServer.ExtraArgs = make(map[string]string)
+	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
 	if !cfg.Ldap.Disabled {
 		cluster.APIServer.ExtraArgs["oidc-issuer-url"] = "https://dex." + cfg.Domain
 		cluster.APIServer.ExtraArgs["oidc-client-id"] = "kubernetes"
@@ -59,10 +59,13 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		cluster.APIServer.ExtraArgs["runtime-config"] = strings.Join(runtimeConfigs, ",")
 	}
 	if cluster.ControllerManager.ExtraArgs == nil {
-		cluster.ControllerManager.ExtraArgs = make(map[string]string)
+		cluster.ControllerManager.ExtraArgs = cfg.Kubernetes.ControllerExtraArgs
 	}
 	cluster.ControllerManager.ExtraArgs["cluster-signing-cert-file"] = "/etc/kubernetes/pki/csr-ca.crt"
 	cluster.ControllerManager.ExtraArgs["cluster-signing-key-file"] = "/etc/kubernetes/pki/ca.key"
+	if cluster.Scheduler.ExtraArgs == nil {
+		cluster.Scheduler.ExtraArgs = cfg.Kubernetes.SchedulerExtraArgs
+	}
 	return cluster
 }
 
