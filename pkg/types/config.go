@@ -16,6 +16,7 @@ type PlatformConfig struct {
 	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
 	Harbor                *Harbor           `yaml:"harbor,omitempty"`
 	HostPrefix            string            `yaml:"hostPrefix"`
+	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA               `yaml:"ingressCA"`
 	GitOps                []GitOps          `yaml:"gitops,omitempty"`
 	Kubernetes            Kubernetes        `yaml:"kubernetes"`
