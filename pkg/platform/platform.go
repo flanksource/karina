@@ -47,6 +47,9 @@ type Platform struct {
 
 func (platform *Platform) Init() {
 	platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+	platform.Client.GetKustomizePatches = func() ([]string, error) {
+		return platform.Patches, nil
+	}
 	platform.Client.ApplyDryRun = platform.DryRun
 }
 
@@ -445,41 +448,31 @@ func (platform *Platform) ExposeIngress(namespace, service string, port int, ann
 }
 
 func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
-	kubectl := platform.GetKubectl()
-	if namespace != "" {
-		namespace = "-n " + namespace
-	}
-
 	for _, spec := range specs {
 		data, err := yaml.Marshal(spec)
 		if err != nil {
 			return fmt.Errorf("applyCRD: failed to marshal yaml specs: %v", err)
 		}
 
-		if log.IsLevelEnabled(log.TraceLevel) {
-			log.Tracef("Applying %s/%s/%s:\n%s", namespace, spec.Kind, spec.Metadata.Name, string(data))
-		} else {
-			log.Debugf("Applying  %s/%s/%s", namespace, spec.Kind, spec.Metadata.Name)
-		}
-
-		file := text.ToFile(string(data), ".yml")
-		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
-			return fmt.Errorf("applyCRD: failed to apply CRD: %v", err)
+		if err := platform.ApplyText(namespace, string(data)); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
 func (platform *Platform) ApplyText(namespace string, specs ...string) error {
-	kubectl := platform.GetKubectl()
-	if namespace != "" {
-		namespace = "-n " + namespace
+	kustomize, err := platform.GetKustomize()
+	if err != nil {
+		return err
 	}
-
 	for _, spec := range specs {
-		file := text.ToFile(spec, ".yml")
-		if err := kubectl("apply %s -f %s", namespace, file); err != nil {
-			return fmt.Errorf("applyText: failed to apply: %v", err)
+		items, err := kustomize.Kustomize([]byte(spec))
+		if err != nil {
+			return err
+		}
+		if err := platform.Apply(namespace, items...); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -494,17 +487,14 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 }
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
-	kubectl := platform.GetKubectl()
-	if namespace != "" {
-		namespace = "-n " + namespace
-	}
 	for _, spec := range specs {
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
 		}
-		if err := kubectl("apply %s -f %s", namespace, text.ToFile(template, ".yaml")); err != nil {
-			return fmt.Errorf("applySpecs: failed to apply specs: %v", err)
+
+		if err := platform.ApplyText(namespace, string(template)); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -593,6 +583,25 @@ func doUntil(fn func() bool) bool {
 			time.Sleep(5 * time.Second)
 		}
 	}
+}
+
+func (p *Platform) GetOrCreateBucket(name string) error {
+	s3Client, err := p.GetS3Client()
+	if err != nil {
+		return fmt.Errorf("failed to get S3 client: %v", err)
+	}
+
+	exists, err := s3Client.BucketExists(name)
+	if err != nil {
+		return fmt.Errorf("failed to check S3 bucket: %v", err)
+	}
+	if !exists {
+		log.Infof("Creating s3://%s", name)
+		if err := s3Client.MakeBucket(name, p.S3.Region); err != nil {
+			return fmt.Errorf("failed to create S3 bucket: %v", err)
+		}
+	}
+	return nil
 }
 
 func (p *Platform) GetS3Client() (*minio.Client, error) {

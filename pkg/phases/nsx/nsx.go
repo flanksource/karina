@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/fatih/structs"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -46,7 +46,7 @@ func Install(p *platform.Platform) error {
 
 	ini := structs.Map(p.NSX)
 
-	s := "[Defaults]\n" + mapToINI(ini)
+	s := "[DEFAULT]\n" + mapToINI(ini)
 
 	log.Tracef("Using NSX config: %s", console.StripSecrets(string(s)))
 

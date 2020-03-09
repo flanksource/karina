@@ -13,6 +13,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
+	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
@@ -31,6 +32,17 @@ func init() {
 		Use:   "opa",
 		Short: "Build and deploy opa aka gatekeeper",
 	}
+
+	_opa.AddCommand(&cobra.Command{
+		Use:   "bundle",
+		Short: "deploy opa bundle",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := opa.DeployBundle(getPlatform(cmd), args[0]); err != nil {
+				log.Fatalf("Error deploying  opa bundles: %s", err)
+			}
+		},
+	})
 
 	_opa.AddCommand(&cobra.Command{
 		Use:   "install",
@@ -63,6 +75,12 @@ func init() {
 			if err := deploy_base.Install(p); err != nil {
 				log.Fatalf("Error deploying base: %s", err)
 			}
+			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying postgres-operator %s\n", err)
+			}
+			if err := eck.Deploy(p); err != nil {
+				log.Fatalf("Error installing ECK: %s", err)
+			}
 			if err := monitoring.Install(p); err != nil {
 				log.Warnf("Error building monitoring stack: %v", err)
 			}
@@ -83,12 +101,6 @@ func init() {
 			}
 			if err := fluentdOperator.Deploy(p); err != nil {
 				log.Fatalf("Error installing fluentd: %s", err)
-			}
-			if err := eck.Deploy(p); err != nil {
-				log.Fatalf("Error installing ECK: %s", err)
-			}
-			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deploying postgres-operator %s\n", err)
 			}
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying filebeat %s\n", err)
@@ -234,6 +246,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying filebeat %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "nginx",
+		Short: "Deploy nginx",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := nginx.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying nginx %s\n", err)
 			}
 		},
 	})

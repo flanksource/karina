@@ -29,26 +29,28 @@ type PlatformConfig struct {
 	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
 	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
 	NSX                   *NSX              `yaml:"nsx,omitempty"`
-	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy",omitempty`
+	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy,omitempty"`
 	OPA                   *OPA              `yaml:"opa,omitempty"`
-	PGO                   *PostgresOperator `yaml:"pgo,omitempty"`
+	PostgresOperator      *PostgresOperator `yaml:"postgresOperator,omitempty"`
 	PodSubnet             string            `yaml:"podSubnet"`
 	Policies              []string          `yaml:"policies,omitempty"`
-	Quack                 *Enabled          `yaml:"quack,omitempty"`
-	Resources             map[string]string `yaml:"resources,omitempty"`
-	S3                    S3                `yaml:"s3,omitempty"`
-	ServiceSubnet         string            `yaml:"serviceSubnet"`
-	SMTP                  Smtp              `yaml:"smtp,omitempty"`
-	Specs                 []string          `yaml:"specs,omitempty"`
-	TrustedCA             string            `yaml:"trustedCA,omitempty"`
-	Versions              map[string]string `yaml:"versions,omitempty"`
-	PlatformOperator      *Enabled          `yaml:"platformOperator,omitempty"`
-	Nginx                 *Enabled          `yaml:"nginx,omitempty"`
-	Minio                 *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator       *FluentdOperator  `yaml:"fluentd,omitempty"`
-	ECK                   *ECK              `yaml:"eck,omitempty"`
-	Thanos                *Thanos           `yaml:"thanos,omitempty"`
-	Filebeat              *Filebeat         `yaml:"filebeat,omitempty"`
+	// A list of strategic merge patches that will be applied to all resources created
+	Patches          []string          `yaml:"patches,omitempty"`
+	Quack            *Enabled          `yaml:"quack,omitempty"`
+	Resources        map[string]string `yaml:"resources,omitempty"`
+	S3               S3                `yaml:"s3,omitempty"`
+	ServiceSubnet    string            `yaml:"serviceSubnet"`
+	SMTP             Smtp              `yaml:"smtp,omitempty"`
+	Specs            []string          `yaml:"specs,omitempty"`
+	TrustedCA        string            `yaml:"trustedCA,omitempty"`
+	Versions         map[string]string `yaml:"versions,omitempty"`
+	PlatformOperator *Enabled          `yaml:"platformOperator,omitempty"`
+	Nginx            *Nginx            `yaml:"nginx,omitempty"`
+	Minio            *Enabled          `yaml:"minio,omitempty"`
+	FluentdOperator  *FluentdOperator  `yaml:"fluentd,omitempty"`
+	ECK              *ECK              `yaml:"eck,omitempty"`
+	Thanos           *Thanos           `yaml:"thanos,omitempty"`
+	Filebeat         *Filebeat         `yaml:"filebeat,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`

@@ -22,7 +22,37 @@ data:
 
     processors:
       - add_cloud_metadata:
-      - add_host_metadata:
+      - drop_event:
+          when:
+            or:
+              - contains:
+                  # ignore nsx INFO messages
+                  message: level="INFO"
+              - contains:
+                  # ignore nsx DEBUG messages
+                  message: level="DEBUG"
+              - contains:
+                  message: GET / HTTP/1.1" 200
+              - contains:
+                  # ignore harbor-portal access logging
+                  message: server.go:2774
+              - contains:
+                  message: GET /api/health HTTP/1.1" 200
+              - contains:
+                  message: kube-probe/
+              - contains:
+                  message: GET /healthz
+      - drop_fields:
+          fields:
+            - ecs.version
+            - agent.id
+            - agent.ephemeral_id
+            - agent.hostname
+            - kubernetes.pod.uid
+            - log.file.path
+            - log.offset
+            - host.os.family
+          ignore_missing: true
 
 {{ if .filebeat.elasticsearch}}
     output.elasticsearch:

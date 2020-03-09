@@ -107,6 +107,8 @@ spec:
           args:
             - "run"
             - "--server"
+            - "--config-file=/config/config.yaml"
+            - "--log-level={{.opa.logLevel}}"
             - "--tls-cert-file=/certs/tls.crt"
             - "--tls-private-key-file=/certs/tls.key"
             - "--addr=0.0.0.0:443"
@@ -122,6 +124,9 @@ spec:
             - readOnly: true
               mountPath: /certs
               name: opa-server
+            - readOnly: true
+              mountPath: /config
+              name: opa-config
           readinessProbe:
             httpGet:
               path: /health
@@ -152,6 +157,32 @@ spec:
         - name: opa-server
           secret:
             secretName: opa-server
+        - name: opa-config
+          configMap:
+            items:
+              - key: config.yaml
+                path: config.yaml
+            name: opa-config
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: opa-config
+  namespace: opa
+data:
+  config.yaml: |
+  {{ if .opa.bundleUrl }}
+    services:
+      - name: {{.opa.bundleServiceName}}
+        url: {{.opa.bundleUrl}}
+    bundle:
+      name: {{.opa.bundleServiceName}}.tar.gz
+      prefix: {{.opa.bundlePrefix}}
+      service: {{.opa.bundleServiceName}}
+      polling:
+          min_delay_seconds: 10
+          max_delay_seconds: 20
+  {{ end }}
 
 ---
 kind: ConfigMap

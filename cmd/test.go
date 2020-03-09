@@ -19,6 +19,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -164,6 +165,15 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(postgresOperator.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "stubs",
+		Short: "Test stubs",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(stubs.Test)
 		},
 	})
 

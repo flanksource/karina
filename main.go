@@ -55,6 +55,9 @@ func main() {
 		cmd.CA,
 		cmd.Apply,
 		cmd.DB,
+		cmd.Exec,
+		cmd.ExecNode,
+		cmd.NSX,
 	)
 
 	if len(commit) > 8 {
@@ -94,6 +97,7 @@ func main() {
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
+	root.PersistentFlags().Bool("show-config", false, "Print out combined config")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 
 	if err := root.Execute(); err != nil {
