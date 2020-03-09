@@ -376,6 +376,13 @@ type NodeLocalDNS struct {
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
 }
 
+type SealedSecrets struct {
+	Enabled    bool   `yaml:"enabled,omitempty"`
+	Cert       string `yaml:"cert,omitempty"`
+	PrivateKey string `yaml:"privateKey,omitempty"`
+	Password   string `yaml:"password,omitempty"`
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`

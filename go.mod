@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/aws/aws-sdk-go v1.29.5
+	github.com/bitnami-labs/sealed-secrets v0.10.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
