@@ -2,7 +2,15 @@ consul: 10.100.0.13
 hostPrefix: k8s
 datacenter: lab
 ldap:
-  disabled: true
+  adminGroup: NA1
+  username: uid=admin,ou=system
+  password: secret
+  port: 10636
+  host: apacheds.ldap
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: DN
 kubernetes:
   version: v1.16.4
 versions:

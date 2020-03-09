@@ -158,9 +158,16 @@ set +o errexit # test failures are reported by Junit
 
 # Run conformance tests
 # shellcheck disable=SC2086
-platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240  --junit-path test-results/results.xml
+failed=false
+if ! platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240  --junit-path test-results/results.xml; then
+   failed=true
+fi
 
 # dump the logs into the ARTIFACTS directory
 mkdir -p artifacts
 platform-cli snapshot $PLATFORM_OPTIONS_FLAGS --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true 
 zip -r artifacts/snapshot.zip snapshot/*
+
+if [[ "$failed" = true ]]; then
+  exit 1
+fi
