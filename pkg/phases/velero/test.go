@@ -2,11 +2,16 @@ package velero
 
 import (
 	"github.com/flanksource/commons/console"
+
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.Velero == nil || p.Velero.Disabled {
+		test.Skipf("velero", "Velero is disabled")
+		return
+	}
 	client, err := p.GetClientset()
 	if err != nil {
 		test.Failf("velero", "Failed to get k8s client %v", err)

@@ -8,6 +8,10 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.PostgresOperator == nil || p.PostgresOperator.Disabled {
+		test.Skipf("postgres-operator", "Postgres operator is disabled")
+		return
+	}
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, Namespace, test)
 }
