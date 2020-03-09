@@ -162,5 +162,5 @@ platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240  --junit-path test-resu
 
 # dump the logs into the ARTIFACTS directory
 mkdir -p artifacts
-platform-cli snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true 
+platform-cli snapshot $PLATFORM_OPTIONS_FLAGS --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true 
 zip -r artifacts/snapshot.zip snapshot/*
