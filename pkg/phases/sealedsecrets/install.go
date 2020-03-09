@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -49,7 +49,7 @@ func Install(platform *platform.Platform) error {
 		}
 
 		items := secretList.Items
-		sort.Sort(ssv1alpha1.ByCreationTimestamp(items))
+		sort.Sort(ByCreationTimestamp(items))
 		secrets := client.CoreV1().Secrets(Namespace)
 
 		if len(items) == 0 {
@@ -86,4 +86,19 @@ func Install(platform *platform.Platform) error {
 	}
 
 	return platform.ApplySpecs(Namespace, "sealed-secrets.yml")
+}
+
+// ByCreationTimestamp is used to sort a list of secrets
+type ByCreationTimestamp []apiv1.Secret
+
+func (s ByCreationTimestamp) Len() int {
+	return len(s)
+}
+
+func (s ByCreationTimestamp) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s ByCreationTimestamp) Less(i, j int) bool {
+	return s[i].GetCreationTimestamp().Unix() < s[j].GetCreationTimestamp().Unix()
 }

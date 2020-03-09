@@ -4,29 +4,31 @@ go 1.12
 
 require (
 	github.com/aws/aws-sdk-go v1.29.5
-	github.com/bitnami-labs/sealed-secrets v0.10.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.1.2
-	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/google/uuid v1.1.1
+	github.com/googleapis/gnostic v0.0.0-20171211024024-933c109c13ce // indirect
 	github.com/grafana-tools/sdk v0.0.0-20191214173017-690a0c6bec7b
 	github.com/imdario/mergo v0.3.6
+	github.com/json-iterator/go v1.1.9 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/moshloop/konfigadm v0.4.6
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.4.1 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.21.0
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.3
