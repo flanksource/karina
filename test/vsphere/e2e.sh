@@ -66,8 +66,6 @@ dump_logs() {
 }
 
 on_exit() {
-  # dump the logs into the ARTIFACTS directory
-  dump_logs
 
   # remove the cluster
   # shellcheck disable=SC2086
@@ -149,7 +147,7 @@ platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 # shellcheck disable=SC2086
 platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
 
-components=("base" "stubs" "dex" "postgres-operator" "harbor" "all" "velero" "fluentd" "eck")
+components=("base" "stubs" "all")
 for component in "${components[@]}"; do
   # Deploy the platform configuration
   # shellcheck disable=SC2086
@@ -159,3 +157,6 @@ done
 # Run conformance tests
 # shellcheck disable=SC2086
 platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240
+
+# dump the logs into the ARTIFACTS directory
+dump_logs
