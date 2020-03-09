@@ -154,9 +154,13 @@ for component in "${components[@]}"; do
   platform-cli deploy "$component" $PLATFORM_OPTIONS_FLAGS
 done
 
+set +o errexit # test failures are reported by Junit
+
 # Run conformance tests
 # shellcheck disable=SC2086
-platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240
+platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240  --junit-path test-results/results.xml
 
 # dump the logs into the ARTIFACTS directory
-dump_logs
+mkdir -p artifacts
+platform-cli snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true 
+zip -r artifacts/snapshot.zip snapshot/*
