@@ -43,7 +43,7 @@ func Deploy(p *platform.Platform) error {
 
 	if err := p.CreateOrUpdateSecret("harbor-chartmuseum", Namespace, map[string][]byte{
 		"CACHE_REDIS_PASSWORD":  []byte{},
-		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.AccessKey),
+		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.SecretKey),
 	}); err != nil {
 		return err
 	}
