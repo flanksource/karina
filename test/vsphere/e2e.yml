@@ -69,6 +69,7 @@ pgo:
       StorageType: dynamic
       StorageClass: nfs
 harbor:
+  disabled: true
   replicas: 1
   version: v1.10.0
   chartVersion: v1.3.0
