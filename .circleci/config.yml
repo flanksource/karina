@@ -44,6 +44,10 @@ jobs:
     steps:
       - checkout
       - run: ./test/vsphere/e2e.sh
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: artifacts
 
   release:
     <<: *go
