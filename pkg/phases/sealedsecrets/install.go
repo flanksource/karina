@@ -5,8 +5,6 @@ import (
 	"sort"
 
 	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
-	"github.com/flanksource/commons/certs"
-	"github.com/flanksource/commons/files"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -36,14 +34,7 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if platform.SealedSecrets.Cert != "" && platform.SealedSecrets.PrivateKey != "" {
-		certBytes := []byte(files.SafeRead(platform.SealedSecrets.Cert))
-		keyBytes := []byte(files.SafeRead(platform.SealedSecrets.PrivateKey))
-		cert, err := certs.DecryptCertificate(certBytes, keyBytes, []byte(platform.SealedSecrets.Password))
-		if err != nil {
-			return errors.Wrap(err, "failed to decrypt certificate")
-		}
-
+	if platform.SealedSecrets.Certificate != nil {
 		client, err := platform.GetClientset()
 		if err != nil {
 			return errors.Wrap(err, "failed to get k8s client")
@@ -73,7 +64,7 @@ func Install(platform *platform.Platform) error {
 						SealedSecretsKeyLabel: "active",
 					},
 				},
-				Data: cert.AsTLSSecret(),
+				Data: platform.SealedSecrets.Certificate.AsTLSSecret(),
 				Type: "kubernetes.io/tls",
 			}
 
@@ -84,7 +75,7 @@ func Install(platform *platform.Platform) error {
 			}
 		} else {
 			secret := items[len(items)-1]
-			secret.Data = cert.AsTLSSecret()
+			secret.Data = platform.SealedSecrets.Certificate.AsTLSSecret()
 
 			log.Infof("Updating %s/secret/%s", Namespace, secret.Name)
 
