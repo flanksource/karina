@@ -27,7 +27,7 @@ linux:
 
 .PHONY: darwin
 darwin:
-	GOOS=darwin go build -o ./.bin/$(NAME)_osx -ldflags "-X \"main.version=$(VERSION)\""  main.go
+	GOOS=darwin go build -o ./.bin/$(NAME)_osx -ldflags "-s -X \"main.version=$(VERSION)\""  main.go
 
 .PHONY: compress
 compress:
