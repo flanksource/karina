@@ -8,6 +8,7 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.1.1
+	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.1.1
