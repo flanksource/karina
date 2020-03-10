@@ -377,7 +377,7 @@ type NodeLocalDNS struct {
 }
 
 type SealedSecrets struct {
-	Enabled     bool               `yaml:"enabled,omitempty"`
+	Disabled    bool               `yaml:"disabled,omitempty"`
 	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
 }
 
