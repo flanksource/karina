@@ -6,6 +6,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/flux"
+
 	"github.com/flanksource/commons/console"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -72,7 +74,7 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 	}
 }
 
-func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command)  {
+func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command) {
 	start := time.Now()
 	for {
 		test := console.TestResults{}
@@ -201,7 +203,7 @@ func init() {
 	thanosTestCmd := &cobra.Command{
 		Use:   "thanos",
 		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
-		Long: "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
+		Long:  "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			runWithArgs(monitoring.TestThanos, args, cmd)
@@ -241,6 +243,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "gitops",
+		Short: "Test gitops",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(flux.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -259,6 +270,7 @@ func init() {
 				postgresOperator.Test(p, test)
 				sealedsecrets.Test(p, test)
 				vault.Test(p, test)
+				flux.Test(p, test)
 			})
 		},
 	})
