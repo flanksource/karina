@@ -11,6 +11,7 @@ func DefaultPlatformConfig() PlatformConfig {
 			ControllerExtraArgs: map[string]string{},
 			SchedulerExtraArgs:  map[string]string{},
 			KubeletExtraArgs:    map[string]string{},
+			EtcdExtraArgs:       map[string]string{},
 		},
 	}
 	return config
