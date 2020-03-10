@@ -7,7 +7,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.1.2
+	github.com/flanksource/commons v1.1.3
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/google/uuid v1.1.1
