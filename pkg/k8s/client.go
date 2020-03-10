@@ -352,12 +352,14 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
 			}
 
+			c.trace("updating", unstructuredObj)
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
 			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
 			if err != nil {
 				log.Errorf("error updating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				continue
 			}
-			c.trace("updating", unstructuredObj)
+
 			if updated.GetResourceVersion() == unstructuredObj.GetResourceVersion() {
 				log.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
