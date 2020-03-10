@@ -1,0 +1,8 @@
+name: test
+domain: 127.0.0.1.nip.io
+kubernetes:
+  version: v1.16.3
+calico:
+  ipip: Never
+  vxlan: Never
+  version: v3.8.2

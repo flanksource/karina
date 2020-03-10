@@ -32,6 +32,14 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 
 func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	paths, _ := cmd.Flags().GetStringArray("config")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	extras, _ := cmd.Flags().GetStringArray("extra")
+	showConfig, _ := cmd.Flags().GetBool("show-config")
+
+	return NewConfig(paths, dryRun, extras, showConfig)
+}
+
+func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
@@ -58,7 +66,6 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		log.Fatalf("Failed to merge default config, %v", err)
 	}
 
-	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	if dryRun {
 		base.DryRun = true
 		log.Infof("Running a dry-run mode, no changes will be made")
@@ -133,7 +140,6 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		gitops[i].GitKey = template(gitops[i].GitKey)
 	}
 	base.GitOps = gitops
-	extras, _ := cmd.Flags().GetStringArray("extra")
 	for _, extra := range extras {
 		key := strings.Split(extra, "=")[0]
 		val := extra[len(key)+1:]
@@ -161,8 +167,6 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 			value.SetBool(b)
 		}
 	}
-
-	showConfig, _ := cmd.Flags().GetBool("show-config")
 
 	if showConfig {
 		data, _ := yaml.Marshal(base)
