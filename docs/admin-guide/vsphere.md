@@ -2,7 +2,7 @@
 
 1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
 2. Download and install the platform-cli binary
-3. Create the cluster `platform-cli provision cluster -c cluster.yml`see [Cluster Lifecycle](#cluster-lifecycle)
+3. Create the cluster `platform-cli provision cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
 4. Check the status of running vms: `platform-cli status`
 5. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
 6. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`

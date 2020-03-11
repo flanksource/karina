@@ -23,7 +23,7 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if !p.FluentdOperator.DisableDefaultConfig {
-		if err := p.ApplySpecs("", "kube-fluentd-default.yml"); err != nil {
+		if err := p.ApplySpecs("", "kube-fluentd-default.yaml"); err != nil {
 			return err
 		}
 	}
@@ -44,5 +44,5 @@ func Deploy(p *platform.Platform) error {
 		p.FluentdOperator.Version = "1.11.0"
 	}
 
-	return p.ApplySpecs("", "kube-fluentd-operator.yml")
+	return p.ApplySpecs("", "kube-fluentd-operator.yaml")
 }

@@ -29,5 +29,5 @@ func Deploy(p *platform.Platform) error {
 		})
 	}
 
-	return p.ApplySpecs(constants.PlatformSystem, "filebeat.yml")
+	return p.ApplySpecs(constants.PlatformSystem, "filebeat.yaml")
 }

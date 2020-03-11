@@ -73,7 +73,7 @@ func (c *Client) GetKustomize() (*kustomize.Manager, error) {
 				return nil, err
 			}
 		} else {
-			name := fmt.Sprintf("patch-%d.yml", no)
+			name := fmt.Sprintf("patch-%d.yaml", no)
 			no++
 			if _, err := files.CopyFromReader(bytes.NewBufferString(patch), dir+"/"+name, 0644); err != nil {
 				return nil, err

@@ -1,7 +1,7 @@
 #!/bin/bash
 BIN=./.bin/platform-cli
 mkdir -p .bin
-export PLATFORM_CONFIG=test/common.yml
+export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
