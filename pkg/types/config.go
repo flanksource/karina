@@ -57,6 +57,7 @@ type PlatformConfig struct {
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`
 	BootstrapToken        string `yaml:"-"`
 	DryRun                bool   `yaml:"-"`
+	Trace                 bool   `yaml:"-"`
 	JoinEndpoint          string `yaml:"-"`
 	Source                string `yaml:"-"`
 	ControlPlaneEndpoint  string `yaml:"-"`

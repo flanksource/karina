@@ -86,8 +86,6 @@ velero:
 thanos:
   version: v0.10.1
   mode: client
-  thanosSidecarEndpoint: thanos-sidecar.127.0.0.1.nip.io
-  thanosSidecarPort: 80
   bucket: thanos
 fluentd-operator:
   version: v1.11.0
