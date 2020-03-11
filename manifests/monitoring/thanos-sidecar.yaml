@@ -21,10 +21,13 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
 spec:
   rules:
-  - host: "{{.thanos.thanosSidecarEndpoint}}"
+  - host: "thanos.{{.domain}}"
     http:
       paths:
       - backend:
           serviceName: thanos-sidecar
           servicePort: 10901
+  tls:
+  - hosts:
+    - thanos.{{.domain}}
 {{- end}}          

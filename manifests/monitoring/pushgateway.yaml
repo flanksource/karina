@@ -49,7 +49,7 @@ metadata:
   namespace: monitoring
 spec:
   rules:
-    - host: pushgateway.{{.name}}.lab.flanksource.com
+    - host: pushgateway.{{.domain}}
       http:
         paths:
           - backend:
@@ -57,4 +57,4 @@ spec:
               servicePort: 9091
   tls:
     - hosts:
-        - pushgateway.{{.name}}.lab.flanksource.com
+        - pushgateway.{{.domain}}

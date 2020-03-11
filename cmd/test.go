@@ -28,6 +28,7 @@ var wait int
 var failOnError bool
 var waitInterval int
 var junitPath, suiteName string
+var thanosUrl, pushGatewayUrl string
 var p *platform.Platform
 
 var Test = &cobra.Command{
@@ -69,11 +70,11 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 	}
 }
 
-func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string), args []string)  {
+func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command)  {
 	start := time.Now()
 	for {
 		test := console.TestResults{}
-		fn(p, &test, args)
+		fn(p, &test, args, cmd)
 		test.Done()
 		elapsed := time.Now().Sub(start)
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
@@ -195,16 +196,20 @@ func init() {
 		},
 	})
 
-
-	Test.AddCommand(&cobra.Command{
+	thanosTestCmd := &cobra.Command{
 		Use:   "thanos",
 		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
-		Long: "test thanos [pushgateway] [thanos]",
-		Args:  cobra.MinimumNArgs(2),
+		Long: "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
+		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			runWithArgs(monitoring.TestThanos, args)
+			runWithArgs(monitoring.TestThanos, args, cmd)
 		},
-	})
+	}
+
+	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayUrl, "pushgateway", "p", "", "Url of Pushgateway")
+	thanosTestCmd.PersistentFlags().StringVarP(&thanosUrl, "thanos", "t", "", "Url of Pushgateway")
+	Test.AddCommand(thanosTestCmd)
+	thanosTestCmd.Flags()
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "all",

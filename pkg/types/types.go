@@ -344,11 +344,18 @@ type CA struct {
 type Thanos struct {
 	Disabled              bool     `yaml:"disabled"`
 	Version               string   `yaml:"version"`
-	Mode                  string   `yaml:"mode,omitempty"`                  // Mode. Should be client or obeservability.
-	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"` // Only for client mode. Endpoint for thanos sidecar ingress rule.
-	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`     // Only for client mode. Port for thanos sidecar ingress rule.
-	Bucket                string   `yaml:"bucket,omitempty"`                // Bucket to store metrics. Should be the same across all environments
-	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`        // Only for observability mode. List of client sidecars in <hostname>:<port> format
+	// Mode. Should be client or obeservability.
+	Mode                  string   `yaml:"mode,omitempty"`
+	// Only for client mode. Endpoint for thanos sidecar ingress rule.
+	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"`
+	// Only for client mode. Port for thanos sidecar ingress rule.
+	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`
+	// Bucket to store metrics. Should be the same across all environments
+	Bucket                string   `yaml:"bucket,omitempty"`
+	// Only for observability mode. List of client sidecars in <hostname>:<port> format
+	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`
+	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
+	EnableCompactor        bool     `yaml:"enableCompactor,omitempty"`
 }
 
 type FluentdOperator struct {

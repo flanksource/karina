@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"net/http"
 	"time"
 )
@@ -20,7 +21,6 @@ import (
 const (
 	testMetricName  = "test_metric"
 	testJobName     = "test"
-	waitTimeSeconds = 0
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -28,10 +28,24 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "monitoring", test)
 }
 
-func TestThanos(p *platform.Platform, test *console.TestResults, args []string) {
+func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd *cobra.Command) {
+	if p.Thanos == nil {
+		log.Fatalf("thanos is disabled")
+	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	pushGatewayHost := args[0]
-	thanosHost := args[1]
+	flags := cmd.Flags()
+	pushGatewayHost, _ := flags.GetString("pushgateway")
+	thanosHost, _ := flags.GetString("thanos")
+	if thanosHost == "" {
+		if p.Thanos.Mode != "observability" {
+			log.Fatalf("please specify --thanos flag in client mode")
+		} else {
+			thanosHost = fmt.Sprintf("https://thanos.%s", p.Domain)
+		}
+	}
+	if pushGatewayHost == "" {
+		pushGatewayHost = fmt.Sprintf("pushgateway.%s", p.Domain)
+	}
 	pusher := pushMetric(pushGatewayHost)
 	err := pusher.Add()
     if err != nil {
@@ -41,25 +55,34 @@ func TestThanos(p *platform.Platform, test *console.TestResults, args []string) 
 		test.Passf("Thanos client", "Metric successfully injected into the client Prometheus. Waiting to receive it in observability cluster.")
 	}
 	log.Tracef("Waiting for metric")
-	time.Sleep(time.Second * waitTimeSeconds)
-	metric, err := pullMetric(thanosHost)
-    if err != nil {
-		test.Failf("Thanos observability", "Failed to pull metric in Observability cluster %v", err)
-	} else {
-		log.Tracef("Got metric %v", metric)
-
-		if metric.String() != "" {
-			test.Passf("Thanos observability", "Got test metric successfully in Observability cluster")
-			err = pusher.Delete()
-			log.Info("Test metric deleted from pushgateway")
-		} else {
+	retries := 12
+	for {
+		if retries == 0 {
 			test.Failf("Thanos observability", "Failed to get test metric in Observability cluster")
+			break
+		}
+		metric, err := pullMetric(thanosHost)
+		if err != nil {
+			test.Failf("Thanos observability", "Failed to pull metric in Observability cluster %v", err)
+		} else {
+			log.Tracef("Got metric %v", metric)
+			if metric.String() != "" {
+				test.Passf("Thanos observability", "Got test metric successfully in Observability cluster")
+				err = pusher.Delete()
+				log.Info("Test metric deleted from pushgateway")
+				break
+			} else {
+				time.Sleep(time.Second * 5)
+				log.Trace("Retrying")
+				retries -= 1
+			}
+		}
+		if err != nil {
+			log.Warn("Failed to delete test metric from pushgateway")
+			break
 		}
 	}
-	if err != nil {
-		log.Warn("Failed to delete test metric from pushgateway")
-		return
-	}
+
 }
 
 func pushMetric(pushGatewayHost string) *push.Pusher {
@@ -77,7 +100,7 @@ func pushMetric(pushGatewayHost string) *push.Pusher {
 func pullMetric(thanosHost string) (model.Value, error) {
 	client, err := api.NewClient(api.Config{
 		Address:      thanosHost,
-		RoundTripper: nil,
+		RoundTripper: http.DefaultTransport,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("pullMetric: failed to get api client to connect to Thanos: %s", err)

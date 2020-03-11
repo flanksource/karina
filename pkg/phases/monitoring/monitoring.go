@@ -175,10 +175,15 @@ func deployThanos(p *platform.Platform) error {
 				}
 			}
 		}
-		thanosSpecs := []string{"thanos-compactor.yaml", "thanos-querier.yaml", "thanos-store.yaml"}
+		thanosSpecs := []string{"thanos-querier.yaml", "thanos-store.yaml"}
 		for _, spec := range thanosSpecs {
 			log.Infof("Applying %s", spec)
 			if err := p.ApplySpecs("", "monitoring/observability/"+spec); err != nil {
+				return err
+			}
+		}
+		if p.Thanos.EnableCompactor == true {
+			if err := p.ApplySpecs("", "monitoring/observability/thanos-compactor.yaml"); err != nil {
 				return err
 			}
 		}
