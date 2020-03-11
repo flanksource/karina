@@ -20,14 +20,14 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	secretName := "test-sealed-secrets"
 	namespace := fmt.Sprintf("sealed-secrets-test-%s", utils.RandomKey(6))
 
-	secretFile, err := ioutil.TempFile("", "secret.yml")
+	secretFile, err := ioutil.TempFile("", "secret.yaml")
 	if err != nil {
-		test.Failf("sealed-secrets", "Failed to create temporary file for secret.yml %v", err)
+		test.Failf("sealed-secrets", "Failed to create temporary file for secret.yaml %v", err)
 		return
 	}
-	sealedSecretFile, err := ioutil.TempFile("", "sealed-secret.yml")
+	sealedSecretFile, err := ioutil.TempFile("", "sealed-secret.yaml")
 	if err != nil {
-		test.Failf("sealed-secrets", "Failed to create temporary file for sealed-secret.yml %v", err)
+		test.Failf("sealed-secrets", "Failed to create temporary file for sealed-secret.yaml %v", err)
 		return
 	}
 	certFile, err := ioutil.TempFile("", "sealed-secret.crt")

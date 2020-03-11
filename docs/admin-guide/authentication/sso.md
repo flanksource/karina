@@ -1,6 +1,6 @@
 # Setting up SSO
 
-### Configure LDAP in `config.yml`.
+### Configure LDAP in `config.yaml`.
 
 ```yaml
 ldap:

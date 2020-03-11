@@ -85,7 +85,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	return platform.ApplySpecs(Namespace, "sealed-secrets.yml")
+	return platform.ApplySpecs(Namespace, "sealed-secrets.yaml")
 }
 
 // ByCreationTimestamp is used to sort a list of secrets

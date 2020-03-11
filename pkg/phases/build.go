@@ -14,7 +14,7 @@ import (
 )
 
 func Build(cfg types.PlatformConfig) error {
-	tmp, _ := ioutil.TempFile("", "config*.yml")
+	tmp, _ := ioutil.TempFile("", "config*.yaml")
 	data, _ := yaml.Marshal(cfg)
 	tmp.WriteString(string(data))
 	os.Mkdir("build", 0755)
@@ -39,8 +39,8 @@ func Build(cfg types.PlatformConfig) error {
 
 	if files.Exists("kustomization.yaml") {
 		log.Infoln("Building with kustomize")
-		os.Remove("build/kustomize.yml")
-		if err := kustomize("build > build/kustomize.yml"); err != nil {
+		os.Remove("build/kustomize.yaml")
+		if err := kustomize("build > build/kustomize.yaml"); err != nil {
 			return fmt.Errorf("build: failed to apply kustomize: %v", err)
 		}
 	}

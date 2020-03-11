@@ -1,6 +1,6 @@
 name: test
 patches:
-  - ./test/patch1.yml
+  - ./test/patch1.yaml
 domain: 127.0.0.1.nip.io
 ldap:
   adminGroup: NA1

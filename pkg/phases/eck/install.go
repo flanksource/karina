@@ -18,7 +18,7 @@ func Deploy(p *platform.Platform) error {
 		log.Infof("Deploying ECK %s", p.ECK.Version)
 	}
 
-	return p.ApplySpecs(Namespace, "eck.yml")
+	return p.ApplySpecs(Namespace, "eck.yaml")
 }
 
 func normalizeVersion(version string) string {
