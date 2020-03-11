@@ -5,12 +5,15 @@ go 1.12
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/aws/aws-sdk-go v1.29.5
+  github.com/davecgh/go-spew v1.1.1
 	github.com/crunchydata/postgres-operator v4.2.2+incompatible
 	github.com/dghubble/sling v1.3.0
 	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.1.1
+	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
+	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4

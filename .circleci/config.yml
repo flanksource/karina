@@ -2,6 +2,7 @@ version: 2
 go: &go
   environment:
     GO111MODULE: "on"
+    CGO_ENABLED: 0
     GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.13
@@ -42,7 +43,6 @@ jobs:
       - setup_remote_docker
       - run: go mod download
       - run: ./scripts/release.sh
-
 
   release-docs:
     docker:

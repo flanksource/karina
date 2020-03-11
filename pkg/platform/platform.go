@@ -51,6 +51,7 @@ func (platform *Platform) Init() {
 		return platform.Patches, nil
 	}
 	platform.Client.ApplyDryRun = platform.DryRun
+	platform.Client.Trace = platform.PlatformConfig.Trace
 }
 
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {

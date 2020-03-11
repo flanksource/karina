@@ -15,6 +15,7 @@ import (
 	certs "github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/files"
 	utils "github.com/flanksource/commons/utils"
+	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
+	"sigs.k8s.io/yaml"
 
 	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 )
@@ -44,6 +46,7 @@ import (
 type Client struct {
 	GetKubeConfigBytes  func() ([]byte, error)
 	ApplyDryRun         bool
+	Trace               bool
 	GetKustomizePatches func() ([]string, error)
 	client              *kubernetes.Clientset
 	dynamicClient       dynamic.Interface
@@ -307,6 +310,20 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 	return nil
 }
 
+func (c *Client) trace(msg string, objects ...runtime.Object) {
+	if !c.Trace {
+		return
+	}
+	for _, obj := range objects {
+		data, err := yaml.Marshal(obj)
+		if err != nil {
+			log.Errorf("Error tracing %s", err)
+		} else {
+			fmt.Println(string(data))
+		}
+	}
+}
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
@@ -316,16 +333,41 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 
 		if c.ApplyDryRun {
 			log.Infof("[dry-run] %s/%s/%s created/configured", resource.Resource, unstructuredObj, unstructuredObj.GetName())
+			continue
+		}
+
+		existing, err := client.Get(unstructuredObj.GetName(), metav1.GetOptions{})
+
+		if existing == nil {
+			c.trace("creating", unstructuredObj)
+			_, err = client.Create(unstructuredObj, metav1.CreateOptions{})
+			if err != nil {
+				log.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+			}
+			log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 		} else {
-			_, err := client.Create(unstructuredObj, metav1.CreateOptions{})
-			if errors.IsAlreadyExists(err) {
-				_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
-				// TODO(moshloop): Diff the old and new objects and log unchanged instead of configured where necessary
-				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-			} else if err == nil {
-				log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+			if unstructuredObj.GetKind() == "Service" {
+				// Workaround for immutable spec.clusterIP error message
+				spec := unstructuredObj.Object["spec"].(map[string]interface{})
+				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
+			}
+
+			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
+			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
+			if err != nil {
+				log.Errorf("error updating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+			}
+			c.trace("updating", unstructuredObj)
+			if updated.GetResourceVersion() == unstructuredObj.GetResourceVersion() {
+				log.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
-				log.Errorf("error handling: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+				if log.IsLevelEnabled(log.TraceLevel) {
+					diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
+					if len(diff) > 0 {
+						log.Tracef("%s", diff)
+					}
+				}
 			}
 		}
 	}
