@@ -104,7 +104,11 @@ spec:
   replicas: 2
   resources:
     requests:
-      memory: 400Mi
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 1532Mi
+      cpu: 2000m
   retention: 240h
   disableCompaction: true
   routePrefix: ""
