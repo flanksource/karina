@@ -19,7 +19,15 @@ const (
 	CaCertName      = "thanos-ca-cert"
 )
 
-var specs = []string{"grafana-operator.yml", "kube-prometheus.yml", "prometheus-adapter.yml", "kube-state-metrics.yml", "node-exporter.yml", "alertmanager-rules.yml.raw", "pushgateway.yaml", "service-monitors.yml"}
+var specs = []string{
+	"grafana-operator.yaml",
+	"kube-prometheus.yaml",
+	"prometheus-adapter.yaml",
+	"kube-state-metrics.yaml",
+	"node-exporter.yaml",
+	"alertmanager-rules.yaml.raw",
+	"service-monitors.yaml",
+}
 
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
@@ -30,7 +38,7 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yml"); err != nil {
+	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yaml"); err != nil {
 		log.Warnf("Failed to deploy prometheus operator %v", err)
 	}
 

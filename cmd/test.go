@@ -19,6 +19,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -212,6 +213,15 @@ func init() {
 	thanosTestCmd.Flags()
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "sealed-secrets",
+		Short: "Test sealed secrets",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(sealedsecrets.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -228,6 +238,7 @@ func init() {
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
+				sealedsecrets.Test(p, test)
 			})
 		},
 	})

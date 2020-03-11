@@ -1,6 +1,6 @@
 name: test
 patches:
-  - ./test/patch1.yml
+  - ./test/patch1.yaml
 domain: 127.0.0.1.nip.io
 ldap:
   adminGroup: NA1
@@ -123,3 +123,9 @@ ca:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
+sealedSecrets:
+  version: "v0.10.0"
+  certificate:
+    cert: .certs/sealed-secrets-crt.pem
+    privateKey: .certs/sealed-secrets-key.pem
+    password: foobar

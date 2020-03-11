@@ -1,7 +1,7 @@
 #!/bin/bash
 BIN=./.bin/platform-cli
 mkdir -p .bin
-export PLATFORM_CONFIG=test/common.yml
+export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
@@ -28,6 +28,7 @@ fi
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca-crt.pem --private-key-path .certs/ingress-ca-key.pem --password foobar  --expiry 1
+  $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
   $BIN provision kind-cluster
 fi
 

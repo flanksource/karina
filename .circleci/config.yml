@@ -8,6 +8,11 @@ go: &go
     - image: circleci/golang:1.13
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
+  lint:
+    <<: *go
+    steps:
+      - checkout
+      - run: go run test/linter/main.go
   test:
     resource_class: large
     environment:
@@ -57,10 +62,12 @@ workflows:
     jobs:
       - test
       - test-next
+      - lint
       - release:
           requires:
             - test
             - test-next
+            - lint
           context: Github
           filters:
             tags:
