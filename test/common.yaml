@@ -137,7 +137,7 @@ vault:
   secretKey: $AWS_SECRET_ACCESS_KEY
 gitops:
   - name: platform-cli
-    namespace: gitops-platform-cli-e2e
+    namespace: gitops-e2e-test
     gitUrl: https://github.com/teodor-pripoae/platform-cli.git
     gitBranch: issue-170-e2e-git-ops
     gitPath: test/gitops/

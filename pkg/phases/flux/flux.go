@@ -116,7 +116,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 	if cr.Namespace == "kube-system" {
 		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
 	} else {
-		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
+		spec.ServiceAccount(saName).AddClusterRole("namespace-admin").AddClusterRole("namespace-creator")
 	}
 
 	data, _ := base64.StdEncoding.DecodeString(cr.GitKey)

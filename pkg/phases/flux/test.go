@@ -11,7 +11,6 @@ import (
 func Test(p *platform.Platform, test *console.TestResults) {
 	namespace := "gitops-e2e-test"
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, "gitops-platform-cli-e2e", test)
 
 	k8s.TestNamespace(client, namespace, test)
 
