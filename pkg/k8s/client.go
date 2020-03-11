@@ -332,7 +332,8 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 		}
 
 		if c.ApplyDryRun {
-			log.Infof("[dry-run] %s/%s/%s created/configured", resource.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.trace("apply", unstructuredObj)
+			log.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
 			continue
 		}
 
