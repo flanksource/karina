@@ -123,3 +123,9 @@ ca:
   cert: .certs/ingress-ca-crt.pem
   privateKey: .certs/ingress-ca-key.pem
   password: foobar
+sealedSecrets:
+  version: "v0.10.0"
+  certificate:
+    cert: .certs/sealed-secrets-crt.pem
+    privateKey: .certs/sealed-secrets-key.pem
+    password: foobar
