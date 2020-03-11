@@ -218,9 +218,28 @@ type Ldap struct {
 }
 
 type Kubernetes struct {
-	Version          string            `yaml:"version"`
+	Version string `yaml:"version"`
+	// KubeletExtraArgs is used to configure additional kubelet command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
-	MasterIP         string            `yaml:"masterIP,omitempty"`
+	// ControlllerExtraArgs is used to configure additional kube-controller-manager command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+	ControllerExtraArgs map[string]string `yaml:"controllerExtraArgs,omitempty"`
+	// SchedulerExtraArgs is used to configure additional kube-scheduler command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+	SchedulerExtraArgs map[string]string `yaml:"schedulerExtraArgs,omitempty"`
+	// APIServerExtraArgs is used to configure additional kube-apiserver command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+	APIServerExtraArgs map[string]string `yaml:"apiServerExtraArgs,omitempty"`
+	// EtcdExtraArgs is used to configure additional etcd command line flags
+	// The list of available flags can be viewed here:
+	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
+	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
+	MasterIP      string            `yaml:"masterIP,omitempty"`
 }
 
 type Dashboard struct {
