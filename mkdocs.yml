@@ -33,6 +33,8 @@ nav:
                 - Dashboards: ./admin-guide/index.md
                 - Multi-Cluster (Thanos): ./admin-guide/index.md
           - Docker Registry (Harbor): ./admin-guide/index.md
+          - Configuration:
+                - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
           - Provisioning:
                 - vSphere: ./admin-guide/vsphere.md
                 - KIND: ./admin-guide/provisioning/kind.md
