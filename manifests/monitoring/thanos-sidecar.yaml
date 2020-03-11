@@ -19,9 +19,13 @@ metadata:
   namespace: monitoring
   annotations:
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
 spec:
+  tls:
+    - hosts:
+      - "thanos-sidecar.{{.domain}}"
   rules:
-  - host: "thanos.{{.domain}}"
+  - host: "thanos-sidecar.{{.domain}}"
     http:
       paths:
       - backend:
