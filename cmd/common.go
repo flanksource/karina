@@ -82,6 +82,11 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		log.Infof("Running a dry-run mode, no changes will be made")
 	}
 
+	trace, _ := cmd.Flags().GetBool("trace")
+	if trace {
+		base.Trace = true
+	}
+
 	base.S3.AccessKey = template(base.S3.AccessKey)
 	base.S3.SecretKey = template(base.S3.SecretKey)
 

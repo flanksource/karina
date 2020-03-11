@@ -9,11 +9,9 @@ stringData:
     type: S3
     config:
       bucket: {{.thanos.bucket}}
-      endpoint: {{.s3.externalEndpoint | strings.TrimPrefix "http://"}}
+      endpoint: {{.s3.externalEndpoint | strings.TrimPrefix "http://" | strings.TrimPrefix "https://"}}
       insecure: true
       access_key: {{.s3.access_key}}
       secret_key: {{.s3.secret_key}}
       http_config:
         insecure_skip_verify: true
-
-
