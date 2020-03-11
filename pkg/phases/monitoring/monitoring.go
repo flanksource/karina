@@ -2,11 +2,11 @@ package monitoring
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/grafana-tools/sdk"
 	log "github.com/sirupsen/logrus"
+
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -115,6 +115,10 @@ func deployThanos(p *platform.Platform) error {
 		return nil
 	}
 
+	if p.S3.ExternalEndpoint == "" {
+		p.S3.ExternalEndpoint = p.S3.Endpoint
+	}
+
 	s3Client, err := p.GetS3Client()
 	if err != nil {
 		return err
@@ -144,10 +148,7 @@ func deployThanos(p *platform.Platform) error {
 	}
 
 	if p.Thanos.Mode == "client" {
-		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within Promerheus pod.")
-		if p.Thanos.ThanosSidecarEndpoint == "" || p.Thanos.ThanosSidecarPort == "" {
-			return errors.New("thanosSidecarEndpoint and thanosSidecarPort should not be empty in client mode")
-		}
+		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod.")
 		if !p.HasSecret(Namespace, SidecarCertName) {
 			cert, err := p.CreateIngressCertificate("thanos-sidecar")
 			if err != nil {
@@ -157,12 +158,11 @@ func deployThanos(p *platform.Platform) error {
 				return fmt.Errorf("install: failed to create secret with certificate and key: %v", err)
 			}
 		}
-		p.ApplySpecs("", "monitoring/thanos-sidecar.yaml")
+		if err := p.ApplySpecs("", "monitoring/thanos-sidecar.yaml"); err != nil {
+			return err
+		}
 	} else if p.Thanos.Mode == "observability" {
 		log.Info("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
-		if p.Thanos.ThanosSidecarEndpoint != "" || p.Thanos.ThanosSidecarPort != "" {
-			return errors.New("thanosSidecarEndpoint and thanosSidecarPort are not empty. Please use clientSidecars to specify client sidecars")
-		}
 		thanosCerts := []string{StoreCertName, SidecarCertName, QueryCertName}
 		for _, certName := range thanosCerts {
 			if !p.HasSecret(Namespace, certName) {

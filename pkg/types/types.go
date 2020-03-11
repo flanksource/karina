@@ -346,10 +346,6 @@ type Thanos struct {
 	Version               string   `yaml:"version"`
 	// Mode. Should be client or obeservability.
 	Mode                  string   `yaml:"mode,omitempty"`
-	// Only for client mode. Endpoint for thanos sidecar ingress rule.
-	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"`
-	// Only for client mode. Port for thanos sidecar ingress rule.
-	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`
 	// Bucket to store metrics. Should be the same across all environments
 	Bucket                string   `yaml:"bucket,omitempty"`
 	// Only for observability mode. List of client sidecars in <hostname>:<port> format

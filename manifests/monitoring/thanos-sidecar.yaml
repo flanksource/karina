@@ -30,4 +30,5 @@ spec:
   tls:
   - hosts:
     - thanos.{{.domain}}
-{{- end}}          
+{{- end}}
+
