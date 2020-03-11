@@ -122,7 +122,8 @@ spec:
   externalLabels:
     cluster: {{.name}}
   version: v2.11.0
-  {{- if and  (index .monitoring "prometheus") (index .monitoring.prometheus "persistence") (index .monitoring.prometheus.persistence "enabled") }}
+  {{- if (index .monitoring "prometheus")  }}
+  {{- if (index .monitoring.prometheus "persistence") }}
   storage:
     volumeClaimTemplate:
       spec:
@@ -132,6 +133,7 @@ spec:
         resources:
           requests:
             storage: {{ .monitoring.prometheus.persistence.capacity }}
+  {{- end }}
   {{- end }}
   {{- if index . "thanos" }}
   {{- if not (index .thanos "disabled") }}
