@@ -148,7 +148,7 @@ spec:
     - args:
       - sidecar
       - --prometheus.url=http://localhost:9090/
-      - --tsdb.path=/prometheus
+      - --tsdb.path=/prometheus/prometheus-db
       - --grpc-address=[$(POD_IP)]:10901
       - --http-address=[$(POD_IP)]:10902
       - --objstore.config=$(OBJSTORE_CONFIG)
