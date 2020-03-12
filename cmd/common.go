@@ -135,6 +135,12 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 		base.Filebeat.Elasticsearch.Password = template(base.Filebeat.Elasticsearch.Password)
 	}
 
+	if base.Vault != nil {
+		base.Vault.AccessKey = template(base.Vault.AccessKey)
+		base.Vault.SecretKey = template(base.Vault.SecretKey)
+		base.Vault.KmsKeyId = template(base.Vault.KmsKeyId)
+	}
+
 	gitops := base.GitOps
 	for i := range gitops {
 		gitops[i].GitKey = template(gitops[i].GitKey)
@@ -147,7 +153,7 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 
 		value, err := lookup.LookupString(&base, key)
 		if err != nil {
-			log.Fatalf("%v", err)
+			log.Fatalf("Cannot lookup %s: %v", key, err)
 		}
 		log.Infof("Overriding %s %v => %v", key, value, val)
 		switch value.Interface().(type) {

@@ -39,35 +39,23 @@ $BIN deploy calico -v
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 
-$BIN deploy base -v
+for app in base stubs dex vault; do
+  $BIN deploy $app -v
+done
 
-$BIN deploy stubs -v
+for app in base stubs; do
+  $BIN test $app --wait 200
+done
 
-$BIN deploy dex -v
-
-$BIN test stubs --wait 200
-
-$BIN test dex --wait 200
+$BIN vault init -v
 
 $BIN deploy postgres-operator install -v
 
-$BIN test base --wait 200
-
 $BIN test postgres-operator --wait 200
-
-$BIN deploy harbor -v
 
 $BIN deploy all -v
 
 $BIN deploy opa bundle automobile -v
-
-$BIN deploy opa install  -v
-
-$BIN deploy velero
-
-$BIN deploy fluentd
-
-$BIN deploy eck
 
 $BIN deploy opa policies test/opa/policies -v
 

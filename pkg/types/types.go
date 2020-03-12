@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/moshloop/platform-cli/pkg/api/calico"
 	"gopkg.in/yaml.v2"
+
+	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
 type Enabled struct {
@@ -386,6 +387,24 @@ type Filebeat struct {
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
 }
+
+type Consul struct {
+	Version        string `yaml:"version"`
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Bucket         string `yaml:"bucket,omitempty"`
+	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+}
+
+type Vault struct {
+	Version   string `yaml:"version"`
+	Disabled  bool   `yaml:"disabled,omitempty"`
+	AccessKey string `yaml:"accessKey,omitempty"`
+	SecretKey string `yaml:"secretKey,omitempty"`
+	KmsKeyId  string `yaml:"kmsKeyId,omitempty"`
+	Region    string `yaml:"region,omitempty"`
+	Consul    Consul `yaml:"consul,omitempty"`
+}
+
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version"`
