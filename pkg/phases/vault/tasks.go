@@ -15,7 +15,12 @@ func Init(p *platform.Platform) error {
 		return err
 	}
 
+	if err :=	p.WaitForPodCommand("vault", "vault-0", "vault", 20*time.Second, "/bin/sh", "-c", "netstat -tln | grep 8200"); err != nil {
+		return err
+	}
+
 	stdout, stderr, err := p.ExecutePodf("vault", "vault-0", "vault", "/bin/vault", "operator", "init", "-tls-skip-verify", "-status")
+
 	log.Debugf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 	if err != nil && strings.Contains(stdout, "Vault is not initialized") {
 		log.Infof("Vault is not initialized, initializing")

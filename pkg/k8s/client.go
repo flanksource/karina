@@ -352,6 +352,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 				spec := unstructuredObj.Object["spec"].(map[string]interface{})
 				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
 			}
+			//apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
 
 			c.trace("updating", unstructuredObj)
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
@@ -841,7 +842,22 @@ func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1
 			}
 		}
 	}
+}
 
+// WaitForPodCommand waits for a command executed in pod to succeed with an exit code of 9
+// error if the timeout is exceeded
+func (c *Client) WaitForPodCommand(ns, name string, container string, timeout time.Duration, command ...string) error {
+	start := time.Now()
+	for {
+		stdout, stderr, err := c.ExecutePodf(ns, name, container, command...)
+		if err == nil {
+			return nil
+		}
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("Timeout exceeded waiting for %s stdout: %s, stderr: %s", name, stdout, stderr)
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 // ExecutePodf runs the specified shell command inside a container of the specified pod
