@@ -21,10 +21,6 @@ func Install(platform *platform.Platform) error {
 		log.Errorf("Error deploying base rbac: %s\n", err)
 	}
 
-	if err := platform.ApplySpecs("", "tiller.yaml"); err != nil {
-		log.Errorf("Error deploying tiller: %s\n", err)
-	}
-
 	if !platform.NodeLocalDNS.Disabled {
 		client, err := platform.GetClientset()
 		if err != nil {
