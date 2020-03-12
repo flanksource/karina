@@ -35,11 +35,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	extras, _ := cmd.Flags().GetStringArray("extra")
 	showConfig, _ := cmd.Flags().GetBool("show-config")
+	trace, _ := cmd.Flags().GetBool("trace")
 
-	return NewConfig(paths, dryRun, extras, showConfig)
+	return NewConfig(paths, dryRun, extras, showConfig, trace)
 }
 
-func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool) types.PlatformConfig {
+func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, trace bool) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
@@ -71,7 +72,6 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool) ty
 		log.Infof("Running a dry-run mode, no changes will be made")
 	}
 
-	trace, _ := cmd.Flags().GetBool("trace")
 	if trace {
 		base.Trace = true
 	}

@@ -14,7 +14,7 @@ func TestGetConfigSimple(t *testing.T) {
 
 	g.Expect(cfg.Name).To(Equal("test"))
 	g.Expect(cfg.Domain).To(Equal("127.0.0.1.nip.io"))
-	g.Expect(cfg.Kubernetes).To(Equal(types.Kubernetes{Version: "v1.15.7"}))
+	g.Expect(cfg.Kubernetes.Version).To(Equal("v1.15.7"))
 }
 
 func TestGetConfigSetDefaults(t *testing.T) {
@@ -22,6 +22,14 @@ func TestGetConfigSetDefaults(t *testing.T) {
 
 	g.Expect(cfg.Ldap.GroupObjectClass).To(Equal("group"))
 	g.Expect(cfg.Ldap.GroupNameAttr).To(Equal("name"))
+	g.Expect(cfg.Kubernetes).To(Equal(types.Kubernetes{
+		Version:             "v1.15.7",
+		APIServerExtraArgs:  map[string]string{},
+		ControllerExtraArgs: map[string]string{},
+		SchedulerExtraArgs:  map[string]string{},
+		KubeletExtraArgs:    map[string]string{},
+		EtcdExtraArgs:       map[string]string{},
+	}))
 }
 
 func TestGetConfigOverwriteDefaults(t *testing.T) {
@@ -46,6 +54,6 @@ func newFixture(paths []string, t *testing.T) (*types.PlatformConfig, *WithT) {
 		fullPaths[i] = fmt.Sprintf("../test/fixtures/%s", paths[i])
 	}
 
-	cfg := cmd.NewConfig(fullPaths, false, []string{}, false)
+	cfg := cmd.NewConfig(fullPaths, false, []string{}, false, false)
 	return &cfg, g
 }
