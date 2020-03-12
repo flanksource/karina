@@ -10,7 +10,7 @@ import (
 )
 
 func TestGetConfigSimple(t *testing.T) {
-	cfg, g := newFixture([]string{"simple.yml"}, t)
+	cfg, g := newFixture([]string{"simple.yaml"}, t)
 
 	g.Expect(cfg.Name).To(Equal("test"))
 	g.Expect(cfg.Domain).To(Equal("127.0.0.1.nip.io"))
@@ -18,7 +18,7 @@ func TestGetConfigSimple(t *testing.T) {
 }
 
 func TestGetConfigSetDefaults(t *testing.T) {
-	cfg, g := newFixture([]string{"simple.yml"}, t)
+	cfg, g := newFixture([]string{"simple.yaml"}, t)
 
 	g.Expect(cfg.Ldap.GroupObjectClass).To(Equal("group"))
 	g.Expect(cfg.Ldap.GroupNameAttr).To(Equal("name"))
@@ -33,7 +33,7 @@ func TestGetConfigSetDefaults(t *testing.T) {
 }
 
 func TestGetConfigOverwriteDefaults(t *testing.T) {
-	cfg, g := newFixture([]string{"ldap.yml"}, t)
+	cfg, g := newFixture([]string{"ldap.yaml"}, t)
 
 	g.Expect(cfg.Ldap.GroupObjectClass).To(Equal("groupOfNames"))
 	g.Expect(cfg.Ldap.GroupNameAttr).To(Equal("DN"))
@@ -41,7 +41,7 @@ func TestGetConfigOverwriteDefaults(t *testing.T) {
 }
 
 func TestMergeTwoConfigs(t *testing.T) {
-	cfg, g := newFixture([]string{"simple.yml", "overwrite.yml"}, t)
+	cfg, g := newFixture([]string{"simple.yaml", "overwrite.yaml"}, t)
 
 	g.Expect(cfg.Kubernetes.Version).To(Equal("v1.15.7"))
 	g.Expect(cfg.Calico.Version).To(Equal("v3.8.2"))
