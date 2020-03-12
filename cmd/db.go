@@ -64,22 +64,33 @@ func init() {
 		},
 	})
 
-	DB.AddCommand(&cobra.Command{
+	backup := &cobra.Command{
 		Use:   "backup",
 		Short: "Create a new database backup",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			schedule, _ := cmd.Flags().GetString("schedule")
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
-			log.Infof("Backing up %s", db)
 
-			if err := db.Backup(); err != nil {
-				log.Fatalf("Error backing up db %s\n", err)
+			if schedule != "" {
+				log.Infof("Creating backup schedule: %s: %s", schedule, db)
+				if err := db.ScheduleBackup(schedule); err != nil {
+					log.Fatalf("Failed to create backup schedule: %v", err)
+				}
+			} else {
+				log.Infof("Backing up %s", db)
+
+				if err := db.Backup(); err != nil {
+					log.Fatalf("Error backing up db %s\n", err)
+				}
 			}
 		},
-	})
+	}
+	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
+	DB.AddCommand(backup)
 
 	DB.PersistentFlags().StringVar(&clusterName, "name", "", "Name of the postgres cluster / service")
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")

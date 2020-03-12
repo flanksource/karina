@@ -21,6 +21,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
+	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -222,6 +223,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "vault",
+		Short: "Test vault",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(vault.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -239,6 +249,7 @@ func init() {
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
 				sealedsecrets.Test(p, test)
+				vault.Test(p, test)
 			})
 		},
 	})

@@ -388,7 +388,6 @@ func (platform *Platform) GetResourceByName(file string, pkg string) (string, er
 		raw, err = templates.FSString(false, file)
 	}
 	if err != nil {
-		log.Fatal(err)
 		return "", err
 	}
 	return raw, nil
@@ -489,6 +488,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
+		log.Debugf("Applying %s", spec)
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
