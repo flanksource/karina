@@ -90,6 +90,11 @@ func (db *PostgresDB) Backup() error {
 	return db.client.StreamLogs(db.Namespace, job.Name)
 }
 
+func (db *PostgresDB) ScheduleBackup(schedule string) error {
+	job := db.GenerateBackupJob().AsCronJob(schedule)
+	return db.client.Apply(db.Namespace, job)
+}
+
 func (db *PostgresDB) ListBackups() ([]string, error) {
 	var backups []string
 	return backups, nil
