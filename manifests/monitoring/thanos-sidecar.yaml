@@ -27,4 +27,8 @@ spec:
       - backend:
           serviceName: thanos-sidecar
           servicePort: 10901
+  tls:
+  - hosts:
+    - thanos.{{.domain}}
 {{- end}}
+
