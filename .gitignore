@@ -6,7 +6,8 @@ build/
 *.env
 config*.yaml
 config*.yml
-docs/*.md
+#TODO: verify intent of ignoring docs/*.md at PR
+#docs/*.md
 .DS_Store
 *-packr.go
 packrd/
