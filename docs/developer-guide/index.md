@@ -2,6 +2,12 @@
 
 ## Quickstart
 
+```bash
+make setup
+make
+sudo make install
+```
+
 ## Documentation
 
 Documentation is done using [MkDocs](https://github.com/mkdocs/mkdocs). 
