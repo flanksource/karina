@@ -19,8 +19,7 @@ Documentation files are MarkDown formatted text files.
 Run
 
 ```sh
-docker run --rm -it -p 8000:8000 -v $PWD:/docs -w /docs \
-    squidfunk/mkdocs-material serve -a 0.0.0.0:8000
+make serve-docs
 ```
 
 Navigate to [http://localhost:8000](http://localhost:8000)
