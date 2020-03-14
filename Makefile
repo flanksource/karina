@@ -6,6 +6,33 @@ ifeq ($(VERSION),)
 VERSION := v$(shell git describe --tags --exclude "*-g*" ) built $(shell date)
 endif
 
+define HELPDOC
+valid targets:\n\
+	* setup          - Install required dependencies esc and github-release\n\
+	* pack           - Packs templates and manifests into golang files\n\
+	* build(default) - Build binaries\n\
+	* install        - Installs binary locally (needs admin priviliges)\n\
+	* linux          - Build for Linux\n\
+	* darwin         - Build for Darwin\n\
+	* docker         - Build docker image\n\
+	* compress       - Uses UPX to compress the executable\n\
+	* serve-docs     - Serves the MkDocs docs locally\n\
+	* build-api-docs - Build golang docs\n\
+	* build-docs     - Build MkDocs docs\n\
+	* deploy-docs    - Deploy MkDocs to Netlify\n\
+\n\
+Normal first time use:\n\
+  make setup\n\
+  make pack\n\
+  make build\n\
+  make compress\n\
+  sudo make install\n\
+\n
+endef
+.PHONY: help
+help:
+	@echo "$(HELPDOC)"
+
 .PHONY: setup
 setup:
 	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
