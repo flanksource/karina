@@ -197,3 +197,12 @@ vault:
       allow_subdomains: true
       allowed_domains:
         - 127.0.0.1.nip.io
+registryCredentials:
+  version: "1.10"
+  namespace: "registry-credentials"
+  aws:
+    enabled: true
+    accessKey: $AWS_ACCESS_KEY_ID
+    secretKey: $AWS_SECRET_ACCESS_KEY
+    account: 745897381572
+    region: us-east-1

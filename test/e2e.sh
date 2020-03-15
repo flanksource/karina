@@ -53,6 +53,8 @@ $BIN deploy postgres-operator install -v
 
 $BIN test postgres-operator --wait 200
 
+$BIN test registry-credentials --wait 200
+
 $BIN deploy all -v
 
 $BIN deploy opa bundle automobile -v
