@@ -119,13 +119,6 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Minio == nil || !platform.Minio.Disabled {
-		log.Infof("Installing minio")
-		if err := platform.ApplySpecs("", "minio.yaml"); err != nil {
-			log.Errorf("Error deploying minio: %s\n", err)
-		}
-	}
-
 	if platform.S3.CSIVolumes {
 		log.Infof("Deploying S3 Volume Provisioner")
 		platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
