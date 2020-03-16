@@ -85,6 +85,52 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 
 }
 
+func TestPrometheus(p *platform.Platform, test *console.TestResults, _ []string, cmd *cobra.Command) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	client, err := api.NewClient(api.Config{
+		Address:      fmt.Sprintf("https://prometheus.%s", p.Domain),
+		RoundTripper: http.DefaultTransport,
+	})
+	if err != nil {
+		log.Fatal("Failed to get client to connect to Prometheus")
+	}
+	promApi := v1.NewAPI(client)
+	targets, err := promApi.Targets(context.Background())
+	if err != nil {
+		log.Fatal("Failed to get targets")
+	}
+	if targets.Active == nil {
+		test.Failf("NoActiveTargets", "No active targets found in Prometheus")
+		return
+	}
+	for _, activeTarget := range targets.Active {
+		targetEndpointName := activeTarget.DiscoveredLabels["__meta_kubernetes_endpoints_name"]
+		targetEndpointAddress := activeTarget.DiscoveredLabels["__address__"]
+		log.Tracef("Testing endpoint: %s", targetEndpointName)
+		log.Trace(activeTarget)
+		if activeTarget.Health == "down" {
+			test.Failf(targetEndpointName, "%s (%s) endpoint is down\n %s", targetEndpointName, targetEndpointAddress, activeTarget.LastError)
+		} else {
+			test.Passf(targetEndpointName, "%s (%s) endpoint is up", targetEndpointName, targetEndpointAddress)
+		}
+	}
+	alerts, err := promApi.Alerts(context.Background())
+	if err != nil {
+		log.Errorf("pullMetric: failed to get alerts")
+		return
+	}
+	if alerts.Alerts == nil {
+		log.Infof("No alerts")
+		return
+	}
+	for _, alert := range alerts.Alerts {
+		alertname := string(alert.Labels["alertname"])
+		if alert.State == "firing" {
+			test.Failf(alertname, "%s alert is firing\n %s", alertname, alert.Labels)
+		}
+	}
+}
+
 func pushMetric(pushGatewayHost string) *push.Pusher {
 	metric := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: testMetricName,
@@ -111,7 +157,7 @@ func pullMetric(thanosHost string) (model.Value, error) {
 		log.Tracef("Got warnings: %s", warn)
 	}
 	if err != nil {
-		fmt.Errorf("pullMetric: failed to ")
+		fmt.Errorf("pullMetric: failed to pull metrics")
 	}
 	return value, err
 }

@@ -232,6 +232,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "prometheus",
+		Short: "Test prometheus",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			runWithArgs(monitoring.TestPrometheus, args, cmd)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),

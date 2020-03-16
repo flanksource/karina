@@ -254,20 +254,27 @@ spec:
     - name: prometheus
       type: prometheus
       access: proxy
-      {{- if index . "thanos"}}
-      {{- if eq .thanos.mode "observability"}}
-      url: http://thanos-query:9090
-      {{- end}}
-      {{- else }}
       url: http://prometheus-k8s:9090
-      {{- end }}
+      isDefault: false
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        timeInterval: "5s"
+    {{- if index . "thanos"}}
+    {{- if eq .thanos.mode "observability"}}
+    - name: thanos
+      type: prometheus
+      access: proxy
+      url: http://thanos-query:9090
       isDefault: true
       version: 1
       editable: true
       jsonData:
         tlsSkipVerify: true
         timeInterval: "5s"
-
+    {{ end }}
+    {{ end }}
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
@@ -324,15 +331,18 @@ kind: Ingress
 metadata:
   name: prometheus
   namespace: monitoring
-  {{ if .oauth2Proxy.enabled }}
   annotations:
+    kubernetes.io/tls-acme: "true"
+  {{ if .oauth2Proxy.enabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
   {{ end }}
 spec:
   tls:
-    - hosts:
+    - secretName: prometheus-tls
+      hosts:
         - prometheus.{{.domain}}
+
   rules:
     - host: prometheus.{{.domain}}
       http:
@@ -346,15 +356,18 @@ kind: Ingress
 metadata:
   name: grafana
   namespace: monitoring
-  {{ if .oauth2Proxy.enabled }}
   annotations:
+    kubernetes.io/tls-acme: "true"
+  {{ if .oauth2Proxy.enabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
   {{ end }}
 spec:
   tls:
-    - hosts:
+    - secretName: grafana-tls
+      hosts:
         - grafana.{{.domain}}
+
   rules:
     - host: grafana.{{.domain}}
       http:
@@ -369,14 +382,16 @@ kind: Ingress
 metadata:
   name: alertmanager
   namespace: monitoring
-  {{ if .oauth2Proxy.enabled }}
   annotations:
+    kubernetes.io/tls-acme: "true"
+  {{ if .oauth2Proxy.enabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
   {{ end }}
 spec:
   tls:
-    - hosts:
+    - secretName: alertmanager-tls
+      hosts:
         - alertmanager.{{.domain}}
   rules:
     - host: alertmanager.{{.domain}}

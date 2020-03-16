@@ -158,12 +158,8 @@ func deployThanos(p *platform.Platform) error {
 	if p.Thanos.Mode == "client" {
 		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod.")
 		if !p.HasSecret(Namespace, SidecarCertName) {
-			cert, err := p.CreateIngressCertificate("thanos-sidecar")
-			if err != nil {
+			if err := 	p.CreateTLSSecret(Namespace, "thanos-sidecar", SidecarCertName); err != nil {
 				return fmt.Errorf("install: failed to create ingress certificate: %v", err)
-			}
-			if err := p.CreateOrUpdateSecret(SidecarCertName, Namespace, cert.AsTLSSecret()); err != nil {
-				return fmt.Errorf("install: failed to create secret with certificate and key: %v", err)
 			}
 		}
 		if err := p.ApplySpecs("", "monitoring/thanos-sidecar.yaml"); err != nil {
