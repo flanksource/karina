@@ -363,6 +363,34 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 	})
 }
 
+func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
+	if platform.HasSecret(namespace, secretName) {
+		log.Debugf("secret/%s/%s' for %s alredy exists", namespace,secretName, subDomain)
+		//TODO(moshloop) check certificate expiry and renew if necessary
+		return nil
+	}
+	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
+	expiry := time.Hour*24*365*3
+
+	if platform.CertManager != nil && !platform.CertManager.Disabled {
+		// when using cert-manager we create a very short-lived cert
+		// so that services can start (with an invalid cert), and then let
+		// cert-manager "renew it"
+		expiry = time.Hour*24*10
+	}
+	signed, err := platform.GetIngressCA().Sign(cert.X509, expiry)
+	if err!= nil {
+		return err
+	}
+
+	cert = &certs.Certificate{
+		X509: signed,
+		PrivateKey: cert.PrivateKey,
+	}
+	return platform.CreateOrUpdateSecret(secretName, namespace, cert.AsTLSSecret())
+}
+
 func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Certificate, error) {
 	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate

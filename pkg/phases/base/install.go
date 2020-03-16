@@ -3,13 +3,13 @@ package base
 import (
 	"fmt"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/constants"
 	"github.com/moshloop/platform-cli/pkg/phases/ingress"
+	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -19,6 +19,10 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.ApplySpecs("", "rbac.yaml"); err != nil {
 		log.Errorf("Error deploying base rbac: %s\n", err)
+	}
+
+	if err := certmanager.Install(platform); err != nil {
+		return err
 	}
 
 	if !platform.NodeLocalDNS.Disabled {
@@ -40,22 +44,6 @@ func Install(platform *platform.Platform) error {
 
 		if err := platform.ApplySpecs("", "node-local-dns.yaml"); err != nil {
 			log.Errorf("Error deploying node-local-dns: %s\n", err)
-		}
-	}
-
-	if platform.CertManager == nil || !platform.CertManager.Disabled {
-		log.Infof("Installing CertMananager")
-		if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
-			log.Errorf("Error deploying cert manager CRDs: %s\n", err)
-		}
-
-		// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
-		// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
-		var _ = platform.ApplySpecs("", "cert-manager-deploy.yaml")
-		platform.GetKubectl()("wait --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
-		platform.WaitForNamespace("cert-manager", 180*time.Second)
-		if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
-			log.Errorf("Error deploying cert manager: %s\n", err)
 		}
 	}
 

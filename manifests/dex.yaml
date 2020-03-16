@@ -16,7 +16,7 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-       app: dex
+      app: dex
   template:
     metadata:
       labels:
@@ -37,7 +37,6 @@ spec:
           ports:
             - name: https
               containerPort: 443
-
           volumeMounts:
             - name: config
               mountPath: /etc/dex/cfg
@@ -63,7 +62,7 @@ spec:
                 path: config.yaml
         - name: tls
           secret:
-            secretName: dex-cert
+            secretName: dex-tls
 
 ---
 apiVersion: v1
@@ -87,13 +86,17 @@ metadata:
   name: dex-ing
   namespace: dex
   annotations:
+    # TODO(moshloop) do we still need to passthrough ssl to dex
+    # if we have a stable CA to validate the dex server with?
+    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/secure-backends: "true"
 spec:
   tls:
-    - hosts:
+    - secretName: dex-tls
+      hosts:
         - dex.{{.domain}}
   rules:
     - host: dex.{{.domain}}

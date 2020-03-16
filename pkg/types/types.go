@@ -218,6 +218,10 @@ type Ldap struct {
 	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
 }
 
+func (ldap Ldap) GetConnectionURL() string {
+	return fmt.Sprintf("ldaps://%s:%s", ldap.Host, ldap.Port)
+}
+
 type Kubernetes struct {
 	Version string `yaml:"version"`
 	// KubeletExtraArgs is used to configure additional kubelet command line flags
@@ -362,16 +366,16 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled              bool     `yaml:"disabled"`
-	Version               string   `yaml:"version"`
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version"`
 	// Mode. Should be client or obeservability.
-	Mode                  string   `yaml:"mode,omitempty"`
+	Mode string `yaml:"mode,omitempty"`
 	// Bucket to store metrics. Should be the same across all environments
-	Bucket                string   `yaml:"bucket,omitempty"`
+	Bucket string `yaml:"bucket,omitempty"`
 	// Only for observability mode. List of client sidecars in <hostname>:<port> format
-	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`
+	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
-	EnableCompactor        bool     `yaml:"enableCompactor,omitempty"`
+	EnableCompactor bool `yaml:"enableCompactor,omitempty"`
 }
 
 type FluentdOperator struct {
@@ -397,6 +401,8 @@ type Consul struct {
 
 type Vault struct {
 	Version   string `yaml:"version"`
+	Token     string `yaml:"token,omitempty"`
+	Address   string `yaml:"address,omitempty"`
 	Disabled  bool   `yaml:"disabled,omitempty"`
 	AccessKey string `yaml:"accessKey,omitempty"`
 	SecretKey string `yaml:"secretKey,omitempty"`
