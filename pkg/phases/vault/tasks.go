@@ -96,8 +96,6 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 	default:
 		fmt.Printf("Unknown CA type %v", ingress)
 	}
-
-	fmt.Println(mounts)
 	return nil
 }
 

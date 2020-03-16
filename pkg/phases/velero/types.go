@@ -1,10 +1,10 @@
 package velero
 
 import (
+	"github.com/moshloop/platform-cli/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/moshloop/platform-cli/pkg/k8s"
 )
 
 type BackupSpec struct {
