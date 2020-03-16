@@ -254,20 +254,27 @@ spec:
     - name: prometheus
       type: prometheus
       access: proxy
-      {{- if index . "thanos"}}
-      {{- if eq .thanos.mode "observability"}}
-      url: http://thanos-query:9090
-      {{- end}}
-      {{- else }}
       url: http://prometheus-k8s:9090
-      {{- end }}
+      isDefault: false
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        timeInterval: "5s"
+    {{- if index . "thanos"}}
+    {{- if eq .thanos.mode "observability"}}
+    - name: thanos
+      type: prometheus
+      access: proxy
+      url: http://thanos-query:9090
       isDefault: true
       version: 1
       editable: true
       jsonData:
         tlsSkipVerify: true
         timeInterval: "5s"
-
+    {{ end }}
+    {{ end }}
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
