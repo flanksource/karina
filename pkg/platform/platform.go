@@ -32,6 +32,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
+
 )
 
 type Platform struct {
@@ -105,10 +106,12 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 		platform.ingressCA, _ = ca.SignCertificate(ca, 1)
 		return platform.ingressCA
 	}
+	log.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
 	ca, err := readCA(platform.IngressCA)
 	if err != nil {
 		log.Fatalf("Unable to open Ingress CA: %v", err)
 	}
+	log.Debugf("[IngressCA] read CA %s", ca.X509.Subject)
 	platform.ingressCA = ca
 	return ca
 }
@@ -371,6 +374,8 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 	}
 	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
+
+	cert.X509.PublicKey = cert.PrivateKey.Public()
 	expiry := time.Hour*24*365*3
 
 	if platform.CertManager != nil && !platform.CertManager.Disabled {
@@ -380,8 +385,8 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 		expiry = time.Hour*24*10
 	}
 	signed, err := platform.GetIngressCA().Sign(cert.X509, expiry)
-	if err!= nil {
-		return err
+	if err != nil {
+		return fmt.Errorf("failed to sign cert %s: %v", cert.X509,err)
 	}
 
 	cert = &certs.Certificate{
