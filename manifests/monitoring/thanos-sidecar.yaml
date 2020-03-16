@@ -18,11 +18,13 @@ metadata:
   name: thanos-sidecar
   namespace: monitoring
   annotations:
+    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
 spec:
   tls:
-    - hosts:
+    - secretName: thanos-tls
+      hosts:
       - "thanos-sidecar.{{.domain}}"
   rules:
   - host: "thanos-sidecar.{{.domain}}"
@@ -31,8 +33,5 @@ spec:
       - backend:
           serviceName: thanos-sidecar
           servicePort: 10901
-  tls:
-  - hosts:
-    - thanos.{{.domain}}
 {{- end}}
 

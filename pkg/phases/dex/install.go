@@ -19,12 +19,8 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if !platform.HasSecret(Namespace, CertName) {
-		cert, err := platform.CreateIngressCertificate("dex")
-		if err != nil {
-			return fmt.Errorf("install: failed to create ingress certificate: %v", err)
-		}
-		if err := platform.CreateOrUpdateSecret(CertName, Namespace, cert.AsTLSSecret()); err != nil {
-			return fmt.Errorf("install: failed to create/update secret: %v", err)
+		if err := platform.CreateTLSSecret(Namespace, "dex", CertName); err != nil {
+			return err
 		}
 	}
 

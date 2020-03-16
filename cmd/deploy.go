@@ -132,7 +132,7 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := dex.Install(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error initializing dex %s", err)
+				log.Fatalf("Error deploying dex %s", err)
 			}
 		},
 	})

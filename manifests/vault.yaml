@@ -515,11 +515,13 @@ metadata:
   namespace: vault
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    kubernetes.io/tls-acme: "true"
   labels:
     app.kubernetes.io/name: vault
 spec:
   tls:
-    - hosts:
+    - secretName: vault-tls
+      hosts:
         - vault.{{.domain}}
   rules:
     - host: "vault.{{.domain}}"
@@ -537,9 +539,12 @@ metadata:
   namespace: vault
   labels:
     app.kubernetes.io/name: vault
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   tls:
-    - hosts:
+    - secretName: consul-tls
+      hosts:
         - vault-consul.{{.domain}}
 
   rules:
