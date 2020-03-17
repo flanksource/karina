@@ -113,3 +113,6 @@ spec:
         backend:
           serviceName: thanos-query
           servicePort: 9090
+  tls:
+    - hosts:
+        - thanos.{{.domain}}
