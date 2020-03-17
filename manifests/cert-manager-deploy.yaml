@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: cert-manager
+  labels:
+    openpolicyagent.org/webhook: ignore
 
 ---
 apiVersion: v1
@@ -709,7 +711,15 @@ spec:
             requests:
               cpu: 10m
               memory: 32Mi
-
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: default-issuer
+  namespace: cert-manager
+spec:
+  ca:
+    secretName: cert-manager-webhook-ca
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -855,13 +865,3 @@ webhooks:
         name: kubernetes
         namespace: default
         path: /apis/webhook.cert-manager.io/v1beta1/validations
-
----
-apiVersion: cert-manager.io/v1alpha2
-kind: ClusterIssuer
-metadata:
-  name: default-issuer
-  namespace: cert-manager
-spec:
-  ca:
-    secretName: cert-manager-webhook-ca
