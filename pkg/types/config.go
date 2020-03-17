@@ -40,7 +40,7 @@ type PlatformConfig struct {
 	Quack            *Enabled          `yaml:"quack,omitempty"`
 	Resources        map[string]string `yaml:"resources,omitempty"`
 	S3               S3                `yaml:"s3,omitempty"`
-	SealedSecrets    SealedSecrets     `yaml:"sealedSecrets,omitempty"`
+	SealedSecrets    *SealedSecrets     `yaml:"sealedSecrets,omitempty"`
 	ServiceSubnet    string            `yaml:"serviceSubnet"`
 	SMTP             Smtp              `yaml:"smtp,omitempty"`
 	Specs            []string          `yaml:"specs,omitempty"`
