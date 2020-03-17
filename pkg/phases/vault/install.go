@@ -13,6 +13,7 @@ const (
 func Deploy(p *platform.Platform) error {
 	if p.Vault == nil || p.Vault.Disabled {
 		log.Infof("Skipping deployment of vault, it is disabled")
+		return
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
