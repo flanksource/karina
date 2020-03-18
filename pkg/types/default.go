@@ -3,7 +3,7 @@ package types
 func DefaultPlatformConfig() PlatformConfig {
 	config := PlatformConfig{
 		CertManager: CertManager{
-			Version: "v1.12.0",
+			Version: "v0.12.0",
 		},
 		Ldap: &Ldap{
 			GroupObjectClass: "group",
