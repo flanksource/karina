@@ -29,7 +29,7 @@ func Install(platform *platform.Platform) error {
 	if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
 		return err
 	}
-	platform.GetKubectl()("wait --timeout=300s --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
+
 	platform.WaitForNamespace(Namespace, 180*time.Second)
 
 	var issuerConfig certmanager.IssuerConfig

@@ -770,25 +770,6 @@ spec:
           secret:
             secretName: cert-manager-webhook-tls
 ---
-apiVersion: apiregistration.k8s.io/v1beta1
-kind: APIService
-metadata:
-  name: v1beta1.webhook.cert-manager.io
-  labels:
-    app: webhook
-    app.kubernetes.io/name: webhook
-    app.kubernetes.io/instance: cert-manager
-  annotations:
-    cert-manager.io/inject-ca-from-secret: "cert-manager/cert-manager-webhook-tls"
-spec:
-  group: webhook.cert-manager.io
-  groupPriorityMinimum: 1000
-  versionPriority: 15
-  service:
-    name: cert-manager-webhook
-    namespace: "cert-manager"
-  version: v1beta1
----
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -798,30 +779,27 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: cert-manager
   annotations:
-    cert-manager.io/inject-apiserver-ca: "true"
+    cert-manager.io/inject-ca-from-secret: "cert-manager/cert-manager-webhook-tls"
 webhooks:
   - name: webhook.cert-manager.io
     rules:
       - apiGroups:
           - "cert-manager.io"
+          - "acme.cert-manager.io"
         apiVersions:
           - v1alpha2
         operations:
           - CREATE
           - UPDATE
         resources:
-          - certificates
-          - issuers
-          - clusterissuers
-          - orders
-          - challenges
-          - certificaterequests
+          - "*/*"
     failurePolicy: Fail
+    sideEffects: None
     clientConfig:
       service:
-        name: kubernetes
-        namespace: default
-        path: /apis/webhook.cert-manager.io/v1beta1/mutations
+        name: cert-manager-webhook
+        namespace: "cert-manager"
+        path: /mutate
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
@@ -832,7 +810,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: cert-manager
   annotations:
-    cert-manager.io/inject-apiserver-ca: "true"
+    cert-manager.io/inject-ca-from-secret: "cert-manager/cert-manager-webhook-tls"
 webhooks:
   - name: webhook.cert-manager.io
     namespaceSelector:
@@ -848,20 +826,18 @@ webhooks:
     rules:
       - apiGroups:
           - "cert-manager.io"
+          - "acme.cert-manager.io"
         apiVersions:
           - v1alpha2
         operations:
           - CREATE
           - UPDATE
         resources:
-          - certificates
-          - issuers
-          - clusterissuers
-          - certificaterequests
+          - "*/*"
     failurePolicy: Fail
     sideEffects: None
     clientConfig:
       service:
-        name: kubernetes
-        namespace: default
-        path: /apis/webhook.cert-manager.io/v1beta1/validations
+        name: cert-manager-webhook
+        namespace: "cert-manager"
+        path: /mutate
