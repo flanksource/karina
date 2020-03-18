@@ -644,7 +644,7 @@ spec:
       serviceAccountName: cert-manager-cainjector
       containers:
         - name: cainjector
-          image: "quay.io/jetstack/cert-manager-cainjector:v0.11.0"
+          image: "quay.io/jetstack/cert-manager-cainjector:{{.certmanager.version}}"
           imagePullPolicy: IfNotPresent
           args:
             - --v=2
@@ -687,7 +687,7 @@ spec:
       serviceAccountName: cert-manager
       containers:
         - name: cert-manager
-          image: "quay.io/jetstack/cert-manager-controller:v0.11.0"
+          image: "quay.io/jetstack/cert-manager-controller:{{.certmanager.version}}"
           imagePullPolicy: IfNotPresent
           args:
             - --v=2
