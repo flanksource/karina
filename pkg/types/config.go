@@ -6,7 +6,7 @@ type PlatformConfig struct {
 	Velero                *Velero           `yaml:"velero,omitempty"`
 	CA                    *CA               `yaml:"ca"`
 	Calico                Calico            `yaml:"calico,omitempty"`
-	CertManager           *Enabled          `yaml:"certManager,omitempty"`
+	CertManager           CertManager          `yaml:"certManager,omitempty"`
 	Consul                string            `yaml:"consul"`
 	Dashboard             Dashboard         `yaml:"dashboard,omitempty"`
 	Datacenter            string            `yaml:"datacenter"`
