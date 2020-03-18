@@ -39,7 +39,7 @@ func NewPostgresql(name string) *Postgresql {
 		Spec: PostgresSpec{
 			TeamID:      "postgres",
 			ClusterName: name,
-			DockerImage: "registry.opensource.zalan.do/acid/spilo-12:1.6-p2",
+			DockerImage: "docker.io/flanksource/spilo:1.6-p2.flanksource",
 			PostgresqlParam: PostgresqlParam{
 				PgVersion:  "12",
 				Parameters: make(map[string]string),
@@ -47,9 +47,6 @@ func NewPostgresql(name string) *Postgresql {
 			Volume: Volume{
 				Size: "10Gi",
 			},
-			// StandbyCluster: &StandbyDescription{
-			// 	S3WalPath: "s3://",
-			// },
 			Patroni: Patroni{
 				InitDB: map[string]string{
 					"encoding":       "UTF8",
@@ -66,12 +63,6 @@ func NewPostgresql(name string) *Postgresql {
 				MaximumLagOnFailover: 32 * 1024 * 1024,
 				Slots:                make(map[string]map[string]string),
 			},
-			// StandbyCluster: nil,
-			// Clone:          CloneDescription{},
-			// Clone: CloneDescription{
-			// 	ClusterName: " ",
-			// },
-
 			Resources: Resources{
 				ResourceLimits: ResourceDescription{
 					CPU:    "2",
@@ -85,7 +76,7 @@ func NewPostgresql(name string) *Postgresql {
 			PodAnnotations:      make(map[string]string),
 			ServiceAnnotations:  make(map[string]string),
 			ShmVolume:           &yes,
-			EnableLogicalBackup: true,
+			EnableLogicalBackup: false,
 			NumberOfInstances:   2,
 		},
 	}
