@@ -35,6 +35,12 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
+	if err := p.CreateOrUpdateSecret(CaCertName, Namespace, map[string][]byte{
+		"ca.crt": p.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
+	}); err != nil {
+		return fmt.Errorf("install: failed to create secret with CA certificate: %v", err)
+	}
+
 	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yaml"); err != nil {
 		log.Warnf("Failed to deploy prometheus operator %v", err)
 	}
@@ -133,12 +139,6 @@ func deployThanos(p *platform.Platform) error {
 	}
 	if err := p.ApplySpecs("", "monitoring/thanos-sidecar.yaml"); err != nil {
 		return err
-	}
-
-	if err := p.CreateOrUpdateSecret(CaCertName, Namespace, map[string][]byte{
-		"ca.crt": p.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
-	}); err != nil {
-		return fmt.Errorf("install: failed to create secret with CA certificate: %v", err)
 	}
 
 	if p.Thanos.Mode == "client" {
