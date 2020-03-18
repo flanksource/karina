@@ -97,7 +97,7 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults, _ []string,
 	promApi := v1.NewAPI(client)
 	targets, err := promApi.Targets(context.Background())
 	if err != nil {
-		log.Fatal("Failed to get targets")
+		log.Fatalf("Failed to get targets: %v", err)
 	}
 	if targets.Active == nil {
 		test.Failf("NoActiveTargets", "No active targets found in Prometheus")

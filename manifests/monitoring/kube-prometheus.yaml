@@ -82,6 +82,27 @@ subjects:
     name: prometheus-k8s
     namespace: monitoring
 ---
+{{- if index . "thanos" }}
+{{- if not (index .thanos "disabled") }}
+
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: thanos-sidecar
+  namespace: monitoring
+spec:
+  dnsNames:
+    - thanos-sidecar.{{.domain}}
+    - thanos-sidecar.monitoring.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: ingress-ca
+  secretName: thanos-sidecar
+
+{{- end }}
+{{- end }}
+
+---
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:

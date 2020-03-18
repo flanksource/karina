@@ -33,13 +33,13 @@ spec:
             - --grpc-client-tls-secure
             - --grpc-client-tls-cert=/ssl/client/tls.crt
             - --grpc-client-tls-key=/ssl/client/tls.key
-            - --grpc-client-tls-ca=/ssl/ca/ca.crt 
+            - --grpc-client-tls-ca=/ssl/ca/ca.crt
           ports:
             - name: http
               containerPort: 10902
             - name: grpc
               containerPort: 10901
-          resources:    
+          resources:
             requests:
               cpu: 100m
               memory: 256Mi
@@ -47,17 +47,32 @@ spec:
               cpu: 200m
               memory: 512Mi
           volumeMounts:
-            - name: thanos-cert
-              mountPath: /ssl/client             
+            - name: thanos-query
+              mountPath: /ssl/client
             - name: thanos-ca-cert
-              mountPath: /ssl/ca       
+              mountPath: /ssl/ca
       volumes:
-      - name: thanos-cert
-        secret:
-          secretName: thanos-query
-      - name: thanos-ca-cert
-        secret:
-          secretName: thanos-ca-cert     
+        - name: thanos-query
+          secret:
+            secretName: thanos-query
+        - name: thanos-ca-cert
+          secret:
+            secretName: thanos-ca-cert
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: thanos-query
+  namespace: monitoring
+spec:
+  dnsNames:
+    - thanos-query.monitoring.svc.cluster.local
+    - thanos-query.monitoring.svc
+  issuerRef:
+    kind: ClusterIssuer
+    name: ingress-ca
+  secretName: thanos-query
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -104,15 +119,18 @@ kind: Ingress
 metadata:
   name: thanos-cluster
   namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   rules:
-  - host: thanos.{{.domain}}
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: thanos-query
-          servicePort: 9090
+    - host: thanos.{{.domain}}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: thanos-query
+              servicePort: 9090
   tls:
-    - hosts:
+    - secretName: thanos-tls
+      hosts:
         - thanos.{{.domain}}

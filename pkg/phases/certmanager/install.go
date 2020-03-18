@@ -4,35 +4,34 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/flanksource/commons/certs"
 	"github.com/moshloop/platform-cli/pkg/api/certmanager"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	Namespace = "cert-manager"
-	IngressCA = "ingress-ca"
+	Namespace      = "cert-manager"
+	IngressCA      = "ingress-ca"
 	VaultTokenName = "vault-token"
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.CertManager != nil && platform.CertManager.Disabled {
-		log.Infof("Cert Manager is disabled, skipping")
-		return nil
-	}
+	// Cert manager is a core component and multiple other components depend on it
+	// so it cannot be disabled
+
 	log.Infof("Installing CertMananager")
 	if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
-		log.Errorf("Error deploying cert manager CRDs: %s\n", err)
+		return err
 	}
 
-	// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
-	// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
-	var _ = platform.ApplySpecs("", "cert-manager-deploy.yaml")
-	platform.GetKubectl()("wait --timeout=300s --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
+	if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
+		return err
+	}
+
 	platform.WaitForNamespace(Namespace, 180*time.Second)
+
 	var issuerConfig certmanager.IssuerConfig
 	if platform.Vault == nil || platform.Vault.Address == "" {
 		log.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
@@ -43,6 +42,7 @@ func Install(platform *platform.Platform) error {
 				return err
 			}
 			issuerConfig = certmanager.IssuerConfig{
+				Vault: nil,
 				CA: &certmanager.CAIssuer{
 					SecretName: IngressCA,
 				},
@@ -51,14 +51,20 @@ func Install(platform *platform.Platform) error {
 			return fmt.Errorf("Unknown cert type:%v", ingress)
 		}
 	} else {
+		// TODO(moshloop): delete previously imported CA
+
+		log.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
 			"token": []byte(platform.Vault.Token),
 		}); err != nil {
 			return err
 		}
 		issuerConfig = certmanager.IssuerConfig{
+			CA: nil,
 			Vault: &certmanager.VaultIssuer{
-				Server: platform.Vault.Address,
+				Server:   platform.Vault.Address,
+				CABundle: platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
+				Path:     platform.Vault.PKIPath,
 				Auth: certmanager.VaultAuth{
 					TokenSecretRef: &certmanager.SecretKeySelector{
 						Key: "token",
@@ -69,6 +75,7 @@ func Install(platform *platform.Platform) error {
 				},
 			},
 		}
+
 	}
 
 	if err := platform.Apply(Namespace, &certmanager.ClusterIssuer{
@@ -88,5 +95,4 @@ func Install(platform *platform.Platform) error {
 	}
 
 	return nil
-
 }

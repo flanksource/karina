@@ -15,6 +15,10 @@ type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
 
+type CertManager struct {
+	Version string `yaml:"version"`
+}
+
 type VM struct {
 	Name   string `yaml:"name,omitempty"`
 	Prefix string `yaml:"prefix,omitempty"`
@@ -287,13 +291,16 @@ type Monitoring struct {
 type Prometheus struct {
 	Version     string                `yaml:"version,omitempty"`
 	Disabled    bool                  `yaml:"disabled,omitempty"`
-	Persistence PrometheusPersistence `yaml:"persistence,omitempty"` // Persistence settings
+	Persistence PrometheusPersistence `yaml:"persistence,omitempty"`
 }
 
 type PrometheusPersistence struct {
-	Enabled      bool   `yaml:"enabled,omitempty"`      // Enable persistence for Prometheus
-	StorageClass string `yaml:"storageClass,omitempty"` // Storage class to use. If not set default one will be used
-	Capacity     string `yaml:"capacity,omitempty"`     // Capacity. Required if persistence is enabled
+	// Enable persistence for Prometheus
+	Enabled bool `yaml:"enabled,omitempty"`
+	// Storage class to use. If not set default one will be used
+	StorageClass string `yaml:"storageClass,omitempty"`
+	// Capacity. Required if persistence is enabled
+	Capacity string `yaml:"capacity,omitempty"`
 }
 
 type Grafana struct {
@@ -400,15 +407,22 @@ type Consul struct {
 }
 
 type Vault struct {
-	Version   string `yaml:"version"`
-	Token     string `yaml:"token,omitempty"`
-	Address   string `yaml:"address,omitempty"`
-	Disabled  bool   `yaml:"disabled,omitempty"`
-	AccessKey string `yaml:"accessKey,omitempty"`
-	SecretKey string `yaml:"secretKey,omitempty"`
-	KmsKeyId  string `yaml:"kmsKeyId,omitempty"`
-	Region    string `yaml:"region,omitempty"`
-	Consul    Consul `yaml:"consul,omitempty"`
+	Version string `yaml:"version"`
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token,omitempty"`
+	// The address of a remote Vault server to use for signinig
+	Address string `yaml:"address,omitempty"`
+	// The path to the PKI Role to use for signing ingress certificates .e.g. /pki/role/ingress-ca
+	PKIPath string `yaml:"pkiPath,omitempty"`
+	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
+	Roles     map[string]map[string]string `yaml:"roles,omitempty"`
+	Disabled  bool                         `yaml:"disabled,omitempty"`
+	AccessKey string                       `yaml:"accessKey,omitempty"`
+	SecretKey string                       `yaml:"secretKey,omitempty"`
+	// The AWS KMS ARN Id to use to unseal vault
+	KmsKeyId string `yaml:"kmsKeyId,omitempty"`
+	Region   string `yaml:"region,omitempty"`
+	Consul   Consul `yaml:"consul,omitempty"`
 }
 
 type ECK struct {

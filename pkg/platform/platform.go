@@ -32,7 +32,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
-
 )
 
 type Platform struct {
@@ -368,7 +367,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 
 func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
 	if platform.HasSecret(namespace, secretName) {
-		log.Debugf("secret/%s/%s' for %s alredy exists", namespace,secretName, subDomain)
+		log.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
 		//TODO(moshloop) check certificate expiry and renew if necessary
 		return nil
 	}
@@ -376,21 +375,19 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 
 	cert.X509.PublicKey = cert.PrivateKey.Public()
-	expiry := time.Hour*24*365*3
 
-	if platform.CertManager != nil && !platform.CertManager.Disabled {
-		// when using cert-manager we create a very short-lived cert
-		// so that services can start (with an invalid cert), and then let
-		// cert-manager "renew it"
-		expiry = time.Hour*24*10
-	}
+	// we are using cert-manager so we create a very short-lived cert
+	// so that services can start (with an invalid cert), and then let
+	// cert-manager "renew it"
+	expiry := time.Hour * 24 * 10
+
 	signed, err := platform.GetIngressCA().Sign(cert.X509, expiry)
 	if err != nil {
-		return fmt.Errorf("failed to sign cert %s: %v", cert.X509,err)
+		return fmt.Errorf("failed to sign cert %s: %v", cert.X509, err)
 	}
 
 	cert = &certs.Certificate{
-		X509: signed,
+		X509:       signed,
 		PrivateKey: cert.PrivateKey,
 	}
 	return platform.CreateOrUpdateSecret(secretName, namespace, cert.AsTLSSecret())

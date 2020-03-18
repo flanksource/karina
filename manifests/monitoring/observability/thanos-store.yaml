@@ -42,9 +42,9 @@ spec:
             - name: data
               mountPath: /var/thanos/store
             - name: thanos-cert
-              mountPath: /ssl/client             
+              mountPath: /ssl/client
             - name: thanos-ca-cert
-              mountPath: /ssl/ca     
+              mountPath: /ssl/ca
       volumes:
         - name: data
           emptyDir: {}
@@ -53,10 +53,28 @@ spec:
             secretName: thanos-objstore-config
         - name: thanos-cert
           secret:
-            secretName: thanos-store-grpc
+            secretName: thanos-cert
         - name: thanos-ca-cert
           secret:
-            secretName: thanos-ca-cert     
+            secretName: thanos-ca-cert
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: thanos-cert
+  namespace: monitoring
+spec:
+  dnsNames:
+    - thanos-store-grpc.monitoring.svc.cluster.local
+    - thanos-store-grpc.monitoring.svc
+    - thanos-store-http.monitoring.svc.cluster.local
+    - thanos-store-http.monitoring.svc
+    - thanos-query.monitoring.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: ingress-ca
+  secretName: thanos-cert
 ---
 apiVersion: v1
 kind: Service

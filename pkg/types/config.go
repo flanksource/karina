@@ -6,7 +6,7 @@ type PlatformConfig struct {
 	Velero                *Velero           `yaml:"velero,omitempty"`
 	CA                    *CA               `yaml:"ca"`
 	Calico                Calico            `yaml:"calico,omitempty"`
-	CertManager           *Enabled          `yaml:"certManager,omitempty"`
+	CertManager           CertManager       `yaml:"certmanager,omitempty"`
 	Consul                string            `yaml:"consul"`
 	Dashboard             Dashboard         `yaml:"dashboard,omitempty"`
 	Datacenter            string            `yaml:"datacenter"`
@@ -40,7 +40,7 @@ type PlatformConfig struct {
 	Quack            *Enabled          `yaml:"quack,omitempty"`
 	Resources        map[string]string `yaml:"resources,omitempty"`
 	S3               S3                `yaml:"s3,omitempty"`
-	SealedSecrets    *SealedSecrets     `yaml:"sealedSecrets,omitempty"`
+	SealedSecrets    *SealedSecrets    `yaml:"sealedSecrets,omitempty"`
 	ServiceSubnet    string            `yaml:"serviceSubnet"`
 	SMTP             Smtp              `yaml:"smtp,omitempty"`
 	Specs            []string          `yaml:"specs,omitempty"`
