@@ -379,7 +379,7 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 	// we are using cert-manager so we create a very short-lived cert
 	// so that services can start (with an invalid cert), and then let
 	// cert-manager "renew it"
-	expiry = time.Hour * 24 * 10
+	expiry := time.Hour * 24 * 10
 
 	signed, err := platform.GetIngressCA().Sign(cert.X509, expiry)
 	if err != nil {
