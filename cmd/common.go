@@ -139,6 +139,7 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 		base.Vault.AccessKey = template(base.Vault.AccessKey)
 		base.Vault.SecretKey = template(base.Vault.SecretKey)
 		base.Vault.KmsKeyId = template(base.Vault.KmsKeyId)
+		base.Vault.Token = template(base.Vault.Token)
 	}
 
 	gitops := base.GitOps
