@@ -20,9 +20,7 @@ const (
 func Install(platform *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it
 	// so it cannot be disabled
-	if platform.CertManager.Version == "" {
-		platform.CertManager.Version = "v1.12.0"
-	}
+
 	log.Infof("Installing CertMananager")
 	if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
 		return err
