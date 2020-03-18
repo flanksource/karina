@@ -57,6 +57,7 @@ spec:
         - name: thanos-ca-cert
           secret:
             secretName: thanos-ca-cert
+
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -69,10 +70,7 @@ spec:
     - thanos-store-grpc.monitoring.svc
     - thanos-store-http.monitoring.svc.cluster.local
     - thanos-store-http.monitoring.svc
-    - thanos-sidecar.monitoring.svc.cluster.local
-    - thanos-sidecar.monitoring.svc
     - thanos-query.monitoring.svc.cluster.local
-    - thanos-query.monitoring.svc
   issuerRef:
     kind: ClusterIssuer
     name: ingress-ca

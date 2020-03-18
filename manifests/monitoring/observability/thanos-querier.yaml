@@ -47,17 +47,32 @@ spec:
               cpu: 200m
               memory: 512Mi
           volumeMounts:
-            - name: thanos-cert
+            - name: thanos-query
               mountPath: /ssl/client
             - name: thanos-ca-cert
               mountPath: /ssl/ca
       volumes:
-        - name: thanos-cert
+        - name: thanos-query
           secret:
-            secretName: thanos-cert
+            secretName: thanos-query
         - name: thanos-ca-cert
           secret:
             secretName: thanos-ca-cert
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: thanos-query
+  namespace: monitoring
+spec:
+  dnsNames:
+    - thanos-query.monitoring.svc.cluster.local
+    - thanos-query.monitoring.svc
+  issuerRef:
+    kind: ClusterIssuer
+    name: ingress-ca
+  secretName: thanos-query
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
