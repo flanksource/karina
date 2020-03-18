@@ -23,7 +23,7 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
 spec:
   tls:
-    - secretName: thanos-tls
+    - secretName: thanos-sidecar-tls
       hosts:
       - "thanos-sidecar.{{.domain}}"
   rules:
