@@ -761,7 +761,15 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
           resources: {}
-
+          readinessProbe:
+            httpGet:
+              port: 6080
+              path: /healthz
+            initialDelaySeconds: 15
+          livenessProbe:
+            httpGet:
+              port: 6080
+              path: /healthz
           volumeMounts:
             - name: certs
               mountPath: /certs
