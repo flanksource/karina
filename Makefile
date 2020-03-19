@@ -6,6 +6,10 @@ ifeq ($(VERSION),)
 VERSION := v$(shell git describe --tags --exclude "*-g*" ) built $(shell date)
 endif
 
+.PHONY: help
+help:
+	@cat docs/developer-guide/make-targets.md
+
 .PHONY: setup
 setup:
 	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
