@@ -15,6 +15,10 @@ func Deploy(p *platform.Platform) error {
 		log.Infof("Skipping deployment of vault, it is disabled")
 		return nil
 	}
+	if p.Vault.Address != "" {
+		log.Infof("Using vault server: %s", p.Vault.Address)
+		return nil
+	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
