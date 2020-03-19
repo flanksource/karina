@@ -42,7 +42,3 @@ make pack
 ```
 
 This generates the `static.go` files in the `manifests/` and `templates/` directories.
-
-## Reference
-
-### Make Targets:
