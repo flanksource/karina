@@ -18,6 +18,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
+	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
@@ -132,7 +133,7 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := dex.Install(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error initializing dex %s", err)
+				log.Fatalf("Error deploying dex %s", err)
 			}
 		},
 	})
@@ -144,6 +145,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := calico.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploy calico dex %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "certmanager",
+		Short: "Build and deploy the certmanager",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := certmanager.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying cert manager %s", err)
 			}
 		},
 	})

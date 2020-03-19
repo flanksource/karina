@@ -159,7 +159,7 @@ spec:
               cpu: 10m
               memory: 20Mi
             limits:
-              cpu: 100m
+              cpu: 500m
               memory: 100Mi
           livenessProbe:
             httpGet:
@@ -230,7 +230,8 @@ webhooks:
           - statefulsets
           - ingresses
           - services
-    failurePolicy: Fail
+    failurePolicy: Ignore
+    timeoutSeconds: 3
     namespaceSelector:
       matchExpressions:
         - key: quack.pusher.com/enabled
@@ -246,4 +247,6 @@ metadata:
   namespace: quack
 data:
   Domain: "{{.domain}}"
+  domain: "{{.domain}}"
   Name: "{{.name}}"
+  name: "{{.name}}"

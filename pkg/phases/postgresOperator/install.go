@@ -15,7 +15,6 @@ func Deploy(platform *platform.Platform) error {
 		log.Infof("Postgres operator is disabled")
 		return nil
 	}
-
 	if platform.PostgresOperator.Version == "" {
 		platform.PostgresOperator.Version = "v1.3.4"
 	}

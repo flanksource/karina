@@ -26,7 +26,7 @@ var (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.SealedSecrets.Disabled {
+	if platform.SealedSecrets == nil || platform.SealedSecrets.Disabled {
 		return nil
 	}
 
