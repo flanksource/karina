@@ -58,7 +58,7 @@
                 "label": "Others",
                 "threshold": 0
             },
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fontSize": "80%",
             "format": "Bps",
             "gridPos": {
@@ -103,7 +103,7 @@
                 "label": "Others",
                 "threshold": 0
             },
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fontSize": "80%",
             "format": "Bps",
             "gridPos": {
@@ -181,7 +181,7 @@
                     "value": ""
                 }
             ],
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 1,
             "fontSize": "90%",
             "gridPos": {
@@ -484,7 +484,7 @@
                         "label": "Others",
                         "threshold": 0
                     },
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fontSize": "80%",
                     "format": "Bps",
                     "gridPos": {
@@ -529,7 +529,7 @@
                         "label": "Others",
                         "threshold": 0
                     },
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fontSize": "80%",
                     "format": "Bps",
                     "gridPos": {
@@ -601,7 +601,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 2,
             "gridPos": {
                 "h": 9,
@@ -700,7 +700,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 2,
             "gridPos": {
                 "h": 9,
@@ -810,7 +810,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -909,7 +909,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -1028,7 +1028,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -1127,7 +1127,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -1249,7 +1249,7 @@
                     "text": "5m",
                     "value": "5m"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": false,
                 "label": null,
@@ -1294,7 +1294,7 @@
                     "text": "5m",
                     "value": "5m"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 2,
                 "includeAll": false,
                 "label": null,
@@ -1321,7 +1321,7 @@
                 "useTags": false
             },
             {
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "filters": [],
                 "hide": 0,
                 "label": "Filter",
