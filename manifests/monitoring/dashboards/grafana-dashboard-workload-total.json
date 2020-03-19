@@ -58,7 +58,7 @@
                 "label": "Others",
                 "threshold": 0
             },
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fontSize": "80%",
             "format": "Bps",
             "gridPos": {
@@ -103,7 +103,7 @@
                 "label": "Others",
                 "threshold": 0
             },
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fontSize": "80%",
             "format": "Bps",
             "gridPos": {
@@ -159,7 +159,7 @@
                         "label": "Others",
                         "threshold": 0
                     },
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fontSize": "80%",
                     "format": "Bps",
                     "gridPos": {
@@ -204,7 +204,7 @@
                         "label": "Others",
                         "threshold": 0
                     },
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fontSize": "80%",
                     "format": "Bps",
                     "gridPos": {
@@ -276,7 +276,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 2,
             "gridPos": {
                 "h": 9,
@@ -375,7 +375,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 2,
             "gridPos": {
                 "h": 9,
@@ -485,7 +485,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -584,7 +584,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -703,7 +703,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -802,7 +802,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -916,6 +916,23 @@
     "templating": {
         "list": [
             {
+                "current": {
+                  "text": "prometheus",
+                  "value": "prometheus"
+                },
+                "hide": 0,
+                "includeAll": false,
+                "label": null,
+                "multi": false,
+                "name": "datasource",
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "type": "datasource"
+            },
+            {
                 "allValue": ".+",
                 "auto": false,
                 "auto_count": 30,
@@ -924,7 +941,7 @@
                     "text": "kube-system",
                     "value": "kube-system"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "definition": "label_values(container_network_receive_packets_total, namespace)",
                 "hide": 0,
                 "includeAll": true,
@@ -956,7 +973,7 @@
                     "text": "",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "definition": "label_values(mixin_pod_workload{namespace=~\"$namespace\"}, workload)",
                 "hide": 0,
                 "includeAll": false,
@@ -988,7 +1005,7 @@
                     "text": "deployment",
                     "value": "deployment"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "definition": "label_values(mixin_pod_workload{namespace=~\"$namespace\", workload=~\"$workload\"}, workload_type)",
                 "hide": 0,
                 "includeAll": false,
@@ -1020,7 +1037,7 @@
                     "text": "5m",
                     "value": "5m"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": false,
                 "label": null,
@@ -1065,7 +1082,7 @@
                     "text": "5m",
                     "value": "5m"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 2,
                 "includeAll": false,
                 "label": null,
@@ -1092,7 +1109,7 @@
                 "useTags": false
             },
             {
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "filters": [],
                 "hide": 0,
                 "label": "Filter",

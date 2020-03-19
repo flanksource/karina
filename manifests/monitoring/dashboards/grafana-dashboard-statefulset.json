@@ -33,7 +33,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -84,7 +84,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$statefulset.*\"}[3m]))",
+                            "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"kubelet\",  namespace=\"$namespace\", pod=~\"$statefulset.*\"}[3m]))",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -116,7 +116,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -167,7 +167,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "sum(container_memory_usage_bytes{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$statefulset.*\"}) / 1024^3",
+                            "expr": "sum(container_memory_usage_bytes{job=\"kubelet\",  namespace=\"$namespace\", pod=~\"$statefulset.*\"}) / 1024^3",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -199,7 +199,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -250,7 +250,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "sum(rate(container_network_transmit_bytes_total{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$statefulset.*\"}[3m])) + sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\",pod=~\"$statefulset.*\"}[3m]))",
+                            "expr": "sum(rate(container_network_transmit_bytes_total{job=\"kubelet\",  namespace=\"$namespace\", pod=~\"$statefulset.*\"}[3m])) + sum(rate(container_network_receive_bytes_total{ namespace=\"$namespace\",pod=~\"$statefulset.*\"}[3m]))",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -296,7 +296,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -348,7 +348,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "max(kube_statefulset_replicas{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", statefulset=\"$statefulset\"}) without (instance, pod)",
+                            "expr": "max(kube_statefulset_replicas{job=\"kube-state-metrics\",  namespace=\"$namespace\", statefulset=\"$statefulset\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -380,7 +380,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -432,7 +432,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "min(kube_statefulset_status_replicas_current{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", statefulset=\"$statefulset\"}) without (instance, pod)",
+                            "expr": "min(kube_statefulset_status_replicas_current{job=\"kube-state-metrics\",  namespace=\"$namespace\", statefulset=\"$statefulset\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -464,7 +464,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -516,7 +516,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "max(kube_statefulset_status_observed_generation{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", statefulset=\"$statefulset\"}) without (instance, pod)",
+                            "expr": "max(kube_statefulset_status_observed_generation{job=\"kube-state-metrics\",  namespace=\"$namespace\", statefulset=\"$statefulset\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -548,7 +548,7 @@
                         "rgba(237, 129, 40, 0.89)",
                         "#d44a3a"
                     ],
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "format": "none",
                     "gauge": {
                         "maxValue": 100,
@@ -600,7 +600,7 @@
                     "tableColumn": "",
                     "targets": [
                         {
-                            "expr": "max(kube_statefulset_metadata_generation{job=\"kube-state-metrics\", statefulset=\"$statefulset\", cluster=\"$cluster\", namespace=\"$namespace\"}) without (instance, pod)",
+                            "expr": "max(kube_statefulset_metadata_generation{job=\"kube-state-metrics\", statefulset=\"$statefulset\",  namespace=\"$namespace\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "",
@@ -643,7 +643,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 1,
                     "gridPos": {
 
@@ -679,35 +679,35 @@
                     "steppedLine": false,
                     "targets": [
                         {
-                            "expr": "max(kube_statefulset_replicas{job=\"kube-state-metrics\", statefulset=\"$statefulset\", cluster=\"$cluster\", namespace=\"$namespace\"}) without (instance, pod)",
+                            "expr": "max(kube_statefulset_replicas{job=\"kube-state-metrics\", statefulset=\"$statefulset\",  namespace=\"$namespace\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "replicas specified",
                             "refId": "A"
                         },
                         {
-                            "expr": "max(kube_statefulset_status_replicas{job=\"kube-state-metrics\", statefulset=\"$statefulset\", cluster=\"$cluster\", namespace=\"$namespace\"}) without (instance, pod)",
+                            "expr": "max(kube_statefulset_status_replicas{job=\"kube-state-metrics\", statefulset=\"$statefulset\",  namespace=\"$namespace\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "replicas created",
                             "refId": "B"
                         },
                         {
-                            "expr": "min(kube_statefulset_status_replicas_ready{job=\"kube-state-metrics\", statefulset=\"$statefulset\", cluster=\"$cluster\", namespace=\"$namespace\"}) without (instance, pod)",
+                            "expr": "min(kube_statefulset_status_replicas_ready{job=\"kube-state-metrics\", statefulset=\"$statefulset\",  namespace=\"$namespace\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "ready",
                             "refId": "C"
                         },
                         {
-                            "expr": "min(kube_statefulset_status_replicas_current{job=\"kube-state-metrics\", statefulset=\"$statefulset\", cluster=\"$cluster\", namespace=\"$namespace\"}) without (instance, pod)",
+                            "expr": "min(kube_statefulset_status_replicas_current{job=\"kube-state-metrics\", statefulset=\"$statefulset\",  namespace=\"$namespace\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "replicas of current version",
                             "refId": "D"
                         },
                         {
-                            "expr": "min(kube_statefulset_status_replicas_updated{job=\"kube-state-metrics\", statefulset=\"$statefulset\", cluster=\"$cluster\", namespace=\"$namespace\"}) without (instance, pod)",
+                            "expr": "min(kube_statefulset_status_replicas_updated{job=\"kube-state-metrics\", statefulset=\"$statefulset\",  namespace=\"$namespace\"}) without (instance, pod)",
                             "format": "time_series",
                             "intervalFactor": 2,
                             "legendFormat": "updated",
@@ -792,7 +792,7 @@
                 "current": {
 
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 2,
                 "includeAll": false,
                 "label": "cluster",
@@ -818,7 +818,7 @@
                 "current": {
 
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": false,
                 "label": "Namespace",
@@ -827,7 +827,7 @@
                 "options": [
 
                 ],
-                "query": "label_values(kube_statefulset_metadata_generation{job=\"kube-state-metrics\", cluster=\"$cluster\"}, namespace)",
+                "query": "label_values(kube_statefulset_metadata_generation{job=\"kube-state-metrics\"}, namespace)",
                 "refresh": 2,
                 "regex": "",
                 "sort": 1,
@@ -844,7 +844,7 @@
                 "current": {
 
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": false,
                 "label": "Name",
@@ -853,7 +853,7 @@
                 "options": [
 
                 ],
-                "query": "label_values(kube_statefulset_metadata_generation{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\"}, statefulset)",
+                "query": "label_values(kube_statefulset_metadata_generation{job=\"kube-state-metrics\",  namespace=\"$namespace\"}, statefulset)",
                 "refresh": 2,
                 "regex": "",
                 "sort": 1,
@@ -866,7 +866,7 @@
                 "useTags": false
             },
             {
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "filters": [],
                 "hide": 0,
                 "label": "Filter",
