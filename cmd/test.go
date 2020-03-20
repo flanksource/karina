@@ -20,7 +20,9 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
+	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -29,6 +31,7 @@ var wait int
 var failOnError bool
 var waitInterval int
 var junitPath, suiteName string
+var thanosUrl, pushGatewayUrl string
 var p *platform.Platform
 
 var Test = &cobra.Command{
@@ -66,6 +69,24 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 			time.Sleep(time.Duration(waitInterval) * time.Second)
 			log.Infof("Re-running tests\n")
 
+		}
+	}
+}
+
+func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command)  {
+	start := time.Now()
+	for {
+		test := console.TestResults{}
+		fn(p, &test, args, cmd)
+		test.Done()
+		elapsed := time.Now().Sub(start)
+		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
+			end(test)
+			return
+		} else {
+			log.Debugf("Waiting to re-run tests\n")
+			time.Sleep(time.Duration(waitInterval) * time.Second)
+			log.Infof("Re-running tests\n")
 		}
 	}
 }
@@ -178,6 +199,48 @@ func init() {
 		},
 	})
 
+	thanosTestCmd := &cobra.Command{
+		Use:   "thanos",
+		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
+		Long: "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			runWithArgs(monitoring.TestThanos, args, cmd)
+		},
+	}
+
+	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayUrl, "pushgateway", "p", "", "Url of Pushgateway")
+	thanosTestCmd.PersistentFlags().StringVarP(&thanosUrl, "thanos", "t", "", "Url of Pushgateway")
+	Test.AddCommand(thanosTestCmd)
+	thanosTestCmd.Flags()
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "sealed-secrets",
+		Short: "Test sealed secrets",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(sealedsecrets.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "vault",
+		Short: "Test vault",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(vault.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
+		Use:   "prometheus",
+		Short: "Test prometheus",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			runWithArgs(monitoring.TestPrometheus, args, cmd)
+		},
+	})
+
 	Test.AddCommand(&cobra.Command{
 		Use:   "configmap-reloader",
 		Short: "Test configmap-reloader",
@@ -205,6 +268,8 @@ func init() {
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
 				configmapReloader.Test(p, test)
+				sealedsecrets.Test(p, test)
+				vault.Test(p, test)
 			})
 		},
 	})

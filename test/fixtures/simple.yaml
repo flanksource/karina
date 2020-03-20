@@ -1,0 +1,4 @@
+name: test
+domain: 127.0.0.1.nip.io
+kubernetes:
+  version: v1.15.7

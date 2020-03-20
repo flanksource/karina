@@ -18,7 +18,10 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
+	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
+	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 )
 
@@ -77,34 +80,40 @@ func init() {
 				log.Fatalf("Error deploying base: %s", err)
 			}
 			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deploying postgres-operator %s\n", err)
+				log.Fatalf("Error deploying postgres-operator %s", err)
 			}
 			if err := eck.Deploy(p); err != nil {
-				log.Fatalf("Error installing ECK: %s", err)
+				log.Fatalf("Error deploying ECK: %s", err)
 			}
 			if err := monitoring.Install(p); err != nil {
-				log.Warnf("Error building monitoring stack: %v", err)
+				log.Warnf("Error deploying monitoring stack: %v", err)
 			}
 			if err := harbor.Deploy(p); err != nil {
 				log.Warnf("Error deploying harbor: %v", err)
 			}
 			if err := dex.Install(p); err != nil {
-				log.Warnf("Error initializing dex: %v", err)
+				log.Warnf("Error deploying dex: %v", err)
 			}
 			if err := opa.Install(p); err != nil {
-				log.Fatalf("Error installing opa control plane: %s", err)
+				log.Fatalf("Error deploying opa control plane: %s", err)
 			}
 			if err := flux.Install(p); err != nil {
-				log.Fatalf("Error installing flux: %s", err)
+				log.Fatalf("Error deploying flux: %s", err)
 			}
 			if err := velero.Install(p); err != nil {
-				log.Fatalf("Error installing velero: %s", err)
+				log.Fatalf("Error deploying velero: %s", err)
 			}
 			if err := fluentdOperator.Deploy(p); err != nil {
-				log.Fatalf("Error installing fluentd: %s", err)
+				log.Fatalf("Error deploying fluentd: %s", err)
 			}
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error deploying filebeat %s\n", err)
+				log.Fatalf("Error deploying filebeat %s", err)
+			}
+			if err := sealedsecrets.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying sealed secrets %s", err)
+			}
+			if err := vault.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying vault %s", err)
 			}
 			if err := configmapReloader.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying configmap-reloader %s\n", err)
@@ -128,7 +137,7 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := dex.Install(getPlatform(cmd)); err != nil {
-				log.Fatalf("Error initializing dex %s", err)
+				log.Fatalf("Error deploying dex %s", err)
 			}
 		},
 	})
@@ -140,6 +149,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := calico.Install(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploy calico dex %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "certmanager",
+		Short: "Build and deploy the certmanager",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := certmanager.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying cert manager %s", err)
 			}
 		},
 	})
@@ -272,6 +292,28 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := configmapReloader.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying configmap-reloader %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "sealed-secrets",
+		Short: "Deploy sealed secrets controller",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := sealedsecrets.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying sealed secrets controller %s\n", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "vault",
+		Short: "Deploy vault",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := vault.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying vault %s", err)
 			}
 		},
 	})

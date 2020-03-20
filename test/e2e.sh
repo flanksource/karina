@@ -1,7 +1,7 @@
 #!/bin/bash
 BIN=./.bin/platform-cli
 mkdir -p .bin
-export PLATFORM_CONFIG=test/common.yml
+export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
@@ -28,6 +28,7 @@ fi
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca-crt.pem --private-key-path .certs/ingress-ca-key.pem --password foobar  --expiry 1
+  $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
   $BIN provision kind-cluster
 fi
 
@@ -38,35 +39,23 @@ $BIN deploy calico -v
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 
-$BIN deploy base -v
+for app in base stubs dex vault; do
+  $BIN deploy $app -v
+done
 
-$BIN deploy stubs -v
+for app in base stubs; do
+  $BIN test $app --wait 200
+done
 
-$BIN deploy dex -v
-
-$BIN test stubs --wait 200
-
-$BIN test dex --wait 200
+$BIN vault init -v
 
 $BIN deploy postgres-operator install -v
 
-$BIN test base --wait 200
-
 $BIN test postgres-operator --wait 200
-
-$BIN deploy harbor -v
 
 $BIN deploy all -v
 
 $BIN deploy opa bundle automobile -v
-
-$BIN deploy opa install  -v
-
-$BIN deploy velero
-
-$BIN deploy fluentd
-
-$BIN deploy eck
 
 $BIN deploy opa policies test/opa/policies -v
 

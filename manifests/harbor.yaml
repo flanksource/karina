@@ -814,6 +814,7 @@ metadata:
   labels:
     app: "harbor"
   annotations:
+    kubernetes.io/tls-acme: "true"
     ingress.kubernetes.io/proxy-body-size: "0"
     ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
@@ -822,7 +823,9 @@ spec:
   tls:
     - secretName: "harbor-ingress"
       hosts:
-        - "{{ .harbor.url | strings.TrimPrefix  "https://" }}"
+        # we don't use harbor.endpoint as it points to a single cluster only and would make
+        # a backup cluster inaccessible prior to promotion
+        - "harbor.{{ .domain}}"
 
   rules:
     - http:
@@ -851,4 +854,4 @@ spec:
             backend:
               serviceName: harbor-core
               servicePort: 80
-      host: "{{ .harbor.url | strings.TrimPrefix  "https://" }}"
+      host: "harbor.{{ .domain}}"

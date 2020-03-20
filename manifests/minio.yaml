@@ -81,9 +81,12 @@ kind: Ingress
 metadata:
   name: minio
   namespace: minio
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   tls:
-    - hosts:
+    - secretName: minio-tls
+      hosts:
         - minio.{{.domain}}
   rules:
     - host: minio.{{.domain}}

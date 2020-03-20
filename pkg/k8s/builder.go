@@ -159,17 +159,19 @@ func (d *DeploymentBuilder) EnvVarFromConfigMap(env, configmap, key string) *Dep
 }
 
 func (d *DeploymentBuilder) AsCronJob(schedule string) *batchv1beta1.CronJob {
+	pod := d.PodTemplate()
+	pod.Spec.RestartPolicy = v1.RestartPolicyNever
 	return &batchv1beta1.CronJob{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "batch/v1beta1",
-			Kind:       "cronjob",
+			Kind:       "CronJob",
 		},
 		ObjectMeta: d.Builder.ObjectMeta(d.Name),
 		Spec: batchv1beta1.CronJobSpec{
 			Schedule: schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
-					Template: d.PodTemplate(),
+					Template: pod,
 				},
 			},
 			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,

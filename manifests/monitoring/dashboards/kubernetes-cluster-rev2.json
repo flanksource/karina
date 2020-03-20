@@ -62,7 +62,7 @@
         "rgba(248, 112, 0, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "format": "none",
       "gauge": {
         "maxValue": 3000,
@@ -145,7 +145,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "decimals": 2,
       "format": "percentunit",
       "gauge": {
@@ -228,7 +228,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "description": "",
       "format": "percentunit",
       "gauge": {
@@ -310,7 +310,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "format": "percentunit",
       "gauge": {
         "maxValue": 1,
@@ -393,7 +393,7 @@
         "rgba(248, 112, 0, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "format": "s",
       "gauge": {
         "maxValue": 10,
@@ -476,7 +476,7 @@
         "rgba(248, 112, 0, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "description": "",
       "format": "none",
       "gauge": {
@@ -562,7 +562,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 0,
       "gridPos": {
         "h": 7,
@@ -651,7 +651,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 3,
       "gridPos": {
         "h": 8,
@@ -748,7 +748,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 1,
       "gridPos": {
         "h": 6,
@@ -834,7 +834,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 1,
       "gridPos": {
         "h": 6,
@@ -921,7 +921,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 0,
       "gridPos": {
         "h": 6,
@@ -1008,7 +1008,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 0,
       "gridPos": {
         "h": 6,
@@ -1096,7 +1096,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1183,7 +1183,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1270,7 +1270,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "prometheus",
+      "datasource": "$datasource",
       "fill": 0,
       "gridPos": {
         "h": 6,
@@ -1361,7 +1361,34 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "text": "prometheus",
+          "value": "prometheus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
+      }
+    ]
   },
   "time": {
     "from": "now-30m",

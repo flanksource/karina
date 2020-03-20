@@ -51,6 +51,7 @@ func (platform *Platform) Init() {
 		return platform.Patches, nil
 	}
 	platform.Client.ApplyDryRun = platform.DryRun
+	platform.Client.Trace = platform.PlatformConfig.Trace
 }
 
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
@@ -104,10 +105,12 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 		platform.ingressCA, _ = ca.SignCertificate(ca, 1)
 		return platform.ingressCA
 	}
+	log.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
 	ca, err := readCA(platform.IngressCA)
 	if err != nil {
 		log.Fatalf("Unable to open Ingress CA: %v", err)
 	}
+	log.Debugf("[IngressCA] read CA %s", ca.X509.Subject)
 	platform.ingressCA = ca
 	return ca
 }
@@ -362,6 +365,34 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 	})
 }
 
+func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
+	if platform.HasSecret(namespace, secretName) {
+		log.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
+		//TODO(moshloop) check certificate expiry and renew if necessary
+		return nil
+	}
+	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
+
+	cert.X509.PublicKey = cert.PrivateKey.Public()
+
+	// we are using cert-manager so we create a very short-lived cert
+	// so that services can start (with an invalid cert), and then let
+	// cert-manager "renew it"
+	expiry := time.Hour * 24 * 10
+
+	signed, err := platform.GetIngressCA().Sign(cert.X509, expiry)
+	if err != nil {
+		return fmt.Errorf("failed to sign cert %s: %v", cert.X509, err)
+	}
+
+	cert = &certs.Certificate{
+		X509:       signed,
+		PrivateKey: cert.PrivateKey,
+	}
+	return platform.CreateOrUpdateSecret(secretName, namespace, cert.AsTLSSecret())
+}
+
 func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Certificate, error) {
 	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
@@ -387,7 +418,6 @@ func (platform *Platform) GetResourceByName(file string, pkg string) (string, er
 		raw, err = templates.FSString(false, file)
 	}
 	if err != nil {
-		log.Fatal(err)
 		return "", err
 	}
 	return raw, nil
@@ -488,6 +518,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
+		log.Debugf("Applying %s", spec)
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)

@@ -26,7 +26,13 @@ func WaitForNamespace(client kubernetes.Interface, ns string, timeout time.Durat
 		pending := 0
 		list, _ := pods.List(metav1.ListOptions{})
 		for _, pod := range list.Items {
-			if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
+			conditions := true
+			for _, condition := range pod.Status.Conditions {
+				if condition.Status == v1.ConditionFalse {
+					conditions = false
+				}
+			}
+			if conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded) {
 				ready++
 			} else {
 				pending++

@@ -29,12 +29,12 @@ func Install(platform *platform.Platform) error {
 		platform.Nginx.RequestBodyMax = "32M"
 	}
 
-	if err := platform.ApplySpecs("", "nginx.yml"); err != nil {
+	if err := platform.ApplySpecs("", "nginx.yaml"); err != nil {
 		log.Errorf("Error deploying nginx: %s\n", err)
 	}
 
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {
-		return platform.ApplySpecs("", "nginx-oauth.yml")
+		return platform.ApplySpecs("", "nginx-oauth.yaml")
 	}
 	return nil
 }

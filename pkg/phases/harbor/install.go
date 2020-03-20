@@ -43,7 +43,7 @@ func Deploy(p *platform.Platform) error {
 
 	if err := p.CreateOrUpdateSecret("harbor-chartmuseum", Namespace, map[string][]byte{
 		"CACHE_REDIS_PASSWORD":  []byte{},
-		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.AccessKey),
+		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.SecretKey),
 	}); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 
-	if err := p.ApplySpecs(Namespace, "harbor.yml"); err != nil {
+	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
 		return err
 	}
 	client := NewHarborClient(p)

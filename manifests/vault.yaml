@@ -1,0 +1,556 @@
+---
+# PodDisruptionBudget to prevent degrading the server cluster through
+# voluntary cluster changes.
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: consul-server
+  namespace: vault
+  labels:
+    app: consul
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: consul
+
+---
+kind: ServiceAccount
+metadata:
+  name: consul-server
+  namespace: vault
+  labels:
+    app: consul
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: consul-server-config
+  namespace: vault
+  labels:
+    app: consul
+data:
+  extra-from-values.json: |-
+    {}
+---
+# Service for Consul DNS.
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-dns
+  namespace: vault
+  labels:
+    app: consul
+spec:
+  ports:
+    - name: dns-tcp
+      port: 53
+      protocol: "TCP"
+      targetPort: dns-tcp
+    - name: dns-udp
+      port: 53
+      protocol: "UDP"
+      targetPort: dns-udp
+  selector:
+    app: consul
+    hasDNS: "true"
+---
+# Headless service for Consul server DNS entries. This service should only
+# point to Consul servers. For access to an agent, one should assume that
+# the agent is installed locally on the node and the NODE_IP should be used.
+# If the node can't run a Consul agent, then this service can be used to
+# communicate directly to a server agent.
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-server
+  namespace: vault
+  labels:
+    app: consul
+  annotations:
+    # This must be set in addition to publishNotReadyAddresses due
+    # to an open issue where it may not work:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  clusterIP: None
+  # We want the servers to become available even if they're not ready
+  # since this DNS is also used for join operations.
+  publishNotReadyAddresses: true
+  ports:
+    - name: http
+      port: 8500
+      targetPort: 8500
+    - name: serflan-tcp
+      protocol: "TCP"
+      port: 8301
+      targetPort: 8301
+    - name: serflan-udp
+      protocol: "UDP"
+      port: 8301
+      targetPort: 8301
+    - name: serfwan-tcp
+      protocol: "TCP"
+      port: 8302
+      targetPort: 8302
+    - name: serfwan-udp
+      protocol: "UDP"
+      port: 8302
+      targetPort: 8302
+    - name: server
+      port: 8300
+      targetPort: 8300
+    - name: dns-tcp
+      protocol: "TCP"
+      port: 8600
+      targetPort: dns-tcp
+    - name: dns-udp
+      protocol: "UDP"
+      port: 8600
+      targetPort: dns-udp
+  selector:
+    app: consul
+    component: server
+---
+# UI Service for Consul Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-ui
+  namespace: vault
+  labels:
+    app: consul
+spec:
+  selector:
+    app: consul
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8500
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: consul-server
+  namespace: vault
+  labels:
+    app: consul
+    component: server
+spec:
+  serviceName: consul-server
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: consul
+      component: server
+      hasDNS: "true"
+  template:
+    metadata:
+      labels:
+        app: consul
+        component: server
+        hasDNS: "true"
+      annotations:
+        "consul.hashicorp.com/connect-inject": "false"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: consul
+                    component: server
+                topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: consul-server
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: config
+          configMap:
+            name: consul-server-config
+      containers:
+        - name: consul
+          image: "consul:1.7.1"
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+          command:
+            - "/bin/sh"
+            - "-ec"
+            - |
+              CONSUL_FULLNAME="consul"
+
+              exec /bin/consul agent \
+                -advertise="${POD_IP}" \
+                -bind=0.0.0.0 \
+                -bootstrap-expect=3 \
+                -client=0.0.0.0 \
+                -config-dir=/consul/config \
+                -datacenter=vault \
+                -data-dir=/consul/data \
+                -domain=consul \
+                -hcl="connect { enabled = true }" \
+                -ui \
+                -retry-join=${CONSUL_FULLNAME}-server-0.${CONSUL_FULLNAME}-server.${NAMESPACE}.svc \
+                -retry-join=${CONSUL_FULLNAME}-server-1.${CONSUL_FULLNAME}-server.${NAMESPACE}.svc \
+                -retry-join=${CONSUL_FULLNAME}-server-2.${CONSUL_FULLNAME}-server.${NAMESPACE}.svc \
+                -server
+          volumeMounts:
+            - name: consul-data
+              mountPath: /consul/data
+            - name: config
+              mountPath: /consul/config
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - consul leave
+          ports:
+            - containerPort: 8500
+              name: http
+            - containerPort: 8301
+              name: serflan
+            - containerPort: 8302
+              name: serfwan
+            - containerPort: 8300
+              name: server
+            - containerPort: 8600
+              name: dns-tcp
+              protocol: "TCP"
+            - containerPort: 8600
+              name: dns-udp
+              protocol: "UDP"
+          readinessProbe:
+            # NOTE(mitchellh): when our HTTP status endpoints support the
+            # proper status codes, we should switch to that. This is temporary.
+            exec:
+              command:
+                - "/bin/sh"
+                - "-ec"
+                - |
+                  curl http://127.0.0.1:8500/v1/status/leader \
+                  2>/dev/null | grep -E '".+"'
+            failureThreshold: 2
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: consul-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# PodDisruptionBudget to prevent degrading the server cluster through
+# voluntary cluster changes.
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      component: server
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+data:
+  extraconfig-from-values.hcl: |-
+    disable_mlock = true
+    ui = true
+    listener "tcp" {
+      address = "[::]:8200"
+      tls_cert_file = "/etc/tls/tls.crt"
+      tls_key_file = "/etc/tls/tls.key"
+      cluster_address = "[::]:8201"
+    }
+    storage "consul" {
+      path = "vault"
+      address = "consul-server:8500"
+    }
+
+    seal "awskms" {
+    }
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: vault-server-binding
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: vault
+    namespace: vault
+---
+# Service for Vault cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+  annotations:
+    # This must be set in addition to publishNotReadyAddresses due
+    # to an open issue where it may not work:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  # We want the servers to become available even if they're not ready
+  # since this DNS is also used for join operations.
+  publishNotReadyAddresses: true
+  ports:
+    - name: https
+      port: 8200
+      targetPort: 8200
+    - name: internal
+      port: 8201
+      targetPort: 8201
+  selector:
+    app.kubernetes.io/name: vault
+    component: server
+---
+# Headless service for Vault server DNS entries. This service should only
+# point to Vault servers. For access to an agent, one should assume that
+# the agent is installed locally on the node and the NODE_IP should be used.
+# If the node can't run a Vault agent, then this service can be used to
+# communicate directly to a server agent.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-ui
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault-ui
+spec:
+  selector:
+    app.kubernetes.io/name: vault
+    component: server
+  publishNotReadyAddresses: true
+  ports:
+    - name: https
+      port: 8200
+      targetPort: 8200
+  type: ClusterIP
+---
+# StatefulSet to run the actual vault server cluster.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  serviceName: vault
+  podManagementPolicy: Parallel
+  replicas: 3
+  updateStrategy:
+    type: OnDelete
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault
+        component: server
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: vault
+                    component: server
+                topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: vault
+      securityContext:
+        runAsNonRoot: true
+        runAsGroup: 1000
+        runAsUser: 100
+        fsGroup: 1000
+      volumes:
+        - name: config
+          configMap:
+            name: vault-config
+        - name: vault-tls
+          secret:
+            secretName: vault-tls
+      containers:
+        - name: vault
+          securityContext:
+            capabilities:
+              add: ["IPC_LOCK"]
+          image: vault:{{.vault.version}}
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/bin/sh"
+            - "-ec"
+          args:
+            - |
+              sed -E "s/HOST_IP/${HOST_IP?}/g" /vault/config/extraconfig-from-values.hcl > /tmp/storageconfig.hcl;
+              sed -Ei "s/POD_IP/${POD_IP?}/g" /tmp/storageconfig.hcl;
+              /usr/local/bin/docker-entrypoint.sh vault server -config=/tmp/storageconfig.hcl
+          envFrom:
+            - secretRef:
+                name: kms
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VAULT_ADDR
+              value: "https://127.0.0.1:8200"
+            - name: VAULT_API_ADDR
+              value: "https://$(POD_IP):8200"
+            - name: SKIP_CHOWN
+              value: "true"
+            - name: SKIP_SETCAP
+              value: "true"
+          volumeMounts:
+            - name: config
+              mountPath: /vault/config
+            - name: vault-tls
+              mountPath: /etc/tls
+          ports:
+            - containerPort: 8200
+              name: https
+            - containerPort: 8201
+              name: internal
+            - containerPort: 8202
+              name: replication
+          readinessProbe:
+            # Check status; unsealed vault servers return 0
+            # The exit code reflects the seal status:
+            #   0 - unsealed
+            #   1 - error
+            #   2 - sealed
+            exec:
+              command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+            failureThreshold: 2
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: "/v1/sys/health?standbyok=true"
+              port: 8200
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+          lifecycle:
+            # Vault container doesn't receive SIGTERM from Kubernetes
+            # and after the grace period ends, Kube sends SIGKILL.  This
+            # causes issues with graceful shutdowns such as deregistering itself
+            # from Consul (zombie services).
+            preStop:
+              exec:
+                command: [
+                    "/bin/sh",
+                    "-c",
+                    # Adding a sleep here to give the pod eviction a
+                    # chance to propagate, so requests will not be made
+                    # to this pod while it's terminating
+                    "sleep 5 && kill -SIGTERM $(pidof vault)",
+                  ]
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: vault
+  namespace: vault
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    kubernetes.io/tls-acme: "true"
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  tls:
+    - secretName: vault-tls
+      hosts:
+        - vault.{{.domain}}
+  rules:
+    - host: "vault.{{.domain}}"
+      http:
+        paths:
+          - backend:
+              serviceName: "vault-ui"
+              servicePort: 8200
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: consul
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - secretName: consul-tls
+      hosts:
+        - vault-consul.{{.domain}}
+
+  rules:
+    - host: "vault-consul.{{.domain}}"
+      http:
+        paths:
+          - backend:
+              serviceName: "consul-server"
+              servicePort: 8500

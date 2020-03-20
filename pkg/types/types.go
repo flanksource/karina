@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/flanksource/commons/certs"
 	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/api/calico"
@@ -12,6 +13,10 @@ import (
 
 type Enabled struct {
 	Disabled bool `yaml:"disabled"`
+}
+
+type CertManager struct {
+	Version string `yaml:"version"`
 }
 
 type VM struct {
@@ -217,10 +222,33 @@ type Ldap struct {
 	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
 }
 
+func (ldap Ldap) GetConnectionURL() string {
+	return fmt.Sprintf("ldaps://%s:%s", ldap.Host, ldap.Port)
+}
+
 type Kubernetes struct {
-	Version          string            `yaml:"version"`
+	Version string `yaml:"version"`
+	// KubeletExtraArgs is used to configure additional kubelet command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
-	MasterIP         string            `yaml:"masterIP,omitempty"`
+	// ControlllerExtraArgs is used to configure additional kube-controller-manager command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+	ControllerExtraArgs map[string]string `yaml:"controllerExtraArgs,omitempty"`
+	// SchedulerExtraArgs is used to configure additional kube-scheduler command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+	SchedulerExtraArgs map[string]string `yaml:"schedulerExtraArgs,omitempty"`
+	// APIServerExtraArgs is used to configure additional kube-apiserver command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+	APIServerExtraArgs map[string]string `yaml:"apiServerExtraArgs,omitempty"`
+	// EtcdExtraArgs is used to configure additional etcd command line flags
+	// The list of available flags can be viewed here:
+	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
+	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
+	MasterIP      string            `yaml:"masterIP,omitempty"`
 }
 
 type Dashboard struct {
@@ -263,13 +291,16 @@ type Monitoring struct {
 type Prometheus struct {
 	Version     string                `yaml:"version,omitempty"`
 	Disabled    bool                  `yaml:"disabled,omitempty"`
-	Persistence PrometheusPersistence `yaml:"persistence,omitempty"` // Persistence settings
+	Persistence PrometheusPersistence `yaml:"persistence,omitempty"`
 }
 
 type PrometheusPersistence struct {
-	Enabled      bool   `yaml:"enabled,omitempty"`      // Enable persistence for Prometheus
-	StorageClass string `yaml:"storageClass,omitempty"` // Storage class to use. If not set default one will be used
-	Capacity     string `yaml:"capacity,omitempty"`     // Capacity. Required if persistence is enabled
+	// Enable persistence for Prometheus
+	Enabled bool `yaml:"enabled,omitempty"`
+	// Storage class to use. If not set default one will be used
+	StorageClass string `yaml:"storageClass,omitempty"`
+	// Capacity. Required if persistence is enabled
+	Capacity string `yaml:"capacity,omitempty"`
 }
 
 type Grafana struct {
@@ -342,13 +373,16 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled              bool     `yaml:"disabled"`
-	Version               string   `yaml:"version"`
-	Mode                  string   `yaml:"mode,omitempty"`                  // Mode. Should be client or obeservability.
-	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"` // Only for client mode. Endpoint for thanos sidecar ingress rule.
-	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`     // Only for client mode. Port for thanos sidecar ingress rule.
-	Bucket                string   `yaml:"bucket,omitempty"`                // Bucket to store metrics. Should be the same across all environments
-	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`        // Only for observability mode. List of client sidecars in <hostname>:<port> format
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version"`
+	// Mode. Should be client or obeservability.
+	Mode string `yaml:"mode,omitempty"`
+	// Bucket to store metrics. Should be the same across all environments
+	Bucket string `yaml:"bucket,omitempty"`
+	// Only for observability mode. List of client sidecars in <hostname>:<port> format
+	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
+	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
+	EnableCompactor bool `yaml:"enableCompactor,omitempty"`
 }
 
 type FluentdOperator struct {
@@ -364,6 +398,33 @@ type Filebeat struct {
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
 }
+
+type Consul struct {
+	Version        string `yaml:"version"`
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Bucket         string `yaml:"bucket,omitempty"`
+	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+}
+
+type Vault struct {
+	Version string `yaml:"version"`
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token,omitempty"`
+	// The address of a remote Vault server to use for signinig
+	Address string `yaml:"address,omitempty"`
+	// The path to the PKI Role to use for signing ingress certificates .e.g. /pki/role/ingress-ca
+	PKIPath string `yaml:"pkiPath,omitempty"`
+	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
+	Roles     map[string]map[string]string `yaml:"roles,omitempty"`
+	Disabled  bool                         `yaml:"disabled,omitempty"`
+	AccessKey string                       `yaml:"accessKey,omitempty"`
+	SecretKey string                       `yaml:"secretKey,omitempty"`
+	// The AWS KMS ARN Id to use to unseal vault
+	KmsKeyId string `yaml:"kmsKeyId,omitempty"`
+	Region   string `yaml:"region,omitempty"`
+	Consul   Consul `yaml:"consul,omitempty"`
+}
+
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version"`
@@ -374,6 +435,12 @@ type NodeLocalDNS struct {
 	DNSServer string `yaml:"dnsServer,omitempty"`
 	LocalDNS  string `yaml:"localDNS,omitempty"`
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
+}
+
+type SealedSecrets struct {
+	Enabled
+	Version     string             `yaml:"version,omitempty"`
+	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
 }
 
 type Connection struct {

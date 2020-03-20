@@ -15,7 +15,6 @@ func Deploy(platform *platform.Platform) error {
 		log.Infof("Postgres operator is disabled")
 		return nil
 	}
-
 	if platform.PostgresOperator.Version == "" {
 		platform.PostgresOperator.Version = "v1.3.4"
 	}
@@ -41,12 +40,12 @@ func Deploy(platform *platform.Platform) error {
 		return err
 	}
 
-	if err := platform.ApplySpecs(Namespace, "postgres-operator.crd.yml"); err != nil {
+	if err := platform.ApplySpecs(Namespace, "postgres-operator.crd.yaml"); err != nil {
 		return err
 	}
 
-	if err := platform.ApplySpecs(Namespace, "postgres-operator-config.yml"); err != nil {
+	if err := platform.ApplySpecs(Namespace, "postgres-operator-config.yaml"); err != nil {
 		return err
 	}
-	return platform.ApplySpecs(Namespace, "postgres-operator.yml")
+	return platform.ApplySpecs(Namespace, "postgres-operator.yaml")
 }

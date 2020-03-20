@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/lookup"
@@ -30,6 +32,15 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 
 func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	paths, _ := cmd.Flags().GetStringArray("config")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	extras, _ := cmd.Flags().GetStringArray("extra")
+	showConfig, _ := cmd.Flags().GetBool("show-config")
+	trace, _ := cmd.Flags().GetBool("trace")
+
+	return NewConfig(paths, dryRun, extras, showConfig, trace)
+}
+
+func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, trace bool) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
@@ -43,32 +54,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		Source: paths[0],
 	}
 
-	for _, path := range paths {
-		cfg := types.PlatformConfig{
-			Source: path,
-		}
+	if err := mergeConfigs(&base, paths); err != nil {
+		log.Fatalf("Failed to merge configs: %v", err)
+	}
 
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			log.Fatalf("Failed to read config file %s, %s", path, err)
-		}
-
-		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			log.Fatalf("Failed to parse YAML: %s", err)
-		}
-
-		for node, vm := range cfg.Nodes {
-			if baseNode, ok := base.Nodes[node]; ok {
-				if err := mergo.Merge(&baseNode, vm); err != nil {
-					log.Fatalf("Failed to merge nodes %s, %s", node, err)
-				}
-				base.Nodes[node] = baseNode
-			}
-		}
-
-		if err := mergo.Merge(&base, cfg); err != nil {
-			log.Fatalf("Failed to merge in %s, %s", path, err)
-		}
+	if err := mergeConfigs(&base, base.ImportConfigs); err != nil {
+		log.Fatalf("Failed to merge configs: %v", err)
 	}
 
 	defaultConfig := types.DefaultPlatformConfig()
@@ -76,10 +67,13 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		log.Fatalf("Failed to merge default config, %v", err)
 	}
 
-	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	if dryRun {
 		base.DryRun = true
 		log.Infof("Running a dry-run mode, no changes will be made")
+	}
+
+	if trace {
+		base.Trace = true
 	}
 
 	base.S3.AccessKey = template(base.S3.AccessKey)
@@ -141,12 +135,18 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		base.Filebeat.Elasticsearch.Password = template(base.Filebeat.Elasticsearch.Password)
 	}
 
+	if base.Vault != nil {
+		base.Vault.AccessKey = template(base.Vault.AccessKey)
+		base.Vault.SecretKey = template(base.Vault.SecretKey)
+		base.Vault.KmsKeyId = template(base.Vault.KmsKeyId)
+		base.Vault.Token = template(base.Vault.Token)
+	}
+
 	gitops := base.GitOps
 	for i := range gitops {
 		gitops[i].GitKey = template(gitops[i].GitKey)
 	}
 	base.GitOps = gitops
-	extras, _ := cmd.Flags().GetStringArray("extra")
 	for _, extra := range extras {
 		key := strings.Split(extra, "=")[0]
 		val := extra[len(key)+1:]
@@ -154,7 +154,7 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 
 		value, err := lookup.LookupString(&base, key)
 		if err != nil {
-			log.Fatalf("%v", err)
+			log.Fatalf("Cannot lookup %s: %v", key, err)
 		}
 		log.Infof("Overriding %s %v => %v", key, value, val)
 		switch value.Interface().(type) {
@@ -175,13 +175,43 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		}
 	}
 
-	showConfig, _ := cmd.Flags().GetBool("show-config")
-
 	if showConfig {
 		data, _ := yaml.Marshal(base)
 		log.Infof("Using configuration: \n%s\n", console.StripSecrets(string(data)))
 	}
 	return base
+}
+
+func mergeConfigs(base *types.PlatformConfig, paths []string) error {
+	for _, path := range paths {
+		cfg := types.PlatformConfig{
+			Source: path,
+		}
+
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to read config file %s", path)
+		}
+
+		if err := yaml.Unmarshal(data, &cfg); err != nil {
+			return errors.Wrap(err, "Failed to parse YAML")
+		}
+
+		for node, vm := range cfg.Nodes {
+			if baseNode, ok := base.Nodes[node]; ok {
+				if err := mergo.Merge(&baseNode, vm); err != nil {
+					return errors.Wrapf(err, "Failed to merge nodes %s", node)
+				}
+				base.Nodes[node] = baseNode
+			}
+		}
+
+		if err := mergo.Merge(base, cfg); err != nil {
+			return errors.Wrapf(err, "Failed to merge in %s", path)
+		}
+	}
+
+	return nil
 }
 
 var Render = &cobra.Command{

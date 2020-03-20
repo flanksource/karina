@@ -79,6 +79,8 @@ kind: Ingress
 metadata:
   name: oauth2-proxy
   namespace: ingress-nginx
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   rules:
     - host: oauth2.{{.domain}}
@@ -89,5 +91,6 @@ spec:
               servicePort: 4180
             path: /oauth2
   tls:
-    - hosts:
+    - secretName: oauth2-tls
+      hosts:
         - oauth2.{{.domain}}

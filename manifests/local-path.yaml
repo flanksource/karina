@@ -73,7 +73,7 @@ spec:
               cpu: 10m
               memory: 20Mi
             limits:
-              cpu: 100m
+              cpu: 200m
               memory: 256Mi
           volumeMounts:
             - name: config-volume
