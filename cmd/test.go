@@ -241,14 +241,18 @@ func init() {
 		},
 	})
 
-	Test.AddCommand(&cobra.Command{
+
+	configmapReloaderCmd := &cobra.Command{
 		Use:   "configmap-reloader",
 		Short: "Test configmap-reloader",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			run(configmapReloader.Test)
+			runWithArgs(configmapReloader.Test, args, cmd)
 		},
-	})
+	}
+
+	configmapReloaderCmd.PersistentFlags().Bool("e2e", false,  "Run e2e tests after main test")
+	Test.AddCommand(configmapReloaderCmd)
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "all",
@@ -267,7 +271,7 @@ func init() {
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
-				configmapReloader.Test(p, test)
+				configmapReloader.Test(p, test, args, cmd)
 				sealedsecrets.Test(p, test)
 				vault.Test(p, test)
 			})
