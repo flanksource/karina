@@ -29,5 +29,5 @@ func Deploy(p *platform.Platform) error {
 		p.ConfigMapReloader.Version = utils.NormalizeVersion(p.ConfigMapReloader.Version)
 	}
 
-	return p.ApplySpecs("", "configmap-reloader.yml")
+	return p.ApplySpecs("", "configmap-reloader.yaml")
 }
