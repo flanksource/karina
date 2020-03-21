@@ -9,14 +9,27 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "iconSize": 0,
+        "lineColor": "",
+        "name": "Annotations & Alerts",
+        "query": "",
+        "showLine": false,
+        "tags": "",
+        "tagsField": "",
+        "textField": ""
       }
     ]
   },
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 32,
-  "iteration": 1584615598107,
+  "id": 30,
+  "iteration": 1584690600016,
   "links": [],
   "panels": [
     {
@@ -196,7 +209,6 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "decimals": null,
       "editable": false,
       "error": false,
       "fill": 1,
@@ -207,7 +219,6 @@
         "x": 4,
         "y": 0
       },
-      "hiddenSeries": false,
       "id": 27,
       "isNew": false,
       "legend": {
@@ -291,7 +302,6 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "decimals": null,
       "editable": false,
       "error": false,
       "fill": 1,
@@ -302,7 +312,6 @@
         "x": 9,
         "y": 0
       },
-      "hiddenSeries": false,
       "id": 28,
       "isNew": false,
       "legend": {
@@ -396,7 +405,6 @@
         "x": 15,
         "y": 0
       },
-      "hiddenSeries": false,
       "id": 24,
       "isNew": false,
       "legend": {
@@ -854,7 +862,6 @@
         "y": 6
       },
       "height": "230px",
-      "hiddenSeries": false,
       "id": 10,
       "isNew": false,
       "legend": {
@@ -951,7 +958,6 @@
         "y": 6
       },
       "height": "",
-      "hiddenSeries": false,
       "id": 2,
       "isNew": false,
       "legend": {
@@ -1030,6 +1036,95 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": true,
+      "colorValue": false,
+      "colors": [
+        "#C4162A",
+        "#C4162A",
+        "#C4162A"
+      ],
+      "datasource": "$datasource",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 13,
+        "y": 6
+      },
+      "id": 32,
+      "interval": null,
+      "links": [
+        {
+          "title": "",
+          "url": "/d/eea-9_sik/prometheus-alerts"
+        }
+      ],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "options": {},
+      "pluginVersion": "6.4.3",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false,
+        "ymax": null,
+        "ymin": null
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(ALERTS{severity=\"critical\"})",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Critical Alerts",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
     },
     {
       "cacheTimeout": null,
@@ -1314,7 +1409,6 @@
         "x": 2,
         "y": 13
       },
-      "hiddenSeries": false,
       "id": 4,
       "isNew": false,
       "legend": {
@@ -1418,7 +1512,6 @@
         "x": 7,
         "y": 13
       },
-      "hiddenSeries": false,
       "hideTimeOverride": false,
       "id": 30,
       "isNew": false,
@@ -1497,28 +1590,44 @@
       }
     }
   ],
-  "schemaVersion": 21,
+  "schemaVersion": 20,
   "style": "dark",
-  "tags": ["main"],
+  "tags": [
+    "main"
+  ],
   "templating": {
     "list": [
       {
+        "allFormat": "",
+        "allValue": "",
         "current": {
           "tags": [],
-          "text": "prometheus",
-          "value": "prometheus"
+          "text": "thanos",
+          "value": "thanos"
         },
+        "datasource": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
+        "label": "",
         "multi": false,
+        "multiFormat": "",
         "name": "datasource",
         "options": [],
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
+        "sort": 0,
         "type": "datasource"
+      },
+      {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": null,
+        "name": "Filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },
@@ -1538,10 +1647,11 @@
       "1h",
       "2h",
       "1d"
-    ]
+    ],
+    "time_options": null
   },
   "timezone": "",
   "title": "Main Dashboard",
   "uid": "Mha26XuWz",
-  "version": 1
+  "version": 3
 }
