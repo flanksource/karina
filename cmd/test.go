@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	"io/ioutil"
 	"os"
 	"path"
@@ -240,6 +241,19 @@ func init() {
 		},
 	})
 
+
+	configmapReloaderCmd := &cobra.Command{
+		Use:   "configmap-reloader",
+		Short: "Test configmap-reloader",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			runWithArgs(configmapReloader.Test, args, cmd)
+		},
+	}
+
+	configmapReloaderCmd.PersistentFlags().Bool("e2e", false,  "Run e2e tests after main test")
+	Test.AddCommand(configmapReloaderCmd)
+
 	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
@@ -257,6 +271,7 @@ func init() {
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
+				configmapReloader.Test(p, test, args, cmd)
 				sealedsecrets.Test(p, test)
 				vault.Test(p, test)
 			})
