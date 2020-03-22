@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -16,9 +15,7 @@ import (
 )
 
 func Install(platform *platform.Platform) error {
-	if err := os.Mkdir(".bin", 0755); err != nil {
-		return errors.Wrap(err, "failed to create directory .bi")
-	}
+	os.Mkdir(".bin", 0755) // nolint: errcheck
 
 	if err := platform.ApplySpecs("", "rbac.yaml"); err != nil {
 		log.Errorf("Error deploying base rbac: %s\n", err)
