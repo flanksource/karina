@@ -115,7 +115,7 @@ ingressCA:
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
-  cookieSecret: ZDBiMDY4MWQ1YmFiZWZiMTY0YjRkNmUwM2I1Mzk2N2I=
+  cookieSecret: !!template "{{ base64.Encode \"d0b0681d5babefb164b4d6e03b53967b\" }}"
 prometheus:
   persistence:
     capacity: 10Gi
@@ -133,7 +133,7 @@ sealedSecrets:
     password: foobar
 vault:
   version: 1.3.2
-  kmsKeyId: $AWS_KMS_ID
+  kmsKeyId: !!env AWS_KMS_ID
   region: us-east-1
-  accessKey: $AWS_ACCESS_KEY_ID
-  secretKey: $AWS_SECRET_ACCESS_KEY
+  accessKey: !!env AWS_ACCESS_KEY_ID
+  secretKey: !!env AWS_SECRET_ACCESS_KEY
