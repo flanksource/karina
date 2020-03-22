@@ -20,12 +20,15 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 
-	crt, err := p.CreateInternalCertificate("vault", Namespace, "cluster.local")
-	if err != nil {
-		return err
-	}
-	if err := p.CreateOrUpdateSecret("vault-tls", Namespace, crt.AsTLSSecret()); err != nil {
-		return err
+	if !p.HasSecret(Namespace, "vault-tls") {
+		//FIXME(moshloop) does this need an internal or external cert?
+		crt, err := p.CreateInternalCertificate("vault", Namespace, "cluster.local")
+		if err != nil {
+			return err
+		}
+		if err := p.CreateOrUpdateSecret("vault-tls", Namespace, crt.AsTLSSecret()); err != nil {
+			return err
+		}
 	}
 
 	if err := p.CreateOrUpdateSecret("kms", Namespace, map[string][]byte{
