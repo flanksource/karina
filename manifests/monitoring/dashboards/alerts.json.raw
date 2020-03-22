@@ -13,7 +13,7 @@
       {
         "datasource": "$datasource",
         "enable": true,
-        "expr": "ALERTS_FOR_STATE{alertname=~\"$alertname\"} * 1000",
+        "expr": "ALERTS_FOR_STATE{instance=~\"$instance\", alertname=~\"$alertname\"} * 1000",
         "hide": false,
         "iconColor": "#37872D",
         "limit": 100,
@@ -42,12 +42,11 @@
       }
     ]
   },
-  "description": "Dashboard showing Prometheus Alerts (both pending and firing) for alerts adjustment and debugging",
   "editable": true,
-  "gnetId": 11098,
+  "gnetId": null,
   "graphTooltip": 1,
-  "id": 26,
-  "iteration": 1584690806775,
+  "id": 33,
+  "iteration": 1584879000697,
   "links": [
     {
       "icon": "external link",
@@ -56,13 +55,16 @@
       "tags": [
         "OS"
       ],
+      "title": "",
       "type": "dashboards"
     },
     {
       "icon": "external link",
+      "includeVars": false,
       "tags": [
         "alerts-advanced"
       ],
+      "title": "",
       "type": "dashboards"
     }
   ],
@@ -74,24 +76,29 @@
       "dashes": false,
       "datasource": "$datasource",
       "description": "",
+      "editable": false,
+      "error": false,
       "fill": 1,
-      "fillGradient": 10,
+      "fillGradient": 0,
       "gridPos": {
         "h": 10,
         "w": 17,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 440,
+      "isNew": false,
       "legend": {
         "alignAsTable": true,
         "avg": false,
         "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
         "max": false,
         "min": false,
         "rightSide": true,
         "show": true,
-        "sideWidth": null,
         "total": false,
         "values": false
       },
@@ -122,7 +129,6 @@
         {
           "alias": "/help_series_x_axes_in_center/",
           "bars": false,
-          "hideTooltip": true,
           "legend": false,
           "lines": false,
           "stack": false,
@@ -130,6 +136,7 @@
         }
       ],
       "spaceLength": 10,
+      "span": 0,
       "stack": false,
       "steppedLine": true,
       "targets": [
@@ -140,7 +147,6 @@
         },
         {
           "expr": "1",
-          "hide": false,
           "legendFormat": "help_series_x_axes_in_center",
           "refId": "A"
         }
@@ -158,6 +164,8 @@
       "type": "graph",
       "xaxis": {
         "buckets": null,
+        "format": "",
+        "logBase": 0,
         "mode": "time",
         "name": null,
         "show": true,
@@ -165,32 +173,29 @@
       },
       "yaxes": [
         {
-          "decimals": null,
           "format": "short",
           "label": "Firing (-)   /  Pending (+)  ",
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": "1",
-          "min": "-1",
+          "max": 1,
+          "min": -1,
           "show": false
         }
       ],
       "yaxis": {
-        "align": true,
-        "alignLevel": 0
+        "align": false,
+        "alignLevel": null
       }
     },
     {
       "columns": [],
       "datasource": "$datasource",
-      "description": "Alerts list for all alerts in a selected time range. For filling this table `Alerts annotations` have to be switched on.",
+      "editable": false,
+      "error": false,
       "fontSize": "100%",
       "gridPos": {
         "h": 10,
@@ -199,25 +204,27 @@
         "y": 0
       },
       "id": 442,
+      "isNew": false,
       "options": {},
       "pageSize": null,
+      "scroll": false,
       "showHeader": true,
       "sort": {
         "col": 3,
         "desc": false
       },
+      "span": 0,
       "styles": [
         {
           "alias": "time",
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "link": false,
-          "linkUrl": "",
           "pattern": "Time",
           "type": "date"
         },
         {
           "alias": "instance",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -225,7 +232,6 @@
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
-          "mappingType": 1,
           "pattern": "Title",
           "thresholds": [],
           "type": "string",
@@ -233,7 +239,7 @@
         },
         {
           "alias": "alertname",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -241,7 +247,6 @@
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
-          "mappingType": 1,
           "pattern": "Tags",
           "thresholds": [],
           "type": "string",
@@ -249,7 +254,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -257,7 +262,6 @@
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
-          "mappingType": 1,
           "pattern": "Text",
           "thresholds": [],
           "type": "hidden",
@@ -265,7 +269,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -278,14 +282,6 @@
           "unit": "short"
         }
       ],
-      "targets": [
-        {
-          "expr": "",
-          "refId": "A"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Alerts Start List",
       "transform": "annotations",
       "type": "table"
@@ -293,7 +289,8 @@
     {
       "columns": [],
       "datasource": "$datasource",
-      "description": "Shows how many times was particular alert started in a defined time range. Alert can be started either directly as `firing` or as a `pending`. Pending alerts wait for a defined time before it flips to a `firing` alert. This is specified with the `FOR` clause in a Prometheus `rules` file.",
+      "editable": false,
+      "error": false,
       "fontSize": "100%",
       "gridPos": {
         "h": 13,
@@ -302,24 +299,27 @@
         "y": 10
       },
       "id": 414,
+      "isNew": false,
       "options": {},
       "pageSize": null,
+      "scroll": false,
       "showHeader": true,
       "sort": {
         "col": 10,
         "desc": true
       },
+      "span": 0,
       "styles": [
         {
           "alias": "Time",
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "link": false,
           "pattern": "Time",
           "type": "hidden"
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -327,7 +327,6 @@
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
-          "mappingType": 1,
           "pattern": "instance",
           "thresholds": [],
           "type": "string",
@@ -335,7 +334,7 @@
         },
         {
           "alias": "count",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -343,7 +342,6 @@
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
-          "mappingType": 1,
           "pattern": "Value",
           "thresholds": [],
           "type": "number",
@@ -351,7 +349,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -368,20 +366,17 @@
         {
           "expr": "changes( ALERTS_FOR_STATE{alertname=~\"$alertname\"}[$__range] ) + 1",
           "format": "table",
-          "hide": false,
           "instant": true,
           "refId": "B"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Total Alert Counts",
       "transform": "table",
       "type": "table"
     }
   ],
   "refresh": false,
-  "schemaVersion": 20,
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [
     "prometheus",
@@ -390,24 +385,30 @@
   "templating": {
     "list": [
       {
+        "allFormat": "",
+        "allValue": "",
         "current": {
           "text": "default",
           "value": "default"
         },
-        "hide": 2,
+        "datasource": null,
+        "hide": 0,
         "includeAll": false,
         "label": "Prometheus datasource",
         "multi": false,
+        "multiFormat": "",
         "name": "datasource",
         "options": [],
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
+        "sort": 0,
         "type": "datasource"
       },
       {
-        "allValue": null,
+        "allFormat": "",
+        "allValue": "",
         "current": {
           "text": "All",
           "value": [
@@ -415,11 +416,12 @@
           ]
         },
         "datasource": "$datasource",
-        "definition": "label_values(ALERTS_FOR_STATE,instance)",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Instance:",
         "multi": true,
+        "multiFormat": "",
         "name": "instance",
         "options": [],
         "query": "label_values(ALERTS_FOR_STATE,instance)",
@@ -434,7 +436,8 @@
         "useTags": false
       },
       {
-        "allValue": null,
+        "allFormat": "",
+        "allValue": "",
         "current": {
           "text": "All",
           "value": [
@@ -442,11 +445,12 @@
           ]
         },
         "datasource": "$datasource",
-        "definition": "label_values(ALERTS_FOR_STATE,alertname)",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Alert:",
         "multi": true,
+        "multiFormat": "",
         "name": "alertname",
         "options": [],
         "query": "label_values(ALERTS_FOR_STATE,alertname)",
@@ -461,7 +465,8 @@
         "useTags": false
       },
       {
-        "allValue": null,
+        "allFormat": "",
+        "allValue": "",
         "current": {
           "text": "All",
           "value": [
@@ -469,11 +474,12 @@
           ]
         },
         "datasource": "$datasource",
-        "definition": "label_values(ALERTS, alertstate)",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "State:",
         "multi": true,
+        "multiFormat": "",
         "name": "alertstate",
         "options": [],
         "query": "label_values(ALERTS, alertstate)",
@@ -488,12 +494,26 @@
         "useTags": false
       },
       {
+        "allFormat": "",
+        "allValue": "",
+        "current": {
+          "text": "",
+          "value": null
+        },
         "datasource": "$datasource",
         "filters": [],
         "hide": 0,
+        "includeAll": false,
         "label": "",
+        "multi": false,
+        "multiFormat": "",
         "name": "Filters",
+        "options": null,
+        "query": "",
+        "refresh": false,
+        "regex": "",
         "skipUrlSync": false,
+        "sort": 0,
         "type": "adhoc"
       }
     ]
@@ -530,5 +550,5 @@
   "timezone": "",
   "title": "Prometheus Alerts",
   "uid": "eea-9_sik",
-  "version": 6
+  "version": 1
 }
