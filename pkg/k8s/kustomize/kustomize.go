@@ -72,7 +72,7 @@ func GetManager(kustomizeDir string) (*Manager, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer ldr.Cleanup()
+		defer ldr.Cleanup() // nolint: errcheck
 
 		// read the Kustomization file and all the patches it is
 		// referencing (either stategicMerge or json6902 patches)
@@ -213,7 +213,7 @@ func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
 			return nil, err
 		}
 		name := "resource.yaml"
-		memFS.WriteFile(filepath.Join(fakeDir, name), b)
+		memFS.WriteFile(filepath.Join(fakeDir, name), b) // nolint: errcheck
 
 		km.kustomizationFile.Resources = []string{name}
 
@@ -225,7 +225,7 @@ func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
 				return nil, err
 			}
 			name := fmt.Sprintf("patch-%d.yaml", i)
-			memFS.WriteFile(filepath.Join(fakeDir, name), b)
+			memFS.WriteFile(filepath.Join(fakeDir, name), b) // nolint: errcheck
 
 			km.kustomizationFile.PatchesStrategicMerge = append(km.kustomizationFile.PatchesStrategicMerge, patch.StrategicMerge(name))
 		}
@@ -234,7 +234,7 @@ func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
 		km.kustomizationFile.PatchesJson6902 = []patch.Json6902{}
 		for i, p := range json6902 {
 			name := fmt.Sprintf("patchjson-%d.yaml", i)
-			memFS.WriteFile(filepath.Join(fakeDir, name), []byte(p.Patch))
+			memFS.WriteFile(filepath.Join(fakeDir, name), []byte(p.Patch)) // nolint: errcheck
 
 			km.kustomizationFile.PatchesJson6902 = append(km.kustomizationFile.PatchesJson6902, patch.Json6902{Target: p.Target, Path: name})
 		}
@@ -244,7 +244,7 @@ func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
 		if err != nil {
 			return nil, err
 		}
-		memFS.WriteFile(filepath.Join(fakeDir, "kustomization.yaml"), kbytes)
+		memFS.WriteFile(filepath.Join(fakeDir, "kustomization.yaml"), kbytes) // nolint: errcheck
 
 		// Finally customize the target resource
 		var out bytes.Buffer

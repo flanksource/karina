@@ -7,6 +7,8 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -165,7 +167,9 @@ func extractSpecs(p *platform.Platform, k8s *kubernetes.Clientset, namespaceList
 	for _, namespace := range namespaceList.Items {
 
 		path := fmt.Sprintf("%s/%s", opts.Destination, namespace.Name)
-		os.MkdirAll(path, 0755)
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return errors.Wrapf(err, "failed to mkdir path %s", path)
+		}
 		ketall := p.GetBinaryWithKubeConfig("ketall")
 		_ = ketall(fmt.Sprintf("-n %s -o yaml --exclude= > %s/specs.yaml", namespace.Name, path))
 	}

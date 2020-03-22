@@ -25,11 +25,14 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 	data, err := net.GET(health)
 	if err != nil {
-		test.Failf("Failed to get status from %s %s", health, err)
+		test.Failf("Harbor", "Failed to get status from %s %s", health, err)
 		return
 	}
 	var status HarborStatus
-	json.Unmarshal(data, &status)
+	if err := json.Unmarshal(data, &status); err != nil {
+		test.Failf("Harbor", "Failed to unmarshal json %v", err)
+		return
+	}
 
 	for _, component := range status.Components {
 		if component.Status == "healthy" {

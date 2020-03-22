@@ -100,6 +100,7 @@ func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	}
 
 	for _, dev := range devices.SelectByType((*vim.VirtualEthernetCard)(nil)) {
+		// nolint: gosimple
 		switch dev.(type) {
 		case *vim.VirtualVmxnet3:
 			net := dev.(*vim.VirtualVmxnet3)
@@ -201,6 +202,7 @@ func (vm *VM) Shutdown() error {
 	return nil
 }
 
+// nolint: unused, deadcode
 func removeDNS(vm *VM) {
 	ip, err := vm.GetIP(time.Second * 5)
 	if err != nil {
@@ -238,7 +240,9 @@ func (vm *VM) Terminate() error {
 			log.Warnf("Failed to power off %s: %v", vm.Name, err)
 		}
 	}
-	vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
+	if err := vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff); err != nil {
+		return errors.Wrapf(err, "Failed to wait for power state")
+	}
 	task, err := vm.vm.Destroy(vm.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete %s", vm)

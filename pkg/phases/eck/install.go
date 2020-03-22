@@ -1,8 +1,6 @@
 package eck
 
 import (
-	"strings"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -19,11 +17,4 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	return p.ApplySpecs(Namespace, "eck.yaml")
-}
-
-func normalizeVersion(version string) string {
-	if strings.HasPrefix(version, "v") {
-		return strings.TrimSuffix(version, "v")
-	}
-	return version
 }

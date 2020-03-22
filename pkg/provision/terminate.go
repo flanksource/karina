@@ -42,7 +42,7 @@ func Cleanup(platform *platform.Platform) error {
 		}
 		wg.Add(1)
 		go func() {
-			vm.Terminate()
+			vm.Terminate() // nolint: errcheck
 			wg.Done()
 		}()
 

@@ -672,8 +672,7 @@ func (c *Client) StreamLogs(namespace, name string) error {
 	log.Debugf("%s/%s running, streaming logs", namespace, name)
 	var wg sync.WaitGroup
 	for _, container := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
-		var logs *rest.Request
-		logs = pods.GetLogs(pod.Name, &v1.PodLogOptions{
+		logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
 			Container: container.Name,
 		})
 
@@ -701,7 +700,9 @@ func (c *Client) StreamLogs(namespace, name string) error {
 
 	}
 	wg.Wait()
-	c.WaitForPod(namespace, name, 120*time.Second, v1.PodSucceeded)
+	if err = c.WaitForPod(namespace, name, 120*time.Second, v1.PodSucceeded); err != nil {
+		return err
+	}
 	pod, err = pods.Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -805,7 +806,7 @@ func (c *Client) PingMaster() bool {
 
 	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
-		log.Trace("pingMaster: Failed to get nodes list: %v", err)
+		log.Tracef("pingMaster: Failed to get nodes list: %v", err)
 		return false
 	}
 	if nodes == nil && len(nodes.Items) == 0 {
@@ -921,7 +922,7 @@ func safeString(buf *bytes.Buffer) string {
 	if buf == nil || buf.Len() == 0 {
 		return ""
 	}
-	return string(buf.Bytes())
+	return buf.String()
 }
 
 // Executef runs the specified shell command on a node by creating
@@ -943,7 +944,7 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 	if err != nil {
 		return "", fmt.Errorf("executef: Failed to create pod: %v", err)
 	}
-	defer pods.Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
+	defer pods.Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{}) // nolint: errcheck
 
 	logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
 		Container: pod.Spec.Containers[0].Name,

@@ -24,8 +24,8 @@ const (
 
 const (
 	serviceNameMaxLength   = 63
-	clusterNameMaxLength   = serviceNameMaxLength - len("-repl")
-	serviceNameRegexString = `^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	clusterNameMaxLength   = serviceNameMaxLength - len("-repl") // nolint: unused, varcheck, deadcode
+	serviceNameRegexString = `^[a-z]([-a-z0-9]*[a-z0-9])?$`      // nolint: unused, varcheck, deadcode
 )
 
 func NewPostgresql(name string) *Postgresql {

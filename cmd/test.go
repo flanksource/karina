@@ -1,22 +1,18 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/phases/flux"
-
 	"github.com/flanksource/commons/console"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"github.com/moshloop/platform-cli/pkg/phases/base"
+	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
@@ -27,6 +23,8 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -53,8 +51,8 @@ func end(test console.TestResults) {
 			test.SuiteName(suiteName)
 		}
 		xml, _ := test.ToXML()
-		os.MkdirAll(path.Dir(junitPath), 0755)
-		ioutil.WriteFile(junitPath, []byte(xml), 0644)
+		os.MkdirAll(path.Dir(junitPath), 0755)         // nolint: errcheck
+		ioutil.WriteFile(junitPath, []byte(xml), 0644) // nolint: errcheck
 	}
 	if test.FailCount > 0 && failOnError {
 		os.Exit(1)
@@ -67,7 +65,7 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 		test := console.TestResults{}
 		fn(p, &test)
 		test.Done()
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
 			end(test)
 			return
@@ -86,7 +84,7 @@ func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args [
 		test := console.TestResults{}
 		fn(p, &test, args, cmd)
 		test.Done()
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
 			end(test)
 			return
@@ -247,7 +245,6 @@ func init() {
 		},
 	})
 
-
 	configmapReloaderCmd := &cobra.Command{
 		Use:   "configmap-reloader",
 		Short: "Test configmap-reloader",
@@ -257,7 +254,7 @@ func init() {
 		},
 	}
 
-	configmapReloaderCmd.PersistentFlags().Bool("e2e", false,  "Run e2e tests after main test")
+	configmapReloaderCmd.PersistentFlags().Bool("e2e", false, "Run e2e tests after main test")
 	Test.AddCommand(configmapReloaderCmd)
 
 	Test.AddCommand(&cobra.Command{
@@ -282,7 +279,7 @@ func init() {
 					dex.Test(p, test)
 					sealedsecrets.Test(p, test)
 					flux.Test(p, test)
-          configmapReloader.Test(p, test, args, cmd)
+					configmapReloader.Test(p, test, args, cmd)
 				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)

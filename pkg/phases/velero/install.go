@@ -59,7 +59,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 		},
 		Spec: BackupSpec{
 			IncludedNamespaces: []string{"*"},
-			TTL:                metav1.Duration{time.Duration(30) * 24 * time.Hour},
+			TTL:                metav1.Duration{Duration: time.Duration(30) * 24 * time.Hour},
 			StorageLocation:    "default",
 			SnapshotVolumes:    &no,
 		},

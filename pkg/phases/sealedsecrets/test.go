@@ -86,7 +86,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace, nil)
+		client.CoreV1().Namespaces().Delete(namespace, nil) // nolint: errcheck
 	}()
 
 	if err := p.ApplyText(namespace, string(sealedSecret)); err != nil {

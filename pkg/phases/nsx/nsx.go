@@ -76,6 +76,7 @@ func mapToINI(ini map[string]interface{}) string {
 		if v == nil {
 			continue
 		}
+		// nolint: gosimple
 		switch v.(type) {
 		case string:
 			if v != "" {

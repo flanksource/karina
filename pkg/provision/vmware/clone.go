@@ -147,7 +147,7 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 	}
 	log.Tracef("Uploaded to %s", path)
 	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", vm.Datastore, path))
-	devices.Connect(cdrom)
+	devices.Connect(cdrom) // nolint: errcheck
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    cdrom,

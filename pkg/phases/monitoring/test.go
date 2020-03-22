@@ -158,7 +158,7 @@ func pullMetric(thanosHost string) (model.Value, error) {
 		log.Tracef("Got warnings: %s", warn)
 	}
 	if err != nil {
-		fmt.Errorf("pullMetric: failed to pull metrics")
+		log.Errorf("pullMetric: failed to pull metrics")
 	}
 	return value, err
 }

@@ -134,26 +134,26 @@ func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (i
 	if f.Kind() != reflect.String {
 		return data, nil
 	}
-	if t != reflect.TypeOf(metav1.Duration{time.Duration(5)}) {
+	if t != reflect.TypeOf(metav1.Duration{Duration: time.Duration(5)}) {
 		return data, nil
 	}
 	d, err := time.ParseDuration(data.(string))
 	if err != nil {
 		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
 	}
-	return metav1.Duration{d}, nil
+	return metav1.Duration{Duration: d}, nil
 }
 
 func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
 	if f.Kind() != reflect.String {
 		return data, nil
 	}
-	if t != reflect.TypeOf(metav1.Time{time.Now()}) {
+	if t != reflect.TypeOf(metav1.Time{Time: time.Now()}) {
 		return data, nil
 	}
 	d, err := time.Parse(time.RFC3339, data.(string))
 	if err != nil {
 		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
 	}
-	return metav1.Time{d}, nil
+	return metav1.Time{Time: d}, nil
 }

@@ -62,7 +62,7 @@ func Status(p *platform.Platform) error {
 			node.Status))
 	}
 
-	for vm, _ := range vms {
+	for vm := range vms {
 		fmt.Printf("%s VM not in cluster\n", console.Redf(vm))
 	}
 	return nil

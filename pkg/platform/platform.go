@@ -383,7 +383,7 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 
 	signed, err := platform.GetIngressCA().Sign(cert.X509, expiry)
 	if err != nil {
-		return fmt.Errorf("failed to sign cert %s: %v", cert.X509, err)
+		return fmt.Errorf("failed to sign cert %s: %v", cert.X509.Subject.CommonName, err)
 	}
 
 	cert = &certs.Certificate{

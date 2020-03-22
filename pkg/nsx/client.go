@@ -160,6 +160,7 @@ func (c *NSXClient) TagLogicalPort(ctx context.Context, id string, tags map[stri
 	return nil
 }
 
+// nolint: structcheck, unused
 type LoadBalancer struct {
 	client *NSXClient
 	name   string

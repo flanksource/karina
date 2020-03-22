@@ -23,7 +23,6 @@ type PostgresDB struct {
 	Superuser string
 	op        *api.OperatorConfiguration
 	client    *k8s.Client
-	s3        *minio.Client
 }
 
 func GetGenericPostgresDB(client *k8s.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {

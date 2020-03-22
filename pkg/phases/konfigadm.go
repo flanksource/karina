@@ -1,15 +1,15 @@
 package phases
 
 import (
-	"errors"
 	"fmt"
 
-	// initialize konfigadm
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/flanksource/commons/certs"
+	// initialize konfigadm
 	_ "github.com/moshloop/konfigadm/pkg"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
@@ -41,7 +41,9 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
-	addCerts(platform, cfg)
+	if err := addCerts(platform, cfg); err != nil {
+		return nil, errors.Wrap(err, "failed to add certs")
+	}
 	cfg.AddCommand("kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log")
 	return cfg, nil
 }
@@ -156,7 +158,9 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
-	addCerts(platform, cfg)
+	if err = addCerts(platform, cfg); err != nil {
+		return nil, errors.Wrap(err, "Failed to add certs")
+	}
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log",
 		token, certKey, platform.JoinEndpoint))

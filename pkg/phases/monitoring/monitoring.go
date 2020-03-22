@@ -76,7 +76,7 @@ func Install(p *platform.Platform) error {
 	for name := range dashboards {
 		contents, err := p.Template("/monitoring/dashboards/"+name, "manifests")
 		if err != nil {
-			fmt.Errorf("Failed to template the dashboard: %v ", err)
+			return fmt.Errorf("Failed to template the dashboard: %v ", err)
 		}
 		var board sdk.Board
 		if err := json.Unmarshal([]byte(contents), &board); err != nil {
@@ -156,7 +156,7 @@ func deployThanos(p *platform.Platform) error {
 				return err
 			}
 		}
-		if p.Thanos.EnableCompactor == true {
+		if p.Thanos.EnableCompactor {
 			if err := p.ApplySpecs("", "monitoring/observability/thanos-compactor.yaml"); err != nil {
 				return err
 			}
