@@ -9,7 +9,7 @@ import (
 	testlib "github.com/moshloop/platform-cli/pkg/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" //Import kubernetes oidc auth plugin
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
 	"k8s.io/client-go/tools/clientcmd"
 )
 

@@ -111,7 +111,7 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		mounts, _ = client.Sys().ListMounts()
+		mounts, _ = client.Sys().ListMounts() // nolint: ineffassign, staticcheck, errcheck
 	}
 
 	ingress := p.GetIngressCA()
@@ -123,7 +123,7 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("Unknown CA type %v", ingress)
+		return fmt.Errorf("unknown CA type %v", ingress)
 	}
 
 	for role, config := range p.Vault.Roles {
