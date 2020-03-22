@@ -16,8 +16,10 @@ import (
 func Install(p *platform.Platform) error {
 	log.Infof("Deploying %d gitops controllers", len(p.GitOps))
 	for _, gitops := range p.GitOps {
-		if err := p.CreateOrUpdateNamespace(gitops.Namespace, nil, nil); err != nil {
-			return fmt.Errorf("install: failed to create namespace: %s: %v", gitops.Namespace, err)
+		if gitops.Namespace != "" {
+			if err := p.CreateOrUpdateNamespace(gitops.Namespace, nil, nil); err != nil {
+				return fmt.Errorf("install: failed to create namespace: %s: %v", gitops.Namespace, err)
+			}
 		}
 
 		if err := p.Apply(gitops.Namespace, NewFluxDeployment(&gitops)...); err != nil {
