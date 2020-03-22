@@ -220,6 +220,11 @@ type Ldap struct {
 	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
 	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
 	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
+	// Test is auth credentials used for OIDC integration tests
+	Test struct {
+		Username string `yaml:"username,omitempty"`
+		Password string `yaml:"password,omitempty"`
+	} `yaml:"test,omitempty"`
 }
 
 func (ldap Ldap) GetConnectionURL() string {
@@ -450,6 +455,11 @@ type Connection struct {
 	Port     string `yaml:"port,omitempty"`
 	Scheme   string `yaml:"scheme,omitempty"`
 	Verify   string `yaml:"verify,omitempty"`
+}
+
+type ConfigMapReloader struct {
+	Version   string  `yaml:"version"`
+	Disabled  bool    `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {
