@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -14,13 +17,11 @@ import (
 	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"net/http"
-	"time"
 )
 
 const (
-	testMetricName  = "test_metric"
-	testJobName     = "test"
+	testMetricName = "test_metric"
+	testJobName    = "test"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -48,7 +49,7 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 	}
 	pusher := pushMetric(pushGatewayHost)
 	err := pusher.Add()
-    if err != nil {
+	if err != nil {
 		test.Failf("Thanos: client", "Failed to inject metric to client Prometheus via Pushgateway %v", err)
 		return
 	} else {
@@ -68,7 +69,7 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 			log.Tracef("Got metric %v", metric)
 			if metric.String() != "" {
 				test.Passf("Thanos observability", "Got test metric successfully in Observability cluster")
-				err = pusher.Delete()
+				_ = pusher.Delete()
 				log.Info("Test metric deleted from pushgateway")
 				break
 			} else {

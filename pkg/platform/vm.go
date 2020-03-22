@@ -180,7 +180,9 @@ func (vm *VM) PowerOff() error {
 		return errors.Wrapf(err, "Failed to power off: %s", vm)
 	}
 	info, err := task.WaitForResult(vm.ctx, nil)
-	if info.State == "success" {
+	if err != nil {
+		return errors.Wrapf(err, "Failed to wait for results: %s", vm)
+	} else if info.State == "success" {
 		log.Debugf("[%s] powered off\n", vm)
 	} else {
 		return errors.Errorf("Failed to poweroff %s, %v", vm, info)
@@ -242,7 +244,9 @@ func (vm *VM) Terminate() error {
 		return errors.Wrapf(err, "Failed to delete %s", vm)
 	}
 	info, err := task.WaitForResult(vm.ctx, nil)
-	if info.State == "success" {
+	if err != nil {
+		return errors.Wrapf(err, "Failed to wait for results %s", vm)
+	} else if info.State == "success" {
 		log.Debugf("[%s] terminated\n", vm)
 	} else {
 		return errors.Errorf("Failed to delete %s, %v", vm, info)

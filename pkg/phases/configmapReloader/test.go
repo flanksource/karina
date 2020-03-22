@@ -1,7 +1,6 @@
 package configmapReloader
 
 import (
-	"fmt"
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -120,7 +119,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 	test.Passf("TestDeploymentCreated", "Created test deployment")
 
 	watch, _ := client.AppsV1().Deployments("configmap-reloader").Watch(metav1.ListOptions{
-		LabelSelector: "k8s-app=configmap-reloader-test",
+		LabelSelector:  "k8s-app=configmap-reloader-test",
 		TimeoutSeconds: &watchTimeout,
 	})
 	for event := range watch.ResultChan() {
@@ -133,7 +132,6 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 			break
 		}
 	}
-
 
 	client.CoreV1().ConfigMaps("configmap-reloader").Update(&v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -179,8 +177,8 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 
 func cleanup(client *kubernetes.Clientset) error {
 	err := client.CoreV1().ConfigMaps("configmap-reloader").Delete("reloader-test", &metav1.DeleteOptions{})
-	err = fmt.Errorf("failed to delete test configmap: %v", err)
+	log.Errorf("failed to delete test configmap: %v", err)
 	err = client.AppsV1().Deployments("configmap-reloader").Delete("configmap-reloader-test", &metav1.DeleteOptions{})
-	err = fmt.Errorf("failed to delete test deployment: %v", err)
+	log.Errorf("failed to delete test deployment: %v", err)
 	return nil
 }

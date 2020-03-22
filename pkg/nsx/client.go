@@ -368,7 +368,7 @@ func (client *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, e
 		VirtualServerIds: []string{server.Id},
 	}
 
-	lb, resp, err = api.CreateLoadBalancerService(client.api.Context, lb)
+	_, resp, err = api.CreateLoadBalancerService(client.api.Context, lb)
 	if err != nil {
 		return "", fmt.Errorf("Unable to create load balancer %s: %s", opts.Name, errorString(resp, err))
 	}

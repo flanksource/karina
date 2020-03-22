@@ -337,7 +337,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			continue
 		}
 
-		existing, err := client.Get(unstructuredObj.GetName(), metav1.GetOptions{})
+		existing, _ := client.Get(unstructuredObj.GetName(), metav1.GetOptions{})
 
 		if existing == nil {
 			c.trace("creating", unstructuredObj)
@@ -389,6 +389,9 @@ func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) err
 	}
 	unstructuredObj.SetAnnotations(existing)
 	_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("annotate: failed to update object: #{err}")
+	}
 	log.Infof("%s/%s/%s annotated", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 	return nil
 }
@@ -801,6 +804,10 @@ func (c *Client) PingMaster() bool {
 	}
 
 	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		log.Trace("pingMaster: Failed to get nodes list: %v", err)
+		return false
+	}
 	if nodes == nil && len(nodes.Items) == 0 {
 		return false
 	}
