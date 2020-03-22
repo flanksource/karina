@@ -75,7 +75,7 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 
-	if err := p.CreateTLSSecret(Namesoace, "harbor", "harbor-ingress"); err != nil {
+	if err := p.CreateTLSSecret(Namespace, "harbor", "harbor-ingress"); err != nil {
 		return err
 	}
 
