@@ -90,7 +90,7 @@ func Install(platform *platform.Platform) error {
 
 	if !platform.Dashboard.Disabled {
 		log.Infof("Installing K8s dashboard")
-		platform.Dashboard.AccessRestricted.Snippet = ingress.IngressNginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
+		platform.Dashboard.AccessRestricted.Snippet = ingress.NginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
 			log.Errorf("Error installing K8s dashboard: %s\n", err)
 		}

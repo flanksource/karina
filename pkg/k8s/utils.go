@@ -40,16 +40,14 @@ func WaitForNamespace(client kubernetes.Interface, ns string, timeout time.Durat
 		}
 		if ready > 0 && pending == 0 {
 			return
-		} else {
-			log.Debugf("ns/%s: ready=%d, pending=%d", ns, ready, pending)
 		}
+		log.Debugf("ns/%s: ready=%d, pending=%d", ns, ready, pending)
 		if start.Add(timeout).Before(time.Now()) {
 			log.Warnf("ns/%s: ready=%d, pending=%d", ns, ready, pending)
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-
 }
 
 func NewDeployment(ns, name, image string, labels map[string]string, port int32, args ...string) *apps.Deployment {

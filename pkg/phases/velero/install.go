@@ -45,8 +45,8 @@ aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
 	if err := velero("install --provider aws --plugins velero/velero-plugin-for-aws:v1.0.0 --bucket %s --secret-file %s --backup-location-config %s", platform.Velero.Bucket, secret, backupConfig); err != nil {
 		return fmt.Errorf("install: failed to install velero: %v", err)
 	}
-	return nil
 
+	return nil
 }
 
 func CreateBackup(platform *platform.Platform) (*Backup, error) {
@@ -86,9 +86,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 
 		if time.Now().After(start.Add(5 * time.Minute)) {
 			return nil, fmt.Errorf("timeout exceeded")
-		} else {
-			time.Sleep(5 * time.Second)
 		}
+		time.Sleep(5 * time.Second)
 	}
-
 }

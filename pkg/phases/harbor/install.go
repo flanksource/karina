@@ -14,9 +14,9 @@ func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
 		log.Infof("Skipping deployment of harbor, it is disabled")
 		return nil
-	} else {
-		log.Infof("Deploying harbor %s", p.Harbor.Version)
 	}
+	log.Infof("Deploying harbor %s", p.Harbor.Version)
+
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
@@ -66,9 +66,9 @@ func Deploy(p *platform.Platform) error {
 		"HARBOR_ADMIN_PASSWORD": []byte(p.Harbor.AdminPassword),
 		"POSTGRESQL_PASSWORD":   []byte(p.Harbor.DB.Password),
 		"CLAIR_DB_PASSWORD":     []byte(p.Harbor.DB.Password),
-		"tls.key":               []byte(tls["tls.key"]),
-		"tls.crt":               []byte(tls["tls.crt"]),
-		"ca.crt":                []byte(tls["tls.crt"]),
+		"tls.key":               tls["tls.key"],
+		"tls.crt":               tls["tls.crt"],
+		"ca.crt":                tls["tls.crt"],
 		"secretKey":             []byte("not-a-secure-key"),
 		"secret":                []byte(nonce),
 	}); err != nil {
@@ -102,9 +102,8 @@ func Deploy(p *platform.Platform) error {
 	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
 		return err
 	}
-	client := NewHarborClient(p)
+	client := NewClient(p)
 	return client.UpdateSettings(*p.Harbor.Settings)
-
 }
 
 func getClairConfig(p *platform.Platform) string {

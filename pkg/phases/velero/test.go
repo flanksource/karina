@@ -25,5 +25,4 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	} else {
 		test.Passf("velero", "Backup %s created successfully in %s", backup.Metadata.Name, backup.Status.CompletionTimestamp.Sub(backup.Status.StartTimestamp.Time))
 	}
-
 }

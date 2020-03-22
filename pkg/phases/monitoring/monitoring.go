@@ -64,7 +64,7 @@ func Install(p *platform.Platform) error {
 
 	dashboards, err := p.GetResourcesByDir("/monitoring/dashboards", "manifests")
 	if err != nil {
-		return fmt.Errorf("Unable to find dashboards: %v", err)
+		return fmt.Errorf("unable to find dashboards: %v", err)
 	}
 
 	urls := map[string]string{
@@ -76,7 +76,7 @@ func Install(p *platform.Platform) error {
 	for name := range dashboards {
 		contents, err := p.Template("/monitoring/dashboards/"+name, "manifests")
 		if err != nil {
-			return fmt.Errorf("Failed to template the dashboard: %v ", err)
+			return fmt.Errorf("failed to template the dashboard: %v ", err)
 		}
 		var board sdk.Board
 		if err := json.Unmarshal([]byte(contents), &board); err != nil {
@@ -99,7 +99,7 @@ func Install(p *platform.Platform) error {
 		}
 
 		if err := p.ApplyCRD("monitoring", k8s.CRD{
-			ApiVersion: "integreatly.org/v1alpha1",
+			APIVersion: "integreatly.org/v1alpha1",
 			Kind:       "GrafanaDashboard",
 			Metadata: k8s.Metadata{
 				Name:      name,
@@ -164,6 +164,6 @@ func deployThanos(p *platform.Platform) error {
 	} else {
 		return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
 	}
-	return nil
 
+	return nil
 }

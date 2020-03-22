@@ -21,7 +21,7 @@ var LogLevels = []string{
 func SetLogLevel(p *platform.Platform, level string) error {
 	level = strings.ToUpper(level)
 	if !strings.Contains(strings.Join(LogLevels, " "), level) {
-		return fmt.Errorf("Invalid log level: %s, valid levels are: %v", level, LogLevels)
+		return fmt.Errorf("invalid log level: %s, valid levels are: %v", level, LogLevels)
 	}
 	client, err := p.GetClientset()
 	if err != nil {

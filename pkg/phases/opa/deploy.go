@@ -23,7 +23,6 @@ func readFile(filename string) (string, error) {
 }
 
 func Deploy(platform *platform.Platform, policiesPath string) error {
-
 	policyFiles, err := ioutil.ReadDir(policiesPath)
 	if err != nil {
 		return err
@@ -32,7 +31,7 @@ func Deploy(platform *platform.Platform, policiesPath string) error {
 	for _, policyFile := range policyFiles {
 		policy, err := readFile(policiesPath + "/" + policyFile.Name())
 		if err != nil {
-			return fmt.Errorf("Cannot read %s", policyFile)
+			return fmt.Errorf("cannot read %s", policyFile)
 		}
 		if err := platform.CreateOrUpdateConfigMap(files.GetBaseName(policyFile.Name()), Namespace, map[string]string{
 			policyFile.Name(): policy,

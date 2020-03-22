@@ -18,7 +18,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
-type SnapshotOptions struct {
+type Options struct {
 	IncludeSpecs  bool
 	IncludeLogs   bool
 	IncludeEvents bool
@@ -27,7 +27,7 @@ type SnapshotOptions struct {
 	LogsSince     time.Duration
 }
 
-func Take(p *platform.Platform, opts SnapshotOptions) error {
+func Take(p *platform.Platform, opts Options) error {
 	var namespaceList *v1.NamespaceList
 
 	k8s, err := p.GetClientset()
@@ -51,7 +51,7 @@ func Take(p *platform.Platform, opts SnapshotOptions) error {
 	if err := extractLogs(k8s, namespaceList, opts); err != nil {
 		return err
 	}
-	if err := extractSpecs(p, k8s, namespaceList, opts); err != nil {
+	if err := extractSpecs(p, namespaceList, opts); err != nil {
 		return err
 	}
 
@@ -62,12 +62,11 @@ func Take(p *platform.Platform, opts SnapshotOptions) error {
 	return nil
 }
 
-func extractEvents(k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, opts SnapshotOptions) error {
+func extractEvents(k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, opts Options) error {
 	if !opts.IncludeEvents {
 		return nil
 	}
 	for _, namespace := range namespaceList.Items {
-
 		events := k8s.CoreV1().Events(namespace.Name)
 		eventList, err := events.List(metav1.ListOptions{})
 		if err != nil {
@@ -97,7 +96,7 @@ func extractEvents(k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, o
 	return nil
 }
 
-func extractLogs(k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, opts SnapshotOptions) error {
+func extractLogs(k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, opts Options) error {
 	if !opts.IncludeLogs {
 		return nil
 	}
@@ -154,18 +153,17 @@ func extractLogs(k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, opt
 				}
 			}
 		}
-
 	}
+
 	return nil
 }
 
-func extractSpecs(p *platform.Platform, k8s *kubernetes.Clientset, namespaceList *v1.NamespaceList, opts SnapshotOptions) error {
+func extractSpecs(p *platform.Platform, namespaceList *v1.NamespaceList, opts Options) error {
 	if !opts.IncludeSpecs {
 		return nil
-
 	}
-	for _, namespace := range namespaceList.Items {
 
+	for _, namespace := range namespaceList.Items {
 		path := fmt.Sprintf("%s/%s", opts.Destination, namespace.Name)
 		if err := os.MkdirAll(path, 0755); err != nil {
 			return errors.Wrapf(err, "failed to mkdir path %s", path)

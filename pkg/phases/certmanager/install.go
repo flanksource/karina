@@ -48,7 +48,7 @@ func Install(platform *platform.Platform) error {
 				},
 			}
 		default:
-			return fmt.Errorf("Unknown cert type:%v", ingress)
+			return fmt.Errorf("unknown cert type:%v", ingress)
 		}
 	} else {
 		// TODO(moshloop): delete previously imported CA
@@ -75,7 +75,6 @@ func Install(platform *platform.Platform) error {
 				},
 			},
 		}
-
 	}
 
 	if err := platform.Apply(Namespace, &certmanager.ClusterIssuer{

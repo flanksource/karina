@@ -36,7 +36,7 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
 	}
-	if err := addInitKubeadmConfig(hostname, platform, cfg); err != nil {
+	if err := addInitKubeadmConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add kubeadm config: %v", err)
 	}
 	createConsulService(hostname, platform, cfg)
@@ -84,7 +84,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	return nil
 }
 
-func addInitKubeadmConfig(hostname string, platform *platform.Platform, cfg *konfigadm.Config) error {
+func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
 	cluster := kubeadm.NewClusterConfig(platform)
 	data, err := yaml.Marshal(cluster)
 	if err != nil {

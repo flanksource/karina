@@ -51,13 +51,13 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		},
 	}
 
-	secretJson, err := json.Marshal(&secret)
+	secretJSON, err := json.Marshal(&secret)
 	if err != nil {
 		test.Failf("sealed-secrets", "Failed to encode secret to json %v", err)
 		return
 	}
 
-	if err := ioutil.WriteFile(secretFile.Name(), secretJson, 0644); err != nil {
+	if err := ioutil.WriteFile(secretFile.Name(), secretJSON, 0644); err != nil {
 		test.Failf("sealed-secrets", "Failed to write secret to file %v", err)
 		return
 	}

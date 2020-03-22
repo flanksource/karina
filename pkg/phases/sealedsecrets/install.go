@@ -7,7 +7,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -89,7 +88,7 @@ func Install(platform *platform.Platform) error {
 }
 
 // ByCreationTimestamp is used to sort a list of secrets
-type ByCreationTimestamp []apiv1.Secret
+type ByCreationTimestamp []v1.Secret
 
 func (s ByCreationTimestamp) Len() int {
 	return len(s)

@@ -21,7 +21,6 @@ func init() {
 		Short: "List all docker images used by the platform",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-
 			images := []string{}
 			for _, prefix := range []string{"image:", "image=="} {
 				stdout, ok := exec.SafeExec("cat build/*.yaml | grep -i %s | cut -d: -f2 -f3 | sort | uniq", prefix)
@@ -36,15 +35,13 @@ func init() {
 				}
 			}
 			fmt.Println(strings.Join(images, "\n"))
-
 		},
 	})
+
 	Images.AddCommand(&cobra.Command{
 		Use:   "sync",
 		Short: "Synchronize all platform docker images to a local registry",
 		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-
-		},
+		Run:   func(cmd *cobra.Command, args []string) {},
 	})
 }

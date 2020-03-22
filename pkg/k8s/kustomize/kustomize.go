@@ -173,7 +173,6 @@ func (km *Manager) loadFromFolder(ldr ifc.Loader) error {
 // Kustomize apply a set of patches to a resource.
 // Portions of the kustomize logic in this function are taken from the kubernetes-sigs/kind project
 func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
-
 	raw, err := getUnstructuredObjects(data)
 	var kustomized []runtime.Object
 	if err != nil {
@@ -272,7 +271,7 @@ func getUnstructuredObjects(data []byte) ([]runtime.Object, error) {
 		var resource *unstructured.Unstructured
 
 		if err := decoder.Decode(&resource); err != nil {
-			return nil, fmt.Errorf("Error decoding %s: %s", chunk, err)
+			return nil, fmt.Errorf("error decoding %s: %s", chunk, err)
 		}
 		items = append(items, resource)
 	}

@@ -19,7 +19,6 @@ import (
 
 // VsphereCluster provision or create a kubernetes cluster
 func VsphereCluster(platform *platform.Platform) error {
-
 	if err := platform.OpenViaEnv(); err != nil {
 		log.Fatalf("Failed to initialize platform: %s", err)
 	}
@@ -131,7 +130,6 @@ func VsphereCluster(platform *platform.Platform) error {
 				}
 				wg.Done()
 			}()
-
 		}
 
 		if worker.Count < len(vms) {
@@ -154,7 +152,6 @@ func VsphereCluster(platform *platform.Platform) error {
 					wg.Done()
 				}()
 			}
-
 		}
 	}
 	wg.Wait()

@@ -36,7 +36,7 @@ func Init(p *platform.Platform) error {
 
 		tokens := regexp.MustCompile(`(?m)Initial Root Token: (\w+).`).FindStringSubmatch(stdout)
 		if tokens == nil {
-			return fmt.Errorf("Not root token found")
+			return fmt.Errorf("not root token found")
 		}
 		log.Infof("Using token: '%s'", tokens[0])
 		p.Vault.Token = tokens[0]

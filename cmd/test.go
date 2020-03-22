@@ -8,16 +8,16 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
-	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
+	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
@@ -32,7 +32,7 @@ var (
 	failOnError               bool
 	waitInterval              int
 	junitPath, suiteName      string
-	thanosUrl, pushGatewayUrl string
+	thanosURL, pushGatewayURL string
 	p                         *platform.Platform
 	testAll                   bool
 	testDestructive           bool
@@ -69,12 +69,10 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
 			end(test)
 			return
-		} else {
-			log.Debugf("Waiting to re-run tests\n")
-			time.Sleep(time.Duration(waitInterval) * time.Second)
-			log.Infof("Re-running tests\n")
-
 		}
+		log.Debugf("Waiting to re-run tests\n")
+		time.Sleep(time.Duration(waitInterval) * time.Second)
+		log.Infof("Re-running tests\n")
 	}
 }
 
@@ -88,11 +86,10 @@ func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args [
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
 			end(test)
 			return
-		} else {
-			log.Debugf("Waiting to re-run tests\n")
-			time.Sleep(time.Duration(waitInterval) * time.Second)
-			log.Infof("Re-running tests\n")
 		}
+		log.Debugf("Waiting to re-run tests\n")
+		time.Sleep(time.Duration(waitInterval) * time.Second)
+		log.Infof("Re-running tests\n")
 	}
 }
 
@@ -174,7 +171,7 @@ func init() {
 		Short: "Test fluentd",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			run(fluentdOperator.Test)
+			run(fluentdoperator.Test)
 		},
 	})
 	Test.AddCommand(&cobra.Command{
@@ -191,7 +188,7 @@ func init() {
 		Short: "Test postgres-operator",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			run(postgresOperator.Test)
+			run(postgresoperator.Test)
 		},
 	})
 
@@ -214,8 +211,8 @@ func init() {
 		},
 	}
 
-	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayUrl, "pushgateway", "p", "", "Url of Pushgateway")
-	thanosTestCmd.PersistentFlags().StringVarP(&thanosUrl, "thanos", "t", "", "Url of Pushgateway")
+	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayURL, "pushgateway", "p", "", "Url of Pushgateway")
+	thanosTestCmd.PersistentFlags().StringVarP(&thanosURL, "thanos", "t", "", "Url of Pushgateway")
 	Test.AddCommand(thanosTestCmd)
 
 	Test.AddCommand(&cobra.Command{
@@ -250,7 +247,7 @@ func init() {
 		Short: "Test configmap-reloader",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			runWithArgs(configmapReloader.Test, args, cmd)
+			runWithArgs(configmapreloader.Test, args, cmd)
 		},
 	}
 
@@ -279,15 +276,15 @@ func init() {
 					dex.Test(p, test)
 					sealedsecrets.Test(p, test)
 					flux.Test(p, test)
-					configmapReloader.Test(p, test, args, cmd)
+					configmapreloader.Test(p, test, args, cmd)
 				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
-				fluentdOperator.Test(p, test)
+				fluentdoperator.Test(p, test)
 				eck.Test(p, test)
-				postgresOperator.Test(p, test)
+				postgresoperator.Test(p, test)
 				vault.Test(p, test)
 			})
 		},

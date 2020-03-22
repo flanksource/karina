@@ -12,7 +12,7 @@ import (
 
 	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
-	. "github.com/moshloop/platform-cli/pkg/types"
+	. "github.com/moshloop/platform-cli/pkg/types" // nolint: golint, stylecheck
 )
 
 const (
@@ -115,7 +115,6 @@ func newVMFlagInfo() *types.VirtualMachineFlagInfo {
 }
 
 func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceList, config *konfigadm.Config) (types.BaseVirtualDeviceConfigSpec, error) {
-
 	op := types.VirtualDeviceConfigSpecOperationEdit
 	cdrom, err := devices.FindCdrom("")
 	if err != nil {
@@ -123,7 +122,6 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 	}
 
 	if cdrom == nil {
-
 		ide, err := devices.FindIDEController("")
 		if err != nil {
 			return nil, fmt.Errorf("getCdrom: failed to find IDE controller: %v", err)
@@ -152,10 +150,9 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 		Operation: op,
 		Device:    cdrom,
 	}, nil
-
 }
-func getDiskSpec(vm VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
 
+func getDiskSpec(vm VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
 	disks := devices.SelectByType((*types.VirtualDisk)(nil))
 	if len(disks) != 1 {
 		return nil, errors.Errorf("invalid disk count: %d", len(disks))

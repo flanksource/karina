@@ -128,12 +128,12 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("Failed to get client %v", err)
+		log.Tracef("failed to get client %v", err)
 		return nil
 	}
 	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("Failed to get secret %s/%s: %v\n", namespace, name, err)
+		log.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
 		return nil
 	}
 	return &secret.Data
@@ -143,7 +143,7 @@ func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
 func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("Failed to get client %v", err)
+		log.Tracef("failed to get client %v", err)
 		return nil
 	}
 	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
@@ -187,7 +187,6 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 		return fmt.Errorf("get: failed to decode config: %v", err)
 	}
 	return decoder.Decode(unstructuredObj.Object)
-
 }
 
 func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
@@ -243,13 +242,11 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 
 	if mapping.Scope == meta.RESTScopeRoot {
 		return dynamicClient.Resource(mapping.Resource), &resource, unstructuredObj, nil
-	} else {
-		if namespace == "" {
-			namespace = unstructuredObj.GetNamespace()
-		}
-		return dynamicClient.Resource(mapping.Resource).Namespace(namespace), &resource, unstructuredObj, nil
 	}
-
+	if namespace == "" {
+		namespace = unstructuredObj.GetNamespace()
+	}
+	return dynamicClient.Resource(mapping.Resource).Namespace(namespace), &resource, unstructuredObj, nil
 }
 
 func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Helper, error) {
@@ -282,7 +279,6 @@ func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Help
 
 func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
 	for _, unstructuredObj := range objects {
-
 		client, err := c.GetRestClient(*unstructuredObj)
 		if err != nil {
 			return err
@@ -319,7 +315,7 @@ func (c *Client) trace(msg string, objects ...runtime.Object) {
 		if err != nil {
 			log.Errorf("Error tracing %s", err)
 		} else {
-			fmt.Println(string(data))
+			fmt.Printf("%s\n%s", msg, string(data))
 		}
 	}
 }
@@ -486,7 +482,6 @@ func (c *Client) HasSecret(ns, name string) bool {
 	secrets := client.CoreV1().Secrets(ns)
 	cm, err := secrets.Get(name, metav1.GetOptions{})
 	return cm != nil && err == nil
-
 }
 
 func (c *Client) HasConfigMap(ns, name string) bool {
@@ -697,7 +692,6 @@ func (c *Client) StreamLogs(namespace, name string) error {
 				fmt.Printf("\x1b[38;5;244m[%s]\x1b[0m %s\n", prefix, string(buffer))
 			}
 		}()
-
 	}
 	wg.Wait()
 	if err = c.WaitForPod(namespace, name, 120*time.Second, v1.PodSucceeded); err != nil {
@@ -710,7 +704,7 @@ func (c *Client) StreamLogs(namespace, name string) error {
 	if pod.Status.Phase == v1.PodSucceeded {
 		return nil
 	}
-	return fmt.Errorf("Pod did not finish successfully %s - %s", pod.Status.Phase, pod.Status.Message)
+	return fmt.Errorf("pod did not finish successfully %s - %s", pod.Status.Phase, pod.Status.Message)
 }
 
 func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint string, group string, user string) ([]byte, error) {
@@ -751,13 +745,13 @@ func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoin
 	return clientcmd.Write(cfg)
 }
 
-func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl, idToken, accessToken, refreshToken string) ([]byte, error) {
+func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpURL, idToken, accessToken, refreshToken string) ([]byte, error) {
 	if !strings.HasPrefix("https://", endpoint) {
 		endpoint = "https://" + endpoint
 	}
 
-	if !strings.HasPrefix("https://", idpUrl) {
-		idpUrl = "https://" + idpUrl
+	if !strings.HasPrefix("https://", idpURL) {
+		idpURL = "https://" + idpURL
 	}
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
@@ -780,8 +774,8 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 						"client-id":                      "kubernetes",
 						"client-secret":                  "ZXhhbXBsZS1hcHAtc2VjcmV0",
 						"extra-scopes":                   "offline_access openid profile email groups",
-						"idp-certificate-authority-data": string(base64.StdEncoding.EncodeToString([]byte(ca.GetPublicChain()[0].EncodedCertificate()))),
-						"idp-issuer-url":                 idpUrl,
+						"idp-certificate-authority-data": base64.StdEncoding.EncodeToString(ca.GetPublicChain()[0].EncodedCertificate()),
+						"idp-issuer-url":                 idpURL,
 						"id-token":                       idToken,
 						"access-token":                   accessToken,
 						"refresh-token":                  refreshToken,
@@ -833,7 +827,7 @@ func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1
 	for {
 		pod, err := pods.Get(name, metav1.GetOptions{})
 		if start.Add(timeout).Before(time.Now()) {
-			return fmt.Errorf("Timeout exceeded waiting for %s is %s, error: %v", name, pod.Status.Phase, err)
+			return fmt.Errorf("timeout exceeded waiting for %s is %s, error: %v", name, pod.Status.Phase, err)
 		}
 
 		if pod == nil || pod.Status.Phase == v1.PodPending {
@@ -862,7 +856,7 @@ func (c *Client) WaitForPodCommand(ns, name string, container string, timeout ti
 			return nil
 		}
 		if start.Add(timeout).Before(time.Now()) {
-			return fmt.Errorf("Timeout exceeded waiting for %s stdout: %s, stderr: %s", name, stdout, stderr)
+			return fmt.Errorf("timeout exceeded waiting for %s stdout: %s, stderr: %s", name, stdout, stderr)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -954,10 +948,9 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 	logString := read(logs)
 	if err != nil {
 		return logString, fmt.Errorf("failed to execute command, pod did not complete: %v", err)
-	} else {
-		log.Tracef("[%s] stdout: %s", node, logString)
-		return logString, nil
 	}
+	log.Tracef("[%s] stdout: %s", node, logString)
+	return logString, nil
 }
 
 func read(req *rest.Request) string {

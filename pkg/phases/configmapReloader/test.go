@@ -1,4 +1,4 @@
-package configmapReloader
+package configmapreloader
 
 import (
 	"github.com/flanksource/commons/console"
@@ -167,25 +167,18 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		for _, condition := range p.Status.Conditions {
 			if condition.Reason == "ReplicaSetUpdated" {
 				test.Passf("DeploymentUpdated", "New secret is available in recreated pods")
-				err := cleanup(client)
-				if err != nil {
-					log.Fatal("Failed to delete test resources")
-				}
+				cleanup(client)
 				return
 			}
 		}
 	}
 	test.Failf("DeploymentNotUpdated", "Deployment was not updated for %d seconds", watchTimeout)
-	err = cleanup(client)
-	if err != nil {
-		log.Fatalf("Failed to delete test resources: %v", err)
-	}
+	cleanup(client)
 }
 
-func cleanup(client *kubernetes.Clientset) error {
+func cleanup(client *kubernetes.Clientset) {
 	err := client.CoreV1().ConfigMaps("configmap-reloader").Delete("reloader-test", &metav1.DeleteOptions{})
 	log.Errorf("failed to delete test configmap: %v", err)
 	err = client.AppsV1().Deployments("configmap-reloader").Delete("configmap-reloader-test", &metav1.DeleteOptions{})
 	log.Errorf("failed to delete test deployment: %v", err)
-	return nil
 }

@@ -28,7 +28,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Failf("Harbor", "Failed to get status from %s %s", health, err)
 		return
 	}
-	var status HarborStatus
+	var status Status
 	if err := json.Unmarshal(data, &status); err != nil {
 		test.Failf("Harbor", "Failed to unmarshal json %v", err)
 		return
@@ -43,7 +43,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 }
 
-type HarborStatus struct {
+type Status struct {
 	Status     string `json:"status"`
 	Components []struct {
 		Name   string `json:"name"`

@@ -354,9 +354,8 @@ func (d *DeploymentBuilder) GetLabels() map[string]string {
 		return map[string]string{
 			"name": d.Name,
 		}
-	} else {
-		return d.labels
 	}
+	return d.labels
 }
 
 func (d *DeploymentBuilder) Ports(ports ...int32) *DeploymentBuilder {

@@ -15,6 +15,7 @@ import (
 const Namespace = "postgres-operator"
 const OperatorConfig = "default"
 
+// nolint: golint
 type PostgresDB struct {
 	Name      string
 	Namespace string

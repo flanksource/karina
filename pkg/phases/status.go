@@ -13,7 +13,6 @@ import (
 )
 
 func Status(p *platform.Platform) error {
-
 	if err := p.OpenViaEnv(); err != nil {
 		return fmt.Errorf("status: failed to open with env: %v", err)
 	}

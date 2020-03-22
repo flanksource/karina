@@ -1,4 +1,4 @@
-package fluentdOperator
+package fluentdoperator
 
 import (
 	"github.com/flanksource/commons/console"
