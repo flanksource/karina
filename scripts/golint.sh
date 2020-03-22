@@ -4,4 +4,4 @@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/insta
 
 make pack && make
 
-golangci-lint run
+GOGC=20 golangci-lint run --verbose --concurrency 2
