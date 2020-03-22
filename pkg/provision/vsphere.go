@@ -8,8 +8,8 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
+	"github.com/flanksource/yaml"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"

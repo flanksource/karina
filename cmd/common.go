@@ -13,10 +13,10 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
+	"github.com/flanksource/yaml"
 	"github.com/imdario/mergo"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"

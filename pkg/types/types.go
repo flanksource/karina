@@ -6,8 +6,7 @@ import (
 	"strings"
 
 	"github.com/flanksource/commons/certs"
-	"gopkg.in/yaml.v2"
-
+	"github.com/flanksource/yaml"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -453,8 +452,8 @@ type Connection struct {
 }
 
 type ConfigMapReloader struct {
-	Version   string  `yaml:"version"`
-	Disabled  bool    `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version"`
+	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {

@@ -4,16 +4,16 @@ import (
 	"errors"
 	"fmt"
 
-	// initialize konfigadm
+	"github.com/flanksource/yaml"
 
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	// initialize konfigadm
+	_ "github.com/moshloop/konfigadm/pkg"
 
 	"github.com/flanksource/commons/certs"
-	_ "github.com/moshloop/konfigadm/pkg"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
 )
 
 var envVars = map[string]string{
