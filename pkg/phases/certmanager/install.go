@@ -33,7 +33,7 @@ func Install(platform *platform.Platform) error {
 	platform.WaitForNamespace(Namespace, 180*time.Second)
 
 	var issuerConfig certmanager.IssuerConfig
-	if platform.Vault == nil || platform.Vault.Address == "" {
+	if platform.CertManager.Vault == nil {
 		log.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
 		ingress := platform.GetIngressCA()
 		switch ingress := ingress.(type) {
@@ -55,16 +55,16 @@ func Install(platform *platform.Platform) error {
 
 		log.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
-			"token": []byte(platform.Vault.Token),
+			"token": []byte(platform.CertManager.Vault.Token),
 		}); err != nil {
 			return err
 		}
 		issuerConfig = certmanager.IssuerConfig{
 			CA: nil,
 			Vault: &certmanager.VaultIssuer{
-				Server:   platform.Vault.Address,
+				Server:   platform.CertManager.Vault.Address,
 				CABundle: platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
-				Path:     platform.Vault.PKIPath,
+				Path:     platform.CertManager.Vault.Path,
 				Auth: certmanager.VaultAuth{
 					TokenSecretRef: &certmanager.SecretKeySelector{
 						Key: "token",
