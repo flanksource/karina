@@ -12,6 +12,9 @@ ldap:
   groupDN: ou=groups,dc=example,dc=com
   groupObjectClass: groupOfNames
   groupNameAttr: DN
+  test:
+    username: test
+    password: secret
 kubernetes:
   version: v1.15.7
   kubeletExtraArgs:
