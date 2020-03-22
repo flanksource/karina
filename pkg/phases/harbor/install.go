@@ -75,12 +75,7 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 
-	cert, err := p.CreateIngressCertificate("harbor")
-	if err != nil {
-		return err
-	}
-
-	if err := p.CreateOrUpdateSecret("harbor-ingress", Namespace, cert.AsTLSSecret()); err != nil {
+	if err := p.CreateTLSSecret(Namesoace, "harbor", "harbor-ingress"); err != nil {
 		return err
 	}
 
