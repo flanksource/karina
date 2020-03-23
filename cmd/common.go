@@ -142,6 +142,10 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 		base.Vault.Token = template(base.Vault.Token)
 	}
 
+	if base.CertManager.Vault != nil {
+		base.CertManager.Vault.Token = template(base.CertManager.Vault.Token)
+	}
+
 	gitops := base.GitOps
 	for i := range gitops {
 		gitops[i].GitKey = template(gitops[i].GitKey)

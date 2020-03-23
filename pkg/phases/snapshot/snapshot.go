@@ -167,7 +167,7 @@ func extractSpecs(p *platform.Platform, k8s *kubernetes.Clientset, namespaceList
 		path := fmt.Sprintf("%s/%s", opts.Destination, namespace.Name)
 		os.MkdirAll(path, 0755)
 		ketall := p.GetBinaryWithKubeConfig("ketall")
-		_ = ketall(fmt.Sprintf("-n %s -o yaml --exclude= > %s/specs.yaml", namespace.Name, path))
+		_ = ketall(fmt.Sprintf("-n %s -o yaml --exclude=events,endpoints,secrets > %s/specs.yaml", namespace.Name, path))
 	}
 
 	return nil

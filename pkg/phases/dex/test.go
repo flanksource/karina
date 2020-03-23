@@ -24,8 +24,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		ClientID:     "kubernetes",
 		ClientSecret: "ZXhhbXBsZS1hcHAtc2VjcmV0",
 		RedirectURI:  "http://localhost:8000",
-		Username:     "test",
-		Password:     "secret",
+		Username:     p.Ldap.Test.Username,
+		Password:     p.Ldap.Test.Password,
 	}
 
 	token, err := dexClient.GetAccessToken()
