@@ -7,6 +7,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/flux"
+
 	"github.com/flanksource/commons/console"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,12 +29,17 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
-var wait int
-var failOnError bool
-var waitInterval int
-var junitPath, suiteName string
-var thanosUrl, pushGatewayUrl string
-var p *platform.Platform
+var (
+	wait                      int
+	failOnError               bool
+	waitInterval              int
+	junitPath, suiteName      string
+	thanosUrl, pushGatewayUrl string
+	p                         *platform.Platform
+	testAll                   bool
+	testDestructive           bool
+	testWrite                 bool
+)
 
 var Test = &cobra.Command{
 	Use: "test",
@@ -73,7 +80,7 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 	}
 }
 
-func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command)  {
+func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command) {
 	start := time.Now()
 	for {
 		test := console.TestResults{}
@@ -202,7 +209,7 @@ func init() {
 	thanosTestCmd := &cobra.Command{
 		Use:   "thanos",
 		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
-		Long: "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
+		Long:  "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			runWithArgs(monitoring.TestThanos, args, cmd)
@@ -212,7 +219,6 @@ func init() {
 	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayUrl, "pushgateway", "p", "", "Url of Pushgateway")
 	thanosTestCmd.PersistentFlags().StringVarP(&thanosUrl, "thanos", "t", "", "Url of Pushgateway")
 	Test.AddCommand(thanosTestCmd)
-	thanosTestCmd.Flags()
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "sealed-secrets",
@@ -255,6 +261,15 @@ func init() {
 	Test.AddCommand(configmapReloaderCmd)
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "gitops",
+		Short: "Test gitops",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(flux.Test)
+		},
+	})
+
+	testAllCmd := &cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -262,19 +277,27 @@ func init() {
 			run(func(p *platform.Platform, test *console.TestResults) {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
-				velero.Test(p, test)
+				if testAll || testWrite {
+					velero.Test(p, test)
+					dex.Test(p, test)
+					sealedsecrets.Test(p, test)
+					flux.Test(p, test)
+          configmapReloader.Test(p, test, args, cmd)
+				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
-				dex.Test(p, test)
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
 				fluentdOperator.Test(p, test)
 				eck.Test(p, test)
 				postgresOperator.Test(p, test)
-				configmapReloader.Test(p, test, args, cmd)
-				sealedsecrets.Test(p, test)
 				vault.Test(p, test)
 			})
 		},
-	})
+	}
+
+	testAllCmd.PersistentFlags().BoolVarP(&testWrite, "write", "w", false, "Run write tests")
+	testAllCmd.PersistentFlags().BoolVarP(&testDestructive, "destructive", "d", false, "Run destructive tests")
+	testAllCmd.PersistentFlags().BoolVarP(&testAll, "all", "a", false, "Run all tests")
+	Test.AddCommand(testAllCmd)
 }

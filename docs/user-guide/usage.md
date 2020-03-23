@@ -38,4 +38,26 @@ See https://github.com/vmware/kube-fluentd-operator#using-the-labels-macro
 
 To ingest logs from a container [see](https://github.com/vmware/kube-fluentd-operator#ingest-logs-from-a-file-in-the-container)
 
+### Configmap reloader
 
+https://github.com/stakater/Reloader
+
+Reloader will trigger pod re-creation when used ConfigMaps or Secrets are being changed.
+
+To recreate pods on configmap/secret change add this annotations to Deployment, DaemonSet or StatefulSet objects:
+
+For ConfigMap:
+```
+configmap.reloader.stakater.com/reload: "configmap-name"
+```
+
+For Secret:
+```
+secret.reloader.stakater.com/reload: "secret-name"
+```
+
+You can also specify multiple names with comma and you can use this annotation to reload on all configmaps and secret changes:
+
+```
+reloader.stakater.com/auto: "true"
+```
