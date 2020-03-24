@@ -19,3 +19,4 @@
 * [Wehooks sampe with Falco](https://kubernetes.io/docs/tasks/debug-application-cluster/falco/)
 
 * [Article on setup for kubeadm cluster](https://medium.com/faun/kubernetes-on-premise-cluster-auditing-eb8ff848fec4)
+  [x] works on KIND
