@@ -1,0 +1,21 @@
+# Implementation notes for k8s cluster auditing
+
+## Overview
+
+## Implementation Approach
+
+  The auditing is *kube-api-server*-based.
+  *kube-api-server* startup needs to be modified to inject a new audit-spec.
+
+  [ ]  Assumption  - platform-cli clusters are `kubeadm`-based
+  [ ]  Verify kubeadm config of apiserver
+  [ ]  Find codebase for kind/kubeadm images that governs *kubeadm* configs
+  [ ]  Find injection/configuration approach
+
+
+## Documentation
+
+* [k8s audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
+* [Wehooks sampe with Falco](https://kubernetes.io/docs/tasks/debug-application-cluster/falco/)
+
+* [Article on setup for kubeadm cluster](https://medium.com/faun/kubernetes-on-premise-cluster-auditing-eb8ff848fec4)
