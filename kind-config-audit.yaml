@@ -1,0 +1,22 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+# patch the generated kubeadm config with some extra settings
+kubeadmConfigPatches:
+  - |
+    apiVersion: kubeadm.k8s.io/v1beta2
+    kind: ClusterConfiguration
+    kubernetesVersion: v1.16.0
+    apiServer:
+      extraArgs:
+        audit-policy-file: "/etc/kubernetes/policies/audit-policy.yaml"
+        audit-log-path: "/var/log/apiserver/audit.log"
+        audit-log-maxage: "30"
+        audit-log-maxsize: "200"
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.17.0@sha256:9512edae126da271b66b990b6fff768fbb7cd786c7d39e86bdf55906352fdf62
+    extraMounts:
+      - hostPath: ./audit-policy.yaml
+        containerPath: /etc/kubernetes/policies/audit-policy.yaml
+      - hostPath: ./
+        containerPath: /var/log/apiserver/
