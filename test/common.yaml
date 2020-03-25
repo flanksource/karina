@@ -130,9 +130,10 @@ sealedSecrets:
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
 auditConfig:
+  #disabled: true
   auditPolicyFile: ./test/fixtures/audit-policy.yaml
   kubeApiServerOptions:
-    audit-log-path: ./auditLogs/audit.logs
+    audit-log-path: /var/auditLogs/audit.logs
     audit-log-maxage: 2
     audit-log-maxbackup: 3
     audit-log-maxsize: 10
