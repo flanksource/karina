@@ -18,6 +18,7 @@ import (
 
 var (
 	kindCADir = "/etc/flanksource/ingress-ca"
+	kindAuditDir = "/etc/flanksource/audit-policy"
 )
 
 // KindCluster provision or create a kubernetes cluster
@@ -28,6 +29,11 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	caPath, err := filepath.Abs(platform.IngressCA.Cert)
+	if err != nil {
+		return errors.Wrap(err, "failed to expand ca file path")
+	}
+
+	auditPolicyPath, err := filepath.Abs(platform.AuditPolicyFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to expand ca file path")
 	}
@@ -66,6 +72,11 @@ func KindCluster(platform *platform.Platform) error {
 					{
 						ContainerPath: kindCADir,
 						HostPath:      path.Dir(caPath),
+						Readonly:      true,
+					},
+					{
+						ContainerPath: kindAuditDir,
+						HostPath:      path.Dir(auditPolicyPath),
 						Readonly:      true,
 					},
 				},
@@ -120,8 +131,18 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		},
+		{
+			Name:      "audit-spec",
+			//TODO: preferred location?
+			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.AuditPolicyFile)),
+			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		},
 	}
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+	clusterConfig.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+	clusterConfig.APIServer.ExtraArgs["audit-log-path"] = "/var/log/apiserver/audit.log"
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
