@@ -169,7 +169,7 @@ func extractSpecs(p *platform.Platform, namespaceList *v1.NamespaceList, opts Op
 			return errors.Wrapf(err, "failed to mkdir path %s", path)
 		}
 		ketall := p.GetBinaryWithKubeConfig("ketall")
-		_ = ketall(fmt.Sprintf("-n %s -o yaml --exclude= > %s/specs.yaml", namespace.Name, path))
+		_ = ketall(fmt.Sprintf("-n %s -o yaml --exclude=events,endpoints,secrets > %s/specs.yaml", namespace.Name, path))
 	}
 
 	return nil
