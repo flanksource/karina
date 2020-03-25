@@ -3,13 +3,13 @@ package types
 import (
 	"fmt"
 	"net/url"
+
 	"strings"
 
 	"github.com/flanksource/commons/certs"
 	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/api/calico"
-
 )
 
 type Enabled struct {
@@ -434,6 +434,19 @@ type Connection struct {
 }
 
 
+
+
+
+type AuditConfig struct {
+	Disabled  bool   `yaml:"disabled,omitempty"`
+	PolicyFile 	string 	`yaml:"auditPolicyFile,omitempty"`
+	ApiServerOptions ApiServerOptions `yaml:"kubeApiServerOptions,omitempty"`
+
+}
+type ApiServerOptions struct {
+	LogOptions AuditLogOptions `yaml:",inline"`
+}
+
 type AuditLogOptions struct {
 	// Naming is aligned to kube-apiserver parameters
 	// and kubeadmConfigPatches apiServer.extraArgs key values
@@ -444,11 +457,6 @@ type AuditLogOptions struct {
 	Format     string `yaml:"audit-log-format,omitempty"`
 }
 
-type AuditConfig struct {
-	PolicyFile 	string 	`yaml:"auditPolicyFile,omitempty"`
-	LogOptions AuditLogOptions `yaml:",inline"`
-
-}
 
 func (c Connection) GetURL() string {
 	url := c.URL
@@ -480,3 +488,5 @@ func (p *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(p)
 	return string(data)
 }
+
+
