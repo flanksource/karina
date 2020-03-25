@@ -5,12 +5,11 @@ import (
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
-	"github.com/pkg/errors"
-	// initialize konfigadm
-	_ "github.com/moshloop/konfigadm/pkg"
+	_ "github.com/moshloop/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 

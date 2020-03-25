@@ -18,7 +18,7 @@ var validateConfig = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		p := getPlatform(cmd)
 		config := p.String()
-		fmt.Println("Generated config is:\n%s", config)
+		fmt.Printf("Generated config is:\n%s\n", config)
 	},
 }
 
