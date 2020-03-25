@@ -1,7 +1,7 @@
 package types
 
 type PlatformConfig struct {
-	Audit                 Audit            `yaml:"audit,omitempty"`
+	AuditConfig           *AuditConfig      `yaml:"auditConfig,omitempty"`
 	Brand                 Brand             `yaml:"brand,omitempty"`
 	Version               string            `yaml:"version"`
 	Velero                *Velero           `yaml:"velero,omitempty"`

@@ -33,7 +33,7 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to expand ca file path")
 	}
 
-	auditPolicyPath, err := filepath.Abs(platform.Audit.AuditPolicyFile)
+	auditPolicyPath, err := filepath.Abs(platform.AuditConfig.PolicyFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to expand ca file path")
 	}
@@ -134,7 +134,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 		{
 			Name:      "audit-spec",
 			//TODO: preferred location?
-			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.Audit.AuditPolicyFile)),
+			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.AuditConfig.PolicyFile)),
 			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,

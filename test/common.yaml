@@ -129,8 +129,14 @@ sealedSecrets:
     cert: .certs/sealed-secrets-crt.pem
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
-audit:
+auditConfig:
   auditPolicyFile: ./test/fixtures/audit-policy.yaml
+  kubeApiServerOptions:
+    audit-log-path: ./auditLogs/audit.logs
+    audit-log-maxage: 2
+    audit-log-maxbackup: 3
+    audit-log-maxsize: 10
+    audit-log-format: json
 vault:
   version: 1.3.2
   kmsKeyId: $AWS_KMS_ID

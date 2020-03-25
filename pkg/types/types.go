@@ -433,8 +433,21 @@ type Connection struct {
 	Verify   string `yaml:"verify,omitempty"`
 }
 
-type Audit struct {
-	AuditPolicyFile 	  string 			`yaml:"auditPolicyFile,omitempty"`
+
+type AuditLogOptions struct {
+	// Naming is aligned to kube-apiserver parameters
+	// and kubeadmConfigPatches apiServer.extraArgs key values
+	Path       string `yaml:"audit-log-path,omitempty"`
+	MaxAge     int `yaml:"audit-log-maxage,omitempty"`
+	MaxBackups int `yaml:"audit-log-maxbackup,omitempty"`
+	MaxSize    int `yaml:"audit-log-maxsize,omitempty"`
+	Format     string `yaml:"audit-log-format,omitempty"`
+}
+
+type AuditConfig struct {
+	PolicyFile 	string 	`yaml:"auditPolicyFile,omitempty"`
+	LogOptions AuditLogOptions `yaml:",inline"`
+
 }
 
 func (c Connection) GetURL() string {
