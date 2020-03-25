@@ -2,18 +2,20 @@ package provision
 
 import (
 	"fmt"
+	types "github.com/moshloop/platform-cli/pkg/types"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -29,11 +31,6 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	caPath, err := filepath.Abs(platform.IngressCA.Cert)
-	if err != nil {
-		return errors.Wrap(err, "failed to expand ca file path")
-	}
-
-	auditPolicyPath, err := filepath.Abs(platform.AuditConfig.PolicyFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to expand ca file path")
 	}
@@ -74,14 +71,26 @@ func KindCluster(platform *platform.Platform) error {
 						HostPath:      path.Dir(caPath),
 						Readonly:      true,
 					},
-					{
-						ContainerPath: kindAuditDir,
-						HostPath:      path.Dir(auditPolicyPath),
-						Readonly:      true,
-					},
+
 				},
 			},
 		},
+	}
+
+	if !platform.AuditConfig.Disabled {
+
+		auditPolicyPath, err := filepath.Abs(platform.AuditConfig.PolicyFile)
+		if err != nil {
+			return errors.Wrap(err, "failed to expand ca file path")
+		}
+
+		mnts  := &kindConfig.Nodes[0].ExtraMounts
+
+		*mnts = append(*mnts, kindapi.Mount{
+				ContainerPath: kindAuditDir,
+				HostPath:      path.Dir(auditPolicyPath),
+				Readonly:      true,
+			})
 	}
 
 	yml, err := yaml.Marshal(kindConfig)
@@ -136,22 +145,33 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		},
-		{
+	}
+	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+
+	if !platform.AuditConfig.Disabled {
+		clusterConfig.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+
+		vols := &clusterConfig.APIServer.ExtraVolumes
+		*vols = append(*vols, api.HostPathMount{
 			Name:      "audit-spec",
-			//TODO: preferred location?
 			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.AuditConfig.PolicyFile)),
 			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
-		},
+		})
+
+		if logOptions := platform.AuditConfig.ApiServerOptions.LogOptions; logOptions != (types.AuditLogOptions {}) {
+			clusterConfig.SetAPIServerExtraAuditArgs(logOptions)
+		}
 	}
-	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
-	clusterConfig.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
-	clusterConfig.APIServer.ExtraArgs["audit-log-path"] = "/var/log/apiserver/audit.log"
+
+
+
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
 	clusterConfig.Networking.ServiceSubnet = ""
+
 
 	kubeadmPatches := []interface{}{
 		clusterConfig,
@@ -169,3 +189,5 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 
 	return result, nil
 }
+
+
