@@ -12,7 +12,6 @@ import (
 
 // VM provisions a new standalone VM
 func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
-
 	if err := platform.OpenViaEnv(); err != nil {
 		return fmt.Errorf("vm: failed to open via env: %v", err)
 	}

@@ -13,8 +13,6 @@ const (
 	IssuerConditionReady IssuerConditionType = "Ready"
 )
 
-
-
 // CertificateConditionType represents an Certificate condition value.
 type CertificateConditionType string
 
@@ -27,7 +25,6 @@ const (
 	// - The commonName and dnsNames attributes match those specified on the Certificate
 	CertificateConditionReady CertificateConditionType = "Ready"
 )
-
 
 const (
 	AltNamesAnnotationKey    = "cert-manager.io/alt-names"
@@ -182,9 +179,6 @@ func DefaultKeyUsages() []KeyUsage {
 	return []KeyUsage{UsageDigitalSignature, UsageKeyEncipherment, UsageServerAuth}
 }
 
-
-
-
 const (
 	// minimum permitted certificate duration by cert-manager
 	MinimumCertificateDuration = time.Hour
@@ -208,7 +202,6 @@ const (
 	// left as the default, `/v1/auth/kubernetes/login` will be called.
 	DefaultVaultKubernetesAuthMountPath = "/v1/auth/kubernetes"
 )
-
 
 // +kubebuilder:validation:Enum=rsa;ecdsa
 type KeyAlgorithm string

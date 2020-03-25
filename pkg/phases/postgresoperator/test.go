@@ -1,4 +1,4 @@
-package postgresOperator
+package postgresoperator
 
 import (
 	"github.com/flanksource/commons/console"

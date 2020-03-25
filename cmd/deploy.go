@@ -1,25 +1,25 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	deploy_base "github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/calico"
+	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
+	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/filebeat"
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
-	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
@@ -31,7 +31,6 @@ var Deploy = &cobra.Command{
 }
 
 func init() {
-
 	var _opa = &cobra.Command{
 		Use:   "opa",
 		Short: "Build and deploy opa aka gatekeeper",
@@ -79,7 +78,7 @@ func init() {
 			if err := deploy_base.Install(p); err != nil {
 				log.Fatalf("Error deploying base: %s", err)
 			}
-			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
+			if err := postgresoperator.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying postgres-operator %s", err)
 			}
 			if err := eck.Deploy(p); err != nil {
@@ -103,7 +102,7 @@ func init() {
 			if err := velero.Install(p); err != nil {
 				log.Fatalf("Error deploying velero: %s", err)
 			}
-			if err := fluentdOperator.Deploy(p); err != nil {
+			if err := fluentdoperator.Deploy(p); err != nil {
 				log.Fatalf("Error deploying fluentd: %s", err)
 			}
 			if err := filebeat.Deploy(getPlatform(cmd)); err != nil {
@@ -115,7 +114,7 @@ func init() {
 			if err := vault.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying vault %s", err)
 			}
-			if err := configmapReloader.Deploy(getPlatform(cmd)); err != nil {
+			if err := configmapreloader.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying configmap-reloader %s\n", err)
 			}
 		},
@@ -235,7 +234,7 @@ func init() {
 		Short: "Deploy the fluentd operator",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := fluentdOperator.Deploy(getPlatform(cmd)); err != nil {
+			if err := fluentdoperator.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying fluentd operator %s\n", err)
 			}
 		},
@@ -257,7 +256,7 @@ func init() {
 		Short: "Deploy the zalando postgres-operator",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := postgresOperator.Deploy(getPlatform(cmd)); err != nil {
+			if err := postgresoperator.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying postgres-operator %s\n", err)
 			}
 		},
@@ -290,7 +289,7 @@ func init() {
 		Short: "Deploy configmap-reloader",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := configmapReloader.Deploy(getPlatform(cmd)); err != nil {
+			if err := configmapreloader.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying configmap-reloader %s\n", err)
 			}
 		},

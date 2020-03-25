@@ -1,7 +1,6 @@
-package configmapReloader
+package configmapreloader
 
 import (
-	"fmt"
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -37,7 +36,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("configmap-reloader", "configmap-reloader not configured")
 		return
 	}
-	client.CoreV1().ConfigMaps("configmap-reloader").Create(&v1.ConfigMap{
+	_, err := client.CoreV1().ConfigMaps("configmap-reloader").Create(&v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -54,8 +53,12 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 			"test": "Before reload",
 		},
 	})
+	if err != nil {
+		test.Failf("TestConfigMapFailed", "Cannot create configmap-reload config map")
+		cleanup(client) // nolint: errcheck
+	}
 	var replicas int32 = 1
-	_, err := client.AppsV1().Deployments("configmap-reloader").Create(&appsv1.Deployment{
+	_, err = client.AppsV1().Deployments("configmap-reloader").Create(&appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "extensions/v1beta1",
@@ -115,12 +118,12 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 
 	if err != nil {
 		test.Failf("TestDeploymentFailed", "Cannot create test deployment")
-		cleanup(client)
+		cleanup(client) // nolint: errcheck
 	}
 	test.Passf("TestDeploymentCreated", "Created test deployment")
 
 	watch, _ := client.AppsV1().Deployments("configmap-reloader").Watch(metav1.ListOptions{
-		LabelSelector: "k8s-app=configmap-reloader-test",
+		LabelSelector:  "k8s-app=configmap-reloader-test",
 		TimeoutSeconds: &watchTimeout,
 	})
 	for event := range watch.ResultChan() {
@@ -134,8 +137,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		}
 	}
 
-
-	client.CoreV1().ConfigMaps("configmap-reloader").Update(&v1.ConfigMap{
+	_, err = client.CoreV1().ConfigMaps("configmap-reloader").Update(&v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -152,6 +154,9 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 			"test": "After reload",
 		},
 	})
+	if err != nil {
+		test.Failf("ConfigMapNotUpdated", "ConfigMap configmap-reloader was not updated: %v", err)
+	}
 	log.Infof("Updated ConfigMap")
 
 	for event := range watch.ResultChan() {
@@ -162,25 +167,18 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		for _, condition := range p.Status.Conditions {
 			if condition.Reason == "ReplicaSetUpdated" {
 				test.Passf("DeploymentUpdated", "New secret is available in recreated pods")
-				err := cleanup(client)
-				if err != nil {
-					log.Fatal("Failed to delete test resources")
-				}
+				cleanup(client)
 				return
 			}
 		}
 	}
 	test.Failf("DeploymentNotUpdated", "Deployment was not updated for %d seconds", watchTimeout)
-	err = cleanup(client)
-	if err != nil {
-		log.Fatal("Failed to delete test resources: %v", err)
-	}
+	cleanup(client)
 }
 
-func cleanup(client *kubernetes.Clientset) error {
+func cleanup(client *kubernetes.Clientset) {
 	err := client.CoreV1().ConfigMaps("configmap-reloader").Delete("reloader-test", &metav1.DeleteOptions{})
-	err = fmt.Errorf("failed to delete test configmap: %v", err)
+	log.Errorf("failed to delete test configmap: %v", err)
 	err = client.AppsV1().Deployments("configmap-reloader").Delete("configmap-reloader-test", &metav1.DeleteOptions{})
-	err = fmt.Errorf("failed to delete test deployment: %v", err)
-	return nil
+	log.Errorf("failed to delete test deployment: %v", err)
 }

@@ -69,7 +69,7 @@ type OPA struct {
 	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
 	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
 	Version            string   `yaml:"version,omitempty"`
-	BundleUrl          string   `yaml:"bundleUrl,omitempty"`
+	BundleURL          string   `yaml:"bundleUrl,omitempty"`
 	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
@@ -160,7 +160,7 @@ type PostgresOperator struct {
 	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
-type Smtp struct {
+type SMTP struct {
 	Server   string `yaml:"server,omitempty"`
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
@@ -341,7 +341,7 @@ type GitOps struct {
 	Namespace string `yaml:"namespace,omitempty"`
 
 	// The URL to git repository to clone
-	GitUrl string `yaml:"gitUrl"`
+	GitURL string `yaml:"gitUrl"`
 
 	// The git branch to use (default: master)
 	GitBranch string `yaml:"gitBranch,omitempty"`
@@ -439,7 +439,7 @@ type Vault struct {
 	AccessKey   string                            `yaml:"accessKey,omitempty"`
 	SecretKey   string                            `yaml:"secretKey,omitempty"`
 	// The AWS KMS ARN Id to use to unseal vault
-	KmsKeyId string `yaml:"kmsKeyId,omitempty"`
+	KmsKeyID string `yaml:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty"`
 	Consul   Consul `yaml:"consul,omitempty"`
 }
@@ -519,8 +519,8 @@ type Connection struct {
 }
 
 type ConfigMapReloader struct {
-	Version   string  `yaml:"version"`
-	Disabled  bool    `yaml:"disabled,omitempty"`
+	Version  string `yaml:"version"`
+	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {

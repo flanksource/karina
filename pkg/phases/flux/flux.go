@@ -80,7 +80,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 	sshConfig := fmt.Sprintf("flux-ssh-%s", cr.Name)
 	saName := fmt.Sprintf("flux-" + cr.Name)
 	argMap := map[string]string{
-		"git-url":                cr.GitUrl,
+		"git-url":                cr.GitURL,
 		"git-branch":             cr.GitBranch,
 		"git-path":               cr.GitPath,
 		"git-poll-interval":      cr.GitPollInterval,

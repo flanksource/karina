@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func IngressNginxAccessSnippet(platform *platform.Platform, c types.LdapAccessConfig) string {
+func NginxAccessSnippet(platform *platform.Platform, c types.LdapAccessConfig) string {
 	if !c.Enabled {
 		var s = `
 auth_request_set $authHeader0 $upstream_http_x_auth_request_user;

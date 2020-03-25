@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -14,13 +17,11 @@ import (
 	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"net/http"
-	"time"
 )
 
 const (
-	testMetricName  = "test_metric"
-	testJobName     = "test"
+	testMetricName = "test_metric"
+	testJobName    = "test"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -48,12 +49,11 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 	}
 	pusher := pushMetric(pushGatewayHost)
 	err := pusher.Add()
-    if err != nil {
+	if err != nil {
 		test.Failf("Thanos: client", "Failed to inject metric to client Prometheus via Pushgateway %v", err)
 		return
-	} else {
-		test.Passf("Thanos client", "Metric successfully injected into the client Prometheus. Waiting to receive it in observability cluster.")
 	}
+	test.Passf("Thanos client", "Metric successfully injected into the client Prometheus. Waiting to receive it in observability cluster.")
 	log.Tracef("Waiting for metric")
 	retries := 12
 	for {
@@ -68,13 +68,13 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 			log.Tracef("Got metric %v", metric)
 			if metric.String() != "" {
 				test.Passf("Thanos observability", "Got test metric successfully in Observability cluster")
-				err = pusher.Delete()
+				_ = pusher.Delete()
 				log.Info("Test metric deleted from pushgateway")
 				break
 			} else {
 				time.Sleep(time.Second * 5)
 				log.Trace("Retrying")
-				retries -= 1
+				retries--
 			}
 		}
 		if err != nil {
@@ -82,7 +82,6 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 			break
 		}
 	}
-
 }
 
 func TestPrometheus(p *platform.Platform, test *console.TestResults, _ []string, cmd *cobra.Command) {
@@ -94,8 +93,8 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults, _ []string,
 	if err != nil {
 		log.Fatal("Failed to get client to connect to Prometheus")
 	}
-	promApi := v1.NewAPI(client)
-	targets, err := promApi.Targets(context.Background())
+	promAPI := v1.NewAPI(client)
+	targets, err := promAPI.Targets(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to get targets: %v", err)
 	}
@@ -114,7 +113,7 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults, _ []string,
 			test.Passf(targetEndpointName, "%s (%s) endpoint is up", targetEndpointName, targetEndpointAddress)
 		}
 	}
-	alerts, err := promApi.Alerts(context.Background())
+	alerts, err := promAPI.Alerts(context.Background())
 	if err != nil {
 		log.Errorf("pullMetric: failed to get alerts")
 		return
@@ -151,13 +150,13 @@ func pullMetric(thanosHost string) (model.Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("pullMetric: failed to get api client to connect to Thanos: %s", err)
 	}
-	promApi := v1.NewAPI(client)
-	value, warn, err := promApi.Query(context.Background(), testMetricName, time.Now())
+	promAPI := v1.NewAPI(client)
+	value, warn, err := promAPI.Query(context.Background(), testMetricName, time.Now())
 	if len(warn) != 0 {
 		log.Tracef("Got warnings: %s", warn)
 	}
 	if err != nil {
-		fmt.Errorf("pullMetric: failed to pull metrics")
+		log.Errorf("pullMetric: failed to pull metrics")
 	}
 	return value, err
 }

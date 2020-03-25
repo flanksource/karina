@@ -36,7 +36,7 @@ func Init(p *platform.Platform) error {
 
 		tokens := regexp.MustCompile(`(?m)Initial Root Token: (\w+).`).FindStringSubmatch(stdout)
 		if tokens == nil {
-			return fmt.Errorf("Not root token found")
+			return fmt.Errorf("not root token found")
 		}
 		log.Infof("Using token: '%s'", tokens[0])
 		p.Vault.Token = tokens[0]
@@ -111,7 +111,7 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		mounts, _ = client.Sys().ListMounts()
+		mounts, _ = client.Sys().ListMounts() // nolint: ineffassign, staticcheck, errcheck
 	}
 
 	ingress := p.GetIngressCA()
@@ -123,7 +123,7 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("Unknown CA type %v", ingress)
+		return fmt.Errorf("unknown CA type %v", ingress)
 	}
 
 	for role, config := range p.Vault.Roles {

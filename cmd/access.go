@@ -51,7 +51,6 @@ func init() {
 		Use:   "sso",
 		Short: "Generate a new kubeconfig file for accessing the cluster using sso",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			platform := getPlatform(cmd)
 			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
 			if err != nil {

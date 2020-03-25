@@ -9,7 +9,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/snapshot"
 )
 
-var opts = snapshot.SnapshotOptions{}
+var opts = snapshot.Options{}
 var Snapshot = &cobra.Command{
 	Use:   "snapshot",
 	Short: "Take a snapshot of the running system",

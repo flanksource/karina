@@ -23,5 +23,4 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	if platform.Minio == nil || !platform.Minio.Disabled {
 		k8s.TestNamespace(client, "minio", test)
 	}
-
 }

@@ -12,9 +12,8 @@ import (
 
 // Cleanup stops and deletes all VM's for a cluster;
 func Cleanup(platform *platform.Platform) error {
-
 	if platform.TerminationProtection {
-		return fmt.Errorf("Termination Protection Enabled, use -e terminationProtection=false to disable")
+		return fmt.Errorf("termination Protection Enabled, use -e terminationProtection=false to disable")
 	}
 
 	if err := platform.OpenViaEnv(); err != nil {
@@ -42,11 +41,11 @@ func Cleanup(platform *platform.Platform) error {
 		}
 		wg.Add(1)
 		go func() {
-			vm.Terminate()
+			vm.Terminate() // nolint: errcheck
 			wg.Done()
 		}()
-
 	}
+
 	wg.Wait()
 	return nil
 }
