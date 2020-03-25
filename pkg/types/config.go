@@ -1,6 +1,9 @@
 package types
 
 type PlatformConfig struct {
+	//TODO: remove at PR
+	//POC: first just string for filename
+	AuditPolicyFile 	  string 			`yaml:"auditPolicyFile,omitempty"`
 	Brand                 Brand             `yaml:"brand,omitempty"`
 	Version               string            `yaml:"version"`
 	Velero                *Velero           `yaml:"velero,omitempty"`
