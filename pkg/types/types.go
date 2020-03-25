@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/api/calico"
+
 )
 
 type Enabled struct {
@@ -430,6 +431,10 @@ type Connection struct {
 	Port     string `yaml:"port,omitempty"`
 	Scheme   string `yaml:"scheme,omitempty"`
 	Verify   string `yaml:"verify,omitempty"`
+}
+
+type Audit struct {
+	AuditPolicyFile 	  string 			`yaml:"auditPolicyFile,omitempty"`
 }
 
 func (c Connection) GetURL() string {
