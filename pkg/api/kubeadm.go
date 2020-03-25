@@ -1,5 +1,10 @@
 package api
 
+import (
+	"github.com/moshloop/platform-cli/pkg/types"
+	"strconv"
+)
+
 type HostPathType string
 
 const (
@@ -90,3 +95,23 @@ type HostPathMount struct {
 	// PathType is the type of the HostPath.
 	PathType HostPathType `yaml:"pathType,omitempty"`
 }
+
+
+func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.AuditLogOptions)  {
+	if logOptions.Path != "" {
+		c.APIServer.ExtraArgs["audit-log-path"] = logOptions.Path
+	}
+	if logOptions.Format != "" {
+		c.APIServer.ExtraArgs["audit-log-format"] = logOptions.Format
+	}
+	if logOptions.MaxAge != 0 {
+		c.APIServer.ExtraArgs["audit-log-maxage"] = strconv.Itoa(logOptions.MaxAge)
+	}
+	if logOptions.MaxBackups != 0 {
+		c.APIServer.ExtraArgs["audit-log-maxbackup"] = strconv.Itoa(logOptions.MaxBackups)
+	}
+	if logOptions.MaxSize != 0 {
+		c.APIServer.ExtraArgs["audit-log-maxsize"] = strconv.Itoa(logOptions.MaxSize)
+	}
+}
+
