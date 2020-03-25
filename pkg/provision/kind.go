@@ -89,6 +89,11 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to marshal config")
 	}
 
+	if platform.PlatformConfig.Trace {
+		log.Print("KIND Config YAML:")
+		log.Print(string(yml))
+	}
+
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")
 	if err != nil {
 		return errors.Wrap(err, "failed to create tempfile")
