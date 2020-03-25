@@ -1,4 +1,4 @@
-package postgresOperator
+package postgresoperator
 
 import (
 	log "github.com/sirupsen/logrus"

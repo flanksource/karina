@@ -48,16 +48,16 @@ func Install(p *platform.Platform) error {
 
 	s := "[DEFAULT]\n" + mapToINI(ini)
 
-	log.Tracef("Using NSX config: %s", console.StripSecrets(string(s)))
+	log.Tracef("Using NSX config: %s", console.StripSecrets(s))
 
 	if err := p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
-		"ncp.ini": string(s),
+		"ncp.ini": s,
 	}); err != nil {
 		return fmt.Errorf("install: failed to create/update configmap: %v", err)
 	}
 
 	if err := p.CreateOrUpdateConfigMap("nsx-node-agent-config", Namespace, map[string]string{
-		"ncp.ini": string(s),
+		"ncp.ini": s,
 	}); err != nil {
 		return fmt.Errorf("install: failed to create/update configmap: %v", err)
 	}
@@ -76,6 +76,7 @@ func mapToINI(ini map[string]interface{}) string {
 		if v == nil {
 			continue
 		}
+		// nolint: gosimple
 		switch v.(type) {
 		case string:
 			if v != "" {

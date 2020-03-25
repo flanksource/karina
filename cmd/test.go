@@ -1,38 +1,43 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/configmapReloader"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
 	"github.com/flanksource/commons/console"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"github.com/moshloop/platform-cli/pkg/phases/base"
+	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
+	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-var wait int
-var failOnError bool
-var waitInterval int
-var junitPath, suiteName string
-var thanosUrl, pushGatewayUrl string
-var p *platform.Platform
+var (
+	wait                      int
+	failOnError               bool
+	waitInterval              int
+	junitPath, suiteName      string
+	thanosURL, pushGatewayURL string
+	p                         *platform.Platform
+	testAll                   bool
+	testDestructive           bool
+	testWrite                 bool
+)
 
 var Test = &cobra.Command{
 	Use: "test",
@@ -46,8 +51,8 @@ func end(test console.TestResults) {
 			test.SuiteName(suiteName)
 		}
 		xml, _ := test.ToXML()
-		os.MkdirAll(path.Dir(junitPath), 0755)
-		ioutil.WriteFile(junitPath, []byte(xml), 0644)
+		os.MkdirAll(path.Dir(junitPath), 0755)         // nolint: errcheck
+		ioutil.WriteFile(junitPath, []byte(xml), 0644) // nolint: errcheck
 	}
 	if test.FailCount > 0 && failOnError {
 		os.Exit(1)
@@ -60,34 +65,31 @@ func run(fn func(p *platform.Platform, test *console.TestResults)) {
 		test := console.TestResults{}
 		fn(p, &test)
 		test.Done()
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
 			end(test)
 			return
-		} else {
-			log.Debugf("Waiting to re-run tests\n")
-			time.Sleep(time.Duration(waitInterval) * time.Second)
-			log.Infof("Re-running tests\n")
-
 		}
+		log.Debugf("Waiting to re-run tests\n")
+		time.Sleep(time.Duration(waitInterval) * time.Second)
+		log.Infof("Re-running tests\n")
 	}
 }
 
-func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command)  {
+func runWithArgs(fn func(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command), args []string, cmd *cobra.Command) {
 	start := time.Now()
 	for {
 		test := console.TestResults{}
 		fn(p, &test, args, cmd)
 		test.Done()
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
 			end(test)
 			return
-		} else {
-			log.Debugf("Waiting to re-run tests\n")
-			time.Sleep(time.Duration(waitInterval) * time.Second)
-			log.Infof("Re-running tests\n")
 		}
+		log.Debugf("Waiting to re-run tests\n")
+		time.Sleep(time.Duration(waitInterval) * time.Second)
+		log.Infof("Re-running tests\n")
 	}
 }
 
@@ -169,7 +171,7 @@ func init() {
 		Short: "Test fluentd",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			run(fluentdOperator.Test)
+			run(fluentdoperator.Test)
 		},
 	})
 	Test.AddCommand(&cobra.Command{
@@ -186,7 +188,7 @@ func init() {
 		Short: "Test postgres-operator",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			run(postgresOperator.Test)
+			run(postgresoperator.Test)
 		},
 	})
 
@@ -202,17 +204,16 @@ func init() {
 	thanosTestCmd := &cobra.Command{
 		Use:   "thanos",
 		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
-		Long: "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
+		Long:  "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			runWithArgs(monitoring.TestThanos, args, cmd)
 		},
 	}
 
-	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayUrl, "pushgateway", "p", "", "Url of Pushgateway")
-	thanosTestCmd.PersistentFlags().StringVarP(&thanosUrl, "thanos", "t", "", "Url of Pushgateway")
+	thanosTestCmd.PersistentFlags().StringVarP(&pushGatewayURL, "pushgateway", "p", "", "Url of Pushgateway")
+	thanosTestCmd.PersistentFlags().StringVarP(&thanosURL, "thanos", "t", "", "Url of Pushgateway")
 	Test.AddCommand(thanosTestCmd)
-	thanosTestCmd.Flags()
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "sealed-secrets",
@@ -241,20 +242,28 @@ func init() {
 		},
 	})
 
-
 	configmapReloaderCmd := &cobra.Command{
 		Use:   "configmap-reloader",
 		Short: "Test configmap-reloader",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			runWithArgs(configmapReloader.Test, args, cmd)
+			runWithArgs(configmapreloader.Test, args, cmd)
 		},
 	}
 
-	configmapReloaderCmd.PersistentFlags().Bool("e2e", false,  "Run e2e tests after main test")
+	configmapReloaderCmd.PersistentFlags().Bool("e2e", false, "Run e2e tests after main test")
 	Test.AddCommand(configmapReloaderCmd)
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "gitops",
+		Short: "Test gitops",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(flux.Test)
+		},
+	})
+
+	testAllCmd := &cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -262,19 +271,27 @@ func init() {
 			run(func(p *platform.Platform, test *console.TestResults) {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
-				velero.Test(p, test)
+				if testAll || testWrite {
+					velero.Test(p, test)
+					dex.Test(p, test)
+					sealedsecrets.Test(p, test)
+					flux.Test(p, test)
+					configmapreloader.Test(p, test, args, cmd)
+				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
-				dex.Test(p, test)
 				monitoring.Test(p, test)
 				nsx.Test(p, test)
-				fluentdOperator.Test(p, test)
+				fluentdoperator.Test(p, test)
 				eck.Test(p, test)
-				postgresOperator.Test(p, test)
-				configmapReloader.Test(p, test, args, cmd)
-				sealedsecrets.Test(p, test)
+				postgresoperator.Test(p, test)
 				vault.Test(p, test)
 			})
 		},
-	})
+	}
+
+	testAllCmd.PersistentFlags().BoolVarP(&testWrite, "write", "w", false, "Run write tests")
+	testAllCmd.PersistentFlags().BoolVarP(&testDestructive, "destructive", "d", false, "Run destructive tests")
+	testAllCmd.PersistentFlags().BoolVarP(&testAll, "all", "a", false, "Run all tests")
+	Test.AddCommand(testAllCmd)
 }

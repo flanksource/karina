@@ -2,6 +2,7 @@ package dex
 
 import (
 	"fmt"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -13,15 +14,12 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
-
 	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if !platform.HasSecret(Namespace, CertName) {
-		if err := platform.CreateTLSSecret(Namespace, "dex", CertName); err != nil {
-			return err
-		}
+	if err := platform.CreateTLSSecret(Namespace, "dex", CertName); err != nil {
+		return err
 	}
 
 	cfg, _ := platform.Template("dex.cfg", "manifests")

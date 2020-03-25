@@ -16,6 +16,20 @@ type Enabled struct {
 
 type CertManager struct {
 	Version string `yaml:"version"`
+
+	// Details of a vault server to use for signing ingress certificates
+	Vault *VaultClient `yaml:"vault,omitempty"`
+}
+
+type VaultClient struct {
+	// The address of a remote Vault server to use for signinig
+	Address string `yaml:"address"`
+
+	// The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca
+	Path string `yaml:"path"`
+
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token"`
 }
 
 type VM struct {
@@ -54,7 +68,7 @@ type OPA struct {
 	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
 	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
 	Version            string   `yaml:"version,omitempty"`
-	BundleUrl          string   `yaml:"bundleUrl,omitempty"`
+	BundleURL          string   `yaml:"bundleUrl,omitempty"`
 	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
@@ -145,7 +159,7 @@ type PostgresOperator struct {
 	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
-type Smtp struct {
+type SMTP struct {
 	Server   string `yaml:"server,omitempty"`
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
@@ -219,6 +233,11 @@ type Ldap struct {
 	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
 	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
 	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
+	// Test is auth credentials used for OIDC integration tests
+	Test struct {
+		Username string `yaml:"username,omitempty"`
+		Password string `yaml:"password,omitempty"`
+	} `yaml:"test,omitempty"`
 }
 
 func (ldap Ldap) GetConnectionURL() string {
@@ -321,7 +340,7 @@ type GitOps struct {
 	Namespace string `yaml:"namespace,omitempty"`
 
 	// The URL to git repository to clone
-	GitUrl string `yaml:"gitUrl"`
+	GitURL string `yaml:"gitUrl"`
 
 	// The git branch to use (default: master)
 	GitBranch string `yaml:"gitBranch,omitempty"`
@@ -409,19 +428,66 @@ type Vault struct {
 	Version string `yaml:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
 	Token string `yaml:"token,omitempty"`
-	// The address of a remote Vault server to use for signinig
-	Address string `yaml:"address,omitempty"`
-	// The path to the PKI Role to use for signing ingress certificates .e.g. /pki/role/ingress-ca
-	PKIPath string `yaml:"pkiPath,omitempty"`
 	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
-	Roles     map[string]map[string]string `yaml:"roles,omitempty"`
-	Disabled  bool                         `yaml:"disabled,omitempty"`
-	AccessKey string                       `yaml:"accessKey,omitempty"`
-	SecretKey string                       `yaml:"secretKey,omitempty"`
+	Roles         map[string]map[string]interface{} `yaml:"roles,omitempty"`
+	Policies      map[string]VaultPolicy            `yaml:"policies,omitempty"`
+	GroupMappings map[string][]string               `yaml:"groupMappings,omitempty"`
+	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
+	ExtraConfig map[string]map[string]interface{} `yaml:"config,omitempty"`
+	Disabled    bool                              `yaml:"disabled,omitempty"`
+	AccessKey   string                            `yaml:"accessKey,omitempty"`
+	SecretKey   string                            `yaml:"secretKey,omitempty"`
 	// The AWS KMS ARN Id to use to unseal vault
-	KmsKeyId string `yaml:"kmsKeyId,omitempty"`
+	KmsKeyID string `yaml:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty"`
 	Consul   Consul `yaml:"consul,omitempty"`
+}
+type VaultPolicy map[string]VaultPolicyPath
+
+type VaultPolicyPath struct {
+	Capabilities      []string            `yaml:"capabilities,omitempty"`
+	DeniedParameters  map[string][]string `yaml:"denied_parameters,omitempty"`
+	AllowedParameters map[string][]string `yaml:"allowed_parameters,omitempty"`
+}
+
+func (vaultPolicy VaultPolicy) String() string {
+	s := ""
+	for path, policy := range vaultPolicy {
+		s += fmt.Sprintf(`
+		path "%s" {
+			capabilities = [%s]
+			denied_parameters = {
+				%s
+			}
+			allowed_parameters {
+				%s
+			}
+		}
+
+		`, path, getCapabilities(policy.Capabilities),
+			getParameters(policy.DeniedParameters),
+			getParameters(policy.AllowedParameters))
+	}
+	return s
+}
+
+func getParameters(params map[string][]string) string {
+	s := []string{}
+	for param, keys := range params {
+		s = append(s, fmt.Sprintf(`"%s" = [%s]`, param, strings.Join(wrap("\"", keys...), ",")))
+	}
+	return strings.Join(s, "\n")
+}
+func getCapabilities(capabilities []string) string {
+	return strings.Join(wrap("\"", capabilities...), ",")
+}
+
+func wrap(with string, array ...string) []string {
+	out := []string{}
+	for _, item := range array {
+		out = append(out, with+item+with)
+	}
+	return out
 }
 
 type ECK struct {

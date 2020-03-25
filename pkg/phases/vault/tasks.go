@@ -28,7 +28,6 @@ func Init(p *platform.Platform) error {
 	log.Debugf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 	if strings.Contains(stdout, "Vault is initialized") {
 		log.Infof("Vault is already initialized, configuring")
-		// return nil
 	}
 	if p.Vault.Token == "" {
 		log.Infof("Vault is not initialized, initializing")
@@ -37,8 +36,9 @@ func Init(p *platform.Platform) error {
 
 		tokens := regexp.MustCompile(`(?m)Initial Root Token: (\w+).`).FindStringSubmatch(stdout)
 		if tokens == nil {
-			return fmt.Errorf("Not root token found")
+			return fmt.Errorf("not root token found")
 		}
+		log.Infof("Using token: '%s'", tokens[0])
 		p.Vault.Token = tokens[0]
 	}
 	config := &api.Config{
@@ -61,6 +61,38 @@ func Init(p *platform.Platform) error {
 	if err := configureLdap(client, p); err != nil {
 		return err
 	}
+
+	yes := true
+	secret, err := client.Auth().Token().Create(&api.TokenCreateRequest{
+		Policies:    []string{"signer"},
+		DisplayName: "karina",
+		Metadata: map[string]string{
+			"value": "key",
+		},
+		Lease:     "8760h",
+		Renewable: &yes,
+		TTL:       "8760h",
+		Period:    "8760h", //1y
+	})
+
+	if err != nil {
+		return err
+	}
+	log.Infof("Token: %s", secret.Auth.ClientToken)
+	for name, policy := range p.Vault.Policies {
+		if _, err := client.Logical().Write("sys/policy/"+name, map[string]interface{}{
+			"policy": policy.String(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
+	for path, config := range p.Vault.ExtraConfig {
+		if _, err := client.Logical().Write(path, config); err != nil {
+			return fmt.Errorf("error writing to %s: %v", path, err)
+		}
+	}
 	return nil
 }
 
@@ -79,10 +111,8 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		mounts, _ = client.Sys().ListMounts()
+		mounts, _ = client.Sys().ListMounts() // nolint: ineffassign, staticcheck, errcheck
 	}
-
-	fmt.Printf("%v", *mounts["pki/"])
 
 	ingress := p.GetIngressCA()
 	switch ingress := ingress.(type) {
@@ -92,10 +122,16 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-
 	default:
-		fmt.Printf("Unknown CA type %v", ingress)
+		return fmt.Errorf("unknown CA type %v", ingress)
 	}
+
+	for role, config := range p.Vault.Roles {
+		if _, err := client.Logical().Write("pki/roles/"+role, config); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -127,5 +163,14 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 	}); err != nil {
 		return err
 	}
+
+	for group, policies := range p.Vault.GroupMappings {
+		if _, err := client.Logical().Write("auth/ldap/groups/"+group, map[string]interface{}{
+			"policies": strings.Join(policies, ","),
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

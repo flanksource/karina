@@ -36,11 +36,9 @@ func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 }
 
 func init() {
-
 	DB.AddCommand(&cobra.Command{
 		Use: "create",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			db, err := getPlatform(cmd).GetOrCreateDB(clusterName, "test")
 			if err != nil {
 				log.Fatalf("Error creating db: %v", err)
@@ -48,6 +46,7 @@ func init() {
 			log.Infof("Created: %+v", db)
 		},
 	})
+
 	DB.AddCommand(&cobra.Command{
 		Use:   "restore [backup path]",
 		Short: "Restore a database from backups",
@@ -96,5 +95,4 @@ func init() {
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")
 	DB.PersistentFlags().StringVar(&secret, "secret", "", "Name of the secret that contains the postgres user credentials")
 	DB.PersistentFlags().StringVar(&superuser, "superuser", "postgres", "Superuser user")
-
 }

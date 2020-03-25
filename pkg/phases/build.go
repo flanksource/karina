@@ -17,8 +17,8 @@ import (
 func Build(cfg types.PlatformConfig) error {
 	tmp, _ := ioutil.TempFile("", "config*.yaml")
 	data, _ := yaml.Marshal(cfg)
-	tmp.WriteString(string(data))
-	os.Mkdir("build", 0755)
+	tmp.WriteString(string(data)) // nolint: errcheck
+	os.Mkdir("build", 0755)       // nolint: errcheck
 	gomplate := deps.Binary("gomplate", cfg.Versions["gomplate"], ".bin")
 	kustomize := deps.Binary("kustomize", cfg.Versions["kustomize"], ".bin")
 

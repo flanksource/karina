@@ -63,16 +63,16 @@ type VXLANMode string
 
 const (
 	VXLANModeNever       VXLANMode = "Never"
-	VXLANModeAlways                = "Always"
-	VXLANModeCrossSubnet           = "CrossSubnet"
+	VXLANModeAlways      VXLANMode = "Always"
+	VXLANModeCrossSubnet VXLANMode = "CrossSubnet"
 )
 
 type IPIPMode string
 
 const (
 	IPIPModeNever       IPIPMode = "Never"
-	IPIPModeAlways               = "Always"
-	IPIPModeCrossSubnet          = "CrossSubnet"
+	IPIPModeAlways      IPIPMode = "Always"
+	IPIPModeCrossSubnet IPIPMode = "CrossSubnet"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

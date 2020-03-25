@@ -143,6 +143,9 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubeadm init phase upload-certs --upload-certs --skip-certificate-key-print --certificate-key %s", key)
 		log.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
 		secret, err = secrets.Get("kubeadm-certs", metav1.GetOptions{})
+		if err != nil {
+			return "", err
+		}
 		// FIXME storing the encryption key in plain text alongside the certs, kind of defeats the purpose
 		secret.Annotations = map[string]string{"key": key}
 		if _, err := secrets.Update(secret); err != nil {
