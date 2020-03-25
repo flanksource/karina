@@ -1,4 +1,4 @@
-package configmapReloader
+package configmapreloader
 
 import (
 	"github.com/flanksource/commons/utils"
@@ -15,9 +15,9 @@ func Deploy(p *platform.Platform) error {
 	if p.ConfigMapReloader == nil || p.ConfigMapReloader.Disabled {
 		log.Infof("Skipping deployment of configmap-reloader, it is disabled")
 		return nil
-	} else {
-		log.Infof("Deploying configmap-reloader %s", p.ConfigMapReloader.Version)
 	}
+
+	log.Infof("Deploying configmap-reloader %s", p.ConfigMapReloader.Version)
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err

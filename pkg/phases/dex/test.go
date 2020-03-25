@@ -3,15 +3,14 @@ package dex
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	testlib "github.com/moshloop/platform-cli/pkg/test"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -37,7 +36,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	test.Passf("dex", "OIDC Authentication flow")
 
 	ca := p.GetIngressCA()
-	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token.IdToken, token.AccessToken, token.RefreshToken)
+	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token.IDToken, token.AccessToken, token.RefreshToken)
 
 	if err != nil {
 		test.Failf("dex", "failed to generate kube config: %v", err)

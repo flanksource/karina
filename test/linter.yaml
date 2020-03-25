@@ -4,3 +4,4 @@ yamlCheck:
     - .goreleaser.yml
     - mkdocs.yml
     - .git/(.*)
+    - .golangci.yml

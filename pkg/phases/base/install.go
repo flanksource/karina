@@ -8,14 +8,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/constants"
-	"github.com/moshloop/platform-cli/pkg/phases/ingress"
 	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
+	"github.com/moshloop/platform-cli/pkg/phases/ingress"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {
-	os.Mkdir(".bin", 0755)
+	os.Mkdir(".bin", 0755) // nolint: errcheck
 
 	if err := platform.ApplySpecs("", "rbac.yaml"); err != nil {
 		log.Errorf("Error deploying base rbac: %s\n", err)
@@ -87,7 +87,7 @@ func Install(platform *platform.Platform) error {
 
 	if !platform.Dashboard.Disabled {
 		log.Infof("Installing K8s dashboard")
-		platform.Dashboard.AccessRestricted.Snippet = ingress.IngressNginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
+		platform.Dashboard.AccessRestricted.Snippet = ingress.NginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
 			log.Errorf("Error installing K8s dashboard: %s\n", err)
 		}
@@ -109,12 +109,15 @@ func Install(platform *platform.Platform) error {
 
 	if platform.S3.CSIVolumes {
 		log.Infof("Deploying S3 Volume Provisioner")
-		platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
+		err := platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
 			"accessKeyID":     []byte(platform.S3.AccessKey),
 			"secretAccessKey": []byte(platform.S3.SecretKey),
 			"endpoint":        []byte("https://" + platform.S3.Endpoint),
 			"region":          []byte(platform.S3.Region),
 		})
+		if err != nil {
+			return fmt.Errorf("install: Failed to create secret csi-s3-secret: %v", err)
+		}
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
 			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}

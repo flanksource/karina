@@ -51,12 +51,6 @@ var (
 	selfLinks = map[string]string{}
 )
 
-func toSectionLink(name string) string {
-	name = strings.ToLower(name)
-	name = strings.Replace(name, " ", "-", -1)
-	return name
-}
-
 func printAPIDocs(paths []string) {
 	types := ParseDocumentationFrom(paths)
 	for _, t := range types {
@@ -73,7 +67,7 @@ func printAPIDocs(paths []string) {
 			fmt.Printf("\n## %s\n\n%s\n\n", strukt.Name, strukt.Doc)
 			fmt.Println("| Field | Description | Scheme | Required |")
 			fmt.Println("| ----- | ----------- | ------ | -------- |")
-			fields := t[1:(len(t))]
+			fields := t[1:]
 			for _, f := range fields {
 				required := ""
 				if f.Mandatory {
@@ -233,7 +227,7 @@ func fieldRequired(field *ast.Field) bool {
 }
 
 func fieldType(typ ast.Expr) string {
-	switch typ.(type) {
+	switch typ.(type) { // nolint: gosimple
 	case *ast.Ident:
 		return toLink(typ.(*ast.Ident).Name)
 	case *ast.StarExpr:

@@ -6,7 +6,6 @@ import (
 )
 
 func provisionLoadbalancers(p *platform.Platform) (masters string, workers string, err error) {
-
 	if p.NSX == nil || p.NSX.Disabled {
 		return "", "", nil
 	}
@@ -43,5 +42,4 @@ func provisionLoadbalancers(p *platform.Platform) (masters string, workers strin
 		return "", "", err
 	}
 	return masters, workers, nil
-
 }

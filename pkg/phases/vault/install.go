@@ -35,7 +35,7 @@ func Deploy(p *platform.Platform) error {
 		"AWS_REGION":               []byte(p.Vault.Region),
 		"AWS_ACCESS_KEY_ID":        []byte(p.Vault.AccessKey),
 		"AWS_SECRET_ACCESS_KEY":    []byte(p.Vault.SecretKey),
-		"VAULT_AWSKMS_SEAL_KEY_ID": []byte(p.Vault.KmsKeyId),
+		"VAULT_AWSKMS_SEAL_KEY_ID": []byte(p.Vault.KmsKeyID),
 	}); err != nil {
 		return err
 	}

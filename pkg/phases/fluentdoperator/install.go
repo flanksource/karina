@@ -1,4 +1,4 @@
-package fluentdOperator
+package fluentdoperator
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -14,9 +14,8 @@ func Deploy(p *platform.Platform) error {
 	if p.FluentdOperator == nil || p.FluentdOperator.Disabled {
 		log.Infof("Skipping deployment of fluentd-operator, it is disabled")
 		return nil
-	} else {
-		log.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)
 	}
+	log.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err

@@ -13,8 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
-
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -204,7 +202,6 @@ type CertificateCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
-
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:openapi-gen=true
@@ -370,7 +367,8 @@ type VaultAppRole struct {
 	// Where the authentication path is mounted in Vault.
 	Path string `json:"path"`
 
-	RoleId    string                   `json:"roleId"`
+	// nolint: golint, stylecheck
+	RoleId    string            `json:"roleId"`
 	SecretRef SecretKeySelector `json:"secretRef"`
 }
 
@@ -404,8 +402,6 @@ type CAIssuer struct {
 type IssuerStatus struct {
 	// +optional
 	Conditions []IssuerCondition `json:"conditions,omitempty"`
-
-
 }
 
 // IssuerCondition contains condition information for an Issuer.
@@ -462,7 +458,6 @@ func (c *ClusterIssuer) Copy() GenericIssuer {
 	return c.DeepCopy()
 }
 
-
 func (c *Issuer) GetObjectMeta() *metav1.ObjectMeta {
 	return &c.ObjectMeta
 }
@@ -481,7 +476,6 @@ func (c *Issuer) SetStatus(status IssuerStatus) {
 func (c *Issuer) Copy() GenericIssuer {
 	return c.DeepCopy()
 }
-
 
 // ConditionStatus represents a condition's status.
 // +kubebuilder:validation:Enum=True;False;Unknown
@@ -530,7 +524,6 @@ type SecretKeySelector struct {
 const (
 	TLSCAKey = "ca.crt"
 )
-
 
 const (
 	CertificateRequestReasonPending = "Pending"

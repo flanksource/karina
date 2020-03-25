@@ -32,6 +32,7 @@ func (vm *VM) UUID() string {
 	return vm.vm.UUID(context.Background())
 }
 
+// nolint: golint, stylecheck
 func (vm *VM) GetVmID() string {
 	return vm.vm.Reference().Value
 }
@@ -62,7 +63,6 @@ func (vm *VM) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 						continue // Ignore non IPv4 address
 					}
 					nics = append(nics, nic)
-
 				}
 			}
 		}
@@ -77,7 +77,7 @@ func (vm *VM) GetIP(timeout time.Duration) (string, error) {
 	deadline := time.Now().Add(timeout)
 	for {
 		if time.Now().After(deadline) {
-			return "", fmt.Errorf("Timeout exceeded")
+			return "", fmt.Errorf("timeout exceeded")
 		}
 		mo, err := vm.GetVirtualMachine(context.TODO())
 		if err != nil {
@@ -100,6 +100,7 @@ func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	}
 
 	for _, dev := range devices.SelectByType((*vim.VirtualEthernetCard)(nil)) {
+		// nolint: gosimple
 		switch dev.(type) {
 		case *vim.VirtualVmxnet3:
 			net := dev.(*vim.VirtualVmxnet3)
@@ -180,7 +181,9 @@ func (vm *VM) PowerOff() error {
 		return errors.Wrapf(err, "Failed to power off: %s", vm)
 	}
 	info, err := task.WaitForResult(vm.ctx, nil)
-	if info.State == "success" {
+	if err != nil {
+		return errors.Wrapf(err, "Failed to wait for results: %s", vm)
+	} else if info.State == "success" {
 		log.Debugf("[%s] powered off\n", vm)
 	} else {
 		return errors.Errorf("Failed to poweroff %s, %v", vm, info)
@@ -199,6 +202,7 @@ func (vm *VM) Shutdown() error {
 	return nil
 }
 
+// nolint: unused, deadcode
 func removeDNS(vm *VM) {
 	ip, err := vm.GetIP(time.Second * 5)
 	if err != nil {
@@ -236,18 +240,21 @@ func (vm *VM) Terminate() error {
 			log.Warnf("Failed to power off %s: %v", vm.Name, err)
 		}
 	}
-	vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
+	if err := vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff); err != nil {
+		return errors.Wrapf(err, "Failed to wait for power state")
+	}
 	task, err := vm.vm.Destroy(vm.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete %s", vm)
 	}
 	info, err := task.WaitForResult(vm.ctx, nil)
-	if info.State == "success" {
+	if err != nil {
+		return errors.Wrapf(err, "Failed to wait for results %s", vm)
+	} else if info.State == "success" {
 		log.Debugf("[%s] terminated\n", vm)
 	} else {
 		return errors.Errorf("Failed to delete %s, %v", vm, info)
 	}
 
 	return nil
-
 }
