@@ -129,6 +129,9 @@ sealedSecrets:
     cert: .certs/sealed-secrets-crt.pem
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
+# TODO: remove at PR
+# Audit configuration point
+auditPolicyFile: ./test/fixtures/audit-policy.yaml
 vault:
   version: 1.3.2
   kmsKeyId: $AWS_KMS_ID
