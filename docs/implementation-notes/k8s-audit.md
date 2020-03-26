@@ -11,8 +11,10 @@
   - [x]  Verify kubeadm config of apiserver
      - [x] works on KIND
      - [ ] works in konfigadm images
-  - [ ]  Find codebase for kind/kubeadm images that governs *kubeadm* configs
-  - [ ]  Find injection/configuration approach
+  - [X]  Find codebase for kind/kubeadm images that governs *kubeadm* configs
+     - [x] KIND
+     - [ ] VMWare
+  - [X]  Find injection/configuration approach
 
 
 ## Documentation
