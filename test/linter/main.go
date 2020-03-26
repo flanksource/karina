@@ -3,15 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 
+	"github.com/flanksource/yaml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const (

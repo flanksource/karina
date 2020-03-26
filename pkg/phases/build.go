@@ -5,12 +5,13 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/flanksource/yaml"
+
 	"github.com/flanksource/commons/deps"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/is"
 	"github.com/moshloop/platform-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 func Build(cfg types.PlatformConfig) error {
