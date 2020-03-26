@@ -160,7 +160,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			PathType:  api.HostPathFile,
 		})
 
-		if logOptions := platform.AuditConfig.ApiServerOptions.LogOptions; logOptions != (types.AuditLogOptions {}) {
+		if logOptions := platform.AuditConfig.ApiServerOptions; logOptions != (types.ApiServerOptions {}) {
 			clusterConfig.SetAPIServerExtraAuditArgs(logOptions)
 		}
 	}
