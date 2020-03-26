@@ -1,9 +1,13 @@
 run:
-  # default concurrency is a available CPU number
-  concurrency: 4
+  # # default concurrency is a available CPU number
+  # concurrency: 4
 
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 5m
+
+  skip-dirs:
+    - ./pkg/k8s/etcd
+  skip-files: []
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
@@ -13,7 +17,7 @@ linters:
     - bodyclose
     - deadcode
     - depguard
-    - dogsled
+    # - dogsled
     - errcheck
     - goconst
     - gofmt

@@ -3,11 +3,12 @@ module github.com/moshloop/platform-cli
 go 1.12
 
 require (
-	github.com/aws/aws-sdk-go v1.29.5
+	github.com/aws/aws-sdk-go v1.29.25
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.1.3
+	github.com/flanksource/commons v1.1.4
+	github.com/flanksource/yaml v0.0.0-20200322131016-b7b2608b8702
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.1.1
@@ -25,11 +26,9 @@ require (
 	github.com/prometheus/client_golang v1.4.1
 	github.com/prometheus/common v0.9.1
 	github.com/sirupsen/logrus v1.4.2
-	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v0.0.6
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.21.0
-	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
 	k8s.io/cli-runtime v0.17.3
