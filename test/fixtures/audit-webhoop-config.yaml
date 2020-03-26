@@ -1,0 +1,16 @@
+#Initial barebones config from
+#https://talkcloudlytome.com/implementing-an-audit-webhook-for-kubernetes/
+apiVersion: v1
+kind: Config
+clusters:
+  - cluster:
+      server: http://audit-webhook-service.auditing.svc.cluster.local/api/audits
+    name: audit-webhook-service
+contexts:
+  - context:
+      cluster: audit-webhook-service
+      user: ""
+    name: default-context
+current-context: default-context
+preferences: {}
+users: []
