@@ -4,7 +4,7 @@ metadata:
   name: pushgateway
   namespace: monitoring
   annotations:
-    prometheus.io/scrape: 'true'
+    prometheus.io/scrape: "true"
   labels:
     k8s-app: pushgateway
 spec:
@@ -47,6 +47,8 @@ metadata:
     k8s-app: pushgateway
   name: pushgateway
   namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   rules:
     - host: pushgateway.{{.domain}}
@@ -56,5 +58,6 @@ spec:
               serviceName: pushgateway
               servicePort: 9091
   tls:
-    - hosts:
+    - secretName: pushgateway-tls
+      hosts:
         - pushgateway.{{.domain}}

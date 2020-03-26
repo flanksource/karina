@@ -19,7 +19,6 @@ import (
 
 // VsphereCluster provision or create a kubernetes cluster
 func VsphereCluster(platform *platform.Platform) error {
-
 	if err := platform.OpenViaEnv(); err != nil {
 		log.Fatalf("Failed to initialize platform: %s", err)
 	}
@@ -60,7 +59,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 
 	// make sure admin kubeconfig is available
-	platform.GetKubeConfig()
+	platform.GetKubeConfig() // nolint: errcheck
 	if platform.JoinEndpoint == "" {
 		platform.JoinEndpoint = "localhost:8443"
 	}
@@ -70,7 +69,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	wg := sync.WaitGroup{}
 	if platform.Master.Count != len(masters) {
 		// upload control plane certs first
-		kubeadm.UploadControlPaneCerts(platform)
+		kubeadm.UploadControlPaneCerts(platform) // nolint: errcheck
 	}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		vm := platform.Master
@@ -131,7 +130,6 @@ func VsphereCluster(platform *platform.Platform) error {
 				}
 				wg.Done()
 			}()
-
 		}
 
 		if worker.Count < len(vms) {
@@ -154,7 +152,6 @@ func VsphereCluster(platform *platform.Platform) error {
 					wg.Done()
 				}()
 			}
-
 		}
 	}
 	wg.Wait()

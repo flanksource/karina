@@ -15,16 +15,16 @@ import (
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 
-type HarborClient struct {
+type Client struct {
 	sling *sling.Sling
 	url   string
 }
 
-func NewHarborClient(p *platform.Platform) *HarborClient {
+func NewClient(p *platform.Platform) *Client {
 	client := &http.Client{Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}}
-	return &HarborClient{
+	return &Client{
 		url: p.Harbor.URL,
 		sling: sling.New().Client(client).Base(p.Harbor.URL).
 			SetBasicAuth("admin", p.Harbor.AdminPassword).
@@ -33,17 +33,18 @@ func NewHarborClient(p *platform.Platform) *HarborClient {
 	}
 }
 
-func (harbor *HarborClient) ListReplicationPolicies() (policies []ReplicationPolicy, customErr error) {
-	_, err := harbor.sling.New().
+func (harbor *Client) ListReplicationPolicies() (policies []ReplicationPolicy, customErr error) {
+	resp, err := harbor.sling.New().
 		Get("api/replication/policies").
 		Receive(&policies, &customErr)
 	if err == nil {
 		err = customErr
 	}
+	defer resp.Body.Close()
 	return policies, err
 }
 
-func (harbor *HarborClient) TriggerReplication(id int) (*Replication, error) {
+func (harbor *Client) TriggerReplication(id int) (*Replication, error) {
 	req := Replication{PolicyID: id}
 	r, err := harbor.sling.New().
 		BodyJSON(&req).
@@ -52,11 +53,17 @@ func (harbor *HarborClient) TriggerReplication(id int) (*Replication, error) {
 	if err != nil {
 		return nil, fmt.Errorf("TriggerReplication: failed to trigger replication: %v", err)
 	}
-	_, err = harbor.sling.New().Get(r.Header["Location"][0]).Receive(&req, &req)
-	return &req, err
+	defer r.Body.Close()
+
+	resp, err := harbor.sling.New().Get(r.Header["Location"][0]).Receive(&req, &req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return &req, nil
 }
 
-func (harbor *HarborClient) UpdateSettings(settings types.HarborSettings) error {
+func (harbor *Client) UpdateSettings(settings types.HarborSettings) error {
 	data, _ := json.Marshal(settings)
 	log.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
 	log.Infof("Updating harbor using: %s \n", harbor.url)
@@ -67,15 +74,16 @@ func (harbor *HarborClient) UpdateSettings(settings types.HarborSettings) error 
 	if err != nil {
 		return fmt.Errorf("failed to update harbor settings: %v", err)
 	}
+	defer r.Body.Close()
 	log.Debugf("Updated settings: %s:\n%+v", r.Status, text.SafeRead(r.Body))
 	return nil
 }
 
-func (harbor *HarborClient) ListMembers(project string) ([]ProjectMember, error) {
+func (harbor *Client) ListMembers(project string) ([]ProjectMember, error) {
 	return nil, nil
 }
 
-type HarborProject struct {
+type Project struct {
 }
 
 type Replication struct {

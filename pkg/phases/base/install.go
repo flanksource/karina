@@ -3,22 +3,26 @@ package base
 import (
 	"fmt"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/constants"
+	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/ingress"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {
-	os.Mkdir(".bin", 0755)
+	os.Mkdir(".bin", 0755) // nolint: errcheck
 
 	if err := platform.ApplySpecs("", "rbac.yaml"); err != nil {
 		log.Errorf("Error deploying base rbac: %s\n", err)
+	}
+
+	if err := certmanager.Install(platform); err != nil {
+		return err
 	}
 
 	if !platform.NodeLocalDNS.Disabled {
@@ -40,22 +44,6 @@ func Install(platform *platform.Platform) error {
 
 		if err := platform.ApplySpecs("", "node-local-dns.yaml"); err != nil {
 			log.Errorf("Error deploying node-local-dns: %s\n", err)
-		}
-	}
-
-	if platform.CertManager == nil || !platform.CertManager.Disabled {
-		log.Infof("Installing CertMananager")
-		if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
-			log.Errorf("Error deploying cert manager CRDs: %s\n", err)
-		}
-
-		// the cert-manager webhook can take time to deploy, so we deploy it once ignoring any errors
-		// wait for 180s for the namespace to be ready, deploy again (usually a no-op) and only then report errors
-		var _ = platform.ApplySpecs("", "cert-manager-deploy.yaml")
-		platform.GetKubectl()("wait --for=condition=Available apiservice v1beta1.webhook.cert-manager.io")
-		platform.WaitForNamespace("cert-manager", 180*time.Second)
-		if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
-			log.Errorf("Error deploying cert manager: %s\n", err)
 		}
 	}
 
@@ -99,7 +87,7 @@ func Install(platform *platform.Platform) error {
 
 	if !platform.Dashboard.Disabled {
 		log.Infof("Installing K8s dashboard")
-		platform.Dashboard.AccessRestricted.Snippet = ingress.IngressNginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
+		platform.Dashboard.AccessRestricted.Snippet = ingress.NginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
 			log.Errorf("Error installing K8s dashboard: %s\n", err)
 		}
@@ -119,21 +107,17 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.Minio == nil || !platform.Minio.Disabled {
-		log.Infof("Installing minio")
-		if err := platform.ApplySpecs("", "minio.yaml"); err != nil {
-			log.Errorf("Error deploying minio: %s\n", err)
-		}
-	}
-
 	if platform.S3.CSIVolumes {
 		log.Infof("Deploying S3 Volume Provisioner")
-		platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
+		err := platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
 			"accessKeyID":     []byte(platform.S3.AccessKey),
 			"secretAccessKey": []byte(platform.S3.SecretKey),
 			"endpoint":        []byte("https://" + platform.S3.Endpoint),
 			"region":          []byte(platform.S3.Region),
 		})
+		if err != nil {
+			return fmt.Errorf("install: Failed to create secret csi-s3-secret: %v", err)
+		}
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
 			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}

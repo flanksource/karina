@@ -10,10 +10,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	client, _ := platform.GetClientset()
 	k8s.TestNamespace(client, "kube-system", test)
 	k8s.TestNamespace(client, "local-path-storage", test)
-
-	if platform.CertManager == nil || !platform.CertManager.Disabled {
-		k8s.TestNamespace(client, "cert-manager", test)
-	}
+	k8s.TestNamespace(client, "cert-manager", test)
 
 	if platform.Quack == nil || !platform.Quack.Disabled {
 		k8s.TestNamespace(client, "quack", test)
@@ -26,5 +23,4 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	if platform.Minio == nil || !platform.Minio.Disabled {
 		k8s.TestNamespace(client, "minio", test)
 	}
-
 }

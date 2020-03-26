@@ -10,7 +10,7 @@ import (
 
 func ReplicateAll(p *platform.Platform) error {
 	defaults(p)
-	client := NewHarborClient(p)
+	client := NewClient(p)
 
 	log.Infoln("Listing replication policies")
 	replications, err := client.ListReplicationPolicies()
@@ -30,7 +30,7 @@ func ReplicateAll(p *platform.Platform) error {
 
 func UpdateSettings(p *platform.Platform) error {
 	defaults(p)
-	client := NewHarborClient(p)
+	client := NewClient(p)
 	log.Infof("Platform: %v", p)
 	log.Infof("Settings: %v", *p.Harbor.Settings)
 	return client.UpdateSettings(*p.Harbor.Settings)

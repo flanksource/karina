@@ -26,7 +26,7 @@ type DexOauth struct {
 
 type DexAccessToken struct {
 	AccessToken  string `json:"access_token"`
-	IdToken      string `json:"id_token"`
+	IDToken      string `json:"id_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
@@ -101,7 +101,7 @@ func (d *DexOauth) getLdapURL() (string, error) {
 	q.Add("state", state)
 	req.URL.RawQuery = q.Encode() + "&scope=offline_access+openid+profile+email+groups" // we want this scope to not be escaped
 
-	client := d.newHttpClient()
+	client := d.newHTTPClient()
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to post url: %s", req.URL.String())
@@ -116,7 +116,7 @@ func (d *DexOauth) getApprovalURL(ldapURL string) (string, error) {
 	form.Set("login", d.Username)
 	form.Set("password", d.Password)
 
-	client := d.newHttpClient()
+	client := d.newHTTPClient()
 	url := fmt.Sprintf("%s%s", d.DexURL, ldapURL)
 	resp, err := client.PostForm(url, form)
 	if err != nil {
@@ -132,7 +132,7 @@ func (d *DexOauth) approve(approvalURL string) (string, error) {
 
 	url := fmt.Sprintf("%s%s", d.DexURL, approvalURL)
 
-	client := d.newHttpClient()
+	client := d.newHTTPClient()
 	resp, err := client.PostForm(url, form)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to post url: %s", url)
@@ -204,7 +204,7 @@ func (d *DexOauth) getToken(code string) (string, error) {
 	return string(bodyBytes), nil
 }
 
-func (d *DexOauth) newHttpClient() *http.Client {
+func (d *DexOauth) newHTTPClient() *http.Client {
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse

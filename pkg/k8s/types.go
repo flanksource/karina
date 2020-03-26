@@ -6,7 +6,7 @@ import (
 
 type CRD struct {
 	Kind       string                 `yaml:"kind,omitempty"`
-	ApiVersion string                 `yaml:"apiVersion,omitempty"`
+	APIVersion string                 `yaml:"apiVersion,omitempty"`
 	Metadata   Metadata               `yaml:"metadata,omitempty"`
 	Spec       map[string]interface{} `yaml:"spec,omitempty"`
 }

@@ -29,4 +29,5 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Failf("minio", "minio GET / - %v", resp.StatusCode)
 	}
 
+	resp.Body.Close() // nolint: errcheck
 }

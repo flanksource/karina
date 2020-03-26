@@ -15,7 +15,6 @@ var NSX = &cobra.Command{
 }
 
 func init() {
-
 	logLevel := &cobra.Command{
 		Use:   "set-log-level",
 		Short: "Update the logging level",

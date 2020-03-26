@@ -46,18 +46,18 @@ type NSX struct {
 }
 
 type NsxV3 struct {
-	NsxApiUser   string `structs:"nsx_api_user,omitempty" yaml:"nsx_api_user,omitempty"`
-	NsxApiPass   string `structs:"nsx_api_password,omitempty" yaml:"nsx_api_password,omitempty"`
+	NsxAPIUser   string `structs:"nsx_api_user,omitempty" yaml:"nsx_api_user,omitempty"`
+	NsxAPIPass   string `structs:"nsx_api_password,omitempty" yaml:"nsx_api_password,omitempty"`
 	PolicyNSXAPI *bool  `structs:"policy_nsxapi" yaml:"policy_nsxapi,omitempty"`
 	// Path to NSX client certificate file. If specified, the nsx_api_user and
 	// nsx_api_password options will be ignored. Must be specified along with
 	// nsx_api_private_key_file option
-	NsxApiCertFile string `structs:"nsx_api_cert_file,omitempty" yaml:"nsx_api_cert_file,omitempty"`
+	NsxAPICertFile string `structs:"nsx_api_cert_file,omitempty" yaml:"nsx_api_cert_file,omitempty"`
 
 	// Path to NSX client private key file. If specified, the nsx_api_user and
 	// nsx_api_password options will be ignored. Must be specified along with
 	// nsx_api_cert_file option
-	NsxApiPrivateKeyFile string `structs:"nsx_api_private_key_file,omitempty" yaml:"nsx_api_private_key_file,omitempty"`
+	NsxAPIPrivateKeyFile string `structs:"nsx_api_private_key_file,omitempty" yaml:"nsx_api_private_key_file,omitempty"`
 
 	// IP address of one or more NSX managers separated by commas. The IP
 	// address should be of the form:
@@ -65,7 +65,7 @@ type NsxV3 struct {
 	// If
 	// scheme is not provided https is used. If port is not provided port 80 is
 	// used for http and port 443 for https.
-	NsxApiManagers []string `structs:"nsx_api_managers,omitempty" yaml:"nsx_api_managers,omitempty"`
+	NsxAPIManagers []string `structs:"nsx_api_managers,omitempty" yaml:"nsx_api_managers,omitempty"`
 
 	// If True, skip fatal errors when no endpoint in the NSX management cluster
 	// is available to serve a request, and retry the request instead
@@ -86,14 +86,14 @@ type NsxV3 struct {
 	Insecure *bool `structs:"insecure,omitempty" yaml:"insecure,omitempty"`
 
 	// The time in seconds before aborting a HTTP connection to a NSX manager.
-	HttpTimeout *int `structs:"http_timeout,omitempty" yaml:"http_timeout,omitempty"`
+	HTTPTimeout *int `structs:"http_timeout,omitempty" yaml:"http_timeout,omitempty"`
 
 	// The time in seconds before aborting a HTTP read response from a NSX
 	// manager.
-	HttpReadTimeout *int `structs:"http_read_timeout,omitempty" yaml:"http_read_timeout,omitempty"`
+	HTTPReadTimeout *int `structs:"http_read_timeout,omitempty" yaml:"http_read_timeout,omitempty"`
 
 	// Maximum number of times to retry a HTTP connection.
-	HttpRetries *int `structs:"http_retries,omitempty" yaml:"http_retries,omitempty"`
+	HTTPRetries *int `structs:"http_retries,omitempty" yaml:"http_retries,omitempty"`
 
 	// Maximum concurrent connections to each NSX manager.
 	ConcurrentConnections *int `structs:"concurrent_connections,omitempty" yaml:"concurrent_connections,omitempty"`
@@ -150,7 +150,7 @@ type NsxV3 struct {
 
 	// An integer for LoadBalancer side timeout value in seconds on layer 7
 	// persistence profile, if the profile exists.
-	L7_PersistenceTimeout *int `structs:"l7_persistence_timeout,omitempty" yaml:"l7_persistence_timeout,omitempty"`
+	L7PersistenceTimeout *int `structs:"l7_persistence_timeout,omitempty" yaml:"l7_persistence_timeout,omitempty"`
 
 	// Option to set load balancer persistence option. If source_ip is selected,
 	// source IP persistence will be offered for ingress traffic through L4 load
@@ -167,7 +167,7 @@ type NsxV3 struct {
 	// support automatically creating the IP blocks. The definition is a comma
 	// separated list: CIDR,CIDR,... Mixing different formats (e.g. UUID,CIDR)
 	// is not supported.
-	ContainerIpBlocks []string `structs:"container_ip_blocks,omitempty" yaml:"container_ip_blocks,omitempty"`
+	ContainerIPBlocks []string `structs:"container_ip_blocks,omitempty" yaml:"container_ip_blocks,omitempty"`
 
 	// Name or UUID of the container ip blocks that will be used for creating
 	// subnets for no-SNAT projects. If specified, no-SNAT projects will use
@@ -243,7 +243,7 @@ type NsxV3 struct {
 	// Determines which kind of information to be used as VIF app_id. Defaults
 	// to pod_resource_key. In WCP mode, pod_uid is used.
 	// Choices: pod_resource_key pod_uid
-	VifAppIdType string `structs:"vif_app_id_type,omitempty" yaml:"vif_app_id_type,omitempty"`
+	VifAppIDType string `structs:"vif_app_id_type,omitempty" yaml:"vif_app_id_type,omitempty"`
 
 	// SNAT IP to secondary IPs mapping. In the cloud case, SNAT rules are
 	// created using the PCG public or link local IPs, local IPs which will be
@@ -253,7 +253,7 @@ type NsxV3 struct {
 	SnatSecondaryIps []string `structs:"snat_secondary_ips,omitempty" yaml:"snat_secondary_ips,omitempty"`
 
 	// If this value is not empty, NCP will append it to nameserver list
-	DnsServers []string `structs:"dns_servers,omitempty" yaml:"dns_servers,omitempty"`
+	DNSServers []string `structs:"dns_servers,omitempty" yaml:"dns_servers,omitempty"`
 
 	// Set this to True to enable NCP to report errors through NSXError CRD.
 	EnableNsxErrCrd *bool `structs:"enable_nsx_err_crd,omitempty" yaml:"enable_nsx_err_crd,omitempty"`
@@ -324,7 +324,7 @@ type NsxCOE struct {
 
 type NsxK8s struct {
 	// Kubernetes API server IP address.
-	ApiserverHostIp string `structs:"apiserver_host_ip,omitempty" yaml:"apiserver_host_ip,omitempty"`
+	ApiserverHostIP string `structs:"apiserver_host_ip,omitempty" yaml:"apiserver_host_ip,omitempty"`
 
 	// Kubernetes API server port.
 	ApiserverHostPort string `structs:"apiserver_host_port,omitempty" yaml:"apiserver_host_port,omitempty"`
@@ -358,15 +358,16 @@ type NsxK8s struct {
 
 	// The default HTTP ingress port
 
-	HttpIngressPort *int `structs:"http_ingress_port,omitempty" yaml:"http_ingress_port,omitempty"`
+	HTTPIngressPort *int `structs:"http_ingress_port,omitempty" yaml:"http_ingress_port,omitempty"`
 
 	// The default HTTPS ingress port
-	HttpsIngressPort *int `structs:"https_ingress_port,omitempty" yaml:"https_ingress_port,omitempty"`
+	HTTPSIngressPort *int `structs:"https_ingress_port,omitempty" yaml:"https_ingress_port,omitempty"`
 
 	// Specify thread pool size to process resource events
 	ResourceWatcherThreadPoolSize *int `structs:"resource_watcher_thread_pool_size,omitempty" yaml:"resource_watcher_thread_pool_size,omitempty"`
 
 	// User specified IP address for HTTP and HTTPS ingresses
+	// nolint: golint, stylecheck
 	HttpAndHttpsIngressIp string `structs:"http_and_https_ingress_ip,omitempty" yaml:"http_and_https_ingress_ip,omitempty"`
 
 	// Set this to True to enable NCP to create segment port for VM through

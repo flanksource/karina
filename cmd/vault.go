@@ -13,7 +13,6 @@ var Vault = &cobra.Command{
 }
 
 func init() {
-
 	init := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize and import CA into vault",

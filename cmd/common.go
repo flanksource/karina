@@ -116,8 +116,8 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 	}
 
 	if base.NSX != nil && base.NSX.NsxV3 != nil {
-		base.NSX.NsxV3.NsxApiUser = template(base.NSX.NsxV3.NsxApiUser)
-		base.NSX.NsxV3.NsxApiPass = template(base.NSX.NsxV3.NsxApiPass)
+		base.NSX.NsxV3.NsxAPIUser = template(base.NSX.NsxV3.NsxAPIUser)
+		base.NSX.NsxV3.NsxAPIPass = template(base.NSX.NsxV3.NsxAPIPass)
 	}
 
 	if base.CA != nil {
@@ -138,7 +138,12 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 	if base.Vault != nil {
 		base.Vault.AccessKey = template(base.Vault.AccessKey)
 		base.Vault.SecretKey = template(base.Vault.SecretKey)
-		base.Vault.KmsKeyId = template(base.Vault.KmsKeyId)
+		base.Vault.KmsKeyID = template(base.Vault.KmsKeyID)
+		base.Vault.Token = template(base.Vault.Token)
+	}
+
+	if base.CertManager.Vault != nil {
+		base.CertManager.Vault.Token = template(base.CertManager.Vault.Token)
 	}
 
 	gitops := base.GitOps

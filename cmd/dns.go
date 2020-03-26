@@ -23,9 +23,9 @@ func init() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
 		},
 	}
+
 	update := &cobra.Command{
 		Use:  "update",
 		Args: cobra.MinimumNArgs(1),
@@ -35,7 +35,6 @@ func init() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
 		},
 	}
 

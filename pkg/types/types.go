@@ -16,6 +16,24 @@ type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
 
+type CertManager struct {
+	Version string `yaml:"version"`
+
+	// Details of a vault server to use for signing ingress certificates
+	Vault *VaultClient `yaml:"vault,omitempty"`
+}
+
+type VaultClient struct {
+	// The address of a remote Vault server to use for signinig
+	Address string `yaml:"address"`
+
+	// The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca
+	Path string `yaml:"path"`
+
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token"`
+}
+
 type VM struct {
 	Name   string `yaml:"name,omitempty"`
 	Prefix string `yaml:"prefix,omitempty"`
@@ -52,7 +70,7 @@ type OPA struct {
 	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
 	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
 	Version            string   `yaml:"version,omitempty"`
-	BundleUrl          string   `yaml:"bundleUrl,omitempty"`
+	BundleURL          string   `yaml:"bundleUrl,omitempty"`
 	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
@@ -143,7 +161,7 @@ type PostgresOperator struct {
 	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
-type Smtp struct {
+type SMTP struct {
 	Server   string `yaml:"server,omitempty"`
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
@@ -217,6 +235,15 @@ type Ldap struct {
 	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
 	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
 	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
+	// Test is auth credentials used for OIDC integration tests
+	Test struct {
+		Username string `yaml:"username,omitempty"`
+		Password string `yaml:"password,omitempty"`
+	} `yaml:"test,omitempty"`
+}
+
+func (ldap Ldap) GetConnectionURL() string {
+	return fmt.Sprintf("ldaps://%s:%s", ldap.Host, ldap.Port)
 }
 
 type Kubernetes struct {
@@ -284,13 +311,16 @@ type Monitoring struct {
 type Prometheus struct {
 	Version     string                `yaml:"version,omitempty"`
 	Disabled    bool                  `yaml:"disabled,omitempty"`
-	Persistence PrometheusPersistence `yaml:"persistence,omitempty"` // Persistence settings
+	Persistence PrometheusPersistence `yaml:"persistence,omitempty"`
 }
 
 type PrometheusPersistence struct {
-	Enabled      bool   `yaml:"enabled,omitempty"`      // Enable persistence for Prometheus
-	StorageClass string `yaml:"storageClass,omitempty"` // Storage class to use. If not set default one will be used
-	Capacity     string `yaml:"capacity,omitempty"`     // Capacity. Required if persistence is enabled
+	// Enable persistence for Prometheus
+	Enabled bool `yaml:"enabled,omitempty"`
+	// Storage class to use. If not set default one will be used
+	StorageClass string `yaml:"storageClass,omitempty"`
+	// Capacity. Required if persistence is enabled
+	Capacity string `yaml:"capacity,omitempty"`
 }
 
 type Grafana struct {
@@ -312,7 +342,7 @@ type GitOps struct {
 	Namespace string `yaml:"namespace,omitempty"`
 
 	// The URL to git repository to clone
-	GitUrl string `yaml:"gitUrl"`
+	GitURL string `yaml:"gitUrl"`
 
 	// The git branch to use (default: master)
 	GitBranch string `yaml:"gitBranch,omitempty"`
@@ -363,16 +393,16 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled              bool     `yaml:"disabled"`
-	Version               string   `yaml:"version"`
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version"`
 	// Mode. Should be client or obeservability.
-	Mode                  string   `yaml:"mode,omitempty"`
+	Mode string `yaml:"mode,omitempty"`
 	// Bucket to store metrics. Should be the same across all environments
-	Bucket                string   `yaml:"bucket,omitempty"`
+	Bucket string `yaml:"bucket,omitempty"`
 	// Only for observability mode. List of client sidecars in <hostname>:<port> format
-	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`
+	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
-	EnableCompactor        bool     `yaml:"enableCompactor,omitempty"`
+	EnableCompactor bool `yaml:"enableCompactor,omitempty"`
 }
 
 type FluentdOperator struct {
@@ -397,13 +427,69 @@ type Consul struct {
 }
 
 type Vault struct {
-	Version   string `yaml:"version"`
-	Disabled  bool   `yaml:"disabled,omitempty"`
-	AccessKey string `yaml:"accessKey,omitempty"`
-	SecretKey string `yaml:"secretKey,omitempty"`
-	KmsKeyId  string `yaml:"kmsKeyId,omitempty"`
-	Region    string `yaml:"region,omitempty"`
-	Consul    Consul `yaml:"consul,omitempty"`
+	Version string `yaml:"version"`
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token,omitempty"`
+	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
+	Roles         map[string]map[string]interface{} `yaml:"roles,omitempty"`
+	Policies      map[string]VaultPolicy            `yaml:"policies,omitempty"`
+	GroupMappings map[string][]string               `yaml:"groupMappings,omitempty"`
+	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
+	ExtraConfig map[string]map[string]interface{} `yaml:"config,omitempty"`
+	Disabled    bool                              `yaml:"disabled,omitempty"`
+	AccessKey   string                            `yaml:"accessKey,omitempty"`
+	SecretKey   string                            `yaml:"secretKey,omitempty"`
+	// The AWS KMS ARN Id to use to unseal vault
+	KmsKeyID string `yaml:"kmsKeyId,omitempty"`
+	Region   string `yaml:"region,omitempty"`
+	Consul   Consul `yaml:"consul,omitempty"`
+}
+type VaultPolicy map[string]VaultPolicyPath
+
+type VaultPolicyPath struct {
+	Capabilities      []string            `yaml:"capabilities,omitempty"`
+	DeniedParameters  map[string][]string `yaml:"denied_parameters,omitempty"`
+	AllowedParameters map[string][]string `yaml:"allowed_parameters,omitempty"`
+}
+
+func (vaultPolicy VaultPolicy) String() string {
+	s := ""
+	for path, policy := range vaultPolicy {
+		s += fmt.Sprintf(`
+		path "%s" {
+			capabilities = [%s]
+			denied_parameters = {
+				%s
+			}
+			allowed_parameters {
+				%s
+			}
+		}
+
+		`, path, getCapabilities(policy.Capabilities),
+			getParameters(policy.DeniedParameters),
+			getParameters(policy.AllowedParameters))
+	}
+	return s
+}
+
+func getParameters(params map[string][]string) string {
+	s := []string{}
+	for param, keys := range params {
+		s = append(s, fmt.Sprintf(`"%s" = [%s]`, param, strings.Join(wrap("\"", keys...), ",")))
+	}
+	return strings.Join(s, "\n")
+}
+func getCapabilities(capabilities []string) string {
+	return strings.Join(wrap("\"", capabilities...), ",")
+}
+
+func wrap(with string, array ...string) []string {
+	out := []string{}
+	for _, item := range array {
+		out = append(out, with+item+with)
+	}
+	return out
 }
 
 type ECK struct {
@@ -433,15 +519,10 @@ type Connection struct {
 	Verify   string `yaml:"verify,omitempty"`
 }
 
-
-
-
-
 type AuditConfig struct {
-	Disabled  bool   `yaml:"disabled,omitempty"`
-	PolicyFile 	string 	`yaml:"auditPolicyFile,omitempty"`
+	Disabled         bool             `yaml:"disabled,omitempty"`
+	PolicyFile       string           `yaml:"auditPolicyFile,omitempty"`
 	ApiServerOptions ApiServerOptions `yaml:"kubeApiServerOptions,omitempty"`
-
 }
 type ApiServerOptions struct {
 	LogOptions AuditLogOptions `yaml:",inline"`
@@ -451,12 +532,16 @@ type AuditLogOptions struct {
 	// Naming is aligned to kube-apiserver parameters
 	// and kubeadmConfigPatches apiServer.extraArgs key values
 	Path       string `yaml:"audit-log-path,omitempty"`
-	MaxAge     int `yaml:"audit-log-maxage,omitempty"`
-	MaxBackups int `yaml:"audit-log-maxbackup,omitempty"`
-	MaxSize    int `yaml:"audit-log-maxsize,omitempty"`
+	MaxAge     int    `yaml:"audit-log-maxage,omitempty"`
+	MaxBackups int    `yaml:"audit-log-maxbackup,omitempty"`
+	MaxSize    int    `yaml:"audit-log-maxsize,omitempty"`
 	Format     string `yaml:"audit-log-format,omitempty"`
 }
 
+type ConfigMapReloader struct {
+	Version  string `yaml:"version"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+}
 
 func (c Connection) GetURL() string {
 	url := c.URL
@@ -488,5 +573,3 @@ func (p *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(p)
 	return string(data)
 }
-
-

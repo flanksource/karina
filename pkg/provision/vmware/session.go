@@ -124,18 +124,18 @@ func (s *Session) FindByUUID(ctx context.Context, uuid string) (object.Reference
 }
 
 // FindVM finds a template based either on a UUID or name.
-func (s Session) FindVM(nameOrId string) (*object.VirtualMachine, error) {
-	tpl, err := s.findVmByUuid(nameOrId)
+func (s Session) FindVM(nameOrID string) (*object.VirtualMachine, error) {
+	tpl, err := s.findVMByUUID(nameOrID)
 	if err != nil {
 		return nil, fmt.Errorf("findVM: failed to find VM by UUID: %v", err)
 	}
 	if tpl != nil {
 		return tpl, nil
 	}
-	return s.findVmByName(nameOrId)
+	return s.findVMByName(nameOrID)
 }
 
-func (s Session) findVmByUuid(templateID string) (*object.VirtualMachine, error) {
+func (s Session) findVMByUUID(templateID string) (*object.VirtualMachine, error) {
 	if !isValidUUID(templateID) {
 		return nil, nil
 	}
@@ -149,8 +149,7 @@ func (s Session) findVmByUuid(templateID string) (*object.VirtualMachine, error)
 	return nil, nil
 }
 
-func (s Session) findVmByName(templateID string) (*object.VirtualMachine, error) {
-
+func (s Session) findVMByName(templateID string) (*object.VirtualMachine, error) {
 	tpl, err := s.Finder.VirtualMachine(context.TODO(), templateID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to find tempate by name %q", templateID)

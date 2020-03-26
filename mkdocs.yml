@@ -40,7 +40,12 @@ nav:
                 - KIND: ./admin-guide/provisioning/kind.md
           - Security:
                 - Protecting secrets with SOPS: ./admin-guide/index.md
-    - Developer Guide: ./developer-guide/index.md
+    - Developer Guide: 
+      - Quickstart: ./developer-guide/index.html#quickstart
+      - Documentation: ./developer-guide/index.html#documentation
+      - Common Issues: ./developer-guide/index.html#common-issues
+      - Reference: ./developer-guide/make-targets.md
+Make Targets:
     - Reference:
           - CLI: ./cli/platform-cli.md
           - Configuration: ./reference/config.md

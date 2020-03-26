@@ -9,7 +9,6 @@ import (
 )
 
 func ConformanceTest(p *platform.Platform, options ConformanceTestOptions) error {
-
 	sonobuoy := p.GetBinaryWithKubeConfig("sonobuoy")
 	args := ""
 	args += fmt.Sprintf(" --wait=%d --wait-output Spinner", options.Wait)
@@ -25,10 +24,10 @@ func ConformanceTest(p *platform.Platform, options ConformanceTestOptions) error
 	}
 
 	if err := sonobuoy("run %s", args); err != nil {
-		return fmt.Errorf("Error submitting sonobuoy tests: %v", err)
+		return fmt.Errorf("error submitting sonobuoy tests: %v", err)
 	}
 	if err := sonobuoy("retrieve %s", options.OutputDir); err != nil {
-		return fmt.Errorf("Error retrieving sonobuoy test results: %v", err)
+		return fmt.Errorf("error retrieving sonobuoy test results: %v", err)
 	}
 	return sonobuoy("delete --all")
 }
