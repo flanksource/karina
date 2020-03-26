@@ -7,7 +7,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.1.3
+	github.com/flanksource/commons v1.1.4
 	github.com/flanksource/yaml v0.0.0-20200322131016-b7b2608b8702
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
 	github.com/gogo/protobuf v1.3.1 // indirect
@@ -40,7 +40,6 @@ require (
 )
 
 replace (
-	github.com/flanksource/commons v1.1.3 => github.com/teodor-pripoae/commons v0.0.0-20200322144710-efd1957de75c
 	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
