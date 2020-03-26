@@ -2,12 +2,14 @@ package types
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"net/url"
 
-	"strings"
+	"gopkg.in/yaml.v2"
 
 	"github.com/flanksource/commons/certs"
-	"gopkg.in/yaml.v2"
 
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
@@ -525,7 +527,8 @@ type AuditConfig struct {
 	ApiServerOptions ApiServerOptions `yaml:"kubeApiServerOptions,omitempty"`
 }
 type ApiServerOptions struct {
-	LogOptions AuditLogOptions `yaml:",inline"`
+	LogOptions AuditLogOptions 				`yaml:",inline"`
+	WebhookOptions AuditWebhookOptions 		`yaml:",inline"`
 }
 
 type AuditLogOptions struct {
@@ -539,6 +542,16 @@ type AuditLogOptions struct {
 	MaxBackups int    `yaml:"audit-log-maxbackup,omitempty"`
 	MaxSize    int    `yaml:"audit-log-maxsize,omitempty"`
 	Format     string `yaml:"audit-log-format,omitempty"`
+}
+
+type AuditWebhookOptions struct {
+	// Naming is aligned to kube-apiserver parameters
+	// and kubeadmConfigPatches apiServer.extraArgs key values
+	// These specifically align to the following apiserver code (release 1.18 shown)
+	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L141-L151
+	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L565-L576
+	ConfigFile     string         `yaml:"audit-webhook-config-file,omitempty"`
+	InitialBackoff time.Duration  `yaml:"audit-webhook-initial-backoff,omitempty"`
 }
 
 type ConfigMapReloader struct {
@@ -576,3 +589,7 @@ func (p *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(p)
 	return string(data)
 }
+
+
+
+
