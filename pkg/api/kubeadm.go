@@ -96,11 +96,17 @@ type HostPathMount struct {
 	PathType HostPathType `yaml:"pathType,omitempty"`
 }
 
+func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.ApiServerOptions) {
+	c.SetAPIServerExtraAuditLogArgs(logOptions.LogOptions)
+	c.SetAPIServerExtraAuditWebhookArgs(logOptions.WebhookOptions)
+}
 
-func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.AuditLogOptions)  {
+func (c *ClusterConfiguration) SetAPIServerExtraAuditLogArgs(logOptions types.AuditLogOptions)  {
+	// Options for logfiles
 	if logOptions.Path != "" {
 		c.APIServer.ExtraArgs["audit-log-path"] = logOptions.Path
 	}
+
 	if logOptions.Format != "" {
 		c.APIServer.ExtraArgs["audit-log-format"] = logOptions.Format
 	}
@@ -113,5 +119,16 @@ func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.Audit
 	if logOptions.MaxSize != 0 {
 		c.APIServer.ExtraArgs["audit-log-maxsize"] = strconv.Itoa(logOptions.MaxSize)
 	}
+}
+
+func (c *ClusterConfiguration) SetAPIServerExtraAuditWebhookArgs(logOptions types.AuditWebhookOptions)  {
+	// Options for webhooks
+	if logOptions.ConfigFile != "" {
+		c.APIServer.ExtraArgs["audit-webhook-config-file"] = logOptions.ConfigFile
+	}
+	if logOptions.InitialBackoff != 0 {
+		c.APIServer.ExtraArgs["audit-webhook-initial-backoff"] = logOptions.InitialBackoff.String()
+	}
+
 }
 
