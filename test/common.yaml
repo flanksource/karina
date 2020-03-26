@@ -145,6 +145,9 @@ auditConfig:
     audit-log-maxbackup: 3
     audit-log-maxsize: 10
     audit-log-format: json
+    # Audit Webhook configs:
+    audit-webhook-config-file: ./test/fixtures/audit-webhoop-config.yaml
+    audit-webhook-initial-backoff: 2s
 gitops:
   - name: platform-cli
     namespace: gitops-e2e-test
