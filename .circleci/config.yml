@@ -10,10 +10,13 @@ go: &go
 jobs:
   lint:
     <<: *go
+    resource_class: large
     steps:
       - checkout
       - run: go run test/linter/main.go
       - run: ./scripts/golint.sh
+      - store_test_results:
+          path: test-results
   test:
     resource_class: large
     environment:
