@@ -249,6 +249,7 @@ func init() {
 			run(func(p *platform.Platform, test *console.TestResults) {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
+				audit.Test(p, test)
 				velero.Test(p, test)
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
@@ -260,7 +261,7 @@ func init() {
 				postgresOperator.Test(p, test)
 				sealedsecrets.Test(p, test)
 				vault.Test(p, test)
-				audit.Test(p, test)
+
 			})
 		},
 	})
