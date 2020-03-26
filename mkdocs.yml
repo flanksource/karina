@@ -34,6 +34,7 @@ nav:
                 - Multi-Cluster (Thanos): ./admin-guide/index.md
           - Docker Registry (Harbor): ./admin-guide/index.md
           - Configuration:
+                - Templating: ./admin-guide/configuration/templating.md
                 - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
           - Provisioning:
                 - vSphere: ./admin-guide/vsphere.md

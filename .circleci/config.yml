@@ -10,7 +10,7 @@ go: &go
 jobs:
   lint:
     <<: *go
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - run: go run test/linter/main.go

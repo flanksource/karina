@@ -3,17 +3,14 @@ package phases
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-
 	"github.com/flanksource/commons/certs"
-	// initialize konfigadm
-	_ "github.com/moshloop/konfigadm/pkg"
+	"github.com/flanksource/yaml"
+	_ "github.com/moshloop/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var envVars = map[string]string{
