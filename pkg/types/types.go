@@ -531,6 +531,9 @@ type ApiServerOptions struct {
 type AuditLogOptions struct {
 	// Naming is aligned to kube-apiserver parameters
 	// and kubeadmConfigPatches apiServer.extraArgs key values
+	// These specifically align to the following apiserver code (release 1.18 shown)
+	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L126-L139
+	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L473-L488
 	Path       string `yaml:"audit-log-path,omitempty"`
 	MaxAge     int    `yaml:"audit-log-maxage,omitempty"`
 	MaxBackups int    `yaml:"audit-log-maxbackup,omitempty"`
