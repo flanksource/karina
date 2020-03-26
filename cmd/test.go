@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
@@ -232,6 +233,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "audit",
+		Short: "Test kubernetes audit",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(audit.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
 		Args:  cobra.MinimumNArgs(0),
@@ -250,6 +260,7 @@ func init() {
 				postgresOperator.Test(p, test)
 				sealedsecrets.Test(p, test)
 				vault.Test(p, test)
+				audit.Test(p, test)
 			})
 		},
 	})
