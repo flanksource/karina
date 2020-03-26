@@ -6,6 +6,7 @@ GO_MOD_CHECKSUM=$(sha1sum go.mod | awk -F " " '{print $1}')
 GO_SUM_CHECKSUM=$(sha1sum go.sum | awk -F " " '{print $1}')
 
 # Check that go.sum and go.mod are correctly checked out
+make pack
 go mod tidy
 
 NEW_GO_MOD_CHECKSUM=$(sha1sum go.mod | awk -F " " '{print $1}')
@@ -24,7 +25,7 @@ go run test/linter/main.go
 
 # Run golanci-lint
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.24.0
-make pack && make
+make
 GOGC=20 golangci-lint run --verbose --concurrency 1
 
 
