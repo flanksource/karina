@@ -138,7 +138,9 @@ auditConfig:
   #disabled: true
   auditPolicyFile: ./test/fixtures/audit-policy.yaml
   kubeApiServerOptions:
-    audit-log-path: /var/auditLogs/audit.logs
+    # Audit Log configs:
+    # audit-log-path: /var/auditLogs/audit.logs
+    audit-log-path: "-" # log to stdout, i.e. apiserver logs
     audit-log-maxage: 2
     audit-log-maxbackup: 3
     audit-log-maxsize: 10
