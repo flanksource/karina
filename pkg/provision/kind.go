@@ -81,7 +81,7 @@ func KindCluster(platform *platform.Platform) error {
 
 		auditPolicyPath, err := filepath.Abs(platform.AuditConfig.PolicyFile)
 		if err != nil {
-			return errors.Wrap(err, "failed to expand ca file path")
+			return errors.Wrap(err, "failed to expand audit config file path")
 		}
 
 		mnts  := &kindConfig.Nodes[0].ExtraMounts
