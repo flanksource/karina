@@ -139,7 +139,6 @@ auditConfig:
   auditPolicyFile: ./test/fixtures/audit-policy.yaml
   kubeApiServerOptions:
     # Audit Log configs:
-    # audit-log-path: /var/auditLogs/audit.logs
     audit-log-path: /var/log/audit/cluster-audit.log
     audit-log-maxage: 2
     audit-log-maxbackup: 3
