@@ -157,7 +157,7 @@ data:
       # set via environment variable
       # secret: placeholder
       debug:
-        addr: localhost:5001
+        addr: :5001
         prometheus:
           enabled: true
           path: "/metrics"
