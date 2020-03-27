@@ -140,14 +140,11 @@ auditConfig:
   kubeApiServerOptions:
     # Audit Log configs:
     # audit-log-path: /var/auditLogs/audit.logs
-    audit-log-path: "-" # log to stdout, i.e. apiserver logs
+    audit-log-path: /var/log/audit/cluster-audit.log
     audit-log-maxage: 2
     audit-log-maxbackup: 3
     audit-log-maxsize: 10
     audit-log-format: json
-    # Audit Webhook configs:
-    audit-webhook-config-file: ./test/fixtures/audit-webhoop-config.yaml
-    audit-webhook-initial-backoff: 2s
 gitops:
   - name: platform-cli
     namespace: gitops-e2e-test
