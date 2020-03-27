@@ -1027,3 +1027,24 @@ func (c *Client) GetMasterNode() (string, error) {
 	}
 	return masterNode, nil
 }
+
+// Returns the first pod found by label
+func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector string) (string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return "", fmt.Errorf("GetFirstPodByLabelSelector: Failed to get clientset: %v", err)
+	}
+
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return "", fmt.Errorf("GetFirstPodByLabelSelector: Failed to query for %v in namespace %v: %v", labelSelector, namespace, err)
+	}
+
+	if pods.Size() < 1 {
+		return "", fmt.Errorf("GetFirstPodByLabelSelector: No pods found for query for %v in namespace %v: %v", labelSelector, namespace, err)
+	}
+
+	return string(pods.Items[0].Name), nil
+}
