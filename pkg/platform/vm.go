@@ -32,6 +32,7 @@ func (vm *VM) UUID() string {
 	return vm.vm.UUID(context.Background())
 }
 
+// nolint: golint, stylecheck
 func (vm *VM) GetVmID() string {
 	return vm.vm.Reference().Value
 }
@@ -74,7 +75,7 @@ func (vm *VM) GetIP(timeout time.Duration) (string, error) {
 	deadline := time.Now().Add(timeout)
 	for {
 		if time.Now().After(deadline) {
-			return "", fmt.Errorf("Timeout exceeded")
+			return "", fmt.Errorf("timeout exceeded")
 		}
 		mo, err := vm.GetVirtualMachine(context.TODO())
 		if err != nil {
@@ -97,6 +98,7 @@ func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	}
 
 	for _, dev := range devices.SelectByType((*vim.VirtualEthernetCard)(nil)) {
+		// nolint: gosimple
 		switch dev.(type) {
 		case *vim.VirtualVmxnet3:
 			net := dev.(*vim.VirtualVmxnet3)
