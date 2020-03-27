@@ -6,6 +6,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/quack"
+
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
@@ -263,6 +265,15 @@ func init() {
 		},
 	})
 
+	Test.AddCommand(&cobra.Command{
+		Use:   "quack",
+		Short: "Test quack",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(quack.Test)
+		},
+	})
+
 	testAllCmd := &cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
@@ -277,6 +288,7 @@ func init() {
 					sealedsecrets.Test(p, test)
 					flux.Test(p, test)
 					configmapreloader.Test(p, test, args, cmd)
+					quack.Test(p, test)
 				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
