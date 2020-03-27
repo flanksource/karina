@@ -60,6 +60,7 @@ func main() {
 		cmd.NSX,
 		cmd.Vault,
 		cmd.Config,
+		cmd.Logs,
 	)
 
 	if len(commit) > 8 {
