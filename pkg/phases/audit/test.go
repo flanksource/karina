@@ -3,8 +3,9 @@ package audit
 import (
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"time"
-     "encoding/json"
+	"path/filepath"
+
+
 )
 
 
@@ -12,12 +13,11 @@ const JUnitAuditConfigClass = "AuditConfig"
 const jUnitAuditApiServerStateClass = "AuditApiServerState"
 
 func Test(p *platform.Platform, tr *console.TestResults) {
-	//tr.Passf("PassTest","Hello %v", "test")
-	//tr.Failf("FailTest","Hello %v", "test")
-
 	ac := p.AuditConfig
 
 	if ac == nil {
+		// nil is a failure as the implicit default if it is not specified
+		// should be 'disabled'
 		tr.Failf(JUnitAuditConfigClass,"There is no AuditConfig")
 		tr.Done()
 	}
@@ -27,27 +27,27 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 		tr.Done()
 	}
 
-	master, err := p.GetMasterNode()
-	tr.Skipf("%v", master)
-	if err != nil {
-		tr.Failf(JUnitAuditConfigClass,"Failed to get a defined master node: %v",  err)
-		return
-	}
-
 	if p.AuditConfig.ApiServerOptions.LogOptions.Path != "" {
-		//stdout, err := p.ExecutePodf(master, 2*time.Minute, "crictl ps --name kube-apiserver -o json")
-		//if err != nil {
-		//	tr.Failf(jUnitAuditApiServerStateClass,"Failed to query for apiserver, crictl invocation error: %v",  err)
-		//	return
-		//}
-		//p.Get("kube-system", "")
 
-
-		err := p.WaitFor()
+		_, err := p.GetClientset()
 		if err != nil {
-			tr.Failf(jUnitAuditApiServerStateClass,"Failed to get a active master node: %v",  err)
-			return
+			tr.Failf(JUnitAuditConfigClass,"Failed to get k8s client: %v",err)
+			tr.Done()
 		}
+
+		pod, err := p.Client.GetFirstPodByLabelSelector("kube-system","component=kube-apiserver")
+		if err != nil {
+			tr.Failf(jUnitAuditApiServerStateClass,"Failed to get api-server pod: %v",err)
+			tr.Done()
+		}
+
+		dir := filepath.Dir(ac.ApiServerOptions.LogOptions.Path)
+		stdout, stderr, err := p.ExecutePodf("kube-system",pod, "kube-apiserver","/usr/bin/du","-s", dir  )
+		if err != nil || stderr != ""{
+			tr.Failf(jUnitAuditApiServerStateClass,"Failed to get api-server pod: %v\n%v",err,stderr)
+			tr.Done()
+		}
+		tr.Passf(jUnitAuditApiServerStateClass,"api-server pod log size is: %v",stdout)
 
 	}
 
