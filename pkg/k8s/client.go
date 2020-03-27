@@ -1005,3 +1005,25 @@ func NewCommandJob(node, command string) v1.PodSpec {
 		HostIPC:     true,
 	}
 }
+
+// Returns the first node found labeled as a master
+func (c *Client) GetMasterNode() (string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return "", fmt.Errorf("GetMasterNode: Failed to get clientset: %v", err)
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	var masterNode string
+	for _, node := range nodes.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			masterNode = node.Name
+			break
+		}
+	}
+	return masterNode, nil
+}

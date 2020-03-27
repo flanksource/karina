@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"os"
 	"strings"
@@ -654,24 +653,5 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	return s3, nil
 }
 
-// Returns the first node found labeled as a master
-func (platform *Platform) GetMasterNode() (string, error) {
-	client, err := platform.GetClientset()
-	if err != nil {
-		return "", err
-	}
 
-	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
-	if err != nil {
-		return "", err
-	}
 
-	var masterNode string
-	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
-		}
-	}
-	return masterNode, nil
-}
