@@ -92,6 +92,7 @@ s3:
   access_key: minio
   secret_key: minio123
   region: us-east1
+  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
 velero:
   bucket: velero
 thanos:

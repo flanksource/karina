@@ -182,6 +182,8 @@ type S3 struct {
 	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
 	// S3 buckets
 	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
+	// Provide a KMS Master Key
+	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {
