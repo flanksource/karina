@@ -522,6 +522,18 @@ type ConfigMapReloader struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
+type Elasticsearch struct {
+	Version        string                     `yaml:"version"`
+	Mem            string                     `yaml:"mem,omitempty"`
+	Replicas       int                        `yaml:"replicas,omitempty"`
+	Persistence    *ElasticsearchPersistence  `yaml:"persistence,omitempty"`
+	Disabled       bool                       `yaml:"disabled,omitempty"`
+}
+
+type ElasticsearchPersistence struct {
+	Size string  `yaml:"size,omitempty"`
+}
+
 func (c Connection) GetURL() string {
 	url := c.URL
 	if c.Port != "" && !strings.Contains(url, ":") {
