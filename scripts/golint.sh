@@ -28,4 +28,6 @@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/insta
 make
 GOGC=20 golangci-lint run --verbose --concurrency 1
 
-
+make pack && make
+mkdir -p test-results
+GOGC=1 golangci-lint run --verbose --print-resources-usage  --out-format=junit-xml > test-results/lint.xml
