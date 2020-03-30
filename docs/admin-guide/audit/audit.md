@@ -8,35 +8,28 @@ Karina allows for auditing to be configured at cluster creation as described bel
 
 ## Configure Auditing in `config.yaml`.
 
-The implicit default is not to audit:
-
-```yaml
-auditConfig:
-  disabled: true
-```
 Karina supports the log backend, which writes audit events to files.
 
-If an `auditConfig` section is specified in the config YAML the following configurations can be supplied:
+If an `kubernetes.auditing` section is specified in the config YAML the following configurations can be supplied:
 
 ```yaml
-auditConfig:
-  #disabled: true
-  auditPolicyFile: ./test/fixtures/audit-policy.yaml
-  kubeApiServerOptions:
-    # Audit Log configs:
-    audit-log-path: /var/log/audit/cluster-audit.log
-    audit-log-maxage: 2
-    audit-log-maxbackup: 3
-    audit-log-maxsize: 10
-    audit-log-format: json
+kubernetes:
+  auditing:
+    policyFile: ./test/fixtures/audit-policy.yaml
+  apiServerExtraArgs:
+    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-maxsize": 1024
+    "audit-log-maxage": 2
+    "audit-log-maxbackup": 3
+    "audit-log-format": legacy   # default is json
 ```
 The [official documentation describes](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#log-backend) the `kubeApiServerOptions` parameters.
 
 
 |Key                   | Description                                              |
 |----------------------|----------------------------------------------------------|
-| `auditPolicyFile`    | Gives the path to the audit policy file to use.<br/>This file will be injected into the master nodes<br/>to `/etc/flanksource/audit-policy/` and into the<br/>api-server pod to `/etc/kubernetes/policies/` and the<br/>api-server `--audit-policy-file` flag will be set to the <br/>correct value.                                           |
-| `audit-log-path`     | Specifies the path in the api-server pod that the audit logs are written to. <br>(a value of `'-'` indicates logging to the pod logs.) <br/> Sets the `--audit-log-path` flag.    |
+| `policyFile`         | Gives the path to the audit policy file to use.<br/>This file will be injected into the master nodes<br/>to `/etc/flanksource/audit-policy/` and into the<br/>api-server pod to `/etc/kubernetes/policies/` and the<br/>api-server `--audit-policy-file` flag will be set to the <br/>correct value.                                           |
+| `audit-log-path`     | Specifies the path in the api-server pod that the audit logs are written to. <br>(a value of `'-'` indicates logging to the pod logs.) <br/> If not specified, it defaults to `/var/log/audit/cluster-audit.log`.<br/>Sets the `--audit-log-path` flag.    |
 | `audit-log-maxage`   | Specifies the maximum number of days to retain log files.<br/> Sets the `--audit-log-maxage` flag.                      |
 | `audit-log-maxbackup`| Specifies the maximum number of audit log files to <br/>retain when logs are rotated past when they reach <br/>maximum size.<br/> Sets the `--audit-log-maxbackup` flag.                   |
 | `audit-log-maxsize`  | Specifies the maximum size in megabytes of the audit <br/>log file before it gets rotated <br/>Sets the `--audit-log-maxsize` flag.                   |
