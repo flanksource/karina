@@ -3,7 +3,6 @@ package provision
 import (
 	"fmt"
 
-	types "github.com/moshloop/platform-cli/pkg/types"
 	"github.com/pkg/errors"
 
 	"io/ioutil"
@@ -80,8 +79,8 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
-	if !platform.AuditConfig.Disabled {
-		auditPolicyPath, err := filepath.Abs(platform.AuditConfig.PolicyFile)
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		auditPolicyPath, err := filepath.Abs(platform.Kubernetes.AuditConfig.PolicyFile)
 		if err != nil {
 			return errors.Wrap(err, "failed to expand audit config file path")
 		}
@@ -150,21 +149,18 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
 
-	if !platform.AuditConfig.Disabled {
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
 		clusterConfig.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
 
 		vols := &clusterConfig.APIServer.ExtraVolumes
 		*vols = append(*vols, api.HostPathMount{
 			Name:      "audit-spec",
-			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.AuditConfig.PolicyFile)),
+			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.Kubernetes.AuditConfig.PolicyFile)),
 			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		})
 
-		if logOptions := platform.AuditConfig.APIServerOptions; logOptions != (types.APIServerOptions{}) {
-			clusterConfig.SetAPIServerExtraAuditArgs(logOptions)
-		}
 	}
 
 	clusterConfig.ControllerManager.ExtraArgs = nil
