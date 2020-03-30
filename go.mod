@@ -21,6 +21,7 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/moshloop/konfigadm v0.4.6
+	github.com/olivere/elastic/v7 v7.0.13
 	github.com/onsi/gomega v1.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.4.1
