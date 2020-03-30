@@ -1108,7 +1108,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 	}
 }
 
-// Returns the name of first node found labeled as a master
+// GetMasterNode returns the name of the first node found labelled as a master
 func (c *Client) GetMasterNode() (string, error) {
 	client, err := c.GetClientset()
 	if err != nil {
