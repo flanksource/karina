@@ -36,9 +36,6 @@ func Cleanup(platform *platform.Platform) error {
 	var wg sync.WaitGroup
 	for _, _vm := range vms {
 		vm := _vm
-		if platform.DryRun {
-			continue
-		}
 		wg.Add(1)
 		go func() {
 			vm.Terminate() // nolint: errcheck

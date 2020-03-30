@@ -52,7 +52,6 @@ func (vm *VM) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 			}
 
 			for _, nic := range c.Val.(vim.ArrayOfGuestNicInfo).GuestNicInfo {
-				fmt.Printf("%v %s\n", nic.Connected, nic.Network)
 				mac := nic.MacAddress
 				if mac == "" || nic.IpConfig == nil {
 					continue
@@ -66,7 +65,6 @@ func (vm *VM) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 				}
 			}
 		}
-
 		return len(nics) == 0
 	})
 	return nics, err
@@ -175,16 +173,14 @@ func (vm *VM) WaitForIP() (string, error) {
 
 // PowerOff a VM and wait for shutdown to complete,
 func (vm *VM) PowerOff() error {
-	log.Infof("[%s] powering off\n", vm)
+	log.Infof("[%s] powering off", vm)
 	task, err := vm.vm.PowerOff(vm.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to power off: %s", vm)
 	}
 	info, err := task.WaitForResult(vm.ctx, nil)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to wait for results: %s", vm)
-	} else if info.State == "success" {
-		log.Debugf("[%s] powered off\n", vm)
+	if info.State == "success" {
+		log.Debugf("[%s] powered off", vm)
 	} else {
 		return errors.Errorf("Failed to poweroff %s, %v", vm, info)
 	}
@@ -193,7 +189,7 @@ func (vm *VM) PowerOff() error {
 
 // Shutdown a VM and wait for shutdown to complete,
 func (vm *VM) Shutdown() error {
-	log.Infof("Gracefully shutting down %s\n", vm.Name)
+	log.Infof("[%s] gracefully shutting down", vm.Name)
 
 	err := vm.vm.ShutdownGuest(vm.ctx)
 	if err != nil {
@@ -202,7 +198,6 @@ func (vm *VM) Shutdown() error {
 	return nil
 }
 
-// nolint: unused, deadcode
 func removeDNS(vm *VM) {
 	ip, err := vm.GetIP(time.Second * 5)
 	if err != nil {
@@ -220,7 +215,7 @@ func removeDNS(vm *VM) {
 }
 
 func (vm *VM) Terminate() error {
-	log.Infof("Terminating %s", vm.Name)
+	log.Infof("[%s] terminating", vm.Name)
 	if vm.Platform.DryRun {
 		log.Infof("Not terminating in dry-run mode %s", vm.Name)
 		return nil
@@ -230,31 +225,28 @@ func (vm *VM) Terminate() error {
 	if power == vim.VirtualMachinePowerStatePoweredOn {
 		err := vm.Shutdown()
 		if err != nil {
-			log.Infof("Graceful shutdown of %s failed, powering off %s\n", vm, err)
+			log.Infof("[%s] graceful shutdown failed, powering off %s", vm, err)
 			if err := vm.PowerOff(); err != nil {
-				log.Infof("Failed to power off %s %s", vm, err)
+				log.Infof("[%s] failed to power off:%s", vm, err)
 			}
 		}
 	} else {
 		if err := vm.PowerOff(); err != nil {
-			log.Warnf("Failed to power off %s: %v", vm.Name, err)
+			log.Warnf("[%s] failed to power off %v", vm.Name, err)
 		}
 	}
-	if err := vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff); err != nil {
-		return errors.Wrapf(err, "Failed to wait for power state")
-	}
+	vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
 	task, err := vm.vm.Destroy(vm.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete %s", vm)
 	}
 	info, err := task.WaitForResult(vm.ctx, nil)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to wait for results %s", vm)
-	} else if info.State == "success" {
+	if info.State == "success" {
 		log.Debugf("[%s] terminated\n", vm)
 	} else {
 		return errors.Errorf("Failed to delete %s, %v", vm, info)
 	}
 
 	return nil
+
 }

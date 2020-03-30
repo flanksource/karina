@@ -34,11 +34,11 @@ func Init(p *platform.Platform) error {
 		stdout, stderr, err = p.ExecutePodf("vault", "vault-0", "vault", "/bin/vault", "operator", "init", "-tls-skip-verify")
 		log.Infof("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 
-		tokens := regexp.MustCompile(`(?m)Initial Root Token: (\w+).`).FindStringSubmatch(stdout)
+		tokens := regexp.MustCompile(`(?m)Initial Root Token: (s.\w+).`).FindStringSubmatch(stdout)
 		if tokens == nil {
-			return fmt.Errorf("not root token found")
+			return fmt.Errorf("Not root token found")
 		}
-		log.Infof("Using token: '%s'", tokens[0])
+
 		p.Vault.Token = tokens[0]
 	}
 	config := &api.Config{
@@ -54,7 +54,6 @@ func Init(p *platform.Platform) error {
 	}
 
 	client.SetToken(p.Vault.Token)
-
 	if err := configurePKI(client, p); err != nil {
 		return err
 	}
@@ -111,7 +110,7 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		mounts, _ = client.Sys().ListMounts() // nolint: ineffassign, staticcheck, errcheck
+		mounts, _ = client.Sys().ListMounts()
 	}
 
 	ingress := p.GetIngressCA()
@@ -123,7 +122,7 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("unknown CA type %v", ingress)
+		return fmt.Errorf("Unknown CA type %v", ingress)
 	}
 
 	for role, config := range p.Vault.Roles {
@@ -155,7 +154,7 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 		"bindpass":     p.Ldap.Password,
 		"userdn":       p.Ldap.UserDN,
 		"groupdn":      p.Ldap.GroupDN,
-		"groupfilter":  fmt.Sprintf("(&(objectClass=%s)({{.UserDN}}))", p.Ldap.GroupObjectClass),
+		"groupfilter":  fmt.Sprintf("(&(objectClass=%s)(member={{.UserDN}}))", p.Ldap.GroupObjectClass),
 		"groupattr":    p.Ldap.GroupNameAttr,
 		"userattr":     "cn",
 		"insecure_tls": "true",
