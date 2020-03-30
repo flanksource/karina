@@ -63,7 +63,14 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 	}
 
 
-
+	//assignment helper to supply default
+	wantedJson := func(s string) string{
+		if (s == "") {
+			return "json"
+		} else {
+			return s
+		}
+	}
 
 	var parameterTests = []struct {
 		description     string
@@ -78,7 +85,7 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 		{
 			description:	"Audit log format set correctly",
 			testParameter: "--audit-log-format",
-			wantValue: ac.ApiServerOptions.LogOptions.Format,
+			wantValue: wantedJson(ac.ApiServerOptions.LogOptions.Format),
 		},
 		{
 			description:	"Audit log file maximum age set correctly",
