@@ -16,6 +16,14 @@ ldap:
     username: test
     password: secret
 kubernetes:
+  auditing:
+    policyFile: ./test/fixtures/audit-policy.yaml
+  apiServerExtraArgs:
+    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-maxsize": 1GB
+    "audit-log-maxage": 2
+    "audit-log-maxbackup": 3
+    "audit-log-format": legacy   # default is json
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
@@ -134,16 +142,6 @@ sealedSecrets:
     cert: .certs/sealed-secrets-crt.pem
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
-auditConfig:
-  #disabled: true
-  auditPolicyFile: ./test/fixtures/audit-policy.yaml
-  kubeApiServerOptions:
-    # Audit Log configs:
-    audit-log-path: /var/log/audit/cluster-audit.log
-    audit-log-maxage: 2
-    audit-log-maxbackup: 3
-    audit-log-maxsize: 10
-    # audit-log-format: legacy   # default is json
 gitops:
   - name: platform-cli
     namespace: gitops-e2e-test
