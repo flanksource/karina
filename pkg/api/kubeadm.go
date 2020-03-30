@@ -1,11 +1,5 @@
 package api
 
-import (
-	"strconv"
-
-	"github.com/moshloop/platform-cli/pkg/types"
-)
-
 type HostPathType string
 
 const (
@@ -95,47 +89,4 @@ type HostPathMount struct {
 	ReadOnly bool `yaml:"readOnly,omitempty"`
 	// PathType is the type of the HostPath.
 	PathType HostPathType `yaml:"pathType,omitempty"`
-}
-
-// Set the APIServer ExtraArguments related to Audit logging from a supplied
-// github.com/moshloop/platform-cli/pkg/types/APIServerOptions
-func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.APIServerOptions) {
-	c.setAPIServerExtraAuditLogArgs(logOptions.LogOptions)
-	c.setAPIServerExtraAuditWebhookArgs(logOptions.WebhookOptions)
-}
-
-// Internal helper function to set the APIServer ExtraArguments related to Audit logging from a supplied
-// github.com/moshloop/platform-cli/pkg/types/AuditLogOptions
-// These options are for Audit logfiles only
-func (c *ClusterConfiguration) setAPIServerExtraAuditLogArgs(logOptions types.AuditLogOptions) {
-	// Options for logfiles
-	if logOptions.Path != "" {
-		c.APIServer.ExtraArgs["audit-log-path"] = logOptions.Path
-	}
-
-	if logOptions.Format != "" {
-		c.APIServer.ExtraArgs["audit-log-format"] = logOptions.Format
-	}
-	if logOptions.MaxAge != 0 {
-		c.APIServer.ExtraArgs["audit-log-maxage"] = strconv.Itoa(logOptions.MaxAge)
-	}
-	if logOptions.MaxBackups != 0 {
-		c.APIServer.ExtraArgs["audit-log-maxbackup"] = strconv.Itoa(logOptions.MaxBackups)
-	}
-	if logOptions.MaxSize != 0 {
-		c.APIServer.ExtraArgs["audit-log-maxsize"] = strconv.Itoa(logOptions.MaxSize)
-	}
-}
-
-// Internal helper function to set the APIServer ExtraArguments related to Audit logging from a supplied
-// github.com/moshloop/platform-cli/pkg/types/AuditWebhookOptions
-// These options are for Audit Webhooks only
-func (c *ClusterConfiguration) setAPIServerExtraAuditWebhookArgs(logOptions types.AuditWebhookOptions) {
-	// Options for webhooks
-	if logOptions.ConfigFile != "" {
-		c.APIServer.ExtraArgs["audit-webhook-config-file"] = logOptions.ConfigFile
-	}
-	if logOptions.InitialBackoff != 0 {
-		c.APIServer.ExtraArgs["audit-webhook-initial-backoff"] = logOptions.InitialBackoff.String()
-	}
 }
