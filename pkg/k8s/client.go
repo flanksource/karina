@@ -577,17 +577,17 @@ func (c *Client) ExposeIngress(namespace, service string, domain string, port in
 			},
 			Spec: v1beta1.IngressSpec{
 				TLS: []v1beta1.IngressTLS{
-					v1beta1.IngressTLS{
+					{
 						Hosts: []string{domain},
 					},
 				},
 				Rules: []v1beta1.IngressRule{
-					v1beta1.IngressRule{
+					{
 						Host: domain,
 						IngressRuleValue: v1beta1.IngressRuleValue{
 							HTTP: &v1beta1.HTTPIngressRuleValue{
 								Paths: []v1beta1.HTTPIngressPath{
-									v1beta1.HTTPIngressPath{
+									{
 										Backend: v1beta1.IngressBackend{
 											ServiceName: service,
 											ServicePort: intstr.FromInt(port),
@@ -970,7 +970,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 	return v1.PodSpec{
 		RestartPolicy: v1.RestartPolicyNever,
 		NodeName:      node,
-		Volumes: []v1.Volume{v1.Volume{
+		Volumes: []v1.Volume{{
 			Name: "root",
 			VolumeSource: v1.VolumeSource{
 				HostPath: &v1.HostPathVolumeSource{
@@ -978,7 +978,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				},
 			},
 		}},
-		Containers: []v1.Container{v1.Container{
+		Containers: []v1.Container{{
 			Name:  "shell",
 			Image: "docker.io/ubuntu:18.04",
 			Command: []string{
@@ -986,7 +986,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				"-c",
 				"chroot /chroot bash -c \"" + command + "\"",
 			},
-			VolumeMounts: []v1.VolumeMount{v1.VolumeMount{
+			VolumeMounts: []v1.VolumeMount{{
 				Name:      "root",
 				MountPath: "/chroot",
 			}},
@@ -995,7 +995,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 			},
 		}},
 		Tolerations: []v1.Toleration{
-			v1.Toleration{
+			{
 				// tolerate all values
 				Operator: "Exists",
 			},

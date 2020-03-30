@@ -567,7 +567,7 @@ func (platform *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.
 		db = postgres.NewPostgresql(clusterName)
 		db.Spec.Databases = databases
 		db.Spec.Users = map[string]postgres.UserFlags{
-			appUsername: postgres.UserFlags{
+			appUsername: {
 				"createdb",
 				"superuser",
 			},
@@ -652,6 +652,3 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	s3.SetCustomTransport(client.Transport)
 	return s3, nil
 }
-
-
-

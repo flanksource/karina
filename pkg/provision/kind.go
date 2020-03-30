@@ -2,6 +2,7 @@ package provision
 
 import (
 	"fmt"
+
 	types "github.com/moshloop/platform-cli/pkg/types"
 	"github.com/pkg/errors"
 
@@ -10,9 +11,7 @@ import (
 	"path"
 	"path/filepath"
 
-
 	"github.com/flanksource/yaml"
-
 
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
@@ -24,7 +23,7 @@ import (
 )
 
 var (
-	kindCADir = "/etc/flanksource/ingress-ca"
+	kindCADir    = "/etc/flanksource/ingress-ca"
 	kindAuditDir = "/etc/flanksource/audit-policy"
 )
 
@@ -76,7 +75,6 @@ func KindCluster(platform *platform.Platform) error {
 						HostPath:      path.Dir(caPath),
 						Readonly:      true,
 					},
-
 				},
 			},
 		},
@@ -88,13 +86,13 @@ func KindCluster(platform *platform.Platform) error {
 			return errors.Wrap(err, "failed to expand audit config file path")
 		}
 
-		mnts  := &kindConfig.Nodes[0].ExtraMounts
+		mnts := &kindConfig.Nodes[0].ExtraMounts
 
 		*mnts = append(*mnts, kindapi.Mount{
-				ContainerPath: kindAuditDir,
-				HostPath:      path.Dir(auditPolicyPath),
-				Readonly:      true,
-			})
+			ContainerPath: kindAuditDir,
+			HostPath:      path.Dir(auditPolicyPath),
+			Readonly:      true,
+		})
 	}
 
 	yml, err := yaml.Marshal(kindConfig)
@@ -169,13 +167,10 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 		}
 	}
 
-
-
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
 	clusterConfig.Networking.ServiceSubnet = ""
-
 
 	kubeadmPatches := []interface{}{
 		clusterConfig,
@@ -193,5 +188,3 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 
 	return result, nil
 }
-
-
