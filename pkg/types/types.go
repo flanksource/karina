@@ -544,17 +544,23 @@ type AuditLogOptions struct {
 }
 
 // This is used to supply a default value for Format
-func (c *AuditLogOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawAuditLogOptions AuditLogOptions
-	raw := rawAuditLogOptions{
-		Format: "json",
+func (c *APIServerOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawAPIServerOptions APIServerOptions
+	raw := rawAPIServerOptions{
+		LogOptions: AuditLogOptions{
+			Path:       "",
+			MaxAge:     0,
+			MaxBackups: 0,
+			MaxSize:    0,
+			Format:     "json",
+		},
 	}
 
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
 
-	*c = AuditLogOptions(raw)
+	*c = APIServerOptions(raw)
 	return nil
 }
 
