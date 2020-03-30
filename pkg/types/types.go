@@ -7,9 +7,9 @@ import (
 
 	"net/url"
 
-	"gopkg.in/yaml.v2"
 
 	"github.com/flanksource/commons/certs"
+	"github.com/flanksource/yaml"
 
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )

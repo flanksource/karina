@@ -18,9 +18,9 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
+	"github.com/flanksource/yaml"
 	minio "github.com/minio/minio-go/v6"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"

@@ -4,11 +4,16 @@ import (
 	"fmt"
 	types "github.com/moshloop/platform-cli/pkg/types"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+
+	"github.com/flanksource/yaml"
+
+
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/moshloop/platform-cli/pkg/api"

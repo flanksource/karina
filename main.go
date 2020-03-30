@@ -59,6 +59,7 @@ func main() {
 		cmd.ExecNode,
 		cmd.NSX,
 		cmd.Vault,
+		cmd.Config,
 	)
 
 	if len(commit) > 8 {
