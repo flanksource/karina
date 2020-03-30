@@ -36,10 +36,10 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	extras, _ := cmd.Flags().GetStringArray("extra")
 	trace, _ := cmd.Flags().GetBool("trace")
 
-	return NewConfig(paths, dryRun, extras, showConfig, trace)
+	return NewConfig(paths, dryRun, extras, trace)
 }
 
-func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, trace bool) types.PlatformConfig {
+func NewConfig(paths []string, dryRun bool, extras []string, trace bool) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
