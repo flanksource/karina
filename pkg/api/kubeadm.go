@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/moshloop/platform-cli/pkg/types"
 	"strconv"
+
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 type HostPathType string
@@ -106,7 +107,7 @@ func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.APISe
 // Internal helper function to set the APIServer ExtraArguments related to Audit logging from a supplied
 // github.com/moshloop/platform-cli/pkg/types/AuditLogOptions
 // These options are for Audit logfiles only
-func (c *ClusterConfiguration) setAPIServerExtraAuditLogArgs(logOptions types.AuditLogOptions)  {
+func (c *ClusterConfiguration) setAPIServerExtraAuditLogArgs(logOptions types.AuditLogOptions) {
 	// Options for logfiles
 	if logOptions.Path != "" {
 		c.APIServer.ExtraArgs["audit-log-path"] = logOptions.Path
@@ -129,7 +130,7 @@ func (c *ClusterConfiguration) setAPIServerExtraAuditLogArgs(logOptions types.Au
 // Internal helper function to set the APIServer ExtraArguments related to Audit logging from a supplied
 // github.com/moshloop/platform-cli/pkg/types/AuditWebhookOptions
 // These options are for Audit Webhooks only
-func (c *ClusterConfiguration) setAPIServerExtraAuditWebhookArgs(logOptions types.AuditWebhookOptions)  {
+func (c *ClusterConfiguration) setAPIServerExtraAuditWebhookArgs(logOptions types.AuditWebhookOptions) {
 	// Options for webhooks
 	if logOptions.ConfigFile != "" {
 		c.APIServer.ExtraArgs["audit-webhook-config-file"] = logOptions.ConfigFile

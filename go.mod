@@ -29,7 +29,6 @@ require (
 	github.com/spf13/cobra v0.0.6
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.21.0
-	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
 	k8s.io/cli-runtime v0.17.3

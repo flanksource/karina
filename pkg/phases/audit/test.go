@@ -1,12 +1,13 @@
 package audit
 
 import (
-	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	v1 "k8s.io/api/core/v1"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/flanksource/commons/console"
+	"github.com/moshloop/platform-cli/pkg/platform"
+	v1 "k8s.io/api/core/v1"
 )
 
 const jUnitAuditConfigClass = "AuditConfig"
@@ -36,16 +37,16 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 
 	pod, err := p.Client.GetFirstPodByLabelSelector("kube-system", "component=kube-apiserver")
 	if err != nil {
-		tr.Failf(jUnitAuditApiServerStateClass, "Failed to get api-server pod: %v", err)
+		tr.Failf(jUnitAuditAPIServerStateClass, "Failed to get api-server pod: %v", err)
 		tr.Done()
 	}
-	tr.Passf(jUnitAuditApiServerStateClass, "api-server pod found")
+	tr.Passf(jUnitAuditAPIServerStateClass, "api-server pod found")
 
 	logFilePath := p.AuditConfig.APIServerOptions.LogOptions.Path
 	//NOTE: '-' - means log to stdout, i.e. api-server logs
 	if logFilePath == "-" {
 		tr.Skipf(jUnitAuditConfigClass, "api-server is configured lo log to stdout, not verifying output")
-	} else if logFilePath != ""  {
+	} else if logFilePath != "" {
 		dir := filepath.Dir(ac.APIServerOptions.LogOptions.Path)
 		stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
 		if err != nil || stderr != "" {
@@ -58,27 +59,26 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 	argMap := createArgMap(pod.Spec.Containers, tr)
 
 	if ac.PolicyFile == "" {
-		tr.Failf(jUnitAuditConfigClass, "--audit-policy-file not configured"  )
+		tr.Failf(jUnitAuditConfigClass, "--audit-policy-file not configured")
 	}
 
-
 	//assignment helper to supply default
-	wantedJSON := func(s string) string{
-		if (s == "") {
+	wantedJSON := func(s string) string {
+		if s == "" {
 			return "json"
 		}
 		return s
 	}
 
 	var parameterTests = []struct {
-		description     string
-		testParameter	string
-		wantValue		string
+		description   string
+		testParameter string
+		wantValue     string
 	}{
 		{
-			description:	"Audit policy file set correctly",
+			description:   "Audit policy file set correctly",
 			testParameter: "--audit-policy-file",
-			wantValue: "/etc/kubernetes/policies/" + filepath.Base(ac.PolicyFile),
+			wantValue:     "/etc/kubernetes/policies/" + filepath.Base(ac.PolicyFile),
 		},
 		{
 			description:   "Audit log format set correctly",
@@ -86,33 +86,33 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 			wantValue:     wantedJSON(ac.APIServerOptions.LogOptions.Format),
 		},
 		{
-			description:	"Audit log file maximum age set correctly",
+			description:   "Audit log file maximum age set correctly",
 			testParameter: "--audit-log-maxage",
-			wantValue: strconv.Itoa(ac.APIServerOptions.LogOptions.MaxAge),
+			wantValue:     strconv.Itoa(ac.APIServerOptions.LogOptions.MaxAge),
 		},
 		{
-			description:	"Audit log file maximum backups set correctly",
+			description:   "Audit log file maximum backups set correctly",
 			testParameter: "--audit-log-maxbackup",
-			wantValue: strconv.Itoa(ac.APIServerOptions.LogOptions.MaxBackups),
+			wantValue:     strconv.Itoa(ac.APIServerOptions.LogOptions.MaxBackups),
 		},
 		{
-			description:	"Audit log file maximum size set correctly",
+			description:   "Audit log file maximum size set correctly",
 			testParameter: "--audit-log-maxsize",
-			wantValue: strconv.Itoa(ac.APIServerOptions.LogOptions.MaxSize),
+			wantValue:     strconv.Itoa(ac.APIServerOptions.LogOptions.MaxSize),
 		},
 	}
 
 	for _, t := range parameterTests {
-		if testArgValue(t.wantValue, t.testParameter, argMap ) {
-			tr.Passf(jUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured to %v", t.wantValue)
+		if testArgValue(t.wantValue, t.testParameter, argMap) {
+			tr.Passf(jUnitAuditConfigClass, t.description+": "+t.testParameter+" configured to %v", t.wantValue)
 		} else {
-			tr.Failf(jUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured incorrectly want %v, got %v", t.wantValue, argMap[t.testParameter]  )
+			tr.Failf(jUnitAuditConfigClass, t.description+": "+t.testParameter+" configured incorrectly want %v, got %v", t.wantValue, argMap[t.testParameter])
 		}
 	}
 }
 
 // create a map of api-server startup parameters for easier comparisons
-func createArgMap(containers []v1.Container, tr *console.TestResults ) (argMap map[string]string ) {
+func createArgMap(containers []v1.Container, tr *console.TestResults) (argMap map[string]string) {
 	argMap = map[string]string{}
 	for _, container := range containers {
 		if container.Name == "kube-apiserver" {
@@ -121,14 +121,13 @@ func createArgMap(containers []v1.Container, tr *console.TestResults ) (argMap m
 				tr.Done()
 			}
 			for i, cmd := range container.Command {
-				if (i!=0) {
-					parts := strings.Split(cmd,"=")
-					if (len(parts) < 2) {
+				if i != 0 {
+					parts := strings.Split(cmd, "=")
+					if len(parts) < 2 {
 						//ignore this
-						break;
+						break
 					}
 					argMap[parts[0]] = parts[1]
-
 				}
 			}
 		}
@@ -137,12 +136,9 @@ func createArgMap(containers []v1.Container, tr *console.TestResults ) (argMap m
 }
 
 // test if a given argument is set to the desired value
-func testArgValue(wantValue string, argChecked string, argMap map[string]string  ) bool {
+func testArgValue(wantValue string, argChecked string, argMap map[string]string) bool {
 	if wantValue != "" {
-		if argMap[argChecked] != wantValue {
-			return false
-		}
-		return true
+		return argMap[argChecked] == wantValue
 	}
 	return false
 }

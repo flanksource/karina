@@ -299,7 +299,6 @@ func init() {
 				eck.Test(p, test)
 				postgresoperator.Test(p, test)
 				vault.Test(p, test)
-
 			})
 		},
 	}

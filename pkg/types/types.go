@@ -7,7 +7,6 @@ import (
 
 	"net/url"
 
-
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
 
@@ -527,8 +526,8 @@ type AuditConfig struct {
 	APIServerOptions APIServerOptions `yaml:"kubeApiServerOptions,omitempty"`
 }
 type APIServerOptions struct {
-	LogOptions AuditLogOptions 				`yaml:",inline"`
-	WebhookOptions AuditWebhookOptions 		`yaml:",inline"`
+	LogOptions     AuditLogOptions     `yaml:",inline"`
+	WebhookOptions AuditWebhookOptions `yaml:",inline"`
 }
 
 type AuditLogOptions struct {
@@ -565,8 +564,8 @@ type AuditWebhookOptions struct {
 	// These specifically align to the following apiserver code (release 1.18 shown)
 	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L141-L151
 	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L565-L576
-	ConfigFile     string         `yaml:"audit-webhook-config-file,omitempty"`
-	InitialBackoff time.Duration  `yaml:"audit-webhook-initial-backoff,omitempty"`
+	ConfigFile     string        `yaml:"audit-webhook-config-file,omitempty"`
+	InitialBackoff time.Duration `yaml:"audit-webhook-initial-backoff,omitempty"`
 }
 
 type ConfigMapReloader struct {
@@ -604,7 +603,3 @@ func (p *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(p)
 	return string(data)
 }
-
-
-
-
