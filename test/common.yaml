@@ -20,7 +20,7 @@ kubernetes:
     policyFile: ./test/fixtures/audit-policy.yaml
   apiServerExtraArgs:
     "audit-log-path": /var/log/audit/cluster-audit.log
-    "audit-log-maxsize": 1GB
+    "audit-log-maxsize": 1024
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
     "audit-log-format": legacy   # default is json
