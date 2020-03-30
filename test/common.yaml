@@ -143,7 +143,7 @@ auditConfig:
     audit-log-maxage: 2
     audit-log-maxbackup: 3
     audit-log-maxsize: 10
-    audit-log-format: json
+    # audit-log-format: legacy   # default is json
 gitops:
   - name: platform-cli
     namespace: gitops-e2e-test

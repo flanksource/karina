@@ -544,6 +544,21 @@ type AuditLogOptions struct {
 	Format     string `yaml:"audit-log-format,omitempty"`
 }
 
+// This is used to supply a default value for Format
+func (c *AuditLogOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawAuditLogOptions AuditLogOptions
+	raw := rawAuditLogOptions{
+		Format: "json",
+	}
+
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	*c = AuditLogOptions(raw)
+	return nil
+}
+
 type AuditWebhookOptions struct {
 	// Naming is aligned to kube-apiserver parameters
 	// and kubeadmConfigPatches apiServer.extraArgs key values
