@@ -2,10 +2,8 @@ package types
 
 import (
 	"fmt"
-	"strings"
-	"time"
-
 	"net/url"
+	"strings"
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
@@ -270,6 +268,32 @@ type Kubernetes struct {
 	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
 	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
 	MasterIP      string            `yaml:"masterIP,omitempty"`
+	// AuditConfig is used to specify the audit policy file.
+	// If a policy file is specified the cluster audit is enabled.
+	// Several api-server flags can be added to APIServerExtraArgs to further
+	// customize the logging configuration.
+	// The relevant flags are:
+	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
+	AuditConfig *AuditConfig        `yaml:"auditing,omitempty"`
+}
+
+// This is used to make sure that if a audit policy is specified
+// that a default audit-log-path will be supplied.
+func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawKubernetes Kubernetes
+	raw := rawKubernetes{}
+
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	if raw.AuditConfig.PolicyFile != ""  {
+		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
+			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
+		}
+	}
+
+	*c = Kubernetes(raw)
+	return nil
 }
 
 type Dashboard struct {
@@ -521,57 +545,7 @@ type Connection struct {
 }
 
 type AuditConfig struct {
-	Disabled         bool             `yaml:"disabled,omitempty"`
-	PolicyFile       string           `yaml:"auditPolicyFile,omitempty"`
-	APIServerOptions APIServerOptions `yaml:"kubeApiServerOptions,omitempty"`
-}
-type APIServerOptions struct {
-	LogOptions     AuditLogOptions     `yaml:",inline"`
-	WebhookOptions AuditWebhookOptions `yaml:",inline"`
-}
-
-type AuditLogOptions struct {
-	// Naming is aligned to kube-apiserver parameters
-	// and kubeadmConfigPatches apiServer.extraArgs key values
-	// These specifically align to the following apiserver code (release 1.18 shown)
-	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L126-L139
-	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L473-L488
-	Path       string `yaml:"audit-log-path,omitempty"`
-	MaxAge     int    `yaml:"audit-log-maxage,omitempty"`
-	MaxBackups int    `yaml:"audit-log-maxbackup,omitempty"`
-	MaxSize    int    `yaml:"audit-log-maxsize,omitempty"`
-	Format     string `yaml:"audit-log-format,omitempty"`
-}
-
-// This is used to supply a default value for Format
-func (c *APIServerOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawAPIServerOptions APIServerOptions
-	raw := rawAPIServerOptions{
-		LogOptions: AuditLogOptions{
-			Path:       "",
-			MaxAge:     0,
-			MaxBackups: 0,
-			MaxSize:    0,
-			Format:     "json",
-		},
-	}
-
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
-
-	*c = APIServerOptions(raw)
-	return nil
-}
-
-type AuditWebhookOptions struct {
-	// Naming is aligned to kube-apiserver parameters
-	// and kubeadmConfigPatches apiServer.extraArgs key values
-	// These specifically align to the following apiserver code (release 1.18 shown)
-	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L141-L151
-	// https://github.com/kubernetes/apiserver/blob/638b0de57633cb0484c433199fca0673a578f1f3/pkg/server/options/audit.go#L565-L576
-	ConfigFile     string        `yaml:"audit-webhook-config-file,omitempty"`
-	InitialBackoff time.Duration `yaml:"audit-webhook-initial-backoff,omitempty"`
+	PolicyFile       string           `yaml:"policyFile,omitempty"`
 }
 
 type ConfigMapReloader struct {
