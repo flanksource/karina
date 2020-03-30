@@ -22,23 +22,23 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 		// A nil AuditConfig is a failure as the implicit default if it is not specified
 		// should be 'disabled'
 		tr.Failf(jUnitAuditConfigClass, "There is no AuditConfig")
-		tr.Done()
+		return
 	} else if ac.Disabled {
 		tr.Skipf(jUnitAuditConfigClass, "AuditConfig is disabled")
-		tr.Done()
+		return
 	}
 
 	_, err := p.GetClientset()
 	if err != nil {
 		tr.Failf(jUnitAuditConfigClass, "Failed to get k8s client: %v", err)
 		// We're done, we can't test anything further.
-		tr.Done()
+		return
 	}
 
 	pod, err := p.Client.GetFirstPodByLabelSelector("kube-system", "component=kube-apiserver")
 	if err != nil {
 		tr.Failf(jUnitAuditAPIServerStateClass, "Failed to get api-server pod: %v", err)
-		tr.Done()
+		return
 	}
 	tr.Passf(jUnitAuditAPIServerStateClass, "api-server pod found")
 
