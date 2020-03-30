@@ -96,12 +96,17 @@ type HostPathMount struct {
 	PathType HostPathType `yaml:"pathType,omitempty"`
 }
 
+// Set the APIServer ExtraArguments related to Audit logging from a supplied
+// github.com/moshloop/platform-cli/pkg/types/ApiServerOptions
 func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.ApiServerOptions) {
-	c.SetAPIServerExtraAuditLogArgs(logOptions.LogOptions)
-	c.SetAPIServerExtraAuditWebhookArgs(logOptions.WebhookOptions)
+	c.setAPIServerExtraAuditLogArgs(logOptions.LogOptions)
+	c.setAPIServerExtraAuditWebhookArgs(logOptions.WebhookOptions)
 }
 
-func (c *ClusterConfiguration) SetAPIServerExtraAuditLogArgs(logOptions types.AuditLogOptions)  {
+// Internal helper function to set the APIServer ExtraArguments related to Audit logging from a supplied
+// github.com/moshloop/platform-cli/pkg/types/AuditLogOptions
+// These options are for Audit logfiles only
+func (c *ClusterConfiguration) setAPIServerExtraAuditLogArgs(logOptions types.AuditLogOptions)  {
 	// Options for logfiles
 	if logOptions.Path != "" {
 		c.APIServer.ExtraArgs["audit-log-path"] = logOptions.Path
@@ -121,7 +126,10 @@ func (c *ClusterConfiguration) SetAPIServerExtraAuditLogArgs(logOptions types.Au
 	}
 }
 
-func (c *ClusterConfiguration) SetAPIServerExtraAuditWebhookArgs(logOptions types.AuditWebhookOptions)  {
+// Internal helper function to set the APIServer ExtraArguments related to Audit logging from a supplied
+// github.com/moshloop/platform-cli/pkg/types/AuditWebhookOptions
+// These options are for Audit Webhooks only
+func (c *ClusterConfiguration) setAPIServerExtraAuditWebhookArgs(logOptions types.AuditWebhookOptions)  {
 	// Options for webhooks
 	if logOptions.ConfigFile != "" {
 		c.APIServer.ExtraArgs["audit-webhook-config-file"] = logOptions.ConfigFile
