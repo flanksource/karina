@@ -67,16 +67,16 @@ workflows:
       - test
       - test-next
       - lint
-#      - release:
-#          requires:
-#            - test
-#            - test-next
-#            - lint
-#          context: Github
-#          filters:
-#            tags:
-#              only: /.*/
-#      - release-docs:
-#          requires:
-#            - release
-#          context: Github
+      - release:
+          requires:
+            - test
+            - test-next
+            - lint
+          context: Github
+          filters:
+            tags:
+              only: /.*/
+      - release-docs:
+          requires:
+            - release
+          context: Github
