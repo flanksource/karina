@@ -83,7 +83,6 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	if !platform.AuditConfig.Disabled {
-
 		auditPolicyPath, err := filepath.Abs(platform.AuditConfig.PolicyFile)
 		if err != nil {
 			return errors.Wrap(err, "failed to expand audit config file path")
@@ -165,7 +164,7 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			PathType:  api.HostPathFile,
 		})
 
-		if logOptions := platform.AuditConfig.ApiServerOptions; logOptions != (types.ApiServerOptions {}) {
+		if logOptions := platform.AuditConfig.APIServerOptions; logOptions != (types.APIServerOptions{}) {
 			clusterConfig.SetAPIServerExtraAuditArgs(logOptions)
 		}
 	}

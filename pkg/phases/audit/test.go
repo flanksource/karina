@@ -22,9 +22,7 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 		// should be 'disabled'
 		tr.Failf(jUnitAuditConfigClass, "There is no AuditConfig")
 		tr.Done()
-	}
-
-	if ac.Disabled {
+	} else if ac.Disabled {
 		tr.Skipf(jUnitAuditConfigClass, "AuditConfig is disabled")
 		tr.Done()
 	}
@@ -43,12 +41,12 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 	}
 	tr.Passf(jUnitAuditApiServerStateClass, "api-server pod found")
 
-	logFilePath := p.AuditConfig.ApiServerOptions.LogOptions.Path
+	logFilePath := p.AuditConfig.APIServerOptions.LogOptions.Path
 	//NOTE: '-' - means log to stdout, i.e. api-server logs
 	if logFilePath == "-" {
 		tr.Skipf(jUnitAuditConfigClass, "api-server is configured lo log to stdout, not verifying output")
 	} else if logFilePath != ""  {
-		dir := filepath.Dir(ac.ApiServerOptions.LogOptions.Path)
+		dir := filepath.Dir(ac.APIServerOptions.LogOptions.Path)
 		stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
 		if err != nil || stderr != "" {
 			tr.Failf(jUnitAuditLogs, "Failed to get file size statistics: %v\n%v", err, stderr)
@@ -85,22 +83,22 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 		{
 			description:   "Audit log format set correctly",
 			testParameter: "--audit-log-format",
-			wantValue:     wantedJSON(ac.ApiServerOptions.LogOptions.Format),
+			wantValue:     wantedJSON(ac.APIServerOptions.LogOptions.Format),
 		},
 		{
 			description:	"Audit log file maximum age set correctly",
 			testParameter: "--audit-log-maxage",
-			wantValue: strconv.Itoa(ac.ApiServerOptions.LogOptions.MaxAge),
+			wantValue: strconv.Itoa(ac.APIServerOptions.LogOptions.MaxAge),
 		},
 		{
 			description:	"Audit log file maximum backups set correctly",
 			testParameter: "--audit-log-maxbackup",
-			wantValue: strconv.Itoa(ac.ApiServerOptions.LogOptions.MaxBackups),
+			wantValue: strconv.Itoa(ac.APIServerOptions.LogOptions.MaxBackups),
 		},
 		{
 			description:	"Audit log file maximum size set correctly",
 			testParameter: "--audit-log-maxsize",
-			wantValue: strconv.Itoa(ac.ApiServerOptions.LogOptions.MaxSize),
+			wantValue: strconv.Itoa(ac.APIServerOptions.LogOptions.MaxSize),
 		},
 	}
 
@@ -109,15 +107,8 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 			tr.Passf(jUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured to %v", t.wantValue)
 		} else {
 			tr.Failf(jUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured incorrectly want %v, got %v", t.wantValue, argMap[t.testParameter]  )
-
 		}
-
 	}
-
-
-
-
-
 }
 
 // create a map of api-server startup parameters for easier comparisons

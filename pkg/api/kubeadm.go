@@ -97,8 +97,8 @@ type HostPathMount struct {
 }
 
 // Set the APIServer ExtraArguments related to Audit logging from a supplied
-// github.com/moshloop/platform-cli/pkg/types/ApiServerOptions
-func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.ApiServerOptions) {
+// github.com/moshloop/platform-cli/pkg/types/APIServerOptions
+func (c *ClusterConfiguration) SetAPIServerExtraAuditArgs(logOptions types.APIServerOptions) {
 	c.setAPIServerExtraAuditLogArgs(logOptions.LogOptions)
 	c.setAPIServerExtraAuditWebhookArgs(logOptions.WebhookOptions)
 }
@@ -137,6 +137,4 @@ func (c *ClusterConfiguration) setAPIServerExtraAuditWebhookArgs(logOptions type
 	if logOptions.InitialBackoff != 0 {
 		c.APIServer.ExtraArgs["audit-webhook-initial-backoff"] = logOptions.InitialBackoff.String()
 	}
-
 }
-

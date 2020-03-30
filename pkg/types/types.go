@@ -524,9 +524,9 @@ type Connection struct {
 type AuditConfig struct {
 	Disabled         bool             `yaml:"disabled,omitempty"`
 	PolicyFile       string           `yaml:"auditPolicyFile,omitempty"`
-	ApiServerOptions ApiServerOptions `yaml:"kubeApiServerOptions,omitempty"`
+	APIServerOptions APIServerOptions `yaml:"kubeApiServerOptions,omitempty"`
 }
-type ApiServerOptions struct {
+type APIServerOptions struct {
 	LogOptions AuditLogOptions 				`yaml:",inline"`
 	WebhookOptions AuditWebhookOptions 		`yaml:",inline"`
 }
