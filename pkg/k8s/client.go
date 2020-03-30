@@ -3,6 +3,7 @@ package k8s
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +18,8 @@ import (
 	utils "github.com/flanksource/commons/utils"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
+	"github.com/moshloop/platform-cli/pkg/k8s/drain"
+	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -27,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	cliresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery/cached/disk"
@@ -39,8 +43,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
 	"sigs.k8s.io/yaml"
-
-	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 )
 
 type Client struct {
@@ -54,6 +56,106 @@ type Client struct {
 
 	kustomizeManager *kustomize.Manager
 	restMapper       meta.RESTMapper
+}
+
+func (c *Client) getDrainHelper() (*drain.Helper, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	return &drain.Helper{
+		Ctx:                 context.Background(),
+		Client:              client,
+		DeleteLocalData:     true,
+		IgnoreAllDaemonSets: true,
+		Timeout:             120 * time.Second,
+	}, nil
+}
+
+func (c *Client) Drain(nodeName string, timeout time.Duration) error {
+	log.Infof("[%s] draining", nodeName)
+	if err := c.Cordon(nodeName); err != nil {
+		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
+	}
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	list, errs := drainer.GetPodsForDeletion(nodeName)
+	if errs != nil {
+		return utilerrors.NewAggregate(errs)
+	}
+	if warnings := list.Warnings(); warnings != "" {
+		log.Warnf("warning when draining %s: %v", nodeName, warnings)
+	}
+
+	if err := drainer.DeleteOrEvictPods(list.Pods()); err != nil {
+		// Maybe warn about non-deleted pods here
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Cordon(nodeName string) error {
+	log.Infof("[%s] cordoning", nodeName)
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	node, err := client.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	cordon := drain.NewCordonHelper(node)
+
+	if node.Spec.Unschedulable {
+		// Already done
+		return nil
+	}
+
+	err, patchErr := cordon.PatchOrReplace(drainer.Client)
+	if patchErr != nil {
+		return patchErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Uncordon(nodeName string) error {
+	log.Infof("[%s] uncordoning", nodeName)
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	node, err := client.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	cordon := drain.NewCordonHelper(node)
+
+	if !node.Spec.Unschedulable {
+		// Already done
+		return nil
+	}
+
+	err, patchErr := cordon.PatchOrReplace(drainer.Client)
+	if patchErr != nil {
+		return patchErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) GetKustomize() (*kustomize.Manager, error) {

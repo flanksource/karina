@@ -34,13 +34,12 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	paths, _ := cmd.Flags().GetStringArray("config")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	extras, _ := cmd.Flags().GetStringArray("extra")
-	showConfig, _ := cmd.Flags().GetBool("show-config")
 	trace, _ := cmd.Flags().GetBool("trace")
 
-	return NewConfig(paths, dryRun, extras, showConfig, trace)
+	return NewConfig(paths, dryRun, extras, trace)
 }
 
-func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, trace bool) types.PlatformConfig {
+func NewConfig(paths []string, dryRun bool, extras []string, trace bool) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
@@ -179,7 +178,7 @@ func NewConfig(paths []string, dryRun bool, extras []string, showConfig bool, tr
 		}
 	}
 
-	if showConfig {
+	if base.Trace {
 		data, _ := yaml.Marshal(base)
 		log.Infof("Using configuration: \n%s\n", console.StripSecrets(string(data)))
 	}
