@@ -1,6 +1,22 @@
 # Cluster Auditing
 
-### Configure Auditing in `config.yaml`.
+K8s allows for the configuration of auditing on the kube-API-Server (see [k8s audit documentation](k8s audit docs)). 
+This is configured by supplying an audit policy file (look [here](audit policy example) for an example).
+Several other relevant kube-apiserver flags can further configure logging behaviour.
+
+Karina allows for auditing to be configured at cluster creation as described below and supports the use of the log backend.
+
+## Configure Auditing in `config.yaml`.
+
+The implicit default is not to audit:
+
+```yaml
+auditConfig:
+  disabled: true
+```
+Karina supports the log backend, which writes audit events to files.
+
+If an `auditConfig` section is specified in the config YAML the following configurations can be supplied:
 
 ```yaml
 auditConfig:
@@ -8,20 +24,158 @@ auditConfig:
   auditPolicyFile: ./test/fixtures/audit-policy.yaml
   kubeApiServerOptions:
     # Audit Log configs:
-    # audit-log-path: /var/auditLogs/audit.logs
-    audit-log-path: "-" # log to stdout, i.e. apiserver logs
+    audit-log-path: /var/log/audit/cluster-audit.log
     audit-log-maxage: 2
     audit-log-maxbackup: 3
     audit-log-maxsize: 10
     audit-log-format: json
-    # Audit Webhook configs:
-    audit-webhook-config-file: ./test/fixtures/audit-webhoop-config.yaml
-    audit-webhook-initial-backoff: 6
+```
+The [official documentation describes](parameter docs) the `kubeApiServerOptions` parameters.
+
+
+|Key                   | Description                                              |
+|----------------------|----------------------------------------------------------|
+| `auditPolicyFile`    | Gives the path to the audit policy file to use.          |
+|                      | This file will be injected into the master nodes         |
+|                      | to `/etc/flanksource/audit-policy/` and into the         |
+|                      | api-server pod to `/etc/kubernetes/policies/` and the    |
+|                      | api-server `--audit-policy-file` flag will be set to the |
+|                      | correct value.                                           |
+| `audit-log-path`     | Specifies the path in the api-server pod that the        |
+|                      | audit logs are written to.                               |
+|                      | (a value of `'-'` indicates logging to the pod logs.)    |
+|                      | Sets the `--audit-log-path` flag.                        |
+| `audit-log-maxage`   | Specifies the maximum number of days to retain log files.|
+|                      | Sets the `--audit-log-maxage` flag.                      |
+| `audit-log-maxbackup`| Specifies the maximum number of audit log files to       |
+|                      | retain when logs are rotated past when they reach        |
+|                      | maximum size.                                            |
+|                      | Sets the `--audit-log-maxbackup` flag.                   |
+| `audit-log-maxsize`  | Specifies the maximum size in megabytes of the audit     |
+|                      | log file before it gets rotated                          |
+|                      | Sets the `--audit-log-maxsize` flag.                   |
+| `audit-log-format`   | Specifies the logging format used.                       |
+|                      | Options are:                                             |
+|                      | `"legacy"` indicates 1-line text format for each event   |
+|                      | `"json"` indicates a structured json format.             |
+|                      | Sets the `--audit-log-format` flag.                   |
+
+These are injected into the cluster at creation time via `kubeadmConfigPatches` that are supplied to `kubeadm`.
+
+(see [kubeadm control pane configuration documentation](kubeadm api server config) for more detail)
+
+## Debugging
+
+Investigating the API Server pod spec can indicate its current config:
+
+e.g.
+
+```
+kubectl get pod -n kube-system kube-apiserver-kind-control-plane -o yaml
 ```
 
-Implicit default is:
+Shows the audit spec mapping:
+<pre>
+       ...
+spec:
+  containers:
+  name: kube-apiserver
+  
+       ...
+       
+    volumeMounts:
+    - mountPath: <b>/etc/kubernetes/policies/audit-policy.yaml</b>
+      name: audit-spec
+      readOnly: true
+      
+       ...
 
-```yaml
-auditConfig:
-  disabled: true
+  volumes:
+  - hostPath:
+      path: <b>/etc/flanksource/audit-policy/audit-policy.yaml</b>
+      type: File
+    name: audit-spec
+</pre>
+
+and the APi Server startup flags:
+
+<pre>
+     ...
+     
+spec:
+  containers:
+  - command:
+    - kube-apiserver
+    - --advertise-address=172.17.0.2
+    - --allow-privileged=true
+    - <b>--audit-log-format=json</b>
+    - <b>--audit-log-maxage=2</b>
+    - <b>--audit-log-maxbackup=3</b>
+    - <b>--audit-log-maxsize=10</b>
+    - <b>--audit-log-path=/var/log/audit/cluster-audit.log</b>
+    - <b>--audit-policy-file=/etc/kubernetes/policies/audit-policy.yaml</b>
+    - --authorization-mode=Node,RBAC
+    
+     ...
+</pre>
+
+KIND cluster creation issues can be debugged by specifying the `--trace` argument to `platform-cli` during creation:
+
+e.g.
+```bash
+platform-cli provision kind-cluster --trace
 ```
+Shows the `kubeadm` patches sent to the KIND configuration and the relevant mappings:
+
+<pre>
+<font color="#06989A">INFO</font>[0000] KIND Config YAML:                            
+<font color="#06989A">INFO</font>[0000] kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  image: kindest/node:v1.15.7
+  extraMounts:
+  
+   ...
+   
+  - containerPath: /etc/flanksource/audit-policy
+    hostPath: <b>/code/go/src/github.com/moshloop/platform-cli/test/fixtures</b>
+    readOnly: true
+ 
+   ...
+ 
+  kubeadmConfigPatches:
+  - |
+    apiVersion: kubeadm.k8s.io/v1beta2
+    kind: ClusterConfiguration
+    kubernetesVersion: v1.15.7
+    apiServer:
+      timeoutForControlPlane: 4m0s
+      extraArgs:
+        <b>audit-log-maxage: &quot;2&quot;
+        audit-log-maxbackup: &quot;3&quot;
+        audit-log-maxsize: &quot;10&quot;
+        audit-log-path: /var/log/audit/cluster-audit.log
+        audit-policy-file: /etc/kubernetes/policies/audit-policy.yaml</b>
+ 
+    ...
+    
+      extraVolumes:
+
+    ...
+
+      - name: audit-spec
+        hostPath: /etc/flanksource/audit-policy/audit-policy.yaml
+        mountPath: /etc/kubernetes/policies/audit-policy.yaml
+        readOnly: true
+        pathType: File
+ 
+    ...
+</pre>
+
+
+
+[k8s audit docs]:https://kubernetes.io/docs/tasks/debug-application-cluster/audit/
+[audit policy example]:https://raw.githubusercontent.com/kubernetes/website/master/content/en/examples/audit/audit-policy.yaml
+[parameter docs]: htps://kubernetes.io/docs/tasks/debug-application-cluster/audit/#log-backend
+[kubeadm api server config]:https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#apiserver-flags
