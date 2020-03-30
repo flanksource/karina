@@ -1,9 +1,10 @@
 package audit
 
 import (
+	"path/filepath"
+
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"path/filepath"
 )
 
 const testName = "auditing"
@@ -12,7 +13,7 @@ const testName = "auditing"
 func Test(p *platform.Platform, tr *console.TestResults) {
 	pf := p.Kubernetes.AuditConfig.PolicyFile
 
-    if pf == "" {
+	if pf == "" {
 		tr.Skipf(testName, "No audit policy specified.")
 		return
 	}
@@ -32,10 +33,10 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 	tr.Passf(testName, "api-server pod found")
 
 	if logFilePath, ok := p.Kubernetes.APIServerExtraArgs["audit-log-path"]; !ok {
-		tr.Failf(testName, "No audit-log-path is specified!", err)
+		tr.Failf(testName, "No audit-log-path is specified!")
 		return
 	} else if logFilePath == "" {
-		tr.Failf(testName, "Empty audit-log-path is specified!", err)
+		tr.Failf(testName, "Empty audit-log-path is specified!")
 		return
 	} else if logFilePath == "-" {
 		tr.Skipf(testName, "api-server is configured lo log to stdout, not verifying output")
