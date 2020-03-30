@@ -277,7 +277,8 @@ type Kubernetes struct {
 	AuditConfig *AuditConfig        `yaml:"auditing,omitempty"`
 }
 
-// This is used to make sure that if a audit policy is specified
+// UnmarshalYAML is used to customize the YAML unmarshalling of
+// Kubernetes objects. It makes sure that if a audit policy is specified
 // that a default audit-log-path will be supplied.
 func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type rawKubernetes Kubernetes
