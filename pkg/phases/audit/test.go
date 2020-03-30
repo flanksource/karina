@@ -9,28 +9,29 @@ import (
 	"strings"
 )
 
-const JUnitAuditConfigClass = "AuditConfig"
-const jUnitAuditApiServerStateClass = "AuditApiServerState"
+const jUnitAuditConfigClass = "AuditConfig"
+const jUnitAuditAPIServerStateClass = "AuditApiServerState"
 const jUnitAuditLogs = "AuditLogsPresent"
 
+//Test k8s auditing functionality.
 func Test(p *platform.Platform, tr *console.TestResults) {
 	ac := p.AuditConfig
 
 	if ac == nil {
 		// A nil AuditConfig is a failure as the implicit default if it is not specified
 		// should be 'disabled'
-		tr.Failf(JUnitAuditConfigClass, "There is no AuditConfig")
+		tr.Failf(jUnitAuditConfigClass, "There is no AuditConfig")
 		tr.Done()
 	}
 
 	if ac.Disabled {
-		tr.Skipf(JUnitAuditConfigClass, "AuditConfig is disabled")
+		tr.Skipf(jUnitAuditConfigClass, "AuditConfig is disabled")
 		tr.Done()
 	}
 
 	_, err := p.GetClientset()
 	if err != nil {
-		tr.Failf(JUnitAuditConfigClass, "Failed to get k8s client: %v", err)
+		tr.Failf(jUnitAuditConfigClass, "Failed to get k8s client: %v", err)
 		// We're done, we can't test anything further.
 		tr.Done()
 	}
@@ -45,7 +46,7 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 	logFilePath := p.AuditConfig.ApiServerOptions.LogOptions.Path
 	//NOTE: '-' - means log to stdout, i.e. api-server logs
 	if logFilePath == "-" {
-		tr.Skipf(JUnitAuditConfigClass, "api-server is configured lo log to stdout, not verifying output")
+		tr.Skipf(jUnitAuditConfigClass, "api-server is configured lo log to stdout, not verifying output")
 	} else if logFilePath != ""  {
 		dir := filepath.Dir(ac.ApiServerOptions.LogOptions.Path)
 		stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
@@ -59,17 +60,16 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 	argMap := createArgMap(pod.Spec.Containers, tr)
 
 	if ac.PolicyFile == "" {
-		tr.Failf(JUnitAuditConfigClass, "--audit-policy-file not configured"  )
+		tr.Failf(jUnitAuditConfigClass, "--audit-policy-file not configured"  )
 	}
 
 
 	//assignment helper to supply default
-	wantedJson := func(s string) string{
+	wantedJSON := func(s string) string{
 		if (s == "") {
 			return "json"
-		} else {
-			return s
 		}
+		return s
 	}
 
 	var parameterTests = []struct {
@@ -83,9 +83,9 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 			wantValue: "/etc/kubernetes/policies/" + filepath.Base(ac.PolicyFile),
 		},
 		{
-			description:	"Audit log format set correctly",
+			description:   "Audit log format set correctly",
 			testParameter: "--audit-log-format",
-			wantValue: wantedJson(ac.ApiServerOptions.LogOptions.Format),
+			wantValue:     wantedJSON(ac.ApiServerOptions.LogOptions.Format),
 		},
 		{
 			description:	"Audit log file maximum age set correctly",
@@ -106,9 +106,9 @@ func Test(p *platform.Platform, tr *console.TestResults) {
 
 	for _, t := range parameterTests {
 		if testArgValue(t.wantValue, t.testParameter, argMap ) {
-			tr.Passf(JUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured to %v", t.wantValue)
+			tr.Passf(jUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured to %v", t.wantValue)
 		} else {
-			tr.Failf(JUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured incorrectly want %v, got %v", t.wantValue, argMap[t.testParameter]  )
+			tr.Failf(jUnitAuditConfigClass, t.description + ": "+ t.testParameter + " configured incorrectly want %v, got %v", t.wantValue, argMap[t.testParameter]  )
 
 		}
 
@@ -126,7 +126,7 @@ func createArgMap(containers []v1.Container, tr *console.TestResults ) (argMap m
 	for _, container := range containers {
 		if container.Name == "kube-apiserver" {
 			if container.Command == nil {
-				tr.Failf(JUnitAuditConfigClass, "api-server pod kube-apiserver container doesn't have command/args")
+				tr.Failf(jUnitAuditConfigClass, "api-server pod kube-apiserver container doesn't have command/args")
 				tr.Done()
 			}
 			for i, cmd := range container.Command {
@@ -150,10 +150,8 @@ func testArgValue(wantValue string, argChecked string, argMap map[string]string 
 	if wantValue != "" {
 		if argMap[argChecked] != wantValue {
 			return false
-		} else {
-			return true
 		}
-	} else {
-		return false
+		return true
 	}
+	return false
 }
