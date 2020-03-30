@@ -1042,7 +1042,7 @@ func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector stri
 		return nil, fmt.Errorf("GetFirstPodByLabelSelector: Failed to query for %v in namespace %v: %v", labelSelector, namespace, err)
 	}
 
-	if pods.Size() < 1 {
+	if (pods != nil && len(pods.Items) < 1) || pods == nil {
 		return nil, fmt.Errorf("GetFirstPodByLabelSelector: No pods found for query for %v in namespace %v: %v", labelSelector, namespace, err)
 	}
 
