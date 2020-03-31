@@ -25,7 +25,6 @@ kubernetes:
 ```
 The [official documentation describes](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#log-backend) the `kubeApiServerOptions` parameters.
 
-
 |Key                   | Description                                              |
 |----------------------|----------------------------------------------------------|
 | `policyFile`         | Gives the path to the audit policy file to use.<br/>This file will be injected into the master nodes<br/>to `/etc/flanksource/audit-policy/` and into the<br/>api-server pod to `/etc/kubernetes/policies/` and the<br/>api-server `--audit-policy-file` flag will be set to the <br/>correct value.                                           |
