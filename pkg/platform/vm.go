@@ -198,7 +198,7 @@ func (vm *VM) Shutdown() error {
 	return nil
 }
 
-func removeDNS(vm *VM) {
+func RemoveDNS(vm *VM) {
 	ip, err := vm.GetIP(time.Second * 5)
 	if err != nil {
 		log.Warnf("Failed to get IP for %s, unable to remove DNS: %v", vm.Name, err)
@@ -235,7 +235,8 @@ func (vm *VM) Terminate() error {
 			log.Warnf("[%s] failed to power off %v", vm.Name, err)
 		}
 	}
-	vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
+	RemoveDNS(vm)
+	_ = vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
 	task, err := vm.vm.Destroy(vm.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete %s", vm)
@@ -246,7 +247,5 @@ func (vm *VM) Terminate() error {
 	} else {
 		return errors.Errorf("Failed to delete %s, %v", vm, info)
 	}
-
 	return nil
-
 }

@@ -497,7 +497,7 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 		return err
 	}
 	for _, spec := range specs {
-		items, err := kustomize.Kustomize([]byte(spec))
+		items, err := kustomize.Kustomize(namespace, []byte(spec))
 		if err != nil {
 			return err
 		}
