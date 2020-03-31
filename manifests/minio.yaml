@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: minio
+  labels:
+    openpolicyagent.org/webhook: ignore
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,11 +32,11 @@ spec:
           image: minio/minio:RELEASE.2019-10-12T01-39-57Z
           resources:
             requests:
-              cpu: "10m"
-              memory: "10Mi"
+              cpu: "100m"
+              memory: "50Mi"
             limits:
               cpu: "500m"
-              memory: "50Mi"
+              memory: "500Mi"
           args:
             - server
             - /data
@@ -81,9 +83,12 @@ kind: Ingress
 metadata:
   name: minio
   namespace: minio
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   tls:
-    - hosts:
+    - secretName: minio-tls
+      hosts:
         - minio.{{.domain}}
   rules:
     - host: minio.{{.domain}}

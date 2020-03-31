@@ -1,12 +1,12 @@
 package opa
 
 import (
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -54,7 +54,6 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 			test.Passf(rejectedFixture.Name(), "%s rejected by Gatekeeper as expected", rejectedFixture.Name())
 		} else {
 			test.Failf(rejectedFixture.Name(), "%s accepted by Gatekeeper as not expected", rejectedFixture.Name())
-
 		}
 	}
 

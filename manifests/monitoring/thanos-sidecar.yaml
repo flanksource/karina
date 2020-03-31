@@ -11,20 +11,24 @@ spec:
       port: 10901
       targetPort: 10901
 ---
-{{- if eq .thanos.mode "client"}}
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: thanos-sidecar
   namespace: monitoring
   annotations:
+    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
 spec:
+  tls:
+    - secretName: thanos-sidecar-tls
+      hosts:
+        - "thanos-sidecar.{{.domain}}"
   rules:
-  - host: "{{.thanos.thanosSidecarEndpoint}}"
-    http:
-      paths:
-      - backend:
-          serviceName: thanos-sidecar
-          servicePort: 10901
-{{- end}}          
+    - host: "thanos-sidecar.{{.domain}}"
+      http:
+        paths:
+          - backend:
+              serviceName: thanos-sidecar
+              servicePort: 10901

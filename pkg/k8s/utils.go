@@ -26,7 +26,13 @@ func WaitForNamespace(client kubernetes.Interface, ns string, timeout time.Durat
 		pending := 0
 		list, _ := pods.List(metav1.ListOptions{})
 		for _, pod := range list.Items {
-			if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
+			conditions := true
+			for _, condition := range pod.Status.Conditions {
+				if condition.Status == v1.ConditionFalse {
+					conditions = false
+				}
+			}
+			if conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded) {
 				ready++
 			} else {
 				pending++
@@ -34,16 +40,14 @@ func WaitForNamespace(client kubernetes.Interface, ns string, timeout time.Durat
 		}
 		if ready > 0 && pending == 0 {
 			return
-		} else {
-			log.Debugf("ns/%s: ready=%d, pending=%d", ns, ready, pending)
 		}
+		log.Debugf("ns/%s: ready=%d, pending=%d", ns, ready, pending)
 		if start.Add(timeout).Before(time.Now()) {
 			log.Warnf("ns/%s: ready=%d, pending=%d", ns, ready, pending)
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-
 }
 
 func NewDeployment(ns, name, image string, labels map[string]string, port int32, args ...string) *apps.Deployment {
@@ -110,30 +114,44 @@ func LowResourceRequirements() v1.ResourceRequirements {
 	}
 }
 
+func decodeStringToTimeDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(time.Duration(5)) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTimeDuration: Failed to parse duration: %v", err)
+	}
+	return d, nil
+}
+
 func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
 	if f.Kind() != reflect.String {
 		return data, nil
 	}
-	if t != reflect.TypeOf(metav1.Duration{time.Duration(5)}) {
+	if t != reflect.TypeOf(metav1.Duration{Duration: time.Duration(5)}) {
 		return data, nil
 	}
 	d, err := time.ParseDuration(data.(string))
 	if err != nil {
 		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
 	}
-	return metav1.Duration{d}, nil
+	return metav1.Duration{Duration: d}, nil
 }
 
 func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
 	if f.Kind() != reflect.String {
 		return data, nil
 	}
-	if t != reflect.TypeOf(metav1.Time{time.Now()}) {
+	if t != reflect.TypeOf(metav1.Time{Time: time.Now()}) {
 		return data, nil
 	}
 	d, err := time.Parse(time.RFC3339, data.(string))
 	if err != nil {
 		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
 	}
-	return metav1.Time{d}, nil
+	return metav1.Time{Time: d}, nil
 }

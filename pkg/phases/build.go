@@ -5,19 +5,20 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/flanksource/yaml"
+
 	"github.com/flanksource/commons/deps"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/is"
 	"github.com/moshloop/platform-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 func Build(cfg types.PlatformConfig) error {
-	tmp, _ := ioutil.TempFile("", "config*.yml")
+	tmp, _ := ioutil.TempFile("", "config*.yaml")
 	data, _ := yaml.Marshal(cfg)
-	tmp.WriteString(string(data))
-	os.Mkdir("build", 0755)
+	tmp.WriteString(string(data)) // nolint: errcheck
+	os.Mkdir("build", 0755)       // nolint: errcheck
 	gomplate := deps.Binary("gomplate", cfg.Versions["gomplate"], ".bin")
 	kustomize := deps.Binary("kustomize", cfg.Versions["kustomize"], ".bin")
 
@@ -39,8 +40,8 @@ func Build(cfg types.PlatformConfig) error {
 
 	if files.Exists("kustomization.yaml") {
 		log.Infoln("Building with kustomize")
-		os.Remove("build/kustomize.yml")
-		if err := kustomize("build > build/kustomize.yml"); err != nil {
+		os.Remove("build/kustomize.yaml")
+		if err := kustomize("build > build/kustomize.yaml"); err != nil {
 			return fmt.Errorf("build: failed to apply kustomize: %v", err)
 		}
 	}

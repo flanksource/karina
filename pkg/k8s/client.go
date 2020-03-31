@@ -1,17 +1,25 @@
 package k8s
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	certs "github.com/flanksource/commons/certs"
+	"github.com/flanksource/commons/files"
 	utils "github.com/flanksource/commons/utils"
+	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
+	"github.com/moshloop/platform-cli/pkg/k8s/drain"
+	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -22,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	cliresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery/cached/disk"
@@ -33,18 +42,120 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
-
-	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
+	"sigs.k8s.io/yaml"
 )
 
 type Client struct {
-	GetKubeConfigBytes func() ([]byte, error)
-	client             *kubernetes.Clientset
-	dynamicClient      dynamic.Interface
-	restConfig         *rest.Config
-	ApplyDryRun        bool
-	kustomizeManager   *kustomize.Manager
-	restMapper         meta.RESTMapper
+	GetKubeConfigBytes  func() ([]byte, error)
+	ApplyDryRun         bool
+	Trace               bool
+	GetKustomizePatches func() ([]string, error)
+	client              *kubernetes.Clientset
+	dynamicClient       dynamic.Interface
+	restConfig          *rest.Config
+
+	kustomizeManager *kustomize.Manager
+	restMapper       meta.RESTMapper
+}
+
+func (c *Client) getDrainHelper() (*drain.Helper, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	return &drain.Helper{
+		Ctx:                 context.Background(),
+		Client:              client,
+		DeleteLocalData:     true,
+		IgnoreAllDaemonSets: true,
+		Timeout:             120 * time.Second,
+	}, nil
+}
+
+func (c *Client) Drain(nodeName string, timeout time.Duration) error {
+	log.Infof("[%s] draining", nodeName)
+	if err := c.Cordon(nodeName); err != nil {
+		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
+	}
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	list, errs := drainer.GetPodsForDeletion(nodeName)
+	if errs != nil {
+		return utilerrors.NewAggregate(errs)
+	}
+	if warnings := list.Warnings(); warnings != "" {
+		log.Warnf("warning when draining %s: %v", nodeName, warnings)
+	}
+
+	if err := drainer.DeleteOrEvictPods(list.Pods()); err != nil {
+		// Maybe warn about non-deleted pods here
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Cordon(nodeName string) error {
+	log.Infof("[%s] cordoning", nodeName)
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	node, err := client.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	cordon := drain.NewCordonHelper(node)
+
+	if node.Spec.Unschedulable {
+		// Already done
+		return nil
+	}
+
+	err, patchErr := cordon.PatchOrReplace(drainer.Client)
+	if patchErr != nil {
+		return patchErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Uncordon(nodeName string) error {
+	log.Infof("[%s] uncordoning", nodeName)
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	node, err := client.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	cordon := drain.NewCordonHelper(node)
+
+	if !node.Spec.Unschedulable {
+		// Already done
+		return nil
+	}
+
+	err, patchErr := cordon.PatchOrReplace(drainer.Client)
+	if patchErr != nil {
+		return patchErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) GetKustomize() (*kustomize.Manager, error) {
@@ -52,6 +163,26 @@ func (c *Client) GetKustomize() (*kustomize.Manager, error) {
 		return c.kustomizeManager, nil
 	}
 	dir, _ := ioutil.TempDir("", "platform-cli-kustomize")
+	patches, err := c.GetKustomizePatches()
+	if err != nil {
+		return nil, err
+	}
+
+	no := 1
+	for _, patch := range patches {
+		if files.Exists(patch) {
+			if err := files.Copy(patch, dir+"/"+files.GetBaseName(patch)); err != nil {
+				return nil, err
+			}
+		} else {
+			name := fmt.Sprintf("patch-%d.yaml", no)
+			no++
+			if _, err := files.CopyFromReader(bytes.NewBufferString(patch), dir+"/"+name, 0644); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	kustomizeManager, err := kustomize.GetManager(dir)
 	c.kustomizeManager = kustomizeManager
 	return c.kustomizeManager, err
@@ -99,12 +230,12 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("Failed to get client %v", err)
+		log.Tracef("failed to get client %v", err)
 		return nil
 	}
 	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("Failed to get secret %s/%s: %v\n", namespace, name, err)
+		log.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
 		return nil
 	}
 	return &secret.Data
@@ -114,7 +245,7 @@ func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
 func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("Failed to get client %v", err)
+		log.Tracef("failed to get client %v", err)
 		return nil
 	}
 	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
@@ -135,10 +266,22 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 		return fmt.Errorf("get: failed to get client: %v", err)
 	}
 
+	err = runtime.DefaultUnstructuredConverter.
+		FromUnstructured(unstructuredObj.Object, obj)
+	if err == nil {
+		return nil
+	}
+	if log.IsLevelEnabled(log.TraceLevel) {
+		spew.Dump(unstructuredObj.Object)
+	}
+
+	// FIXME(moshloop) getting the zalando operationconfiguration fails with "unrecognized type: int64" so we fall back to brute-force
+	log.Warnf("Using mapstructure to decode %s: %v", obj.GetObjectKind().GroupVersionKind().Kind, err)
 	config := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
-		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration),
-		Result:           &obj,
+		TagName:          "json",
+		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration, decodeStringToTimeDuration),
+		Result:           obj,
 	}
 
 	decoder, err := mapstructure.NewDecoder(config)
@@ -146,7 +289,6 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 		return fmt.Errorf("get: failed to decode config: %v", err)
 	}
 	return decoder.Decode(unstructuredObj.Object)
-
 }
 
 func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
@@ -202,13 +344,11 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 
 	if mapping.Scope == meta.RESTScopeRoot {
 		return dynamicClient.Resource(mapping.Resource), &resource, unstructuredObj, nil
-	} else {
-		if namespace == "" {
-			namespace = unstructuredObj.GetNamespace()
-		}
-		return dynamicClient.Resource(mapping.Resource).Namespace(namespace), &resource, unstructuredObj, nil
 	}
-
+	if namespace == "" {
+		namespace = unstructuredObj.GetNamespace()
+	}
+	return dynamicClient.Resource(mapping.Resource).Namespace(namespace), &resource, unstructuredObj, nil
 }
 
 func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Helper, error) {
@@ -241,7 +381,6 @@ func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Help
 
 func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
 	for _, unstructuredObj := range objects {
-
 		client, err := c.GetRestClient(*unstructuredObj)
 		if err != nil {
 			return err
@@ -269,25 +408,68 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 	return nil
 }
 
+func (c *Client) trace(msg string, objects ...runtime.Object) {
+	if !c.Trace {
+		return
+	}
+	for _, obj := range objects {
+		data, err := yaml.Marshal(obj)
+		if err != nil {
+			log.Errorf("Error tracing %s", err)
+		} else {
+			fmt.Printf("%s\n%s", msg, string(data))
+		}
+	}
+}
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
-			return fmt.Errorf("apply: failed to get dynamic client: %v", err)
+			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
 		if c.ApplyDryRun {
-			log.Infof("[dry-run] %s/%s/%s created/configured", resource.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.trace("apply", unstructuredObj)
+			log.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
+			continue
+		}
+
+		existing, _ := client.Get(unstructuredObj.GetName(), metav1.GetOptions{})
+
+		if existing == nil {
+			c.trace("creating", unstructuredObj)
+			_, err = client.Create(unstructuredObj, metav1.CreateOptions{})
+			if err != nil {
+				log.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+			}
+			log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 		} else {
-			_, err := client.Create(unstructuredObj, metav1.CreateOptions{})
-			if errors.IsAlreadyExists(err) {
-				_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
-				// TODO(moshloop): Diff the old and new objects and log unchanged instead of configured where necessary
-				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-			} else if err == nil {
-				log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+			if unstructuredObj.GetKind() == "Service" {
+				// Workaround for immutable spec.clusterIP error message
+				spec := unstructuredObj.Object["spec"].(map[string]interface{})
+				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
+			}
+			//apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
+
+			c.trace("updating", unstructuredObj)
+			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
+			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
+			if err != nil {
+				log.Errorf("error updating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				continue
+			}
+
+			if updated.GetResourceVersion() == unstructuredObj.GetResourceVersion() {
+				log.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
-				log.Errorf("error handling: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+				if log.IsLevelEnabled(log.TraceLevel) {
+					diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
+					if len(diff) > 0 {
+						log.Tracef("%s", diff)
+					}
+				}
 			}
 		}
 	}
@@ -305,6 +487,9 @@ func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) err
 	}
 	unstructuredObj.SetAnnotations(existing)
 	_, err = client.Update(unstructuredObj, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("annotate: failed to update object: #{err}")
+	}
 	log.Infof("%s/%s/%s annotated", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 	return nil
 }
@@ -399,7 +584,6 @@ func (c *Client) HasSecret(ns, name string) bool {
 	secrets := client.CoreV1().Secrets(ns)
 	cm, err := secrets.Get(name, metav1.GetOptions{})
 	return cm != nil && err == nil
-
 }
 
 func (c *Client) HasConfigMap(ns, name string) bool {
@@ -568,6 +752,63 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 	return err
 }
 
+func (c *Client) StreamLogs(namespace, name string) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
+	}
+	pods := client.CoreV1().Pods(namespace)
+	pod, err := pods.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	log.Debugf("Waiting for %s/%s to be running", namespace, name)
+	if err := c.WaitForPod(namespace, name, 120*time.Second, v1.PodRunning, v1.PodSucceeded); err != nil {
+		return err
+	}
+	log.Debugf("%s/%s running, streaming logs", namespace, name)
+	var wg sync.WaitGroup
+	for _, container := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
+		logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
+			Container: container.Name,
+		})
+
+		prefix := pod.Name
+		if len(pod.Spec.Containers) > 1 {
+			prefix += "/" + container.Name
+		}
+		podLogs, err := logs.Stream()
+		if err != nil {
+			return err
+		}
+		wg.Add(1)
+		go func() {
+			defer podLogs.Close()
+			defer wg.Done()
+
+			scanner := bufio.NewScanner(podLogs)
+			for scanner.Scan() {
+				incoming := scanner.Bytes()
+				buffer := make([]byte, len(incoming))
+				copy(buffer, incoming)
+				fmt.Printf("\x1b[38;5;244m[%s]\x1b[0m %s\n", prefix, string(buffer))
+			}
+		}()
+	}
+	wg.Wait()
+	if err = c.WaitForPod(namespace, name, 120*time.Second, v1.PodSucceeded); err != nil {
+		return err
+	}
+	pod, err = pods.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if pod.Status.Phase == v1.PodSucceeded {
+		return nil
+	}
+	return fmt.Errorf("pod did not finish successfully %s - %s", pod.Status.Phase, pod.Status.Message)
+}
+
 func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint string, group string, user string) ([]byte, error) {
 	contextName := fmt.Sprintf("%s@%s", user, clusterName)
 	cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
@@ -606,13 +847,13 @@ func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoin
 	return clientcmd.Write(cfg)
 }
 
-func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpUrl, idToken, accessToken, refreshToken string) ([]byte, error) {
+func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint, idpURL, idToken, accessToken, refreshToken string) ([]byte, error) {
 	if !strings.HasPrefix("https://", endpoint) {
 		endpoint = "https://" + endpoint
 	}
 
-	if !strings.HasPrefix("https://", idpUrl) {
-		idpUrl = "https://" + idpUrl
+	if !strings.HasPrefix("https://", idpURL) {
+		idpURL = "https://" + idpURL
 	}
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
@@ -635,8 +876,8 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 						"client-id":                      "kubernetes",
 						"client-secret":                  "ZXhhbXBsZS1hcHAtc2VjcmV0",
 						"extra-scopes":                   "offline_access openid profile email groups",
-						"idp-certificate-authority-data": string(base64.StdEncoding.EncodeToString([]byte(ca.GetPublicChain()[0].EncodedCertificate()))),
-						"idp-issuer-url":                 idpUrl,
+						"idp-certificate-authority-data": base64.StdEncoding.EncodeToString(ca.GetPublicChain()[0].EncodedCertificate()),
+						"idp-issuer-url":                 idpURL,
 						"id-token":                       idToken,
 						"access-token":                   accessToken,
 						"refresh-token":                  refreshToken,
@@ -660,6 +901,10 @@ func (c *Client) PingMaster() bool {
 	}
 
 	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		log.Tracef("pingMaster: Failed to get nodes list: %v", err)
+		return false
+	}
 	if nodes == nil && len(nodes.Items) == 0 {
 		return false
 	}
@@ -674,7 +919,7 @@ func (c *Client) PingMaster() bool {
 
 // WaitForPod waits for a pod to be in the specified phase, or returns an
 // error if the timeout is exceeded
-func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Duration) error {
+func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1.PodPhase) error {
 	client, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("waitForPod: Failed to get clientset: %v", err)
@@ -684,23 +929,48 @@ func (c *Client) WaitForPod(ns, name string, status v1.PodPhase, timeout time.Du
 	for {
 		pod, err := pods.Get(name, metav1.GetOptions{})
 		if start.Add(timeout).Before(time.Now()) {
-			return fmt.Errorf("Timeout exceeded waiting for %s to be %s: is %s, error: %v", name, status, pod.Status.Phase, err)
+			return fmt.Errorf("timeout exceeded waiting for %s is %s, error: %v", name, pod.Status.Phase, err)
 		}
 
-		if pod != nil && pod.Status.Phase == status {
+		if pod == nil || pod.Status.Phase == v1.PodPending {
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		if pod.Status.Phase == v1.PodFailed {
 			return nil
+		}
+
+		for _, phase := range phases {
+			if pod.Status.Phase == phase {
+				return nil
+			}
+		}
+	}
+}
+
+// WaitForPodCommand waits for a command executed in pod to succeed with an exit code of 9
+// error if the timeout is exceeded
+func (c *Client) WaitForPodCommand(ns, name string, container string, timeout time.Duration, command ...string) error {
+	start := time.Now()
+	for {
+		stdout, stderr, err := c.ExecutePodf(ns, name, container, command...)
+		if err == nil {
+			return nil
+		}
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for %s stdout: %s, stderr: %s", name, stdout, stderr)
 		}
 		time.Sleep(5 * time.Second)
 	}
-
 }
 
 // ExecutePodf runs the specified shell command inside a container of the specified pod
-func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...interface{}) (string, string, error) {
+func (c *Client) ExecutePodf(namespace, pod, container string, command ...string) (string, string, error) {
 	client, err := c.GetClientset()
 	if err != nil {
 		return "", "", fmt.Errorf("executePodf: Failed to get clientset: %v", err)
 	}
+	log.Debugf("[%s/%s/%s] %s", namespace, pod, container, command)
 	const tty = false
 	req := client.CoreV1().RESTClient().Post().
 		Resource("pods").
@@ -710,7 +980,7 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 		Param("container", container)
 	req.VersionedParams(&v1.PodExecOptions{
 		Container: container,
-		Command:   []string{fmt.Sprintf(command, args...)},
+		Command:   command,
 		Stdin:     false,
 		Stdout:    true,
 		Stderr:    true,
@@ -721,28 +991,34 @@ func (c *Client) ExecutePodf(namespace, pod, container, command string, args ...
 	if err != nil {
 		return "", "", fmt.Errorf("ExecutePodf: Failed to get REST config: %v", err)
 	}
+
 	exec, err := remotecommand.NewSPDYExecutor(rc, "POST", req.URL())
 	if err != nil {
 		return "", "", fmt.Errorf("ExecutePodf: Failed to get SPDY Executor: %v", err)
 	}
-	var stdout, stderr *bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	err = exec.Stream(remotecommand.StreamOptions{
 		Stdin:  nil,
-		Stdout: stdout,
-		Stderr: stderr,
+		Stdout: &stdout,
+		Stderr: &stderr,
 		Tty:    tty,
 	})
+
+	_stdout := safeString(&stdout)
+	_stderr := safeString(&stderr)
 	if err != nil {
-		return "", "", err
+		return _stdout, _stderr, fmt.Errorf("exec returned an error: %+v", err)
 	}
-	return safeString(stdout), safeString(stderr), nil
+
+	log.Tracef("[%s/%s/%s] %s => %s %s ", namespace, pod, container, command, _stdout, _stderr)
+	return _stdout, _stderr, nil
 }
 
 func safeString(buf *bytes.Buffer) string {
 	if buf == nil || buf.Len() == 0 {
 		return ""
 	}
-	return string(buf.Bytes())
+	return buf.String()
 }
 
 // Executef runs the specified shell command on a node by creating
@@ -753,29 +1029,30 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 		return "", fmt.Errorf("executef: Failed to get clientset: %v", err)
 	}
 	pods := client.CoreV1().Pods("kube-system")
-
+	command = fmt.Sprintf(command, args...)
 	pod, err := pods.Create(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("command-%s-%s", node, utils.ShortTimestamp()),
 		},
-		Spec: NewCommandJob(node, fmt.Sprintf(command, args...)),
+		Spec: NewCommandJob(node, command),
 	})
+	log.Tracef("[%s] executing '%s' in pod %s", node, command, pod.Name)
 	if err != nil {
 		return "", fmt.Errorf("executef: Failed to create pod: %v", err)
 	}
-	defer pods.Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
+	defer pods.Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{}) // nolint: errcheck
 
 	logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
 		Container: pod.Spec.Containers[0].Name,
 	})
 
-	err = c.WaitForPod("kube-system", pod.ObjectMeta.Name, v1.PodSucceeded, timeout)
+	err = c.WaitForPod("kube-system", pod.ObjectMeta.Name, timeout, v1.PodSucceeded)
 	logString := read(logs)
 	if err != nil {
 		return logString, fmt.Errorf("failed to execute command, pod did not complete: %v", err)
-	} else {
-		return logString, nil
 	}
+	log.Tracef("[%s] stdout: %s", node, logString)
+	return logString, nil
 }
 
 func read(req *rest.Request) string {
@@ -819,6 +1096,12 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				Privileged: &yes,
 			},
 		}},
+		Tolerations: []v1.Toleration{
+			v1.Toleration{
+				// tolerate all values
+				Operator: "Exists",
+			},
+		},
 		HostNetwork: true,
 		HostPID:     true,
 		HostIPC:     true,

@@ -2,11 +2,21 @@ version: 2
 go: &go
   environment:
     GO111MODULE: "on"
+    CGO_ENABLED: 0
     GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.13
   working_directory: /go/src/github.com/moshloop/platform-cli
 jobs:
+  lint:
+    <<: *go
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: go run test/linter/main.go
+      - run: ./scripts/golint.sh
+      - store_test_results:
+          path: test-results
   test:
     resource_class: large
     environment:
@@ -43,7 +53,6 @@ jobs:
       - run: go mod download
       - run: ./scripts/release.sh
 
-
   release-docs:
     docker:
       - image: flanksource/build-tools
@@ -57,10 +66,12 @@ workflows:
     jobs:
       - test
       - test-next
+      - lint
       - release:
           requires:
             - test
             - test-next
+            - lint
           context: Github
           filters:
             tags:

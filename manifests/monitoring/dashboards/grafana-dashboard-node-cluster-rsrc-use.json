@@ -902,6 +902,15 @@
                 "refresh": 1,
                 "regex": "",
                 "type": "datasource"
+            },
+            {
+                "datasource": "prometheus",
+                "filters": [],
+                "hide": 0,
+                "label": "Filter",
+                "name": "filter",
+                "skipUrlSync": false,
+                "type": "adhoc"
             }
         ]
     },

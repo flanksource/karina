@@ -1,19 +1,16 @@
 package phases
 
 import (
-	"errors"
 	"fmt"
 
-	// initialize konfigadm
-
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-
 	"github.com/flanksource/commons/certs"
-	_ "github.com/moshloop/konfigadm/pkg"
+	"github.com/flanksource/yaml"
+	_ "github.com/moshloop/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var envVars = map[string]string{
@@ -36,12 +33,14 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
 	}
-	if err := addInitKubeadmConfig(hostname, platform, cfg); err != nil {
+	if err := addInitKubeadmConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add kubeadm config: %v", err)
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
-	addCerts(platform, cfg)
+	if err := addCerts(platform, cfg); err != nil {
+		return nil, errors.Wrap(err, "failed to add certs")
+	}
 	cfg.AddCommand("kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log")
 	return cfg, nil
 }
@@ -82,7 +81,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	return nil
 }
 
-func addInitKubeadmConfig(hostname string, platform *platform.Platform, cfg *konfigadm.Config) error {
+func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
 	cluster := kubeadm.NewClusterConfig(platform)
 	data, err := yaml.Marshal(cluster)
 	if err != nil {
@@ -156,7 +155,9 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
-	addCerts(platform, cfg)
+	if err = addCerts(platform, cfg); err != nil {
+		return nil, errors.Wrap(err, "Failed to add certs")
+	}
 	cfg.AddCommand(fmt.Sprintf(
 		"kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log",
 		token, certKey, platform.JoinEndpoint))
