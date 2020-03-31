@@ -1,16 +1,27 @@
 package nginx
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 
+const (
+	Namespace = "ingress-nginx"
+)
+
 func Install(platform *platform.Platform) error {
+
 	if platform.Nginx != nil && platform.Nginx.Disabled {
 		log.Debugf("Skipping nginx deployment")
 		return nil
+	}
+
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
 	if platform.Nginx == nil {
