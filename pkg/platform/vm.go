@@ -182,7 +182,7 @@ func (vm *VM) PowerOff() error {
 	if info.State == "success" {
 		log.Debugf("[%s] powered off", vm)
 	} else {
-		return errors.Errorf("Failed to poweroff %s, %v", vm, info)
+		return errors.Errorf("Failed to poweroff %s, %v, %s", vm, info, err)
 	}
 	return nil
 }
@@ -245,7 +245,7 @@ func (vm *VM) Terminate() error {
 	if info.State == "success" {
 		log.Debugf("[%s] terminated\n", vm)
 	} else {
-		return errors.Errorf("Failed to delete %s, %v", vm, info)
+		return errors.Errorf("Failed to delete %s, %v, %s", vm, info, err)
 	}
 	return nil
 }

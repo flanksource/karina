@@ -76,22 +76,23 @@ func VsphereCluster(platform *platform.Platform) error {
 		vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
 		vm.Tags["Role"] = platform.Name + "-masters"
 		log.Infof("Creating new secondary master %s\n", vm.Name)
+		if platform.DryRun {
+			continue
+		}
 		config, err := phases.CreateSecondaryMaster(platform)
 		if err != nil {
 			log.Errorf("Failed to create secondary master: %s", err)
+			continue
+		}
+		cloned, err := platform.Clone(vm, config)
+		if err != nil {
+			log.Errorf("Failed to clone secondary master: %s", err)
+			continue
+		}
+		if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), cloned.IP); err != nil {
+			log.Warnf("Failed to update DNS for %s", cloned.IP)
 		} else {
-			if !platform.DryRun {
-				vm, err := platform.Clone(vm, config)
-				if err != nil {
-					log.Errorf("Failed to Clone secondary master: %s", err)
-				} else {
-					if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), vm.IP); err != nil {
-						log.Warnf("Failed to update DNS for %s", vm.IP)
-					} else {
-						log.Infof("Provisioned new master: %s\n", vm.IP)
-					}
-				}
-			}
+			log.Infof("Provisioned new master: %s\n", cloned.IP)
 		}
 	}
 
@@ -108,27 +109,28 @@ func VsphereCluster(platform *platform.Platform) error {
 			wg.Add(1)
 			vm := worker
 			go func() {
+				defer wg.Done()
 				config, err := phases.CreateWorker(platform)
 				if err != nil {
 					log.Errorf("Failed to create workers %s\n", err)
-				} else {
-					vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, worker.Prefix, utils.ShortTimestamp())
-					vm.Tags["Role"] = platform.Name + "-workers"
-					if !platform.DryRun {
-						log.Infof("Creating new worker %s\n", vm.Name)
-						vm, err := platform.Clone(vm, config)
-						if err != nil {
-							log.Errorf("Failed to Clone worker: %s", err)
-						} else {
-							if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), vm.IP); err != nil {
-								log.Warnf("Failed to update DNS for %s", vm.IP)
-							} else {
-								log.Infof("Provisioned new worker: %s\n", vm.IP)
-							}
-						}
-					}
+					return
 				}
-				wg.Done()
+				vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, worker.Prefix, utils.ShortTimestamp())
+				vm.Tags["Role"] = platform.Name + "-workers"
+				if platform.DryRun {
+					return
+				}
+				log.Infof("Creating new worker %s\n", vm.Name)
+				vm, err := platform.Clone(vm, config)
+				if err != nil {
+					log.Errorf("Failed to Clone worker: %s", err)
+					return
+				}
+				if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), vm.IP); err != nil {
+					log.Warnf("Failed to update DNS for %s", vm.IP)
+				} else {
+					log.Infof("Provisioned new worker: %s\n", vm.IP)
+				}
 			}()
 		}
 
@@ -142,12 +144,15 @@ func VsphereCluster(platform *platform.Platform) error {
 			log.Infof("Downscaling %d extra worker nodes", terminateCount)
 			time.Sleep(3 * time.Second)
 			for i := 0; i < terminateCount; i++ {
-				name := vmNames[worker.Count+i-1]
+				vm := vms[vmNames[worker.Count+i-1]]
 				wg.Add(1)
 				go func() {
 					//terminate oldest first
-					if err := vms[name].Terminate(); err != nil {
-						log.Warnf("Failed to terminate %s: %v", name, err)
+					if err := platform.Drain(vm.Name, 2*time.Minute); err != nil {
+						log.Warnf("[%s] failed to drain: %v", vm.Name, err)
+					}
+					if err := vm.Terminate(); err != nil {
+						log.Warnf("Failed to terminate %s: %v", vm.Name, err)
 					}
 					wg.Done()
 				}()
