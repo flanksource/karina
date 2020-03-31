@@ -61,6 +61,7 @@ func main() {
 		cmd.Vault,
 		cmd.Config,
 		cmd.Logs,
+		cmd.Rolling,
 	)
 
 	if len(commit) > 8 {

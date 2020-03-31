@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+//nolint
 package drain
 
 import (
@@ -196,6 +196,19 @@ func (d *Helper) mirrorPodFilter(pod corev1.Pod) podDeleteStatus {
 }
 
 func (d *Helper) localStorageFilter(pod corev1.Pod) podDeleteStatus {
+	pvcs := d.Client.CoreV1().PersistentVolumeClaims(pod.Namespace)
+
+	for _, vol := range pod.Spec.Volumes {
+		if vol.PersistentVolumeClaim != nil {
+			pvc, err := pvcs.Get(vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
+			if err != nil {
+				return makePodDeleteStatusWithError(err.Error())
+			}
+			if pvc != nil && pvc.Spec.StorageClassName == nil || strings.Contains(*pvc.Spec.StorageClassName, "local") {
+				return makePodDeleteStatusSkip()
+			}
+		}
+	}
 	if !hasLocalStorage(pod) {
 		return makePodDeleteStatusOkay()
 	}
@@ -203,6 +216,7 @@ func (d *Helper) localStorageFilter(pod corev1.Pod) podDeleteStatus {
 	if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 		return makePodDeleteStatusOkay()
 	}
+
 	if !d.DeleteLocalData {
 		return makePodDeleteStatusWithError(localStorageFatal)
 	}
