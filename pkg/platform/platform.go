@@ -43,6 +43,8 @@ type Platform struct {
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
 	ingressCA  certs.CertificateAuthority
+	// Terminating is true if the cluster is in a terminating state
+	Terminating bool
 }
 
 func (platform *Platform) Init() {

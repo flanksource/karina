@@ -19,6 +19,7 @@ func Cleanup(platform *platform.Platform) error {
 	if err := WithVmwareCluster(platform); err != nil {
 		return err
 	}
+	platform.Terminating = true
 
 	vms, err := platform.Cluster.GetMachines()
 	if err != nil {

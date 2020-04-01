@@ -2,8 +2,10 @@ package provision
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -12,6 +14,74 @@ import (
 
 // Perform a rolling restart of nodes
 func RollingUpdate(platform *platform.Platform, drainTimeout time.Duration, forceRestart bool) error {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return err
+	}
+	if err := WithVmwareCluster(platform); err != nil {
+		return err
+	}
+
+	// make sure admin kubeconfig is available
+	platform.GetKubeConfig() // nolint: errcheck
+	if platform.JoinEndpoint == "" {
+		platform.JoinEndpoint = "localhost:8443"
+	}
+
+	// upload control plane certs first
+	if _, err := kubeadm.UploadControlPaneCerts(platform); err != nil {
+		return err
+	}
+	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, node := range list.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			log.Infof("Skipping master %s", node.Name)
+			continue
+		}
+
+		health := platform.GetHealth()
+
+		log.Infof("Health Before: %s", health)
+
+		timer := NewTimer()
+
+		if err := platform.Cordon(node.Name); err != nil {
+			return fmt.Errorf("failed to cordon %s: %v", node.Name, err)
+		}
+		replacement, err := createWorker(platform, "")
+		if err != nil {
+			return fmt.Errorf("failed to create new worker: %v", err)
+		}
+
+		log.Infof("waiting for replacement to become ready")
+		if status, err := platform.WaitForNode(replacement.Name(), drainTimeout, v1.NodeReady, v1.ConditionTrue); err != nil {
+			return fmt.Errorf("new worker %s did not come up healthy: %v", node.Name, status)
+		}
+		machine, err := platform.Cluster.GetMachine(node.Name)
+		if err != nil {
+			return err
+		}
+
+		terminate(platform, machine)
+
+		log.Infof("Replaced %s in %s", node.Name, timer)
+
+		doUntil(func() bool {
+			currentHealth := platform.GetHealth()
+			log.Infof(currentHealth.String())
+			if currentHealth.IsDegradedComparedTo(health) {
+				time.Sleep(5 * time.Second)
+				return false
+			}
+			return true
+		})
+		if platform.GetHealth().IsDegradedComparedTo(health) {
+			return fmt.Errorf("cluster is not healthy, aborting rollout")
+		}
+	}
 	return nil
 }
 
@@ -26,7 +96,15 @@ func RollingRestart(platform *platform.Platform, drainTimeout time.Duration, for
 	if err != nil {
 		return err
 	}
+	var names sort.StringSlice
+	nodes := make(map[string]v1.Node)
 	for _, node := range list.Items {
+		names = append(names, node.Name)
+		nodes[node.Name] = node
+	}
+	sort.Sort(sort.Reverse(names))
+	for _, name := range names {
+		node := nodes[name]
 		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
 			log.Infof("Skipping master %s", node.Name)
 			continue

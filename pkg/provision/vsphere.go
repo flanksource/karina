@@ -6,16 +6,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/yaml"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
+	"github.com/flanksource/yaml"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
+	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func WithVmwareCluster(platform *platform.Platform) error {
@@ -216,15 +216,25 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 }
 
 func terminate(platform *platform.Platform, vm types.Machine) {
-	if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
-		log.Warnf("[%s] failed to drain: %v", vm.Name, err)
+	if !platform.Terminating {
+		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
+			log.Warnf("[%s] failed to drain: %v", vm.Name, err)
+		}
+	}
+	client, err := platform.GetClientset()
+	if err != nil {
+		log.Warnf("Failed to get client to delete node")
+	} else {
+		client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{})
+	}
+
+	if err := RemoveDNS(platform, vm); err != nil {
+		log.Warnf("Failed to remove dns for %s: %v", vm, err)
 	}
 	if err := vm.Terminate(); err != nil {
 		log.Warnf("Failed to terminate %s: %v", vm.Name, err)
 	}
-	if err := RemoveDNS(platform, vm); err != nil {
-		log.Warnf("Failed remove dns for %s: %v", vm, err)
-	}
+
 }
 
 func RemoveDNS(p *platform.Platform, vm types.Machine) error {
