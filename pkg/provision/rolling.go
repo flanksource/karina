@@ -13,7 +13,7 @@ import (
 )
 
 // Perform a rolling restart of nodes
-func RollingUpdate(platform *platform.Platform, drainTimeout time.Duration, forceRestart bool) error {
+func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeout time.Duration, forceRestart bool) error {
 	client, err := platform.GetClientset()
 	if err != nil {
 		return err
@@ -42,6 +42,25 @@ func RollingUpdate(platform *platform.Platform, drainTimeout time.Duration, forc
 			continue
 		}
 
+		machine, err := platform.Cluster.GetMachine(node.Name)
+		if err != nil {
+			return err
+		}
+
+		attributes, err := machine.GetAttributes()
+		if err != nil {
+			return err
+		}
+		created, _ := time.Parse("02Jan06-15:04:05", attributes["CreatedDate"])
+		template := attributes["Template"]
+		age := time.Since(created)
+		if age > minAge {
+			log.Infof("Replacing %s, created=%s, age=%s, template=%s ", machine.Name(), created, age, template)
+		} else {
+			log.Infof("Skipping %s,  created=%s, age=%s, template=%s ", machine.Name(), created, age, template)
+			continue
+		}
+
 		health := platform.GetHealth()
 
 		log.Infof("Health Before: %s", health)
@@ -56,13 +75,9 @@ func RollingUpdate(platform *platform.Platform, drainTimeout time.Duration, forc
 			return fmt.Errorf("failed to create new worker: %v", err)
 		}
 
-		log.Infof("waiting for replacement to become ready")
+		log.Infof("waiting for replacement for %s to become ready", node.Name)
 		if status, err := platform.WaitForNode(replacement.Name(), drainTimeout, v1.NodeReady, v1.ConditionTrue); err != nil {
 			return fmt.Errorf("new worker %s did not come up healthy: %v", node.Name, status)
-		}
-		machine, err := platform.Cluster.GetMachine(node.Name)
-		if err != nil {
-			return err
 		}
 
 		terminate(platform, machine)
