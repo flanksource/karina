@@ -2,22 +2,28 @@ package provision
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
+
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/flanksource/yaml"
-	"github.com/pkg/errors"
+
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
-	kindCADir = "/etc/flanksource/ingress-ca"
+	kindCADir    = "/etc/flanksource/ingress-ca"
+	kindAuditDir = "/etc/flanksource/audit-policy"
 )
 
 // KindCluster provision or create a kubernetes cluster
@@ -73,9 +79,29 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		auditPolicyPath, err := filepath.Abs(platform.Kubernetes.AuditConfig.PolicyFile)
+		if err != nil {
+			return errors.Wrap(err, "failed to expand audit config file path")
+		}
+
+		mnts := &kindConfig.Nodes[0].ExtraMounts
+
+		*mnts = append(*mnts, kindapi.Mount{
+			ContainerPath: kindAuditDir,
+			HostPath:      path.Dir(auditPolicyPath),
+			Readonly:      true,
+		})
+	}
+
 	yml, err := yaml.Marshal(kindConfig)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal config")
+	}
+
+	if platform.PlatformConfig.Trace {
+		log.Print("KIND Config YAML:")
+		log.Print(string(yml))
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")
@@ -122,6 +148,21 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 		},
 	}
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		clusterConfig.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+
+		vols := &clusterConfig.APIServer.ExtraVolumes
+		*vols = append(*vols, api.HostPathMount{
+			Name:      "audit-spec",
+			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.Kubernetes.AuditConfig.PolicyFile)),
+			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		})
+
+	}
+
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
