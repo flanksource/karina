@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var timeout = 5 * time.Minute
+
 // Perform a rolling restart of nodes
 func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeout time.Duration, forceRestart bool) error {
 	client, err := platform.GetClientset()
@@ -84,7 +86,7 @@ func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeo
 
 		log.Infof("Replaced %s in %s", node.Name, timer)
 
-		doUntil(func() bool {
+		if succeededWithinTimeout := doUntil(timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			log.Infof(currentHealth.String())
 			if currentHealth.IsDegradedComparedTo(health) {
@@ -92,7 +94,9 @@ func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeo
 				return false
 			}
 			return true
-		})
+		}); !succeededWithinTimeout {
+			log.Errorf("Health degraded after waiting %v", timeout)
+		}
 		if platform.GetHealth().IsDegradedComparedTo(health) {
 			return fmt.Errorf("cluster is not healthy, aborting rollout")
 		}
@@ -161,7 +165,7 @@ func RollingRestart(platform *platform.Platform, drainTimeout time.Duration, for
 		}
 		log.Infof("Restarted %s in %s", node.Name, timer)
 
-		doUntil(func() bool {
+		if succeededWithinTimeout := doUntil(timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			log.Infof(currentHealth.String())
 			if currentHealth.IsDegradedComparedTo(health) {
@@ -169,19 +173,21 @@ func RollingRestart(platform *platform.Platform, drainTimeout time.Duration, for
 				return false
 			}
 			return true
-		})
+		}); !succeededWithinTimeout {
+			log.Warnf("Current health not recovered after timeout %v", timeout)
+		}
 	}
 	return nil
 }
 
-func doUntil(fn func() bool) bool {
+func doUntil(timeout time.Duration, fn func() bool) bool {
 	start := time.Now()
 
 	for {
 		if fn() {
 			return true
 		}
-		if time.Now().After(start.Add(5 * time.Minute)) {
+		if time.Now().After(start.Add(timeout)) {
 			return false
 		}
 		time.Sleep(5 * time.Second)

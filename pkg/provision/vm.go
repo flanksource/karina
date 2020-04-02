@@ -21,11 +21,11 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 		return fmt.Errorf("vm: failed to get new config: %v", err)
 	}
 	log.Infof("Using konfigadm spec: %s\n", konfigs)
-	_vm, err := platform.Clone(*vm, konfig)
+	machine, err := platform.Clone(*vm, konfig)
 
 	if err != nil {
 		return fmt.Errorf("vm: failed to clone %v", err)
 	}
-	log.Infof("Provisioned  %s ->  %s\n", vm.Name, _vm.IP)
+	log.Infof("Provisioned  %s ->  %s\n", machine.Name(), machine.IP())
 	return nil
 }

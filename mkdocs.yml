@@ -22,6 +22,7 @@ nav:
               - Logging In: ./user-guide/login.md
               - Usage: ./user-guide/usage.md
       - Administrator Guide:
+              - Audit: ./admin-guide/audit/audit.md
               - Authentication:
                       - Setting up SSO: ./admin-guide/authentication/sso.md
                       - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md

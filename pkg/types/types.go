@@ -7,6 +7,7 @@ import (
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
+
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -267,6 +268,33 @@ type Kubernetes struct {
 	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
 	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
 	MasterIP      string            `yaml:"masterIP,omitempty"`
+	// AuditConfig is used to specify the audit policy file.
+	// If a policy file is specified the cluster audit is enabled.
+	// Several api-server flags can be added to APIServerExtraArgs to further
+	// customize the logging configuration.
+	// The relevant flags are:
+	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
+	AuditConfig *AuditConfig `yaml:"auditing,omitempty"`
+}
+
+// UnmarshalYAML is used to customize the YAML unmarshalling of
+// Kubernetes objects. It makes sure that if a audit policy is specified
+// that a default audit-log-path will be supplied.
+func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawKubernetes Kubernetes
+	raw := rawKubernetes{}
+
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	if raw.AuditConfig.PolicyFile != "" {
+		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
+			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
+		}
+	}
+
+	*c = Kubernetes(raw)
+	return nil
 }
 
 type Dashboard struct {
@@ -515,6 +543,10 @@ type Connection struct {
 	Port     string `yaml:"port,omitempty"`
 	Scheme   string `yaml:"scheme,omitempty"`
 	Verify   string `yaml:"verify,omitempty"`
+}
+
+type AuditConfig struct {
+	PolicyFile string `yaml:"policyFile,omitempty"`
 }
 
 type ConfigMapReloader struct {
