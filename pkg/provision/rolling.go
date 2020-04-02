@@ -95,7 +95,7 @@ func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeo
 			}
 			return true
 		}); !succeededWithinTimeout {
-			log.Error("Health degraded after waiting %v", timeout)
+			log.Errorf("Health degraded after waiting %v", timeout)
 		}
 		if platform.GetHealth().IsDegradedComparedTo(health) {
 			return fmt.Errorf("cluster is not healthy, aborting rollout")
