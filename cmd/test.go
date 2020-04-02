@@ -7,6 +7,10 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
+	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
@@ -23,8 +27,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -234,6 +236,15 @@ func init() {
 	})
 
 	Test.AddCommand(&cobra.Command{
+		Use:   "audit",
+		Short: "Test kubernetes audit",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(audit.Test)
+		},
+	})
+
+	Test.AddCommand(&cobra.Command{
 		Use:   "prometheus",
 		Short: "Test prometheus",
 		Args:  cobra.MinimumNArgs(0),
@@ -271,6 +282,8 @@ func init() {
 			run(func(p *platform.Platform, test *console.TestResults) {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
+				audit.Test(p, test)
+
 				if testAll || testWrite {
 					velero.Test(p, test)
 					dex.Test(p, test)

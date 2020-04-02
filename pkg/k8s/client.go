@@ -727,17 +727,17 @@ func (c *Client) ExposeIngress(namespace, service string, domain string, port in
 			},
 			Spec: v1beta1.IngressSpec{
 				TLS: []v1beta1.IngressTLS{
-					v1beta1.IngressTLS{
+					{
 						Hosts: []string{domain},
 					},
 				},
 				Rules: []v1beta1.IngressRule{
-					v1beta1.IngressRule{
+					{
 						Host: domain,
 						IngressRuleValue: v1beta1.IngressRuleValue{
 							HTTP: &v1beta1.HTTPIngressRuleValue{
 								Paths: []v1beta1.HTTPIngressPath{
-									v1beta1.HTTPIngressPath{
+									{
 										Backend: v1beta1.IngressBackend{
 											ServiceName: service,
 											ServicePort: intstr.FromInt(port),
@@ -1160,7 +1160,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 	return v1.PodSpec{
 		RestartPolicy: v1.RestartPolicyNever,
 		NodeName:      node,
-		Volumes: []v1.Volume{v1.Volume{
+		Volumes: []v1.Volume{{
 			Name: "root",
 			VolumeSource: v1.VolumeSource{
 				HostPath: &v1.HostPathVolumeSource{
@@ -1168,7 +1168,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				},
 			},
 		}},
-		Containers: []v1.Container{v1.Container{
+		Containers: []v1.Container{{
 			Name:  "shell",
 			Image: "docker.io/ubuntu:18.04",
 			Command: []string{
@@ -1176,7 +1176,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				"-c",
 				"chroot /chroot bash -c \"" + command + "\"",
 			},
-			VolumeMounts: []v1.VolumeMount{v1.VolumeMount{
+			VolumeMounts: []v1.VolumeMount{{
 				Name:      "root",
 				MountPath: "/chroot",
 			}},
@@ -1185,7 +1185,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 			},
 		}},
 		Tolerations: []v1.Toleration{
-			v1.Toleration{
+			{
 				// tolerate all values
 				Operator: "Exists",
 			},
@@ -1196,6 +1196,48 @@ func NewCommandJob(node, command string) v1.PodSpec {
 	}
 }
 
+// GetMasterNode returns the name of the first node found labelled as a master
+func (c *Client) GetMasterNode() (string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return "", fmt.Errorf("GetMasterNode: Failed to get clientset: %v", err)
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	var masterNode string
+	for _, node := range nodes.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			masterNode = node.Name
+			break
+		}
+	}
+	return masterNode, nil
+}
+
+// Returns the first pod found by label
+func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector string) (*v1.Pod, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, fmt.Errorf("GetFirstPodByLabelSelector: Failed to get clientset: %v", err)
+	}
+
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("GetFirstPodByLabelSelector: Failed to query for %v in namespace %v: %v", labelSelector, namespace, err)
+	}
+
+	if (pods != nil && len(pods.Items) < 1) || pods == nil {
+		return nil, fmt.Errorf("GetFirstPodByLabelSelector: No pods found for query for %v in namespace %v: %v", labelSelector, namespace, err)
+	}
+
+	return &pods.Items[0], nil
+}
 type Health struct {
 	RunningPods, PendingPods, ErrorPods, CrashLoopBackOff int
 	ReadyNodes, UnreadyNodes                              int
