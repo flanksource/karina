@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	Namespace = "configmap-reloader"
+	Namespace = "platform-system"
 )
 
 func Deploy(p *platform.Platform) error {
@@ -23,7 +23,7 @@ func Deploy(p *platform.Platform) error {
 		p.ConfigMapReloader.Version = utils.NormalizeVersion(p.ConfigMapReloader.Version)
 	}
 
-	log.Infof("Deploying configmap-reloader %s", p.ConfigMapReloader.Version)
+	log.Infof("Deploying configmap-reloader %s into %s", p.ConfigMapReloader.Version, Namespace)
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err

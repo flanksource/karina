@@ -3,8 +3,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app: reloader-reloader
-  name: reloader-reloader-role
+    app: reloader
+  name: reloader-role
   namespace: default
 rules:
   - apiGroups:
@@ -42,51 +42,51 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    app: reloader-reloader
-  name: reloader-reloader-role-binding
+    app: reloader
+  name: reloader-role-binding
   namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: reloader-reloader-role
+  name: reloader-role
 subjects:
   - kind: ServiceAccount
-    name: reloader-reloader
-    namespace: configmap-reloader
+    name: reloader
+    namespace: platform-system
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: reloader-reloader
-  name: reloader-reloader
-  namespace: configmap-reloader
+    app: reloader
+  name: reloader
+  namespace: platform-system
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: reloader-reloader
-  name: reloader-reloader
-  namespace: configmap-reloader
+    app: reloader
+  name: reloader
+  namespace: platform-system
 spec:
   replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: reloader-reloader
+      app: reloader
   template:
     metadata:
       labels:
-        app: reloader-reloader
+        app: reloader
     spec:
       containers:
         - env: []
           image: "stakater/reloader:{{.configmapReloader.version}}"
           imagePullPolicy: IfNotPresent
-          name: reloader-reloader
+          name: reloader
           args:
             - --configmap-annotation=reload/configmap
             - --secret-annotation=reload/secret
             - --auto-annotation=reload/all
-      serviceAccountName: reloader-reloader
+      serviceAccountName: reloader
