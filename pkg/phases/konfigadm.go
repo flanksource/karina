@@ -21,6 +21,16 @@ var envVars = map[string]string{
 	"KUBECONFIG":        "/etc/kubernetes/admin.conf",
 }
 
+var noCAErrorText = `Must specify a 'ca'' section in the platform config.
+e.g.:
+ca:
+   cert: .certs/root-ca-crt.pem
+   privateKey: .certs/root-ca-key.pem
+   password: foobar
+
+CA certs are generated using platform-cli ca generate
+`
+
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	if platform.Name == "" {
 		return nil, errors.New("Must specify a platform name")
@@ -61,6 +71,10 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 }
 
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
+	if platform.CA == nil {
+		return errors.New(noCAErrorText)
+	}
+
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
 	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
 	if err != nil {

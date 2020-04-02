@@ -37,7 +37,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	if len(masters) == 0 {
 		_, err := createMaster(platform)
 		if err != nil {
-			log.Fatalf("Failed to create master %v", err)
+			log.Fatalf("Failed to create master: %v", err)
 		}
 	}
 
