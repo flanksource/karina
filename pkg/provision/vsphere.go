@@ -163,7 +163,9 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 
 	var machine types.Machine
 	if !platform.DryRun {
-		machine, err := platform.Clone(vm, config)
+		//Note: = not :=, otherwise the new `machine` shadows the one declared
+		//                outside the if and this function always return nil
+		machine, err = platform.Clone(vm, config)
 
 		if err != nil {
 			return nil, err
