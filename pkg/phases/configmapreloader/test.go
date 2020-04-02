@@ -16,7 +16,7 @@ var watchTimeout = int64(30) // Wait for deployment to update only N seconds
 
 func Test(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command) {
 	client, _ := p.GetClientset()
-	if p.ConfigMapReloader == nil || p.ConfigMapReloader.Disabled {
+	if p.ConfigMapReloader.Disabled {
 		test.Skipf("configmap-reloader", "configmap-reloader not configured")
 		return
 	}
@@ -32,7 +32,7 @@ func Test(p *platform.Platform, test *console.TestResults, args []string, cmd *c
 
 func e2eTest(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.ConfigMapReloader == nil || p.ConfigMapReloader.Disabled {
+	if p.ConfigMapReloader.Disabled {
 		test.Skipf("configmap-reloader", "configmap-reloader not configured")
 		return
 	}
@@ -70,7 +70,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 				"k8s-app": "configmap-reloader-test",
 			},
 			Annotations: map[string]string{
-				"configmap.reloader.stakater.com/reload": "reloader-test",
+				"reload/configmap": "reloader-test",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{

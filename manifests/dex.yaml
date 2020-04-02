@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   labels:
     app: dex
+  annotations:
+    reload/all: "true" #restart on cm/secret change
   name: dex
   namespace: dex
 spec:

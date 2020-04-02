@@ -85,6 +85,8 @@ spec:
           image: "stakater/reloader:{{.configmapReloader.version}}"
           imagePullPolicy: IfNotPresent
           name: reloader-reloader
-          args: []
+          args:
+            - --configmap-annotation=reload/configmap
+            - --secret-annotation=reload/secret
+            - --auto-annotation=reload/all
       serviceAccountName: reloader-reloader
-
