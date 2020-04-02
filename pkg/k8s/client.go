@@ -1237,6 +1237,7 @@ func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector stri
 	}
 
 	return &pods.Items[0], nil
+}
 type Health struct {
 	RunningPods, PendingPods, ErrorPods, CrashLoopBackOff int
 	ReadyNodes, UnreadyNodes                              int
