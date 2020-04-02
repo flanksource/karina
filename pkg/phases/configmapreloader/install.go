@@ -12,7 +12,7 @@ const (
 )
 
 func Deploy(p *platform.Platform) error {
-	if p.ConfigMapReloader == nil || p.ConfigMapReloader.Disabled {
+	if p.ConfigMapReloader != nil && p.ConfigMapReloader.Disabled {
 		log.Infof("Skipping deployment of configmap-reloader, it is disabled")
 		return nil
 	}
