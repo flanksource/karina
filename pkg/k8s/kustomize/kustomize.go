@@ -172,7 +172,7 @@ func (km *Manager) loadFromFolder(ldr ifc.Loader) error {
 
 // Kustomize apply a set of patches to a resource.
 // Portions of the kustomize logic in this function are taken from the kubernetes-sigs/kind project
-func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
+func (km *Manager) Kustomize(namespace string, data []byte) ([]runtime.Object, error) {
 	raw, err := getUnstructuredObjects(data)
 	var kustomized []runtime.Object
 	if err != nil {
@@ -183,8 +183,8 @@ func (km *Manager) Kustomize(data []byte) ([]runtime.Object, error) {
 		resource := _resource.(*unstructured.Unstructured)
 
 		// get patches corresponding to this resource
-		strategicMerge := km.strategicMergePatches.filterByResource(resource)
-		json6902 := km.json6902Patches.filterByResource(resource)
+		strategicMerge := km.strategicMergePatches.filterByResource(namespace, resource)
+		json6902 := km.json6902Patches.filterByResource(namespace, resource)
 
 		// if there are no patches, for the target resources, exit
 		patchesCnt := len(strategicMerge) + len(json6902)
