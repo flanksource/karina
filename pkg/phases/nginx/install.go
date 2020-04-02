@@ -14,7 +14,6 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
-
 	if platform.Nginx != nil && platform.Nginx.Disabled {
 		log.Debugf("Skipping nginx deployment")
 		return nil

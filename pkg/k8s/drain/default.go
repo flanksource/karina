@@ -40,7 +40,7 @@ func RunNodeDrain(drainer *Helper, nodeName string) error {
 		fmt.Fprintf(drainer.ErrOut, "WARNING: %s\n", warnings)
 	}
 
-	if err := drainer.DeleteOrEvictPods(list.Pods()); err != nil {
+	if err := drainer.DeleteOrEvictPods(list.Pods()...); err != nil {
 		// Maybe warn about non-deleted pods here
 		return err
 	}
