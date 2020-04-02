@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var timeout =  5 * time.Minute
+var timeout = 5 * time.Minute
 
 // Perform a rolling restart of nodes
 func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeout time.Duration, forceRestart bool) error {
@@ -86,7 +86,7 @@ func RollingUpdate(platform *platform.Platform, minAge time.Duration, drainTimeo
 
 		log.Infof("Replaced %s in %s", node.Name, timer)
 
-		if succeededWithinTimeout:= doUntil(timeout, func() bool {
+		if succeededWithinTimeout := doUntil(timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			log.Infof(currentHealth.String())
 			if currentHealth.IsDegradedComparedTo(health) {
@@ -174,7 +174,7 @@ func RollingRestart(platform *platform.Platform, drainTimeout time.Duration, for
 			}
 			return true
 		}); !succeededWithinTimeout {
-			log.Warn("Current health not recovered after timeout %v", timeout )
+			log.Warn("Current health not recovered after timeout %v", timeout)
 		}
 	}
 	return nil
