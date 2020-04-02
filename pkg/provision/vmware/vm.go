@@ -3,6 +3,7 @@ package vmware
 import (
 	"context"
 	"fmt"
+
 	"net"
 	"time"
 

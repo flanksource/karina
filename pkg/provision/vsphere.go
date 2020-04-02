@@ -128,12 +128,10 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 	config, err := phases.CreateSecondaryMaster(platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secondary master: %s", err)
-
 	}
 	cloned, err := platform.Clone(vm, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone secondary master: %s", err)
-
 	}
 	if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), cloned.IP()); err != nil {
 		log.Warnf("Failed to update DNS for %s", cloned.IP())
@@ -165,7 +163,9 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 
 	var machine types.Machine
 	if !platform.DryRun {
-		machine, err := platform.Clone(vm, config)
+		//Note: = not :=, otherwise the new `machine` shadows the one declared
+		//                outside the if and this function always return nil
+		machine, err = platform.Clone(vm, config)
 
 		if err != nil {
 			return nil, err
@@ -183,7 +183,7 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 
 func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine, error) {
 	if nodeGroup == "" {
-		for k, _ := range platform.Nodes {
+		for k := range platform.Nodes {
 			nodeGroup = k
 		}
 	}
@@ -218,23 +218,24 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 func terminate(platform *platform.Platform, vm types.Machine) {
 	if !platform.Terminating {
 		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
-			log.Warnf("[%s] failed to drain: %v", vm.Name, err)
+			log.Warnf("[%s] failed to drain: %v", vm.Name(), err)
 		}
 	}
 	client, err := platform.GetClientset()
 	if err != nil {
 		log.Warnf("Failed to get client to delete node")
 	} else {
-		client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{})
+		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
+			log.Warnf("Failed to delete node for %s: %v", vm, err)
+		}
 	}
 
 	if err := RemoveDNS(platform, vm); err != nil {
 		log.Warnf("Failed to remove dns for %s: %v", vm, err)
 	}
 	if err := vm.Terminate(); err != nil {
-		log.Warnf("Failed to terminate %s: %v", vm.Name, err)
+		log.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}
-
 }
 
 func RemoveDNS(p *platform.Platform, vm types.Machine) error {
