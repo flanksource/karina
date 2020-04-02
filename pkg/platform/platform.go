@@ -29,20 +29,22 @@ import (
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/nsx"
-	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
 )
 
 type Platform struct {
+	Cluster types.Cluster
 	types.PlatformConfig
+
 	k8s.Client
 	ctx        context.Context
-	session    *vmware.Session
 	nsx        *nsx.NSXClient
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
 	ingressCA  certs.CertificateAuthority
+	// Terminating is true if the cluster is in a terminating state
+	Terminating bool
 }
 
 func (platform *Platform) Init() {
@@ -115,31 +117,6 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 	return ca
 }
 
-// GetVMs returns a list of all VM's associated with the cluster
-func (platform *Platform) GetVMsByPrefix(prefix string) (map[string]*VM, error) {
-	var vms = make(map[string]*VM)
-	list, err := platform.session.Finder.VirtualMachineList(
-		platform.ctx, fmt.Sprintf("%s-%s-%s*", platform.HostPrefix, platform.Name, prefix))
-	if err != nil {
-		return nil, nil
-	}
-	for _, vm := range list {
-		item := &VM{
-			Platform: platform,
-			ctx:      platform.ctx,
-			vm:       vm,
-		}
-		item.Name = vm.Name()
-		vms[vm.Name()] = item
-	}
-	return vms, nil
-}
-
-// GetVMs returns a list of all VM's associated with the cluster
-func (platform *Platform) GetVMs() (map[string]*VM, error) {
-	return platform.GetVMsByPrefix("")
-}
-
 // WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
 	for {
@@ -205,22 +182,16 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	return platform.nsx, nil
 }
 
-func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, error) {
+func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Machine, error) {
 	for _, cmd := range vm.Commands {
 		config.AddCommand(cmd)
 	}
-	ctx := context.TODO()
-	obj, err := platform.session.Clone(vm, config)
+
+	VM, err := platform.Cluster.Clone(vm, config)
 	if err != nil {
-		return nil, fmt.Errorf("clone: failed to clone session: %v", err)
+		return nil, err
 	}
 
-	VM := &VM{
-		VM:       vm,
-		Platform: platform,
-		ctx:      platform.ctx,
-		vm:       obj,
-	}
 	if err := VM.SetAttributes(map[string]string{
 		"Template":    vm.Template,
 		"CreatedDate": time.Now().Format("02Jan06-15:04:05"),
@@ -232,8 +203,10 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to get IP for %s: %v", vm.Name, err)
 	}
-	VM.IP = ip
+	vm.IP = ip
+	log.Tracef("[%s] found ip %s", vm.Name, ip)
 	if platform.NSX != nil && !platform.NSX.Disabled {
+		ctx := context.TODO()
 		nsxClient, err := platform.GetNSXClient()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get NSX client: %v", err)
@@ -264,24 +237,6 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 		}
 	}
 	return VM, nil
-}
-
-func (platform *Platform) GetSession() *vmware.Session {
-	return platform.session
-}
-
-// OpenViaEnv opens a new vmware session using environment variables
-func (platform *Platform) OpenViaEnv() error {
-	if platform.session != nil {
-		return nil
-	}
-	platform.ctx = context.TODO()
-	session, err := vmware.GetSessionFromEnv()
-	if err != nil {
-		return fmt.Errorf("openViaEnv: failed to get session from env: %v", err)
-	}
-	platform.session = session
-	return nil
 }
 
 // GetMasterIPs returns a list of healthy master IP's

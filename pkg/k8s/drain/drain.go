@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+//nolint
 package drain
 
 import (
@@ -198,7 +198,7 @@ func (d *Helper) GetPodsForDeletion(nodeName string) (*podDeleteList, []error) {
 }
 
 // DeleteOrEvictPods deletes or evicts the pods on the api server
-func (d *Helper) DeleteOrEvictPods(pods []corev1.Pod) error {
+func (d *Helper) DeleteOrEvictPods(pods ...corev1.Pod) error {
 	if len(pods) == 0 {
 		return nil
 	}

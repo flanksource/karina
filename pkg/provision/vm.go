@@ -12,9 +12,10 @@ import (
 
 // VM provisions a new standalone VM
 func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
-	if err := platform.OpenViaEnv(); err != nil {
-		return fmt.Errorf("vm: failed to open via env: %v", err)
+	if err := WithVmwareCluster(platform); err != nil {
+		return err
 	}
+
 	konfig, err := konfigadm.NewConfig(konfigs...).Build()
 	if err != nil {
 		return fmt.Errorf("vm: failed to get new config: %v", err)

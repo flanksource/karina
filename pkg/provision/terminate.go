@@ -16,11 +16,12 @@ func Cleanup(platform *platform.Platform) error {
 		return fmt.Errorf("termination Protection Enabled, use -e terminationProtection=false to disable")
 	}
 
-	if err := platform.OpenViaEnv(); err != nil {
-		return fmt.Errorf("cleanup: failed to open via env %v", err)
+	if err := WithVmwareCluster(platform); err != nil {
+		return err
 	}
+	platform.Terminating = true
 
-	vms, err := platform.GetVMs()
+	vms, err := platform.Cluster.GetMachines()
 	if err != nil {
 		return fmt.Errorf("cleanup: failed to get VMs %v", err)
 	}
@@ -38,8 +39,8 @@ func Cleanup(platform *platform.Platform) error {
 		vm := _vm
 		wg.Add(1)
 		go func() {
-			vm.Terminate() // nolint: errcheck
-			wg.Done()
+			defer wg.Done()
+			terminate(platform, vm)
 		}()
 	}
 
