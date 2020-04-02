@@ -160,7 +160,6 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		})
-
 	}
 
 	clusterConfig.ControllerManager.ExtraArgs = nil
