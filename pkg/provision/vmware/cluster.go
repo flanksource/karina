@@ -58,7 +58,7 @@ func (p *vmwareCluster) GetMachinesByPrefix(prefix string) (map[string]types.Mac
 	return vms, nil
 }
 
-func (platform *vmwareCluster) GetMachine(name string) (types.Machine, error) {
-	machines, err := platform.GetMachines()
+func (p *vmwareCluster) GetMachine(name string) (types.Machine, error) {
+	machines, err := p.GetMachines()
 	return machines[name], err
 }
