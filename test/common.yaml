@@ -52,8 +52,8 @@ versions:
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 opa:
-  version: 0.13.5
-  kubeMgmtVersion: 0.8
+  version: 0.17.3
+  kubeMgmtVersion: 0.10
   bundleUrl: http://minio.minio.svc:9000
   bundlePrefix: bundles
   bundleServiceName: automobile
