@@ -223,7 +223,9 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	if err != nil {
 		log.Warnf("Failed to get client to delete node")
 	} else {
-		client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{})
+		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
+			log.Warnf("Failed to delete node for %s: %v", vm, err)
+		}
 	}
 
 	if err := RemoveDNS(platform, vm); err != nil {
