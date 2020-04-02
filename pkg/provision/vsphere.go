@@ -218,7 +218,7 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 func terminate(platform *platform.Platform, vm types.Machine) {
 	if !platform.Terminating {
 		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
-			log.Warnf("[%s] failed to drain: %v", vm.Name, err)
+			log.Warnf("[%s] failed to drain: %v", vm.Name(), err)
 		}
 	}
 	client, err := platform.GetClientset()
@@ -234,7 +234,7 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 		log.Warnf("Failed to remove dns for %s: %v", vm, err)
 	}
 	if err := vm.Terminate(); err != nil {
-		log.Warnf("Failed to terminate %s: %v", vm.Name, err)
+		log.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}
 }
 
