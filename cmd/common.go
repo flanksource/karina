@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -178,6 +179,7 @@ func NewConfig(paths []string, dryRun bool, extras []string, trace bool) types.P
 		}
 	}
 
+	harbor.Defaults(&base)
 	if base.Trace {
 		data, _ := yaml.Marshal(base)
 		log.Infof("Using configuration: \n%s\n", console.StripSecrets(string(data)))

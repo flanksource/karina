@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 
@@ -27,7 +26,7 @@ var clairVersions = map[string]string{
 
 const Namespace = "harbor"
 
-func defaults(p *platform.Platform) {
+func Defaults(p *types.PlatformConfig) {
 	harbor := p.Harbor
 	if harbor == nil {
 		return
