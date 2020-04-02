@@ -38,7 +38,8 @@ type Platform struct {
 	types.PlatformConfig
 
 	k8s.Client
-	ctx        context.Context
+	//TODO: verify if ctx can be removed after refactoring has left it unused
+	ctx        context.Context   //nolint
 	nsx        *nsx.NSXClient
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
