@@ -183,7 +183,7 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 
 func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine, error) {
 	if nodeGroup == "" {
-		for k, _ := range platform.Nodes {
+		for k := range platform.Nodes {
 			nodeGroup = k
 		}
 	}
