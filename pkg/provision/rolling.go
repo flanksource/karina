@@ -174,7 +174,7 @@ func RollingRestart(platform *platform.Platform, drainTimeout time.Duration, for
 			}
 			return true
 		}); !succeededWithinTimeout {
-			log.Warn("Current health not recovered after timeout %v", timeout)
+			log.Warnf("Current health not recovered after timeout %v", timeout)
 		}
 	}
 	return nil
