@@ -12,7 +12,6 @@ import (
 )
 
 func Status(p *platform.Platform) error {
-
 	if err := WithVmwareCluster(p); err != nil {
 		return err
 	}

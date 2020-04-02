@@ -128,12 +128,10 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 	config, err := phases.CreateSecondaryMaster(platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secondary master: %s", err)
-
 	}
 	cloned, err := platform.Clone(vm, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone secondary master: %s", err)
-
 	}
 	if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), cloned.IP()); err != nil {
 		log.Warnf("Failed to update DNS for %s", cloned.IP())
@@ -234,7 +232,6 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	if err := vm.Terminate(); err != nil {
 		log.Warnf("Failed to terminate %s: %v", vm.Name, err)
 	}
-
 }
 
 func RemoveDNS(p *platform.Platform, vm types.Machine) error {
