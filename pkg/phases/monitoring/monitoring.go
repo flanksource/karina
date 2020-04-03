@@ -64,14 +64,6 @@ func Install(p *platform.Platform) error {
 	if err != nil {
 		return fmt.Errorf("unable to find dashboards: %v", err)
 	}
-
-	//urls := map[string]string{
-	//	"alertmanager": fmt.Sprintf("https://alertmanager.%s", p.Domain),
-	//	"grafana":      fmt.Sprintf("https://grafana.%s", p.Domain),
-	//	"prometheus":   fmt.Sprintf("https://prometheus.%s", p.Domain),
-	//	"kibana":       fmt.Sprintf("https://kibana.%s", p.Domain),
-	//}
-
 	for name := range dashboards {
 		contents, err := p.Template("/monitoring/dashboards/"+name, "manifests")
 		if err != nil {
