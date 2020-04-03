@@ -75,6 +75,9 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: filebeat
+  annotations:
+    reload/all: "true" #restart on cm/secret change
+
 spec:
   selector:
     matchLabels:

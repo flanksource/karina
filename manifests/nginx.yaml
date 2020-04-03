@@ -158,6 +158,8 @@ kind: DaemonSet
 metadata:
   name: nginx-ingress-controller
   namespace: ingress-nginx
+  annotations:
+    reload/all: "true" #restart on cm/secret change
 spec:
   selector:
     matchLabels:

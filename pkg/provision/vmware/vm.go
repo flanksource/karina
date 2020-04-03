@@ -18,7 +18,7 @@ import (
 )
 
 // VM represents a specific instance of a VM
-type VM struct {
+type vm struct {
 	name, ip string
 	dryRun   bool
 	ctx      context.Context
@@ -26,7 +26,7 @@ type VM struct {
 }
 
 func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine) types.Machine {
-	_vm := VM{
+	_vm := vm{
 		ctx:    ctx,
 		dryRun: dryRun,
 		vm:     obj,
@@ -35,7 +35,7 @@ func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine) types.M
 	return &_vm
 }
 
-func (vm *VM) IP() string {
+func (vm *vm) IP() string {
 	if vm.ip == "" {
 		ip, _ := vm.WaitForIP()
 		vm.ip = ip
@@ -43,29 +43,29 @@ func (vm *VM) IP() string {
 	return vm.ip
 }
 
-func (vm *VM) Name() string {
+func (vm *vm) Name() string {
 	return vm.name
 }
 
-func (vm *VM) String() string {
+func (vm *vm) String() string {
 	return vm.name
 }
 
-func (vm *VM) UUID() string {
+func (vm *vm) UUID() string {
 	return vm.vm.UUID(context.Background())
 }
 
 // nolint: golint, stylecheck
-func (vm *VM) GetVmID() string {
+func (vm *vm) GetVmID() string {
 	return vm.vm.Reference().Value
 }
 
 // WaitForPoweredOff waits until the VM is reported as off by vCenter
-func (vm *VM) WaitForPoweredOff() error {
+func (vm *vm) WaitForPoweredOff() error {
 	return vm.vm.WaitForPowerState(vm.ctx, vim.VirtualMachinePowerStatePoweredOff)
 }
 
-func (vm *VM) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
+func (vm *vm) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 	var nics []vim.GuestNicInfo
 	p := property.DefaultCollector(vm.vm.Client())
 	err := property.Wait(ctx, p, vm.vm.Reference(), []string{"guest.net"}, func(pc []vim.PropertyChange) bool {
@@ -94,7 +94,7 @@ func (vm *VM) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 }
 
 // WaitForIP waits for a non-local IPv4 address to be reported by vCenter
-func (vm *VM) GetIP(timeout time.Duration) (string, error) {
+func (vm *vm) GetIP(timeout time.Duration) (string, error) {
 	deadline := time.Now().Add(timeout)
 	for {
 		if time.Now().After(deadline) {
@@ -112,7 +112,7 @@ func (vm *VM) GetIP(timeout time.Duration) (string, error) {
 	}
 }
 
-func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
+func (vm *vm) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	// deadline := time.Now().Add(timeout)
 	ids := []string{}
 	devices, err := vm.vm.Device(context.TODO())
@@ -133,7 +133,7 @@ func (vm *VM) GetLogicalPortIds(timeout time.Duration) ([]string, error) {
 	return ids, nil
 }
 
-func (vm *VM) SetAttributes(attributes map[string]string) error {
+func (vm *vm) SetAttributes(attributes map[string]string) error {
 	ctx := context.TODO()
 	fields, err := object.GetCustomFieldsManager(vm.vm.Client())
 	if err != nil {
@@ -151,7 +151,7 @@ func (vm *VM) SetAttributes(attributes map[string]string) error {
 	return nil
 }
 
-func (vm *VM) GetAttributes() (map[string]string, error) {
+func (vm *vm) GetAttributes() (map[string]string, error) {
 	attributes := make(map[string]string)
 	ctx := context.TODO()
 	refs := []vim.ManagedObjectReference{vm.vm.Reference()}
@@ -179,7 +179,7 @@ func (vm *VM) GetAttributes() (map[string]string, error) {
 	return attributes, nil
 }
 
-func (vm *VM) GetVirtualMachine(ctx context.Context) (*mo.VirtualMachine, error) {
+func (vm *vm) GetVirtualMachine(ctx context.Context) (*mo.VirtualMachine, error) {
 	var res []mo.VirtualMachine
 	pc := property.DefaultCollector(vm.vm.Client())
 	err := pc.Retrieve(ctx, []vim.ManagedObjectReference{vm.vm.Reference()}, nil, &res)
@@ -190,12 +190,12 @@ func (vm *VM) GetVirtualMachine(ctx context.Context) (*mo.VirtualMachine, error)
 }
 
 // WaitForIP waits for a non-local IPv4 address to be reported by vCenter
-func (vm *VM) WaitForIP() (string, error) {
+func (vm *vm) WaitForIP() (string, error) {
 	return vm.GetIP(5 * time.Minute)
 }
 
 // PowerOff a VM and wait for shutdown to complete,
-func (vm *VM) PowerOff() error {
+func (vm *vm) PowerOff() error {
 	log.Infof("[%s] powering off", vm)
 	task, err := vm.vm.PowerOff(vm.ctx)
 	if err != nil {
@@ -211,7 +211,7 @@ func (vm *VM) PowerOff() error {
 }
 
 // Shutdown a VM and wait for shutdown to complete,
-func (vm *VM) Shutdown() error {
+func (vm *vm) Shutdown() error {
 	log.Infof("[%s] gracefully shutting down", vm.Name())
 
 	err := vm.vm.ShutdownGuest(vm.ctx)
@@ -221,7 +221,7 @@ func (vm *VM) Shutdown() error {
 	return nil
 }
 
-func (vm *VM) Terminate() error {
+func (vm *vm) Terminate() error {
 	log.Infof("[%s] terminating", vm.Name())
 	if vm.dryRun {
 		log.Infof("Not terminating in dry-run mode %s", vm.Name())
