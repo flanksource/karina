@@ -121,17 +121,10 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 		return "", err
 	}
 
-	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	masterNode, err := platform.GetMasterNode()
+
 	if err != nil {
 		return "", err
-	}
-
-	var masterNode string
-	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
-		}
 	}
 
 	secrets := client.CoreV1().Secrets("kube-system")

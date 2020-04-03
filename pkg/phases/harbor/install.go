@@ -20,7 +20,6 @@ func Deploy(p *platform.Platform) error {
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
-	defaults(p)
 	var nonce string
 	if p.HasSecret(Namespace, "harbor-secret") {
 		nonce = string((*p.GetSecret(Namespace, "harbor-secret"))["secret"])

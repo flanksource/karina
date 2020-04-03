@@ -54,6 +54,6 @@ func newFixture(paths []string, t *testing.T) (*types.PlatformConfig, *WithT) {
 		fullPaths[i] = fmt.Sprintf("../test/fixtures/%s", paths[i])
 	}
 
-	cfg := cmd.NewConfig(fullPaths, false, []string{}, false, false)
+	cfg := cmd.NewConfig(fullPaths, false, []string{}, false)
 	return &cfg, g
 }

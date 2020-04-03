@@ -71,7 +71,6 @@ workflows:
           requires:
             - test
             - test-next
-            - lint
           context: Github
           filters:
             tags:

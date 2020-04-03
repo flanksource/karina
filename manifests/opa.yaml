@@ -171,6 +171,8 @@ metadata:
   namespace: opa
 data:
   config.yaml: |
+    labels:
+      domain: {{ .domain }}
   {{ if .opa.bundleUrl }}
     services:
       - name: {{.opa.bundleServiceName}}
