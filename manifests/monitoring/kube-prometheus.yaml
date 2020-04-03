@@ -267,7 +267,7 @@ spec:
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
-  name: datasources
+  name: prometheus
   namespace: monitoring
 spec:
   name: prometheus.yaml
@@ -296,6 +296,35 @@ spec:
         timeInterval: "5s"
     {{ end }}
     {{ end }}
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: elasticsearch
+  namespace: monitoring
+spec:
+  name: elasticsearch.yaml
+  datasources:
+    - name: elasticsearch
+      type: elasticsearch
+      access: proxy
+      basicAuth: true
+      url: "https://{{.filebeat.elasticsearch.url}}:9200"
+      basicAuthUser: {{.filebeat.elasticsearch.user}}
+      secureJsonData:
+        basicAuthPassword: {{.filebeat.elasticsearch.password}}
+      isDefault: false
+      database: "filebeat-7.6.0-*"
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        timeInterval: "5s"
+
+        timeField: "@timestamp"
+        esVersion: 70
+        logMessageField: message
+        logLevelField: fields.level
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
@@ -345,7 +374,8 @@ spec:
       version: "1.0.16"
     - name: "kubernetes-app"
       version: "1.0.1"
-
+    - name: "elasticsearch"
+      version: "5.0.0"
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

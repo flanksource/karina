@@ -1,10 +1,8 @@
 package monitoring
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/grafana-tools/sdk"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/k8s"
@@ -67,37 +65,18 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("unable to find dashboards: %v", err)
 	}
 
-	urls := map[string]string{
-		"alertmanager": fmt.Sprintf("https://alertmanager.%s", p.Domain),
-		"grafana":      fmt.Sprintf("https://grafana.%s", p.Domain),
-		"prometheus":   fmt.Sprintf("https://prometheus.%s", p.Domain),
-	}
+	//urls := map[string]string{
+	//	"alertmanager": fmt.Sprintf("https://alertmanager.%s", p.Domain),
+	//	"grafana":      fmt.Sprintf("https://grafana.%s", p.Domain),
+	//	"prometheus":   fmt.Sprintf("https://prometheus.%s", p.Domain),
+	//	"kibana":       fmt.Sprintf("https://kibana.%s", p.Domain),
+	//}
 
 	for name := range dashboards {
 		contents, err := p.Template("/monitoring/dashboards/"+name, "manifests")
 		if err != nil {
 			return fmt.Errorf("failed to template the dashboard: %v ", err)
 		}
-		var board sdk.Board
-		if err := json.Unmarshal([]byte(contents), &board); err != nil {
-			log.Warnf("Invalid grafana dashboard %s: %v", name, err)
-		}
-
-		for i := range board.Templating.List {
-			for k, v := range urls {
-				if k == board.Templating.List[i].Name {
-					board.Templating.List[i].Current.Value = v
-					board.Templating.List[i].Current.Text = v
-					board.Templating.List[i].Query = v
-				}
-			}
-		}
-
-		contentsModified, err := json.Marshal(&board)
-		if err != nil {
-			log.Warnf("Failed to marshal dashboard json %s: %v", name, err)
-		}
-
 		if err := p.ApplyCRD("monitoring", k8s.CRD{
 			APIVersion: "integreatly.org/v1alpha1",
 			Kind:       "GrafanaDashboard",
@@ -110,7 +89,7 @@ func Install(p *platform.Platform) error {
 			},
 			Spec: map[string]interface{}{
 				"name": name,
-				"json": string(contentsModified),
+				"json": contents,
 			},
 		}); err != nil {
 			return fmt.Errorf("install: failed to apply CRD: %v", err)
