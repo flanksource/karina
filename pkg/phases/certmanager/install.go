@@ -20,6 +20,9 @@ const (
 func Install(platform *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it
 	// so it cannot be disabled
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
+	}
 
 	log.Infof("Installing CertMananager")
 	if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {

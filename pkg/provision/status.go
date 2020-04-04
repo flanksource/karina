@@ -1,23 +1,22 @@
-package phases
+package provision
 
 import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Status(p *platform.Platform) error {
-	if err := p.OpenViaEnv(); err != nil {
-		return fmt.Errorf("status: failed to open with env: %v", err)
+	if err := WithVmwareCluster(p); err != nil {
+		return err
 	}
 
-	vmList, err := p.GetVMs()
+	vmList, err := p.Cluster.GetMachines()
 	if err != nil {
 		return fmt.Errorf("status: failed to get VMs: %v", err)
 	}
@@ -34,7 +33,7 @@ func Status(p *platform.Platform) error {
 		} else {
 			attributes["ip"] = ip
 		}
-		vms[vm.Name] = attributes
+		vms[vm.Name()] = attributes
 	}
 
 	client, err := p.GetClientset()

@@ -3,6 +3,7 @@ package k8s
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +18,10 @@ import (
 	utils "github.com/flanksource/commons/utils"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
+	"github.com/moshloop/platform-cli/pkg/k8s/drain"
+	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 	log "github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,9 +29,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
 	cliresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery/cached/disk"
 	"k8s.io/client-go/dynamic"
@@ -39,8 +46,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
 	"sigs.k8s.io/yaml"
-
-	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 )
 
 type Client struct {
@@ -54,6 +59,151 @@ type Client struct {
 
 	kustomizeManager *kustomize.Manager
 	restMapper       meta.RESTMapper
+}
+
+func (c *Client) getDrainHelper() (*drain.Helper, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	return &drain.Helper{
+		Ctx:                 context.Background(),
+		ErrOut:              os.Stderr,
+		Out:                 os.Stdout,
+		Client:              client,
+		DeleteLocalData:     true,
+		IgnoreAllDaemonSets: true,
+		Timeout:             120 * time.Second,
+	}, nil
+}
+
+func (c *Client) Drain(nodeName string, timeout time.Duration) error {
+	log.Infof("[%s] draining", nodeName)
+	if err := c.Cordon(nodeName); err != nil {
+		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
+	}
+
+	if err := c.EvictLocalVolumes(nodeName); err != nil {
+		return err
+	}
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	list, errs := drainer.GetPodsForDeletion(nodeName)
+	if errs != nil {
+		return utilerrors.NewAggregate(errs)
+	}
+	if warnings := list.Warnings(); warnings != "" {
+		log.Warnf("warning when draining %s: %v", nodeName, warnings)
+	}
+
+	if err := drainer.DeleteOrEvictPods(list.Pods()...); err != nil {
+		// Maybe warn about non-deleted pods here
+		return err
+	}
+	return nil
+}
+
+func (c *Client) EvictLocalVolumes(nodeName string) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	drainer, err := c.getDrainHelper()
+	if err != nil {
+		return err
+	}
+	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, pod := range pods.Items {
+		if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
+			continue
+		}
+
+		if pod.ObjectMeta.Labels["spilo-role"] == "master" {
+			log.Infof("Conducting failover of %s", pod.Name)
+			var stdout, stderr string
+			if stdout, stderr, err = c.ExecutePodf(pod.Namespace, pod.Name, "postgres", "curl", "-s", "http://localhost:8008/switchover", "-XPOST", fmt.Sprintf("-d {\"leader\":\"%s\"}", pod.Name)); err != nil {
+				return fmt.Errorf("failed to failover instance, aborting: %v %s %s", err, stderr, stdout)
+			}
+			log.Infof("Failed over: %s %s", stdout, stderr)
+		}
+		if err := drainer.DeleteOrEvictPods(pod); err != nil {
+			return err
+		}
+		pvcs := client.CoreV1().PersistentVolumeClaims(pod.Namespace)
+
+		for _, vol := range pod.Spec.Volumes {
+			if vol.PersistentVolumeClaim != nil {
+				pvc, err := pvcs.Get(vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if pvc != nil && pvc.Spec.StorageClassName == nil || strings.Contains(*pvc.Spec.StorageClassName, "local") {
+					log.Infof("[%s] deleting", pvc.Name)
+					if err := pvcs.Delete(pvc.Name, &metav1.DeleteOptions{}); err != nil {
+						return err
+					}
+					//nolint: errcheck
+					wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
+						_, err := pvcs.Get(pvc.Name, metav1.GetOptions{})
+						return errors.IsNotFound(err), nil
+					})
+					pvc.ObjectMeta.SetAnnotations(nil)
+					pvc.SetFinalizers([]string{})
+					pvc.SetSelfLink("")
+					pvc.SetResourceVersion("")
+					pvc.Spec.VolumeName = ""
+					new, err := pvcs.Create(pvc)
+					if err != nil {
+						return err
+					}
+					log.Infof("Created new PVC %s -> %s", pvc.UID, new.UID)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Client) Cordon(nodeName string) error {
+	log.Infof("[%s] cordoning", nodeName)
+
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	nodes := client.CoreV1().Nodes()
+	node, err := nodes.Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	node.Spec.Unschedulable = true
+	_, err = nodes.Update(node)
+	return err
+}
+
+func (c *Client) Uncordon(nodeName string) error {
+	log.Infof("[%s] uncordoning", nodeName)
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+	nodes := client.CoreV1().Nodes()
+	node, err := nodes.Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	node.Spec.Unschedulable = false
+	_, err = nodes.Update(node)
+	return err
 }
 
 func (c *Client) GetKustomize() (*kustomize.Manager, error) {
@@ -577,17 +727,17 @@ func (c *Client) ExposeIngress(namespace, service string, domain string, port in
 			},
 			Spec: v1beta1.IngressSpec{
 				TLS: []v1beta1.IngressTLS{
-					v1beta1.IngressTLS{
+					{
 						Hosts: []string{domain},
 					},
 				},
 				Rules: []v1beta1.IngressRule{
-					v1beta1.IngressRule{
+					{
 						Host: domain,
 						IngressRuleValue: v1beta1.IngressRuleValue{
 							HTTP: &v1beta1.HTTPIngressRuleValue{
 								Paths: []v1beta1.HTTPIngressPath{
-									v1beta1.HTTPIngressPath{
+									{
 										Backend: v1beta1.IngressBackend{
 											ServiceName: service,
 											ServicePort: intstr.FromInt(port),
@@ -846,6 +996,46 @@ func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1
 	}
 }
 
+func (c *Client) GetConditionsForNode(name string) (map[v1.NodeConditionType]v1.ConditionStatus, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if node == nil {
+		return nil, nil
+	}
+
+	var out = make(map[v1.NodeConditionType]v1.ConditionStatus)
+	for _, condition := range node.Status.Conditions {
+		out[condition.Type] = condition.Status
+	}
+	return out, nil
+}
+
+// WaitForNode waits for a pod to be in the specified phase, or returns an
+// error if the timeout is exceeded
+func (c *Client) WaitForNode(name string, timeout time.Duration, condition v1.NodeConditionType, statii ...v1.ConditionStatus) (map[v1.NodeConditionType]v1.ConditionStatus, error) {
+	start := time.Now()
+	for {
+		conditions, err := c.GetConditionsForNode(name)
+		if start.Add(timeout).Before(time.Now()) {
+			return conditions, fmt.Errorf("timeout exceeded waiting for %s is %s, error: %v", name, conditions, err)
+		}
+
+		for _, status := range statii {
+			if conditions[condition] == status {
+				return conditions, nil
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
+
 // WaitForPodCommand waits for a command executed in pod to succeed with an exit code of 9
 // error if the timeout is exceeded
 func (c *Client) WaitForPodCommand(ns, name string, container string, timeout time.Duration, command ...string) error {
@@ -970,7 +1160,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 	return v1.PodSpec{
 		RestartPolicy: v1.RestartPolicyNever,
 		NodeName:      node,
-		Volumes: []v1.Volume{v1.Volume{
+		Volumes: []v1.Volume{{
 			Name: "root",
 			VolumeSource: v1.VolumeSource{
 				HostPath: &v1.HostPathVolumeSource{
@@ -978,7 +1168,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				},
 			},
 		}},
-		Containers: []v1.Container{v1.Container{
+		Containers: []v1.Container{{
 			Name:  "shell",
 			Image: "docker.io/ubuntu:18.04",
 			Command: []string{
@@ -986,7 +1176,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 				"-c",
 				"chroot /chroot bash -c \"" + command + "\"",
 			},
-			VolumeMounts: []v1.VolumeMount{v1.VolumeMount{
+			VolumeMounts: []v1.VolumeMount{{
 				Name:      "root",
 				MountPath: "/chroot",
 			}},
@@ -995,7 +1185,7 @@ func NewCommandJob(node, command string) v1.PodSpec {
 			},
 		}},
 		Tolerations: []v1.Toleration{
-			v1.Toleration{
+			{
 				// tolerate all values
 				Operator: "Exists",
 			},
@@ -1004,4 +1194,127 @@ func NewCommandJob(node, command string) v1.PodSpec {
 		HostPID:     true,
 		HostIPC:     true,
 	}
+}
+
+// GetMasterNode returns the name of the first node found labelled as a master
+func (c *Client) GetMasterNode() (string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return "", fmt.Errorf("GetMasterNode: Failed to get clientset: %v", err)
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	var masterNode string
+	for _, node := range nodes.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			masterNode = node.Name
+			break
+		}
+	}
+	return masterNode, nil
+}
+
+// Returns the first pod found by label
+func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector string) (*v1.Pod, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, fmt.Errorf("GetFirstPodByLabelSelector: Failed to get clientset: %v", err)
+	}
+
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("GetFirstPodByLabelSelector: Failed to query for %v in namespace %v: %v", labelSelector, namespace, err)
+	}
+
+	if (pods != nil && len(pods.Items) < 1) || pods == nil {
+		return nil, fmt.Errorf("GetFirstPodByLabelSelector: No pods found for query for %v in namespace %v: %v", labelSelector, namespace, err)
+	}
+
+	return &pods.Items[0], nil
+}
+
+type Health struct {
+	RunningPods, PendingPods, ErrorPods, CrashLoopBackOff int
+	ReadyNodes, UnreadyNodes                              int
+	Error                                                 error
+}
+
+func (h Health) IsDegradedComparedTo(h2 Health) bool {
+	if h2.RunningPods > h.RunningPods ||
+		h.PendingPods-1 > h2.PendingPods || h.ErrorPods > h2.ErrorPods || h.CrashLoopBackOff > h2.CrashLoopBackOff {
+		return true
+	}
+	return h.UnreadyNodes > h2.UnreadyNodes
+}
+
+func IsPodCrashLoopBackoff(pod v1.Pod) bool {
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.State.Waiting != nil && status.State.Waiting.Reason == "CrashLoopBackOff" {
+			return true
+		}
+	}
+	return false
+}
+
+func IsPodHealthy(pod v1.Pod) bool {
+	conditions := true
+	for _, condition := range pod.Status.Conditions {
+		if condition.Status == v1.ConditionFalse {
+			conditions = false
+		}
+	}
+	return conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded)
+}
+
+func IsPodFinished(pod v1.Pod) bool {
+	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
+}
+
+func IsPodPending(pod v1.Pod) bool {
+	return pod.Status.Phase == v1.PodPending
+}
+
+func IsDeleted(object metav1.Object) bool {
+	return object.GetDeletionTimestamp() != nil && !object.GetDeletionTimestamp().IsZero()
+}
+
+func IsPodDaemonSet(pod v1.Pod) bool {
+	controllerRef := metav1.GetControllerOf(&pod)
+	return controllerRef != nil && controllerRef.Kind == appsv1.SchemeGroupVersion.WithKind("DaemonSet").Kind
+}
+
+func (h Health) String() string {
+	return fmt.Sprintf("pods(running=%d, pending=%d, crashloop=%d, error=%d)  nodes(ready=%d, notready=%d)",
+		h.RunningPods, h.PendingPods, h.CrashLoopBackOff, h.ErrorPods, h.ReadyNodes, h.UnreadyNodes)
+}
+
+func (c *Client) GetHealth() Health {
+	health := Health{}
+	client, err := c.GetClientset()
+	if err != nil {
+		return Health{Error: err}
+	}
+	pods, err := client.CoreV1().Pods("").List(metav1.ListOptions{})
+	if err != nil {
+		return Health{Error: err}
+	}
+
+	for _, pod := range pods.Items {
+		if IsPodCrashLoopBackoff(pod) {
+			health.CrashLoopBackOff++
+		} else if IsPodHealthy(pod) {
+			health.RunningPods++
+		} else if IsPodPending(pod) {
+			health.PendingPods++
+		} else {
+			health.ErrorPods++
+		}
+	}
+	return health
 }
