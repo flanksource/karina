@@ -12,7 +12,7 @@ import (
 
 	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
-	. "github.com/moshloop/platform-cli/pkg/types" // nolint: golint, stylecheck
+	ptypes "github.com/moshloop/platform-cli/pkg/types"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 )
 
 // Clone kicks off a clone operation on vCenter to create a new virtual machine.
-func (s Session) Clone(vm VM, config *konfigadm.Config) (*object.VirtualMachine, error) {
+func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualMachine, error) {
 	ctx := context.TODO()
 
 	tpl, err := s.FindVM(vm.Template)
@@ -114,7 +114,7 @@ func newVMFlagInfo() *types.VirtualMachineFlagInfo {
 	}
 }
 
-func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceList, config *konfigadm.Config) (types.BaseVirtualDeviceConfigSpec, error) {
+func getCdrom(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList, config *konfigadm.Config) (types.BaseVirtualDeviceConfigSpec, error) {
 	op := types.VirtualDeviceConfigSpecOperationEdit
 	cdrom, err := devices.FindCdrom("")
 	if err != nil {
@@ -152,7 +152,7 @@ func getCdrom(datastore *object.Datastore, vm VM, devices object.VirtualDeviceLi
 	}, nil
 }
 
-func getDiskSpec(vm VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
+func getDiskSpec(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
 	disks := devices.SelectByType((*types.VirtualDisk)(nil))
 	if len(disks) != 1 {
 		return nil, errors.Errorf("invalid disk count: %d", len(disks))
@@ -169,7 +169,7 @@ func getDiskSpec(vm VM, devices object.VirtualDeviceList) (types.BaseVirtualDevi
 
 const ethCardType = "vmxnet3"
 
-func getNetworkSpecs(s Session, vm VM, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
+func getNetworkSpecs(s Session, vm ptypes.VM, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
 	ctx := context.TODO()
 	deviceSpecs := []types.BaseVirtualDeviceConfigSpec{}
 

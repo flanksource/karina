@@ -104,11 +104,11 @@ func newStrategicMergeSliceFromBytes(in []byte) (strategicMergeSlice, error) {
 }
 
 // filterByResource returns all the strategic merge patches in the strategicMergeSlice corresponding to a given resource
-func (s *strategicMergeSlice) filterByResource(r *unstructured.Unstructured) strategicMergeSlice {
+func (s *strategicMergeSlice) filterByResource(namespace string, r *unstructured.Unstructured) strategicMergeSlice {
 	var result strategicMergeSlice
 	for _, p := range *s {
 		if p.GroupVersionKind() == r.GroupVersionKind() &&
-			p.GetNamespace() == r.GetNamespace() &&
+			(p.GetNamespace() == r.GetNamespace() || p.GetNamespace() == namespace) &&
 			p.GetName() == r.GetName() {
 			result = append(result, p)
 		}

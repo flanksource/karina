@@ -114,10 +114,6 @@ func deployThanos(p *platform.Platform) error {
 
 	if p.Thanos.Mode == "client" {
 		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod.")
-
-		if err := p.ApplySpecs("", "monitoring/thanos-sidecar.yaml"); err != nil {
-			return err
-		}
 	} else if p.Thanos.Mode == "observability" {
 		log.Info("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
 		thanosSpecs := []string{"thanos-querier.yaml", "thanos-store.yaml"}

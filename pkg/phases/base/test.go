@@ -12,10 +12,6 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "local-path-storage", test)
 	k8s.TestNamespace(client, "cert-manager", test)
 
-	if platform.Quack == nil || !platform.Quack.Disabled {
-		k8s.TestNamespace(client, "quack", test)
-	}
-
 	if platform.Nginx == nil || !platform.Nginx.Disabled {
 		k8s.TestNamespace(client, "ingress-nginx", test)
 	}

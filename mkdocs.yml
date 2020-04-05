@@ -2,51 +2,51 @@ repo_url: https://github.com/flanksource/platform-cli
 repo_name: platform-cli
 site_name: platform-cli
 theme:
-      name: 'material'
+      name: "material"
       palette:
-            primary: 'royalblue'
-      logo: 'img/favicon.png'
+            primary: "royalblue"
+      logo: "img/favicon.png"
 extra:
-  social:
-    - type: 'github'
-      link: 'https://github.com/flanksource'
+      social:
+            - type: "github"
+              link: "https://github.com/flanksource"
 markdown_extensions:
-    - admonition
-    - fenced_code
-    - pymdownx.smartsymbols
-    - pymdownx.superfences
-    - codehilite:
-          linenums: true
+      - admonition
+      - fenced_code
+      - pymdownx.smartsymbols
+      - pymdownx.superfences
+      - codehilite:
+              linenums: true
 nav:
-    - User Guide:
-          - Logging In: ./user-guide/login.md
-          - Usage: ./user-guide/usage.md
-    - Administrator Guide:
-          - Authentication:
-                - Setting up SSO: ./admin-guide/authentication/sso.md
-                - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md
-          - Cluster Lifecycle: ./admin-guide/cluster-lifecycle.md
-          - Multi-Tenancy: ./admin-guide/index.md
-          - Monitoring:
-                - Alerting: ./admin-guide/index.md
-                - Canaries: ./admin-guide/index.md
-                - Dashboards: ./admin-guide/index.md
-                - Multi-Cluster (Thanos): ./admin-guide/index.md
-          - Docker Registry (Harbor): ./admin-guide/index.md
-          - Configuration:
-                - Templating: ./admin-guide/configuration/templating.md
-                - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
-          - Provisioning:
-                - vSphere: ./admin-guide/vsphere.md
-                - KIND: ./admin-guide/provisioning/kind.md
-          - Security:
-                - Protecting secrets with SOPS: ./admin-guide/index.md
-    - Developer Guide: 
-      - Quickstart: ./developer-guide/index.html#quickstart
-      - Documentation: ./developer-guide/index.html#documentation
-      - Common Issues: ./developer-guide/index.html#common-issues
-      - Reference: ./developer-guide/make-targets.md
-Make Targets:
-    - Reference:
-          - CLI: ./cli/platform-cli.md
-          - Configuration: ./reference/config.md
+      - User Guide:
+              - Logging In: ./user-guide/login.md
+              - Usage: ./user-guide/usage.md
+      - Administrator Guide:
+              - Audit: ./admin-guide/audit/audit.md
+              - Authentication:
+                      - Setting up SSO: ./admin-guide/authentication/sso.md
+                      - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md
+              - Cluster Lifecycle: ./admin-guide/cluster-lifecycle.md
+              - Multi-Tenancy: ./admin-guide/index.md
+              - Monitoring:
+                      - Alerting: ./admin-guide/index.md
+                      - Canaries: ./admin-guide/index.md
+                      - Dashboards: ./admin-guide/index.md
+                      - Multi-Cluster (Thanos): ./admin-guide/index.md
+              - Docker Registry (Harbor): ./admin-guide/index.md
+              - Configuration:
+                      - Templating: ./admin-guide/configuration/templating.md
+                      - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
+              - Provisioning:
+                      - vSphere: ./admin-guide/vsphere.md
+                      - KIND: ./admin-guide/provisioning/kind.md
+              - Security:
+                      - Protecting secrets with SOPS: ./admin-guide/index.md
+      - Developer Guide:
+              - Quickstart: ./developer-guide/index.html#quickstart
+              - Documentation: ./developer-guide/index.html#documentation
+              - Common Issues: ./developer-guide/index.html#common-issues
+              - Reference: ./developer-guide/make-targets.md
+      - Reference:
+              - CLI: ./cli/platform-cli.md
+              - Configuration: ./reference/config.md
