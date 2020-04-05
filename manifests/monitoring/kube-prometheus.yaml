@@ -297,6 +297,10 @@ spec:
     {{ end }}
     {{ end }}
 ---
+{{- if index . "filebeat" }}
+{{- if not (index .filebeat "disabled") }}
+{{- if index . "elasticsearch" }}
+{{- if not (index .elasticsearch "disabled") }}
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
@@ -309,12 +313,12 @@ spec:
       type: elasticsearch
       access: proxy
       basicAuth: true
-      url: "https://{{.filebeat.elasticsearch.url}}:9200"
+      url: "https://{{.filebeat.elasticsearch.url}}:{{.filebeat.elasticsearch.port}}"
       basicAuthUser: {{.filebeat.elasticsearch.user}}
       secureJsonData:
         basicAuthPassword: {{.filebeat.elasticsearch.password}}
       isDefault: false
-      database: "filebeat-7.6.0-*"
+      database: "filebeat-{{.filebeat.version}}-*"
       version: 1
       editable: true
       jsonData:
@@ -326,6 +330,10 @@ spec:
         logMessageField: message
         logLevelField: fields.level
 ---
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
 metadata:
