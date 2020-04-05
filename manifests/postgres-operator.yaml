@@ -269,7 +269,8 @@ spec:
       serviceAccountName: postgres-operator
       containers:
         - name: postgres-operator
-          image: docker.io/flanksource/postgres-operator:{{.postgresOperator.version}}
+#          image: docker.io/flanksource/postgres-operator:{{.postgresOperator.version}}
+          image: quay.io/toni0/postgres-operator:add-env-and-secrets
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -300,3 +301,14 @@ spec:
       targetPort: 8080
   selector:
     name: postgres-operator
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-operator-cluster-environment
+  namespace: postgres-operator
+data:
+  AWS_ACCESS_KEY_ID: "{{ .s3.access_key | base64.Encode }}"
+  AWS_SECRET_ACCESS_KEY: "{{ .s3.secret_key | base64.Encode }}"
+  AWS_ENDPOINT: {{ .s3.endpoint | base64.Encode }}
+  AWS_S3_FORCE_PATH_STYLE: {{ "true" | base64.Encode }}
