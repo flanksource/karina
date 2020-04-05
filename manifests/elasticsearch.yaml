@@ -28,14 +28,19 @@ spec:
             - name: elasticsearch
               env:
                 - name: ES_JAVA_OPTS
-                  value: -Xms{{.elasticsearch.mem}} -Xmx{{.elasticsearch.mem}}
+                  value: -Xms{{.elasticsearch.mem.requests}} -Xmx{{.elasticsearch.mem.limits}}
               resources:
                 requests:
-                  memory: 2Gi
+                  memory: {{.elasticsearch.mem.requests}}
                   cpu: 0.5
                 limits:
-                  memory: 4Gi
+                  memory: {{.elasticsearch.mem.limits}}
                   cpu: 2
+      {{- if not (eq .elasticsearch.persistence.enabled true) }}
+          volumes:
+            - name: elasticsearch-data
+              emptyDir: {}
+      {{- else}}
       volumeClaimTemplates:
         - metadata:
             name: elasticsearch-data
@@ -44,8 +49,9 @@ spec:
               - ReadWriteOnce
             resources:
               requests:
-                storage: {{.elasticsearch.persistence.size}}
-            storageClassName: local-path
+                storage: {{.elasticsearch.persistence.capacity}}
+            storageClassName: {{.elasticsearch.persistence.storageClass}}
+      {{- end}}
 ---
 apiVersion: kibana.k8s.elastic.co/v1
 kind: Kibana
