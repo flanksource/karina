@@ -339,18 +339,23 @@ type Monitoring struct {
 }
 
 type Prometheus struct {
-	Version     string                `yaml:"version,omitempty"`
-	Disabled    bool                  `yaml:"disabled,omitempty"`
-	Persistence PrometheusPersistence `yaml:"persistence,omitempty"`
+	Version     string      `yaml:"version,omitempty"`
+	Disabled    bool        `yaml:"disabled,omitempty"`
+	Persistence Persistence `yaml:"persistence,omitempty"`
 }
 
-type PrometheusPersistence struct {
+type Persistence struct {
 	// Enable persistence for Prometheus
 	Enabled bool `yaml:"enabled,omitempty"`
 	// Storage class to use. If not set default one will be used
 	StorageClass string `yaml:"storageClass,omitempty"`
 	// Capacity. Required if persistence is enabled
 	Capacity string `yaml:"capacity,omitempty"`
+}
+
+type Memory struct {
+	Requests string `yaml:"requests,omitempty"`
+	Limits   string `yaml:"limits,omitempty"`
 }
 
 type Grafana struct {
@@ -556,6 +561,14 @@ type AuditConfig struct {
 type ConfigMapReloader struct {
 	Version  string `yaml:"version"`
 	Disabled bool   `yaml:"disabled,omitempty"`
+}
+
+type Elasticsearch struct {
+	Version        string        `yaml:"version"`
+	Mem            *Memory       `yaml:"mem,omitempty"`
+	Replicas       int           `yaml:"replicas,omitempty"`
+	Persistence    *Persistence  `yaml:"persistence,omitempty"`
+	Disabled       bool          `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {
