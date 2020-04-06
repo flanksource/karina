@@ -51,7 +51,7 @@ $BIN vault init -v
 
 $BIN deploy postgres-operator install -v
 
-$BIN test postgres-operator --wait 200
+$BIN test postgres-operator --wait 420 --e2e
 
 $BIN deploy all -v
 
