@@ -569,7 +569,7 @@ func (platform *Platform) GetOrCreateDB(config postgres.ClusterConfig) (*types.D
 			}
 			envVarsList = append(envVarsList, envVar)
 		}
-		if !config.EnableWalClusterId {
+		if !config.EnableWalClusterID {
 			envVarsList = append(envVarsList, v1.EnvVar{
 				Name:  "WAL_BUCKET_SCOPE_SUFFIX",
 				Value: "",
@@ -681,7 +681,7 @@ func (platform *Platform) PostgresOperatorBackupBucket() string {
 
 func (platform *Platform) cloneDatabaseEnv(config postgres.ClusterConfig) []v1.EnvVar {
 	waleS3Prefix := fmt.Sprintf("s3://%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName)
-	if config.EnableWalClusterId {
+	if config.EnableWalClusterID {
 		waleS3Prefix = fmt.Sprintf("s3://%s/spilo/%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName, config.Clone.ClusterID)
 	}
 	envVars := []v1.EnvVar{
@@ -698,7 +698,7 @@ func (platform *Platform) cloneDatabaseEnv(config postgres.ClusterConfig) []v1.E
 			Value: config.Clone.Timestamp,
 		},
 	}
-	if !config.EnableWalClusterId {
+	if !config.EnableWalClusterID {
 		envVars = append(envVars, v1.EnvVar{
 			Name:  "CLONE_WALG_S3_PREFIX",
 			Value: waleS3Prefix,

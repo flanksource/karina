@@ -43,13 +43,13 @@ func init() {
 			config := pgapi.NewClusterConfig(clusterName, "test")
 			config.Namespace = namespace
 			config.BackupSchedule, _ = cmd.Flags().GetString("wal-schedule")
-			config.EnableWalClusterId, _ = cmd.Flags().GetBool("wal-enable-cluster-uid")
+			config.EnableWalClusterID, _ = cmd.Flags().GetBool("wal-enable-cluster-uid")
 			config.UseWalgRestore, _ = cmd.Flags().GetBool("wal-use-walg-restore")
 			cloneClusterName, _ := cmd.Flags().GetString("clone-cluster-name")
 			if cloneClusterName != "" {
 				config.Clone = &pgapi.CloneConfig{ClusterName: cloneClusterName}
 				config.Clone.Timestamp, _ = cmd.Flags().GetString("clone-timestamp")
-				if config.EnableWalClusterId {
+				if config.EnableWalClusterID {
 					config.Clone.ClusterID, _ = cmd.Flags().GetString("clone-cluster-uid")
 				}
 			}
@@ -119,5 +119,4 @@ func init() {
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")
 	DB.PersistentFlags().StringVar(&secret, "secret", "", "Name of the secret that contains the postgres user credentials")
 	DB.PersistentFlags().StringVar(&superuser, "superuser", "postgres", "Superuser user")
-
 }

@@ -5,7 +5,7 @@ type ClusterConfig struct {
 	Databases []string
 	Namespace string
 
-	EnableWalClusterId   bool
+	EnableWalClusterID   bool
 	UseWalgRestore       bool
 	BackupSchedule       string
 	AwsCredentialsSecret string
@@ -24,7 +24,7 @@ func NewClusterConfig(clusterName string, dbNames ...string) ClusterConfig {
 		Name:                 clusterName,
 		Databases:            dbNames,
 		Namespace:            "postgres-operator",
-		EnableWalClusterId:   false,
+		EnableWalClusterID:   false,
 		BackupSchedule:       "*/5 * * * *",
 		UseWalgRestore:       true,
 		AwsCredentialsSecret: "postgres-operator-cluster-environment",
