@@ -321,7 +321,7 @@ func init() {
 		},
 	}
 
-	testAllCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "e", false, "Run e2e tests")
+	testAllCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
 	testAllCmd.PersistentFlags().BoolVarP(&testDestructive, "destructive", "d", false, "Run destructive tests")
 	testAllCmd.PersistentFlags().BoolVarP(&testAll, "all", "a", false, "Run all tests")
 	Test.AddCommand(testAllCmd)
