@@ -241,7 +241,7 @@ func exposeService(p *platform.Platform, clusterName string) (*exec.Cmd, int, er
 
 	randomPort := 36000 + rand.Intn(1000)
 
-	portForwardCmd := exec.Command("kubectl", "--namespace", "postgres-operator", "port-forward", pods.Items[0].Name, fmt.Sprintf("%d:5432", randomPort))
+	portForwardCmd := exec.Command("./.bin/kubectl", "--namespace", "postgres-operator", "port-forward", pods.Items[0].Name, fmt.Sprintf("%d:5432", randomPort))
 	if err := portForwardCmd.Start(); err != nil {
 		return nil, 0, errors.Wrap(err, "Failed to start portforward cmd")
 	}
