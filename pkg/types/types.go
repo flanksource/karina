@@ -184,6 +184,8 @@ type S3 struct {
 	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
 	// Provide a KMS Master Key
 	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
+	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
+	UsePathStyle bool `yaml:"usePathStyle"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {
