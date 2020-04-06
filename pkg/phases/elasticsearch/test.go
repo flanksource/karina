@@ -8,5 +8,5 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, "eck", test)
+	k8s.TestNamespace(client, Namespace, test)
 }

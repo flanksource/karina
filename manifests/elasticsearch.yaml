@@ -1,11 +1,4 @@
 {{- $JVM_OPTIONS := .elasticsearch.mem.requests | strings.ReplaceAll "Ki" "k" | strings.ReplaceAll "Mi" "m" | strings.ReplaceAll "Gi" "g" -}}
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: eck
-  labels:
-    quack.pusher.com/enabled: "true"
----
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
