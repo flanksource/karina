@@ -69,7 +69,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		test.Failf(testName, "Failed to expose service %s: %v", cluster1Name, err)
 		return
 	}
-	defer pf1.Process.Kill()
+	defer pf1.Process.Kill() // nolint: errcheck
 
 	if err := insertTestFixtures(db, port1); err != nil {
 		test.Failf(testName, "Failed to insert fixtures into database %s: %v", cluster1.Name, err)
@@ -102,7 +102,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		test.Failf(testName, "Failed to expose service %s: %v", cluster2Name, err)
 		return
 	}
-	defer pf2.Process.Kill()
+	defer pf2.Process.Kill() // nolint: errcheck
 
 	if err := testFixturesArePresent(db2, port2, 5*time.Minute); err != nil {
 		test.Failf(testName, "Failed to find test fixtures data in clone database %s: %v", cluster2Name, err)
@@ -205,7 +205,7 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 				foundAll = false
 				continue
 			} else {
-				log.Debugf("Found key %s for prefix %s, backups found", resp.Contents[0].Key, path)
+				log.Debugf("Found key %s for prefix %s, backups found", aws.StringValue(resp.Contents[0].Key), path)
 				if i == 1 {
 					// save wal segments objects to check for latest timestamp
 					walSegments = resp.Contents
