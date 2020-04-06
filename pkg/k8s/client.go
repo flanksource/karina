@@ -20,6 +20,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/moshloop/platform-cli/pkg/k8s/drain"
 	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -425,6 +426,20 @@ func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Help
 	}
 
 	return cliresource.NewHelper(restClient, mapping), nil
+}
+
+func (c *Client) GetProxyDialer(p proxy.Proxy) (*proxy.Dialer, error) {
+	clientset, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+
+	restConfig, err := c.GetRESTConfig()
+	if err != nil {
+		return nil,
+	}
+
+	return proxy.NewDialer(p, clientset, restConfig)
 }
 
 func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
