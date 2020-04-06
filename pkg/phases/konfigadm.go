@@ -2,6 +2,7 @@ package phases
 
 import (
 	"fmt"
+	"github.com/flanksource/commons/files"
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
@@ -103,6 +104,13 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	}
 	log.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
+		if ap == "" || len(ap) < 1 {
+			log.Fatalf("Unable to read audit policy file")
+		}
+		cfg.Files["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+	}
 	return nil
 }
 
