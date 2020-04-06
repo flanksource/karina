@@ -68,7 +68,6 @@ func (query Query) ToQuery() elastic.Query {
 }
 
 func ExportLogs(p *platform.Platform, query Query) error {
-
 	es, err := elastic.NewSimpleClient(
 		elastic.SetBasicAuth(p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.Password),
 		elastic.SetURL(p.Filebeat.Elasticsearch.GetURL()),

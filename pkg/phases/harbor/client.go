@@ -36,7 +36,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		return nil, err
 	}
 	if len(pods.Items) == 0 {
-		return nil, fmt.Errorf("No running harbor-core pods")
+		return nil, fmt.Errorf("no running harbor-core pods")
 	}
 	dialer, _ := p.GetProxyDialer(proxy.Proxy{
 		Namespace:    Namespace,
