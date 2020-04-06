@@ -9,7 +9,10 @@ import (
 )
 
 func ReplicateAll(p *platform.Platform) error {
-	client := NewClient(p)
+	client, err := NewClient(p)
+	if err != nil {
+		return err
+	}
 
 	log.Infoln("Listing replication policies")
 	replications, err := client.ListReplicationPolicies()
@@ -28,7 +31,10 @@ func ReplicateAll(p *platform.Platform) error {
 }
 
 func UpdateSettings(p *platform.Platform) error {
-	client := NewClient(p)
+	client, err := NewClient(p)
+	if err != nil {
+		return err
+	}
 	log.Infof("Platform: %v", p)
 	log.Infof("Settings: %v", *p.Harbor.Settings)
 	return client.UpdateSettings(*p.Harbor.Settings)

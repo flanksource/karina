@@ -436,7 +436,7 @@ func (c *Client) GetProxyDialer(p proxy.Proxy) (*proxy.Dialer, error) {
 
 	restConfig, err := c.GetRESTConfig()
 	if err != nil {
-		return nil,
+		return nil, err
 	}
 
 	return proxy.NewDialer(p, clientset, restConfig)

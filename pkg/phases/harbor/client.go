@@ -4,33 +4,74 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/dghubble/sling"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/text"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
+	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Client struct {
-	sling *sling.Sling
-	url   string
+	sling  *sling.Sling
+	client *http.Client
+	url    string
 }
 
-func NewClient(p *platform.Platform) *Client {
-	client := &http.Client{Transport: &http.Transport{
+func NewClient(p *platform.Platform) (*Client, error) {
+	clientset, err := p.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+
+	pods, err := clientset.CoreV1().Pods(Namespace).List(metav1.ListOptions{
+		LabelSelector: "app=harbor,component=core",
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("No running harbor-core pods")
+	}
+	dialer, _ := p.GetProxyDialer(proxy.Proxy{
+		Namespace:    Namespace,
+		Kind:         "pods",
+		ResourceName: pods.Items[0].Name,
+		Port:         8080,
+	})
+	tr := &http.Transport{
+		DialContext:     dialer.DialContext,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}}
+	}
+
+	client := &http.Client{Transport: tr}
 	return &Client{
-		url: p.Harbor.URL,
-		sling: sling.New().Client(client).Base(p.Harbor.URL).
+		client: client,
+		url:    p.Harbor.URL,
+		sling: sling.New().Client(client).Base("http://harbor-core").
 			SetBasicAuth("admin", p.Harbor.AdminPassword).
 			Set("accept", "application/json").
 			Set("content-type", "application/json"),
+	}, nil
+}
+
+func (harbor *Client) GetStatus() (*Status, error) {
+	resp, err := harbor.client.Get("http://harbor-core/api/health")
+	if err != nil {
+		return nil, err
 	}
+	status := Status{}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &status); err != nil {
+		log.Errorf("Failed to unmarshall :%v", err)
+	}
+	return &status, nil
 }
 
 func (harbor *Client) ListReplicationPolicies() (policies []ReplicationPolicy, customErr error) {
@@ -153,4 +194,12 @@ type ProjectMember struct {
 	RoleID     int    `json:"role_id,omitempty"`
 	EntityID   int    `json:"entity_id,omitempty"`
 	EntityType string `json:"entity_type,omitempty"`
+}
+
+type Status struct {
+	Status     string `json:"status"`
+	Components []struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	} `json:"components"`
 }

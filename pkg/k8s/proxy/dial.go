@@ -92,7 +92,7 @@ func (d *Dialer) DialContext(_ context.Context, network string, addr string) (ne
 
 	p, _, err := dialer.Dial(portforward.PortForwardProtocolV1Name)
 	if err != nil {
-		return nil, errors.Wrap(err, "error upgrading connection")
+		return nil, errors.Wrap(err, "error upgrading connection for: "+req.URL().String())
 	}
 	headers := http.Header{}
 	headers.Set(corev1.StreamType, corev1.StreamTypeError)
