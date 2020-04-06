@@ -16,6 +16,14 @@ ldap:
     username: test
     password: secret
 kubernetes:
+  auditing:
+    policyFile: ./test/fixtures/audit-policy.yaml
+  apiServerExtraArgs:
+    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-maxsize": 1024
+    "audit-log-maxage": 2
+    "audit-log-maxbackup": 3
+    "audit-log-format": legacy   # default is json
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
@@ -44,8 +52,8 @@ versions:
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 opa:
-  version: 0.13.5
-  kubeMgmtVersion: 0.8
+  version: 0.17.3
+  kubeMgmtVersion: 0.10
   bundleUrl: http://minio.minio.svc:9000
   bundlePrefix: bundles
   bundleServiceName: automobile

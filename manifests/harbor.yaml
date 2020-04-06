@@ -323,6 +323,8 @@ metadata:
   labels:
     app: "harbor"
     component: chartmuseum
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   strategy:
@@ -380,6 +382,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: harbor-clair
+  annotations:
+    reload/all: "true" # restart on cm/secret change
   labels:
     app: "harbor"
     component: clair
@@ -472,6 +476,8 @@ metadata:
   labels:
     app: "harbor"
     component: core
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   selector:
@@ -563,6 +569,8 @@ metadata:
   labels:
     app: "harbor"
     component: jobservice
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   strategy:
@@ -642,6 +650,8 @@ metadata:
   labels:
     app: "harbor"
     component: portal
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   selector:
@@ -680,6 +690,8 @@ metadata:
   labels:
     app: "harbor"
     component: registry
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   strategy:

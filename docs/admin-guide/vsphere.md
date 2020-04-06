@@ -2,14 +2,15 @@
 
 1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
 2. Download and install the platform-cli binary
-3. Create the cluster `platform-cli provision cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
-4. Check the status of running vms: `platform-cli status`
-5. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
-6. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
-7. Build the base platform configuration: `platform-cli build all`
-8. Deploy the platform configuration: `platform-cli deploy all`
-9. Run conformance tests: `platform-cli test`
-10. Tear down the cluster: `platform-cli cleanup`
+3. Generate a CA for the cluster: `platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/ingress-ca.key --password foobar`
+4. Create the cluster `platform-cli provision cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
+5. Check the status of running vms: `platform-cli status`
+6. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
+7. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
+8. Build the base platform configuration: `platform-cli build all`
+9. Deploy the platform configuration: `platform-cli deploy all`
+10. Run conformance tests: `platform-cli test`
+11. Tear down the cluster: `platform-cli cleanup`
 
 #### PlatformConfiguration
 
@@ -35,7 +36,12 @@ serviceSubnet: 10.96.0.0/16
 podSubnet: 10.97.0.0/16
 # Prefix to be added to VM hostnames,
 hostPrefix:
-# The VM configuration for master nodes
+# The root CA used to sign generated certs
+ca:
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ The VM configuration for master nodes
 master:
   count: 5
   cpu: 4
