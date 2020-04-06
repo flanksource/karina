@@ -7,7 +7,6 @@ import (
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
-
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -600,11 +599,11 @@ type ConfigMapReloader struct {
 }
 
 type Elasticsearch struct {
-	Version        string        `yaml:"version"`
-	Mem            *Memory       `yaml:"mem,omitempty"`
-	Replicas       int           `yaml:"replicas,omitempty"`
-	Persistence    *Persistence  `yaml:"persistence,omitempty"`
-	Disabled       bool          `yaml:"disabled,omitempty"`
+	Version     string       `yaml:"version"`
+	Mem         *Memory      `yaml:"mem,omitempty"`
+	Replicas    int          `yaml:"replicas,omitempty"`
+	Persistence *Persistence `yaml:"persistence,omitempty"`
+	Disabled    bool         `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {

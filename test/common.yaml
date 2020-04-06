@@ -198,7 +198,7 @@ vault:
       allowed_domains:
         - 127.0.0.1.nip.io
 registryCredentials:
-  version: "1.10"
+  version: "v1.10.flanksource.1"
   namespace: "registry-credentials"
   aws:
     enabled: true

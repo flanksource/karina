@@ -330,7 +330,7 @@ func init() {
 			if err := elasticsearch.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying elasticsearch %s", err)
 			}
-		}
+		},
 	})
 
 	Deploy.AddCommand(&cobra.Command{
