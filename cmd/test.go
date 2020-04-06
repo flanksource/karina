@@ -6,12 +6,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/phases/quack"
-
 	"github.com/flanksource/commons/console"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
@@ -24,11 +19,15 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
+	"github.com/moshloop/platform-cli/pkg/phases/quack"
+	"github.com/moshloop/platform-cli/pkg/phases/registrycreds"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -285,6 +284,15 @@ func init() {
 		},
 	})
 
+	Test.AddCommand(&cobra.Command{
+		Use:   "registry-credentials",
+		Short: "Test registry credentials",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(registrycreds.Test)
+		},
+	})
+
 	testAllCmd := &cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
@@ -302,6 +310,7 @@ func init() {
 					flux.Test(p, test)
 					configmapreloader.Test(p, test, args, cmd)
 					quack.Test(p, test)
+					registrycreds.Test(p, test)
 				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)

@@ -59,6 +59,8 @@ $BIN deploy opa bundle automobile -v
 
 $BIN deploy opa policies test/opa/policies -v
 
+$BIN test registry-credentials --wait 200
+
 failed=false
 if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
   failed=true

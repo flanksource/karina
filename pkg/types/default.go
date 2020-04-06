@@ -16,6 +16,9 @@ func DefaultPlatformConfig() PlatformConfig {
 			KubeletExtraArgs:    map[string]string{},
 			EtcdExtraArgs:       map[string]string{},
 		},
+		RegistryCredentials: RegistryCredentials{
+			Namespace: "kube-system",
+		},
 	}
 	return config
 }
