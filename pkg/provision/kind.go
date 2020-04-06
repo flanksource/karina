@@ -150,8 +150,6 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
 
 	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
-		clusterConfig.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
-
 		vols := &clusterConfig.APIServer.ExtraVolumes
 		*vols = append(*vols, api.HostPathMount{
 			Name:      "audit-spec",

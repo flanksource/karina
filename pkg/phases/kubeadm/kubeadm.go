@@ -39,6 +39,11 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
+
+	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
+		cluster.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+	}
+
 	if !cfg.Ldap.Disabled {
 		cluster.APIServer.ExtraArgs["oidc-issuer-url"] = "https://dex." + cfg.Domain
 		cluster.APIServer.ExtraArgs["oidc-client-id"] = "kubernetes"
