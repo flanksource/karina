@@ -45,6 +45,8 @@ spec:
               value: "{{.s3.access_key}}"
             - name: MINIO_SECRET_KEY
               value: "{{.s3.secret_key}}"
+            - name: MINIO_KMS_MASTER_KEY
+              value: "{{.s3.kmsMasterKey}}"
           ports:
             - containerPort: 9000
           # Readiness probe detects situations when MinIO server instance

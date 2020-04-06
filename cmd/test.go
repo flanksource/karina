@@ -39,7 +39,7 @@ var (
 	p                         *platform.Platform
 	testAll                   bool
 	testDestructive           bool
-	testWrite                 bool
+	testE2E                   bool
 )
 
 var Test = &cobra.Command{
@@ -186,14 +186,19 @@ func init() {
 		},
 	})
 
-	Test.AddCommand(&cobra.Command{
+	postgresOperatorTestCmd := &cobra.Command{
 		Use:   "postgres-operator",
 		Short: "Test postgres-operator",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(postgresoperator.Test)
+			if testE2E {
+				run(postgresoperator.TestE2E)
+			}
 		},
-	})
+	}
+	postgresOperatorTestCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
+	Test.AddCommand(postgresOperatorTestCmd)
 
 	Test.AddCommand(&cobra.Command{
 		Use:   "stubs",
@@ -303,13 +308,14 @@ func init() {
 				base.Test(p, test)
 				audit.Test(p, test)
 
-				if testAll || testWrite {
+				if testAll || testE2E {
 					velero.Test(p, test)
 					dex.Test(p, test)
 					sealedsecrets.Test(p, test)
 					flux.Test(p, test)
 					configmapreloader.Test(p, test, args, cmd)
 					quack.Test(p, test)
+					postgresoperator.TestE2E(p, test)
 					registrycreds.Test(p, test)
 				}
 				opa.TestNamespace(p, client, test)
@@ -324,7 +330,7 @@ func init() {
 		},
 	}
 
-	testAllCmd.PersistentFlags().BoolVarP(&testWrite, "write", "w", false, "Run write tests")
+	testAllCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
 	testAllCmd.PersistentFlags().BoolVarP(&testDestructive, "destructive", "d", false, "Run destructive tests")
 	testAllCmd.PersistentFlags().BoolVarP(&testAll, "all", "a", false, "Run all tests")
 	Test.AddCommand(testAllCmd)

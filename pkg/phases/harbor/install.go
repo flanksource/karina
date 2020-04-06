@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/konfigadm/pkg/utils"
+	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -33,7 +34,8 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if p.Harbor.DB == nil {
-		db, err := p.GetOrCreateDB(dbCluster, dbNames...)
+		dbConfig := pgapi.NewClusterConfig(dbCluster, dbNames...)
+		db, err := p.GetOrCreateDB(dbConfig)
 		if err != nil {
 			return fmt.Errorf("deploy: failed to get/update db: %v", err)
 		}

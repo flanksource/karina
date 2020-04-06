@@ -84,7 +84,7 @@ harbor:
   bucket: harbor-blobs
   version: v1.10.0
 postgresOperator:
-  version: v1.3.4
+  version: v1.3.4.flanksource.1
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -92,6 +92,8 @@ s3:
   access_key: minio
   secret_key: minio123
   region: us-east1
+  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
+  usePathStyle: true
 velero:
   bucket: velero
 thanos:
