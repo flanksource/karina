@@ -2,10 +2,11 @@ package elastic
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"reflect"
 
-	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
@@ -17,14 +18,25 @@ type Query struct {
 	Pod       string
 	Count     int
 	Query     string
+	Since     string
+}
+
+type Fields struct {
+	Cluster string `json:"cluster"`
+}
+
+type Kubernetes struct {
+	Namespace string `json:"namespace"`
+	Pod       Name   `json:"pod"`
+	Container Name   `json:"container"`
 }
 
 type Message struct {
-	Namespace string `json:"namespace"`
-	Pod       Name   `json:"pod"`
-	Host      Name   `json:"host"`
-	Timestamp string `json:"@timestamp"`
-	Message   string
+	Kubernetes Kubernetes `json:"kubernetes"`
+	Host       Name       `json:"host"`
+	Fields     Fields     `json:"fields"`
+	Timestamp  string     `json:"@timestamp"`
+	Message    string
 }
 type Name struct {
 	Name string
@@ -48,10 +60,15 @@ func (query Query) ToQuery() elastic.Query {
 	if query.Query != "" {
 		q.Must(elastic.NewQueryStringQuery(query.Query))
 	}
+
+	if query.Since != "" {
+		q.Must(elastic.NewRangeQuery("@timestamp").From("now-" + query.Since).To("now"))
+	}
 	return q
 }
 
-func ExportLogs(p *platform.Platform, query Query, dst string) error {
+func ExportLogs(p *platform.Platform, query Query) error {
+
 	es, err := elastic.NewSimpleClient(
 		elastic.SetBasicAuth(p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.Password),
 		elastic.SetURL(p.Filebeat.Elasticsearch.GetURL()),
@@ -59,10 +76,16 @@ func ExportLogs(p *platform.Platform, query Query, dst string) error {
 	if err != nil {
 		return err
 	}
+	scroll := elastic.NewScrollService(es)
 
-	result, err := es.Search().
+	pageSize := 5000
+	if query.Count < pageSize {
+		pageSize = query.Count
+	}
+	count := 0
+	result, err := scroll.
 		Index("filebeat-*").
-		Size(query.Count).
+		Size(pageSize).
 		Sort("@timestamp", false).
 		Query(query.ToQuery()).
 		Do(context.Background())
@@ -70,10 +93,25 @@ func ExportLogs(p *platform.Platform, query Query, dst string) error {
 		return err
 	}
 
-	for _, hit := range result.Each(reflect.TypeOf(Message{})) {
-		msg := hit.(Message)
-		fmt.Printf("[%s/%s/%s] %v\n", console.Greenf(query.Pod), msg.Namespace, msg.Pod, msg.Message)
+	for result.ScrollId != "" && count < query.Count {
+		for _, hit := range result.Each(reflect.TypeOf(Message{})) {
+			msg := hit.(Message)
+			fmt.Printf("[%s/%s/%s] %v\n", msg.Fields.Cluster, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			count++
+			if count >= query.Count {
+				break
+			}
+		}
+		result, err = scroll.ScrollId(result.ScrollId).Do(context.Background())
+		if err != nil && errors.Is(err, io.EOF) {
+			log.Infof("Exported %d results of %d total", count, result.TotalHits())
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		log.Infof("Exported %d results of %d total", count, result.TotalHits())
 	}
-	log.Infof("Export %d results of %d total", len(result.Hits.Hits), result.TotalHits())
+
 	return nil
 }
