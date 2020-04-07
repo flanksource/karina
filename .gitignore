@@ -18,9 +18,13 @@ hack/
 .manifests/
 kind
 test-results/
+artifacts/
 manifests/static.go
 templates/static.go
 snapshot/
+vendor/
 .idea
 .vscode
 .certs
+#goland ide generated files:
+__debug_bin
