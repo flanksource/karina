@@ -36,11 +36,16 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	extras, _ := cmd.Flags().GetStringArray("extra")
 	trace, _ := cmd.Flags().GetBool("trace")
+	e2e, _ := cmd.Flags().GetBool("e2e")
 
-	return NewConfig(paths, dryRun, extras, trace)
+	config := NewConfig(paths, extras)
+	config.E2E = e2e
+	config.Trace = trace
+	config.DryRun = dryRun
+	return config
 }
 
-func NewConfig(paths []string, dryRun bool, extras []string, trace bool) types.PlatformConfig {
+func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
@@ -54,26 +59,17 @@ func NewConfig(paths []string, dryRun bool, extras []string, trace bool) types.P
 		Source: paths[0],
 	}
 
-	if err := mergeConfigs(&base, paths); err != nil {
-		log.Fatalf("Failed to merge configs: %v", err)
+	defaultConfig := types.DefaultPlatformConfig()
+	if err := mergo.Merge(&base, defaultConfig); err != nil {
+		log.Fatalf("Failed to merge default config, %v", err)
 	}
 
 	if err := mergeConfigs(&base, base.ImportConfigs); err != nil {
 		log.Fatalf("Failed to merge configs: %v", err)
 	}
 
-	defaultConfig := types.DefaultPlatformConfig()
-	if err := mergo.Merge(&base, defaultConfig); err != nil {
-		log.Fatalf("Failed to merge default config, %v", err)
-	}
-
-	if dryRun {
-		base.DryRun = true
-		log.Infof("Running a dry-run mode, no changes will be made")
-	}
-
-	if trace {
-		base.Trace = true
+	if err := mergeConfigs(&base, paths); err != nil {
+		log.Fatalf("Failed to merge configs: %v", err)
 	}
 
 	base.S3.AccessKey = template(base.S3.AccessKey)

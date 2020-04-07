@@ -17,6 +17,9 @@ import (
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "sealed-secrets", test)
+	if !p.E2E {
+		return
+	}
 	secretName := "test-sealed-secrets"
 	namespace := fmt.Sprintf("sealed-secrets-test-%s", utils.RandomKey(6))
 

@@ -322,8 +322,6 @@ func init() {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
 				audit.Test(p, test)
-
-				if testAll || testE2E {
 					velero.Test(p, test)
 					dex.Test(p, test)
 					sealedsecrets.Test(p, test)
@@ -332,8 +330,11 @@ func init() {
 					quack.Test(p, test)
 					postgresoperator.TestE2E(p, test)
 					registrycreds.Test(p, test)
+<<<<<<< HEAD
 					consul.TestE2E(p, test)
 				}
+=======
+>>>>>>> add test --e2e option
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
 				monitoring.Test(p, test)

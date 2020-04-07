@@ -42,6 +42,9 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, Namespace, test)
+	if p.E2E {
+		TestE2E(p, test)
+	}
 }
 
 func TestE2E(p *platform.Platform, test *console.TestResults) {

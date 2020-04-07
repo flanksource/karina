@@ -67,4 +67,6 @@ type PlatformConfig struct {
 	JoinEndpoint          string `yaml:"-"`
 	Source                string `yaml:"-"`
 	ControlPlaneEndpoint  string `yaml:"-"`
+	// E2E is true if end to end tests are being run
+	E2E bool `yaml:"-"`
 }

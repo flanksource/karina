@@ -18,6 +18,10 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 	k8s.TestNamespace(client, namespace, test)
 
+	if !p.E2E {
+		return
+	}
+
 	if err := p.CreateOrUpdateNamespace(testNamespace, nil, nil); err != nil {
 		test.Failf("registry-creds", "failed to create namespace %s", testNamespace)
 		return

@@ -16,6 +16,9 @@ import (
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "dex", test)
+	if !p.E2E {
+		return
+	}
 	k8s.TestNamespace(client, "ldap", test)
 
 	dexClient := &testlib.DexOauth{

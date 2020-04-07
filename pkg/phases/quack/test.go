@@ -17,6 +17,10 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	client, _ := platform.GetClientset()
 	k8s.TestNamespace(client, Namespace, test)
 
+	if !platform.E2E {
+		return
+	}
+
 	namespace := fmt.Sprintf("quack-test-%s", utils.RandomKey(6))
 
 	if err := platform.CreateOrUpdateNamespace(namespace, EnabledLabels, nil); err != nil {

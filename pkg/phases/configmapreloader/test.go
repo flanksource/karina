@@ -21,13 +21,10 @@ func Test(p *platform.Platform, test *console.TestResults, args []string, cmd *c
 		return
 	}
 	k8s.TestNamespace(client, Namespace, test)
-	runE2E, err := cmd.Flags().GetBool("e2e")
-	if err != nil {
+	if !p.E2E {
 		return
 	}
-	if runE2E {
-		e2eTest(p, test)
-	}
+	e2eTest(p, test)
 }
 
 func e2eTest(p *platform.Platform, test *console.TestResults) {
