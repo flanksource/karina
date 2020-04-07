@@ -106,10 +106,10 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
-		if ap == "" || len(ap) < 1 {
+		if ap == ""  {
 			log.Fatalf("Unable to read audit policy file")
 		}
-		cfg.Files["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+		cfg.Files["/etc/kubernetes/policies/audit-policy.yaml"] = string(ap)
 	}
 	return nil
 }
