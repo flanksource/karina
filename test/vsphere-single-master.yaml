@@ -1,0 +1,51 @@
+# DNS Wildcard domain that this cluster will be accessible under
+domain: 10.100.0.40.nip.io
+## Endpoint for externally hosted consul cluster
+consul: 10.100.0.13
+# Cluster name
+name: test-kubeadm-configs
+datacenter: lab
+#ldap:
+#  # Domain binding, e.g. DC=local,DC=corp
+#  dn:
+#  # LDAPS hostname / IP
+#  host:
+#  # LDAP group name that will be granted cluster-admin
+#  adminGroup:
+specs: # A list of folders of kubernetes specs to apply, these will be templatized
+  - ./manifests
+versions:
+  kubernetes: v1.16.4
+serviceSubnet: 10.96.0.0/16
+podSubnet: 10.97.0.0/16
+# Prefix to be added to VM hostnames,
+hostPrefix: tka
+# The VM configuration for master nodes
+master:
+  count: 1
+  cpu: 2
+  memory: 4
+  disk: 10
+  # GOVC_NETWORK
+  network: "VM Network"
+  # GOVC_CLUSTER
+  cluster: "cluster"
+  template: "k8s-1.16.4"
+ca:
+  cert: .certs/root-ca-crt.pem
+  privateKey: .certs/root-ca-key.pem
+  password: foobar
+dns:
+  disabled: true
+# The VM configuration for worker nodes, multiple groups can be specified
+#workers:
+#  worker:
+#    count: 8
+#    cpu: 16
+#    memory: 64
+#    disk: 300
+#    # GOVC_NETWORK
+#    network:
+#      # GOVC_CLUSTER
+#      cluster:
+#    template:
