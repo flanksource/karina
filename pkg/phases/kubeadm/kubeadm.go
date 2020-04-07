@@ -42,6 +42,14 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 
 	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
 		cluster.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+		mnt := api.HostPathMount{
+			Name:      "auditpolicy",
+			HostPath:  "/etc/kubernetes/policies/audit-policy.yaml",
+			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		}
+		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt )
 	}
 
 	if !cfg.Ldap.Disabled {
