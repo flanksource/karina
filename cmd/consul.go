@@ -38,7 +38,7 @@ func init() {
 	}
 	backupCmd.Flags().String("name", "", "Name of the consul deployment")
 	backupCmd.Flags().String("namespace", "", "Namespace where consul runs")
-	backupCmd.Flags().String("schedule", "", "A cron schedule to backup on a reccuring basis")
+	backupCmd.Flags().String("schedule", "", "A cron schedule to backup on a recurring basis")
 
 	restoreCmd := &cobra.Command{
 		Use:   "restore [backup path]",
