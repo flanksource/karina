@@ -5,6 +5,14 @@ consul: 10.100.0.13
 # Cluster name
 name: test-kubeadm-configs
 datacenter: lab
+kubernetes:
+  auditing:
+    policyFile: ./test/fixtures/audit-policy.yaml
+  apiServerExtraArgs:
+    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-maxsize": 1024
+    "audit-log-maxage": 2
+    "audit-log-maxbackup": 3
 #ldap:
 #  # Domain binding, e.g. DC=local,DC=corp
 #  dn:
