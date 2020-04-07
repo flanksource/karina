@@ -19,6 +19,7 @@ type Query struct {
 	Count     int
 	Query     string
 	Since     string
+	From, To  string
 }
 
 type Fields struct {
@@ -61,7 +62,9 @@ func (query Query) ToQuery() elastic.Query {
 		q.Must(elastic.NewQueryStringQuery(query.Query))
 	}
 
-	if query.Since != "" {
+	if query.From != "" {
+		q.Must(elastic.NewRangeQuery("@timestamp").From(query.From).To(query.To))
+	} else if query.Since != "" {
 		q.Must(elastic.NewRangeQuery("@timestamp").From("now-" + query.Since).To("now"))
 	}
 	return q

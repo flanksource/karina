@@ -17,6 +17,8 @@ var Logs = &cobra.Command{
 		namespace, _ := cmd.Flags().GetString("namespace")
 		cluster, _ := cmd.Flags().GetString("cluster")
 		since, _ := cmd.Flags().GetString("since")
+		from, _ := cmd.Flags().GetString("from")
+		to, _ := cmd.Flags().GetString("to")
 		if err := elastic.ExportLogs(getPlatform(cmd), elastic.Query{
 			Pod:       pod,
 			Count:     count,
@@ -24,6 +26,8 @@ var Logs = &cobra.Command{
 			Namespace: namespace,
 			Since:     since,
 			Query:     kql,
+			From:      from,
+			To:        to,
 		}); err != nil {
 			log.Fatalf("Failed to export logs, %s", err)
 		}
@@ -31,10 +35,12 @@ var Logs = &cobra.Command{
 }
 
 func init() {
+	Logs.Flags().String("from", "", "Logs since")
+	Logs.Flags().String("to", "", "Logs to")
 	Logs.Flags().String("since", "1d", "Logs since")
 	Logs.Flags().StringP("query", "q", "", "KQL query")
 	Logs.Flags().String("cluster", "", "The kubernetes cluster to search in")
-	Logs.Flags().Int("count", 1000, "Number of log entries to return")
+	Logs.Flags().Int("count", 100000, "Number of log entries to return")
 	Logs.Flags().StringP("pod", "p", "", "Restrict to pod")
 	Logs.Flags().StringP("namespace", "n", "", "Restruct to namespace")
 }
