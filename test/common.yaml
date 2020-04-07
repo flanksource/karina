@@ -201,7 +201,6 @@ vault:
         - 127.0.0.1.nip.io
   consul:
     bucket: "consul-backups"
-    backupImage: "docker.io/flanksource/consul-backup-restore:0.1"
 registryCredentials:
   version: "v1.10.flanksource.1"
   namespace: "registry-credentials"

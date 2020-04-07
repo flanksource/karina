@@ -13,18 +13,22 @@ import (
 )
 
 type BackupRestore struct {
-	Name      string
-	Namespace string
-	client    *k8s.Client
-	platform  *platform.Platform
+	*platform.Platform
+	Name        string
+	Namespace   string
+	dockerImage string
 }
 
 func NewBackupRestore(platform *platform.Platform, name, namespace string) *BackupRestore {
+	dockerImage := platform.Vault.Consul.BackupImage
+	if dockerImage == "" {
+		dockerImage = "docker.io/flanksource/consul-backup-restore:0.1"
+	}
 	br := &BackupRestore{
-		Name:      name,
-		Namespace: namespace,
-		platform:  platform,
-		client:    &platform.Client,
+		Platform:    platform,
+		Name:        name,
+		Namespace:   namespace,
+		dockerImage: dockerImage,
 	}
 	return br
 }
@@ -34,25 +38,25 @@ func (b *BackupRestore) Backup() error {
 		Command("/scripts/backup.sh").
 		AsOneShotJob()
 
-	if err := b.client.Apply(b.Namespace, job); err != nil {
+	if err := b.Apply(b.Namespace, job); err != nil {
 		return err
 	}
 
-	return b.client.StreamLogs(b.Namespace, job.Name)
+	return b.StreamLogs(b.Namespace, job.Name)
 }
 
 func (b *BackupRestore) ScheduleBackup(schedule string) error {
 	job := b.GenerateBackupJob().
 		Command("/scripts/backup.sh").
 		AsCronJob(schedule)
-	return b.client.Apply(b.Namespace, job)
+	return b.Apply(b.Namespace, job)
 }
 
 func (b *BackupRestore) Restore(backup string) error {
 	var backupBucket string
 	if !strings.HasPrefix(backup, "s3://") {
-		backupBucket = b.platform.Vault.Consul.Bucket
-		backup = fmt.Sprintf("s3://%s/consul/backups/%s/%s/%s", b.platform.Vault.Consul.Bucket, b.Namespace, b.Name, backup)
+		backupBucket = b.Vault.Consul.Bucket
+		backup = fmt.Sprintf("s3://%s/consul/backups/%s/%s/%s", b.Vault.Consul.Bucket, b.Namespace, b.Name, backup)
 	} else {
 		uri, err := url.Parse(backup)
 		if err != nil {
@@ -67,18 +71,18 @@ func (b *BackupRestore) Restore(backup string) error {
 			"RESTORE_BUCKET": backupBucket,
 		}).AsOneShotJob()
 
-	if err := b.client.Apply(b.Namespace, job); err != nil {
+	if err := b.Apply(b.Namespace, job); err != nil {
 		return err
 	}
 
-	return b.client.StreamLogs(b.Namespace, job.Name)
+	return b.StreamLogs(b.Namespace, job.Name)
 }
 
 func (b *BackupRestore) GenerateBackupJob() *k8s.DeploymentBuilder {
-	vault := b.platform.Vault
+	vault := b.Vault
 	consulBackupSecret := "consul-backup-config"
 
-	builder := k8s.Deployment("consul-backup-"+b.Name+"-"+utils.ShortTimestamp(), vault.Consul.BackupImage)
+	builder := k8s.Deployment("consul-backup-"+b.Name+"-"+utils.ShortTimestamp(), b.dockerImage)
 	return builder.
 		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
 		EnvVarFromSecret("AWS_ACCESS_KEY_ID", consulBackupSecret, "AWS_ACCESS_KEY_ID").
