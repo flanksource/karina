@@ -287,7 +287,6 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig) {
 	if err := pgClient.Delete(clusterName, nil); err != nil {
 		log.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
 		return
-	} else {
-		log.Infof("Deleeted pg cluster: %s", clusterName)
 	}
+	log.Infof("Deleeted pg cluster: %s", clusterName)
 }
