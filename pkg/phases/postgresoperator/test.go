@@ -281,7 +281,7 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig) {
 		return
 	}
 
-	_, err := pgClient.Get(clusterName, metav1.GetOptions{})
+	_, err = pgClient.Get(clusterName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return
 	}
