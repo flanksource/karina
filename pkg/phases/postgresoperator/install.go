@@ -16,7 +16,7 @@ func Deploy(platform *platform.Platform) error {
 		return nil
 	}
 	if platform.PostgresOperator.Version == "" {
-		platform.PostgresOperator.Version = "v1.3.4"
+		platform.PostgresOperator.Version = "v1.3.4.flanksource.2"
 	}
 	if platform.PostgresOperator.SpiloImage == "" {
 		platform.PostgresOperator.SpiloImage = "docker.io/flanksource/spilo:1.6-p2.flanksource"
