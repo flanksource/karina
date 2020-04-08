@@ -171,7 +171,7 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 
 	cfg := aws.NewConfig().
 		WithRegion(p.S3.Region).
-		WithEndpoint(p.S3.ExternalEndpoint).
+		WithEndpoint(p.S3.GetExternalEndpoint()).
 		WithCredentials(
 			credentials.NewStaticCredentials(p.S3.AccessKey, p.S3.SecretKey, ""),
 		).
