@@ -49,20 +49,17 @@ done
 
 $BIN vault init -v
 
-$BIN deploy postgres-operator install -v
-
-$BIN test postgres-operator --wait 420 --e2e
-
 $BIN deploy all -v
 
 $BIN deploy opa bundle automobile -v
 
 $BIN deploy opa policies test/opa/policies -v
 
-$BIN test registry-credentials --wait 200
+$BIN test all -v --wait 240
 
 failed=false
-if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
+
+if ! $BIN test all --e2e -v --wait 420 --junit-path test-results/results.xml; then
   failed=true
 fi
 
