@@ -72,7 +72,6 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 
 	if err := insertTestFixtures(db, port1); err != nil {
 		test.Failf(testName, "Failed to insert fixtures into database %s: %v", cluster1.Name, err)
-		time.Sleep(320 * time.Second)
 		return
 	}
 	timestamp := time.Now().Add(5 * time.Second)
@@ -130,8 +129,7 @@ func insertTestFixtures(db *types.DB, port int) error {
 		&Link{URL: "http://flanksource.com"},
 		&Link{URL: "http://kubernetes.io"},
 	}
-	err = pgdb.Insert(links...)
-	return fmt.Errorf("failed to insert links: %v", err)
+	return pgdb.Insert(links...)
 }
 
 func testFixturesArePresent(db *types.DB, port int, timeout time.Duration) error {
