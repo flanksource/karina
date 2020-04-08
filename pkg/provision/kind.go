@@ -79,21 +79,6 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
-	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
-		auditPolicyPath, err := filepath.Abs(platform.Kubernetes.AuditConfig.PolicyFile)
-		if err != nil {
-			return errors.Wrap(err, "failed to expand audit config file path")
-		}
-
-		mnts := &kindConfig.Nodes[0].ExtraMounts
-
-		*mnts = append(*mnts, kindapi.Mount{
-			ContainerPath: kindAuditDir,
-			HostPath:      path.Dir(auditPolicyPath),
-			Readonly:      true,
-		})
-	}
-
 	yml, err := yaml.Marshal(kindConfig)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal config")
