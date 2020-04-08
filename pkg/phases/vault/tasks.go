@@ -15,7 +15,7 @@ import (
 )
 
 func Init(p *platform.Platform) error {
-	if err := p.WaitForPod("vault", "vault-0", 120*time.Second, v1.PodRunning); err != nil {
+	if err := p.WaitForPod("vault", "vault-0", 300*time.Second, v1.PodRunning); err != nil {
 		return err
 	}
 
