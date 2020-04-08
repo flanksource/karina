@@ -52,7 +52,6 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		test.Skipf(testName, "Postgres operator is disabled")
 		return
 	}
-	client, _ := p.GetClientset()
 	cluster1 := pgapi.NewClusterConfig(utils.RandomString(6), "test", "e2e_db")
 	cluster1.BackupSchedule = "*/1 * * * *"
 	cluster1Name := "postgres-" + cluster1.Name
@@ -177,7 +176,7 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 		WithHTTPClient(&http.Client{Transport: tr})
 	ssn, err := session.NewSession(cfg)
 	if err != nil {
-		return errors.Wrap(err, "failed to create S3 session")
+		return fmt.Errorf("failed to create S3 session: %v", err)
 	}
 	client := s3.New(ssn)
 	client.Config.S3ForcePathStyle = aws.Bool(p.S3.UsePathStyle)
@@ -282,7 +281,7 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig) {
 		return
 	}
 
-	existing, err := pgClient.Get(clusterName, metav1.GetOptions{})
+	_, err := pgClient.Get(clusterName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return
 	}
