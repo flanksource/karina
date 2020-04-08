@@ -14,6 +14,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
+	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
@@ -46,6 +47,9 @@ var (
 
 var Test = &cobra.Command{
 	Use: "test",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		p = getPlatform(cmd)
+	},
 }
 
 func end(test console.TestResults) {
@@ -194,9 +198,6 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			run(postgresoperator.Test)
-			if testE2E {
-				run(postgresoperator.TestE2E)
-			}
 		},
 	}
 	postgresOperatorTestCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
@@ -313,6 +314,15 @@ func init() {
 		},
 	})
 
+	Test.AddCommand(&cobra.Command{
+		Use:   "elasticsearch",
+		Short: "Test elasticsearch cluster health",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			run(elasticsearch.Test)
+		},
+	})
+
 	testAllCmd := &cobra.Command{
 		Use:   "all",
 		Short: "Test all components",
@@ -322,19 +332,26 @@ func init() {
 				client, _ := p.GetClientset()
 				base.Test(p, test)
 				audit.Test(p, test)
-					velero.Test(p, test)
-					dex.Test(p, test)
-					sealedsecrets.Test(p, test)
-					flux.Test(p, test)
-					configmapreloader.Test(p, test, args, cmd)
-					quack.Test(p, test)
-					postgresoperator.TestE2E(p, test)
-					registrycreds.Test(p, test)
-<<<<<<< HEAD
-					consul.TestE2E(p, test)
-				}
-=======
->>>>>>> add test --e2e option
+
+				velero.Test(p, test)
+				dex.Test(p, test)
+				sealedsecrets.Test(p, test)
+				flux.Test(p, test)
+				configmapreloader.Test(p, test, args, cmd)
+				quack.Test(p, test)
+				postgresoperator.TestE2E(p, test)
+				registrycreds.Test(p, test)
+				consul.TestE2E(p, test)
+
+				velero.Test(p, test)
+				dex.Test(p, test)
+				sealedsecrets.Test(p, test)
+				flux.Test(p, test)
+				configmapreloader.Test(p, test, args, cmd)
+				quack.Test(p, test)
+				postgresoperator.Test(p, test)
+				registrycreds.Test(p, test)
+
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)
 				monitoring.Test(p, test)
@@ -343,6 +360,7 @@ func init() {
 				eck.Test(p, test)
 				postgresoperator.Test(p, test)
 				vault.Test(p, test)
+				elasticsearch.Test(p, test)
 			})
 		},
 	}

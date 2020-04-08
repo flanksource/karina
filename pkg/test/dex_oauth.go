@@ -190,7 +190,7 @@ func (d *DexOauth) getToken(code string) (string, error) {
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", errors.Errorf("unable to read body", err)
+		return "", errors.Errorf("unable to read body: %v", err)
 	}
 
 	return string(bodyBytes), nil

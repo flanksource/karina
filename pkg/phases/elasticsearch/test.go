@@ -55,7 +55,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s-es-http/_cluster/health", clusterName), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("https://%s-es-http/_cluster/health", clusterName), nil)
 	req.Header.Add("Authorization", "Basic "+basicAuth(userName, string((*secret)[userName])))
 
 	resp, err := httpClient.Do(req)
@@ -78,9 +78,4 @@ func Test(p *platform.Platform, test *console.TestResults) {
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
-
-func redirectPolicyFunc(req *http.Request, via []*http.Request) error {
-
-	return nil
 }
