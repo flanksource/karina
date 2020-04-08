@@ -144,11 +144,7 @@ func (d *DexOauth) approve(approvalURL string) (string, error) {
 
 func getRedirect(resp *http.Response, expectedCode int) (string, error) {
 	if resp.StatusCode != expectedCode {
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return "", errors.Errorf("expected redirect code, got %d, body: %s", resp.StatusCode, string(bodyBytes))
+		return "", errors.Errorf("expected redirect code, got %d", resp.StatusCode)
 	}
 
 	location := resp.Header.Get("location")
@@ -189,16 +185,12 @@ func (d *DexOauth) getToken(code string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return "", errors.Errorf("expected redirect code, got %d, body: %s", resp.StatusCode, string(bodyBytes))
+		return "", errors.Errorf("expected redirect code, got %d", resp.StatusCode)
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return "", errors.Errorf("unable to read body", err)
 	}
 
 	return string(bodyBytes), nil
