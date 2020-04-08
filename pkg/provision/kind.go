@@ -26,7 +26,7 @@ var (
 	kindAuditDir = "/etc/flanksource/audit-policy"
 )
 
-// KindCluster provision or create a kubernetes cluster
+// KindCluster provisions or creates a kubernetes cluster
 func KindCluster(platform *platform.Platform) error {
 	kubeadmPatches, err := createKubeAdmPatches(platform)
 	if err != nil {
