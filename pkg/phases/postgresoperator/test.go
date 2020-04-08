@@ -14,8 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-
-	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-pg/pg/v9/orm"
 
@@ -54,13 +53,11 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, Namespace, test)
-
 	cluster1 := pgapi.NewClusterConfig(utils.RandomString(6), "test", "e2e_db")
 	cluster1.BackupSchedule = "*/1 * * * *"
 	cluster1Name := "postgres-" + cluster1.Name
 	db, err := p.GetOrCreateDB(cluster1)
-	defer removeE2ECluster(p, cluster1)
+	defer removeE2ECluster(p, cluster1) //failsafe removal of cluster
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster1.Name, err)
 		return
@@ -85,6 +82,8 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		test.Failf(testName, "Failed to find any wal backups for database %s: %v", cluster1.Name, err)
 		return
 	}
+
+	removeE2ECluster(p, cluster1)
 
 	cluster2 := pgapi.NewClusterConfig(cluster1.Name+"-clone", "test")
 	cluster2.Clone = &pgapi.CloneConfig{
@@ -125,7 +124,7 @@ func insertTestFixtures(db *types.DB, port int) error {
 
 	err := pgdb.CreateTable(&Link{}, &orm.CreateTableOptions{})
 	if err != nil {
-		return errors.Wrap(err, "failed to create table links")
+		return fmt.Errorf("failed to create table links: %v", err)
 	}
 
 	links := []interface{}{
@@ -133,7 +132,7 @@ func insertTestFixtures(db *types.DB, port int) error {
 		&Link{URL: "http://kubernetes.io"},
 	}
 	err = pgdb.Insert(links...)
-	return errors.Wrap(err, "failed to insert links")
+	return fmt.Errorf("failed to insert links: %v", err)
 }
 
 func testFixturesArePresent(db *types.DB, port int, timeout time.Duration) error {
@@ -159,7 +158,7 @@ func testFixturesArePresent(db *types.DB, port int, timeout time.Duration) error
 		}
 		time.Sleep(5 * time.Second)
 		if time.Now().After(deadline) {
-			return errors.Errorf("Could not find any links in database e2e_db, deadline exceeded")
+			return fmt.Errorf("could not find any links in database e2e_db, deadline exceeded")
 		}
 	}
 }
@@ -201,7 +200,7 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 			}
 			resp, err := client.ListObjects(req)
 			if err != nil {
-				return errors.Wrapf(err, "failed to list objects in bucket %s", bucket)
+				return fmt.Errorf("failed to list objects in bucket %s: %v", bucket, err)
 			}
 			if len(resp.Contents) == 0 || !strings.HasPrefix(aws.StringValue(resp.Contents[0].Key), path) {
 				log.Infof("Did not find any object in bucket %s, retrying in 5 seconds", bucket)
@@ -225,7 +224,7 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 		}
 		time.Sleep(5 * time.Second)
 		if time.Now().After(deadline) {
-			return errors.Errorf("Could not find any backups in bucket %s, deadline exceeded", bucket)
+			return fmt.Errorf("could not find any backups in bucket %s, deadline exceeded", bucket)
 		}
 	}
 }
@@ -235,18 +234,18 @@ func exposeService(p *platform.Platform, clusterName string) (*exec.Cmd, int, er
 	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
 	pods, err := client.CoreV1().Pods(Namespace).List(opts)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "failed to get master pod for cluster %s", clusterName)
+		return nil, 0, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
 	}
 
 	if len(pods.Items) != 1 {
-		return nil, 0, errors.Errorf("Expected 1 pod for spilo-role=master got %d", len(pods.Items))
+		return nil, 0, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
 	}
 
 	randomPort := 36000 + rand.Intn(1000)
 
 	portForwardCmd := exec.Command("./.bin/kubectl", "--namespace", "postgres-operator", "port-forward", pods.Items[0].Name, fmt.Sprintf("%d:5432", randomPort))
 	if err := portForwardCmd.Start(); err != nil {
-		return nil, 0, errors.Wrap(err, "Failed to start portforward cmd")
+		return nil, 0, fmt.Errorf("failed to start portforward cmd: %v", err)
 	}
 
 	deadline := time.Now().Add(10 * time.Second)
@@ -268,7 +267,7 @@ func exposeService(p *platform.Platform, clusterName string) (*exec.Cmd, int, er
 		time.Sleep(1 * time.Second)
 		if time.Now().After(deadline) {
 			portForwardCmd.Process.Kill() // nolint: errcheck
-			return nil, 0, errors.Errorf("timed out connecting to port %d", randomPort)
+			return nil, 0, fmt.Errorf("timed out connecting to port %d", randomPort)
 		}
 	}
 }
@@ -283,8 +282,13 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig) {
 		return
 	}
 
+	existing, err := pgClient.Get(clusterName, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		return
+	}
+
 	if err := pgClient.Delete(clusterName, nil); err != nil {
-		log.Errorf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
+		log.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
 		return
 	}
 }
