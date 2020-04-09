@@ -2,7 +2,6 @@ package kubeadm
 
 import (
 	"fmt"
-	"github.com/flanksource/commons/files"
 	"strings"
 	"time"
 
@@ -43,11 +42,6 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 
 	// Audit policy
 	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
-		ap := files.SafeRead(cfg.Kubernetes.AuditConfig.PolicyFile)
-		if ap == ""  {
-			log.Fatalf("Unable to read audit policy file")
-		}
-		cluster.Files["/etc/kubernetes/policies/audit-policy.yaml"] = string(ap)
 		cluster.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
 		mnt := api.HostPathMount{
 			Name:      "auditpolicy",
