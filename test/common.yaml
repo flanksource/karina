@@ -120,8 +120,8 @@ filebeat:
 eck:
   version: 1.0.1
 ingressCA:
-  cert: .certs/ingress-ca-crt.pem
-  privateKey: .certs/ingress-ca-key.pem
+  cert: .certs/root-ca-crt.pem
+  privateKey: .certs/root-ca-key.pem
   password: foobar
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
@@ -133,8 +133,8 @@ prometheus:
 configmapReloader:
   version: "v0.0.56"
 ca:
-  cert: .certs/ingress-ca-crt.pem
-  privateKey: .certs/ingress-ca-key.pem
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
   password: foobar
 sealedSecrets:
   version: "v0.10.0"
