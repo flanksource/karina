@@ -1,0 +1,136 @@
+consul: 10.100.0.13
+hostPrefix: k8s
+datacenter: lab
+ldap:
+  adminGroup: NA1
+  username: uid=admin,ou=system
+  password: secret
+  port: 10636
+  host: apacheds.ldap
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: DN
+kubernetes:
+  version: v1.16.4
+versions:
+  gomplate: v3.5.0
+  konfigadm: v0.3.6
+  jb: v0.1.0
+  jsonnet: 0.14
+  sonobuoy: 0.16.4
+  govc: v0.20.0
+  gojsontoyaml: master
+  kubectl: v1.15.3
+  pgo: 4.2.0
+  helm: v2.13.0
+  velero: v1.2.0
+  expenv: v1.2.0
+  ketall: v1.3.0
+podSubnet: 100.200.0.0/16
+serviceSubnet: 100.100.0.0/16
+opa:
+  disabled: true
+calico:
+  ipip: Never
+  vxlan: Never
+  version: v3.8.2
+nodeLocalDNS:
+  disabled: false
+monitoring:
+  version: dfb626837f04756ed5a8805845f51ebd29d342ec
+thanos:
+  version: v0.10.1
+  mode: client
+  thanosSidecarEndpoint: thanos-sidecar.127.0.0.1.nip.io
+  thanosSidecarPort: 80
+  bucket: thanos
+pgo:
+  version: 4.2.0
+  imageVersion: 4.2.0
+  primaryStorage: local-path
+  xlogStorage: local-path
+  backupStorage: local-path
+  replicaStorage: local-path
+  backrestStorage: local-path
+  storage:
+    xlogstorage:
+      AccessMode: ReadWriteOnce
+      Size: 2G
+      StorageType: dynamic
+      storageClass: local-path
+      Fsgroup: 26
+    local-path:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: local-path
+      Fsgroup: 26
+    s3:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: s3
+    nfs:
+      AccessMode: ReadWriteOnce
+      Size: 50G
+      StorageType: dynamic
+      StorageClass: nfs
+harbor:
+  disabled: true
+  replicas: 1
+  version: v1.10.0
+  chartVersion: v1.3.0
+s3:
+  endpoint: s3.us-east1.amazonaws.com
+  bucket: flanksource-lab
+  access_key: $AWS_ACCESS_KEY_ID
+  secret_key: $AWS_SECRET_ACCESS_KEY
+  region: us-east1
+velero:
+  disabled: true
+fluentd-operator:
+  version: v1.11.0
+  repository: jvassev/kube-fluentd-operator
+  elasticsearch:
+    url: log-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: https
+eck:
+  version: 1.0.0
+ca:
+  cert: .certs/ca.crt.pem
+  privateKey: .certs/ca.key.pem
+  password: $PLATFORM_CA_CEK
+ingressCA:
+  cert: .certs/ca.crt.pem
+  privateKey: .certs/ca.key.pem
+  password: $PLATFORM_CA_CEK
+dns:
+  type: route53
+  secretKey: $AWS_SECRET_ACCESS_KEY
+  accessKey: $AWS_ACCESS_KEY_ID
+  zone: Z24N338E28DO
+master:
+  count: 1
+  cpu: 2
+  memory: 8
+  disk: 20
+  networks:
+    - $GOVC_NETWORK
+  cluster: $GOVC_CLUSTER
+  prefix: m
+  template: k8s-1.16.4
+workers:
+  worker:
+    prefix: w
+    networks:
+      - $GOVC_NETWORK
+    cluster: $GOVC_CLUSTER
+    count: 1
+    cpu: 4
+    memory: 8
+    disk: 30
+    template: k8s-1.16.4
