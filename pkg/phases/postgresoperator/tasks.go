@@ -34,57 +34,16 @@ func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.
 				"superuser",
 			},
 		}
-		db.Spec.Parameters = map[string]string{
-			"archive_mode":    "on",
-			"archive_timeout": "60s",
-		}
 
-		envVars := []string{
-			"AWS_ACCESS_KEY_ID",
-			"AWS_SECRET_ACCESS_KEY",
-			"AWS_ENDPOINT",
-			"AWS_S3_FORCE_PATH_STYLE",
-		}
-		envVarsList := []v1.EnvVar{
-			{
-				Name:  "BACKUP_SCHEDULE",
-				Value: config.BackupSchedule,
-			},
-			{
-				Name:  "USE_WALG_RESTORE",
-				Value: strconv.FormatBool(config.UseWalgRestore),
-			},
-			{
-				Name:  "USE_WALG_BACKUP",
-				Value: strconv.FormatBool(config.UseWalgRestore),
-			},
-		}
-
-		for _, k := range envVars {
-			envVar := v1.EnvVar{
-				Name: k,
-				ValueFrom: &v1.EnvVarSource{
-					SecretKeyRef: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
-						Key:                  k,
-					},
-				},
+		envVarsList := []v1.EnvVar{}
+		if config.EnableWalArchiving {
+			db.Spec.Parameters = map[string]string{
+				"archive_mode":    "on",
+				"archive_timeout": "60s",
 			}
-			envVarsList = append(envVarsList, envVar)
-		}
-		if !config.EnableWalClusterID {
-			envVarsList = append(envVarsList, v1.EnvVar{
-				Name:  "WAL_BUCKET_SCOPE_SUFFIX",
-				Value: "",
-			})
-			envVarsList = append(envVarsList, v1.EnvVar{
-				Name:  "WALG_S3_PREFIX",
-				Value: fmt.Sprintf("s3://%s/%s/wal/", backupBucket, clusterName),
-			})
-			envVarsList = append(envVarsList, v1.EnvVar{
-				Name:  "CLONE_WAL_BUCKET_SCOPE_SUFFIX",
-				Value: "/",
-			})
+
+			walEnvVars := getWalArchivingEnvVars(config, clusterName, backupBucket)
+			envVarsList = append(envVarsList, walEnvVars...)
 		}
 		if config.Clone != nil {
 			cloneEnvVars := cloneDatabaseEnv(p, config)
@@ -165,6 +124,57 @@ func cloneDatabaseEnv(p *platform.Platform, config postgres.ClusterConfig) []v1.
 	}
 
 	return envVars
+}
+
+func getWalArchivingEnvVars(config postgres.ClusterConfig, clusterName, backupBucket string) []v1.EnvVar {
+	envVars := []string{
+		"AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_ACCESS_KEY",
+		"AWS_ENDPOINT",
+		"AWS_S3_FORCE_PATH_STYLE",
+	}
+	envVarsList := []v1.EnvVar{
+		{
+			Name:  "BACKUP_SCHEDULE",
+			Value: config.BackupSchedule,
+		},
+		{
+			Name:  "USE_WALG_RESTORE",
+			Value: strconv.FormatBool(config.UseWalgRestore),
+		},
+		{
+			Name:  "USE_WALG_BACKUP",
+			Value: strconv.FormatBool(config.UseWalgRestore),
+		},
+	}
+
+	for _, k := range envVars {
+		envVar := v1.EnvVar{
+			Name: k,
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
+					Key:                  k,
+				},
+			},
+		}
+		envVarsList = append(envVarsList, envVar)
+	}
+	if !config.EnableWalClusterID {
+		envVarsList = append(envVarsList, v1.EnvVar{
+			Name:  "WAL_BUCKET_SCOPE_SUFFIX",
+			Value: "",
+		})
+		envVarsList = append(envVarsList, v1.EnvVar{
+			Name:  "WALG_S3_PREFIX",
+			Value: fmt.Sprintf("s3://%s/%s/wal/", backupBucket, clusterName),
+		})
+		envVarsList = append(envVarsList, v1.EnvVar{
+			Name:  "CLONE_WAL_BUCKET_SCOPE_SUFFIX",
+			Value: "/",
+		})
+	}
+	return envVarsList
 }
 
 func getBackupBucket(p *platform.Platform) string {
