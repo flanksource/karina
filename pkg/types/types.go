@@ -150,6 +150,29 @@ func (db DB) GetConnectionURL(name string) string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", db.Username, url.QueryEscape(db.Password), db.Host, db.Port, name)
 }
 
+type DebugConfig struct {
+	Disabled       					  bool   `yaml:"disabled,omitempty"`
+	InjectVspherePrimaryMasterCommand string `yaml:"injectVspherePrimaryMasterCommand,omitempty"`
+}
+
+// UnmarshalYAML is used to customize the YAML unmarshalling of
+// DebugConfig objects.
+func (c *DebugConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawDebugConfig DebugConfig
+	raw := rawDebugConfig{}
+
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	if raw.Disabled == true {
+		*c = DebugConfig{Disabled: true}
+		return nil
+	}
+
+	*c = DebugConfig(raw)
+	return nil
+}
+
 type PostgresOperator struct {
 	Disabled       bool   `yaml:"disabled,omitempty"`
 	Version        string `yaml:"version"`

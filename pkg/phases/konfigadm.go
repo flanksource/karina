@@ -52,6 +52,9 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to add certs")
 	}
+	if(!platform.DebugConfig.Disabled && platform.DebugConfig.InjectVspherePrimaryMasterCommand != "") {
+		cfg.AddCommand(platform.DebugConfig.InjectVspherePrimaryMasterCommand)
+	}
 	cfg.AddCommand("kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log")
 	return cfg, nil
 }

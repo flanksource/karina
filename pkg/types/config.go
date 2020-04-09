@@ -10,6 +10,7 @@ type PlatformConfig struct {
 	Consul                string            `yaml:"consul"`
 	Dashboard             Dashboard         `yaml:"dashboard,omitempty"`
 	Datacenter            string            `yaml:"datacenter"`
+	DebugConfig           *DebugConfig       `yaml:"debug,omitempty"`
 	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
 	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
 	Domain                string            `yaml:"domain"`
