@@ -1,30 +1,25 @@
 package postgresoperator
 
 import (
-	"crypto/tls"
 	"fmt"
 	"math/rand"
 	"net"
-	"net/http"
 	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/go-pg/pg/v9/orm"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	pg "github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/pkg/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,7 +49,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	cluster1 := pgapi.NewClusterConfig(utils.RandomString(6), "test", "e2e_db")
 	cluster1.BackupSchedule = "*/1 * * * *"
 	cluster1Name := "postgres-" + cluster1.Name
-	db, err := p.GetOrCreateDB(cluster1)
+	db, err := GetOrCreateDB(p, cluster1)
 	defer removeE2ECluster(p, cluster1, test) //failsafe removal of cluster
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster1.Name, err)
@@ -80,15 +75,13 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	removeE2ECluster(p, cluster1, test)
-
 	cluster2 := pgapi.NewClusterConfig(cluster1.Name+"-clone", "test")
 	cluster2.Clone = &pgapi.CloneConfig{
 		ClusterName: cluster1Name,
 		Timestamp:   time.Now().Format("2006-01-02 15:04:05 UTC"),
 	}
 	cluster2Name := "postgres-" + cluster2.Name
-	db2, err := p.GetOrCreateDB(cluster2)
+	db2, err := GetOrCreateDB(p, cluster2)
 	defer removeE2ECluster(p, cluster2, test)
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster2.Name, err)
@@ -160,25 +153,12 @@ func testFixturesArePresent(db *types.DB, port int, timeout time.Duration, test 
 }
 
 func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Duration, timestamp time.Time, test *console.TestResults) error {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	cfg := aws.NewConfig().
-		WithRegion(p.S3.Region).
-		WithEndpoint(p.S3.GetExternalEndpoint()).
-		WithCredentials(
-			credentials.NewStaticCredentials(p.S3.AccessKey, p.S3.SecretKey, ""),
-		).
-		WithHTTPClient(&http.Client{Transport: tr})
-	ssn, err := session.NewSession(cfg)
+	client, err := p.GetAWSS3Client()
 	if err != nil {
-		return fmt.Errorf("failed to create S3 session: %v", err)
+		return errors.Wrap(err, "failed to get aws client")
 	}
-	client := s3.New(ssn)
-	client.Config.S3ForcePathStyle = aws.Bool(p.S3.UsePathStyle)
 
-	bucket := p.PostgresOperatorBackupBucket()
+	bucket := getBackupBucket(p)
 	deadline := time.Now().Add(timeout)
 	paths := []string{
 		fmt.Sprintf("%s/wal/basebackups_005", clusterName),
@@ -279,7 +259,7 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *co
 	}
 
 	_, err = pgClient.Get(clusterName, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
+	if kerrors.IsNotFound(err) {
 		return
 	}
 

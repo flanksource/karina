@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/client/postgres"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var DB = &cobra.Command{
@@ -54,7 +54,7 @@ func init() {
 				}
 			}
 
-			db, err := getPlatform(cmd).GetOrCreateDB(config)
+			db, err := postgresoperator.GetOrCreateDB(getPlatform(cmd), config)
 			if err != nil {
 				log.Fatalf("Error creating db: %v", err)
 			}
