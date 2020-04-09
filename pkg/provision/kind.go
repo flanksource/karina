@@ -149,6 +149,17 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
 
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		vols := &clusterConfig.APIServer.ExtraVolumes
+		*vols = append(*vols, api.HostPathMount{
+			Name:      "audit-spec",
+			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.Kubernetes.AuditConfig.PolicyFile)),
+			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		})
+	}
+
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
