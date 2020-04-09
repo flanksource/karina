@@ -17,6 +17,10 @@ import (
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 )
 
+// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
+const AuditPolicyPath = "/etc/kubernetes/policies/audit-policy.yaml"
+
+// NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster := api.ClusterConfiguration{
 		APIVersion:        "kubeadm.k8s.io/v1beta2",
@@ -40,13 +44,12 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
 
-	// Audit policy
 	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
-		cluster.APIServer.ExtraArgs["audit-policy-file"] = "/etc/kubernetes/policies/audit-policy.yaml"
+		cluster.APIServer.ExtraArgs["audit-policy-file"] = AuditPolicyPath
 		mnt := api.HostPathMount{
 			Name:      "auditpolicy",
-			HostPath:  "/etc/kubernetes/policies/audit-policy.yaml",
-			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
+			HostPath:  AuditPolicyPath,
+			MountPath: AuditPolicyPath,
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		}

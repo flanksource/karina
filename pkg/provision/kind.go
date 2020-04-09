@@ -23,7 +23,6 @@ import (
 
 var (
 	kindCADir    = "/etc/flanksource/ingress-ca"
-	kindAuditDir = "/etc/flanksource/audit-policy"
 )
 
 // KindCluster provisions or creates a kubernetes cluster
