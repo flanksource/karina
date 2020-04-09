@@ -25,7 +25,7 @@ var (
 	kindCADir    = "/etc/flanksource/ingress-ca"
 )
 
-// KindCluster provisions or creates a kubernetes cluster
+// KindCluster provisions a new Kind cluster
 func KindCluster(platform *platform.Platform) error {
 	kubeadmPatches, err := createKubeAdmPatches(platform)
 	if err != nil {
@@ -78,18 +78,24 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
-	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
-		auditPolicyPath, err := filepath.Abs(platform.Kubernetes.AuditConfig.PolicyFile)
-		if err != nil {
-			return errors.Wrap(err, "failed to expand audit config file path")
-		}
+	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile;
+		policyFile != "" {
+			// for kind cluster audit policy files are mapped in via a dual
+			// host -> master,
+			// master -> kube-api-server pod
+			// mapping
 
-		mnts := &kindConfig.Nodes[0].ExtraMounts
+			absFile, err := filepath.Abs(policyFile)
+			if err != nil {
+				return errors.Wrap(err, "failed to expand audit policy file path")
+			}
 
-		*mnts = append(*mnts, kindapi.Mount{
-			ContainerPath: kindAuditDir,
-			HostPath:      path.Dir(auditPolicyPath),
-			Readonly:      true,
+			mnts := &kindConfig.Nodes[0].ExtraMounts
+
+			*mnts = append(*mnts, kindapi.Mount{
+				ContainerPath:  kubeadm.AuditPolicyPath,
+				HostPath:       absFile,
+				Readonly:       true,
 		})
 	}
 
@@ -132,32 +138,24 @@ func KindCluster(platform *platform.Platform) error {
 	return platform.GetKubectl()("delete sc standard")
 }
 
+// createKubeAdmPatches reads a Platform config, creates a new ClusterConfiguration from it and
+// then extracts a slice of kind-specific KubeAdm patches from it.
 func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig := kubeadm.NewClusterConfig(platform)
 	clusterConfig.ControlPlaneEndpoint = ""
-	clusterConfig.ClusterName = ""
+	clusterConfig.ClusterName = platform.Name
 	clusterConfig.APIServer.CertSANs = nil
-	clusterConfig.APIServer.ExtraVolumes = []api.HostPathMount{
-		{
+
+	vol := &clusterConfig.APIServer.ExtraVolumes
+	*vol = append(*vol, api.HostPathMount{
 			Name:      "oidc-certificates",
 			HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
 			MountPath: "/etc/ssl/oidc/ingress-ca.pem",
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
-		},
-	}
-	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
-
-	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
-		vols := &clusterConfig.APIServer.ExtraVolumes
-		*vols = append(*vols, api.HostPathMount{
-			Name:      "audit-spec",
-			HostPath:  path.Join(kindAuditDir, filepath.Base(platform.Kubernetes.AuditConfig.PolicyFile)),
-			MountPath: "/etc/kubernetes/policies/audit-policy.yaml",
-			ReadOnly:  true,
-			PathType:  api.HostPathFile,
 		})
-	}
+
+	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
 
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
