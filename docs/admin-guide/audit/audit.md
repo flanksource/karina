@@ -45,6 +45,7 @@ For Kind clusters these configs are injected as `kubeadmConfigPatches` patches s
 
 ## Debugging
 
+### Kind Clusters
 Investigating the API Server pod spec can indicate its current config:
 
 e.g.
@@ -155,3 +156,21 @@ nodes:
  
     ...
 </pre>
+
+### vSphere Clusters
+
+Adding the following debug keys to the platform config can grant access to the primary master
+VM to allow debugging `kubeadm init` config issues:
+
+```YAML
+debug:
+  injectVspherePrimaryMasterCommand: "useradd debug; echo 'debug:debug' | chpasswd; adduser debug sudo; adduser debug docker;mkdir -p /home/debug/.ssh; touch /home/debug/.ssh/authorized_keys; echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCjSTjgX3GeHQc47Nw1rKF4IwvlR09CncjTsK3GORm9ZpUxPkXhLIQ7xHktYKftapB+zzjfjG02ZtIDwGHYypi5qXLRqPxSLOxjASPIZoErb7WLZ745btEb3pmjBEt19v4fbVFUyr4eqIWzDHGh81Pj2DCuirlMvlWwiHYCiBUsZcRtAlg/u2z4BTfthR2skPvck3Fr3yfL51BHgdv1gdD4n+aAquzxdJV74ED5p9+MKYc7IDkb5NBZf1/8iC3LFw4QjM07ibPc4SDzOMHGRLjCXuEwphfKyv56v1L9lMXXcVrwFSwPCtqQu1uVA2iBufgShq8eWcujLbthfcwP+4v philip@silent' >> /home/debug/.ssh/authorized_keys; chown debug:debug /home/debug/.ssh/authorized_keys; chmod 600 /home/debug/.ssh/authorized_keys"
+```
+
+This creates a user named `debug` user (password `debug`) and specifies a public key for a SSH identity that can be used to log into the VM during startup.
+
+cloudinit logs are in `cloud-init-output.log` - the last stages of this contains the kubeadm outputs.
+
+api-server specific logs can be found by finding the api-server pod containers using docker and inspecring their logs.
+``````
+
