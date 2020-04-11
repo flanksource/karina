@@ -43,8 +43,8 @@ ca:
   privateKey: .certs/root-ca.key
   password: foobar
 ingressCA:
-  cert: .certs/root-ca-crt.pem
-  privateKey: .certs/root-ca-key.pem
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
   password: foobar
 dns:
   disabled: true
