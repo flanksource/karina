@@ -31,9 +31,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	defer func() {
-		_ := client.CoreV1().Namespaces().Delete(testNamespace, nil)
-	}
-
+		_ = client.CoreV1().Namespaces().Delete(testNamespace, nil)
+	}()
 
 	// wait for up to 2 minutes for registry-credentials to create the secrets
 	// in the background
@@ -60,5 +59,4 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 
 	test.Passf("registry-creds", "secret %s in namespace %s has registry credentials", secretName, testNamespace)
-
 }
