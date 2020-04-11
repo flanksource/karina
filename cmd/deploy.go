@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
 	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
+	"github.com/moshloop/platform-cli/pkg/phases/registrycreds"
 	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
 	"github.com/moshloop/platform-cli/pkg/phases/vault"
@@ -116,6 +118,9 @@ func init() {
 			}
 			if err := configmapreloader.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying configmap-reloader %s\n", err)
+			}
+			if err := registrycreds.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying registry credentials %s\n", err)
 			}
 		},
 	}
@@ -313,6 +318,28 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := vault.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying vault %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "elasticsearch",
+		Short: "Deploy Elasticsearch",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := elasticsearch.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying elasticsearch %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "registry-credentials",
+		Short: "Deploy registry credentials controller",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := registrycreds.Install(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying registry credentials controller %s\n", err)
 			}
 		},
 	})
