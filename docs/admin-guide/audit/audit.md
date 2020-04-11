@@ -34,7 +34,12 @@ The [official documentation describes](https://kubernetes.io/docs/tasks/debug-ap
 | `audit-log-maxsize`  | Specifies the maximum size in megabytes of the audit <br/>log file before it gets rotated <br/>Sets the `--audit-log-maxsize` flag.                   |
 | `audit-log-format`   | Specifies the logging format used.<br/>Options are:<br/>`"legacy"` indicates 1-line text format for each event <br/> `"json"` indicates a structured json format. <br/>Sets the `--audit-log-format` flag.                   |
 
-These are injected into the cluster at creation time via `kubeadmConfigPatches` that are supplied to `kubeadm`.
+These are injected into the cluster at creation time.
+
+For vSphere clusters these configs are injected through the `kubeadm.conf` passed to `kubeadm` 
+through cloud-init images passed to the primary master.
+
+For Kind clusters these configs are injected as `kubeadmConfigPatches` patches specified in the Kind cluster config YAML.
 
 (see [kubeadm control pane configuration documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#apiserver-flags) for more detail)
 
