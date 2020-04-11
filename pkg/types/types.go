@@ -151,7 +151,7 @@ func (db DB) GetConnectionURL(name string) string {
 }
 
 type DebugConfig struct {
-	Disabled       					  bool   `yaml:"disabled,omitempty"`
+	Disabled                          bool   `yaml:"disabled,omitempty"`
 	InjectVspherePrimaryMasterCommand string `yaml:"injectVspherePrimaryMasterCommand,omitempty"`
 }
 
@@ -164,7 +164,7 @@ func (c *DebugConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
-	if raw.Disabled == true {
+	if raw.Disabled {
 		*c = DebugConfig{Disabled: true}
 		return nil
 	}

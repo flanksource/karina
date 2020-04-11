@@ -53,7 +53,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		}
-		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt )
+		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt)
 	}
 
 	if !cfg.Ldap.Disabled {

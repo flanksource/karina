@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -95,11 +94,11 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 func readCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
 	if cert == "" {
-		return nil, errors.New(fmt.Sprintf("Unable to read certificate %s", ca.Cert))
+		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
 	}
 	privateKey := files.SafeRead(ca.PrivateKey)
 	if privateKey == "" {
-		return nil, errors.New(fmt.Sprintf("Unable to read private key %s", ca.PrivateKey))
+		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
 	}
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }

@@ -2,6 +2,7 @@ package phases
 
 import (
 	"fmt"
+
 	"github.com/flanksource/commons/files"
 
 	"github.com/flanksource/commons/certs"
@@ -52,7 +53,7 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to add certs")
 	}
-	if(!platform.DebugConfig.Disabled && platform.DebugConfig.InjectVspherePrimaryMasterCommand != "") {
+	if !platform.DebugConfig.Disabled && platform.DebugConfig.InjectVspherePrimaryMasterCommand != "" {
 		cfg.AddCommand(platform.DebugConfig.InjectVspherePrimaryMasterCommand)
 	}
 	cfg.AddCommand("kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log")
@@ -111,10 +112,10 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 		// for vSphere clusters audit policy files are injected into the machine
 		// via the KonfigAdm
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
-		if ap == ""  {
+		if ap == "" {
 			log.Fatalf("Unable to read audit policy file")
 		}
-		cfg.Files[kubeadm.AuditPolicyPath] = string(ap)
+		cfg.Files[kubeadm.AuditPolicyPath] = ap
 	}
 	return nil
 }

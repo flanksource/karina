@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	kindCADir    = "/etc/flanksource/ingress-ca"
+	kindCADir = "/etc/flanksource/ingress-ca"
 )
 
 // KindCluster provisions a new Kind cluster
@@ -78,24 +78,23 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
-	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile;
-		policyFile != "" {
-			// for kind cluster audit policy files are mapped in via a dual
-			// host -> master,
-			// master -> kube-api-server pod
-			// mapping
+	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile; policyFile != "" {
+		// for kind cluster audit policy files are mapped in via a dual
+		// host -> master,
+		// master -> kube-api-server pod
+		// mapping
 
-			absFile, err := filepath.Abs(policyFile)
-			if err != nil {
-				return errors.Wrap(err, "failed to expand audit policy file path")
-			}
+		absFile, err := filepath.Abs(policyFile)
+		if err != nil {
+			return errors.Wrap(err, "failed to expand audit policy file path")
+		}
 
-			mnts := &kindConfig.Nodes[0].ExtraMounts
+		mnts := &kindConfig.Nodes[0].ExtraMounts
 
-			*mnts = append(*mnts, kindapi.Mount{
-				ContainerPath:  kubeadm.AuditPolicyPath,
-				HostPath:       absFile,
-				Readonly:       true,
+		*mnts = append(*mnts, kindapi.Mount{
+			ContainerPath: kubeadm.AuditPolicyPath,
+			HostPath:      absFile,
+			Readonly:      true,
 		})
 	}
 
@@ -148,12 +147,12 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 
 	vol := &clusterConfig.APIServer.ExtraVolumes
 	*vol = append(*vol, api.HostPathMount{
-			Name:      "oidc-certificates",
-			HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
-			MountPath: "/etc/ssl/oidc/ingress-ca.pem",
-			ReadOnly:  true,
-			PathType:  api.HostPathFile,
-		})
+		Name:      "oidc-certificates",
+		HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
+		MountPath: "/etc/ssl/oidc/ingress-ca.pem",
+		ReadOnly:  true,
+		PathType:  api.HostPathFile,
+	})
 
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
 
