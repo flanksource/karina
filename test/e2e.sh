@@ -44,26 +44,33 @@ for app in base stubs dex vault; do
 done
 
 for app in base stubs consul; do
-  $BIN test $app --wait 200
+  $BIN test $app --wait 240
 done
 
 $BIN vault init -v
 
 $BIN deploy all -v
 
+# deploy the opa bundles first, as they can take some time to load, this effectively
+# parallelizes this work to make the entire test complete faster
 $BIN deploy opa bundle automobile -v
 
 $BIN deploy opa policies test/opa/policies -v
 
+# wait for up to 4 minutes, rerunning tests if they fail
+# this allows for all resources to reconcile and images to finish downloading etc..
 $BIN test all -v --wait 240
 
 failed=false
 
-if ! $BIN test all --e2e -v --wait 420 --junit-path test-results/results.xml; then
+# e2e do not use --wait at the run level, if needed each individual test implements
+# its own wait. e2e tests should always pass once the non e2e have passed
+
+if ! $BIN test all --e2e -v --junit-path test-results/results.xml; then
   failed=true
 fi
 
-if ! $BIN test opa test/opa/opa-fixtures --wait 180 --junit-path test-results/opa-results.xml; then
+if ! $BIN test opa test/opa/opa-fixtures --junit-path test-results/opa-results.xml; then
   failed=true
 fi
 
