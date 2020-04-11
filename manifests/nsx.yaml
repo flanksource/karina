@@ -224,6 +224,8 @@ kind: Deployment
 metadata:
   name: nsx-ncp
   namespace: nsx-system
+  annotations:
+    reload/all: "true" # restart on cm/secret change
   labels:
     tier: nsx-networking
     component: nsx-ncp
@@ -456,6 +458,8 @@ kind: DaemonSet
 metadata:
   name: nsx-node-agent
   namespace: nsx-system
+  annotations:
+    reload/all: "true" #restart on cm/secret change
   labels:
     tier: nsx-networking
     component: nsx-node-agent

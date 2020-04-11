@@ -11,6 +11,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/ingress"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
+	"github.com/moshloop/platform-cli/pkg/phases/quack"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -71,11 +72,8 @@ func Install(platform *platform.Platform) error {
 		log.Fatalf("Error deploying nginx %s\n", err)
 	}
 
-	if platform.Quack == nil || !platform.Quack.Disabled {
-		log.Infof("Installing Quack")
-		if err := platform.ApplySpecs("", "quack.yaml"); err != nil {
-			log.Errorf("Error deploying quack: %s\n", err)
-		}
+	if err := quack.Install(platform); err != nil {
+		log.Fatalf("Error installing quack %s\n", err)
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {

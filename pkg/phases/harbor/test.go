@@ -17,7 +17,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("Harbor", "Harbor is not configured")
 		return
 	}
-	defaults(p)
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "harbor", test)
 	health := fmt.Sprintf("%s/api/health", p.Harbor.URL)
