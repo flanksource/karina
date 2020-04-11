@@ -40,8 +40,6 @@ var (
 	junitPath, suiteName      string
 	thanosURL, pushGatewayURL string
 	p                         *platform.Platform
-	testAll                   bool
-	testDestructive           bool
 	testE2E                   bool
 )
 
@@ -365,8 +363,6 @@ func init() {
 		},
 	}
 
-	testAllCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
-	testAllCmd.PersistentFlags().BoolVarP(&testDestructive, "destructive", "d", false, "Run destructive tests")
-	testAllCmd.PersistentFlags().BoolVarP(&testAll, "all", "a", false, "Run all tests")
+	Test.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
 	Test.AddCommand(testAllCmd)
 }
