@@ -34,9 +34,9 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		_ = client.CoreV1().Namespaces().Delete(testNamespace, nil)
 	}()
 
-	// wait for up to 2 minutes for registry-credentials to create the secrets
+	// wait for up to 4 minutes for registry-credentials to create the secrets
 	// in the background
-	_ = wait.PollImmediate(1*time.Second, 120*time.Second, func() (bool, error) {
+	_ = wait.PollImmediate(1*time.Second, 4*time.Minute, func() (bool, error) {
 		log.Debugf("Checking for pull secret: %s", secretName)
 		return p.HasSecret(testNamespace, secretName), nil
 	})
