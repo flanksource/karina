@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  labels:
+    k8s-app: logstash
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:{{.logstash.version}}
+          volumeMounts:
+            - name: logstash-settings-config-volume
+              mountPath: /usr/share/logstash/config
+            - name: logstash-pipeline-config-volume
+              mountPath: /usr/share/logstash/pipeline
+          envFrom:
+            - secretRef:
+                name: "elastic"
+          ports:
+            - containerPort: 5044
+              name: filebeat
+            - containerPort: 9600
+              name: logstash
+      volumes:
+        - name: logstash-settings-config-volume
+          secret:
+            secretName: logstash-secret
+            items:
+              - key: logstash.yml
+                path: logstash.yml
+        - name: logstash-pipeline-config-volume
+          secret:
+            secretName: logstash-secret
+            items:
+              - key: pipeline.conf
+                path: pipeline.conf
+  selector:
+    matchLabels:
+      k8s-app: logstash
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logstash-secret
+  labels:
+    k8s-app: logstash
+stringData:
+  logstash.yml: |-
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+  pipeline.conf: |-
+    input {
+      beats {
+        port => 5044
+        ssl  => false
+        client_inactivity_timeout => 300
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ["${ELASTICSEARCH_HOST:elasticsearch}"]
+        user => "${ELASTICSEARCH_USER}"
+        password => "${ELASTICSEARCH_PASSWORD}"
+        index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+        ssl => true
+        ssl_certificate_verification => false
+      }
+      stdout {
+        codec => rubydebug
+      }
+    }
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: logstash
+spec:
+  type: ClusterIP
+  selector:
+    k8s-app: logstash
+  ports:
+    - protocol: TCP
+      port: 5044
+      targetPort: 5044
+      name: filebeat
+    - protocol: TCP
+      port: 9600
+      targetPort: 9600
+      name: logstash

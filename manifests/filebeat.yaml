@@ -64,8 +64,7 @@ data:
       ssl.supported_protocols: [TLSv1.2, TLSv1.3]
 {{ else if .filebeat.logstash }}
     output.logstash:
-      hosts: ["${LOGSTASH_HOST}"]
-      ssl.verification_mode: none
+      hosts: ["${LOGSTASH_URL}"]
 {{ end }}
 ---
 apiVersion: apps/v1

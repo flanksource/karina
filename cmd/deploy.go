@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
+	"github.com/moshloop/platform-cli/pkg/phases/logstash"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -329,6 +330,17 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := elasticsearch.Deploy(getPlatform(cmd)); err != nil {
 				log.Fatalf("Error deploying elasticsearch %s", err)
+			}
+		},
+	})
+
+	Deploy.AddCommand(&cobra.Command{
+		Use:   "logstash",
+		Short: "Deploy Logstash",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := logstash.Deploy(getPlatform(cmd)); err != nil {
+				log.Fatalf("Error deploying logstash %s", err)
 			}
 		},
 	})

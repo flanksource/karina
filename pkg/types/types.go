@@ -610,6 +610,13 @@ type Elasticsearch struct {
 	Disabled    bool         `yaml:"disabled,omitempty"`
 }
 
+type Logstash struct {
+	Version        string       `yaml:"version"`
+	Replicas       int          `yaml:"replicas"`
+	Elasticsearch  *Connection	`yaml:"elasticsearch"`
+	Disabled 	   bool 	    `yaml:"disabled,omitempty"`
+}
+
 func (c Connection) GetURL() string {
 	url := c.URL
 	if c.Port != "" && !strings.Contains(url, ":") {
