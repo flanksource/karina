@@ -9,6 +9,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.1.4
 	github.com/flanksource/yaml v0.0.0-20200322131016-b7b2608b8702
+	github.com/go-pg/pg/v9 v9.1.5
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.1.1

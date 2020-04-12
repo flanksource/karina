@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-registry-creds
+  namespace: 0001-test-registry-creds
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: test-registry-creds
+  template:
+    metadata:
+      labels:
+        name: test-registry-creds
+    spec:
+      containers:
+        - image: {{ .registryCredentials.aws.account }}.dkr.ecr.{{ .registryCredentials.aws.region }}.amazonaws.com/nginx:1.17.9
+          name: registry-creds
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: awsecr-cred

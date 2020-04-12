@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/client/postgres"
 )
 
@@ -36,16 +37,30 @@ func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 }
 
 func init() {
-	DB.AddCommand(&cobra.Command{
+	create := &cobra.Command{
 		Use: "create",
 		Run: func(cmd *cobra.Command, args []string) {
-			db, err := getPlatform(cmd).GetOrCreateDB(clusterName, "test")
+			config := pgapi.NewClusterConfig(clusterName, "test")
+			config.Namespace = namespace
+			config.BackupSchedule, _ = cmd.Flags().GetString("wal-schedule")
+			config.EnableWalClusterID, _ = cmd.Flags().GetBool("wal-enable-cluster-uid")
+			config.UseWalgRestore, _ = cmd.Flags().GetBool("wal-use-walg-restore")
+			cloneClusterName, _ := cmd.Flags().GetString("clone-cluster-name")
+			if cloneClusterName != "" {
+				config.Clone = &pgapi.CloneConfig{ClusterName: cloneClusterName}
+				config.Clone.Timestamp, _ = cmd.Flags().GetString("clone-timestamp")
+				if config.EnableWalClusterID {
+					config.Clone.ClusterID, _ = cmd.Flags().GetString("clone-cluster-uid")
+				}
+			}
+
+			db, err := getPlatform(cmd).GetOrCreateDB(config)
 			if err != nil {
 				log.Fatalf("Error creating db: %v", err)
 			}
 			log.Infof("Created: %+v", db)
 		},
-	})
+	}
 
 	DB.AddCommand(&cobra.Command{
 		Use:   "restore [backup path]",
@@ -88,6 +103,15 @@ func init() {
 			}
 		},
 	}
+
+	create.Flags().String("wal-schedule", "*/5 * * * *", "A cron schedule to backup wal logs")
+	create.Flags().Bool("wal-enable-cluster-uid", false, "Enable cluster UID in wal logs s3 path")
+	create.Flags().Bool("wal-use-walg-restore", true, "Enable wal-g for wal restore")
+	create.Flags().String("clone-cluster-name", "", "Name of the cluster to clone")
+	create.Flags().String("clone-cluster-uid", "", "UID of the cluster to clone")
+	create.Flags().String("clone-timestamp", "", "Timestamp of the wal to clone")
+	DB.AddCommand(create)
+
 	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
 	DB.AddCommand(backup)
 
