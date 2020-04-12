@@ -1,5 +1,26 @@
 ## Platform Quickstart
 
+1. Install platform-cli
+
+Download the latest official release for your platform from the [github repository](https://github.com/flanksource/platform-cli/releases/latest) and place it 
+
+
+docker pull flanksource/platform-cli:latest
+
+2. Setup and verify vSphere connectivity
+
+
+		os.Getenv("GOVC_FQDN"))
+		os.Getenv("GOVC_DATACENTER"),
+		os.Getenv("GOVC_USER"),
+		os.Getenv("GOVC_PASS"),
+
+3. Create CA certs for use with the cluster
+
+```yaml
+platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar`
+```
+
 1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
 2. Download and install the platform-cli binary
 3. Generate a CA for the cluster: `platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/ingress-ca.key --password foobar`
