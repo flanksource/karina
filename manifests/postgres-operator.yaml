@@ -300,3 +300,14 @@ spec:
       targetPort: 8080
   selector:
     name: postgres-operator
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-operator-cluster-environment
+  namespace: postgres-operator
+data:
+  AWS_ACCESS_KEY_ID: "{{ .s3.access_key | base64.Encode }}"
+  AWS_SECRET_ACCESS_KEY: "{{ .s3.secret_key | base64.Encode }}"
+  AWS_ENDPOINT: {{ .s3.endpoint | base64.Encode }}
+  AWS_S3_FORCE_PATH_STYLE: {{ "true" | base64.Encode }}

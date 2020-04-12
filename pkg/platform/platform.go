@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
+	v1 "k8s.io/api/core/v1"
 )
 
 type Platform struct {
@@ -507,17 +509,18 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
-func (platform *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.DB, error) {
-	clusterName := "postgres-" + name
+func (platform *Platform) GetOrCreateDB(config postgres.ClusterConfig) (*types.DB, error) {
+	clusterName := "postgres-" + config.Name
 	databases := make(map[string]string)
 	appUsername := "app"
-	ns := "postgres-operator"
+	ns := config.Namespace
 	secretName := fmt.Sprintf("%s.%s.credentials", appUsername, clusterName)
+	backupBucket := platform.PostgresOperatorBackupBucket()
 
 	db := &postgres.Postgresql{}
 	if err := platform.Get(ns, clusterName, db); err != nil {
 		log.Infof("Creating new cluster: %s", clusterName)
-		for _, db := range dbNames {
+		for _, db := range config.Databases {
 			databases[db] = appUsername
 		}
 		db = postgres.NewPostgresql(clusterName)
@@ -528,6 +531,63 @@ func (platform *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.
 				"superuser",
 			},
 		}
+		db.Spec.Parameters = map[string]string{
+			"archive_mode":    "on",
+			"archive_timeout": "60s",
+		}
+
+		envVars := []string{
+			"AWS_ACCESS_KEY_ID",
+			"AWS_SECRET_ACCESS_KEY",
+			"AWS_ENDPOINT",
+			"AWS_S3_FORCE_PATH_STYLE",
+		}
+		envVarsList := []v1.EnvVar{
+			{
+				Name:  "BACKUP_SCHEDULE",
+				Value: config.BackupSchedule,
+			},
+			{
+				Name:  "USE_WALG_RESTORE",
+				Value: strconv.FormatBool(config.UseWalgRestore),
+			},
+			{
+				Name:  "USE_WALG_BACKUP",
+				Value: strconv.FormatBool(config.UseWalgRestore),
+			},
+		}
+
+		for _, k := range envVars {
+			envVar := v1.EnvVar{
+				Name: k,
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
+						Key:                  k,
+					},
+				},
+			}
+			envVarsList = append(envVarsList, envVar)
+		}
+		if !config.EnableWalClusterID {
+			envVarsList = append(envVarsList, v1.EnvVar{
+				Name:  "WAL_BUCKET_SCOPE_SUFFIX",
+				Value: "",
+			})
+			envVarsList = append(envVarsList, v1.EnvVar{
+				Name:  "WALG_S3_PREFIX",
+				Value: fmt.Sprintf("s3://%s/%s/wal/", backupBucket, clusterName),
+			})
+			envVarsList = append(envVarsList, v1.EnvVar{
+				Name:  "CLONE_WAL_BUCKET_SCOPE_SUFFIX",
+				Value: "/",
+			})
+		}
+		if config.Clone != nil {
+			cloneEnvVars := platform.cloneDatabaseEnv(config)
+			envVarsList = append(envVarsList, cloneEnvVars...)
+		}
+		db.Spec.Env = envVarsList
 
 		if err := platform.Apply(ns, db); err != nil {
 			return nil, err
@@ -607,4 +667,61 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	}
 	s3.SetCustomTransport(client.Transport)
 	return s3, nil
+}
+
+func (platform *Platform) PostgresOperatorBackupBucket() string {
+	backupBucket := platform.PostgresOperator.BackupBucket
+
+	if backupBucket == "" {
+		backupBucket = "postgres-backups-" + platform.Name
+	}
+
+	return backupBucket
+}
+
+func (platform *Platform) cloneDatabaseEnv(config postgres.ClusterConfig) []v1.EnvVar {
+	waleS3Prefix := fmt.Sprintf("s3://%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName)
+	if config.EnableWalClusterID {
+		waleS3Prefix = fmt.Sprintf("s3://%s/spilo/%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName, config.Clone.ClusterID)
+	}
+	envVars := []v1.EnvVar{
+		{
+			Name:  "CLONE_METHOD",
+			Value: "CLONE_WITH_WALE",
+		},
+		{
+			Name:  "CLONE_USE_WALG_RESTORE",
+			Value: strconv.FormatBool(config.UseWalgRestore),
+		},
+		{
+			Name:  "CLONE_TARGET_TIME",
+			Value: config.Clone.Timestamp,
+		},
+	}
+	if !config.EnableWalClusterID {
+		envVars = append(envVars, v1.EnvVar{
+			Name:  "CLONE_WALG_S3_PREFIX",
+			Value: waleS3Prefix,
+		})
+	}
+	awsEnvVars := []string{
+		"AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_ACCESS_KEY",
+		"AWS_ENDPOINT",
+		"AWS_S3_FORCE_PATH_STYLE",
+	}
+	for _, k := range awsEnvVars {
+		envVar := v1.EnvVar{
+			Name: fmt.Sprintf("CLONE_%s", k),
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
+					Key:                  k,
+				},
+			},
+		}
+		envVars = append(envVars, envVar)
+	}
+
+	return envVars
 }

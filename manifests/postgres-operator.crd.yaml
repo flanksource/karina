@@ -85,6 +85,45 @@ spec:
               type: boolean
             enableShmVolume:
               type: boolean
+            env:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                  valueFrom:
+                    type: object
+                    properties:
+                      fieldRef:
+                        type: object
+                        properties:
+                          apiVersion:
+                            type: string
+                          fieldPath:
+                            type: string
+                      configMapKeyRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          key:
+                            type: string
+                          option:
+                            type: boolean
+                      secretKeyRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          key:
+                            type: string
+                          option:
+                            type: boolean
+
             init_containers:  # deprecated
               type: array
               nullable: true
@@ -329,6 +368,25 @@ spec:
                   type: string
                 subPath:
                   type: string
+            volumes:
+              type: array
+              items:
+                type: object
+            volumeMounts:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  readOnly:
+                    type: boolean
+                  mountPath:
+                    type: string
+                  subPath:
+                    type: string
+                  mountPathExpr:
+                    type: string
         status:
           type: object
           additionalProperties:
