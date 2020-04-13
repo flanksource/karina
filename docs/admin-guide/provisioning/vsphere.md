@@ -1,9 +1,34 @@
 ## Platform Quickstart
 
-1. Install platform-cli
+### 1. Install platform-cli
 
-Download the latest official release for your platform from the [github repository](https://github.com/flanksource/platform-cli/releases/latest) and place it 
+Choose to build from source, download a release or use docker.
 
+#### Clone,build from source and install:
+
+```bash
+git clone git@github.com:flanksource/platform-cli.git
+cd platform-cli
+make setup
+make pack
+make
+make compress
+sudo make install #enter password when prompted
+```
+
+_or_
+
+#### Download release and install:
+
+Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/platform-cli/releases/latest).
+
+Make it executable and place in your path.
+
+_or_
+
+#### Use docker image:
+
+Use latest docker image:
 
 docker pull flanksource/platform-cli:latest
 
