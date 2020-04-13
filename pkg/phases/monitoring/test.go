@@ -21,6 +21,10 @@ import (
 const (
 	testMetricName = "test_metric"
 	testJobName    = "test"
+	critical       = "critical"
+	none           = "none"
+	warning        = "warning"
+	info           = "info"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -121,13 +125,27 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	if alerts.Alerts == nil {
-		test.Infof("No alerts")
+		test.Failf("prometheus", "Watchdog alert should be firing")
 		return
+	}
+	alertLevel := p.Monitoring.E2E.MinAlertLevel
+	if alertLevel == "" {
+		alertLevel = critical
 	}
 	for _, alert := range alerts.Alerts {
 		alertname := string(alert.Labels["alertname"])
+		severity := string(alert.Labels["severity"])
+		if alertname == "Watchdog" {
+			continue
+		}
+		if alertLevel == critical && severity != critical {
+			continue
+		}
+		if alertLevel == warning && severity != critical && severity != warning {
+			continue
+		}
 		if alert.State == "firing" {
-			test.Failf(alertname, "%s alert is firing\n %s", alertname, alert.Labels)
+			test.Failf(alertname, "%s alert is firing %s", alertname, alert.Labels)
 		}
 	}
 }

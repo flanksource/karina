@@ -340,6 +340,11 @@ type Monitoring struct {
 	NodeExporter       string     `yaml:"nodeExporter,omitempty"`
 	AddonResizer       string     `yaml:"addonResizer,omitempty"`
 	PrometheusOperator string     `yaml:"prometheus_operator,omitempty"`
+	E2E                struct {
+		// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
+		// can be one of critical, warning, info
+		MinAlertLevel string `yaml:"minAlertLevel,omitempty"`
+	} `yaml:"e2e,omitempty"`
 }
 
 type Prometheus struct {
