@@ -166,7 +166,6 @@ func (client DynamicDNSClient) sendMessage(zone string, msg *dns.Msg) error {
 
 func newRR(domain string, zone string, ttl int, resourceType string, record string) (*dns.RR, error) {
 	RR := strings.Trim(fmt.Sprintf("%s.%s %d %s %s", domain, zone, ttl, resourceType, record), " ")
-	client.Tracef(RR)
 	rr, err := dns.NewRR(RR)
 	if err != nil {
 		return nil, fmt.Errorf("newRR failed: %v", err)

@@ -26,7 +26,6 @@ import (
 	"github.com/flanksource/commons/logger"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -58,7 +57,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 		}
 	}
 
-	session.Infof("Logging into vcenter: %s@%s", user, vcenter)
+	logger.Infof("Logging into vcenter: %s@%s", user, vcenter)
 	soapURL, err := soap.ParseURL(vcenter)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error parsing vSphere URL %q", vcenter)
@@ -70,15 +69,13 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 	soapURL.User = url.UserPassword(user, pass)
 
 	// Temporarily setting the insecure flag True
-	// TODO(ssurana): handle the certs better
 	client, err := govmomi.NewClient(context.TODO(), soapURL, true)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error setting up new vSphere SOAP client")
 	}
 
-	session := Session{Client: client, Logger: logrus.StandardLogger()}
+	session := Session{Client: client, Logger: logger.StandardLogger()}
 
-	// TODO(frapposelli): replace `dev` with version string
 	session.UserAgent = "platform-cli"
 
 	// Assign the finder to the session.
