@@ -3,14 +3,13 @@ package elasticsearch
 import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 )
 
 const Namespace = "eck"
 
 func Deploy(p *platform.Platform) error {
 	if p.Elasticsearch == nil || p.Elasticsearch.Disabled {
-		log.Infof("Skipping deployment of elasticsearch, it is disabled")
+		p.Infof("Skipping deployment of elasticsearch, it is disabled")
 		return nil
 	}
 

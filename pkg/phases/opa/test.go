@@ -6,15 +6,15 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
-	"k8s.io/client-go/kubernetes"
 )
 
-func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *console.TestResults) {
+func Test(p *platform.Platform, test *console.TestResults) {
 	if p.OPA != nil && p.OPA.Disabled {
 		test.Skipf("opa", "OPA is not configured")
 		return
 	}
+
+	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "opa", test)
 }
 
@@ -40,7 +40,8 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-		log.Tracef("Install: Failed to read dir: %s", err)
+		test.Failf("opa", "Install: Failed to read dir: %s", err)
+		return
 	}
 
 	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)

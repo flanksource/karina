@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -27,10 +25,10 @@ func Cleanup(platform *platform.Platform) error {
 	}
 
 	if len(vms) > platform.GetVMCount()*2 {
-		log.Fatalf("Too many VM's found, expecting +- %d but found %d", platform.GetVMCount(), len(vms))
+		platform.Fatalf("Too many VM's found, expecting +- %d but found %d", platform.GetVMCount(), len(vms))
 	}
 
-	log.Infof("Deleting %d vm's, CTRL+C to skip, sleeping for 10s", len(vms))
+	platform.Infof("Deleting %d vm's, CTRL+C to skip, sleeping for 10s", len(vms))
 	//pausing to give time for user to terminate
 	time.Sleep(10 * time.Second)
 

@@ -23,9 +23,10 @@ import (
 	"os"
 	"sync"
 
+	"github.com/flanksource/commons/logger"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -39,6 +40,7 @@ var sessionMU sync.Mutex
 
 // Session is a vSphere session with a configured Finder.
 type Session struct {
+	logger.Logger
 	*govmomi.Client
 	Finder     *find.Finder
 	datacenter *object.Datacenter
@@ -56,7 +58,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 		}
 	}
 
-	log.Infof("Logging into vcenter: %s@%s", user, vcenter)
+	session.Infof("Logging into vcenter: %s@%s", user, vcenter)
 	soapURL, err := soap.ParseURL(vcenter)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error parsing vSphere URL %q", vcenter)
@@ -74,7 +76,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 		return nil, errors.Wrapf(err, "error setting up new vSphere SOAP client")
 	}
 
-	session := Session{Client: client}
+	session := Session{Client: client, Logger: logrus.StandardLogger()}
 
 	// TODO(frapposelli): replace `dev` with version string
 	session.UserAgent = "platform-cli"

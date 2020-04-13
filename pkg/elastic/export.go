@@ -9,7 +9,6 @@ import (
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/olivere/elastic/v7"
-	log "github.com/sirupsen/logrus"
 )
 
 type Query struct {
@@ -106,13 +105,13 @@ func ExportLogs(p *platform.Platform, query Query) error {
 		}
 		result, err = scroll.ScrollId(result.ScrollId).Do(context.Background())
 		if err != nil && errors.Is(err, io.EOF) {
-			log.Infof("Exported %d results of %d total", count, result.TotalHits())
+			p.Infof("Exported %d results of %d total", count, result.TotalHits())
 			return nil
 		}
 		if err != nil {
 			return err
 		}
-		log.Infof("Exported %d results of %d total", count, result.TotalHits())
+		p.Infof("Exported %d results of %d total", count, result.TotalHits())
 	}
 
 	return nil

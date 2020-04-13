@@ -9,15 +9,16 @@ import (
 
 	"github.com/dghubble/sling"
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Client struct {
+	logger.Logger
 	sling  *sling.Sling
 	client *http.Client
 	url    string
@@ -51,6 +52,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 
 	client := &http.Client{Transport: tr}
 	return &Client{
+		Logger: p.Logger,
 		client: client,
 		url:    p.Harbor.URL,
 		sling: sling.New().Client(client).Base("http://harbor-core").
@@ -69,7 +71,7 @@ func (harbor *Client) GetStatus() (*Status, error) {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	if err := json.Unmarshal(body, &status); err != nil {
-		log.Errorf("Failed to unmarshall :%v", err)
+		harbor.Errorf("Failed to unmarshall :%v", err)
 	}
 	return &status, nil
 }
@@ -106,8 +108,8 @@ func (harbor *Client) TriggerReplication(id int) (*Replication, error) {
 
 func (harbor *Client) UpdateSettings(settings types.HarborSettings) error {
 	data, _ := json.Marshal(settings)
-	log.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
-	log.Infof("Updating harbor using: %s \n", harbor.url)
+	harbor.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
+	harbor.Infof("Updating harbor using: %s \n", harbor.url)
 	r, err := harbor.sling.New().
 		Put("api/configurations").
 		BodyJSON(&settings).
@@ -116,7 +118,7 @@ func (harbor *Client) UpdateSettings(settings types.HarborSettings) error {
 		return fmt.Errorf("failed to update harbor settings: %v", err)
 	}
 	defer r.Body.Close()
-	log.Debugf("Updated settings: %s:\n%+v", r.Status, text.SafeRead(r.Body))
+	harbor.Debugf("Updated settings: %s:\n%+v", r.Status, text.SafeRead(r.Body))
 	return nil
 }
 

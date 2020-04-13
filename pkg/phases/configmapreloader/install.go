@@ -2,7 +2,6 @@ package configmapreloader
 
 import (
 	"github.com/flanksource/commons/utils"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -13,7 +12,7 @@ const (
 
 func Deploy(p *platform.Platform) error {
 	if p.ConfigMapReloader.Disabled {
-		log.Infof("Skipping deployment of configmap-reloader, it is disabled")
+		p.Infof("Skipping deployment of configmap-reloader, it is disabled")
 		return nil
 	}
 
@@ -23,7 +22,7 @@ func Deploy(p *platform.Platform) error {
 		p.ConfigMapReloader.Version = utils.NormalizeVersion(p.ConfigMapReloader.Version)
 	}
 
-	log.Infof("Deploying configmap-reloader %s into %s", p.ConfigMapReloader.Version, Namespace)
+	p.Infof("Deploying configmap-reloader %s into %s", p.ConfigMapReloader.Version, Namespace)
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err

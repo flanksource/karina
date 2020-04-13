@@ -6,7 +6,6 @@ import (
 
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -67,7 +66,7 @@ func Install(platform *platform.Platform) error {
 				Type: "kubernetes.io/tls",
 			}
 
-			log.Infof("Creating %s/secret/%s", Namespace, SecretPrefix)
+			platform.Infof("Creating %s/secret/%s", Namespace, SecretPrefix)
 
 			if _, err := secrets.Create(secret); err != nil {
 				return errors.Wrap(err, "failed to create new secret")
@@ -76,7 +75,7 @@ func Install(platform *platform.Platform) error {
 			secret := items[len(items)-1]
 			secret.Data = platform.SealedSecrets.Certificate.AsTLSSecret()
 
-			log.Infof("Updating %s/secret/%s", Namespace, secret.Name)
+			platform.Infof("Updating %s/secret/%s", Namespace, secret.Name)
 
 			if _, err := secrets.Update(&secret); err != nil {
 				return errors.Wrapf(err, "failed to update secret %s", secret.Name)

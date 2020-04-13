@@ -25,7 +25,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -56,14 +55,14 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	cluster1.BackupSchedule = "*/1 * * * *"
 	cluster1Name := "postgres-" + cluster1.Name
 	db, err := p.GetOrCreateDB(cluster1)
-	defer removeE2ECluster(p, cluster1) //failsafe removal of cluster
+	defer removeE2ECluster(p, cluster1, test) //failsafe removal of cluster
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster1.Name, err)
 		return
 	}
 	test.Passf(testName, "Cluster %s deployed", cluster1Name)
 
-	pf1, port1, err := exposeService(p, cluster1Name)
+	pf1, port1, err := exposeService(p, cluster1Name, test)
 	if err != nil {
 		test.Failf(testName, "Failed to expose service %s: %v", cluster1Name, err)
 		return
@@ -76,12 +75,12 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	}
 	timestamp := time.Now().Add(5 * time.Second)
 
-	if err := waitForWalBackup(p, cluster1Name, 5*time.Minute, timestamp); err != nil {
+	if err := waitForWalBackup(p, cluster1Name, 5*time.Minute, timestamp, test); err != nil {
 		test.Failf(testName, "Failed to find any wal backups for database %s: %v", cluster1.Name, err)
 		return
 	}
 
-	removeE2ECluster(p, cluster1)
+	removeE2ECluster(p, cluster1, test)
 
 	cluster2 := pgapi.NewClusterConfig(cluster1.Name+"-clone", "test")
 	cluster2.Clone = &pgapi.CloneConfig{
@@ -90,21 +89,21 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	}
 	cluster2Name := "postgres-" + cluster2.Name
 	db2, err := p.GetOrCreateDB(cluster2)
-	defer removeE2ECluster(p, cluster2)
+	defer removeE2ECluster(p, cluster2, test)
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster2.Name, err)
 		return
 	}
 	test.Passf(testName, "Cluster %s deployed user", cluster1.Name)
 
-	pf2, port2, err := exposeService(p, cluster2Name)
+	pf2, port2, err := exposeService(p, cluster2Name, test)
 	if err != nil {
 		test.Failf(testName, "Failed to expose service %s: %v", cluster2Name, err)
 		return
 	}
 	defer pf2.Process.Kill() // nolint: errcheck
 
-	if err := testFixturesArePresent(db2, port2, 5*time.Minute); err != nil {
+	if err := testFixturesArePresent(db2, port2, 5*time.Minute, test); err != nil {
 		test.Failf(testName, "Failed to find test fixtures data in clone database %s: %v", cluster2Name, err)
 		return
 	}
@@ -132,7 +131,7 @@ func insertTestFixtures(db *types.DB, port int) error {
 	return pgdb.Insert(links...)
 }
 
-func testFixturesArePresent(db *types.DB, port int, timeout time.Duration) error {
+func testFixturesArePresent(db *types.DB, port int, timeout time.Duration, test *console.TestResults) error {
 	pgdb := pg.Connect(&pg.Options{
 		User:     db.Username,
 		Password: db.Password,
@@ -147,9 +146,9 @@ func testFixturesArePresent(db *types.DB, port int, timeout time.Duration) error
 		var links []Link
 		err := pgdb.Model(&links).Select()
 		if err != nil {
-			log.Errorf("failed to list links: %v", err)
+			test.Errorf("failed to list links: %v", err)
 		} else if len(links) != 2 {
-			log.Errorf("expected 2 links got %d", len(links))
+			test.Errorf("expected 2 links got %d", len(links))
 		} else {
 			return nil
 		}
@@ -160,7 +159,7 @@ func testFixturesArePresent(db *types.DB, port int, timeout time.Duration) error
 	}
 }
 
-func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Duration, timestamp time.Time) error {
+func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Duration, timestamp time.Time, test *console.TestResults) error {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -200,11 +199,11 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 				return fmt.Errorf("failed to list objects in bucket %s: %v", bucket, err)
 			}
 			if len(resp.Contents) == 0 || !strings.HasPrefix(aws.StringValue(resp.Contents[0].Key), path) {
-				log.Infof("Did not find any object in bucket %s, retrying in 5 seconds", bucket)
+				test.Infof("Did not find any object in bucket %s, retrying in 5 seconds", bucket)
 				foundAll = false
 				continue
 			} else {
-				log.Debugf("Found key %s for prefix %s, backups found", aws.StringValue(resp.Contents[0].Key), path)
+				test.Tracef("Found key %s for prefix %s, backups found", aws.StringValue(resp.Contents[0].Key), path)
 				if i == 1 {
 					// save wal segments objects to check for latest timestamp
 					walSegments = resp.Contents
@@ -226,7 +225,7 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 	}
 }
 
-func exposeService(p *platform.Platform, clusterName string) (*exec.Cmd, int, error) {
+func exposeService(p *platform.Platform, clusterName string, test *console.TestResults) (*exec.Cmd, int, error) {
 	client, _ := p.GetClientset()
 	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
 	pods, err := client.CoreV1().Pods(Namespace).List(opts)
@@ -254,10 +253,10 @@ func exposeService(p *platform.Platform, clusterName string) (*exec.Cmd, int, er
 		}
 
 		if err, ok := err.(*net.OpError); ok && err.Timeout() {
-			log.Errorf("Timeout error connecting to port %d: %s, retrying in 1 second", randomPort, err)
+			test.Errorf("Timeout error connecting to port %d: %s, retrying in 1 second", randomPort, err)
 		} else if err != nil {
 			// Log or report the error here
-			log.Warnf("Error connecting to port %d: %s, retrying in 1 second", randomPort, err)
+			test.Warnf("Error connecting to port %d: %s, retrying in 1 second", randomPort, err)
 		} else {
 			return portForwardCmd, randomPort, nil
 		}
@@ -269,13 +268,13 @@ func exposeService(p *platform.Platform, clusterName string) (*exec.Cmd, int, er
 	}
 }
 
-func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig) {
+func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *console.TestResults) {
 	clusterName := "postgres-" + config.Name
 	db := pgapi.NewPostgresql(clusterName)
 
 	pgClient, _, _, err := p.GetDynamicClientFor(Namespace, db)
 	if err != nil {
-		log.Errorf("Failed to get dynamic client: %v", err)
+		test.Errorf("Failed to get dynamic client: %v", err)
 		return
 	}
 
@@ -285,8 +284,8 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig) {
 	}
 
 	if err := pgClient.Delete(clusterName, nil); err != nil {
-		log.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
+		test.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
 		return
 	}
-	log.Infof("Deleted pg cluster: %s", clusterName)
+	test.Infof("Deleted pg cluster: %s", clusterName)
 }

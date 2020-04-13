@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/flanksource/commons/certs"
@@ -25,14 +24,14 @@ func Init(p *platform.Platform) error {
 
 	stdout, stderr, err := p.ExecutePodf("vault", "vault-0", "vault", "/bin/vault", "operator", "init", "-tls-skip-verify", "-status")
 
-	log.Debugf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+	p.Debugf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 	if strings.Contains(stdout, "Vault is initialized") {
-		log.Infof("Vault is already initialized, configuring")
+		p.Infof("Vault is already initialized, configuring")
 	}
 	if p.Vault.Token == "" {
-		log.Infof("Vault is not initialized, initializing")
+		p.Infof("Vault is not initialized, initializing")
 		stdout, stderr, err = p.ExecutePodf("vault", "vault-0", "vault", "/bin/vault", "operator", "init", "-tls-skip-verify")
-		log.Infof("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+		p.Infof("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 
 		tokens := regexp.MustCompile(`(?m)Initial Root Token: (s.\w+).`).FindStringSubmatch(stdout)
 		if tokens == nil {
@@ -77,7 +76,7 @@ func Init(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Token: %s", secret.Auth.ClientToken)
+	p.Infof("Token: %s", secret.Auth.ClientToken)
 	for name, policy := range p.Vault.Policies {
 		if _, err := client.Logical().Write("sys/policy/"+name, map[string]interface{}{
 			"policy": policy.String(),

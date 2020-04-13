@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/constants"
@@ -19,7 +18,7 @@ func Install(platform *platform.Platform) error {
 	os.Mkdir(".bin", 0755) // nolint: errcheck
 
 	if err := platform.ApplySpecs("", "rbac.yaml"); err != nil {
-		log.Errorf("Error deploying base rbac: %s\n", err)
+		platform.Errorf("Error deploying base rbac: %s", err)
 	}
 
 	if err := certmanager.Install(platform); err != nil {
@@ -44,7 +43,7 @@ func Install(platform *platform.Platform) error {
 		platform.NodeLocalDNS.DNSDomain = "cluster.local"
 
 		if err := platform.ApplySpecs("", "node-local-dns.yaml"); err != nil {
-			log.Errorf("Error deploying node-local-dns: %s\n", err)
+			platform.Errorf("Error deploying node-local-dns: %s", err)
 		}
 	}
 
@@ -69,44 +68,44 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if err := nginx.Install(platform); err != nil {
-		log.Fatalf("Error deploying nginx %s\n", err)
+		platform.Fatalf("Error deploying nginx %s", err)
 	}
 
 	if err := quack.Install(platform); err != nil {
-		log.Fatalf("Error installing quack %s\n", err)
+		platform.Fatalf("Error installing quack %s", err)
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
-		log.Infof("Installing local path volumes")
+		platform.Infof("Installing local path volumes")
 		if err := platform.ApplySpecs("", "local-path.yaml"); err != nil {
-			log.Errorf("Error deploying local path volumes: %s\n", err)
+			platform.Errorf("Error deploying local path volumes: %s", err)
 		}
 	}
 
 	if !platform.Dashboard.Disabled {
-		log.Infof("Installing K8s dashboard")
+		platform.Infof("Installing K8s dashboard")
 		platform.Dashboard.AccessRestricted.Snippet = ingress.NginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
-			log.Errorf("Error installing K8s dashboard: %s\n", err)
+			platform.Errorf("Error installing K8s dashboard: %s", err)
 		}
 	}
 
 	if platform.NamespaceConfigurator == nil || !platform.NamespaceConfigurator.Disabled {
-		log.Infof("Installing namespace configurator")
+		platform.Infof("Installing namespace configurator")
 		if err := platform.ApplySpecs("", "namespace-configurator.yaml"); err != nil {
-			log.Errorf("Error deploying namespace configurator: %s\n", err)
+			platform.Errorf("Error deploying namespace configurator: %s", err)
 		}
 	}
 
 	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
-		log.Infof("Installing platform operator")
+		platform.Infof("Installing platform operator")
 		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
-			log.Errorf("Error deploying platform-operator: %s\n", err)
+			platform.Errorf("Error deploying platform-operator: %s", err)
 		}
 	}
 
 	if platform.S3.CSIVolumes {
-		log.Infof("Deploying S3 Volume Provisioner")
+		platform.Infof("Deploying S3 Volume Provisioner")
 		err := platform.CreateOrUpdateSecret("csi-s3-secret", "kube-system", map[string][]byte{
 			"accessKeyID":     []byte(platform.S3.AccessKey),
 			"secretAccessKey": []byte(platform.S3.SecretKey),
@@ -122,9 +121,9 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.NFS != nil {
-		log.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
+		platform.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
 		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
-			log.Errorf("Failed to deploy NFS %+v", err)
+			platform.Errorf("Failed to deploy NFS %+v", err)
 		}
 	}
 
