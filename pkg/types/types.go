@@ -546,7 +546,7 @@ type SealedSecrets struct {
 }
 
 type RegistryCredentials struct {
-	Enabled
+	Disabled              bool                   `yaml:"disabled,omitempty"`
 	Version               string                 `yaml:"version,omitempty"`
 	Namespace             string                 `yaml:"namespace,omitempty"`
 	Aws                   RegistryCredentialsECR `yaml:"aws,omitempty"`

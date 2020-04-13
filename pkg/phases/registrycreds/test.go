@@ -3,7 +3,6 @@ package registrycreds
 import (
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -13,6 +12,10 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.RegistryCredentials == nil || p.RegistryCredentials.Disabled {
+		test.Skipf("registry-creds", "registry credentials not configured or disabled")
+		return
+	}
 	client, _ := p.GetClientset()
 	namespace := p.RegistryCredentials.Namespace
 	// HACK: registry-creds creates secrets for namespaces in alphabetical order
@@ -37,7 +40,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	// wait for up to 4 minutes for registry-credentials to create the secrets
 	// in the background
 	_ = wait.PollImmediate(1*time.Second, 4*time.Minute, func() (bool, error) {
-		log.Debugf("Checking for pull secret: %s", secretName)
+		p.Debugf("Checking for pull secret: %s", secretName)
 		return p.HasSecret(testNamespace, secretName), nil
 	})
 
