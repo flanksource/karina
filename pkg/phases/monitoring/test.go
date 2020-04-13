@@ -22,9 +22,7 @@ const (
 	testMetricName = "test_metric"
 	testJobName    = "test"
 	critical       = "critical"
-	none           = "none"
 	warning        = "warning"
-	info           = "info"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
