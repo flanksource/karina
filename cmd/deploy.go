@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	log "github.com/flanksource/commons/logger"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
@@ -65,6 +67,8 @@ func init() {
 		Use: "phases",
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
+			// we track the failure status, and continue on failure to allow degraded operations
+			failed := false
 			// first deploy strictly ordered phases, these phases are often dependencies for other phases
 			for _, name := range order {
 				flag, _ := cmd.Flags().GetBool(name)
@@ -72,7 +76,8 @@ func init() {
 					continue
 				}
 				if err := phases[name](p); err != nil {
-					log.Fatalf("Failed to deploy %s: %v", name, err)
+					log.Errorf("Failed to deploy %s: %v", name, err)
+					failed = true
 				}
 				// remove the phase from the map so it isn't run again
 				delete(phases, name)
@@ -83,8 +88,12 @@ func init() {
 					continue
 				}
 				if err := fn(p); err != nil {
-					log.Fatalf("Failed to deploy %s: %v", name, err)
+					log.Errorf("Failed to deploy %s: %v", name, err)
+					failed = true
 				}
+			}
+			if failed {
+				os.Exit(1)
 			}
 		},
 	}
@@ -113,10 +122,16 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
+			// we track the failure status, and continue on failure to allow degraded operations
+			failed := false
 			for name, fn := range phases {
 				if err := fn(p); err != nil {
-					log.Fatalf("Failed to deploy %s: %v", name, err)
+					log.Errorf("Failed to deploy %s: %v", name, err)
+					failed = true
 				}
+			}
+			if failed {
+				os.Exit(1)
 			}
 		},
 	}
