@@ -7,7 +7,6 @@ import (
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
-
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -205,6 +204,10 @@ type S3 struct {
 	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
 	// S3 buckets
 	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
+	// Provide a KMS Master Key
+	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
+	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
+	UsePathStyle bool `yaml:"usePathStyle"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {
@@ -358,18 +361,23 @@ type Monitoring struct {
 }
 
 type Prometheus struct {
-	Version     string                `yaml:"version,omitempty"`
-	Disabled    bool                  `yaml:"disabled,omitempty"`
-	Persistence PrometheusPersistence `yaml:"persistence,omitempty"`
+	Version     string      `yaml:"version,omitempty"`
+	Disabled    bool        `yaml:"disabled,omitempty"`
+	Persistence Persistence `yaml:"persistence,omitempty"`
 }
 
-type PrometheusPersistence struct {
+type Persistence struct {
 	// Enable persistence for Prometheus
 	Enabled bool `yaml:"enabled,omitempty"`
 	// Storage class to use. If not set default one will be used
 	StorageClass string `yaml:"storageClass,omitempty"`
 	// Capacity. Required if persistence is enabled
 	Capacity string `yaml:"capacity,omitempty"`
+}
+
+type Memory struct {
+	Requests string `yaml:"requests,omitempty"`
+	Limits   string `yaml:"limits,omitempty"`
 }
 
 type Grafana struct {
@@ -559,6 +567,46 @@ type SealedSecrets struct {
 	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
 }
 
+type RegistryCredentials struct {
+	Enabled
+	Version               string                 `yaml:"version,omitempty"`
+	Namespace             string                 `yaml:"namespace,omitempty"`
+	Aws                   RegistryCredentialsECR `yaml:"aws,omitempty"`
+	DockerPrivateRegistry RegistryCredentialsDPR `yaml:"dockerRegistry,omitempty"`
+	GCR                   RegistryCredentialsGCR `yaml:"gcr,omitempty"`
+	ACR                   RegistryCredentialsACR `yaml:"azure,omitempty"`
+}
+
+type RegistryCredentialsECR struct {
+	Enabled      bool   `yaml:"enabled,omitempty"`
+	AccessKey    string `yaml:"accessKey,omitempty"`
+	SecretKey    string `yaml:"secretKey,omitempty"`
+	SessionToken string `yaml:"secretToken,omitempty"`
+	Account      string `yaml:"account,omitempty"`
+	Region       string `yaml:"region,omitempty"`
+	AssumeRole   string `yaml:"assumeRole,omitempty"`
+}
+
+type RegistryCredentialsDPR struct {
+	Enabled  bool   `yaml:"enabled,omitempty"`
+	Server   string `yaml:"server,omitempty"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+}
+
+type RegistryCredentialsGCR struct {
+	Enabled                bool   `yaml:"enabled,omitempty"`
+	URL                    string `yaml:"url,omitempty"`
+	ApplicationCredentials string `yaml:"applicationCredentials,omitempty"`
+}
+
+type RegistryCredentialsACR struct {
+	Enabled  bool   `yaml:"enabled,omitempty"`
+	URL      string `yaml:"string,omitempty"`
+	ClientID string `yaml:"clientId,omitempty"`
+	Password string `yaml:"password,omitempty"`
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`
@@ -575,6 +623,14 @@ type AuditConfig struct {
 type ConfigMapReloader struct {
 	Version  string `yaml:"version"`
 	Disabled bool   `yaml:"disabled,omitempty"`
+}
+
+type Elasticsearch struct {
+	Version     string       `yaml:"version"`
+	Mem         *Memory      `yaml:"mem,omitempty"`
+	Replicas    int          `yaml:"replicas,omitempty"`
+	Persistence *Persistence `yaml:"persistence,omitempty"`
+	Disabled    bool         `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {
