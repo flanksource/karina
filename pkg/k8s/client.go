@@ -77,43 +77,141 @@ func (c *Client) getDrainHelper() (*drain.Helper, error) {
 	}, nil
 }
 
-func (c *Client) Drain(nodeName string, timeout time.Duration) error {
-	log.Infof("[%s] draining", nodeName)
-	if err := c.Cordon(nodeName); err != nil {
-		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
-	}
-
-	if err := c.EvictLocalVolumes(nodeName); err != nil {
-		return err
-	}
-	drainer, err := c.getDrainHelper()
+func (c *Client) ScalePod(pod v1.Pod, replicas int32) error {
+	client, err := c.GetClientset()
 	if err != nil {
 		return err
 	}
-	list, errs := drainer.GetPodsForDeletion(nodeName)
-	if errs != nil {
-		return utilerrors.NewAggregate(errs)
-	}
-	if warnings := list.Warnings(); warnings != "" {
-		log.Warnf("warning when draining %s: %v", nodeName, warnings)
-	}
 
-	if err := drainer.DeleteOrEvictPods(list.Pods()...); err != nil {
-		// Maybe warn about non-deleted pods here
-		return err
+	for _, owner := range pod.GetOwnerReferences() {
+		if owner.Kind == "ReplicaSet" {
+			replicasets := client.AppsV1().ReplicaSets(pod.Namespace)
+			rs, err := replicasets.Get(owner.Name, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if *rs.Spec.Replicas != replicas {
+				c.Infof("Scaling %s/%s => %d", pod.Namespace, owner.Name, replicas)
+				rs.Spec.Replicas = &replicas
+				_, err := replicasets.Update(rs)
+				if err != nil {
+					return err
+				}
+			} else {
+				c.Infof("Scaling %s/%s => %d (no-op)", pod.Namespace, owner.Name, replicas)
+			}
+		}
 	}
 	return nil
 }
 
-func (c *Client) EvictLocalVolumes(nodeName string) error {
+func (c *Client) GetPodReplicas(pod v1.Pod) (int, error) {
 	client, err := c.GetClientset()
 	if err != nil {
+		return 0, err
+	}
+
+	for _, owner := range pod.GetOwnerReferences() {
+		if owner.Kind == "ReplicaSet" {
+			replicasets := client.AppsV1().ReplicaSets(pod.Namespace)
+
+			rs, err := replicasets.Get(owner.Name, metav1.GetOptions{})
+			if err != nil {
+				return 0, err
+			}
+			return int(*rs.Spec.Replicas), nil
+		}
+		c.Infof("Ignore pod controller: %s", owner.Kind)
+	}
+	return 1, nil
+}
+
+func (c *Client) Drain(nodeName string, timeout time.Duration) error {
+	c.Infof("[%s] draining", nodeName)
+	if err := c.Cordon(nodeName); err != nil {
+		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
+	}
+	return c.EvictNode(nodeName)
+}
+
+func (c *Client) EvictPod(pod v1.Pod) error {
+	if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
 		return nil
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
 	}
 	drainer, err := c.getDrainHelper()
 	if err != nil {
 		return err
 	}
+	replicas, err := c.GetPodReplicas(pod)
+	if err != nil {
+		return err
+	}
+	if replicas == 1 {
+		if err := c.ScalePod(pod, int32(2)); err != nil {
+			return err
+		}
+		defer func() {
+			if err := c.ScalePod(pod, int32(1)); err != nil {
+				c.Warnf("Failed to scale back pod: %v", err)
+			}
+		}()
+	}
+
+	if pod.ObjectMeta.Labels["spilo-role"] == "master" {
+		c.Infof("Conducting failover of %s", pod.Name)
+		var stdout, stderr string
+		if stdout, stderr, err = c.ExecutePodf(pod.Namespace, pod.Name, "postgres", "curl", "-s", "http://localhost:8008/switchover", "-XPOST", fmt.Sprintf("-d {\"leader\":\"%s\"}", pod.Name)); err != nil {
+			return fmt.Errorf("failed to failover instance, aborting: %v %s %s", err, stderr, stdout)
+		}
+		c.Infof("Failed over: %s %s", stdout, stderr)
+	}
+	if err := drainer.DeleteOrEvictPods(pod); err != nil {
+		return err
+	}
+
+	pvcs := client.CoreV1().PersistentVolumeClaims(pod.Namespace)
+	for _, vol := range pod.Spec.Volumes {
+		if vol.PersistentVolumeClaim != nil {
+			pvc, err := pvcs.Get(vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if pvc != nil && pvc.Spec.StorageClassName == nil || strings.Contains(*pvc.Spec.StorageClassName, "local") {
+				c.Infof("[%s] deleting", pvc.Name)
+				if err := pvcs.Delete(pvc.Name, &metav1.DeleteOptions{}); err != nil {
+					return err
+				}
+				//nolint: errcheck
+				wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
+					_, err := pvcs.Get(pvc.Name, metav1.GetOptions{})
+					return errors.IsNotFound(err), nil
+				})
+				pvc.ObjectMeta.SetAnnotations(nil)
+				pvc.SetFinalizers([]string{})
+				pvc.SetSelfLink("")
+				pvc.SetResourceVersion("")
+				pvc.Spec.VolumeName = ""
+				new, err := pvcs.Create(pvc)
+				if err != nil {
+					return err
+				}
+				c.Infof("Created new PVC %s -> %s", pvc.UID, new.UID)
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Client) EvictNode(nodeName string) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+
 	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String(),
 	})
@@ -123,51 +221,8 @@ func (c *Client) EvictLocalVolumes(nodeName string) error {
 	}
 
 	for _, pod := range pods.Items {
-		if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
-			continue
-		}
-
-		if pod.ObjectMeta.Labels["spilo-role"] == "master" {
-		c.Infof("Conducting failover of %s", pod.Name)
-			var stdout, stderr string
-			if stdout, stderr, err = c.ExecutePodf(pod.Namespace, pod.Name, "postgres", "curl", "-s", "http://localhost:8008/switchover", "-XPOST", fmt.Sprintf("-d {\"leader\":\"%s\"}", pod.Name)); err != nil {
-				return fmt.Errorf("failed to failover instance, aborting: %v %s %s", err, stderr, stdout)
-			}
-		c.Infof("Failed over: %s %s", stdout, stderr)
-		}
-		if err := drainer.DeleteOrEvictPods(pod); err != nil {
+		if err := c.EvictPod(pod); err != nil {
 			return err
-		}
-
-		pvcs := client.CoreV1().PersistentVolumeClaims(pod.Namespace)
-		for _, vol := range pod.Spec.Volumes {
-			if vol.PersistentVolumeClaim != nil {
-				pvc, err := pvcs.Get(vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if pvc != nil && pvc.Spec.StorageClassName == nil || strings.Contains(*pvc.Spec.StorageClassName, "local") {
-				c.Infof("[%s] deleting", pvc.Name)
-					if err := pvcs.Delete(pvc.Name, &metav1.DeleteOptions{}); err != nil {
-						return err
-					}
-					//nolint: errcheck
-					wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
-						_, err := pvcs.Get(pvc.Name, metav1.GetOptions{})
-						return errors.IsNotFound(err), nil
-					})
-					pvc.ObjectMeta.SetAnnotations(nil)
-					pvc.SetFinalizers([]string{})
-					pvc.SetSelfLink("")
-					pvc.SetResourceVersion("")
-					pvc.Spec.VolumeName = ""
-					new, err := pvcs.Create(pvc)
-					if err != nil {
-						return err
-					}
-				c.Infof("Created new PVC %s -> %s", pvc.UID, new.UID)
-				}
-			}
 		}
 	}
 	return nil
@@ -526,13 +581,13 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 				c.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
 				c.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-					diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
-					if len(diff) > 0 {
+				diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
+				if len(diff) > 0 {
 					c.Tracef("%s", diff)
-					}
 				}
 			}
 		}
+	}
 	return nil
 }
 
@@ -1318,6 +1373,9 @@ func (c *Client) GetHealth() Health {
 	}
 
 	for _, pod := range pods.Items {
+		if IsDeleted(&pod) {
+			continue
+		}
 		if IsPodCrashLoopBackoff(pod) {
 			health.CrashLoopBackOff++
 		} else if IsPodHealthy(pod) {
