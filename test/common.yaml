@@ -202,7 +202,7 @@ vault:
   consul:
     bucket: "consul-backups"
 registryCredentials:
-  version: "v1.10.flanksource.1"
+  version: "v1.10.flanksource.2"
   namespace: "registry-credentials"
   aws:
     enabled: true
