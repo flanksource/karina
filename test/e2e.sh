@@ -34,12 +34,14 @@ fi
 
 $BIN version
 
-$BIN deploy phases --base --stubs --dex --vault --calico -v
+$BIN deploy phases --base --stubs --dex --calico -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 # wait for the base deployment with stubs to come up healthy
 $BIN test phases --base --stubs --wait 120 --progress=false
+
+$BIN deploy phases --vault -v
 
 $BIN vault init -v
 
