@@ -32,13 +32,15 @@ Use latest docker image:
 
 docker pull flanksource/platform-cli:latest
 
-2. Setup and verify vSphere connectivity
+## 2. Setup and verify vSphere connectivity
 
+Make sure the following environment variables are set:
 
-		os.Getenv("GOVC_FQDN"))
-		os.Getenv("GOVC_DATACENTER"),
-		os.Getenv("GOVC_USER"),
-		os.Getenv("GOVC_PASS"),
+`GOVC_FQDN`
+`GOVC_USER`
+`GOVC_PASS`
+`GOVC_DATACENTER`
+`GOVC_NETWORK`
 
 3. Create CA certs for use with the cluster
 
