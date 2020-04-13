@@ -205,6 +205,7 @@ vault:
   consul:
     bucket: "consul-backups"
 registryCredentials:
+  disabled: true # quarantine registry creds
   version: "v1.10.flanksource.2"
   namespace: "registry-credentials"
   aws:
