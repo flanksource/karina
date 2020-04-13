@@ -30,7 +30,9 @@ _or_
 
 Use latest docker image:
 
+```
 docker pull flanksource/platform-cli:latest
+```
 
 ## 2. Setup and verify vSphere connectivity
 
