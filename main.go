@@ -35,7 +35,6 @@ func main() {
 	}
 
 	root.AddCommand(
-		cmd.Dependencies,
 		cmd.Images,
 		cmd.MachineImages,
 		cmd.Upgrade,
