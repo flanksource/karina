@@ -3,8 +3,6 @@ package vault
 import (
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -14,7 +12,7 @@ const (
 
 func Deploy(p *platform.Platform) error {
 	if p.Vault == nil || p.Vault.Disabled {
-		log.Infof("Skipping deployment of vault, it is disabled")
+		p.Infof("Skipping deployment of vault, it is disabled")
 		return nil
 	}
 

@@ -6,41 +6,51 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
-	"k8s.io/client-go/kubernetes"
 )
 
-func TestNamespace(p *platform.Platform, client kubernetes.Interface, test *console.TestResults) {
+func Test(p *platform.Platform, test *console.TestResults) {
 	if p.OPA != nil && p.OPA.Disabled {
 		test.Skipf("opa", "OPA is not configured")
 		return
 	}
+
+	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "opa", test)
+	if p.E2E {
+		testE2E(p, test)
+	}
 }
 
-func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestResults) {
-	if p.OPA != nil && p.OPA.Disabled {
+func testE2E(p *platform.Platform, test *console.TestResults) {
+	if p.OPA == nil || p.OPA.Disabled {
 		test.Skipf("opa", "OPA is not configured")
+		return
+	}
+
+	if p.OPA.E2E.Fixtures == "" {
+		test.Skipf("opa", "OPA fixtures path not configured under opa.e2e.fixtures")
 		return
 	}
 
 	kubectl := p.GetKubectl()
 
-	if err := kubectl("apply -f test/opa/namespaces/"); err != nil {
+	if err := kubectl("apply -f %s/resources", p.OPA.E2E.Fixtures); err != nil {
 		test.Failf("opa", "Failed to setup namespaces: %v", err)
 		return
 	}
-	if err := kubectl("apply -f test/opa/ingress-duplicate.yaml"); err != nil {
-		test.Failf("opa", "Failed to create ingress: %v", err)
-		return
-	}
+	defer func() {
+		for _, path := range []string{"resources", "accepted", "rejected"} {
+			kubectl("delete -f %s/%s --force  &> /dev/null", p.OPA.E2E.Fixtures, path) //nolint errcheck
+		}
+	}()
 
-	rejectedFixturesPath := fixturesPath + "/rejected"
-	acceptedFixturesPath := fixturesPath + "/accepted"
+	rejectedFixturesPath := p.OPA.E2E.Fixtures + "/rejected"
+	acceptedFixturesPath := p.OPA.E2E.Fixtures + "/accepted"
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-		log.Tracef("Install: Failed to read dir: %s", err)
+		test.Failf("opa", "Install: Failed to read dir: %s", err)
+		return
 	}
 
 	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)
@@ -51,23 +61,17 @@ func TestPolicies(p *platform.Platform, fixturesPath string, test *console.TestR
 
 	for _, rejectedFixture := range rejectedFixtureFiles {
 		if err := kubectl("apply -f %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name()); err != nil {
-			test.Passf(rejectedFixture.Name(), "%s rejected by Gatekeeper as expected", rejectedFixture.Name())
+			test.Passf(rejectedFixture.Name(), "%s rejected as expected", rejectedFixture.Name())
 		} else {
-			test.Failf(rejectedFixture.Name(), "%s accepted by Gatekeeper as not expected", rejectedFixture.Name())
+			test.Failf(rejectedFixture.Name(), "%s accepted as not expected", rejectedFixture.Name())
 		}
 	}
 
 	for _, acceptedFixture := range acceptedFixtureFiles {
 		if err := kubectl("apply -f %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name()); err != nil {
-			test.Failf(acceptedFixture.Name(), "%s rejected by Gatekeeper as not expected", acceptedFixture.Name())
+			test.Failf(acceptedFixture.Name(), "%s rejected as not expected", acceptedFixture.Name())
 		} else {
-			test.Passf(acceptedFixture.Name(), "%s accepted by Gatekeeper as expected", acceptedFixture.Name())
+			test.Passf(acceptedFixture.Name(), "%s accepted as expected", acceptedFixture.Name())
 		}
 	}
-
-	// cleanup old objects
-	_ = kubectl("delete -f test/opa/namespaces/ --force &> /dev/null")
-	_ = kubectl("delete -f test/opa/ingress-duplicate.yaml --force &> /dev/null")
-	_ = kubectl("delete -f test/opa/opa-fixtures/accepted/ --force &> /dev/null")
-	_ = kubectl("delete -f test/opa/opa-fixtures/rejected/ --force &> /dev/null")
 }

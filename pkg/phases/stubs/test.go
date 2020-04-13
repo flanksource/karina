@@ -20,7 +20,10 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}}
 
 	resp, err := net.Get("https://" + p.S3.GetExternalEndpoint())
-	// 200 or 403 resoonse from minio is fine, 503 is not.
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close() // nolint: errcheck
+	}
+	// 200 or 403 response from minio is fine, 503 is not.
 	if err != nil {
 		test.Failf("minio", "minio GET / - %v", err)
 	} else if resp.StatusCode == 200 || resp.StatusCode == 403 {
@@ -28,6 +31,4 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	} else {
 		test.Failf("minio", "minio GET / - %v", resp.StatusCode)
 	}
-
-	resp.Body.Close() // nolint: errcheck
 }

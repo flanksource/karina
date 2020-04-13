@@ -10,7 +10,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var envVars = map[string]string{
@@ -101,7 +100,7 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	if err != nil {
 		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
 	}
-	log.Tracef("Using kubeadm config: \n%s", string(data))
+	platform.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	return nil
 }

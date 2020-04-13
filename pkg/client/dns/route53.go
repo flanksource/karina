@@ -8,10 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	log "github.com/sirupsen/logrus"
+	"github.com/flanksource/commons/logger"
 )
 
 type Route53Client struct {
+	logger.Logger
 	HostedZoneID         string
 	AccessKey, SecretKey string
 	Domain               string
@@ -70,14 +71,14 @@ func (r53 *Route53Client) Get(domain string) ([]string, error) {
 		}
 	}
 
-	log.Tracef("lookup %s => %v", domain, records)
+	r53.Tracef("lookup %s => %v", domain, records)
 	return records, nil
 }
 
 func (r53 *Route53Client) Update(domain string, records ...string) error {
 	rr := getResourceRecords(records...)
 	ttl := int64(60)
-	log.Tracef("Updating %s domain to %v", domain, records)
+	r53.Tracef("Updating %s domain to %v", domain, records)
 	input := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Changes: []*route53.Change{

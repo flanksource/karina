@@ -15,8 +15,15 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.SealedSecrets == nil || p.SealedSecrets.Disabled {
+		test.Skipf("sealed-secrets", "sealed-secrets not installed or disabled")
+		return
+	}
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "sealed-secrets", test)
+	if !p.E2E {
+		return
+	}
 	secretName := "test-sealed-secrets"
 	namespace := fmt.Sprintf("sealed-secrets-test-%s", utils.RandomKey(6))
 

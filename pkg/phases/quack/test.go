@@ -15,7 +15,11 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := platform.GetClientset()
-	k8s.TestNamespace(client, "quack", test)
+	k8s.TestNamespace(client, Namespace, test)
+
+	if !platform.E2E {
+		return
+	}
 
 	namespace := fmt.Sprintf("quack-test-%s", utils.RandomKey(6))
 
@@ -47,24 +51,21 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 
 	cm := *rcm
-	ok := true
 
 	if cm["prometheus"] != fmt.Sprintf("prometheus.%s", platform.Domain) {
 		test.Failf("quack", "expected prometheus config value to equal %s got %s", fmt.Sprintf("prometheus.%s", platform.Domain), cm["prometheus"])
-		ok = false
+		return
 	}
 
 	if cm["grafana"] != fmt.Sprintf("grafana.%s", platform.Domain) {
 		test.Failf("quack", "expected grafana config value to equal %s got %s", fmt.Sprintf("grafana.%s", platform.Domain), cm["grafana"])
-		ok = false
+		return
 	}
 
 	if cm["cluster.name"] != fmt.Sprintf("Cluster %s", platform.Name) {
 		test.Failf("quack", "expected cluster name config value to equal %s got %s", fmt.Sprintf("Cluster %s", platform.Name), cm["cluster.name"])
-		ok = false
+		return
 	}
 
-	if ok {
-		test.Passf("quack", "configmap %s in namespace %s was successfully updated by quack", configMapName, namespace)
-	}
+	test.Passf("quack", "configmap %s in namespace %s was successfully updated by quack", configMapName, namespace)
 }

@@ -3,8 +3,6 @@ package monitoring
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -40,7 +38,7 @@ func Install(p *platform.Platform) error {
 	}
 
 	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yaml"); err != nil {
-		log.Warnf("Failed to deploy prometheus operator %v", err)
+		p.Warnf("Failed to deploy prometheus operator %v", err)
 	}
 
 	data, err := p.Template("monitoring/alertmanager.yaml", "manifests")
@@ -54,7 +52,7 @@ func Install(p *platform.Platform) error {
 	}
 
 	for _, spec := range specs {
-		log.Infof("Applying %s", spec)
+		p.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
 			return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
 		}
@@ -93,7 +91,7 @@ func Install(p *platform.Platform) error {
 
 func deployThanos(p *platform.Platform) error {
 	if p.Thanos == nil || p.Thanos.Disabled {
-		log.Debugln("Thanos is disabled")
+		p.Debugf("Thanos is disabled")
 		return nil
 	}
 
@@ -113,12 +111,12 @@ func deployThanos(p *platform.Platform) error {
 	}
 
 	if p.Thanos.Mode == "client" {
-		log.Info("Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod.")
+		p.Infof("Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod.")
 	} else if p.Thanos.Mode == "observability" {
-		log.Info("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
+		p.Infof("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
 		thanosSpecs := []string{"thanos-querier.yaml", "thanos-store.yaml"}
 		for _, spec := range thanosSpecs {
-			log.Infof("Applying %s", spec)
+			p.Infof("Applying %s", spec)
 			if err := p.ApplySpecs("", "monitoring/observability/"+spec); err != nil {
 				return err
 			}
