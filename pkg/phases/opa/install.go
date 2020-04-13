@@ -35,5 +35,11 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	return platform.ApplySpecs(Namespace, "opa.yaml")
+	if err := platform.ApplySpecs(Namespace, "opa.yaml"); err != nil {
+		return err
+	}
+	if platform.OPA.Policies != "" {
+		return deploy(platform, platform.OPA.Policies)
+	}
+	return nil
 }

@@ -73,8 +73,13 @@ type OPA struct {
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
 	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
+	// Policies is a path to directory containing .rego policy files
+	Policies string `yaml:"policies,omitempty"`
 	// Log level for opa server, one of: debug,info,error, defaults to error
 	LogLevel string `yaml:"logLevel,omitempty"`
+	E2E      struct {
+		Fixtures string `yaml:"fixtures,omitempty"`
+	} `yaml:"e2e,omitempty"`
 }
 
 type Harbor struct {

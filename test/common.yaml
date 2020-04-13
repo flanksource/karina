@@ -53,6 +53,9 @@ podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 opa:
   version: 0.17.3
+  e2e:
+    fixtures: test/opa/opa-fixtures
+  policies: test/opa/policies
   kubeMgmtVersion: 0.10
   bundleUrl: http://minio.minio.svc:9000
   bundlePrefix: bundles
