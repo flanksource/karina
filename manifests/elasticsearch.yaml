@@ -1,3 +1,4 @@
+{{- $JVM_OPTIONS := .elasticsearch.mem.requests | strings.ReplaceAll "Ki" "k" | strings.ReplaceAll "Mi" "m" | strings.ReplaceAll "Gi" "g" -}}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -28,7 +29,7 @@ spec:
             - name: elasticsearch
               env:
                 - name: ES_JAVA_OPTS
-                  value: -Xms{{.elasticsearch.mem.requests}} -Xmx{{.elasticsearch.mem.limits}}
+                  value: -Xms{{ $JVM_OPTIONS }} -Xmx{{ $JVM_OPTIONS }}
               resources:
                 requests:
                   memory: {{.elasticsearch.mem.requests}}
