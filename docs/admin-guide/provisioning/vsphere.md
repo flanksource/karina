@@ -46,16 +46,26 @@ Make sure the following environment variables are set:
 `GOVC_DATASTORE`
 `GOVC_CLUSTER`
 
-3. Create CA certs for use with the cluster
+Connectivity can be verified by [installing govc](https://github.com/vmware/govmomi/tree/master/govc#installation) and running the following:
+
+```bash
+export GOVC_URL="$GOVC_USER:$GOVC_PASS@$GOVC_FQDN"
+govc about
+```
+
+## 3. Create CA certs for use with the cluster
 
 ```yaml
-platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar`
+platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar
 ```
+## 4. Configure the platform config
+
+
 
 1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
 2. Download and install the platform-cli binary
 3. Generate a CA for the cluster: `platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/ingress-ca.key --password foobar`
-4. Create the cluster `platform-cli provision cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
+4. Create the cluster `platform-cli provision vsphere-cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
 5. Check the status of running vms: `platform-cli status`
 6. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
 7. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
@@ -141,3 +151,7 @@ export GOVC_RESOURCE_POOL=
 export GOVC_INSECURE=1
 export GOVC_URL="$GOVC_USER:$GOVC_PASS@$GOVC_FQDN"
 ```
+
+# Troubleshooting
+
+`FATA[0034] Failed to create master: clone: failed create waiter: Invalid configuration for device '3'.`
