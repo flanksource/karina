@@ -36,19 +36,18 @@ import (
 )
 
 var (
-	wait                      int
-	failOnError               bool
-	waitInterval              int
-	junitPath, suiteName      string
-	thanosURL, pushGatewayURL string
-	p                         *platform.Platform
-	progress                  *mpb.Progress
-	test                      *console.TestResults
-	testE2E, showProgress     bool
-	concurrency               int
-	ch                        chan int
-	wg                        *sync.WaitGroup
-	stdout                    bytes.Buffer
+	wait                  int
+	failOnError           bool
+	waitInterval          int
+	junitPath, suiteName  string
+	p                     *platform.Platform
+	progress              *mpb.Progress
+	test                  *console.TestResults
+	testE2E, showProgress bool
+	concurrency           int
+	ch                    chan int
+	wg                    *sync.WaitGroup
+	stdout                bytes.Buffer
 )
 
 var Test = &cobra.Command{
@@ -95,13 +94,12 @@ func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
 				bar.Done()
 				<-ch
 				return
-			} else {
-				localTest.Retry()
-				bar.Status(fmt.Sprintf("Waiting to re-run tests, retry: %d", localTest.Retries))
-				time.Sleep(time.Duration(waitInterval) * time.Second)
-				bar.Status("Re-running tests")
-				<-ch
 			}
+			localTest.Retry()
+			bar.Status(fmt.Sprintf("Waiting to re-run tests, retry: %d", localTest.Retries))
+			time.Sleep(time.Duration(waitInterval) * time.Second)
+			bar.Status("Re-running tests")
+			<-ch
 		}
 	}()
 }

@@ -112,6 +112,7 @@ func init() {
 		Short: "Build everything",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			p := getPlatform(cmd)
 			for name, fn := range phases {
 				if err := fn(p); err != nil {
 					log.Fatalf("Failed to deploy %s: %v", name, err)

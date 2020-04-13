@@ -31,5 +31,4 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	} else {
 		test.Failf("minio", "minio GET / - %v", resp.StatusCode)
 	}
-
 }

@@ -26,7 +26,6 @@ func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResult
 		} else {
 			t.Failf(ns, "[%s] Expected pods but none running - did you deploy?", ns)
 		}
-
 	}
 	for _, pod := range list.Items {
 		conditions := true
