@@ -43,6 +43,8 @@ Make sure the following environment variables are set:
 `GOVC_PASS`
 `GOVC_DATACENTER`
 `GOVC_NETWORK`
+`GOVC_DATASTORE`
+`GOVC_CLUSTER`
 
 3. Create CA certs for use with the cluster
 
