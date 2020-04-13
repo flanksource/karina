@@ -18,8 +18,8 @@ func Init(p *platform.Platform) error {
 	if err := p.WaitForPod("vault", "vault-0", 300*time.Second, v1.PodRunning); err != nil {
 		return err
 	}
-
-	if err := p.WaitForPodCommand("vault", "vault-0", "vault", 20*time.Second, "/bin/sh", "-c", "netstat -tln | grep 8200"); err != nil {
+	p.Infof("Waiting for vault service to be listening")
+	if err := p.WaitForPodCommand("vault", "vault-0", "vault", 120*time.Second, "/bin/sh", "-c", "netstat -tln | grep 8200"); err != nil {
 		return err
 	}
 
