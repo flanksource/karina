@@ -15,14 +15,13 @@ import (
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
 	Namespace = "vault"
 )
 
-func TestE2E(p *platform.Platform, test *console.TestResults) {
+func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Vault == nil || p.Vault.Disabled {
 		test.Skipf("consul", "Consul is disabled")
 		return
@@ -102,7 +101,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 func getConsulValue(p *platform.Platform, namespace, pod, container, key string) string {
 	stdout, _, err := p.ExecutePodf(namespace, pod, container, "consul", "kv", "get", key)
 	if err != nil {
-		log.Errorf("failed to get key %s: %v", key, err)
+		p.Errorf("failed to get key %s: %v", key, err)
 		return ""
 	}
 	value := strings.TrimSuffix(stdout, "\n")
@@ -116,7 +115,7 @@ func getSnapshotFilename(p *platform.Platform, namespace, pod, timestamp string)
 
 	cfg := aws.NewConfig().
 		WithRegion(p.S3.Region).
-		WithEndpoint(p.S3.ExternalEndpoint).
+		WithEndpoint(p.S3.GetExternalEndpoint()).
 		WithCredentials(
 			credentials.NewStaticCredentials(p.S3.AccessKey, p.S3.SecretKey, ""),
 		).

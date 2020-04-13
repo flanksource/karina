@@ -9,12 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/phases/consul"
-
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
+	"github.com/moshloop/platform-cli/pkg/phases/consul"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
 	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
@@ -124,42 +123,11 @@ func init() {
 		end(test)
 	}
 
-<<<<<<< HEAD
-	consulTestCmd := &cobra.Command{
-		Use:   "consul",
-		Short: "Test consul",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			if testE2E {
-				run(consul.TestE2E)
-			}
-		},
-	}
-	consulTestCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
-	Test.AddCommand(consulTestCmd)
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "stubs",
-		Short: "Test stubs",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(stubs.Test)
-		},
-	})
-
-	thanosTestCmd := &cobra.Command{
-		Use:   "thanos",
-		Short: "Test thanos. Requires Pushgateway and Thanos endpoints",
-		Long:  "Push metric to pushgateway and try to pull from Thanos. For client cluster --thanos flag is required.",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			runWithArgs(monitoring.TestThanos, args, cmd)
-		},
-=======
 	tests := map[string]TestFn{
 		"audit":              audit.Test,
 		"base":               base.Test,
 		"configmap-reloader": configmapreloader.Test,
+		"consul":             consul.Test,
 		"dex":                dex.Test,
 		"eck":                eck.Test,
 		"elasticsearch":      elasticsearch.Test,
@@ -178,7 +146,6 @@ func init() {
 		"thanos":             monitoring.TestThanos,
 		"vault":              vault.Test,
 		"velero":             velero.Test,
->>>>>>> test and deployment refactoring
 	}
 
 	var Phases = &cobra.Command{
