@@ -39,7 +39,7 @@ func TestThanos(p *platform.Platform, test *console.TestResults) {
 
 	if p.Thanos.Mode != "observability" {
 		if p.Thanos.E2E.Server == "" {
-			test.Failf("thanos", "Must specify a thanos server under e2e.server in client mode")
+			test.Skipf("thanos", "Must specify a thanos server under e2e.server in client mode")
 			return
 		}
 		thanosHost = p.Thanos.E2E.Server

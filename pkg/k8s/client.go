@@ -573,7 +573,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
 			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
 			if err != nil {
-				c.Errorf("error updating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				c.Errorf("error updating: %s/%s/%s : %+v", unstructuredObj.GetNamespace(), resource.Resource, unstructuredObj.GetName(), err)
 				continue
 			}
 
