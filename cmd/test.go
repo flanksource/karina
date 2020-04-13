@@ -6,6 +6,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/consul"
+
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
@@ -200,6 +202,19 @@ func init() {
 	postgresOperatorTestCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
 	Test.AddCommand(postgresOperatorTestCmd)
 
+	consulTestCmd := &cobra.Command{
+		Use:   "consul",
+		Short: "Test consul",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if testE2E {
+				run(consul.TestE2E)
+			}
+		},
+	}
+	consulTestCmd.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
+	Test.AddCommand(consulTestCmd)
+
 	Test.AddCommand(&cobra.Command{
 		Use:   "stubs",
 		Short: "Test stubs",
@@ -317,6 +332,7 @@ func init() {
 					quack.Test(p, test)
 					postgresoperator.TestE2E(p, test)
 					registrycreds.Test(p, test)
+					consul.TestE2E(p, test)
 				}
 				opa.TestNamespace(p, client, test)
 				harbor.Test(p, test)

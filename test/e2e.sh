@@ -43,7 +43,7 @@ for app in base stubs dex vault; do
   $BIN deploy $app -v
 done
 
-for app in base stubs; do
+for app in base stubs consul; do
   $BIN test $app --wait 200
 done
 

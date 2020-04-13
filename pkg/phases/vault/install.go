@@ -1,6 +1,8 @@
 package vault
 
 import (
+	"strconv"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -38,6 +40,21 @@ func Deploy(p *platform.Platform) error {
 		"VAULT_AWSKMS_SEAL_KEY_ID": []byte(p.Vault.KmsKeyID),
 	}); err != nil {
 		return err
+	}
+
+	if p.Vault.Consul.Bucket != "" {
+		if err := p.CreateOrUpdateSecret("consul-backup-config", Namespace, map[string][]byte{
+			"AWS_REGION":              []byte(p.S3.Region),
+			"AWS_ACCESS_KEY_ID":       []byte(p.S3.AccessKey),
+			"AWS_SECRET_ACCESS_KEY":   []byte(p.S3.SecretKey),
+			"AWS_ENDPOINT":            []byte(p.S3.Endpoint),
+			"AWS_S3_FORCE_PATH_STYLE": []byte(strconv.FormatBool(p.S3.UsePathStyle)),
+		}); err != nil {
+			return err
+		}
+		if err := p.GetOrCreateBucket(p.Vault.Consul.Bucket); err != nil {
+			return err
+		}
 	}
 
 	return p.ApplySpecs(Namespace, "vault.yaml")

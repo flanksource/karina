@@ -458,6 +458,7 @@ type Consul struct {
 	Disabled       bool   `yaml:"disabled,omitempty"`
 	Bucket         string `yaml:"bucket,omitempty"`
 	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
 type Vault struct {
