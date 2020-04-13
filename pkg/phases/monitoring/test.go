@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 const (
@@ -29,26 +28,23 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "monitoring", test)
 }
 
-func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd *cobra.Command) {
-	if p.Thanos == nil {
+func TestThanos(p *platform.Platform, test *console.TestResults) {
+	if p.Thanos == nil || p.Thanos.Disabled {
 		test.Skipf("thanos", "thanos is disabled")
 		return
 	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	flags := cmd.Flags()
-	pushGatewayHost, _ := flags.GetString("pushgateway")
-	thanosHost, _ := flags.GetString("thanos")
-	if thanosHost == "" {
-		if p.Thanos.Mode != "observability" {
-			test.Failf("thanos", "please specify --thanos flag in client mode")
+	pushGatewayHost := "pushgateway." + p.Domain
+	thanosHost := fmt.Sprintf("https://thanos.%s", p.Domain)
+
+	if p.Thanos.Mode != "observability" {
+		if p.Thanos.E2E.Server == "" {
+			test.Failf("thanos", "Must specify a thanos server under e2e.server in client mode")
 			return
-		} else {
-			thanosHost = fmt.Sprintf("https://thanos.%s", p.Domain)
 		}
+		thanosHost = p.Thanos.E2E.Server
 	}
-	if pushGatewayHost == "" {
-		pushGatewayHost = fmt.Sprintf("pushgateway.%s", p.Domain)
-	}
+
 	pusher := pushMetric(pushGatewayHost)
 	err := pusher.Add()
 	if err != nil {
@@ -56,7 +52,6 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 		return
 	}
 	test.Passf("Thanos client", "Metric successfully injected into the client Prometheus. Waiting to receive it in observability cluster.")
-	test.Tracef("Waiting for metric")
 	retries := 12
 	for {
 		if retries == 0 {
@@ -86,7 +81,11 @@ func TestThanos(p *platform.Platform, test *console.TestResults, _ []string, cmd
 	}
 }
 
-func TestPrometheus(p *platform.Platform, test *console.TestResults, _ []string, cmd *cobra.Command) {
+func TestPrometheus(p *platform.Platform, test *console.TestResults) {
+	if p.Monitoring == nil || p.Monitoring.Disabled {
+		test.Skipf("prometheus", "monitoring is not configured or enabled")
+		return
+	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	client, err := api.NewClient(api.Config{
 		Address:      fmt.Sprintf("https://prometheus.%s", p.Domain),

@@ -442,6 +442,10 @@ type Thanos struct {
 	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
 	EnableCompactor bool `yaml:"enableCompactor,omitempty"`
+
+	E2E struct {
+		Server string `yaml:"server,omitempty"`
+	} `yaml:"e2e,omitempty"`
 }
 
 type FluentdOperator struct {
