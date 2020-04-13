@@ -13,6 +13,7 @@ import (
 	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	ptypes "github.com/moshloop/platform-cli/pkg/types"
+    "github.com/kr/pretty"
 )
 
 const (
@@ -88,6 +89,8 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	}
 
 	log.Infof("Cloning %s to %s", vm.Template, vm.Name)
+
+	log.Tracef("VM Spec: %# v", pretty.Formatter(spec))
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
