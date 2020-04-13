@@ -38,9 +38,8 @@ $BIN deploy phases --base --stubs --dex --vault --calico -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
-
-#wait for the base deployment with stubs to come up healthy
-$BIN test phases --base --stubs --wait 120
+# wait for the base deployment with stubs to come up healthy
+$BIN test phases --base --stubs --wait 120 --progress=false
 
 $BIN vault init -v
 
@@ -51,13 +50,13 @@ $BIN deploy all -v
 $BIN opa bundle automobile -v
 # wait for up to 4 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
-$BIN test all -v --wait 240
+$BIN test all -v --wait 240 --progress=false
 
 failed=false
 
 # e2e do not use --wait at the run level, if needed each individual test implements
 # its own wait. e2e tests should always pass once the non e2e have passed
-if ! $BIN test all --e2e -v --junit-path test-results/results.xml; then
+if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
   failed=true
 fi
 
