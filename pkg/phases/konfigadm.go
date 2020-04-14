@@ -110,7 +110,7 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 		// via the KonfigAdm
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
 		if ap == "" {
-			log.Fatalf("Unable to read audit policy file")
+			return fmt.Errorf("unable to read audit policy file")
 		}
 		cfg.Files[kubeadm.AuditPolicyPath] = ap
 	}
