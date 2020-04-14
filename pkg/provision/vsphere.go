@@ -27,7 +27,7 @@ func WithVmwareCluster(platform *platform.Platform) error {
 	return nil
 }
 
-// VsphereCluster provision or create a kubernetes cluster
+// VsphereCluster provisions or creates a kubernetes cluster
 func VsphereCluster(platform *platform.Platform) error {
 	if err := WithVmwareCluster(platform); err != nil {
 		return err
@@ -148,6 +148,7 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-masters"
+	vm.Tags["Name"] = vm.Name
 	log.Infof("No masters detected, deploying new master %s", vm.Name)
 	config, err := phases.CreatePrimaryMaster(platform)
 	if err != nil {

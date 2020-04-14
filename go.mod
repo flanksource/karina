@@ -16,6 +16,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.6
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/kr/pretty v0.2.0
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect

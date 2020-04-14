@@ -57,10 +57,21 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 
 func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	platform.Init()
-	cfg, err := konfigadm.NewConfig().Build()
-	if err != nil {
-		return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
+	var cfg *konfigadm.Config
+	var err error
+
+	if platform.Master.KonfigadmFile == "" {
+		cfg, err = konfigadm.NewConfig().Build()
+		if err != nil {
+			return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
+		}
+	} else {
+		cfg, err = konfigadm.NewConfig(platform.Master.KonfigadmFile).Build()
+		if err != nil {
+			return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
+		}
 	}
+
 	for k, v := range envVars {
 		cfg.Environment[k] = v
 	}
