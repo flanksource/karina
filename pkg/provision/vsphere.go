@@ -148,7 +148,6 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-masters"
-	vm.Tags["Name"] = vm.Name
 	log.Infof("No masters detected, deploying new master %s", vm.Name)
 	config, err := phases.CreatePrimaryMaster(platform)
 	if err != nil {
