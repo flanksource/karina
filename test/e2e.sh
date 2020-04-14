@@ -27,7 +27,8 @@ else
 fi
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
-  $BIN ca generate --name ingress-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+  $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+  $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
   $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
   $BIN provision kind-cluster
 fi
@@ -69,4 +70,3 @@ zip -r artifacts/snapshot.zip snapshot/*
 if [[ "$failed" = true ]]; then
   exit 1
 fi
-

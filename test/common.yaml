@@ -138,8 +138,8 @@ ca:
   privateKey: .certs/root-ca.key
   password: foobar
 ingressCA:
-  cert: .certs/root-ca.crt
-  privateKey: .certs/root-ca.key
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
   password: foobar
 sealedSecrets:
   version: "v0.10.0"
