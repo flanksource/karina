@@ -2,7 +2,6 @@ package phases
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/flanksource/commons/files"
 
