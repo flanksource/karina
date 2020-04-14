@@ -7,7 +7,6 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,7 +41,7 @@ func Status(p *platform.Platform) error {
 		return fmt.Errorf("status: failed to get clientset: %v", err)
 	}
 
-	log.Infof("Listing nodes")
+	p.Infof("Listing nodes")
 	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("%+v", err)

@@ -17,8 +17,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -104,8 +102,8 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	if platform.PlatformConfig.Trace {
-		log.Print("KIND Config YAML:")
-		log.Print(string(yml))
+		platform.Infof("KIND Config YAML:")
+		platform.Infof(string(yml))
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")

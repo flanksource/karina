@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/text"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -72,7 +71,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 	}
 	start := time.Now()
 
-	log.Infof("Waiting for %s to complete", backup.Metadata.Name)
+	platform.Infof("Waiting for %s to complete", backup.Metadata.Name)
 	for {
 		backup = &Backup{}
 		if err := platform.Get(Namespace, name, backup); err != nil {

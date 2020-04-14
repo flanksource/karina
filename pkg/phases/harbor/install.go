@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/konfigadm/pkg/utils"
 	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -13,10 +11,10 @@ import (
 
 func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
-		log.Infof("Skipping deployment of harbor, it is disabled")
+		p.Infof("Skipping deployment of harbor, it is disabled")
 		return nil
 	}
-	log.Infof("Deploying harbor %s", p.Harbor.Version)
+	p.Infof("Deploying harbor %s", p.Harbor.Version)
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
@@ -98,7 +96,10 @@ func Deploy(p *platform.Platform) error {
 	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
 		return err
 	}
-	client := NewClient(p)
+	client, err := NewClient(p)
+	if err != nil {
+		return err
+	}
 	return client.UpdateSettings(*p.Harbor.Settings)
 }
 

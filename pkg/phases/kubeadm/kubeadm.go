@@ -8,7 +8,6 @@ import (
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -149,9 +148,9 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 	secret, err := secrets.Get("kubeadm-certs", metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		key = utils.RandomKey(32)
-		log.Infof("Uploading control plane cert from %s", masterNode)
+		platform.Infof("Uploading control plane cert from %s", masterNode)
 		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubeadm init phase upload-certs --upload-certs --skip-certificate-key-print --certificate-key %s", key)
-		log.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
+		platform.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
 		secret, err = secrets.Get("kubeadm-certs", metav1.GetOptions{})
 		if err != nil {
 			return "", err
@@ -163,7 +162,7 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 		}
 		return key, nil
 	} else if err == nil {
-		log.Infof("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
+		platform.Infof("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
 		return secret.Annotations["key"], nil
 	}
 	return "", err
