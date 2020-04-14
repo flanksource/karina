@@ -54,6 +54,7 @@ type VM struct {
 }
 
 type Calico struct {
+	Disabled  bool                    `yaml:"disabled,omitempty"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
 	Version   string                  `yaml:"version,omitempty"`
