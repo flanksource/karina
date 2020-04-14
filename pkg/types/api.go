@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 )
 
 // Machine represents a running instance of a VM

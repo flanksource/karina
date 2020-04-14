@@ -25,7 +25,7 @@ import (
 	minio "github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
 
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/postgres"

@@ -7,9 +7,9 @@ import (
 	"github.com/flanksource/commons/files"
 
 	"github.com/flanksource/commons/certs"
+	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/flanksource/yaml"
-	_ "github.com/moshloop/konfigadm/pkg" // initialize konfigadm
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
