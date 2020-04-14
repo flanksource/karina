@@ -2,7 +2,6 @@ package filebeat
 
 import (
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/moshloop/platform-cli/pkg/constants"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -10,7 +9,7 @@ import (
 
 func Deploy(p *platform.Platform) error {
 	if p.Filebeat == nil || p.Filebeat.Disabled {
-		log.Infof("Skipping deployment of filebeat, it is disabled")
+		p.Infof("Skipping deployment of filebeat, it is disabled")
 		return nil
 	}
 

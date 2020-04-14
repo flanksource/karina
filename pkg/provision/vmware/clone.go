@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
 
-	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/kr/pretty"
 	ptypes "github.com/moshloop/platform-cli/pkg/types"
-    "github.com/kr/pretty"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -63,7 +63,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	}
 	deviceSpecs = append(deviceSpecs, networkSpecs...)
 
-	cdrom, err := getCdrom(datastore, vm, devices, config)
+	cdrom, err := s.getCdrom(datastore, vm, devices, config)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting cdrom")
 	}
@@ -88,7 +88,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 		PowerOn: true,
 	}
 
-	log.Infof("Cloning %s to %s", vm.Template, vm.Name)
+	s.Infof("Cloning %s to %s", vm.Template, vm.Name)
 
 	log.Tracef("VM Spec: %# v", pretty.Formatter(spec))
 
@@ -106,7 +106,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	if err != nil {
 		return nil, fmt.Errorf("clone: failed to find VM: %v", err)
 	}
-	log.Infof("Cloned VM: %s", obj.UUID(ctx))
+	s.Infof("Cloned VM: %s", obj.UUID(ctx))
 	return obj, nil
 }
 
@@ -117,7 +117,7 @@ func newVMFlagInfo() *types.VirtualMachineFlagInfo {
 	}
 }
 
-func getCdrom(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList, config *konfigadm.Config) (types.BaseVirtualDeviceConfigSpec, error) {
+func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList, config *konfigadm.Config) (types.BaseVirtualDeviceConfigSpec, error) {
 	op := types.VirtualDeviceConfigSpecOperationEdit
 	cdrom, err := devices.FindCdrom("")
 	if err != nil {
@@ -135,15 +135,15 @@ func getCdrom(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualD
 		}
 		op = types.VirtualDeviceConfigSpecOperationAdd
 	}
-	log.Infof("Creating ISO for %s", vm.Name)
+	s.Infof("Creating ISO for %s", vm.Name)
 	iso, err := cloudinit.CreateISO(vm.Name, config.ToCloudInit().String())
 	if err != nil {
 		return nil, fmt.Errorf("getCdrom: failed to create ISO: %v", err)
 	}
 	path := fmt.Sprintf("cloud-init/%s.iso", vm.Name)
-	log.Infof("Uploading to [%s] %s", datastore.Name(), path)
+	s.Infof("Uploading to [%s] %s", datastore.Name(), path)
 	if err = datastore.UploadFile(context.TODO(), iso, path, &soap.DefaultUpload); err != nil {
-		log.Infof("%+v\n", err)
+		s.Infof("%+v\n", err)
 		return nil, err
 	}
 	log.Tracef("Uploaded to %s", path)

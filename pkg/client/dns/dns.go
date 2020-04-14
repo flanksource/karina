@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flanksource/commons/logger"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 var tsigAlgs = map[string]string{
@@ -24,6 +24,7 @@ type Client interface {
 }
 
 type DynamicDNSClient struct {
+	logger.Logger
 	KeyName    string
 	Zone       string
 	Nameserver string
@@ -34,7 +35,7 @@ type DynamicDNSClient struct {
 
 func (client DynamicDNSClient) Append(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
-	log.Debugf("Appending %s.%s %s", domain, client.Zone, records)
+	client.Debugf("Appending %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
 
@@ -98,7 +99,7 @@ func (client DynamicDNSClient) Get(domain string) ([]string, error) {
 
 func (client DynamicDNSClient) Update(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
-	log.Debugf("Updating %s.%s %s", domain, client.Zone, records)
+	client.Debugf("Updating %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
 
@@ -120,7 +121,7 @@ func (client DynamicDNSClient) Update(domain string, records ...string) error {
 
 func (client DynamicDNSClient) Delete(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
-	log.Debugf("Removing %s.%s %s", domain, client.Zone, records)
+	client.Debugf("Removing %s.%s %s", domain, client.Zone, records)
 
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
@@ -165,7 +166,6 @@ func (client DynamicDNSClient) sendMessage(zone string, msg *dns.Msg) error {
 
 func newRR(domain string, zone string, ttl int, resourceType string, record string) (*dns.RR, error) {
 	RR := strings.Trim(fmt.Sprintf("%s.%s %d %s %s", domain, zone, ttl, resourceType, record), " ")
-	log.Tracef(RR)
 	rr, err := dns.NewRR(RR)
 	if err != nil {
 		return nil, fmt.Errorf("newRR failed: %v", err)

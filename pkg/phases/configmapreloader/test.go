@@ -4,8 +4,6 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,20 +12,17 @@ import (
 
 var watchTimeout = int64(30) // Wait for deployment to update only N seconds
 
-func Test(p *platform.Platform, test *console.TestResults, args []string, cmd *cobra.Command) {
+func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.ConfigMapReloader.Disabled {
 		test.Skipf("configmap-reloader", "configmap-reloader not configured")
 		return
 	}
 	k8s.TestNamespace(client, Namespace, test)
-	runE2E, err := cmd.Flags().GetBool("e2e")
-	if err != nil {
+	if !p.E2E {
 		return
 	}
-	if runE2E {
-		e2eTest(p, test)
-	}
+	e2eTest(p, test)
 }
 
 func e2eTest(p *platform.Platform, test *console.TestResults) {
@@ -129,10 +124,10 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 	for event := range watch.ResultChan() {
 		p, ok := event.Object.(*appsv1.Deployment)
 		if !ok {
-			log.Errorf("unexpected type")
+			test.Errorf("unexpected type")
 		}
 		if p.Status.ReadyReplicas == 1 {
-			log.Tracef("Deployment is ready")
+			test.Tracef("Deployment is ready")
 			break
 		}
 	}
@@ -158,12 +153,13 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		test.Failf("configmap-reloader", "ConfigMap configmap-reloader was not updated: %v", err)
 		return
 	}
-	log.Tracef("Updated ConfigMap")
+	test.Tracef("Updated ConfigMap")
 
 	for event := range watch.ResultChan() {
 		p, ok := event.Object.(*appsv1.Deployment)
 		if !ok {
-			log.Fatal("unexpected type")
+			test.Failf("configmap-reloader", "unexpected type")
+			return
 		}
 		for _, condition := range p.Status.Conditions {
 			if condition.Reason == "ReplicaSetUpdated" {
@@ -179,5 +175,4 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 func cleanup(client *kubernetes.Clientset) {
 	client.CoreV1().ConfigMaps(Namespace).Delete("reloader-test", &metav1.DeleteOptions{})
 	client.AppsV1().Deployments(Namespace).Delete("configmap-reloader-test", &metav1.DeleteOptions{})
-
 }

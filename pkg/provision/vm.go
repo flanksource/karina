@@ -3,9 +3,7 @@ package provision
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -20,12 +18,12 @@ func VM(platform *platform.Platform, vm *types.VM, konfigs ...string) error {
 	if err != nil {
 		return fmt.Errorf("vm: failed to get new config: %v", err)
 	}
-	log.Infof("Using konfigadm spec: %s\n", konfigs)
+	platform.Infof("Using konfigadm spec: %s\n", konfigs)
 	machine, err := platform.Clone(*vm, konfig)
 
 	if err != nil {
 		return fmt.Errorf("vm: failed to clone %v", err)
 	}
-	log.Infof("Provisioned  %s ->  %s\n", machine.Name(), machine.IP())
+	platform.Infof("Provisioned  %s ->  %s\n", machine.Name(), machine.IP())
 	return nil
 }

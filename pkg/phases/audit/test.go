@@ -11,6 +11,10 @@ const testName = "auditing"
 
 // Test k8s auditing functionality.
 func Test(p *platform.Platform, tr *console.TestResults) {
+	if p.Kubernetes.AuditConfig == nil {
+		tr.Skipf(testName, "auditing not configured")
+		return
+	}
 	pf := p.Kubernetes.AuditConfig.PolicyFile
 
 	if pf == "" {

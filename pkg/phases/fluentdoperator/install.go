@@ -1,8 +1,6 @@
 package fluentdoperator
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -12,10 +10,10 @@ const (
 
 func Deploy(p *platform.Platform) error {
 	if p.FluentdOperator == nil || p.FluentdOperator.Disabled {
-		log.Infof("Skipping deployment of fluentd-operator, it is disabled")
+		p.Infof("Skipping deployment of fluentd-operator, it is disabled")
 		return nil
 	}
-	log.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)
+	p.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
