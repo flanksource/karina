@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moshloop/konfigadm/pkg/utils"
+	"github.com/flanksource/konfigadm/pkg/utils"
 	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )

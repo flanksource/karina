@@ -7,7 +7,8 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.2.0
-	github.com/flanksource/yaml v0.0.0-20200322131016-b7b2608b8702
+	github.com/flanksource/konfigadm v0.6.0
+	github.com/flanksource/yaml v0.0.0-20200325175021-f76146a3718a
 	github.com/go-pg/pg/v9 v9.1.5
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
 	github.com/gogo/protobuf v1.3.1 // indirect
@@ -21,9 +22,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/moshloop/konfigadm v0.4.6
 	github.com/olivere/elastic/v7 v7.0.13
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0
