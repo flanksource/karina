@@ -9,8 +9,8 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
 
-	cloudinit "github.com/moshloop/konfigadm/pkg/cloud-init"
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	ptypes "github.com/moshloop/platform-cli/pkg/types"
 )
 
