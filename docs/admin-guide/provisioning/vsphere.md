@@ -57,7 +57,9 @@ govc about
 
 ```yaml
 platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar
+platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar
 ```
+
 ## 4. Configure the platform config
 
 
