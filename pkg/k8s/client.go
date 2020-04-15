@@ -12,15 +12,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	certs "github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/files"
+	"github.com/flanksource/commons/logger"
 	utils "github.com/flanksource/commons/utils"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
 	"github.com/moshloop/platform-cli/pkg/k8s/drain"
 	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
-	log "github.com/sirupsen/logrus"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -32,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cliresource "k8s.io/cli-runtime/pkg/resource"
@@ -49,6 +48,7 @@ import (
 )
 
 type Client struct {
+	logger.Logger
 	GetKubeConfigBytes  func() ([]byte, error)
 	ApplyDryRun         bool
 	Trace               bool
@@ -77,43 +77,141 @@ func (c *Client) getDrainHelper() (*drain.Helper, error) {
 	}, nil
 }
 
-func (c *Client) Drain(nodeName string, timeout time.Duration) error {
-	log.Infof("[%s] draining", nodeName)
-	if err := c.Cordon(nodeName); err != nil {
-		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
-	}
-
-	if err := c.EvictLocalVolumes(nodeName); err != nil {
-		return err
-	}
-	drainer, err := c.getDrainHelper()
+func (c *Client) ScalePod(pod v1.Pod, replicas int32) error {
+	client, err := c.GetClientset()
 	if err != nil {
 		return err
 	}
-	list, errs := drainer.GetPodsForDeletion(nodeName)
-	if errs != nil {
-		return utilerrors.NewAggregate(errs)
-	}
-	if warnings := list.Warnings(); warnings != "" {
-		log.Warnf("warning when draining %s: %v", nodeName, warnings)
-	}
 
-	if err := drainer.DeleteOrEvictPods(list.Pods()...); err != nil {
-		// Maybe warn about non-deleted pods here
-		return err
+	for _, owner := range pod.GetOwnerReferences() {
+		if owner.Kind == "ReplicaSet" {
+			replicasets := client.AppsV1().ReplicaSets(pod.Namespace)
+			rs, err := replicasets.Get(owner.Name, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if *rs.Spec.Replicas != replicas {
+				c.Infof("Scaling %s/%s => %d", pod.Namespace, owner.Name, replicas)
+				rs.Spec.Replicas = &replicas
+				_, err := replicasets.Update(rs)
+				if err != nil {
+					return err
+				}
+			} else {
+				c.Infof("Scaling %s/%s => %d (no-op)", pod.Namespace, owner.Name, replicas)
+			}
+		}
 	}
 	return nil
 }
 
-func (c *Client) EvictLocalVolumes(nodeName string) error {
+func (c *Client) GetPodReplicas(pod v1.Pod) (int, error) {
 	client, err := c.GetClientset()
 	if err != nil {
+		return 0, err
+	}
+
+	for _, owner := range pod.GetOwnerReferences() {
+		if owner.Kind == "ReplicaSet" {
+			replicasets := client.AppsV1().ReplicaSets(pod.Namespace)
+
+			rs, err := replicasets.Get(owner.Name, metav1.GetOptions{})
+			if err != nil {
+				return 0, err
+			}
+			return int(*rs.Spec.Replicas), nil
+		}
+		c.Infof("Ignore pod controller: %s", owner.Kind)
+	}
+	return 1, nil
+}
+
+func (c *Client) Drain(nodeName string, timeout time.Duration) error {
+	c.Infof("[%s] draining", nodeName)
+	if err := c.Cordon(nodeName); err != nil {
+		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
+	}
+	return c.EvictNode(nodeName)
+}
+
+func (c *Client) EvictPod(pod v1.Pod) error {
+	if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
 		return nil
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
 	}
 	drainer, err := c.getDrainHelper()
 	if err != nil {
 		return err
 	}
+	replicas, err := c.GetPodReplicas(pod)
+	if err != nil {
+		return err
+	}
+	if replicas == 1 {
+		if err := c.ScalePod(pod, int32(2)); err != nil {
+			return err
+		}
+		defer func() {
+			if err := c.ScalePod(pod, int32(1)); err != nil {
+				c.Warnf("Failed to scale back pod: %v", err)
+			}
+		}()
+	}
+
+	if pod.ObjectMeta.Labels["spilo-role"] == "master" {
+		c.Infof("Conducting failover of %s", pod.Name)
+		var stdout, stderr string
+		if stdout, stderr, err = c.ExecutePodf(pod.Namespace, pod.Name, "postgres", "curl", "-s", "http://localhost:8008/switchover", "-XPOST", fmt.Sprintf("-d {\"leader\":\"%s\"}", pod.Name)); err != nil {
+			return fmt.Errorf("failed to failover instance, aborting: %v %s %s", err, stderr, stdout)
+		}
+		c.Infof("Failed over: %s %s", stdout, stderr)
+	}
+	if err := drainer.DeleteOrEvictPods(pod); err != nil {
+		return err
+	}
+
+	pvcs := client.CoreV1().PersistentVolumeClaims(pod.Namespace)
+	for _, vol := range pod.Spec.Volumes {
+		if vol.PersistentVolumeClaim != nil {
+			pvc, err := pvcs.Get(vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if pvc != nil && pvc.Spec.StorageClassName == nil || strings.Contains(*pvc.Spec.StorageClassName, "local") {
+				c.Infof("[%s] deleting", pvc.Name)
+				if err := pvcs.Delete(pvc.Name, &metav1.DeleteOptions{}); err != nil {
+					return err
+				}
+				//nolint: errcheck
+				wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
+					_, err := pvcs.Get(pvc.Name, metav1.GetOptions{})
+					return errors.IsNotFound(err), nil
+				})
+				pvc.ObjectMeta.SetAnnotations(nil)
+				pvc.SetFinalizers([]string{})
+				pvc.SetSelfLink("")
+				pvc.SetResourceVersion("")
+				pvc.Spec.VolumeName = ""
+				new, err := pvcs.Create(pvc)
+				if err != nil {
+					return err
+				}
+				c.Infof("Created new PVC %s -> %s", pvc.UID, new.UID)
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Client) EvictNode(nodeName string) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil
+	}
+
 	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String(),
 	})
@@ -123,58 +221,15 @@ func (c *Client) EvictLocalVolumes(nodeName string) error {
 	}
 
 	for _, pod := range pods.Items {
-		if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
-			continue
-		}
-
-		if pod.ObjectMeta.Labels["spilo-role"] == "master" {
-			log.Infof("Conducting failover of %s", pod.Name)
-			var stdout, stderr string
-			if stdout, stderr, err = c.ExecutePodf(pod.Namespace, pod.Name, "postgres", "curl", "-s", "http://localhost:8008/switchover", "-XPOST", fmt.Sprintf("-d {\"leader\":\"%s\"}", pod.Name)); err != nil {
-				return fmt.Errorf("failed to failover instance, aborting: %v %s %s", err, stderr, stdout)
-			}
-			log.Infof("Failed over: %s %s", stdout, stderr)
-		}
-		if err := drainer.DeleteOrEvictPods(pod); err != nil {
+		if err := c.EvictPod(pod); err != nil {
 			return err
-		}
-		pvcs := client.CoreV1().PersistentVolumeClaims(pod.Namespace)
-
-		for _, vol := range pod.Spec.Volumes {
-			if vol.PersistentVolumeClaim != nil {
-				pvc, err := pvcs.Get(vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if pvc != nil && pvc.Spec.StorageClassName == nil || strings.Contains(*pvc.Spec.StorageClassName, "local") {
-					log.Infof("[%s] deleting", pvc.Name)
-					if err := pvcs.Delete(pvc.Name, &metav1.DeleteOptions{}); err != nil {
-						return err
-					}
-					//nolint: errcheck
-					wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
-						_, err := pvcs.Get(pvc.Name, metav1.GetOptions{})
-						return errors.IsNotFound(err), nil
-					})
-					pvc.ObjectMeta.SetAnnotations(nil)
-					pvc.SetFinalizers([]string{})
-					pvc.SetSelfLink("")
-					pvc.SetResourceVersion("")
-					pvc.Spec.VolumeName = ""
-					new, err := pvcs.Create(pvc)
-					if err != nil {
-						return err
-					}
-					log.Infof("Created new PVC %s -> %s", pvc.UID, new.UID)
-				}
-			}
 		}
 	}
 	return nil
 }
 
 func (c *Client) Cordon(nodeName string) error {
-	log.Infof("[%s] cordoning", nodeName)
+	c.Infof("[%s] cordoning", nodeName)
 
 	client, err := c.GetClientset()
 	if err != nil {
@@ -191,7 +246,7 @@ func (c *Client) Cordon(nodeName string) error {
 }
 
 func (c *Client) Uncordon(nodeName string) error {
-	log.Infof("[%s] uncordoning", nodeName)
+	c.Infof("[%s] uncordoning", nodeName)
 	client, err := c.GetClientset()
 	if err != nil {
 		return nil
@@ -278,12 +333,12 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("failed to get client %v", err)
+		c.Tracef("failed to get client %v", err)
 		return nil
 	}
 	secret, err := k8s.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
+		c.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
 		return nil
 	}
 	return &secret.Data
@@ -293,12 +348,12 @@ func (c *Client) GetSecret(namespace, name string) *map[string][]byte {
 func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 	k8s, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("failed to get client %v", err)
+		c.Tracef("failed to get client %v", err)
 		return nil
 	}
 	cm, err := k8s.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
+		c.Tracef("failed to get secret %s/%s: %v\n", namespace, name, err)
 		return nil
 	}
 	return &cm.Data
@@ -319,12 +374,12 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	if err == nil {
 		return nil
 	}
-	if log.IsLevelEnabled(log.TraceLevel) {
-		spew.Dump(unstructuredObj.Object)
-	}
+	// if c.IsLevelEnabled(logger.TraceLevel) {
+	// 	spew.Dump(unstructuredObj.Object)
+	// }
 
 	// FIXME(moshloop) getting the zalando operationconfiguration fails with "unrecognized type: int64" so we fall back to brute-force
-	log.Warnf("Using mapstructure to decode %s: %v", obj.GetObjectKind().GroupVersionKind().Kind, err)
+	c.Warnf("Using mapstructure to decode %s: %v", obj.GetObjectKind().GroupVersionKind().Kind, err)
 	config := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
 		TagName:          "json",
@@ -427,6 +482,20 @@ func (c *Client) GetRestClient(obj unstructured.Unstructured) (*cliresource.Help
 	return cliresource.NewHelper(restClient, mapping), nil
 }
 
+func (c *Client) GetProxyDialer(p proxy.Proxy) (*proxy.Dialer, error) {
+	clientset, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+
+	restConfig, err := c.GetRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return proxy.NewDialer(p, clientset, restConfig)
+}
+
 func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
 	for _, unstructuredObj := range objects {
 		client, err := c.GetRestClient(*unstructuredObj)
@@ -435,21 +504,21 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 		}
 
 		if c.ApplyDryRun {
-			log.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
 			_, err = client.Create(namespace, true, unstructuredObj, &metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
 				_, err = client.Replace(namespace, unstructuredObj.GetName(), true, unstructuredObj)
 				if err != nil {
-					log.Errorf("error handling: %s : %+v", client.Resource, err)
+					c.Errorf("error handling: %s : %+v", client.Resource, err)
 				} else {
 					// TODO(moshloop): Diff the old and new objects and log unchanged instead of configured where necessary
-					log.Infof("%s/%s/%s configured", client.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+					c.Infof("%s/%s/%s configured", client.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 				}
 			} else if err == nil {
-				log.Infof("%s/%s/%s created", client.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+				c.Infof("%s/%s/%s created", client.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
-				log.Errorf("error handling: %s : %+v", client.Resource, err)
+				c.Errorf("error handling: %s : %+v", client.Resource, err)
 			}
 		}
 	}
@@ -463,7 +532,7 @@ func (c *Client) trace(msg string, objects ...runtime.Object) {
 	for _, obj := range objects {
 		data, err := yaml.Marshal(obj)
 		if err != nil {
-			log.Errorf("Error tracing %s", err)
+			c.Errorf("Error tracing %s", err)
 		} else {
 			fmt.Printf("%s\n%s", msg, string(data))
 		}
@@ -479,7 +548,7 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 
 		if c.ApplyDryRun {
 			c.trace("apply", unstructuredObj)
-			log.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
+			c.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
 			continue
 		}
 
@@ -489,9 +558,9 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			c.trace("creating", unstructuredObj)
 			_, err = client.Create(unstructuredObj, metav1.CreateOptions{})
 			if err != nil {
-				log.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				c.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
 			}
-			log.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+			c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 		} else {
 			if unstructuredObj.GetKind() == "Service" {
 				// Workaround for immutable spec.clusterIP error message
@@ -504,19 +573,17 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
 			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
 			if err != nil {
-				log.Errorf("error updating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+				c.Errorf("error updating: %s/%s/%s : %+v", unstructuredObj.GetNamespace(), resource.Resource, unstructuredObj.GetName(), err)
 				continue
 			}
 
 			if updated.GetResourceVersion() == unstructuredObj.GetResourceVersion() {
-				log.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+				c.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
-				log.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-				if log.IsLevelEnabled(log.TraceLevel) {
-					diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
-					if len(diff) > 0 {
-						log.Tracef("%s", diff)
-					}
+				c.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+				diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
+				if len(diff) > 0 {
+					c.Tracef("%s", diff)
 				}
 			}
 		}
@@ -538,7 +605,7 @@ func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) err
 	if err != nil {
 		return fmt.Errorf("annotate: failed to update object: #{err}")
 	}
-	log.Infof("%s/%s/%s annotated", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+	c.Infof("%s/%s/%s annotated", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 	return nil
 }
 
@@ -555,7 +622,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	if _, err := client.Update(unstructuredObj, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("label: failed to update client: %v", err)
 	}
-	log.Infof("%s/%s/%s labelled", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
+	c.Infof("%s/%s/%s labelled", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 	return nil
 }
 
@@ -585,7 +652,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		cm.Labels = labels
 		cm.Annotations = annotations
 
-		log.Infof("Creating namespace %s", name)
+		c.Debugf("Creating namespace %s", name)
 		if !c.ApplyDryRun {
 			if _, err := ns.Create(cm); err != nil {
 				return err
@@ -615,7 +682,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 	(*cm).Labels = labels
 	(*cm).Annotations = annotations
 	if !c.ApplyDryRun {
-		log.Infof("Updating namespace %s", name)
+		c.Debugf("Updating namespace %s", name)
 		if _, err := ns.Update(cm); err != nil {
 			return err
 		}
@@ -626,7 +693,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 func (c *Client) HasSecret(ns, name string) bool {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("hasSecret: failed to get client set: %v", err)
+		c.Tracef("hasSecret: failed to get client set: %v", err)
 		return false
 	}
 	secrets := client.CoreV1().Secrets(ns)
@@ -637,7 +704,7 @@ func (c *Client) HasSecret(ns, name string) bool {
 func (c *Client) HasConfigMap(ns, name string) bool {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("hasConfigMap: failed to get client set: %v", err)
+		c.Tracef("hasConfigMap: failed to get client set: %v", err)
 		return false
 	}
 	configmaps := client.CoreV1().ConfigMaps(ns)
@@ -664,7 +731,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
 			Data:       data,
 		}
-		log.Infof("Creating %s/secret/%s", ns, name)
+		c.Infof("Creating %s/secret/%s", ns, name)
 		if !c.ApplyDryRun {
 			if _, err := secrets.Create(cm); err != nil {
 				return fmt.Errorf("createOrUpdateSecret: failed to namespace: %v", err)
@@ -673,7 +740,7 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 	} else {
 		(*cm).Data = data
 		if !c.ApplyDryRun {
-			log.Infof("Updating %s/secret/%s", ns, name)
+			c.Infof("Updating %s/secret/%s", ns, name)
 			if _, err := secrets.Update(cm); err != nil {
 				return fmt.Errorf("createOrUpdateSecret: failed to update configmap: %v", err)
 			}
@@ -693,7 +760,7 @@ func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string
 		cm = &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
 			Data:       data}
-		log.Infof("Creating %s/cm/%s", ns, name)
+		c.Infof("Creating %s/cm/%s", ns, name)
 		if !c.ApplyDryRun {
 			if _, err := configs.Create(cm); err != nil {
 				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
@@ -702,7 +769,7 @@ func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string
 	} else {
 		(*cm).Data = data
 		if !c.ApplyDryRun {
-			log.Infof("Updating %s/cm/%s", ns, name)
+			c.Infof("Updating %s/cm/%s", ns, name)
 			if _, err := configs.Update(cm); err != nil {
 				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
 			}
@@ -750,7 +817,7 @@ func (c *Client) ExposeIngress(namespace, service string, domain string, port in
 				},
 			},
 		}
-		log.Infof("Creating %s/ingress/%s", namespace, service)
+		c.Infof("Creating %s/ingress/%s", namespace, service)
 		if !c.ApplyDryRun {
 			if _, err := ingresses.Create(ingress); err != nil {
 				return fmt.Errorf("exposeIngress: failed to create ingress: %v", err)
@@ -773,8 +840,8 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 
 	existing, err := pvcs.Get(name, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		log.Tracef("GetOrCreatePVC: failed to get PVC: %s", err)
-		log.Infof("Creating PVC %s/%s (%s %s)\n", namespace, name, size, class)
+		c.Tracef("GetOrCreatePVC: failed to get PVC: %s", err)
+		c.Infof("Creating PVC %s/%s (%s %s)\n", namespace, name, size, class)
 		_, err = pvcs.Create(&v1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
@@ -794,7 +861,7 @@ func (c *Client) GetOrCreatePVC(namespace, name, size, class string) error {
 	} else if err != nil {
 		return fmt.Errorf("getOrCreatePVC: failed to create PVC: %v", err)
 	} else {
-		log.Infof("Found existing PVC %s/%s (%s %s) ==> %s\n", namespace, name, size, class, existing.UID)
+		c.Infof("Found existing PVC %s/%s (%s %s) ==> %s\n", namespace, name, size, class, existing.UID)
 		return nil
 	}
 	return err
@@ -810,11 +877,11 @@ func (c *Client) StreamLogs(namespace, name string) error {
 	if err != nil {
 		return err
 	}
-	log.Debugf("Waiting for %s/%s to be running", namespace, name)
+	c.Debugf("Waiting for %s/%s to be running", namespace, name)
 	if err := c.WaitForPod(namespace, name, 120*time.Second, v1.PodRunning, v1.PodSucceeded); err != nil {
 		return err
 	}
-	log.Debugf("%s/%s running, streaming logs", namespace, name)
+	c.Debugf("%s/%s running, streaming logs", namespace, name)
 	var wg sync.WaitGroup
 	for _, container := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
 		logs := pods.GetLogs(pod.Name, &v1.PodLogOptions{
@@ -944,13 +1011,13 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 func (c *Client) PingMaster() bool {
 	client, err := c.GetClientset()
 	if err != nil {
-		log.Tracef("pingMaster: Failed to get clientset: %v", err)
+		c.Tracef("pingMaster: Failed to get clientset: %v", err)
 		return false
 	}
 
 	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
-		log.Tracef("pingMaster: Failed to get nodes list: %v", err)
+		c.Tracef("pingMaster: Failed to get nodes list: %v", err)
 		return false
 	}
 	if nodes == nil && len(nodes.Items) == 0 {
@@ -959,7 +1026,7 @@ func (c *Client) PingMaster() bool {
 
 	_, err = client.CoreV1().ServiceAccounts("kube-system").Get("default", metav1.GetOptions{})
 	if err != nil {
-		log.Tracef("pingMaster: Failed to get service account: %v", err)
+		c.Tracef("pingMaster: Failed to get service account: %v", err)
 		return false
 	}
 	return true
@@ -1058,7 +1125,7 @@ func (c *Client) ExecutePodf(namespace, pod, container string, command ...string
 	if err != nil {
 		return "", "", fmt.Errorf("executePodf: Failed to get clientset: %v", err)
 	}
-	log.Debugf("[%s/%s/%s] %s", namespace, pod, container, command)
+	c.Debugf("[%s/%s/%s] %s", namespace, pod, container, command)
 	const tty = false
 	req := client.CoreV1().RESTClient().Post().
 		Resource("pods").
@@ -1098,7 +1165,7 @@ func (c *Client) ExecutePodf(namespace, pod, container string, command ...string
 		return _stdout, _stderr, fmt.Errorf("exec returned an error: %+v", err)
 	}
 
-	log.Tracef("[%s/%s/%s] %s => %s %s ", namespace, pod, container, command, _stdout, _stderr)
+	c.Tracef("[%s/%s/%s] %s => %s %s ", namespace, pod, container, command, _stdout, _stderr)
 	return _stdout, _stderr, nil
 }
 
@@ -1124,7 +1191,7 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 		},
 		Spec: NewCommandJob(node, command),
 	})
-	log.Tracef("[%s] executing '%s' in pod %s", node, command, pod.Name)
+	c.Tracef("[%s] executing '%s' in pod %s", node, command, pod.Name)
 	if err != nil {
 		return "", fmt.Errorf("executef: Failed to create pod: %v", err)
 	}
@@ -1139,7 +1206,7 @@ func (c *Client) Executef(node string, timeout time.Duration, command string, ar
 	if err != nil {
 		return logString, fmt.Errorf("failed to execute command, pod did not complete: %v", err)
 	}
-	log.Tracef("[%s] stdout: %s", node, logString)
+	c.Tracef("[%s] stdout: %s", node, logString)
 	return logString, nil
 }
 
@@ -1306,6 +1373,9 @@ func (c *Client) GetHealth() Health {
 	}
 
 	for _, pod := range pods.Items {
+		if IsDeleted(&pod) {
+			continue
+		}
 		if IsPodCrashLoopBackoff(pod) {
 			health.CrashLoopBackOff++
 		} else if IsPodHealthy(pod) {

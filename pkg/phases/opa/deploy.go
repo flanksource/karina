@@ -22,7 +22,7 @@ func readFile(filename string) (string, error) {
 	return string(data), nil
 }
 
-func Deploy(platform *platform.Platform, policiesPath string) error {
+func deploy(platform *platform.Platform, policiesPath string) error {
 	policyFiles, err := ioutil.ReadDir(policiesPath)
 	if err != nil {
 		return err

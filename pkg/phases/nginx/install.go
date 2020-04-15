@@ -3,8 +3,6 @@ package nginx
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -15,7 +13,7 @@ const (
 
 func Install(platform *platform.Platform) error {
 	if platform.Nginx != nil && platform.Nginx.Disabled {
-		log.Debugf("Skipping nginx deployment")
+		platform.Debugf("Skipping nginx deployment")
 		return nil
 	}
 
@@ -29,7 +27,7 @@ func Install(platform *platform.Platform) error {
 	if platform.Nginx.Version == "" {
 		platform.Nginx.Version = "0.25.1.flanksource.1"
 	}
-	log.Infof("Installing Nginx Ingress Controller: %s", platform.Nginx.Version)
+	platform.Infof("Installing Nginx Ingress Controller: %s", platform.Nginx.Version)
 
 	if platform.Nginx.RequestBodyBuffer == "" {
 		platform.Nginx.RequestBodyBuffer = "16M"
@@ -40,7 +38,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if err := platform.ApplySpecs("", "nginx.yaml"); err != nil {
-		log.Errorf("Error deploying nginx: %s\n", err)
+		platform.Errorf("Error deploying nginx: %s\n", err)
 	}
 
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {

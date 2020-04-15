@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
 

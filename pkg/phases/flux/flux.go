@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/moshloop/platform-cli/pkg/k8s"
@@ -14,7 +13,7 @@ import (
 )
 
 func Install(p *platform.Platform) error {
-	log.Infof("Deploying %d gitops controllers", len(p.GitOps))
+	p.Infof("Deploying %d gitops controllers", len(p.GitOps))
 	for _, gitops := range p.GitOps {
 		if gitops.Namespace != "" {
 			if err := p.CreateOrUpdateNamespace(gitops.Namespace, nil, nil); err != nil {

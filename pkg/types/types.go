@@ -54,6 +54,7 @@ type VM struct {
 }
 
 type Calico struct {
+	Disabled  bool                    `yaml:"disabled,omitempty"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
 	Version   string                  `yaml:"version,omitempty"`
@@ -73,8 +74,13 @@ type OPA struct {
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
 	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
+	// Policies is a path to directory containing .rego policy files
+	Policies string `yaml:"policies,omitempty"`
 	// Log level for opa server, one of: debug,info,error, defaults to error
 	LogLevel string `yaml:"logLevel,omitempty"`
+	E2E      struct {
+		Fixtures string `yaml:"fixtures,omitempty"`
+	} `yaml:"e2e,omitempty"`
 }
 
 type Harbor struct {
@@ -335,6 +341,11 @@ type Monitoring struct {
 	NodeExporter       string     `yaml:"nodeExporter,omitempty"`
 	AddonResizer       string     `yaml:"addonResizer,omitempty"`
 	PrometheusOperator string     `yaml:"prometheus_operator,omitempty"`
+	E2E                struct {
+		// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
+		// can be one of critical, warning, info
+		MinAlertLevel string `yaml:"minAlertLevel,omitempty"`
+	} `yaml:"e2e,omitempty"`
 }
 
 type Prometheus struct {
@@ -437,6 +448,10 @@ type Thanos struct {
 	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
 	EnableCompactor bool `yaml:"enableCompactor,omitempty"`
+
+	E2E struct {
+		Server string `yaml:"server,omitempty"`
+	} `yaml:"e2e,omitempty"`
 }
 
 type FluentdOperator struct {
@@ -458,6 +473,7 @@ type Consul struct {
 	Disabled       bool   `yaml:"disabled,omitempty"`
 	Bucket         string `yaml:"bucket,omitempty"`
 	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
 type Vault struct {
@@ -545,7 +561,7 @@ type SealedSecrets struct {
 }
 
 type RegistryCredentials struct {
-	Enabled
+	Disabled              bool                   `yaml:"disabled,omitempty"`
 	Version               string                 `yaml:"version,omitempty"`
 	Namespace             string                 `yaml:"namespace,omitempty"`
 	Aws                   RegistryCredentialsECR `yaml:"aws,omitempty"`

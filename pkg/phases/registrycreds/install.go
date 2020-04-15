@@ -6,8 +6,11 @@ import (
 )
 
 func Install(p *platform.Platform) error {
-	if p.RegistryCredentials.Disabled {
+	if p.RegistryCredentials == nil || p.RegistryCredentials.Disabled {
 		return nil
+	}
+	if p.RegistryCredentials.Namespace == "" {
+		p.RegistryCredentials.Namespace = "platform-system"
 	}
 	namespace := p.RegistryCredentials.Namespace
 

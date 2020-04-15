@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,13 +18,14 @@ import (
 	"github.com/flanksource/commons/deps"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/is"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
 	"github.com/flanksource/yaml"
 	minio "github.com/minio/minio-go/v6"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/postgres"
@@ -38,10 +40,11 @@ import (
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
-
+	logger.Logger
+	logFields map[string]interface{}
 	k8s.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
-	ctx        context.Context   //nolint
+	ctx        context.Context //nolint
 	nsx        *nsx.NSXClient
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
@@ -57,6 +60,51 @@ func (platform *Platform) Init() {
 	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
+	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
+	platform.Client.Logger = platform.Logger
+	platform.logFields = make(map[string]interface{})
+}
+func (platform *Platform) clone() *Platform {
+	logFields := make(map[string]interface{})
+	for k, v := range platform.logFields {
+		logFields[k] = v
+	}
+	return &Platform{
+		Cluster:        platform.Cluster,
+		PlatformConfig: platform.PlatformConfig,
+		Logger:         platform.Logger,
+		logFields:      logFields,
+		Client:         platform.Client,
+		ctx:            context.TODO(),
+		nsx:            platform.nsx,
+		kubeConfig:     platform.kubeConfig,
+		ca:             platform.ca,
+		ingressCA:      platform.ingressCA,
+		Terminating:    platform.Terminating,
+	}
+}
+
+func (platform *Platform) WithField(key string, value interface{}) *Platform {
+	copy := platform.clone()
+	logger := copy.Logger.(*logrus.Entry)
+	copy.logFields[key] = value
+	copy.Logger = logger.WithField(key, value)
+	copy.Client.Logger = copy.Logger
+	return copy
+}
+
+func (platform *Platform) WithLogOutput(output io.Writer) *Platform {
+	copy := platform.clone()
+	logger := logrus.New()
+	logger.SetOutput(output)
+	logger.Formatter = &logrus.TextFormatter{ForceColors: true}
+	newLogger := logger.WithContext(context.Background())
+	for k, v := range copy.logFields {
+		newLogger = newLogger.WithField(k, v)
+	}
+	copy.Logger = newLogger
+	copy.Client.Logger = copy.Logger
+	return copy
 }
 
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
@@ -82,7 +130,7 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	}
 	ca, err := readCA(platform.CA)
 	if err != nil {
-		log.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
+		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
 	platform.ca = ca
 	return ca
@@ -105,17 +153,17 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 	}
 
 	if platform.IngressCA == nil {
-		log.Infof("Creating self-signed CA for ingress")
+		platform.Infof("Creating self-signed CA for ingress")
 		ca := certs.NewCertificateBuilder("ingress-ca").CA().Certificate
 		platform.ingressCA, _ = ca.SignCertificate(ca, 1)
 		return platform.ingressCA
 	}
-	log.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
+	platform.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
 	ca, err := readCA(platform.IngressCA)
 	if err != nil {
-		log.Fatalf("Unable to open Ingress CA: %v", err)
+		platform.Fatalf("Unable to open Ingress CA: %v", err)
 	}
-	log.Debugf("[IngressCA] read CA %s", ca.X509.Subject)
+	platform.Debugf("[IngressCA] read CA %s", ca.X509.Subject)
 	platform.ingressCA = ca
 	return ca
 }
@@ -133,11 +181,15 @@ func (platform *Platform) WaitFor() error {
 
 func (platform *Platform) GetDNSClient() dns.Client {
 	if platform.DNS == nil || platform.DNS.Disabled {
-		return &dns.DummyDNSClient{Zone: platform.DNS.Zone}
+		return &dns.DummyDNSClient{
+			Logger: platform.Logger,
+			Zone:   platform.DNS.Zone,
+		}
 	}
 
 	if platform.DNS.Type == "route53" {
 		dns := &dns.Route53Client{
+			Logger:       platform.Logger,
 			HostedZoneID: platform.DNS.Zone,
 			AccessKey:    platform.DNS.AccessKey,
 			SecretKey:    platform.DNS.SecretKey,
@@ -147,6 +199,7 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	}
 
 	return &dns.DynamicDNSClient{
+		Logger:     platform.Logger,
 		Zone:       platform.DNS.Zone,
 		KeyName:    platform.DNS.KeyName,
 		Nameserver: platform.DNS.Nameserver,
@@ -167,11 +220,12 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	}
 
 	client := &nsx.NSXClient{
+		Logger:   platform.Logger,
 		Host:     platform.NSX.NsxV3.NsxAPIManagers[0],
 		Username: platform.NSX.NsxV3.NsxAPIUser,
 		Password: platform.NSX.NsxV3.NsxAPIPass,
 	}
-	log.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
+	platform.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
 
 	if err := client.Init(); err != nil {
 		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
@@ -181,7 +235,7 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
 	}
-	log.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
+	platform.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
 	return platform.nsx, nil
 }
 
@@ -199,15 +253,15 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 		"Template":    vm.Template,
 		"CreatedDate": time.Now().Format("02Jan06-15:04:05"),
 	}); err != nil {
-		log.Warnf("Failed to set attributes for %s: %v", vm.Name, err)
+		platform.Warnf("Failed to set attributes for %s: %v", vm.Name, err)
 	}
-	log.Debugf("[%s] Waiting for IP", vm.Name)
+	platform.Debugf("[%s] Waiting for IP", vm.Name)
 	ip, err := VM.WaitForIP()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get IP for %s: %v", vm.Name, err)
 	}
 	vm.IP = ip
-	log.Tracef("[%s] found ip %s", vm.Name, ip)
+	platform.Tracef("[%s] found ip %s", vm.Name, ip)
 	if platform.NSX != nil && !platform.NSX.Disabled {
 		ctx := context.TODO()
 		nsxClient, err := platform.GetNSXClient()
@@ -248,7 +302,7 @@ func (platform *Platform) GetMasterIPs() []string {
 		return []string{platform.Kubernetes.MasterIP}
 	}
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
-	log.Tracef("Finding masters via consul: %s\n", url)
+	platform.Tracef("Finding masters via consul: %s\n", url)
 	response, _ := net.GET(url)
 	var consul api.Consul
 	if err := json.Unmarshal(response, &consul); err != nil {
@@ -259,7 +313,7 @@ node:
 	for _, node := range consul {
 		for _, check := range node.Checks {
 			if check.Status != "passing" {
-				log.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
+				platform.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
 				continue node
 			}
 		}
@@ -271,7 +325,7 @@ node:
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
 	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
-		log.Tracef("Using KUBECONFIG from ENV")
+		platform.Tracef("Using KUBECONFIG from ENV")
 		return os.Getenv("KUBECONFIG"), nil
 	}
 	cwd, _ := os.Getwd()
@@ -316,7 +370,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 		return platform.GetBinary("kubectl")
 	}
 
-	log.Tracef("Using KUBECONFIG=%s", kubeconfig)
+	platform.Tracef("Using KUBECONFIG=%s", kubeconfig)
 	return deps.BinaryWithEnv("kubectl", platform.Kubernetes.Version, ".bin", map[string]string{
 		"KUBECONFIG": kubeconfig,
 		"PATH":       os.Getenv("PATH"),
@@ -325,11 +379,11 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 
 func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
 	if platform.HasSecret(namespace, secretName) {
-		log.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
+		platform.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
 		//TODO(moshloop) check certificate expiry and renew if necessary
 		return nil
 	}
-	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	platform.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 
 	cert.X509.PublicKey = cert.PrivateKey.Public()
@@ -352,14 +406,14 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 }
 
 func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Certificate, error) {
-	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	platform.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 3)
 }
 
 func (platform *Platform) CreateInternalCertificate(service string, namespace string, clusterDomain string) (*certs.Certificate, error) {
 	domain := fmt.Sprintf("%s.%s.svc.%s", service, namespace, clusterDomain)
-	log.Infof("Creating new internal certificate %s", domain)
+	platform.Infof("Creating new internal certificate %s", domain)
 	cert := certs.NewCertificateBuilder(domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 5)
 }
@@ -392,7 +446,7 @@ func (platform *Platform) Template(file string, pkg string) (string, error) {
 	template, err := text.Template(raw, platform.PlatformConfig)
 	if err != nil {
 		data, _ := yaml.Marshal(platform.PlatformConfig)
-		log.Debugf("Error templating %s: %s", file, console.StripSecrets(string(data)))
+		platform.Debugf("Error templating %s: %s", file, console.StripSecrets(string(data)))
 		return "", err
 	}
 	return template, nil
@@ -476,7 +530,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		log.Debugf("Applying %s", spec)
+		platform.Debugf("Applying %s", spec)
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
@@ -492,7 +546,7 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 func (platform *Platform) GetBinaryWithEnv(name string, env map[string]string) deps.BinaryFunc {
 	if platform.DryRun {
 		return func(msg string, args ...interface{}) error {
-			fmt.Printf("CMD: "+fmt.Sprintf("%s", env)+" .bin/"+name+" "+msg+"\n", args...)
+			platform.Tracef("CMD: "+fmt.Sprintf("%s", env)+" .bin/"+name+" "+msg+"\n", args...)
 			return nil
 		}
 	}
@@ -502,7 +556,7 @@ func (platform *Platform) GetBinaryWithEnv(name string, env map[string]string) d
 func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 	if platform.DryRun {
 		return func(msg string, args ...interface{}) error {
-			fmt.Printf("CMD: .bin/"+name+" "+msg+"\n", args...)
+			platform.Tracef("CMD: .bin/"+name+" "+msg+"\n", args...)
 			return nil
 		}
 	}
@@ -519,7 +573,7 @@ func (platform *Platform) GetOrCreateDB(config postgres.ClusterConfig) (*types.D
 
 	db := &postgres.Postgresql{}
 	if err := platform.Get(ns, clusterName, db); err != nil {
-		log.Infof("Creating new cluster: %s", clusterName)
+		platform.Infof("Creating new cluster: %s", clusterName)
 		for _, db := range config.Databases {
 			databases[db] = appUsername
 		}
@@ -598,7 +652,7 @@ func (platform *Platform) GetOrCreateDB(config postgres.ClusterConfig) (*types.D
 		if err := platform.Get(ns, clusterName, db); err != nil {
 			return true
 		}
-		log.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
+		platform.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
 		return db.Status.PostgresClusterStatus == postgres.ClusterStatusRunning
 	})
 	if db.Status.PostgresClusterStatus != postgres.ClusterStatusRunning {
@@ -642,7 +696,7 @@ func (platform *Platform) GetOrCreateBucket(name string) error {
 		return fmt.Errorf("failed to check S3 bucket: %v", err)
 	}
 	if !exists {
-		log.Infof("Creating s3://%s", name)
+		platform.Infof("Creating s3://%s", name)
 		if err := s3Client.MakeBucket(name, platform.S3.Region); err != nil {
 			return fmt.Errorf("failed to create S3 bucket: %v", err)
 		}

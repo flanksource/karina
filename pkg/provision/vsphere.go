@@ -14,7 +14,6 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,7 +36,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	if len(masters) == 0 {
 		_, err := createMaster(platform)
 		if err != nil {
-			log.Fatalf("Failed to create master: %v", err)
+			platform.Fatalf("Failed to create master: %v", err)
 		}
 	}
 
@@ -48,7 +47,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 
 	masters = platform.GetMasterIPs()
-	log.Infof("Detected %d existing masters: %s", len(masters), masters)
+	platform.Infof("Detected %d existing masters: %s", len(masters), masters)
 
 	if platform.Master.Count != len(masters) {
 		// upload control plane certs first
@@ -57,7 +56,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)
 		if err != nil {
-			log.Warnf("Failed to create secondary master: %v", err)
+			platform.Warnf("Failed to create secondary master: %v", err)
 		}
 	}
 
@@ -75,7 +74,7 @@ func VsphereCluster(platform *platform.Platform) error {
 			go func() {
 				defer wg.Done()
 				if _, err := createWorker(platform, _nodeGroup); err != nil {
-					log.Errorf("Failed to provision worker %v", err)
+					platform.Errorf("Failed to provision worker %v", err)
 				}
 			}()
 		}
@@ -87,7 +86,7 @@ func VsphereCluster(platform *platform.Platform) error {
 				vmNames = append(vmNames, k)
 			}
 			sort.Strings(vmNames)
-			log.Infof("Downscaling %d extra worker nodes", terminateCount)
+			platform.Infof("Downscaling %d extra worker nodes", terminateCount)
 			time.Sleep(3 * time.Second)
 			for i := 0; i < terminateCount; i++ {
 				vm := vms[vmNames[worker.Count+i-1]] //terminate oldest first
@@ -108,7 +107,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: kubectl --kubeconfig %s get nodes\n\n Next deploy the CNI and addons\n\n\n", platform.Name, path)
 	masterLB, workerLB, err := provisionLoadbalancers(platform)
 	if err != nil {
-		log.Errorf("Failed to provision load balancers: %v", err)
+		platform.Errorf("Failed to provision load balancers: %v", err)
 	}
 	fmt.Printf("Provisioned LoadBalancers:\n Masters: %s\nWorkers: %s\n", masterLB, workerLB)
 	return nil
@@ -121,7 +120,7 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-masters"
-	log.Infof("Creating new secondary master %s", vm.Name)
+	platform.Infof("Creating new secondary master %s", vm.Name)
 	if platform.DryRun {
 		return nil, nil
 	}
@@ -134,9 +133,9 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 		return nil, fmt.Errorf("failed to clone secondary master: %s", err)
 	}
 	if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), cloned.IP()); err != nil {
-		log.Warnf("Failed to update DNS for %s", cloned.IP())
+		platform.Warnf("Failed to update DNS for %s", cloned.IP())
 	} else {
-		log.Infof("Provisioned new master: %s\n", cloned.IP())
+		platform.Infof("Provisioned new master: %s\n", cloned.IP())
 	}
 	return cloned, nil
 }
@@ -148,7 +147,7 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-masters"
-	log.Infof("No masters detected, deploying new master %s", vm.Name)
+	platform.Infof("No masters detected, deploying new master %s", vm.Name)
 	config, err := phases.CreatePrimaryMaster(platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create primary master: %s", err)
@@ -159,7 +158,7 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 		return nil, fmt.Errorf("error saving config %s", err)
 	}
 
-	log.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
+	platform.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
 
 	var machine types.Machine
 	if !platform.DryRun {
@@ -171,9 +170,9 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 			return nil, err
 		}
 		if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), machine.IP()); err != nil {
-			log.Errorf("Failed to update DNS record for %s: %v", machine, err)
+			platform.Errorf("Failed to update DNS record for %s: %v", machine, err)
 		}
-		log.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
+		platform.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
 	}
 	if err := platform.WaitFor(); err != nil {
 		return nil, fmt.Errorf("primary master failed to come up %s ", err)
@@ -198,7 +197,7 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-workers"
-	log.Infof("Creating new worker %s", vm.Name)
+	platform.Infof("Creating new worker %s", vm.Name)
 	if platform.DryRun {
 		return nil, nil
 	}
@@ -208,9 +207,9 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 		return nil, fmt.Errorf("failed to clone worker: %s", err)
 	}
 	if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), cloned.IP()); err != nil {
-		log.Warnf("Failed to update DNS for %s", cloned.IP())
+		platform.Warnf("Failed to update DNS for %s", cloned.IP())
 	} else {
-		log.Infof("Provisioned new worker: %s\n", cloned.IP())
+		platform.Infof("Provisioned new worker: %s\n", cloned.IP())
 	}
 	return cloned, nil
 }
@@ -218,23 +217,23 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 func terminate(platform *platform.Platform, vm types.Machine) {
 	if !platform.Terminating {
 		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
-			log.Warnf("[%s] failed to drain: %v", vm.Name(), err)
+			platform.Warnf("[%s] failed to drain: %v", vm.Name(), err)
 		}
 	}
 	client, err := platform.GetClientset()
 	if err != nil {
-		log.Warnf("Failed to get client to delete node")
+		platform.Warnf("Failed to get client to delete node")
 	} else {
 		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
-			log.Warnf("Failed to delete node for %s: %v", vm, err)
+			platform.Warnf("Failed to delete node for %s: %v", vm, err)
 		}
 	}
 
 	if err := RemoveDNS(platform, vm); err != nil {
-		log.Warnf("Failed to remove dns for %s: %v", vm, err)
+		platform.Warnf("Failed to remove dns for %s: %v", vm, err)
 	}
 	if err := vm.Terminate(); err != nil {
-		log.Warnf("Failed to terminate %s: %v", vm.Name(), err)
+		platform.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}
 }
 
