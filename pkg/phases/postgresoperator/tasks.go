@@ -2,14 +2,18 @@ package postgresoperator
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/moshloop/platform-cli/pkg/api/postgres"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.DB, error) {
@@ -199,4 +203,36 @@ func doUntil(fn func() bool) bool {
 		}
 		time.Sleep(5 * time.Second)
 	}
+}
+
+func GetPatroniClient(p *platform.Platform, namespace, clusterName string) (*http.Client, error) {
+	client, _ := p.GetClientset()
+	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
+	pods, err := client.CoreV1().Pods(namespace).List(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
+	}
+
+	if len(pods.Items) != 1 {
+		return nil, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
+	}
+
+	dialer, err := p.GetProxyDialer(proxy.Proxy{
+		Namespace:    namespace,
+		Kind:         "pods",
+		ResourceName: pods.Items[0].Name,
+		Port:         8008,
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get proxy dialer")
+	}
+
+	tr := &http.Transport{
+		DialContext: dialer.DialContext,
+	}
+
+	httpClient := &http.Client{Transport: tr}
+
+	return httpClient, nil
 }

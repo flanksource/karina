@@ -26,16 +26,19 @@ import (
 	"github.com/flanksource/commons/text"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/flanksource/yaml"
+	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Platform struct {
@@ -640,4 +643,43 @@ func (platform *Platform) GetAWSS3Client() (*s3.S3, error) {
 	client := s3.New(ssn)
 	client.Config.S3ForcePathStyle = aws.Bool(platform.S3.UsePathStyle)
 	return client, nil
+}
+
+func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {
+	client, _ := platform.GetClientset()
+	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
+	pods, err := client.CoreV1().Pods(namespace).List(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
+	}
+
+	if len(pods.Items) != 1 {
+		return nil, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
+	}
+
+	secretName := fmt.Sprintf("app.%s.credentials", clusterName)
+	secret := platform.GetSecret("postgres-operator", secretName)
+	if secret == nil {
+		return nil, fmt.Errorf("%s not found", secretName)
+	}
+
+	dialer, err := platform.GetProxyDialer(proxy.Proxy{
+		Namespace:    namespace,
+		Kind:         "pods",
+		ResourceName: pods.Items[0].Name,
+		Port:         5432,
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get proxy dialer")
+	}
+
+	pgdb := pg.Connect(&pg.Options{
+		User:     string((*secret)["username"]),
+		Password: string((*secret)["password"]),
+		Dialer:   dialer.DialContext,
+		Database: databaseName,
+	})
+
+	return pgdb, nil
 }
