@@ -39,11 +39,17 @@ docker pull flanksource/platform-cli:latest
 Make sure the following environment variables are set:
 
 `GOVC_FQDN`
+
 `GOVC_USER`
+
 `GOVC_PASS`
+
 `GOVC_DATACENTER`
+
 `GOVC_NETWORK`
+
 `GOVC_DATASTORE`
+
 `GOVC_CLUSTER`
 
 Connectivity can be verified by [installing govc](https://github.com/vmware/govmomi/tree/master/govc#installation) and running the following:
@@ -62,7 +68,71 @@ platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --p
 
 ## 4. Configure the platform config
 
+Create a YAML platform configuration file.
 
+Below is a small working sample.
+
+See other examples in the [test vSphere platform fixtures](https://github.com/flanksource/platform-cli/tree/master/test/vsphere).
+
+See the
+[Configuration Reference](./reference/config.md) for details of available configurations.
+
+```yaml
+##
+## Sample platform config
+##
+
+## Cluster name
+name: example-cluster
+
+## Prefix to be added to VM hostnames,
+hostPrefix: ex
+
+## Endpoint for externally hosted consul cluster
+## NOTE: a working consol config required to verify
+##       that primary master is available.
+consul: 10.100.0.13
+
+## Domain that cluster will be available at
+## NOTE: domain must be supplied for vSphere clusters
+domain: 10.100.0.0.nip.io
+
+# vSphere datacenter
+datacenter: lab
+
+# The CA certs generated in step 3
+ca:
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ingressCA:
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
+  password: foobar
+
+# A list of folders of kubernetes specs to apply, 
+# these will be templatized
+specs: 
+  - ./manifests
+versions:
+  kubernetes: v1.16.4
+serviceSubnet: 10.96.0.0/16
+podSubnet: 10.97.0.0/16
+
+## The VM configuration for master nodes
+master:
+  count: 1
+  cpu: 2  #NOTE: minimum of 2
+  memory: 4
+  disk: 10
+  # GOVC_NETWORK
+  network: "VM Network"
+  # GOVC_CLUSTER
+  cluster: "cluster"
+  template: "k8s-1.16.4"
+
+
+```
 
 1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
 2. Download and install the platform-cli binary
