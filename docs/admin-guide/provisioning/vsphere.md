@@ -4,7 +4,7 @@
 
 Choose to build from source, download a release or use docker.
 
-#### Clone,build from source and install:
+#### Clone, build from source and install:
 
 ```bash
 git clone git@github.com:flanksource/platform-cli.git
@@ -36,6 +36,9 @@ docker pull flanksource/platform-cli:latest
 
 ## 2. Setup and verify vSphere connectivity
 
+`platform-cli` uses the [VMWare govmomi library](https://github.com/vmware/govmomi) 
+which normally uses the following environment variables for connectivity parameters.
+
 Make sure the following environment variables are set:
 
 `GOVC_FQDN`
@@ -61,6 +64,8 @@ govc about
 
 ## 3. Create CA certs for use with the cluster
 
+Create a Certificate Authority for the cluster and the cluster ingress by running:
+
 ```yaml
 platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar
 platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar
@@ -68,7 +73,7 @@ platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --p
 
 ## 4. Configure the platform config
 
-Create a YAML platform configuration file.
+`platform-cli` uses a YAML platform configuration file.
 
 Below is a small working sample.
 
@@ -130,14 +135,12 @@ master:
   # GOVC_CLUSTER
   cluster: "cluster"
   template: "k8s-1.16.4"
-
-
 ```
 
-1. Setup [environment variables](#environment-variables) and [platform configuration](#platform-configuration)
-2. Download and install the platform-cli binary
-3. Generate a CA for the cluster: `platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/ingress-ca.key --password foobar`
+
+
 4. Create the cluster `platform-cli provision vsphere-cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
+
 5. Check the status of running vms: `platform-cli status`
 6. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
 7. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
