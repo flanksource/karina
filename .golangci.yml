@@ -46,11 +46,3 @@ linters:
 linters-settings:
   gofmt:
     simplify: false
-
-# Exclude konfigadm-template.yml from linting
-# until konfigadm is modified to allow .yaml files
-# see https://github.com/flanksource/konfigadm/pull/62
-# and
-# https://github.com/flanksource/konfigadm/blob/98ccbc8add3bbafdb6f488077c3f2f763d42bcb0/pkg/types/config.go#L155-L159
-skip-files:
-  - test/fixtures/konfigadm-template.yml
