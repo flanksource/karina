@@ -13,7 +13,6 @@ import (
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/kr/pretty"
 	ptypes "github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -90,7 +89,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	s.Infof("Cloning %s to %s", vm.Template, vm.Name)
 
-	log.Tracef("VM Spec: %# v", pretty.Formatter(spec))
+	s.Tracef("VM Spec: %# v", pretty.Formatter(spec))
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
@@ -146,7 +145,7 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 		s.Infof("%+v\n", err)
 		return nil, err
 	}
-	log.Tracef("Uploaded to %s", path)
+	s.Tracef("Uploaded to %s", path)
 
 	//NOTE: using the datastore Name as the vm.Datastore may be "" and
 	//      the datastore may have been determined from default values.
