@@ -34,15 +34,6 @@ The [official documentation describes](https://kubernetes.io/docs/tasks/debug-ap
 | `audit-log-maxsize`  | Specifies the maximum size in megabytes of the audit <br/>log file before it gets rotated <br/>Sets the `--audit-log-maxsize` flag.                   |
 | `audit-log-format`   | Specifies the logging format used.<br/>Options are:<br/>`"legacy"` indicates 1-line text format for each event <br/> `"json"` indicates a structured json format. <br/>Sets the `--audit-log-format` flag.                   |
 
-These are injected into the cluster at creation time.
-
-For vSphere clusters these configs are injected through the `kubeadm.conf` passed to `kubeadm` 
-through cloud-init images passed to the primary master.
-
-For Kind clusters these configs are injected as `kubeadmConfigPatches` patches specified in the Kind cluster config YAML.
-
-(see [kubeadm control pane configuration documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#apiserver-flags) for more detail)
-
 ## Debugging
 
 ### Kind Clusters
@@ -157,25 +148,4 @@ nodes:
     ...
 </pre>
 
-### vSphere Clusters
 
-Adding the coomands to the platform config can grant access to the primary master
-VM to allow debugging `kubeadm init` config issues:
-
-```YAML
-master:
-# ... 
-  commands: 
-## SAMPLE startup debug config
-## for access to primary masters
-## that fail to start
-    - "useradd debug; echo 'debug:debug' | chpasswd; adduser debug sudo; adduser debug docker;mkdir -p /home/debug/.ssh; touch /home/debug/.ssh/authorized_keys; echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCjSTjgX3GeHQc47Nw1rKF4IwvlR09CncjTsK3GORm9ZpUxPkXhLIQ7xHktYKftapB+zzjfjG02ZtIDwGHYypi5qXLRqPxSLOxjASPIZoErb7WLZ745btEb3pmjBEt19v4fbVFUyr4eqIWzDHGh81Pj2DCuirlMvlWwiHYCiBUsZcRtAlg/u2z4BTfthR2skPvck3Fr3yfL51BHgdv1gdD4n+aAquzxdJV74ED5p9+MKYc7IDkb5NBZf1/8iC3LFw4QjM07ibPc4SDzOMHGRLjCXuEwphfKyv56v1L9lMXXcVrwFSwPCtqQu1uVA2iBufgShq8eWcujLbthfcwP+4v philip@silent' >> /home/debug/.ssh/authorized_keys; chown debug:debug /home/debug/.ssh/authorized_keys; chmod 600 /home/debug/.ssh/authorized_keys"
-# ...
-```
-
-This creates a user named `debug` user (password `debug`) and specifies a public key for a SSH identity that can be used to log into the VM during startup.
-
-cloudinit logs are in `cloud-init-output.log` - the last stages of this contains the kubeadm outputs.
-
-api-server specific logs can be found by finding the api-server pod containers using docker and inspecring their logs.
-``````
