@@ -16,7 +16,6 @@ type PlatformConfig struct {
 	DNS            *DynamicDNS `yaml:"dns,omitempty"`
 	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
 	// Domain specifies the domain that cluster will be available at
-	// NOTE: domain must be supplied for vSphere clusters.
 	Domain      string   `yaml:"domain"`
 	EventRouter *Enabled `yaml:"eventRouter,omitempty"`
 	Harbor      *Harbor  `yaml:"harbor,omitempty"`
