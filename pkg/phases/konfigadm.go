@@ -105,8 +105,7 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	platform.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
-		// for vSphere clusters audit policy files are injected into the machine
-		// via the KonfigAdm
+		// clusters audit policy files are injected into the machine via konfigadm
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
 		if ap == "" {
 			return fmt.Errorf("unable to read audit policy file")
