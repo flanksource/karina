@@ -77,7 +77,7 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile; policyFile != "" {
-		// for kind cluster audit policy files are mapped in via a dual
+		// for kind clusters audit policy files are mapped in via a dual
 		// host -> master,
 		// master -> kube-api-server pod
 		// mapping
