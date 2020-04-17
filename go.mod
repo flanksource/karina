@@ -23,6 +23,7 @@ require (
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olivere/elastic/v7 v7.0.13
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0

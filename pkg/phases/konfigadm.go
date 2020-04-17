@@ -3,6 +3,8 @@ package phases
 import (
 	"fmt"
 
+	"github.com/flanksource/commons/files"
+
 	"github.com/flanksource/commons/certs"
 	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
@@ -102,6 +104,14 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	}
 	platform.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		// clusters audit policy files are injected into the machine via konfigadm
+		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
+		if ap == "" {
+			return fmt.Errorf("unable to read audit policy file")
+		}
+		cfg.Files[kubeadm.AuditPolicyPath] = ap
+	}
 	return nil
 }
 

@@ -124,6 +124,9 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin")
 }
 
+// GetCA retrieves the cert.CertificateAuthority
+// for the given platform, initialising it (platform.ca) if it hasn't been read from
+// the specified config (platform.CA) yet.
 func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
@@ -136,9 +139,17 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	return ca
 }
 
+// readCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
+// with key password ca.Password.
 func readCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
+	if cert == "" {
+		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
+	}
 	privateKey := files.SafeRead(ca.PrivateKey)
+	if privateKey == "" {
+		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
+	}
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
