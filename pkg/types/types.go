@@ -192,7 +192,12 @@ type S3 struct {
 	// Provide a KMS Master Key
 	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
 	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
-	UsePathStyle bool `yaml:"usePathStyle"`
+	UsePathStyle bool  `yaml:"usePathStyle"`
+	E2E          S3E2E `yaml:"e2e,omitempty"`
+}
+
+type S3E2E struct {
+	Minio bool `yaml:"minio,omitempty"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {

@@ -5,7 +5,7 @@ import (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.Minio != nil && !platform.Minio.Disabled {
+	if platform.S3.E2E.Minio {
 		if err := platform.CreateOrUpdateNamespace("minio", nil, nil); err != nil {
 			return err
 		}
