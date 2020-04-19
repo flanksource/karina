@@ -27,6 +27,10 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
+	if !p.E2E {
+		return
+	}
+
 	cs := NewBackupRestore(p, "consul-server", "vault")
 
 	key1 := "e2e-test-" + utils.RandomString(6)
