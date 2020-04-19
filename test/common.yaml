@@ -12,7 +12,8 @@ ldap:
   groupDN: ou=groups,dc=example,dc=com
   groupObjectClass: groupOfNames
   groupNameAttr: DN
-  test:
+  e2e:
+    mock: true
     username: test
     password: secret
 kubernetes:
@@ -23,7 +24,7 @@ kubernetes:
     "audit-log-maxsize": 1024
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
-    "audit-log-format": legacy   # default is json
+    "audit-log-format": legacy # default is json
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
@@ -88,6 +89,7 @@ harbor:
   version: v1.10.0
 postgresOperator:
   version: v1.3.4.flanksource.1
+minio:
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -127,7 +129,7 @@ eck:
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
-  cookieSecret: !!template "{{ base64.Encode \"d0b0681d5babefb164b4d6e03b53967b\" }}"
+  cookieSecret: !!template '{{ base64.Encode "d0b0681d5babefb164b4d6e03b53967b" }}'
 prometheus:
   persistence:
     capacity: 10Gi
