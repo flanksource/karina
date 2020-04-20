@@ -118,7 +118,7 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	}
 
 	// update hosts file with hostname
-	cfg.AddCommand("echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts")
+	cfg.AddCommand(updateHostsFileCmd)
 	return cfg, nil
 }
 
