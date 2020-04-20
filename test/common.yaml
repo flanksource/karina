@@ -99,6 +99,7 @@ s3:
   region: us-east1
   kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
   usePathStyle: true
+  skipTLSVerify: true
   e2e:
     minio: true
 velero:
