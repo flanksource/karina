@@ -7,7 +7,6 @@ import (
 	"github.com/flanksource/commons/certs"
 	"github.com/moshloop/platform-cli/pkg/api/certmanager"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,8 +19,11 @@ const (
 func Install(platform *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it
 	// so it cannot be disabled
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		return fmt.Errorf("install: failed to create/update namespace: %v", err)
+	}
 
-	log.Infof("Installing CertMananager")
+	platform.Infof("Installing CertMananager")
 	if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
 		return err
 	}
@@ -34,7 +36,7 @@ func Install(platform *platform.Platform) error {
 
 	var issuerConfig certmanager.IssuerConfig
 	if platform.CertManager.Vault == nil {
-		log.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
+		platform.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
 		ingress := platform.GetIngressCA()
 		switch ingress := ingress.(type) {
 		case *certs.Certificate:
@@ -53,7 +55,7 @@ func Install(platform *platform.Platform) error {
 	} else {
 		// TODO(moshloop): delete previously imported CA
 
-		log.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
+		platform.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
 			"token": []byte(platform.CertManager.Vault.Token),
 		}); err != nil {

@@ -1,13 +1,7 @@
 package harbor
 
 import (
-	"encoding/json"
-	"fmt"
-
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/commons/net"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
@@ -17,20 +11,17 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("Harbor", "Harbor is not configured")
 		return
 	}
-	defaults(p)
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "harbor", test)
-	health := fmt.Sprintf("%s/api/health", p.Harbor.URL)
-	log.Infof("Checking %s\n", health)
-
-	data, err := net.GET(health)
+	harbor, err := NewClient(p)
 	if err != nil {
-		test.Failf("Harbor", "Failed to get status from %s %s", health, err)
+		test.Failf(Namespace, "failed to get harbor client: %v", err)
 		return
 	}
-	var status Status
-	if err := json.Unmarshal(data, &status); err != nil {
-		test.Failf("Harbor", "Failed to unmarshal json %v", err)
+	var status *Status
+	status, err = harbor.GetStatus()
+	if err != nil {
+		test.Failf("Harbor", "Failed to get harbor status %v", err)
 		return
 	}
 
@@ -41,12 +32,4 @@ func Test(p *platform.Platform, test *console.TestResults) {
 			test.Failf("Harbor", "%s is %s", component.Name, component.Status)
 		}
 	}
-}
-
-type Status struct {
-	Status     string `json:"status"`
-	Components []struct {
-		Name   string `json:"name"`
-		Status string `json:"status"`
-	} `json:"components"`
 }

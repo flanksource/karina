@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,33 +18,39 @@ import (
 	"github.com/flanksource/commons/deps"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/is"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
 	"github.com/flanksource/yaml"
 	minio "github.com/minio/minio-go/v6"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/nsx"
-	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
+	v1 "k8s.io/api/core/v1"
 )
 
 type Platform struct {
+	Cluster types.Cluster
 	types.PlatformConfig
+	logger.Logger
+	logFields map[string]interface{}
 	k8s.Client
-	ctx        context.Context
-	session    *vmware.Session
+	//TODO: verify if ctx can be removed after refactoring has left it unused
+	ctx        context.Context //nolint
 	nsx        *nsx.NSXClient
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
 	ingressCA  certs.CertificateAuthority
+	// Terminating is true if the cluster is in a terminating state
+	Terminating bool
 }
 
 func (platform *Platform) Init() {
@@ -52,6 +60,51 @@ func (platform *Platform) Init() {
 	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
+	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
+	platform.Client.Logger = platform.Logger
+	platform.logFields = make(map[string]interface{})
+}
+func (platform *Platform) clone() *Platform {
+	logFields := make(map[string]interface{})
+	for k, v := range platform.logFields {
+		logFields[k] = v
+	}
+	return &Platform{
+		Cluster:        platform.Cluster,
+		PlatformConfig: platform.PlatformConfig,
+		Logger:         platform.Logger,
+		logFields:      logFields,
+		Client:         platform.Client,
+		ctx:            context.TODO(),
+		nsx:            platform.nsx,
+		kubeConfig:     platform.kubeConfig,
+		ca:             platform.ca,
+		ingressCA:      platform.ingressCA,
+		Terminating:    platform.Terminating,
+	}
+}
+
+func (platform *Platform) WithField(key string, value interface{}) *Platform {
+	copy := platform.clone()
+	logger := copy.Logger.(*logrus.Entry)
+	copy.logFields[key] = value
+	copy.Logger = logger.WithField(key, value)
+	copy.Client.Logger = copy.Logger
+	return copy
+}
+
+func (platform *Platform) WithLogOutput(output io.Writer) *Platform {
+	copy := platform.clone()
+	logger := logrus.New()
+	logger.SetOutput(output)
+	logger.Formatter = &logrus.TextFormatter{ForceColors: true}
+	newLogger := logger.WithContext(context.Background())
+	for k, v := range copy.logFields {
+		newLogger = newLogger.WithField(k, v)
+	}
+	copy.Logger = newLogger
+	copy.Client.Logger = copy.Logger
+	return copy
 }
 
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
@@ -68,24 +121,35 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return nil, fmt.Errorf("could not find any master ips")
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin")
+	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin", 24*7*time.Hour)
 }
 
+// GetCA retrieves the cert.CertificateAuthority
+// for the given platform, initialising it (platform.ca) if it hasn't been read from
+// the specified config (platform.CA) yet.
 func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
 	}
 	ca, err := readCA(platform.CA)
 	if err != nil {
-		log.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
+		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
 	platform.ca = ca
 	return ca
 }
 
+// readCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
+// with key password ca.Password.
 func readCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
+	if cert == "" {
+		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
+	}
 	privateKey := files.SafeRead(ca.PrivateKey)
+	if privateKey == "" {
+		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
+	}
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
@@ -100,44 +164,19 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 	}
 
 	if platform.IngressCA == nil {
-		log.Infof("Creating self-signed CA for ingress")
+		platform.Infof("Creating self-signed CA for ingress")
 		ca := certs.NewCertificateBuilder("ingress-ca").CA().Certificate
 		platform.ingressCA, _ = ca.SignCertificate(ca, 1)
 		return platform.ingressCA
 	}
-	log.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
+	platform.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
 	ca, err := readCA(platform.IngressCA)
 	if err != nil {
-		log.Fatalf("Unable to open Ingress CA: %v", err)
+		platform.Fatalf("Unable to open Ingress CA: %v", err)
 	}
-	log.Debugf("[IngressCA] read CA %s", ca.X509.Subject)
+	platform.Debugf("[IngressCA] read CA %s", ca.X509.Subject)
 	platform.ingressCA = ca
 	return ca
-}
-
-// GetVMs returns a list of all VM's associated with the cluster
-func (platform *Platform) GetVMsByPrefix(prefix string) (map[string]*VM, error) {
-	var vms = make(map[string]*VM)
-	list, err := platform.session.Finder.VirtualMachineList(
-		platform.ctx, fmt.Sprintf("%s-%s-%s*", platform.HostPrefix, platform.Name, prefix))
-	if err != nil {
-		return nil, nil
-	}
-	for _, vm := range list {
-		item := &VM{
-			Platform: platform,
-			ctx:      platform.ctx,
-			vm:       vm,
-		}
-		item.Name = vm.Name()
-		vms[vm.Name()] = item
-	}
-	return vms, nil
-}
-
-// GetVMs returns a list of all VM's associated with the cluster
-func (platform *Platform) GetVMs() (map[string]*VM, error) {
-	return platform.GetVMsByPrefix("")
 }
 
 // WaitFor at least 1 master IP to be reachable
@@ -153,11 +192,15 @@ func (platform *Platform) WaitFor() error {
 
 func (platform *Platform) GetDNSClient() dns.Client {
 	if platform.DNS == nil || platform.DNS.Disabled {
-		return &dns.DummyDNSClient{Zone: platform.DNS.Zone}
+		return &dns.DummyDNSClient{
+			Logger: platform.Logger,
+			Zone:   platform.DNS.Zone,
+		}
 	}
 
 	if platform.DNS.Type == "route53" {
 		dns := &dns.Route53Client{
+			Logger:       platform.Logger,
 			HostedZoneID: platform.DNS.Zone,
 			AccessKey:    platform.DNS.AccessKey,
 			SecretKey:    platform.DNS.SecretKey,
@@ -167,6 +210,7 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	}
 
 	return &dns.DynamicDNSClient{
+		Logger:     platform.Logger,
 		Zone:       platform.DNS.Zone,
 		KeyName:    platform.DNS.KeyName,
 		Nameserver: platform.DNS.Nameserver,
@@ -187,11 +231,12 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	}
 
 	client := &nsx.NSXClient{
+		Logger:   platform.Logger,
 		Host:     platform.NSX.NsxV3.NsxAPIManagers[0],
 		Username: platform.NSX.NsxV3.NsxAPIUser,
 		Password: platform.NSX.NsxV3.NsxAPIPass,
 	}
-	log.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
+	platform.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
 
 	if err := client.Init(); err != nil {
 		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
@@ -201,39 +246,35 @@ func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
 	}
-	log.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
+	platform.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
 	return platform.nsx, nil
 }
 
-func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, error) {
+func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Machine, error) {
 	for _, cmd := range vm.Commands {
 		config.AddCommand(cmd)
 	}
-	ctx := context.TODO()
-	obj, err := platform.session.Clone(vm, config)
+
+	VM, err := platform.Cluster.Clone(vm, config)
 	if err != nil {
-		return nil, fmt.Errorf("clone: failed to clone session: %v", err)
+		return nil, err
 	}
 
-	VM := &VM{
-		VM:       vm,
-		Platform: platform,
-		ctx:      platform.ctx,
-		vm:       obj,
-	}
 	if err := VM.SetAttributes(map[string]string{
 		"Template":    vm.Template,
 		"CreatedDate": time.Now().Format("02Jan06-15:04:05"),
 	}); err != nil {
-		log.Warnf("Failed to set attributes for %s: %v", vm.Name, err)
+		platform.Warnf("Failed to set attributes for %s: %v", vm.Name, err)
 	}
-	log.Debugf("[%s] Waiting for IP", vm.Name)
+	platform.Debugf("[%s] Waiting for IP", vm.Name)
 	ip, err := VM.WaitForIP()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get IP for %s: %v", vm.Name, err)
 	}
-	VM.IP = ip
+	vm.IP = ip
+	platform.Tracef("[%s] found ip %s", vm.Name, ip)
 	if platform.NSX != nil && !platform.NSX.Disabled {
+		ctx := context.TODO()
 		nsxClient, err := platform.GetNSXClient()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get NSX client: %v", err)
@@ -266,31 +307,13 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (*VM, err
 	return VM, nil
 }
 
-func (platform *Platform) GetSession() *vmware.Session {
-	return platform.session
-}
-
-// OpenViaEnv opens a new vmware session using environment variables
-func (platform *Platform) OpenViaEnv() error {
-	if platform.session != nil {
-		return nil
-	}
-	platform.ctx = context.TODO()
-	session, err := vmware.GetSessionFromEnv()
-	if err != nil {
-		return fmt.Errorf("openViaEnv: failed to get session from env: %v", err)
-	}
-	platform.session = session
-	return nil
-}
-
 // GetMasterIPs returns a list of healthy master IP's
 func (platform *Platform) GetMasterIPs() []string {
 	if platform.Kubernetes.MasterIP != "" {
 		return []string{platform.Kubernetes.MasterIP}
 	}
 	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
-	log.Tracef("Finding masters via consul: %s\n", url)
+	platform.Tracef("Finding masters via consul: %s\n", url)
 	response, _ := net.GET(url)
 	var consul api.Consul
 	if err := json.Unmarshal(response, &consul); err != nil {
@@ -301,7 +324,7 @@ node:
 	for _, node := range consul {
 		for _, check := range node.Checks {
 			if check.Status != "passing" {
-				log.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
+				platform.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
 				continue node
 			}
 		}
@@ -313,7 +336,7 @@ node:
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
 	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
-		log.Tracef("Using KUBECONFIG from ENV")
+		platform.Tracef("Using KUBECONFIG from ENV")
 		return os.Getenv("KUBECONFIG"), nil
 	}
 	cwd, _ := os.Getwd()
@@ -358,7 +381,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 		return platform.GetBinary("kubectl")
 	}
 
-	log.Tracef("Using KUBECONFIG=%s", kubeconfig)
+	platform.Tracef("Using KUBECONFIG=%s", kubeconfig)
 	return deps.BinaryWithEnv("kubectl", platform.Kubernetes.Version, ".bin", map[string]string{
 		"KUBECONFIG": kubeconfig,
 		"PATH":       os.Getenv("PATH"),
@@ -367,11 +390,11 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 
 func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
 	if platform.HasSecret(namespace, secretName) {
-		log.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
+		platform.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
 		//TODO(moshloop) check certificate expiry and renew if necessary
 		return nil
 	}
-	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	platform.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 
 	cert.X509.PublicKey = cert.PrivateKey.Public()
@@ -394,14 +417,14 @@ func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName strin
 }
 
 func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Certificate, error) {
-	log.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
+	platform.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 3)
 }
 
 func (platform *Platform) CreateInternalCertificate(service string, namespace string, clusterDomain string) (*certs.Certificate, error) {
 	domain := fmt.Sprintf("%s.%s.svc.%s", service, namespace, clusterDomain)
-	log.Infof("Creating new internal certificate %s", domain)
+	platform.Infof("Creating new internal certificate %s", domain)
 	cert := certs.NewCertificateBuilder(domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 5)
 }
@@ -434,7 +457,7 @@ func (platform *Platform) Template(file string, pkg string) (string, error) {
 	template, err := text.Template(raw, platform.PlatformConfig)
 	if err != nil {
 		data, _ := yaml.Marshal(platform.PlatformConfig)
-		log.Debugf("Error templating %s: %s", file, console.StripSecrets(string(data)))
+		platform.Debugf("Error templating %s: %s", file, console.StripSecrets(string(data)))
 		return "", err
 	}
 	return template, nil
@@ -497,7 +520,7 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 		return err
 	}
 	for _, spec := range specs {
-		items, err := kustomize.Kustomize([]byte(spec))
+		items, err := kustomize.Kustomize(namespace, []byte(spec))
 		if err != nil {
 			return err
 		}
@@ -518,7 +541,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		log.Debugf("Applying %s", spec)
+		platform.Debugf("Applying %s", spec)
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
@@ -534,7 +557,7 @@ func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 func (platform *Platform) GetBinaryWithEnv(name string, env map[string]string) deps.BinaryFunc {
 	if platform.DryRun {
 		return func(msg string, args ...interface{}) error {
-			fmt.Printf("CMD: "+fmt.Sprintf("%s", env)+" .bin/"+name+" "+msg+"\n", args...)
+			platform.Tracef("CMD: "+fmt.Sprintf("%s", env)+" .bin/"+name+" "+msg+"\n", args...)
 			return nil
 		}
 	}
@@ -544,34 +567,92 @@ func (platform *Platform) GetBinaryWithEnv(name string, env map[string]string) d
 func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 	if platform.DryRun {
 		return func(msg string, args ...interface{}) error {
-			fmt.Printf("CMD: .bin/"+name+" "+msg+"\n", args...)
+			platform.Tracef("CMD: .bin/"+name+" "+msg+"\n", args...)
 			return nil
 		}
 	}
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
-func (platform *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.DB, error) {
-	clusterName := "postgres-" + name
+func (platform *Platform) GetOrCreateDB(config postgres.ClusterConfig) (*types.DB, error) {
+	clusterName := "postgres-" + config.Name
 	databases := make(map[string]string)
 	appUsername := "app"
-	ns := "postgres-operator"
+	ns := config.Namespace
 	secretName := fmt.Sprintf("%s.%s.credentials", appUsername, clusterName)
+	backupBucket := platform.PostgresOperatorBackupBucket()
 
 	db := &postgres.Postgresql{}
 	if err := platform.Get(ns, clusterName, db); err != nil {
-		log.Infof("Creating new cluster: %s", clusterName)
-		for _, db := range dbNames {
+		platform.Infof("Creating new cluster: %s", clusterName)
+		for _, db := range config.Databases {
 			databases[db] = appUsername
 		}
 		db = postgres.NewPostgresql(clusterName)
 		db.Spec.Databases = databases
 		db.Spec.Users = map[string]postgres.UserFlags{
-			appUsername: postgres.UserFlags{
+			appUsername: {
 				"createdb",
 				"superuser",
 			},
 		}
+		db.Spec.Parameters = map[string]string{
+			"archive_mode":    "on",
+			"archive_timeout": "60s",
+		}
+
+		envVars := []string{
+			"AWS_ACCESS_KEY_ID",
+			"AWS_SECRET_ACCESS_KEY",
+			"AWS_ENDPOINT",
+			"AWS_S3_FORCE_PATH_STYLE",
+		}
+		envVarsList := []v1.EnvVar{
+			{
+				Name:  "BACKUP_SCHEDULE",
+				Value: config.BackupSchedule,
+			},
+			{
+				Name:  "USE_WALG_RESTORE",
+				Value: strconv.FormatBool(config.UseWalgRestore),
+			},
+			{
+				Name:  "USE_WALG_BACKUP",
+				Value: strconv.FormatBool(config.UseWalgRestore),
+			},
+		}
+
+		for _, k := range envVars {
+			envVar := v1.EnvVar{
+				Name: k,
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
+						Key:                  k,
+					},
+				},
+			}
+			envVarsList = append(envVarsList, envVar)
+		}
+		if !config.EnableWalClusterID {
+			envVarsList = append(envVarsList, v1.EnvVar{
+				Name:  "WAL_BUCKET_SCOPE_SUFFIX",
+				Value: "",
+			})
+			envVarsList = append(envVarsList, v1.EnvVar{
+				Name:  "WALG_S3_PREFIX",
+				Value: fmt.Sprintf("s3://%s/%s/wal/", backupBucket, clusterName),
+			})
+			envVarsList = append(envVarsList, v1.EnvVar{
+				Name:  "CLONE_WAL_BUCKET_SCOPE_SUFFIX",
+				Value: "/",
+			})
+		}
+		if config.Clone != nil {
+			cloneEnvVars := platform.cloneDatabaseEnv(config)
+			envVarsList = append(envVarsList, cloneEnvVars...)
+		}
+		db.Spec.Env = envVarsList
 
 		if err := platform.Apply(ns, db); err != nil {
 			return nil, err
@@ -582,7 +663,7 @@ func (platform *Platform) GetOrCreateDB(name string, dbNames ...string) (*types.
 		if err := platform.Get(ns, clusterName, db); err != nil {
 			return true
 		}
-		log.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
+		platform.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
 		return db.Status.PostgresClusterStatus == postgres.ClusterStatusRunning
 	})
 	if db.Status.PostgresClusterStatus != postgres.ClusterStatusRunning {
@@ -626,7 +707,7 @@ func (platform *Platform) GetOrCreateBucket(name string) error {
 		return fmt.Errorf("failed to check S3 bucket: %v", err)
 	}
 	if !exists {
-		log.Infof("Creating s3://%s", name)
+		platform.Infof("Creating s3://%s", name)
 		if err := s3Client.MakeBucket(name, platform.S3.Region); err != nil {
 			return fmt.Errorf("failed to create S3 bucket: %v", err)
 		}
@@ -651,4 +732,61 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	}
 	s3.SetCustomTransport(client.Transport)
 	return s3, nil
+}
+
+func (platform *Platform) PostgresOperatorBackupBucket() string {
+	backupBucket := platform.PostgresOperator.BackupBucket
+
+	if backupBucket == "" {
+		backupBucket = "postgres-backups-" + platform.Name
+	}
+
+	return backupBucket
+}
+
+func (platform *Platform) cloneDatabaseEnv(config postgres.ClusterConfig) []v1.EnvVar {
+	waleS3Prefix := fmt.Sprintf("s3://%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName)
+	if config.EnableWalClusterID {
+		waleS3Prefix = fmt.Sprintf("s3://%s/spilo/%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName, config.Clone.ClusterID)
+	}
+	envVars := []v1.EnvVar{
+		{
+			Name:  "CLONE_METHOD",
+			Value: "CLONE_WITH_WALE",
+		},
+		{
+			Name:  "CLONE_USE_WALG_RESTORE",
+			Value: strconv.FormatBool(config.UseWalgRestore),
+		},
+		{
+			Name:  "CLONE_TARGET_TIME",
+			Value: config.Clone.Timestamp,
+		},
+	}
+	if !config.EnableWalClusterID {
+		envVars = append(envVars, v1.EnvVar{
+			Name:  "CLONE_WALG_S3_PREFIX",
+			Value: waleS3Prefix,
+		})
+	}
+	awsEnvVars := []string{
+		"AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_ACCESS_KEY",
+		"AWS_ENDPOINT",
+		"AWS_S3_FORCE_PATH_STYLE",
+	}
+	for _, k := range awsEnvVars {
+		envVar := v1.EnvVar{
+			Name: fmt.Sprintf("CLONE_%s", k),
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
+					Key:                  k,
+				},
+			},
+		}
+		envVars = append(envVars, envVar)
+	}
+
+	return envVars
 }

@@ -3,14 +3,15 @@ package phases
 import (
 	"fmt"
 
+	"github.com/flanksource/commons/files"
+
 	"github.com/flanksource/commons/certs"
+	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/flanksource/yaml"
-	_ "github.com/moshloop/konfigadm/pkg" // initialize konfigadm
-	konfigadm "github.com/moshloop/konfigadm/pkg/types"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var envVars = map[string]string{
@@ -20,6 +21,16 @@ var envVars = map[string]string{
 	"ETCDCTL_KEY":       "/etc/kubernetes/pki/etcd/healthcheck-client.key",
 	"KUBECONFIG":        "/etc/kubernetes/admin.conf",
 }
+
+var noCAErrorText = `Must specify a 'ca'' section in the platform config.
+e.g.:
+ca:
+   cert: .certs/root-ca-crt.pem
+   privateKey: .certs/root-ca-key.pem
+   password: foobar
+
+CA certs are generated using platform-cli ca generate
+`
 
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	if platform.Name == "" {
@@ -61,6 +72,10 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 }
 
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
+	if platform.CA == nil {
+		return errors.New(noCAErrorText)
+	}
+
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
 	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
 	if err != nil {
@@ -87,8 +102,16 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	if err != nil {
 		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
 	}
-	log.Tracef("Using kubeadm config: \n%s", string(data))
+	platform.Tracef("Using kubeadm config: \n%s", string(data))
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		// clusters audit policy files are injected into the machine via konfigadm
+		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
+		if ap == "" {
+			return fmt.Errorf("unable to read audit policy file")
+		}
+		cfg.Files[kubeadm.AuditPolicyPath] = ap
+	}
 	return nil
 }
 

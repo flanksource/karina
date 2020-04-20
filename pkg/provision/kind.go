@@ -2,13 +2,16 @@ package provision
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
+
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/flanksource/yaml"
-	"github.com/pkg/errors"
+
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/moshloop/platform-cli/pkg/api"
@@ -20,7 +23,7 @@ var (
 	kindCADir = "/etc/flanksource/ingress-ca"
 )
 
-// KindCluster provision or create a kubernetes cluster
+// KindCluster provisions a new Kind cluster
 func KindCluster(platform *platform.Platform) error {
 	kubeadmPatches, err := createKubeAdmPatches(platform)
 	if err != nil {
@@ -73,9 +76,34 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
+	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile; policyFile != "" {
+		// for kind clusters audit policy files are mapped in via a dual
+		// host -> master,
+		// master -> kube-api-server pod
+		// mapping
+
+		absFile, err := filepath.Abs(policyFile)
+		if err != nil {
+			return errors.Wrap(err, "failed to expand audit policy file path")
+		}
+
+		mnts := &kindConfig.Nodes[0].ExtraMounts
+
+		*mnts = append(*mnts, kindapi.Mount{
+			ContainerPath: kubeadm.AuditPolicyPath,
+			HostPath:      absFile,
+			Readonly:      true,
+		})
+	}
+
 	yml, err := yaml.Marshal(kindConfig)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal config")
+	}
+
+	if platform.PlatformConfig.Trace {
+		platform.Infof("KIND Config YAML:")
+		platform.Infof(string(yml))
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")
@@ -107,21 +135,25 @@ func KindCluster(platform *platform.Platform) error {
 	return platform.GetKubectl()("delete sc standard")
 }
 
+// createKubeAdmPatches reads a Platform config, creates a new ClusterConfiguration from it and
+// then extracts a slice of kind-specific KubeAdm patches from it.
 func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig := kubeadm.NewClusterConfig(platform)
 	clusterConfig.ControlPlaneEndpoint = ""
-	clusterConfig.ClusterName = ""
+	clusterConfig.ClusterName = platform.Name
 	clusterConfig.APIServer.CertSANs = nil
-	clusterConfig.APIServer.ExtraVolumes = []api.HostPathMount{
-		{
-			Name:      "oidc-certificates",
-			HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
-			MountPath: "/etc/ssl/oidc/ingress-ca.pem",
-			ReadOnly:  true,
-			PathType:  api.HostPathFile,
-		},
-	}
+
+	vol := &clusterConfig.APIServer.ExtraVolumes
+	*vol = append(*vol, api.HostPathMount{
+		Name:      "oidc-certificates",
+		HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
+		MountPath: "/etc/ssl/oidc/ingress-ca.pem",
+		ReadOnly:  true,
+		PathType:  api.HostPathFile,
+	})
+
 	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""

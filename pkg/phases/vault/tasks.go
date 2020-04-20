@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/flanksource/commons/certs"
@@ -15,30 +14,31 @@ import (
 )
 
 func Init(p *platform.Platform) error {
-	if err := p.WaitForPod("vault", "vault-0", 120*time.Second, v1.PodRunning); err != nil {
+	p.Infof("Waiting for vault/vault-0 to be running")
+	if err := p.WaitForPod("vault", "vault-0", 300*time.Second, v1.PodRunning); err != nil {
 		return err
 	}
-
-	if err := p.WaitForPodCommand("vault", "vault-0", "vault", 20*time.Second, "/bin/sh", "-c", "netstat -tln | grep 8200"); err != nil {
+	p.Infof("Waiting for vault service to be listening")
+	if err := p.WaitForPodCommand("vault", "vault-0", "vault", 120*time.Second, "/bin/sh", "-c", "netstat -tln | grep 8200"); err != nil {
 		return err
 	}
 
 	stdout, stderr, err := p.ExecutePodf("vault", "vault-0", "vault", "/bin/vault", "operator", "init", "-tls-skip-verify", "-status")
 
-	log.Debugf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+	p.Debugf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 	if strings.Contains(stdout, "Vault is initialized") {
-		log.Infof("Vault is already initialized, configuring")
+		p.Infof("Vault is already initialized, configuring")
 	}
 	if p.Vault.Token == "" {
-		log.Infof("Vault is not initialized, initializing")
+		p.Infof("Vault is not initialized, initializing")
 		stdout, stderr, err = p.ExecutePodf("vault", "vault-0", "vault", "/bin/vault", "operator", "init", "-tls-skip-verify")
-		log.Infof("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+		p.Infof("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
 
-		tokens := regexp.MustCompile(`(?m)Initial Root Token: (\w+).`).FindStringSubmatch(stdout)
+		tokens := regexp.MustCompile(`(?m)Initial Root Token: (s.\w+).`).FindStringSubmatch(stdout)
 		if tokens == nil {
-			return fmt.Errorf("not root token found")
+			return fmt.Errorf("no root token found")
 		}
-		log.Infof("Using token: '%s'", tokens[0])
+
 		p.Vault.Token = tokens[0]
 	}
 	config := &api.Config{
@@ -54,7 +54,6 @@ func Init(p *platform.Platform) error {
 	}
 
 	client.SetToken(p.Vault.Token)
-
 	if err := configurePKI(client, p); err != nil {
 		return err
 	}
@@ -78,7 +77,7 @@ func Init(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Token: %s", secret.Auth.ClientToken)
+	p.Infof("Token: %s", secret.Auth.ClientToken)
 	for name, policy := range p.Vault.Policies {
 		if _, err := client.Logical().Write("sys/policy/"+name, map[string]interface{}{
 			"policy": policy.String(),
@@ -111,7 +110,6 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		mounts, _ = client.Sys().ListMounts() // nolint: ineffassign, staticcheck, errcheck
 	}
 
 	ingress := p.GetIngressCA()
@@ -155,7 +153,7 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 		"bindpass":     p.Ldap.Password,
 		"userdn":       p.Ldap.UserDN,
 		"groupdn":      p.Ldap.GroupDN,
-		"groupfilter":  fmt.Sprintf("(&(objectClass=%s)({{.UserDN}}))", p.Ldap.GroupObjectClass),
+		"groupfilter":  fmt.Sprintf("(&(objectClass=%s)(member={{.UserDN}}))", p.Ldap.GroupObjectClass),
 		"groupattr":    p.Ldap.GroupNameAttr,
 		"userattr":     "cn",
 		"insecure_tls": "true",

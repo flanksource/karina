@@ -139,6 +139,7 @@ data:
         region: {{.s3.region}}
         bucket: {{.harbor.bucket}}
         regionendpoint: {{.s3.endpoint}}
+        skipverify: true
       cache:
         layerinfo: redis
       maintenance:
@@ -154,10 +155,8 @@ data:
     http:
       relativeurls: false
       addr: :5000
-      # set via environment variable
-      # secret: placeholder
       debug:
-        addr: localhost:5001
+        addr: :5001
         prometheus:
           enabled: true
           path: "/metrics"
@@ -281,15 +280,41 @@ metadata:
   name: "harbor-registry"
   labels:
     app: "harbor"
+    component: registry
 spec:
   ports:
     - name: registry
       port: 5000
     - name: controller
       port: 8080
+    - name: metrics
+      port: 5001
   selector:
     app: "harbor"
     component: registry
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: "harbor"
+    component: registry
+  name: harbor-registry
+  namespace: harbor
+spec:
+  jobLabel: harbor-registry
+  namespaceSelector:
+    matchNames:
+      - harbor
+  endpoints:
+    - port: metrics
+      interval: 10s
+      honorLabels: true
+      path: /metrics
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: registry
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -298,6 +323,8 @@ metadata:
   labels:
     app: "harbor"
     component: chartmuseum
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   strategy:
@@ -355,6 +382,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: harbor-clair
+  annotations:
+    reload/all: "true" # restart on cm/secret change
   labels:
     app: "harbor"
     component: clair
@@ -447,6 +476,8 @@ metadata:
   labels:
     app: "harbor"
     component: core
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   selector:
@@ -538,6 +569,8 @@ metadata:
   labels:
     app: "harbor"
     component: jobservice
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   strategy:
@@ -617,6 +650,8 @@ metadata:
   labels:
     app: "harbor"
     component: portal
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   selector:
@@ -655,6 +690,8 @@ metadata:
   labels:
     app: "harbor"
     component: registry
+  annotations:
+    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   strategy:

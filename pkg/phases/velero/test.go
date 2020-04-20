@@ -20,6 +20,10 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 	k8s.TestNamespace(client, Namespace, test)
 
+	if !p.E2E {
+		return
+	}
+
 	if backup, err := CreateBackup(p); err != nil {
 		test.Failf("velero", "Failed to create backup: %v", err)
 	} else {

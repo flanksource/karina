@@ -3,6 +3,7 @@ package cmd
 import (
 	"io/ioutil"
 
+	"github.com/flanksource/commons/text"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -19,8 +20,13 @@ var Apply = &cobra.Command{
 			data, err := ioutil.ReadFile(spec)
 			if err != nil {
 				log.Fatalf("Could not read %s: %v", spec, err)
-			} else if err := p.ApplyText(ns, string(data)); err != nil {
-				log.Fatalf("Could not apply config %s: %v", spec, err)
+			}
+			template, err := text.Template(string(data), p.PlatformConfig)
+			if err != nil {
+				log.Fatalf("failed to template %s: %v", spec, err)
+			}
+			if err := p.ApplyText(ns, template); err != nil {
+				log.Fatalf("failed to apply %s: %v", spec, err)
 			}
 		}
 	},

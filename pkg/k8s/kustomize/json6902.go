@@ -46,13 +46,13 @@ func newJSON6902FromFile(f patch.Json6902, ldr ifc.Loader, file string) (*json69
 }
 
 // filterByResource returns all the json6902 patches in the json6902Slice corresponding to a given resource
-func (s *json6902Slice) filterByResource(r *unstructured.Unstructured) json6902Slice {
+func (s *json6902Slice) filterByResource(namespace string, r *unstructured.Unstructured) json6902Slice {
 	var result json6902Slice
 	for _, p := range *s {
 		if p.Group == r.GroupVersionKind().Group &&
 			p.Version == r.GroupVersionKind().Version &&
 			p.Kind == r.GroupVersionKind().Kind &&
-			p.Namespace == r.GetNamespace() &&
+			(p.Namespace == r.GetNamespace() || p.Namespace == namespace) &&
 			p.Name == r.GetName() {
 			result = append(result, p)
 		}

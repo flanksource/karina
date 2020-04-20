@@ -1,15 +1,10 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    app: dex
-  name: dex
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
     app: dex
+  annotations:
+    reload/all: "true" #restart on cm/secret change
   name: dex
   namespace: dex
 spec:

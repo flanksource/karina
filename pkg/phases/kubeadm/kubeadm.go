@@ -8,7 +8,6 @@ import (
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/api"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +16,10 @@ import (
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 )
 
+// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
+const AuditPolicyPath = "/etc/kubernetes/policies/audit-policy.yaml"
+
+// NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster := api.ClusterConfiguration{
 		APIVersion:        "kubeadm.k8s.io/v1beta2",
@@ -39,6 +42,19 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
+
+	if cfg.Kubernetes.AuditConfig != nil && cfg.Kubernetes.AuditConfig.PolicyFile != "" {
+		cluster.APIServer.ExtraArgs["audit-policy-file"] = AuditPolicyPath
+		mnt := api.HostPathMount{
+			Name:      "auditpolicy",
+			HostPath:  AuditPolicyPath,
+			MountPath: AuditPolicyPath,
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		}
+		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt)
+	}
+
 	if !cfg.Ldap.Disabled {
 		cluster.APIServer.ExtraArgs["oidc-issuer-url"] = "https://dex." + cfg.Domain
 		cluster.APIServer.ExtraArgs["oidc-client-id"] = "kubernetes"
@@ -121,17 +137,10 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 		return "", err
 	}
 
-	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	masterNode, err := platform.GetMasterNode()
+
 	if err != nil {
 		return "", err
-	}
-
-	var masterNode string
-	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
-		}
 	}
 
 	secrets := client.CoreV1().Secrets("kube-system")
@@ -139,9 +148,9 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 	secret, err := secrets.Get("kubeadm-certs", metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		key = utils.RandomKey(32)
-		log.Infof("Uploading control plane cert from %s", masterNode)
+		platform.Infof("Uploading control plane cert from %s", masterNode)
 		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubeadm init phase upload-certs --upload-certs --skip-certificate-key-print --certificate-key %s", key)
-		log.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
+		platform.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
 		secret, err = secrets.Get("kubeadm-certs", metav1.GetOptions{})
 		if err != nil {
 			return "", err
@@ -153,7 +162,7 @@ func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
 		}
 		return key, nil
 	} else if err == nil {
-		log.Infof("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
+		platform.Infof("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
 		return secret.Annotations["key"], nil
 	}
 	return "", err

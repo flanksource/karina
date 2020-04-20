@@ -16,6 +16,9 @@ import (
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "dex", test)
+	if !p.E2E {
+		return
+	}
 	k8s.TestNamespace(client, "ldap", test)
 
 	dexClient := &testlib.DexOauth{
@@ -23,8 +26,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		ClientID:     "kubernetes",
 		ClientSecret: "ZXhhbXBsZS1hcHAtc2VjcmV0",
 		RedirectURI:  "http://localhost:8000",
-		Username:     p.Ldap.Test.Username,
-		Password:     p.Ldap.Test.Password,
+		Username:     p.Ldap.E2E.Username,
+		Password:     p.Ldap.E2E.Password,
 	}
 
 	token, err := dexClient.GetAccessToken()

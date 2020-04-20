@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/flanksource/commons/logger"
 	nsxt "github.com/vmware/go-vmware-nsxt"
 	"github.com/vmware/go-vmware-nsxt/common"
 	"github.com/vmware/go-vmware-nsxt/loadbalancer"
@@ -18,8 +18,9 @@ import (
 
 // nolint: golint
 type NSXClient struct {
-	api                      *nsxt.APIClient
-	cfg                      *nsxt.Configuration
+	api *nsxt.APIClient
+	cfg *nsxt.Configuration
+	logger.Logger
 	Username, Password, Host string
 	RemoteAuth               bool
 }
@@ -152,7 +153,7 @@ func (c *NSXClient) TagLogicalPort(ctx context.Context, id string, tags map[stri
 		})
 	}
 
-	log.Tracef("[%s/%s] tagging: %v", port.Id, port.Attachment.Id, port.Tags)
+	c.Tracef("[%s/%s] tagging: %v", port.Id, port.Attachment.Id, port.Tags)
 	_, resp, err = c.api.LogicalSwitchingApi.UpdateLogicalPort(context.TODO(), port.Id, port)
 	if err != nil {
 		return fmt.Errorf("unable to update port %s: %s", port.Id, errorString(resp, err))
@@ -235,7 +236,7 @@ func (c *NSXClient) AllocateIP(pool string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to allocate IP from %s: %s", pool, errorString(resp, err))
 	}
-	log.Infof("Allocated IP: %s %s %s", addr.AllocationId, addr.Id, addr.DisplayName)
+	c.Infof("Allocated IP: %s %s %s", addr.AllocationId, addr.Id, addr.DisplayName)
 	return addr.AllocationId, nil
 }
 
@@ -271,7 +272,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 
 	for _, server := range virtualServers.Results {
 		if server.DisplayName == opts.Name {
-			log.Infof("LoadBalancer %s found, returning its IP %s ", opts.Name, server.IpAddress)
+			c.Infof("LoadBalancer %s found, returning its IP %s ", opts.Name, server.IpAddress)
 			return server.IpAddress, nil
 		}
 	}
@@ -308,7 +309,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 		return "", fmt.Errorf("unable to update advertisement config %s: %s", opts.Name, errorString(resp, err))
 	}
 
-	log.Infof("Created T1 router %s/%s", t1.DisplayName, t1.Id)
+	c.Infof("Created T1 router %s/%s", t1.DisplayName, t1.Id)
 
 	_, resp, err = routing.CreateLogicalRouterLinkPortOnTier1(ctx, manager.LogicalRouterLinkPortOnTier1{
 		LogicalRouterId: t1.Id,
@@ -377,6 +378,6 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 		return "", fmt.Errorf("unable to create load balancer %s: %s", opts.Name, errorString(resp, err))
 	}
 
-	log.Infof("Created LoadBalancer service: %s/%s", server.Id, ip)
+	c.Infof("Created LoadBalancer service: %s/%s", server.Id, ip)
 	return ip, nil
 }
