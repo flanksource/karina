@@ -22,6 +22,5 @@ func Install(platform *platform.Platform) error {
 			platform.Errorf("Error deploying apacheds: %s\n", err)
 		}
 	}
-
 	return nil
 }
