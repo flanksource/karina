@@ -35,7 +35,7 @@ master:
   # GOVC_CLUSTER
   cluster: "cluster"
   template: "k8s-1.16.4"
-  konfigadm: ./test/fixtures/konfigadm-template.yml
+  konfigadm: ./test/fixtures/konfigadm-template.yaml
   commands: 
 ## SAMPLE startup debug config
 ## for access to primary masters
