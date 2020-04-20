@@ -21,6 +21,13 @@ var envVars = map[string]string{
 	"KUBECONFIG":        "/etc/kubernetes/admin.conf",
 }
 
+const updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
+
+const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log"
+
+const kubeadmMasterJoinCmdf = "kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
+const kubeadmNodeJoinCmdf = "kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
+
 var noCAErrorText = `Must specify a 'ca'' section in the platform config.
 e.g.:
 ca:
@@ -51,7 +58,7 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to add certs")
 	}
-	cfg.AddCommand("kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log")
+	cfg.AddCommand(kubeadmInitCmd)
 	return cfg, nil
 }
 
@@ -172,9 +179,7 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	if err = addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "Failed to add certs")
 	}
-	cfg.AddCommand(fmt.Sprintf(
-		"kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log",
-		token, certKey, platform.JoinEndpoint))
+	cfg.AddCommand(fmt.Sprintf(kubeadmMasterJoinCmdf, token, certKey, platform.JoinEndpoint))
 	return cfg, nil
 }
 
@@ -188,8 +193,6 @@ func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
 	}
 	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand(fmt.Sprintf(
-		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log",
-		token, platform.JoinEndpoint))
+	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
 	return cfg, nil
 }
