@@ -22,9 +22,7 @@ var envVars = map[string]string{
 }
 
 const updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
-
 const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log"
-
 const kubeadmMasterJoinCmdf = "kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
 const kubeadmNodeJoinCmdf = "kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
 
