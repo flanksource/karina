@@ -98,47 +98,21 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	clusters := []string{cluster1Name, cluster2Name}
-	for _, cluster := range clusters {
-		patroniClient, err := GetPatroniClient(p, Namespace, cluster)
-		if err != nil {
-			test.Failf(testName, "Failed to get patroni client to cluster %s", cluster)
-			continue
-		}
-		response, err := patroniClient.Get("http://patroni/cluster")
-		if err != nil {
-			test.Failf(testName, "Failed to get /cluster endpoint for cluster %s: %v", cluster, err)
-			continue
-		}
-		defer response.Body.Close() // nolint: errcheck
-		clusterResponse := &ClusterResponse{}
-		err = json.NewDecoder(response.Body).Decode(&clusterResponse)
-		if err != nil {
-			test.Failf(testName, "Failed to read response body for cluster %s: %v", cluster, err)
-			continue
-		}
+	var errMessage error = nil
 
-		for _, m := range clusterResponse.Members {
-			if m.State != "running" {
-				test.Failf(testName, "Expected state for cluster=%s node=%s to be 'running', got %s", cluster, m.Name, m.State)
-				continue
-			} else if m.Role == "replica" {
-				iLag, ok := m.Lag.(int)
-				if ok && iLag > 0 {
-					test.Failf(testName, "Expected replication lag for cluster=%s replica=%s to be 0, got %d", cluster, m.Name, m.Lag)
-					continue
-				} else if !ok {
-					sLag, ok := m.Lag.(string)
-					if ok && sLag != "" {
-						test.Failf(testName, "Expected replication lag for cluster=%s replica=%s to be 0, got %s", cluster, m.Name, m.Lag)
-					}
-				}
-			}
-			test.Passf(testName, "cluster=%s node=%s is running", cluster, m.Name)
+	ok := doUntil(func() bool {
+		errMessage = checkReplicaLag(p, cluster1Name, cluster2Name)
+		if err != nil {
+			return false
 		}
+		return true
+	})
+
+	if ok {
+		test.Passf(testName, "Cloned cluster %s successfully created", cluster2Name)
+	} else {
+		test.Failf(testName, "Failed to check replica lag: %v", errMessage)
 	}
-
-	test.Passf(testName, "Cloned cluster %s successfully created", cluster2Name)
 }
 
 func insertTestFixtures(p *platform.Platform, clusterName string, test *console.TestResults) error {
@@ -241,6 +215,42 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 			return fmt.Errorf("could not find any backups in bucket %s, deadline exceeded", bucket)
 		}
 	}
+}
+
+func checkReplicaLag(p *platform.Platform, clusters ...string) error {
+	for _, cluster := range clusters {
+		patroniClient, err := GetPatroniClient(p, Namespace, cluster)
+		if err != nil {
+			return errors.Errorf("Failed to get patroni client to cluster %s", cluster)
+		}
+		response, err := patroniClient.Get("http://patroni/cluster")
+		if err != nil {
+			return errors.Errorf("Failed to get /cluster endpoint for cluster %s: %v", cluster, err)
+		}
+		defer response.Body.Close() // nolint: errcheck
+		clusterResponse := &ClusterResponse{}
+		err = json.NewDecoder(response.Body).Decode(&clusterResponse)
+		if err != nil {
+			return errors.Errorf("Failed to read response body for cluster %s: %v", cluster, err)
+		}
+
+		for _, m := range clusterResponse.Members {
+			if m.State != "running" {
+				return errors.Errorf("Expected state for cluster=%s node=%s to be 'running', got %s", cluster, m.Name, m.State)
+			} else if m.Role == "replica" {
+				iLag, ok := m.Lag.(int)
+				if ok && iLag > 0 {
+					return errors.Errorf("Expected replication lag for cluster=%s replica=%s to be 0, got %d", cluster, m.Name, m.Lag)
+				} else if !ok {
+					sLag, ok := m.Lag.(string)
+					if ok && sLag != "" {
+						return errors.Errorf("Expected replication lag for cluster=%s replica=%s to be 0, got %s", cluster, m.Name, m.Lag)
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *console.TestResults) {
