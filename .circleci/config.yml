@@ -18,7 +18,7 @@ jobs:
       - store_test_results:
           path: test-results
   test:
-    resource_class: large
+    resource_class: xlarge
     environment:
       VERSION: v1.15.3
     machine:
@@ -32,7 +32,7 @@ jobs:
           path: artifacts
 
   test-next:
-    resource_class: large
+    resource_class: xlarge
     environment:
       VERSION: v1.16.3
     machine:
