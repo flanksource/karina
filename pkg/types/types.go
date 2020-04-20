@@ -51,6 +51,9 @@ type VM struct {
 	// Tags to be applied to the VM
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
+	// KonfigadmFile allows for the specification of a konfigadm
+	// spec used as basis for configuring the VM on creation.
+	KonfigadmFile string `yaml:"konfigadm,omitempty"`
 	IP       string            `yaml:"-"`
 }
 
