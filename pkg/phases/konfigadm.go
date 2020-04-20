@@ -48,7 +48,7 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	}
 	hostname := ""
 	platform.Init()
-	cfg, err := baseKonfig()
+	cfg, err := baseKonfig(platform.Master.KonfigadmFile)
 	if err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
 	}
@@ -68,7 +68,7 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	hostname := ""
 	platform.Init()
-	cfg, err := baseKonfig()
+	cfg, err := baseKonfig(platform.Master.KonfigadmFile)
 	if err != nil {
 		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
 	}
@@ -92,7 +92,7 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 // CreateWorker creates a konfigadm config for a worker in node group nodegroup
 func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 	platform.Init()
-	cfg, err := baseKonfig()
+	cfg, err := baseKonfig("")
 	if err != nil {
 		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
 	}
@@ -108,11 +108,12 @@ func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 // baseKonfig generates a base konfigadm configuration.
 // It copies in the required environment variables and
 // initial commands.
-func baseKonfig() (*konfigadm.Config, error) {
-	cfg, err := konfigadm.NewConfig().Build()
+func baseKonfig(initialKonfigadmFile string) (*konfigadm.Config, error) {
+	cfg, err := konfigadm.NewConfig(initialKonfigadmFile).Build()
 	if err != nil {
 		return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
 	}
+
 	for k, v := range envVars {
 		cfg.Environment[k] = v
 	}
