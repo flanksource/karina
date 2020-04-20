@@ -34,12 +34,9 @@ The [official documentation describes](https://kubernetes.io/docs/tasks/debug-ap
 | `audit-log-maxsize`  | Specifies the maximum size in megabytes of the audit <br/>log file before it gets rotated <br/>Sets the `--audit-log-maxsize` flag.                   |
 | `audit-log-format`   | Specifies the logging format used.<br/>Options are:<br/>`"legacy"` indicates 1-line text format for each event <br/> `"json"` indicates a structured json format. <br/>Sets the `--audit-log-format` flag.                   |
 
-These are injected into the cluster at creation time via `kubeadmConfigPatches` that are supplied to `kubeadm`.
-
-(see [kubeadm control pane configuration documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#apiserver-flags) for more detail)
-
 ## Debugging
 
+### Kind Clusters
 Investigating the API Server pod spec can indicate its current config:
 
 e.g.
@@ -150,3 +147,5 @@ nodes:
  
     ...
 </pre>
+
+

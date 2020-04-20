@@ -12,8 +12,13 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
+	if p.Ldap.E2E.Mock {
+		k8s.TestNamespace(client, "ldap", test)
+	}
+	if !p.S3.E2E.Minio {
+		return
+	}
 	k8s.TestNamespace(client, "minio", test)
-	k8s.TestNamespace(client, "ldap", test)
 
 	net := &http.Client{Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
