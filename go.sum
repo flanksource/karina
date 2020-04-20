@@ -128,6 +128,8 @@ github.com/flanksource/commons v1.1.4 h1:RwiKv62D0aPjqIICfqhhaI8AMMHeUiBAUdnumNx
 github.com/flanksource/commons v1.1.4/go.mod h1:pfuOutgi1ZK8PhbolaskGTCleZO1q9A2srEj5++l9/o=
 github.com/flanksource/commons v1.2.0 h1:hd5UZhf8lE84HwgxE+ch/xupiu9YLxsFTO/a8p6cToU=
 github.com/flanksource/commons v1.2.0/go.mod h1:6P0TYmsqu3QVDBjrIoib4pmBBdt2M/Z934grc8B7i4U=
+github.com/flanksource/konfigadm v0.6.0-2-g9751ff1 h1:mPTWZTM0IkiuWmwLX5XJi8TJt5ELm54Qqqq1tMT6r5g=
+github.com/flanksource/konfigadm v0.6.0-2-g9751ff1/go.mod h1:Dt9HKnY/C9WnF8slBm3h9KByogRSiVqARkp1HdSgWjA=
 github.com/flanksource/konfigadm v0.6.0 h1:RlAK4Wl1r4TtZXaiUX72IJt4N4ydxhH5KEJla+NThSY=
 github.com/flanksource/konfigadm v0.6.0/go.mod h1:Dt9HKnY/C9WnF8slBm3h9KByogRSiVqARkp1HdSgWjA=
 github.com/flanksource/yaml v0.0.0-20200322131016-b7b2608b8702 h1:+Ey5EeJrXZVapq77BDncYPjGrNth3uo6az6hU5plVj8=
