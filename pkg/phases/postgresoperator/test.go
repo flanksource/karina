@@ -102,10 +102,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 
 	ok := doUntil(func() bool {
 		errMessage = checkReplicaLag(p, cluster1Name, cluster2Name)
-		if err != nil {
-			return false
-		}
-		return true
+		return errMessage == nil
 	})
 
 	if ok {
