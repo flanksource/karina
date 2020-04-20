@@ -63,6 +63,45 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	return cfg, nil
 }
 
+// CreateSecondaryMaster creates a konfigadm config for a secondary master.
+func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
+	hostname := ""
+	cfg, err := baseKonfig(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
+	}
+	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createSecondaryMaster: failed to get/create bootstrap token: %v", err)
+	}
+	certKey, err := kubeadm.UploadControlPaneCerts(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
+	}
+	createConsulService(hostname, platform, cfg)
+	createClientSideLoadbalancers(platform, cfg)
+	if err = addCerts(platform, cfg); err != nil {
+		return nil, errors.Wrap(err, "Failed to add certs")
+	}
+	cfg.AddCommand(fmt.Sprintf(kubeadmMasterJoinCmdf, token, certKey, platform.JoinEndpoint))
+	return cfg, nil
+}
+
+// CreateWorker creates a konfigadm config for a worker in node group nodegroup
+func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
+	cfg, err := baseKonfig(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
+	}
+	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
+	}
+	createClientSideLoadbalancers(platform, cfg)
+	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
+	return cfg, nil
+}
+
 // baseKonfig generates a base konfigadm configuration.
 // It copies in the required environment variables and
 // initial commands.
@@ -170,43 +209,4 @@ func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.C
 			"PORT":           "8443",
 		},
 	})
-}
-
-// CreateSecondaryMaster creates a konfigadm config for a secondary master.
-func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
-	hostname := ""
-	cfg, err := baseKonfig(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
-	}
-	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createSecondaryMaster: failed to get/create bootstrap token: %v", err)
-	}
-	certKey, err := kubeadm.UploadControlPaneCerts(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
-	}
-	createConsulService(hostname, platform, cfg)
-	createClientSideLoadbalancers(platform, cfg)
-	if err = addCerts(platform, cfg); err != nil {
-		return nil, errors.Wrap(err, "Failed to add certs")
-	}
-	cfg.AddCommand(fmt.Sprintf(kubeadmMasterJoinCmdf, token, certKey, platform.JoinEndpoint))
-	return cfg, nil
-}
-
-// CreateWorker creates a konfigadm config for a worker in node group nodegroup
-func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
-	cfg, err := baseKonfig(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
-	}
-	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
-	}
-	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
-	return cfg, nil
 }
