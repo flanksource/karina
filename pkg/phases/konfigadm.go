@@ -113,7 +113,6 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 	createClientSideLoadbalancers(platform, cfg)
 	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
 	return cfg, nil
-
 }
 
 // baseKonfig generates a base konfigadm configuration.
