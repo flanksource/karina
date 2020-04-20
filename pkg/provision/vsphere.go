@@ -189,7 +189,7 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	}
 	worker := platform.Nodes[nodeGroup]
 	vm := worker
-	config, err := phases.CreateWorker(platform)
+	config, err := phases.CreateWorker(nodeGroup, platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create worker %v", err)
 	}

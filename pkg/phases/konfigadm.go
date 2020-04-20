@@ -88,19 +88,27 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 }
 
 // CreateWorker creates a konfigadm config for a worker in node group nodegroup
-func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
+func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Config, error) {
 	platform.Init()
-	cfg, err := baseKonfig("")
-	if err != nil {
-		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
+	if platform.Nodes == nil {
+		return nil, fmt.Errorf("CreateWorker failed to create worker - nil Nodes supplied")
 	}
-	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
+	if node, ok := platform.Nodes[nodegroup]; !ok {
+		return nil, fmt.Errorf("CreateWorker failed to create worker - supplied nodegroup not found")
+	} else {
+		baseConfig := node.KonfigadmFile
+		cfg, err := baseKonfig(baseConfig)
+		if err != nil {
+			return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
+		}
+		token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+		if err != nil {
+			return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
+		}
+		createClientSideLoadbalancers(platform, cfg)
+		cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
+		return cfg, nil
 	}
-	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
-	return cfg, nil
 }
 
 // baseKonfig generates a base konfigadm configuration.
