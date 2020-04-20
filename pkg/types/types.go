@@ -196,8 +196,10 @@ type S3 struct {
 	// Provide a KMS Master Key
 	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
 	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
-	UsePathStyle bool  `yaml:"usePathStyle"`
-	E2E          S3E2E `yaml:"e2e,omitempty"`
+	UsePathStyle bool `yaml:"usePathStyle"`
+	// Skip TLS verify when connecting to S3
+	SkipTLSVerify bool  `yaml:"skipTLSVerify"`
+	E2E           S3E2E `yaml:"e2e,omitempty"`
 }
 
 type S3E2E struct {

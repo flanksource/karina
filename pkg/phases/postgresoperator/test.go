@@ -1,36 +1,42 @@
 package postgresoperator
 
 import (
-	"crypto/tls"
+	"encoding/json"
 	"fmt"
-	"math/rand"
-	"net"
-	"net/http"
-	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/go-pg/pg/v9/orm"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	pg "github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/pkg/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Link struct {
 	ID  int64
 	URL string
+}
+
+type ClusterResponse struct {
+	Members []ClusterResponseMember `json:"members"`
+}
+
+type ClusterResponseMember struct {
+	Name     string      `json:"name"`
+	Host     string      `json:"host"`
+	Port     int         `json:"port"`
+	Role     string      `json:"role"`
+	State    string      `json:"state"`
+	URL      string      `json:"api_url"`
+	Timeline int         `json:"timeline"`
+	Lag      interface{} `json:"lag"`
 }
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -54,7 +60,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	cluster1 := pgapi.NewClusterConfig(utils.RandomString(6), "test", "e2e_db")
 	cluster1.BackupSchedule = "*/1 * * * *"
 	cluster1Name := "postgres-" + cluster1.Name
-	db, err := p.GetOrCreateDB(cluster1)
+	_, err := GetOrCreateDB(p, cluster1)
 	defer removeE2ECluster(p, cluster1, test) //failsafe removal of cluster
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster1.Name, err)
@@ -62,14 +68,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	}
 	test.Passf(testName, "Cluster %s deployed", cluster1Name)
 
-	pf1, port1, err := exposeService(p, cluster1Name, test)
-	if err != nil {
-		test.Failf(testName, "Failed to expose service %s: %v", cluster1Name, err)
-		return
-	}
-	defer pf1.Process.Kill() // nolint: errcheck
-
-	if err := insertTestFixtures(db, port1); err != nil {
+	if err := insertTestFixtures(p, cluster1Name, test); err != nil {
 		test.Failf(testName, "Failed to insert fixtures into database %s: %v", cluster1.Name, err)
 		return
 	}
@@ -80,15 +79,13 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	removeE2ECluster(p, cluster1, test)
-
 	cluster2 := pgapi.NewClusterConfig(cluster1.Name+"-clone", "test")
 	cluster2.Clone = &pgapi.CloneConfig{
 		ClusterName: cluster1Name,
 		Timestamp:   time.Now().Format("2006-01-02 15:04:05 UTC"),
 	}
 	cluster2Name := "postgres-" + cluster2.Name
-	db2, err := p.GetOrCreateDB(cluster2)
+	_, err = GetOrCreateDB(p, cluster2)
 	defer removeE2ECluster(p, cluster2, test)
 	if err != nil {
 		test.Failf(testName, "Error creating db %s: %v", cluster2.Name, err)
@@ -96,31 +93,36 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	}
 	test.Passf(testName, "Cluster %s deployed user", cluster1.Name)
 
-	pf2, port2, err := exposeService(p, cluster2Name, test)
-	if err != nil {
-		test.Failf(testName, "Failed to expose service %s: %v", cluster2Name, err)
-		return
-	}
-	defer pf2.Process.Kill() // nolint: errcheck
-
-	if err := testFixturesArePresent(db2, port2, 5*time.Minute, test); err != nil {
+	if err := testFixturesArePresent(p, cluster2Name, 5*time.Minute, test); err != nil {
 		test.Failf(testName, "Failed to find test fixtures data in clone database %s: %v", cluster2Name, err)
 		return
 	}
-	test.Passf(testName, "Cloned cluster %s successfully created", cluster2Name)
+
+	var errMessage error = nil
+
+	ok := doUntil(func() bool {
+		errMessage = checkReplicaLag(p, cluster1Name, cluster2Name)
+		return errMessage == nil
+	})
+
+	if ok {
+		test.Passf(testName, "Cloned cluster %s successfully created", cluster2Name)
+	} else {
+		test.Failf(testName, "Failed to check replica lag: %v", errMessage)
+	}
 }
 
-func insertTestFixtures(db *types.DB, port int) error {
-	pgdb := pg.Connect(&pg.Options{
-		User:     db.Username,
-		Password: db.Password,
-		Addr:     fmt.Sprintf("localhost:%d", port),
-		Database: "e2e_db",
-	})
+func insertTestFixtures(p *platform.Platform, clusterName string, test *console.TestResults) error {
+	pgdb, err := p.OpenDB(Namespace, clusterName, "e2e_db")
+	if err != nil {
+		test.Failf("postgres-operator", "failed to connect to e2e_db")
+		return err
+	}
 	defer pgdb.Close()
 
-	err := pgdb.CreateTable(&Link{}, &orm.CreateTableOptions{})
+	err = pgdb.CreateTable(&Link{}, &orm.CreateTableOptions{})
 	if err != nil {
+		test.Failf("postgres-operator", "failed to create test table")
 		return fmt.Errorf("failed to create table links: %v", err)
 	}
 
@@ -131,13 +133,12 @@ func insertTestFixtures(db *types.DB, port int) error {
 	return pgdb.Insert(links...)
 }
 
-func testFixturesArePresent(db *types.DB, port int, timeout time.Duration, test *console.TestResults) error {
-	pgdb := pg.Connect(&pg.Options{
-		User:     db.Username,
-		Password: db.Password,
-		Addr:     fmt.Sprintf("localhost:%d", port),
-		Database: "e2e_db",
-	})
+func testFixturesArePresent(p *platform.Platform, clusterName string, timeout time.Duration, test *console.TestResults) error {
+	pgdb, err := p.OpenDB(Namespace, clusterName, "e2e_db")
+	if err != nil {
+		test.Failf("postgres-operator", "failed to connect to e2e_db")
+		return err
+	}
 	defer pgdb.Close()
 
 	deadline := time.Now().Add(timeout)
@@ -154,31 +155,19 @@ func testFixturesArePresent(db *types.DB, port int, timeout time.Duration, test 
 		}
 		time.Sleep(5 * time.Second)
 		if time.Now().After(deadline) {
+			test.Failf("postgres-operator", "deadline exceeded waiting for links to be present in cloned database")
 			return fmt.Errorf("could not find any links in database e2e_db, deadline exceeded")
 		}
 	}
 }
 
 func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Duration, timestamp time.Time, test *console.TestResults) error {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	cfg := aws.NewConfig().
-		WithRegion(p.S3.Region).
-		WithEndpoint(p.S3.GetExternalEndpoint()).
-		WithCredentials(
-			credentials.NewStaticCredentials(p.S3.AccessKey, p.S3.SecretKey, ""),
-		).
-		WithHTTPClient(&http.Client{Transport: tr})
-	ssn, err := session.NewSession(cfg)
+	client, err := p.GetAWSS3Client()
 	if err != nil {
-		return fmt.Errorf("failed to create S3 session: %v", err)
+		return errors.Wrap(err, "failed to get aws client")
 	}
-	client := s3.New(ssn)
-	client.Config.S3ForcePathStyle = aws.Bool(p.S3.UsePathStyle)
 
-	bucket := p.PostgresOperatorBackupBucket()
+	bucket := getBackupBucket(p)
 	deadline := time.Now().Add(timeout)
 	paths := []string{
 		fmt.Sprintf("%s/wal/basebackups_005", clusterName),
@@ -225,47 +214,40 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 	}
 }
 
-func exposeService(p *platform.Platform, clusterName string, test *console.TestResults) (*exec.Cmd, int, error) {
-	client, _ := p.GetClientset()
-	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
-	pods, err := client.CoreV1().Pods(Namespace).List(opts)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
-	}
-
-	if len(pods.Items) != 1 {
-		return nil, 0, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
-	}
-
-	randomPort := 36000 + rand.Intn(1000)
-
-	portForwardCmd := exec.Command("./.bin/kubectl", "--namespace", "postgres-operator", "port-forward", pods.Items[0].Name, fmt.Sprintf("%d:5432", randomPort))
-	if err := portForwardCmd.Start(); err != nil {
-		return nil, 0, fmt.Errorf("failed to start portforward cmd: %v", err)
-	}
-
-	deadline := time.Now().Add(10 * time.Second)
-
-	for {
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", randomPort), 3*time.Second)
-		if conn != nil {
-			defer conn.Close()
+func checkReplicaLag(p *platform.Platform, clusters ...string) error {
+	for _, cluster := range clusters {
+		patroniClient, err := GetPatroniClient(p, Namespace, cluster)
+		if err != nil {
+			return errors.Errorf("Failed to get patroni client to cluster %s", cluster)
+		}
+		response, err := patroniClient.Get("http://patroni/cluster")
+		if err != nil {
+			return errors.Errorf("Failed to get /cluster endpoint for cluster %s: %v", cluster, err)
+		}
+		defer response.Body.Close() // nolint: errcheck
+		clusterResponse := &ClusterResponse{}
+		err = json.NewDecoder(response.Body).Decode(&clusterResponse)
+		if err != nil {
+			return errors.Errorf("Failed to read response body for cluster %s: %v", cluster, err)
 		}
 
-		if err, ok := err.(*net.OpError); ok && err.Timeout() {
-			test.Errorf("Timeout error connecting to port %d: %s, retrying in 1 second", randomPort, err)
-		} else if err != nil {
-			// Log or report the error here
-			test.Warnf("Error connecting to port %d: %s, retrying in 1 second", randomPort, err)
-		} else {
-			return portForwardCmd, randomPort, nil
-		}
-		time.Sleep(1 * time.Second)
-		if time.Now().After(deadline) {
-			portForwardCmd.Process.Kill() // nolint: errcheck
-			return nil, 0, fmt.Errorf("timed out connecting to port %d", randomPort)
+		for _, m := range clusterResponse.Members {
+			if m.State != "running" {
+				return errors.Errorf("Expected state for cluster=%s node=%s to be 'running', got %s", cluster, m.Name, m.State)
+			} else if m.Role == "replica" {
+				iLag, ok := m.Lag.(int)
+				if ok && iLag > 0 {
+					return errors.Errorf("Expected replication lag for cluster=%s replica=%s to be 0, got %d", cluster, m.Name, m.Lag)
+				} else if !ok {
+					sLag, ok := m.Lag.(string)
+					if ok && sLag != "" {
+						return errors.Errorf("Expected replication lag for cluster=%s replica=%s to be 0, got %s", cluster, m.Name, m.Lag)
+					}
+				}
+			}
 		}
 	}
+	return nil
 }
 
 func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *console.TestResults) {
@@ -279,7 +261,7 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *co
 	}
 
 	_, err = pgClient.Get(clusterName, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
+	if kerrors.IsNotFound(err) {
 		return
 	}
 
