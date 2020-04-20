@@ -38,6 +38,7 @@ ca:
 CA certs are generated using platform-cli ca generate
 `
 
+// CreatePrimaryMaster creates a konfigadm config for the primary master.
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	if platform.Name == "" {
 		return nil, errors.New("Must specify a platform name")
@@ -62,6 +63,9 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	return cfg, nil
 }
 
+// baseKonfig generates a base konfigadm configuration.
+// It copies in the required environment variables and
+// initial commands.
 func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	platform.Init()
 	cfg, err := konfigadm.NewConfig().Build()
@@ -77,6 +81,8 @@ func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
 	return cfg, nil
 }
 
+// addCerts derives certs and key files for a cluster from its platform
+// config and adds the cert and key files to its konfigadm files
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	if platform.CA == nil {
 		return errors.New(noCAErrorText)
@@ -102,6 +108,8 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	return nil
 }
 
+// addInitKubeadmConfig derives the initial kubeadm config for a cluster from its platform
+// config and adds it to its konfigadm files
 func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
 	cluster := kubeadm.NewClusterConfig(platform)
 	data, err := yaml.Marshal(cluster)
@@ -113,6 +121,8 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 	return nil
 }
 
+// createConsulService derives the initial consul config for a cluster from its platform
+// config and adds it to its konfigadm files
 func createConsulService(hostname string, platform *platform.Platform, cfg *konfigadm.Config) {
 	cfg.Files["/etc/kubernetes/consul/api.json"] = fmt.Sprintf(`
 {
@@ -136,6 +146,8 @@ func createConsulService(hostname string, platform *platform.Platform, cfg *konf
 	`, hostname, platform.Name)
 }
 
+// createClientSideLoadbalancers derives the client side loadbalancer configs for a cluster from its platform
+// config and adds it to its konfigadm containers
 func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.Config) {
 	cfg.Containers = append(cfg.Containers, konfigadm.Container{
 		Image: platform.GetImagePath("docker.io/consul:1.3.1"),
@@ -160,6 +172,7 @@ func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.C
 	})
 }
 
+// CreateSecondaryMaster creates a konfigadm config for a secondary master.
 func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	hostname := ""
 	cfg, err := baseKonfig(platform)
@@ -183,6 +196,7 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	return cfg, nil
 }
 
+// CreateWorker creates a konfigadm config for a worker in node group nodegroup
 func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
 	cfg, err := baseKonfig(platform)
 	if err != nil {
