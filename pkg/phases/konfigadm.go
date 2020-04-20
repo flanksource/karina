@@ -97,22 +97,23 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 	if platform.Nodes == nil {
 		return nil, fmt.Errorf("CreateWorker failed to create worker - nil Nodes supplied")
 	}
-	if node, ok := platform.Nodes[nodegroup]; !ok {
+	if _, ok := platform.Nodes[nodegroup]; !ok {
 		return nil, fmt.Errorf("CreateWorker failed to create worker - supplied nodegroup not found")
-	} else {
-		baseConfig := node.KonfigadmFile
-		cfg, err := baseKonfig(baseConfig)
-		if err != nil {
-			return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
-		}
-		token, err := kubeadm.GetOrCreateBootstrapToken(platform)
-		if err != nil {
-			return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
-		}
-		createClientSideLoadbalancers(platform, cfg)
-		cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
-		return cfg, nil
 	}
+	node := platform.Nodes[nodegroup]
+	baseConfig := node.KonfigadmFile
+	cfg, err := baseKonfig(baseConfig)
+	if err != nil {
+		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
+	}
+	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+	if err != nil {
+		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
+	}
+	createClientSideLoadbalancers(platform, cfg)
+	cfg.AddCommand(fmt.Sprintf(kubeadmNodeJoinCmdf, token, platform.JoinEndpoint))
+	return cfg, nil
+
 }
 
 // baseKonfig generates a base konfigadm configuration.
