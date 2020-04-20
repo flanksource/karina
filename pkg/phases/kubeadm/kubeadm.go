@@ -43,7 +43,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
 
-	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
+	if cfg.Kubernetes.AuditConfig != nil && cfg.Kubernetes.AuditConfig.PolicyFile != "" {
 		cluster.APIServer.ExtraArgs["audit-policy-file"] = AuditPolicyPath
 		mnt := api.HostPathMount{
 			Name:      "auditpolicy",
