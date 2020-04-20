@@ -137,7 +137,7 @@ func baseKonfig(initialKonfigadmFile string) (*konfigadm.Config, error) {
 // addAuditConfig derives the initial admin config for a cluster from its platform
 // config and adds it to its konfigadm files
 func addAuditConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+	if platform.Kubernetes.AuditConfig != nil && platform.Kubernetes.AuditConfig.PolicyFile != "" {
 		// clusters audit policy files are injected into the machine via konfigadm
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
 		if ap == "" {
