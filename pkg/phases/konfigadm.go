@@ -2,6 +2,7 @@ package phases
 
 import (
 	"fmt"
+	"github.com/flanksource/commons/files"
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/yaml"
@@ -52,6 +53,9 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	}
 	if err := addInitKubeadmConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add kubeadm config: %v", err)
+	}
+	if err := addAuditConfig(platform, cfg); err != nil {
+		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
 	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
@@ -127,6 +131,20 @@ func baseKonfig(initialKonfigadmFile string) (*konfigadm.Config, error) {
 	// update hosts file with hostname
 	cfg.AddCommand(updateHostsFileCmd)
 	return cfg, nil
+}
+
+// addAuditConfig derives the initial admin config for a cluster from its platform
+// config and adds it to its konfigadm files
+func addAuditConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		// clusters audit policy files are injected into the machine via konfigadm
+		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
+		if ap == "" {
+			return fmt.Errorf("unable to read audit policy file")
+		}
+		cfg.Files[kubeadm.AuditPolicyPath] = ap
+	}
+	return nil
 }
 
 // addCerts derives certs and key files for a cluster from its platform
