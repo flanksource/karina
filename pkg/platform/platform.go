@@ -121,7 +121,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return nil, fmt.Errorf("could not find any master ips")
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin")
+	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin", 24*7*time.Hour)
 }
 
 // GetCA retrieves the cert.CertificateAuthority
