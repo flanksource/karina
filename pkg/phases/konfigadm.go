@@ -27,7 +27,7 @@ const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf | tee
 const kubeadmMasterJoinCmdf = "kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
 const kubeadmNodeJoinCmdf = "kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log"
 
-var noCAErrorText = `Must specify a 'ca'' section in the platform config.
+const noCAErrorText = `Must specify a 'ca'' section in the platform config.
 e.g.:
 ca:
    cert: .certs/root-ca-crt.pem
