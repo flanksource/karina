@@ -11,6 +11,7 @@ import (
 
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/kr/pretty"
 	ptypes "github.com/moshloop/platform-cli/pkg/types"
 )
 
@@ -88,6 +89,8 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	s.Infof("Cloning %s to %s", vm.Template, vm.Name)
 
+	s.Tracef("VM Spec: %# v", pretty.Formatter(spec))
+
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error trigging clone op for machine %s/%s %+v\n\n%+v", folder, vm.Name, err, spec)
@@ -143,7 +146,10 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 		return nil, err
 	}
 	s.Tracef("Uploaded to %s", path)
-	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", vm.Datastore, path))
+
+	//NOTE: using the datastore Name as the vm.Datastore may be "" and
+	//      the datastore may have been determined from default values.
+	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", datastore.Name(), path))
 	devices.Connect(cdrom) // nolint: errcheck
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,

@@ -32,6 +32,7 @@ type VaultClient struct {
 	Token string `yaml:"token"`
 }
 
+// VM captures the specifications of a virtual machine
 type VM struct {
 	Name   string `yaml:"name,omitempty"`
 	Prefix string `yaml:"prefix,omitempty"`
@@ -50,7 +51,9 @@ type VM struct {
 	// Tags to be applied to the VM
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
-	IP       string            `yaml:"-"`
+	// A path to a konfigadm specification used for configuring the VM on creation.
+	KonfigadmFile string `yaml:"konfigadm,omitempty"`
+	IP            string `yaml:"-"`
 }
 
 type Calico struct {
