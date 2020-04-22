@@ -16,8 +16,11 @@ import (
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 )
 
-// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
-const AuditPolicyPath = "/etc/kubernetes/policies/audit-policy.yaml"
+const (
+	// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
+	AuditPolicyPath              = "/etc/kubernetes/policies/audit-policy.yaml"
+	EncryptionProviderConfigPath = "/etc/kubernetes/policies/encryption-provider-config.yaml" //TODO: verify location
+)
 
 // NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
@@ -49,6 +52,18 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 			Name:      "auditpolicy",
 			HostPath:  AuditPolicyPath,
 			MountPath: AuditPolicyPath,
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		}
+		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt)
+	}
+
+	if cfg.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile != "" {
+		cluster.APIServer.ExtraArgs["encryption-provider-config"] = EncryptionProviderConfigPath
+		mnt := api.HostPathMount{
+			Name:      "encryption-config",
+			HostPath:  EncryptionProviderConfigPath,
+			MountPath: EncryptionProviderConfigPath,
 			ReadOnly:  true,
 			PathType:  api.HostPathFile,
 		}
