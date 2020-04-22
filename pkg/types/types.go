@@ -631,6 +631,8 @@ type Connection struct {
 	Verify   string `yaml:"verify,omitempty"`
 }
 
+// Specifies Cluster Auditing Config,
+// primarily by specifying the Audit Policy File supplied to the cluster API Server.
 type AuditConfig struct {
 	PolicyFile string `yaml:"policyFile,omitempty"`
 }
