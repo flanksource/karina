@@ -301,6 +301,8 @@ type Kubernetes struct {
 	// The relevant flags are:
 	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
 	AuditConfig *AuditConfig `yaml:"auditing,omitempty"`
+	// EncryptionConfig is used to specify the encryption configuration file.
+	EncryptionConfig EncryptionConfig `yaml:"encryption,omitempty"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of
@@ -631,6 +633,12 @@ type Connection struct {
 
 type AuditConfig struct {
 	PolicyFile string `yaml:"policyFile,omitempty"`
+}
+
+// Specifies Cluster Encryption Provider Config,
+// primarily by specifying the Encryption Provider Config File supplied to the cluster API Server.
+type EncryptionConfig struct {
+	EncryptionProviderConfigFile string `yaml:"encryptionConfig,omitempty"`
 }
 
 type ConfigMapReloader struct {
