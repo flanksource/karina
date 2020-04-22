@@ -640,7 +640,7 @@ type AuditConfig struct {
 // Specifies Cluster Encryption Provider Config,
 // primarily by specifying the Encryption Provider Config File supplied to the cluster API Server.
 type EncryptionConfig struct {
-	EncryptionProviderConfigFile string `yaml:"encryptionConfig,omitempty"`
+	EncryptionProviderConfigFile string `yaml:"encryptionProviderConfigFile,omitempty"`
 }
 
 type ConfigMapReloader struct {
