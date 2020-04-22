@@ -57,6 +57,9 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addAuditConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
 	}
+	if err := addEncryptionConfig(platform, cfg); err != nil {
+		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
+	}
 	createConsulService(hostname, platform, cfg)
 	createClientSideLoadbalancers(platform, cfg)
 	if err := addCerts(platform, cfg); err != nil {
