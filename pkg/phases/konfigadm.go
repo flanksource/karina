@@ -133,16 +133,30 @@ func baseKonfig(initialKonfigadmFile string) (*konfigadm.Config, error) {
 	return cfg, nil
 }
 
-// addAuditConfig derives the initial admin config for a cluster from its platform
+// addAuditConfig derives the initial audit config for a cluster from its platform
 // config and adds it to its konfigadm files
 func addAuditConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+	if pf := platform.Kubernetes.AuditConfig.PolicyFile; pf != "" {
 		// clusters audit policy files are injected into the machine via konfigadm
-		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
+		ap := files.SafeRead(pf)
 		if ap == "" {
-			return fmt.Errorf("unable to read audit policy file")
+			return fmt.Errorf("unable to read audit policy file %v", pf)
 		}
 		cfg.Files[kubeadm.AuditPolicyPath] = ap
+	}
+	return nil
+}
+
+// addEncryptionConfig derives the initial encryption config for a cluster from its platform
+// config and adds it to its konfigadm files
+func addEncryptionConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
+	if ef := platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile; ef != "" {
+		// clusters encryption provider files are injected into the machine via konfigadm
+		ep := files.SafeRead(ef)
+		if ep == "" {
+			return fmt.Errorf("unable to encryption provider file %v", ef)
+		}
+		cfg.Files[kubeadm.EncryptionProviderConfigPath] = ep
 	}
 	return nil
 }
