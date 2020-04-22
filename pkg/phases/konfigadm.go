@@ -85,6 +85,9 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	if err != nil {
 		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
 	}
+	if err := addAuditConfig(platform, cfg); err != nil {
+		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
+	}
 	if err := addEncryptionConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
 	}
