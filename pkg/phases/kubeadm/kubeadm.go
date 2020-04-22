@@ -131,7 +131,7 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 	return token, nil
 }
 
-func UploadControlPaneCerts(platform *platform.Platform) (string, error) {
+func UploadControlPlaneCerts(platform *platform.Platform) (string, error) {
 	client, err := platform.GetClientset()
 	if err != nil {
 		return "", err

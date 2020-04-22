@@ -51,7 +51,7 @@ func VsphereCluster(platform *platform.Platform) error {
 
 	if platform.Master.Count != len(masters) {
 		// upload control plane certs first
-		kubeadm.UploadControlPaneCerts(platform) // nolint: errcheck
+		kubeadm.UploadControlPlaneCerts(platform) // nolint: errcheck
 	}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)

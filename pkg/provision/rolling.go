@@ -36,7 +36,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 	}
 
 	// upload control plane certs first
-	if _, err := kubeadm.UploadControlPaneCerts(platform); err != nil {
+	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
 		return err
 	}
 	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
