@@ -17,7 +17,7 @@ func init() {
 		Short: "generate CLI documentation",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := doc.GenMarkdownTree(root, args[0])
+			err := doc.GenMarkdownTree(&rootCmd, args[0])
 			if err != nil {
 				log.Fatal(err)
 			}

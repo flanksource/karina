@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var root = &cobra.Command{
+var rootCmd = cobra.Command{
 	Use: "platform-cli",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		level, _ := cmd.Flags().GetCount("loglevel")
@@ -24,6 +24,7 @@ var root = &cobra.Command{
 
 // GetRootCmd returns the main CLI command.
 func GetRootCmd(version string) *cobra.Command {
+	root := rootCmd
 	root.AddCommand(
 		Access,
 		APIDocs,
@@ -72,5 +73,5 @@ func GetRootCmd(version string) *cobra.Command {
 	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 
-	return root
+	return &root
 }
