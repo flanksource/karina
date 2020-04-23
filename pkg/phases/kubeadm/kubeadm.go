@@ -19,7 +19,7 @@ import (
 const (
 	// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
 	AuditPolicyPath              = "/etc/kubernetes/policies/audit-policy.yaml"
-	EncryptionProviderConfigPath = "/etc/kubernetes/policies/encryption-provider-config.yaml" //TODO: verify location
+	EncryptionProviderConfigPath = "/etc/kubernetes/policies/encryption-provider-config.yaml"
 )
 
 // NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
