@@ -85,10 +85,14 @@ func TestEncryption(p *platform.Platform, tr *console.TestResults) {
 	secretKey := "test-secret"
 	secretValue := "correct-horse-battery-staple"
 	tr.Infof("Creating secret '%v' in namespace '%v'", secretName, ns)
-	p.Client.CreateOrUpdateSecret(secretName, ns,
+	err = p.Client.CreateOrUpdateSecret(secretName, ns,
 		map[string]([]byte){
 			secretKey: []byte(secretValue),
 		})
+	if err != nil {
+		tr.Failf(testEncryptionName, "Failed to create secret: %v", err)
+		return
+	}
 
 	verificationCommand := fmt.Sprintf("ETCDCTL_API=3 etcdctl get /registry/secrets/%v/%v"+
 		" --endpoints https://127.0.0.1:2379"+
