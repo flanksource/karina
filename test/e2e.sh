@@ -9,6 +9,10 @@ GITHUB_USER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_USER=${GITHUB_USER##*:}
 MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_USER/$NAME/commits/master | jq -r '.sha')
 
+if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
+  circleci-agent step halt
+  exit 0
+fi
 
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
