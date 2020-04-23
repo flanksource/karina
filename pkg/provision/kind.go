@@ -2,6 +2,7 @@ package provision
 
 import (
 	"fmt"
+	"github.com/flanksource/commons/files"
 
 	"github.com/pkg/errors"
 
@@ -96,24 +97,9 @@ func KindCluster(platform *platform.Platform) error {
 		})
 	}
 
-	if encryptionFile := platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile; encryptionFile != "" {
-		// for kind clusters encryption provider config files are mapped in via a dual
-		// host -> master,
-		// master -> kube-api-server pod
-		// mapping
-
-		absFile, err := filepath.Abs(encryptionFile)
-		if err != nil {
-			return errors.Wrap(err, "failed to expand encryption provider file path")
-		}
-
-		mnts := &kindConfig.Nodes[0].ExtraMounts
-
-		*mnts = append(*mnts, kindapi.Mount{
-			ContainerPath: kubeadm.EncryptionProviderConfigPath,
-			HostPath:      absFile,
-			Readonly:      true,
-		})
+	err = configureEncryptionMappings(platform, &kindConfig)
+	if err != nil {
+		return err
 	}
 
 	yml, err := yaml.Marshal(kindConfig)
@@ -194,4 +180,35 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// configureEncryptionMappings configures the mapping of the encryption provider config files into the
+// KIND cluster config
+func configureEncryptionMappings(platform *platform.Platform, kindConfig *kindapi.Cluster) error {
+	encryptionFile := platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile
+	if encryptionFile == "" {
+		platform.Debugf("No encryption provider config specified for KIND cluster")
+		return nil
+	}
+	// for kind clusters encryption provider config files are mapped in via a dual
+	// host -> master,
+	// master -> kube-api-server pod
+	// mapping
+
+	absFile, err := filepath.Abs(encryptionFile)
+	if err != nil {
+		return errors.Wrapf(err, "failed to expand encryption provider file path for %v", encryptionFile)
+	}
+	if content := files.SafeRead(absFile); len(content) == 0 {
+		return fmt.Errorf("failed to read encryption provider file %v", absFile)
+	}
+
+	mnts := &kindConfig.Nodes[0].ExtraMounts
+
+	*mnts = append(*mnts, kindapi.Mount{
+		ContainerPath: kubeadm.EncryptionProviderConfigPath,
+		HostPath:      absFile,
+		Readonly:      true,
+	})
+	return nil
 }
