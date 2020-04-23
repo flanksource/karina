@@ -129,6 +129,7 @@ func init() {
 		"dex":                dex.Test,
 		"eck":                eck.Test,
 		"elasticsearch":      elasticsearch.Test,
+		"encryption":         kubeadm.TestEncryption,
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,
