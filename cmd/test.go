@@ -3,12 +3,13 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"io/ioutil"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
