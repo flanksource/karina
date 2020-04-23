@@ -122,7 +122,7 @@ func init() {
 	}
 
 	tests := map[string]TestFn{
-		"audit":              kubeadm.Test,
+		"audit":              kubeadm.TestAudit,
 		"base":               base.Test,
 		"configmap-reloader": configmapreloader.Test,
 		"consul":             consul.Test,
