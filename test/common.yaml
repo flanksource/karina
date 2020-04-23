@@ -19,6 +19,8 @@ ldap:
 kubernetes:
   auditing:
     policyFile: ./test/fixtures/audit-policy.yaml
+  encryption:
+    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
   apiServerExtraArgs:
     "audit-log-path": /var/log/audit/cluster-audit.log
     "audit-log-maxsize": 1024
