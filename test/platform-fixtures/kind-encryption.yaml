@@ -1,0 +1,218 @@
+name: test-encryption
+kubernetes:
+  encryption:
+    #TODO: get consisten relative path scheme
+    encryptionProviderConfigFile: ../test/fixtures/encryption-config.yaml
+  version: v1.15.7
+  kubeletExtraArgs:
+    node-labels: "ingress-ready=true"
+    authorization-mode: "AlwaysAllow"
+  masterIP: localhost
+#
+#
+patches:
+  - ./test/patch1.yaml
+domain: 127.0.0.1.nip.io
+ldap:
+  adminGroup: NA1
+  username: uid=admin,ou=system
+  password: secret
+  port: 10636
+  host: apacheds.ldap
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: DN
+  e2e:
+    mock: true
+    username: test
+    password: secret
+dashboard:
+  accessRestricted:
+    enabled: true
+    groups:
+      - cn=k8s,ou=groups,dc=example,dc=com
+versions:
+  gomplate: v3.5.0
+  konfigadm: v0.3.6
+  jb: v0.1.0
+  jsonnet: 0.14
+  sonobuoy: 0.16.4
+  govc: v0.20.0
+  gojsontoyaml: master
+  kubectl: v1.15.3
+  pgo: 4.2.0
+  helm: v2.13.0
+  velero: v1.2.0
+  expenv: v1.2.0
+  ketall: v1.3.0
+  apacheds: 0.7.0
+podSubnet: 100.200.0.0/16
+serviceSubnet: 100.100.0.0/16
+opa:
+  version: 0.17.3
+  e2e:
+    fixtures: test/opa/opa-fixtures
+  policies: test/opa/policies
+  kubeMgmtVersion: 0.10
+  bundleUrl: http://minio.minio.svc:9000
+  bundlePrefix: bundles
+  bundleServiceName: automobile
+  logFormat: json-pretty
+  setDecisionLogs: true
+  namespaceWhitelist:
+    - kube-system
+    - nsx-system
+    - quack
+    - cert-manager
+    - harbor
+    - pgo
+    - dex
+    - local-path-storage
+    - kube-node-lease
+    - monitoring
+    - minio
+calico:
+  ipip: Never
+  vxlan: Never
+  version: v3.8.2
+nodeLocalDNS:
+  disabled: false
+monitoring:
+  version: dfb626837f04756ed5a8805845f51ebd29d342ec
+harbor:
+  replicas: 1
+  bucket: harbor-blobs
+  version: v1.10.0
+postgresOperator:
+  version: v1.3.4.flanksource.1
+minio:
+s3:
+  endpoint: http://minio.minio.svc:9000
+  externalEndpoint: minio.127.0.0.1.nip.io
+  bucket: harbor
+  access_key: minio
+  secret_key: minio123
+  region: us-east1
+  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
+  usePathStyle: true
+  skipTLSVerify: true
+  e2e:
+    minio: true
+velero:
+  bucket: velero
+thanos:
+  version: v0.10.1
+  mode: client
+  bucket: thanos
+fluentd-operator:
+  version: v1.11.0
+  repository: jvassev/kube-fluentd-operator
+fluentd:
+  version: 1.11.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: https
+filebeat:
+  version: 7.6.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: filebeat
+    password: filebeat
+    port: 9200
+    scheme: https
+eck:
+  version: 1.0.1
+oauth2Proxy:
+  version: "v5.0.0.flanksource.1"
+  oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
+  cookieSecret: !!template '{{ base64.Encode "d0b0681d5babefb164b4d6e03b53967b" }}'
+prometheus:
+  persistence:
+    capacity: 10Gi
+configmapReloader:
+  version: "v0.0.56"
+ca:
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ingressCA:
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
+  password: foobar
+#sealedSecrets:
+#  version: "v0.10.0"
+#  certificate:
+#    cert: .certs/sealed-secrets-crt.pem
+#    privateKey: .certs/sealed-secrets-key.pem
+#    password: foobar
+gitops:
+  - name: platform-cli
+    namespace: gitops-e2e-test
+    gitUrl: https://github.com/teodor-pripoae/platform-cli.git
+    gitBranch: issue-170-e2e-git-ops
+    gitPath: test/gitops/
+vault:
+  version: 1.3.2
+  kmsKeyId: arn:aws:kms:us-east-1:745897381572:key/dde327f5-3b77-41b7-b42a-f9ae2270d90d
+  region: us-east-1
+  accessKey: !!env AWS_ACCESS_KEY_ID
+  secretKey: !!env AWS_SECRET_ACCESS_KEY
+  pkiPath: "pki/sign/ingress"
+  groupMappings:
+    "admins":
+      - admin
+      - signer
+  policies:
+    admin:
+      "auth/*":
+        capabilities:
+          - read
+          - create
+          - update
+          - sudo
+          - list
+          - delete
+      "sys/*":
+        capabilities:
+          - read
+          - create
+          - update
+          - sudo
+          - list
+          - delete
+    signer:
+      "pki/sign/ingress":
+        capabilities: ["update"]
+      "pki/*":
+        capabilities: ["list", "read"]
+  roles:
+    ingress:
+      max_ttl: 2160h
+      ttl: 2160h
+      key_type: rsa
+      key_bits: 2048
+      ou: "OU"
+      organization: org
+      locality: locality
+      province: gauteng
+      generate_lease: true
+      require_cn: false
+      allow_subdomains: true
+      allowed_domains:
+        - 127.0.0.1.nip.io
+  consul:
+    bucket: "consul-backups"
+registryCredentials:
+  disabled: true # quarantine registry creds
+  version: "v1.10.flanksource.2"
+  namespace: "registry-credentials"
+  aws:
+    enabled: true
+    accessKey: $AWS_ACCESS_KEY_ID
+    secretKey: $AWS_SECRET_ACCESS_KEY
+    account: 745897381572
+    region: us-east-1
