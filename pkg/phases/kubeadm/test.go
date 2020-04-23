@@ -121,5 +121,4 @@ func TestEncryption(p *platform.Platform, tr *console.TestResults) {
 	} else {
 		tr.Failf(testEncryptionName, "Secret %v could not be read, wanted %v, got %v", secretName, secretValue, got)
 	}
-	return
 }
