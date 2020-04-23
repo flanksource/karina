@@ -119,7 +119,13 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 // It copies in the required environment variables and
 // initial commands.
 func baseKonfig(initialKonfigadmFile string) (*konfigadm.Config, error) {
-	cfg, err := konfigadm.NewConfig(initialKonfigadmFile).Build()
+	var cfg *konfigadm.Config
+	var err error
+	if initialKonfigadmFile == "" {
+		cfg, err = konfigadm.NewConfig().Build()
+	} else {
+		cfg, err = konfigadm.NewConfig(initialKonfigadmFile).Build()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
 	}
