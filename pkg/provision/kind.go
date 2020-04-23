@@ -184,6 +184,9 @@ func configureAuditMappings(platform *platform.Platform, kindConfig *kindapi.Clu
 	if err != nil {
 		return errors.Wrap(err, "failed to expand audit policy file path")
 	}
+	if content := files.SafeRead(absFile); len(content) == 0 {
+		return fmt.Errorf("failed to read audit policy file %v", absFile)
+	}
 
 	mnts := &kindConfig.Nodes[0].ExtraMounts
 
