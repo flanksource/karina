@@ -22,7 +22,6 @@ nav:
               - Logging In: ./user-guide/login.md
               - Usage: ./user-guide/usage.md
       - Administrator Guide:
-              - Audit: ./admin-guide/audit/audit.md
               - Authentication:
                       - Setting up SSO: ./admin-guide/authentication/sso.md
                       - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md
@@ -38,6 +37,8 @@ nav:
                       - Multi-Cluster (Thanos): ./admin-guide/index.md
               - Docker Registry (Harbor): ./admin-guide/index.md
               - Configuration:
+                      - Audit: ./admin-guide/configuration/audit.md
+                      - Encryption: ./admin-guide/configuration/encryption.md
                       - Templating: ./admin-guide/configuration/templating.md
                       - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
               - Provisioning:
