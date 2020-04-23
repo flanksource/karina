@@ -77,24 +77,9 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
-	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile; policyFile != "" {
-		// for kind clusters audit policy files are mapped in via a dual
-		// host -> master,
-		// master -> kube-api-server pod
-		// mapping
-
-		absFile, err := filepath.Abs(policyFile)
-		if err != nil {
-			return errors.Wrap(err, "failed to expand audit policy file path")
-		}
-
-		mnts := &kindConfig.Nodes[0].ExtraMounts
-
-		*mnts = append(*mnts, kindapi.Mount{
-			ContainerPath: kubeadm.AuditPolicyPath,
-			HostPath:      absFile,
-			Readonly:      true,
-		})
+	err = configureAuditMappings(platform, &kindConfig)
+	if err != nil {
+		return err
 	}
 
 	err = configureEncryptionMappings(platform, &kindConfig)
@@ -180,6 +165,35 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// configureAuditMappings configures the mapping of the audit policy config files into the
+// KIND cluster config
+func configureAuditMappings(platform *platform.Platform, kindConfig *kindapi.Cluster) error {
+	policyFile := platform.Kubernetes.AuditConfig.PolicyFile
+	if policyFile == "" {
+		platform.Debugf("No audit policy specified for KIND cluster")
+		return nil
+	}
+	// for kind clusters audit policy files are mapped in via a dual
+	// host -> master,
+	// master -> kube-api-server pod
+	// mapping
+
+	absFile, err := filepath.Abs(policyFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to expand audit policy file path")
+	}
+
+	mnts := &kindConfig.Nodes[0].ExtraMounts
+
+	*mnts = append(*mnts, kindapi.Mount{
+		ContainerPath: kubeadm.AuditPolicyPath,
+		HostPath:      absFile,
+		Readonly:      true,
+	})
+
+	return nil
 }
 
 // configureEncryptionMappings configures the mapping of the encryption provider config files into the
