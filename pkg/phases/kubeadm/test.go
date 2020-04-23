@@ -35,7 +35,7 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 		tr.Failf(testAuditName, "Failed to get api-server pod: %v", err)
 		return
 	}
-	tr.Passf(testAuditName, "api-server pod found")
+	tr.Infof(testAuditName, "api-server pod found")
 
 	if logFilePath, ok := p.Kubernetes.APIServerExtraArgs["audit-log-path"]; !ok {
 		tr.Failf(testAuditName, "No audit-log-path is specified!")
