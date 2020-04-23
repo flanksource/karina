@@ -1,4 +1,4 @@
-package audit
+package kubeadm
 
 import (
 	"path/filepath"
