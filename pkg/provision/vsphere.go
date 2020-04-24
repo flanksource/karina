@@ -23,6 +23,7 @@ func WithVmwareCluster(platform *platform.Platform) error {
 		return err
 	}
 	platform.Cluster = cluster
+	platform.Init()
 	return nil
 }
 
@@ -226,6 +227,8 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	} else {
 		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
 			platform.Warnf("Failed to delete node for %s: %v", vm, err)
+		} else {
+			platform.Infof("Deleted node %s", vm.Name())
 		}
 	}
 

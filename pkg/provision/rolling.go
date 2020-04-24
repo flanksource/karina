@@ -1,12 +1,17 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
 
+	"github.com/flanksource/commons/timer"
+	"github.com/google/martian/log"
+	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -14,12 +19,32 @@ import (
 type RollingOptions struct {
 	Timeout                time.Duration
 	MinAge                 time.Duration
+	Max                    int
 	Force                  bool
 	ScaleSingleDeployments bool
 	MigrateLocalVolumes    bool
 }
 
-// Perform a rolling restart of nodes
+type nodeMachine struct {
+	Node    v1.Node
+	Machine types.Machine
+}
+
+type nodeMachines []nodeMachine
+
+func (n nodeMachines) Less(i, j int) bool {
+	return n[j].Machine.GetAge() < n[i].Machine.GetAge()
+}
+
+func (n nodeMachines) Len() int {
+	return len(n)
+}
+
+func (n nodeMachines) Swap(i, j int) {
+	n[i], n[j] = n[j], n[i]
+}
+
+// Perform a rolling update of nodes
 func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 	client, err := platform.GetClientset()
 	if err != nil {
@@ -39,47 +64,114 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
 		return err
 	}
+	// upload etcd certs so that we can connect to etcd
+	cert, err := kubeadm.UploadEtcdCerts(platform)
+	if err != nil {
+		return err
+	}
+
+	etcdClientGenerator, err := platform.GetEtcdClientGenerator(cert)
+	if err != nil {
+		return err
+	}
 	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
-	for _, node := range list.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			platform.Infof("Skipping master %s", node.Name)
-			continue
-		}
 
+	rolled := 0
+	nodes := nodeMachines{}
+	ctx := context.Background()
+	for _, node := range list.Items {
 		machine, err := platform.Cluster.GetMachine(node.Name)
 		if err != nil {
 			return err
 		}
+		nodes = append(nodes, nodeMachine{Node: node, Machine: machine})
+	}
+	// roll nodes from oldest to newest
+	sort.Sort(nodes)
 
-		attributes, err := machine.GetAttributes()
-		if err != nil {
-			return err
-		}
-		created, _ := time.Parse("02Jan06-15:04:05", attributes["CreatedDate"])
-		template := attributes["Template"]
-		age := time.Since(created)
+	for _, nodeMachine := range nodes {
+		machine := nodeMachine.Machine
+		node := nodeMachine.Node
+		age := machine.GetAge()
+		template := machine.GetTemplate()
+
 		if age > opts.MinAge {
-			platform.Infof("Replacing %s, created=%s, age=%s, template=%s ", machine.Name(), created, age, template)
+			platform.Infof("Replacing %s,  age=%s, template=%s ", machine.Name(), age, template)
 		} else {
-			platform.Infof("Skipping %s,  created=%s, age=%s, template=%s ", machine.Name(), created, age, template)
+			platform.Infof("Skipping %s, age=%s, template=%s ", machine.Name(), age, template)
 			continue
+		}
+
+		if k8s.IsMasterNode(node) {
+			etcdClient, err := etcdClientGenerator.ForNode(ctx, node.Name)
+			if err != nil {
+				return err
+			}
+			if etcdClient.IsLeader {
+				members, err := etcdClient.Members(ctx)
+				if err != nil {
+					return err
+				}
+
+				var nextLeaderId uint64
+				for _, member := range members {
+					if member.ID != etcdClient.MemberID {
+						platform.Infof("Moving etcd leader from %s to %s", etcdClient.Name, member.Name)
+						nextLeaderId = member.ID
+						break
+					}
+				}
+
+				if err := etcdClient.MoveLeader(ctx, nextLeaderId); err != nil {
+					return fmt.Errorf("failed to move leader: %v", err)
+				}
+			}
+
+			leaderClient, err := etcdClientGenerator.ForLeader(ctx, list)
+			if err != nil {
+				return err
+			}
+
+			platform.Infof("Removing etcd member %s", node.Name)
+			if err := leaderClient.RemoveMember(ctx, etcdClient.MemberID); err != nil {
+				return err
+			}
+
+			// proactivly remove server from consul so that we can get a new connection to k8s
+			if err := platform.GetConsulClient().RemoveMember(node.Name); err != nil {
+				return err
+			}
+			// reset the connection to the existing master (which may be the one we just removed)
+			platform.ResetMasterConnection()
+			// wait for a new connection to be healthy before continuing
+			if err := platform.WaitFor(); err != nil {
+				return err
+			}
 		}
 
 		health := platform.GetHealth()
 
 		platform.Infof("Health Before: %s", health)
 
-		timer := NewTimer()
+		timer := timer.NewTimer()
 
 		if err := platform.Cordon(node.Name); err != nil {
 			return fmt.Errorf("failed to cordon %s: %v", node.Name, err)
 		}
-		replacement, err := createWorker(platform, "")
-		if err != nil {
-			return fmt.Errorf("failed to create new worker: %v", err)
+		var replacement types.Machine
+		if k8s.IsMasterNode(node) {
+			replacement, err = createSecondaryMaster(platform)
+			if err != nil {
+				return fmt.Errorf("failed to create new secondary master: %v", err)
+			}
+		} else {
+			replacement, err = createWorker(platform, "")
+			if err != nil {
+				return fmt.Errorf("failed to create new worker: %v", err)
+			}
 		}
 
 		platform.Infof("waiting for replacement for %s to become ready", node.Name)
@@ -90,7 +182,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		terminate(platform, machine)
 
 		platform.Infof("Replaced %s in %s", node.Name, timer)
-
+		rolled++
 		if succeededWithinTimeout := doUntil(opts.Timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			platform.Infof(currentHealth.String())
@@ -103,9 +195,14 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			platform.Errorf("Health degraded after waiting %v", timer)
 		}
 		if platform.GetHealth().IsDegradedComparedTo(health) {
-			return fmt.Errorf("cluster is not healthy, aborting rollout")
+			return fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, nodes.Len())
 		}
+		if rolled >= opts.Max {
+			break
+		}
+
 	}
+	log.Infof("Rollout finished, rolled %d of %d ", rolled, nodes.Len())
 	return nil
 }
 
@@ -138,7 +235,7 @@ func RollingRestart(platform *platform.Platform, opts RollingOptions) error {
 
 		platform.Infof("Health Before: %s", health)
 
-		timer := NewTimer()
+		timer := timer.NewTimer()
 		if err := platform.Drain(node.Name, opts.Timeout); err != nil {
 			if opts.Force {
 				platform.Errorf("failed to drain %s, force restarting: %v", node.Name, err)
@@ -197,24 +294,4 @@ func doUntil(timeout time.Duration, fn func() bool) bool {
 		}
 		time.Sleep(5 * time.Second)
 	}
-}
-
-type Timer struct {
-	Start time.Time
-}
-
-func (t Timer) Elapsed() float64 {
-	return float64(time.Since(t.Start).Milliseconds())
-}
-
-func (t Timer) Millis() int64 {
-	return time.Since(t.Start).Milliseconds()
-}
-
-func (t Timer) String() string {
-	return fmt.Sprintf("%dms", t.Millis())
-}
-
-func NewTimer() Timer {
-	return Timer{Start: time.Now()}
 }

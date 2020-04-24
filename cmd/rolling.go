@@ -37,8 +37,9 @@ var RollingUpdate = &cobra.Command{
 
 func init() {
 	rollingOpts = provision.RollingOptions{}
-	RollingUpdate.Flags().DurationVar(&rollingOpts.MinAge, "min-age", time.Hour*24*7, "Minimum age of VM's to update")
-	Rolling.PersistentFlags().DurationVar(&rollingOpts.Timeout, "timeout", time.Minute*2, "timeout between actions")
+	RollingUpdate.Flags().DurationVar(&rollingOpts.MinAge, "min-age", time.Hour*24*7, "Minimum age of nodes to roll")
+	Rolling.PersistentFlags().DurationVar(&rollingOpts.Timeout, "timeout", time.Minute*5, "timeout between actions")
+	Rolling.PersistentFlags().IntVar(&rollingOpts.Max, "max", 100, "Max number of nodes to roll")
 	Rolling.PersistentFlags().BoolVar(&rollingOpts.MigrateLocalVolumes, "migrate-local-volumes", true, "Delete and recreate local PVC's")
 	Rolling.PersistentFlags().BoolVar(&rollingOpts.Force, "force", false, "ignore errors and continue with the rolling action regardless of health")
 	Rolling.AddCommand(RollingRestart, RollingUpdate)
