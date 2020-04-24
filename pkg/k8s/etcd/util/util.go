@@ -17,7 +17,7 @@ limitations under the License.
 package util
 
 import (
-	"sigs.k8s.io/cluster-api/controlplane/kubeadm/internal/etcd"
+	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
 )
 
 // MemberForName returns the etcd member with the matching name.
