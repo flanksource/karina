@@ -12,7 +12,8 @@ ldap:
   groupDN: ou=groups,dc=example,dc=com
   groupObjectClass: groupOfNames
   groupNameAttr: DN
-  test:
+  e2e:
+    mock: true
     username: test
     password: secret
 kubernetes:
@@ -23,7 +24,7 @@ kubernetes:
     "audit-log-maxsize": 1024
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
-    "audit-log-format": legacy   # default is json
+    "audit-log-format": legacy # default is json
   version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
@@ -88,6 +89,7 @@ harbor:
   version: v1.10.0
 postgresOperator:
   version: v1.3.4.flanksource.1
+minio:
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io
@@ -97,6 +99,9 @@ s3:
   region: us-east1
   kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
   usePathStyle: true
+  skipTLSVerify: true
+  e2e:
+    minio: true
 velero:
   bucket: velero
 thanos:
@@ -124,22 +129,22 @@ filebeat:
     scheme: https
 eck:
   version: 1.0.1
-ingressCA:
-  cert: .certs/ingress-ca-crt.pem
-  privateKey: .certs/ingress-ca-key.pem
-  password: foobar
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
-  cookieSecret: !!template "{{ base64.Encode \"d0b0681d5babefb164b4d6e03b53967b\" }}"
+  cookieSecret: !!template '{{ base64.Encode "d0b0681d5babefb164b4d6e03b53967b" }}'
 prometheus:
   persistence:
     capacity: 10Gi
 configmapReloader:
   version: "v0.0.56"
 ca:
-  cert: .certs/ingress-ca-crt.pem
-  privateKey: .certs/ingress-ca-key.pem
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ingressCA:
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
   password: foobar
 sealedSecrets:
   version: "v0.10.0"

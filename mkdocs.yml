@@ -26,6 +26,9 @@ nav:
               - Authentication:
                       - Setting up SSO: ./admin-guide/authentication/sso.md
                       - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md
+              - Administration:
+                  - Postgres Databases: ./admin-guide/administration/databases.md
+                  - Consul: ./admin-guide/administration/consul.md
               - Cluster Lifecycle: ./admin-guide/cluster-lifecycle.md
               - Multi-Tenancy: ./admin-guide/index.md
               - Monitoring:

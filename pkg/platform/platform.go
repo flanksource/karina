@@ -9,10 +9,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
@@ -21,20 +24,21 @@ import (
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
-	"github.com/flanksource/yaml"
-	minio "github.com/minio/minio-go/v6"
-	"github.com/sirupsen/logrus"
-
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/flanksource/yaml"
+	pg "github.com/go-pg/pg/v9"
+	minio "github.com/minio/minio-go/v6"
 	"github.com/moshloop/platform-cli/manifests"
 	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/api/postgres"
 	"github.com/moshloop/platform-cli/pkg/client/dns"
 	"github.com/moshloop/platform-cli/pkg/k8s"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	"github.com/moshloop/platform-cli/pkg/nsx"
 	"github.com/moshloop/platform-cli/pkg/types"
 	"github.com/moshloop/platform-cli/templates"
-	v1 "k8s.io/api/core/v1"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Platform struct {
@@ -121,9 +125,12 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return nil, fmt.Errorf("could not find any master ips")
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin")
+	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin", 24*7*time.Hour)
 }
 
+// GetCA retrieves the cert.CertificateAuthority
+// for the given platform, initialising it (platform.ca) if it hasn't been read from
+// the specified config (platform.CA) yet.
 func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
@@ -136,9 +143,17 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	return ca
 }
 
+// readCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
+// with key password ca.Password.
 func readCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
+	if cert == "" {
+		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
+	}
 	privateKey := files.SafeRead(ca.PrivateKey)
+	if privateKey == "" {
+		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
+	}
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
@@ -563,128 +578,6 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
-func (platform *Platform) GetOrCreateDB(config postgres.ClusterConfig) (*types.DB, error) {
-	clusterName := "postgres-" + config.Name
-	databases := make(map[string]string)
-	appUsername := "app"
-	ns := config.Namespace
-	secretName := fmt.Sprintf("%s.%s.credentials", appUsername, clusterName)
-	backupBucket := platform.PostgresOperatorBackupBucket()
-
-	db := &postgres.Postgresql{}
-	if err := platform.Get(ns, clusterName, db); err != nil {
-		platform.Infof("Creating new cluster: %s", clusterName)
-		for _, db := range config.Databases {
-			databases[db] = appUsername
-		}
-		db = postgres.NewPostgresql(clusterName)
-		db.Spec.Databases = databases
-		db.Spec.Users = map[string]postgres.UserFlags{
-			appUsername: {
-				"createdb",
-				"superuser",
-			},
-		}
-		db.Spec.Parameters = map[string]string{
-			"archive_mode":    "on",
-			"archive_timeout": "60s",
-		}
-
-		envVars := []string{
-			"AWS_ACCESS_KEY_ID",
-			"AWS_SECRET_ACCESS_KEY",
-			"AWS_ENDPOINT",
-			"AWS_S3_FORCE_PATH_STYLE",
-		}
-		envVarsList := []v1.EnvVar{
-			{
-				Name:  "BACKUP_SCHEDULE",
-				Value: config.BackupSchedule,
-			},
-			{
-				Name:  "USE_WALG_RESTORE",
-				Value: strconv.FormatBool(config.UseWalgRestore),
-			},
-			{
-				Name:  "USE_WALG_BACKUP",
-				Value: strconv.FormatBool(config.UseWalgRestore),
-			},
-		}
-
-		for _, k := range envVars {
-			envVar := v1.EnvVar{
-				Name: k,
-				ValueFrom: &v1.EnvVarSource{
-					SecretKeyRef: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
-						Key:                  k,
-					},
-				},
-			}
-			envVarsList = append(envVarsList, envVar)
-		}
-		if !config.EnableWalClusterID {
-			envVarsList = append(envVarsList, v1.EnvVar{
-				Name:  "WAL_BUCKET_SCOPE_SUFFIX",
-				Value: "",
-			})
-			envVarsList = append(envVarsList, v1.EnvVar{
-				Name:  "WALG_S3_PREFIX",
-				Value: fmt.Sprintf("s3://%s/%s/wal/", backupBucket, clusterName),
-			})
-			envVarsList = append(envVarsList, v1.EnvVar{
-				Name:  "CLONE_WAL_BUCKET_SCOPE_SUFFIX",
-				Value: "/",
-			})
-		}
-		if config.Clone != nil {
-			cloneEnvVars := platform.cloneDatabaseEnv(config)
-			envVarsList = append(envVarsList, cloneEnvVars...)
-		}
-		db.Spec.Env = envVarsList
-
-		if err := platform.Apply(ns, db); err != nil {
-			return nil, err
-		}
-	}
-
-	doUntil(func() bool {
-		if err := platform.Get(ns, clusterName, db); err != nil {
-			return true
-		}
-		platform.Infof("Waiting for %s to be running, is: %s", clusterName, db.Status.PostgresClusterStatus)
-		return db.Status.PostgresClusterStatus == postgres.ClusterStatusRunning
-	})
-	if db.Status.PostgresClusterStatus != postgres.ClusterStatusRunning {
-		return nil, fmt.Errorf("postgres cluster failed to start: %s", db.Status.PostgresClusterStatus)
-	}
-	secret := platform.GetSecret("postgres-operator", secretName)
-	if secret == nil {
-		return nil, fmt.Errorf("%s not found", secretName)
-	}
-
-	return &types.DB{
-		Host:     fmt.Sprintf("%s.%s.svc.cluster.local", clusterName, ns),
-		Username: string((*secret)["username"]),
-		Port:     5432,
-		Password: string((*secret)["password"]),
-	}, nil
-}
-
-func doUntil(fn func() bool) bool {
-	start := time.Now()
-
-	for {
-		if fn() {
-			return true
-		}
-		if time.Now().After(start.Add(5 * time.Minute)) {
-			return false
-		}
-		time.Sleep(5 * time.Second)
-	}
-}
-
 func (platform *Platform) GetOrCreateBucket(name string) error {
 	s3Client, err := platform.GetS3Client()
 	if err != nil {
@@ -723,59 +616,70 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	return s3, nil
 }
 
-func (platform *Platform) PostgresOperatorBackupBucket() string {
-	backupBucket := platform.PostgresOperator.BackupBucket
-
-	if backupBucket == "" {
-		backupBucket = "postgres-backups-" + platform.Name
+func (platform *Platform) GetAWSSession() (*session.Session, error) {
+	tr := &http.Transport{}
+	if platform.S3.SkipTLSVerify {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-
-	return backupBucket
+	cfg := aws.NewConfig().
+		WithRegion(platform.S3.Region).
+		WithEndpoint(platform.S3.ExternalEndpoint).
+		WithCredentials(
+			credentials.NewStaticCredentials(platform.S3.AccessKey, platform.S3.SecretKey, ""),
+		).
+		WithHTTPClient(&http.Client{Transport: tr})
+	ssn, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create new aws session")
+	}
+	return ssn, nil
 }
 
-func (platform *Platform) cloneDatabaseEnv(config postgres.ClusterConfig) []v1.EnvVar {
-	waleS3Prefix := fmt.Sprintf("s3://%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName)
-	if config.EnableWalClusterID {
-		waleS3Prefix = fmt.Sprintf("s3://%s/spilo/%s/%s/wal", platform.PostgresOperatorBackupBucket(), config.Clone.ClusterName, config.Clone.ClusterID)
+func (platform *Platform) GetAWSS3Client() (*s3.S3, error) {
+	ssn, err := platform.GetAWSSession()
+	if err != nil {
+		return nil, err
 	}
-	envVars := []v1.EnvVar{
-		{
-			Name:  "CLONE_METHOD",
-			Value: "CLONE_WITH_WALE",
-		},
-		{
-			Name:  "CLONE_USE_WALG_RESTORE",
-			Value: strconv.FormatBool(config.UseWalgRestore),
-		},
-		{
-			Name:  "CLONE_TARGET_TIME",
-			Value: config.Clone.Timestamp,
-		},
-	}
-	if !config.EnableWalClusterID {
-		envVars = append(envVars, v1.EnvVar{
-			Name:  "CLONE_WALG_S3_PREFIX",
-			Value: waleS3Prefix,
-		})
-	}
-	awsEnvVars := []string{
-		"AWS_ACCESS_KEY_ID",
-		"AWS_SECRET_ACCESS_KEY",
-		"AWS_ENDPOINT",
-		"AWS_S3_FORCE_PATH_STYLE",
-	}
-	for _, k := range awsEnvVars {
-		envVar := v1.EnvVar{
-			Name: fmt.Sprintf("CLONE_%s", k),
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: config.AwsCredentialsSecret},
-					Key:                  k,
-				},
-			},
-		}
-		envVars = append(envVars, envVar)
+	client := s3.New(ssn)
+	client.Config.S3ForcePathStyle = aws.Bool(platform.S3.UsePathStyle)
+	return client, nil
+}
+
+func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {
+	client, _ := platform.GetClientset()
+	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
+	pods, err := client.CoreV1().Pods(namespace).List(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
 	}
 
-	return envVars
+	if len(pods.Items) != 1 {
+		return nil, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
+	}
+
+	secretName := fmt.Sprintf("app.%s.credentials", clusterName)
+	secret := platform.GetSecret("postgres-operator", secretName)
+	if secret == nil {
+		return nil, fmt.Errorf("%s not found", secretName)
+	}
+
+	dialer, err := platform.GetProxyDialer(proxy.Proxy{
+		Namespace:    namespace,
+		Kind:         "pods",
+		ResourceName: pods.Items[0].Name,
+		Port:         5432,
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get proxy dialer")
+	}
+
+	pgdb := pg.Connect(&pg.Options{
+		User:     string((*secret)["username"]),
+		Password: string((*secret)["password"]),
+		Dialer:   dialer.DialContext,
+		Database: databaseName,
+	})
+
+	return pgdb, nil
 }

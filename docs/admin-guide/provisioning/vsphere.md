@@ -132,19 +132,15 @@ master:
   cpu: 2  #NOTE: minimum of 2
   memory: 4
   disk: 10
-  # GOVC_NETWORK
-  network: "VM Network"
-  # GOVC_CLUSTER
-  cluster: "cluster"
+  network: !!env GOVC_NETWORK
+  cluster: !!env GOVC_CLUSTER
   prefix: m
   template: "k8s-1.16.4"
 workers:
-  worker:
+  worker-group-a:
     prefix: w
-    # GOVC_NETWORK
-    network: "VM Network"
-    # GOVC_CLUSTER
-    cluster: "cluster"
+    network: !!env GOVC_NETWORK
+    cluster: !!env GOVC_CLUSTER
     count: 1
     cpu: 2
     memory: 4

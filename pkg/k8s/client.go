@@ -924,13 +924,21 @@ func (c *Client) StreamLogs(namespace, name string) error {
 	return fmt.Errorf("pod did not finish successfully %s - %s", pod.Status.Phase, pod.Status.Message)
 }
 
-func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint string, group string, user string) ([]byte, error) {
+func CreateKubeConfig(clusterName string, ca certs.CertificateAuthority, endpoint string, group string, user string, expiry time.Duration) ([]byte, error) {
 	contextName := fmt.Sprintf("%s@%s", user, clusterName)
 	cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
-	cert, err := ca.SignCertificate(cert, 1)
+	if cert.X509.PublicKey == nil && cert.PrivateKey != nil {
+		cert.X509.PublicKey = cert.PrivateKey.Public()
+	}
+	signed, err := ca.Sign(cert.X509, expiry)
 	if err != nil {
 		return nil, fmt.Errorf("createKubeConfig: failed to sign certificate: %v", err)
 	}
+	cert = &certs.Certificate{
+		X509:       signed,
+		PrivateKey: cert.PrivateKey,
+	}
+
 	cfg := api.Config{
 		Clusters: map[string]*api.Cluster{
 			clusterName: {

@@ -5,7 +5,7 @@ import (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.Minio == nil || !platform.Minio.Disabled {
+	if platform.S3.E2E.Minio {
 		if err := platform.CreateOrUpdateNamespace("minio", nil, nil); err != nil {
 			return err
 		}
@@ -14,12 +14,13 @@ func Install(platform *platform.Platform) error {
 			platform.Errorf("Error deploying minio: %s\n", err)
 		}
 	}
-	if err := platform.CreateOrUpdateNamespace("ldap", nil, nil); err != nil {
-		return err
+	if platform.Ldap != nil && platform.Ldap.E2E.Mock {
+		if err := platform.CreateOrUpdateNamespace("ldap", nil, nil); err != nil {
+			return err
+		}
+		if err := platform.ApplySpecs("", "apacheds.yaml"); err != nil {
+			platform.Errorf("Error deploying apacheds: %s\n", err)
+		}
 	}
-	if err := platform.ApplySpecs("", "apacheds.yaml"); err != nil {
-		platform.Errorf("Error deploying apacheds: %s\n", err)
-	}
-
 	return nil
 }

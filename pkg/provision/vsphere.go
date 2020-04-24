@@ -26,7 +26,7 @@ func WithVmwareCluster(platform *platform.Platform) error {
 	return nil
 }
 
-// VsphereCluster provision or create a kubernetes cluster
+// VsphereCluster provisions or creates a kubernetes cluster
 func VsphereCluster(platform *platform.Platform) error {
 	if err := WithVmwareCluster(platform); err != nil {
 		return err
@@ -188,7 +188,7 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	}
 	worker := platform.Nodes[nodeGroup]
 	vm := worker
-	config, err := phases.CreateWorker(platform)
+	config, err := phases.CreateWorker(nodeGroup, platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create worker %v", err)
 	}

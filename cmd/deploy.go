@@ -58,11 +58,6 @@ func init() {
 
 	order := []string{"calico", "nsx", "base", "stubs", "postgres-operator", "dex", "vault"}
 
-	// pinpoint := map[string]DeployFn{
-	// 	"cert-manager": certmanager.Install,
-	// 	"quack":        quack.Install,
-	// }
-
 	var Phases = &cobra.Command{
 		Use: "phases",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -124,6 +119,17 @@ func init() {
 			p := getPlatform(cmd)
 			// we track the failure status, and continue on failure to allow degraded operations
 			failed := false
+
+			// first deploy strictly ordered phases, these phases are often dependencies for other phases
+			for _, name := range order {
+				if err := phases[name](p); err != nil {
+					log.Errorf("Failed to deploy %s: %v", name, err)
+					failed = true
+				}
+				// remove the phase from the map so it isn't run again
+				delete(phases, name)
+			}
+
 			for name, fn := range phases {
 				if err := fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
