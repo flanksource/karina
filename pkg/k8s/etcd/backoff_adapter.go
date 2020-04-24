@@ -41,6 +41,7 @@ var etcdBackoff = wait.Backoff{
 }
 
 // EtcdBackoffAdapterOption defines the option type for the EtcdBackoffAdapter
+//nolint: golint
 type EtcdBackoffAdapterOption func(*EtcdBackoffAdapter)
 
 // WithBackoff configures the backoff period of etcd calls the adapter makes.
@@ -58,6 +59,7 @@ func WithTimeout(timeout time.Duration) EtcdBackoffAdapterOption {
 }
 
 // EtcdBackoffAdapter wraps EtcdClient calls in a wait.ExponentialBackoff.
+//nolint: golint
 type EtcdBackoffAdapter struct {
 	EtcdClient    *clientv3.Client
 	BackoffParams wait.Backoff

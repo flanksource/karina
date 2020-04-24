@@ -145,6 +145,10 @@ func NewClientWithEtcd(ctx context.Context, etcdClient Etcd) (*Client, error) {
 	}
 
 	members, err := etcdClient.MemberList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var name string
 	for _, member := range members.Members {
 		if member.ID == status.Header.MemberId {

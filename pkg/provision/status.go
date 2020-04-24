@@ -89,7 +89,6 @@ func Status(p *platform.Platform) error {
 		fmt.Fprintf(w, "%s\t", node.Status.NodeInfo.KernelVersion)
 		fmt.Fprintf(w, "%s\t", node.Status.NodeInfo.ContainerRuntimeVersion)
 		fmt.Fprintf(w, "\n")
-
 	}
 	_ = w.Flush()
 
@@ -126,12 +125,11 @@ func getEtcdHealth(node v1.Node, etcdClientGenerator *etcd.EtcdClientGenerator) 
 	if etcdClient.LeaderID == etcdClient.MemberID {
 		s += "Leader"
 	}
-
 	return s
 }
 
 func gb(bytes int64) string {
-	return fmt.Sprintf("%d", int64(bytes/1024/1024/1024))
+	return fmt.Sprintf("%d", bytes/1024/1024/1024)
 }
 
 func size(bytes int64) string {

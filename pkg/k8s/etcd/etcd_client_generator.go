@@ -31,6 +31,7 @@ import (
 )
 
 // etcdClientGenerator generates etcd clients that connect to specific etcd members on particular control plane nodes.
+//nolint: golint
 type EtcdClientGenerator struct {
 	clientset  *kubernetes.Clientset
 	restConfig *rest.Config

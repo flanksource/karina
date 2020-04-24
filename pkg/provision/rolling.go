@@ -116,16 +116,16 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 					return err
 				}
 
-				var nextLeaderId uint64
+				var nextLeaderID uint64
 				for _, member := range members {
 					if member.ID != etcdClient.MemberID {
 						platform.Infof("Moving etcd leader from %s to %s", etcdClient.Name, member.Name)
-						nextLeaderId = member.ID
+						nextLeaderID = member.ID
 						break
 					}
 				}
 
-				if err := etcdClient.MoveLeader(ctx, nextLeaderId); err != nil {
+				if err := etcdClient.MoveLeader(ctx, nextLeaderID); err != nil {
 					return fmt.Errorf("failed to move leader: %v", err)
 				}
 			}
@@ -200,7 +200,6 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		if rolled >= opts.Max {
 			break
 		}
-
 	}
 	log.Infof("Rollout finished, rolled %d of %d ", rolled, nodes.Len())
 	return nil

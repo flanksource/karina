@@ -8,7 +8,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	apps "k8s.io/api/apps/v1"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -195,7 +194,7 @@ func IsDeleted(object metav1.Object) bool {
 
 func IsPodDaemonSet(pod v1.Pod) bool {
 	controllerRef := metav1.GetControllerOf(&pod)
-	return controllerRef != nil && controllerRef.Kind == appsv1.SchemeGroupVersion.WithKind("DaemonSet").Kind
+	return controllerRef != nil && controllerRef.Kind == apps.SchemeGroupVersion.WithKind("DaemonSet").Kind
 }
 
 func GetNodeStatus(node v1.Node) string {
