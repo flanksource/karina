@@ -300,7 +300,7 @@ type Kubernetes struct {
 	// customize the logging configuration.
 	// The relevant flags are:
 	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
-	AuditConfig *AuditConfig `yaml:"auditing,omitempty"`
+	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of
@@ -313,7 +313,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
-	if raw.AuditConfig != nil && raw.AuditConfig.PolicyFile != "" {
+	if raw.AuditConfig.PolicyFile != "" {
 		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
 			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
 		}
