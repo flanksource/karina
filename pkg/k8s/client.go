@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -19,9 +21,9 @@ import (
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
 	"github.com/moshloop/platform-cli/pkg/k8s/drain"
+	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
 	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
 	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -56,9 +58,34 @@ type Client struct {
 	client              *kubernetes.Clientset
 	dynamicClient       dynamic.Interface
 	restConfig          *rest.Config
+	etcdClientGenerator *etcd.EtcdClientGenerator
+	kustomizeManager    *kustomize.Manager
+	restMapper          meta.RESTMapper
+}
 
-	kustomizeManager *kustomize.Manager
-	restMapper       meta.RESTMapper
+func (c *Client) ResetConnection() {
+	c.client = nil
+	c.dynamicClient = nil
+	c.restConfig = nil
+	c.etcdClientGenerator = nil
+}
+
+func (c *Client) GetEtcdClientGenerator(ca *certs.Certificate) (*etcd.EtcdClientGenerator, error) {
+	if c.etcdClientGenerator != nil {
+		return c.etcdClientGenerator, nil
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	rest, _ := c.GetRESTConfig()
+	caPool := x509.NewCertPool()
+	caPool.AppendCertsFromPEM(ca.EncodedCertificate())
+	cert, _ := tls.X509KeyPair(ca.EncodedCertificate(), ca.EncodedPrivateKey())
+	return etcd.NewEtcdClientGenerator(client, rest, &tls.Config{
+		RootCAs:      caPool,
+		Certificates: []tls.Certificate{cert},
+	}), nil
 }
 
 func (c *Client) getDrainHelper() (*drain.Helper, error) {
@@ -325,6 +352,10 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
 	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("kubeConfig is empty")
+	}
+
 	c.restConfig, err = clientcmd.RESTConfigFromKubeConfig(data)
 	return c.restConfig, err
 }
@@ -1312,61 +1343,6 @@ func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector stri
 	}
 
 	return &pods.Items[0], nil
-}
-
-type Health struct {
-	RunningPods, PendingPods, ErrorPods, CrashLoopBackOff int
-	ReadyNodes, UnreadyNodes                              int
-	Error                                                 error
-}
-
-func (h Health) IsDegradedComparedTo(h2 Health) bool {
-	if h2.RunningPods > h.RunningPods ||
-		h.PendingPods-1 > h2.PendingPods || h.ErrorPods > h2.ErrorPods || h.CrashLoopBackOff > h2.CrashLoopBackOff {
-		return true
-	}
-	return h.UnreadyNodes > h2.UnreadyNodes
-}
-
-func IsPodCrashLoopBackoff(pod v1.Pod) bool {
-	for _, status := range pod.Status.ContainerStatuses {
-		if status.State.Waiting != nil && status.State.Waiting.Reason == "CrashLoopBackOff" {
-			return true
-		}
-	}
-	return false
-}
-
-func IsPodHealthy(pod v1.Pod) bool {
-	conditions := true
-	for _, condition := range pod.Status.Conditions {
-		if condition.Status == v1.ConditionFalse {
-			conditions = false
-		}
-	}
-	return conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded)
-}
-
-func IsPodFinished(pod v1.Pod) bool {
-	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
-}
-
-func IsPodPending(pod v1.Pod) bool {
-	return pod.Status.Phase == v1.PodPending
-}
-
-func IsDeleted(object metav1.Object) bool {
-	return object.GetDeletionTimestamp() != nil && !object.GetDeletionTimestamp().IsZero()
-}
-
-func IsPodDaemonSet(pod v1.Pod) bool {
-	controllerRef := metav1.GetControllerOf(&pod)
-	return controllerRef != nil && controllerRef.Kind == appsv1.SchemeGroupVersion.WithKind("DaemonSet").Kind
-}
-
-func (h Health) String() string {
-	return fmt.Sprintf("pods(running=%d, pending=%d, crashloop=%d, error=%d)  nodes(ready=%d, notready=%d)",
-		h.RunningPods, h.PendingPods, h.CrashLoopBackOff, h.ErrorPods, h.ReadyNodes, h.UnreadyNodes)
 }
 
 func (c *Client) GetHealth() Health {
