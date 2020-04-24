@@ -12,7 +12,6 @@ cd platform-cli
 make setup
 make pack
 make
-make compress
 sudo make install #enter password when prompted
 ```
 
@@ -105,6 +104,9 @@ domain: 10.100.0.0.nip.io
 # vSphere datacenter
 datacenter: lab
 
+dns:
+  disabled: true
+
 # The CA certs generated in step 3
 ca:
   cert: .certs/root-ca.crt
@@ -134,12 +136,31 @@ master:
   network: "VM Network"
   # GOVC_CLUSTER
   cluster: "cluster"
+  prefix: m
   template: "k8s-1.16.4"
+workers:
+  worker:
+    prefix: w
+    # GOVC_NETWORK
+    network: "VM Network"
+    # GOVC_CLUSTER
+    cluster: "cluster"
+    count: 1
+    cpu: 2
+    memory: 4
+    disk: 10
+    template: k8s-1.16.4
 ```
 
+## 5. Provision the cluster
 
+Provision the cluster with:
 
-4. Create the cluster `platform-cli provision vsphere-cluster -c cluster.yaml`see [Cluster Lifecycle](#cluster-lifecycle)
+```bash
+platform-cli provision vsphere-cluster -c cluster.yaml
+```
+
+see [Cluster Lifecycle](#cluster-lifecycle) for more info.
 
 5. Check the status of running vms: `platform-cli status`
 6. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
@@ -208,25 +229,3 @@ The PlatformConfiguration is used to generate other files used to bootstrap a cl
 * [ClusterConfiguration](https://godoc.org/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2#ClusterConfiguration)
 * JoinConfiguration
 * consul.json
-
-##### Environment Variables
-
-The following variables are required to configure access to vSphere, they also work with [govc](https://github.com/vmware/govmomi/tree/master/govc)
-
-```bash
-export GOVC_FQDN=
-export GOVC_DATACENTER=
-export GOVC_CLUSTER=
-export GOVC_FOLDER=
-export GOVC_NETWORK=
-export GOVC_PASS=
-export GOVC_USER=
-export GOVC_DATASTORE=
-export GOVC_RESOURCE_POOL=
-export GOVC_INSECURE=1
-export GOVC_URL="$GOVC_USER:$GOVC_PASS@$GOVC_FQDN"
-```
-
-# Troubleshooting
-
-`FATA[0034] Failed to create master: clone: failed create waiter: Invalid configuration for device '3'.`
