@@ -3,7 +3,6 @@ package platform
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,6 +67,7 @@ func (platform *Platform) Init() {
 	platform.Client.Logger = platform.Logger
 	platform.logFields = make(map[string]interface{})
 }
+
 func (platform *Platform) clone() *Platform {
 	logFields := make(map[string]interface{})
 	for k, v := range platform.logFields {
@@ -111,6 +111,11 @@ func (platform *Platform) WithLogOutput(output io.Writer) *Platform {
 	return copy
 }
 
+func (platform *Platform) ResetMasterConnection() {
+	platform.kubeConfig = nil
+	platform.Client.ResetConnection()
+}
+
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	if platform.kubeConfig != nil {
 		return platform.kubeConfig, nil
@@ -125,7 +130,18 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return nil, fmt.Errorf("could not find any master ips")
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin", 24*7*time.Hour)
+	var ip string
+
+	for _, master := range masters {
+		if net.Ping(master, 6443, 10) {
+			ip = master
+		}
+	}
+	if ip == "" {
+		return nil, fmt.Errorf("none of the masters are up: %v", masters)
+	}
+
+	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
 }
 
 // GetCA retrieves the cert.CertificateAuthority
@@ -311,30 +327,20 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 	return VM, nil
 }
 
-// GetMasterIPs returns a list of healthy master IP's
+func (platform *Platform) GetConsulClient() api.Consul {
+	return api.Consul{
+		Logger:  platform.Logger,
+		Host:    platform.Consul,
+		Service: platform.Name,
+	}
+}
+
+// GetMasterIPs returns a list of all healthy master IP's
 func (platform *Platform) GetMasterIPs() []string {
 	if platform.Kubernetes.MasterIP != "" {
 		return []string{platform.Kubernetes.MasterIP}
 	}
-	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
-	platform.Tracef("Finding masters via consul: %s\n", url)
-	response, _ := net.GET(url)
-	var consul api.Consul
-	if err := json.Unmarshal(response, &consul); err != nil {
-		fmt.Println(err)
-	}
-	var addresses []string
-node:
-	for _, node := range consul {
-		for _, check := range node.Checks {
-			if check.Status != "passing" {
-				platform.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
-				continue node
-			}
-		}
-		addresses = append(addresses, node.Node.Address)
-	}
-	return addresses
+	return platform.GetConsulClient().GetMembers()
 }
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
