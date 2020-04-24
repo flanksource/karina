@@ -156,72 +156,49 @@ Provision the cluster with:
 platform-cli provision vsphere-cluster -c cluster.yaml
 ```
 
-see [Cluster Lifecycle](#cluster-lifecycle) for more info.
+## 6. Deploy a CNI
 
-5. Check the status of running vms: `platform-cli status`
-6. Export an X509 based kubeconfig: `platform-cli kubeconfig admin`
-7. Export an OIDC based kubeconfig: `platform-cli kubeconfig sso`
-8. Build the base platform configuration: `platform-cli build all`
-9. Deploy the platform configuration: `platform-cli deploy all`
-10. Run conformance tests: `platform-cli test`
-11. Tear down the cluster: `platform-cli cleanup`
+Deploy Calico:
 
-#### PlatformConfiguration
-
-```yaml
-# DNS Wildcard domain that this cluster will be accessible under
-domain:
-# Endpoint for externally hosted consul cluster
-consul:
-# Cluster name
-name:
-ldap:
-  # Domain binding, e.g. DC=local,DC=corp
-  dn:
-  # LDAPS hostname / IP
-  host:
-  # LDAP group name that will be granted cluster-admin
-  adminGroup:
-specs: # A list of folders of kubernetes specs to apply, these will be templatized
-  - ./manifests
-versions:
-  kubernetes: v1.15.0
-serviceSubnet: 10.96.0.0/16
-podSubnet: 10.97.0.0/16
-# Prefix to be added to VM hostnames,
-hostPrefix:
-# The root CA used to sign generated certs
-ca:
-  cert: .certs/root-ca.crt
-  privateKey: .certs/root-ca.key
-  password: foobar
- The VM configuration for master nodes
-master:
-  count: 5
-  cpu: 4
-  memory: 16
-  disk: 200
-  # GOVC_NETWORK
-  network:
-  # GOVC_CLUSTER
-  cluster:
-  template:
-# The VM configuration for worker nodes, multiple groups can be specified
-workers:
-  worker:
-    count: 8
-    cpu: 16
-    memory: 64
-    disk: 300
-    # GOVC_NETWORK
-    network:
-    # GOVC_CLUSTER
- 	  cluster:
-    template:
+```bash
+platform-cli deploy calico -c cluster.yaml
 ```
 
-The PlatformConfiguration is used to generate other files used to bootstrap a cluster:
+## 7. Deploy base configs
 
-* [ClusterConfiguration](https://godoc.org/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2#ClusterConfiguration)
-* JoinConfiguration
-* consul.json
+Run:
+
+```bash
+platform-cli deploy base -c cluster.yaml
+```
+
+## 8. Access the cluster
+
+Export a kubeconfig file (using an X509 admin example):
+
+```bash
+platform-cli kubeconfig admin -c cluster.yaml > kubeconfig.yaml
+export KUBECONFIG=$PWD/kubeconfig.yaml
+```
+
+For the session `kubectl` commands can then be used to access the cluster, e.g.:
+
+```bash
+kubectl get nodes
+```
+
+## 9. Run Conformance Tests
+
+Run:
+
+```bash
+platform-cli test all -c cluster.yaml
+```
+
+## 10. Tear Down the cluster
+
+Run:
+
+```bash
+platform-cli cleanup -c cluster.yaml
+```
