@@ -50,6 +50,17 @@ func (vm *vm) Name() string {
 	return vm.name
 }
 
+func (vm *vm) GetAge() time.Duration {
+	attributes, _ := vm.GetAttributes()
+	created, _ := time.Parse("02Jan06-15:04:05", attributes["CreatedDate"])
+	return time.Since(created)
+}
+
+func (vm *vm) GetTemplate() string {
+	attributes, _ := vm.GetAttributes()
+	return attributes["Template"]
+}
+
 func (vm *vm) String() string {
 	return vm.name
 }
