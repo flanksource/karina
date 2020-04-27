@@ -92,7 +92,7 @@ generate_cluster_id() {
   echo "e2e-${prefix}"
 }
 
-# These are used inside e2e.yml
+# These are used inside e2e.yaml
 PLATFORM_CLUSTER_ID=$(generate_cluster_id)
 export PLATFORM_CLUSTER_ID
 export PLATFORM_CA=$PWD/.certs/ca.crt.pem
@@ -100,7 +100,7 @@ export PLATFORM_PRIVATE_KEY=$PWD/.certs/ca.key.pem
 export PLATFORM_CA_CEK=foobar
 export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
 
-export PLATFORM_CONFIG=$PWD/test/vsphere/e2e.yml
+export PLATFORM_CONFIG=$PWD/test/vsphere/e2e.yaml
 
 # These variables are required to configure access to vSphere, they also work with govc
 export GOVC_FQDN="vcenter.lab.flanksource.com"
