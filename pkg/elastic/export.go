@@ -82,7 +82,7 @@ func ExportLogs(p *platform.Platform, filebeatName string, query Query) error {
 	}
 
 	if filebeat == nil {
-		return fmt.Errorf("Failed to find filebeat with name %s", filebeatName)
+		return fmt.Errorf("failed to find filebeat with name %s", filebeatName)
 	}
 
 	p.Infof("Exporting logs from %s@%s", filebeat.Elasticsearch.User, filebeat.Elasticsearch.GetURL())
