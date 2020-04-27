@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: minio
+  labels:
+    openpolicyagent.org/webhook: ignore
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,6 +45,8 @@ spec:
               value: "{{.s3.access_key}}"
             - name: MINIO_SECRET_KEY
               value: "{{.s3.secret_key}}"
+            - name: MINIO_KMS_MASTER_KEY
+              value: "{{.s3.kmsMasterKey}}"
           ports:
             - containerPort: 9000
           # Readiness probe detects situations when MinIO server instance
@@ -81,9 +85,12 @@ kind: Ingress
 metadata:
   name: minio
   namespace: minio
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   tls:
-    - hosts:
+    - secretName: minio-tls
+      hosts:
         - minio.{{.domain}}
   rules:
     - host: minio.{{.domain}}

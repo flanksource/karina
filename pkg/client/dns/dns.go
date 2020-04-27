@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flanksource/commons/logger"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 var tsigAlgs = map[string]string{
@@ -16,7 +16,7 @@ var tsigAlgs = map[string]string{
 	"hmac-sha512": dns.HmacSHA512,
 }
 
-type DNSClient interface {
+type Client interface {
 	Append(domain string, records ...string) error
 	Get(domain string) ([]string, error)
 	Update(domain string, records ...string) error
@@ -24,6 +24,7 @@ type DNSClient interface {
 }
 
 type DynamicDNSClient struct {
+	logger.Logger
 	KeyName    string
 	Zone       string
 	Nameserver string
@@ -34,22 +35,21 @@ type DynamicDNSClient struct {
 
 func (client DynamicDNSClient) Append(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
-	log.Debugf("Appending %s.%s %s", domain, client.Zone, records)
+	client.Debugf("Appending %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
 
 	for _, record := range records {
-		if rr, err := newRR(domain, client.Zone, 60, "A", record); err != nil {
+		rr, err := newRR(domain, client.Zone, 60, "A", record)
+		if err != nil {
 			return fmt.Errorf("append: failed to get new RR: %v", err)
-		} else {
-			m.Insert([]dns.RR{*rr})
 		}
+		m.Insert([]dns.RR{*rr})
 	}
 	return client.sendMessage(client.Zone, m)
 }
 
 func (client DynamicDNSClient) Get(domain string) ([]string, error) {
-
 	m := new(dns.Msg)
 	m.SetAxfr(domain)
 	if !client.Insecure {
@@ -72,9 +72,8 @@ func (client DynamicDNSClient) Get(domain string) ([]string, error) {
 		if e.Error != nil {
 			if e.Error == dns.ErrSoa {
 				return nil, fmt.Errorf("AXFR error: unexpected response received from the server")
-			} else {
-				return nil, fmt.Errorf("AXFR error: %v", e.Error)
 			}
+			return nil, fmt.Errorf("AXFR error: %v", e.Error)
 		}
 		for _, rr := range e.RR {
 			switch rr.Header().Rrtype {
@@ -100,51 +99,52 @@ func (client DynamicDNSClient) Get(domain string) ([]string, error) {
 
 func (client DynamicDNSClient) Update(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
-	log.Debugf("Updating %s.%s %s", domain, client.Zone, records)
+	client.Debugf("Updating %s.%s %s", domain, client.Zone, records)
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
 
-	if rr, err := newRR(domain, client.Zone, 0, "ANY", ""); err != nil {
+	rr, err := newRR(domain, client.Zone, 0, "ANY", "")
+	if err != nil {
 		return fmt.Errorf("update: failed to get new RR: %v", err)
-	} else {
-		m.RemoveRRset([]dns.RR{*rr})
 	}
+	m.RemoveRRset([]dns.RR{*rr})
 
 	for _, record := range records {
-		if rr, err := newRR(domain, client.Zone, 60, "A", record); err != nil {
+		rr, err := newRR(domain, client.Zone, 60, "A", record)
+		if err != nil {
 			return fmt.Errorf("update: failed to get new RR: %v", err)
-		} else {
-			m.Insert([]dns.RR{*rr})
 		}
+		m.Insert([]dns.RR{*rr})
 	}
 	return client.sendMessage(client.Zone, m)
 }
 
 func (client DynamicDNSClient) Delete(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
-	log.Debugf("Removing %s.%s %s", domain, client.Zone, records)
+	client.Debugf("Removing %s.%s %s", domain, client.Zone, records)
 
 	m := new(dns.Msg)
 	m.SetUpdate(client.Zone + ".")
 
 	for _, record := range records {
 		if record == "*" {
-			if rr, err := newRR(domain, client.Zone, 0, "ANY", ""); err != nil {
+			rr, err := newRR(domain, client.Zone, 0, "ANY", "")
+			if err != nil {
 				return fmt.Errorf("delete: failed to get new RR: %v", err)
-			} else {
-				m.RemoveRRset([]dns.RR{*rr})
 			}
+			m.RemoveRRset([]dns.RR{*rr})
 		} else {
-			if rr, err := newRR(domain, client.Zone, 0, "A", record); err != nil {
+			rr, err := newRR(domain, client.Zone, 0, "A", record)
+			if err != nil {
 				return fmt.Errorf("delete: failed to get new RR: %v", err)
-			} else {
-				m.Remove([]dns.RR{*rr})
 			}
+			m.Remove([]dns.RR{*rr})
 		}
 	}
 	return client.sendMessage(client.Zone, m)
 }
 
+// nolint: unparam
 func (client DynamicDNSClient) sendMessage(zone string, msg *dns.Msg) error {
 	c := new(dns.Client)
 	c.SingleInflight = true
@@ -166,7 +166,6 @@ func (client DynamicDNSClient) sendMessage(zone string, msg *dns.Msg) error {
 
 func newRR(domain string, zone string, ttl int, resourceType string, record string) (*dns.RR, error) {
 	RR := strings.Trim(fmt.Sprintf("%s.%s %d %s %s", domain, zone, ttl, resourceType, record), " ")
-	log.Tracef(RR)
 	rr, err := dns.NewRR(RR)
 	if err != nil {
 		return nil, fmt.Errorf("newRR failed: %v", err)

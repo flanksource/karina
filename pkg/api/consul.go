@@ -1,6 +1,65 @@
 package api
 
-type Consul []struct {
+import (
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/flanksource/commons/logger"
+	"github.com/flanksource/commons/net"
+)
+
+type Consul struct {
+	logger.Logger
+	Host, Service string
+}
+
+func (consul Consul) GetMembers() []string {
+	url := fmt.Sprintf("http://%s/v1/health/service/%s", consul.Host, consul.Service)
+	consul.Tracef("Finding masters via consul: %s\n", url)
+	response, _ := net.GET(url)
+	var resp consulResponse
+	if err := json.Unmarshal(response, &resp); err != nil {
+		fmt.Println(err)
+	}
+	var addresses []string
+node:
+	for _, node := range resp {
+		for _, check := range node.Checks {
+			if check.Status != "passing" {
+				consul.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
+				continue node
+			}
+		}
+		addresses = append(addresses, node.Node.Address)
+	}
+	return addresses
+}
+
+func (consul Consul) RemoveMember(name string) error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("http://%s/v1/catalog/deregister", consul.Host), strings.NewReader(fmt.Sprintf("{\"Node\": \"%s\"}", name)))
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return fmt.Errorf("failed to remove consul member %s: %s", name, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return fmt.Errorf("failed to remove consul member %s: %s", name, resp.Status)
+	}
+	consul.Infof("Removed consul member %s: %s", name, resp.Status)
+	return nil
+}
+
+type consulResponse []struct {
 	Node struct {
 		ID              string `json:"ID"`
 		Node            string `json:"Node"`

@@ -4,23 +4,22 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/moshloop/konfigadm/pkg/utils"
+	"github.com/flanksource/konfigadm/pkg/utils"
+	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
-		log.Infof("Skipping deployment of harbor, it is disabled")
+		p.Infof("Skipping deployment of harbor, it is disabled")
 		return nil
-	} else {
-		log.Infof("Deploying harbor %s", p.Harbor.Version)
 	}
+	p.Infof("Deploying harbor %s", p.Harbor.Version)
+
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
-	defaults(p)
 	var nonce string
 	if p.HasSecret(Namespace, "harbor-secret") {
 		nonce = string((*p.GetSecret(Namespace, "harbor-secret"))["secret"])
@@ -34,7 +33,8 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if p.Harbor.DB == nil {
-		db, err := p.GetOrCreateDB(dbCluster, dbNames...)
+		dbConfig := pgapi.NewClusterConfig(dbCluster, dbNames...)
+		db, err := postgresoperator.GetOrCreateDB(p, dbConfig)
 		if err != nil {
 			return fmt.Errorf("deploy: failed to get/update db: %v", err)
 		}
@@ -43,7 +43,7 @@ func Deploy(p *platform.Platform) error {
 
 	if err := p.CreateOrUpdateSecret("harbor-chartmuseum", Namespace, map[string][]byte{
 		"CACHE_REDIS_PASSWORD":  []byte{},
-		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.AccessKey),
+		"AWS_SECRET_ACCESS_KEY": []byte(p.S3.SecretKey),
 	}); err != nil {
 		return err
 	}
@@ -66,21 +66,16 @@ func Deploy(p *platform.Platform) error {
 		"HARBOR_ADMIN_PASSWORD": []byte(p.Harbor.AdminPassword),
 		"POSTGRESQL_PASSWORD":   []byte(p.Harbor.DB.Password),
 		"CLAIR_DB_PASSWORD":     []byte(p.Harbor.DB.Password),
-		"tls.key":               []byte(tls["tls.key"]),
-		"tls.crt":               []byte(tls["tls.crt"]),
-		"ca.crt":                []byte(tls["tls.crt"]),
+		"tls.key":               tls["tls.key"],
+		"tls.crt":               tls["tls.crt"],
+		"ca.crt":                tls["tls.crt"],
 		"secretKey":             []byte("not-a-secure-key"),
 		"secret":                []byte(nonce),
 	}); err != nil {
 		return err
 	}
 
-	cert, err := p.CreateIngressCertificate("harbor")
-	if err != nil {
-		return err
-	}
-
-	if err := p.CreateOrUpdateSecret("harbor-ingress", Namespace, cert.AsTLSSecret()); err != nil {
+	if err := p.CreateTLSSecret(Namespace, "harbor", "harbor-ingress"); err != nil {
 		return err
 	}
 
@@ -99,12 +94,14 @@ func Deploy(p *platform.Platform) error {
 		return err
 	}
 
-	if err := p.ApplySpecs(Namespace, "harbor.yml"); err != nil {
+	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
 		return err
 	}
-	client := NewHarborClient(p)
+	client, err := NewClient(p)
+	if err != nil {
+		return err
+	}
 	return client.UpdateSettings(*p.Harbor.Settings)
-
 }
 
 func getClairConfig(p *platform.Platform) string {

@@ -24,8 +24,8 @@ const (
 
 const (
 	serviceNameMaxLength   = 63
-	clusterNameMaxLength   = serviceNameMaxLength - len("-repl")
-	serviceNameRegexString = `^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	clusterNameMaxLength   = serviceNameMaxLength - len("-repl") // nolint: unused, varcheck, deadcode
+	serviceNameRegexString = `^[a-z]([-a-z0-9]*[a-z0-9])?$`      // nolint: unused, varcheck, deadcode
 )
 
 func NewPostgresql(name string) *Postgresql {
@@ -39,7 +39,7 @@ func NewPostgresql(name string) *Postgresql {
 		Spec: PostgresSpec{
 			TeamID:      "postgres",
 			ClusterName: name,
-			DockerImage: "registry.opensource.zalan.do/acid/spilo-12:1.6-p2",
+			DockerImage: "docker.io/flanksource/spilo:1.6-p2.flanksource",
 			PostgresqlParam: PostgresqlParam{
 				PgVersion:  "12",
 				Parameters: make(map[string]string),
@@ -47,9 +47,6 @@ func NewPostgresql(name string) *Postgresql {
 			Volume: Volume{
 				Size: "10Gi",
 			},
-			// StandbyCluster: &StandbyDescription{
-			// 	S3WalPath: "s3://",
-			// },
 			Patroni: Patroni{
 				InitDB: map[string]string{
 					"encoding":       "UTF8",
@@ -66,12 +63,6 @@ func NewPostgresql(name string) *Postgresql {
 				MaximumLagOnFailover: 32 * 1024 * 1024,
 				Slots:                make(map[string]map[string]string),
 			},
-			// StandbyCluster: nil,
-			// Clone:          CloneDescription{},
-			// Clone: CloneDescription{
-			// 	ClusterName: " ",
-			// },
-
 			Resources: Resources{
 				ResourceLimits: ResourceDescription{
 					CPU:    "2",
@@ -85,7 +76,7 @@ func NewPostgresql(name string) *Postgresql {
 			PodAnnotations:      make(map[string]string),
 			ServiceAnnotations:  make(map[string]string),
 			ShmVolume:           &yes,
-			EnableLogicalBackup: true,
+			EnableLogicalBackup: false,
 			NumberOfInstances:   2,
 		},
 	}
@@ -112,6 +103,7 @@ func (in Postgresql) GetObjectKind() schema.ObjectKind {
 }
 
 // PostgresSpec defines the specification for the PostgreSQL TPR.
+// nolint: golint
 type PostgresSpec struct {
 	PostgresqlParam `json:"postgresql"`
 	Volume          `json:"volume,omitempty"`
@@ -136,22 +128,25 @@ type PostgresSpec struct {
 	// load balancers' source ranges are the same for master and replica services
 	AllowedSourceRanges []string `json:"allowedSourceRanges"`
 
-	NumberOfInstances  int32                `json:"numberOfInstances"`
-	Users              map[string]UserFlags `json:"users"`
-	MaintenanceWindows []MaintenanceWindow  `json:"maintenanceWindows,omitempty"`
-	// Clone                 CloneDescription     `json:"clone"`
-	ClusterName           string            `json:"-"`
-	Databases             map[string]string `json:"databases,omitempty"`
-	Tolerations           []v1.Toleration   `json:"tolerations,omitempty"`
-	Sidecars              []Sidecar         `json:"sidecars,omitempty"`
-	InitContainers        []v1.Container    `json:"initContainers,omitempty"`
-	PodPriorityClassName  string            `json:"podPriorityClassName,omitempty"`
-	ShmVolume             *bool             `json:"enableShmVolume,omitempty"`
-	EnableLogicalBackup   bool              `json:"enableLogicalBackup,omitempty"`
-	LogicalBackupSchedule string            `json:"logicalBackupSchedule,omitempty"`
+	NumberOfInstances     int32                `json:"numberOfInstances"`
+	Users                 map[string]UserFlags `json:"users"`
+	MaintenanceWindows    []MaintenanceWindow  `json:"maintenanceWindows,omitempty"`
+	Clone                 *CloneDescription    `json:"clone,omitempty"`
+	ClusterName           string               `json:"-"`
+	Databases             map[string]string    `json:"databases,omitempty"`
+	Tolerations           []v1.Toleration      `json:"tolerations,omitempty"`
+	Sidecars              []Sidecar            `json:"sidecars,omitempty"`
+	InitContainers        []v1.Container       `json:"initContainers,omitempty"`
+	PodPriorityClassName  string               `json:"podPriorityClassName,omitempty"`
+	ShmVolume             *bool                `json:"enableShmVolume,omitempty"`
+	EnableLogicalBackup   bool                 `json:"enableLogicalBackup,omitempty"`
+	LogicalBackupSchedule string               `json:"logicalBackupSchedule,omitempty"`
 	// StandbyCluster        *StandbyDescription  `json:"standby"`
 	PodAnnotations     map[string]string `json:"podAnnotations"`
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+	Env                []v1.EnvVar       `json:"env,omitempty"`
+	VolumeMounts       []v1.VolumeMount  `json:"volumeMounts,omitempty"`
+	Volumes            []v1.Volume       `json:"volumes,omitempty"`
 
 	// deprecated json tags
 	InitContainersOld       []v1.Container `json:"init_containers,omitempty"`
@@ -224,7 +219,7 @@ type CloneDescription struct {
 	EndTimestamp      string `json:"timestamp,omitempty"`
 	S3WalPath         string `json:"s3_wal_path,omitempty"`
 	S3Endpoint        string `json:"s3_endpoint,omitempty"`
-	S3AccessKeyId     string `json:"s3_access_key_id,omitempty"`
+	S3AccessKeyID     string `json:"s3_access_key_id,omitempty"`
 	S3SecretAccessKey string `json:"s3_secret_access_key,omitempty"`
 	S3ForcePathStyle  *bool  `json:"s3_force_path_style,omitempty" defaults:"false"`
 }
@@ -242,6 +237,7 @@ type Sidecar struct {
 type UserFlags []string
 
 // PostgresStatus contains status of the PostgreSQL cluster (running, creation failed etc.)
+// nolint: golint
 type PostgresStatus struct {
 	PostgresClusterStatus string `json:"PostgresClusterStatus"`
 }
@@ -270,6 +266,7 @@ type OperatorConfigurationList struct {
 }
 
 // PostgresUsersConfiguration defines the system users of Postgres.
+// nolint: golint
 type PostgresUsersConfiguration struct {
 	SuperUsername       string `json:"super_username,omitempty"`
 	ReplicationUsername string `json:"replication_username,omitempty"`
@@ -311,6 +308,7 @@ type KubernetesMetaConfiguration struct {
 }
 
 // PostgresPodResourcesDefaults defines the spec of default resources
+// nolint: golint
 type PostgresPodResourcesDefaults struct {
 	DefaultCPURequest    string `json:"default_cpu_request,omitempty"`
 	DefaultMemoryRequest string `json:"default_memory_request,omitempty"`
@@ -332,7 +330,7 @@ type OperatorTimeouts struct {
 
 // LoadBalancerConfiguration defines the LB configuration
 type LoadBalancerConfiguration struct {
-	DbHostedZone              string            `json:"db_hosted_zone,omitempty"`
+	DBHostedZone              string            `json:"db_hosted_zone,omitempty"`
 	EnableMasterLoadBalancer  bool              `json:"enable_master_load_balancer,omitempty"`
 	EnableReplicaLoadBalancer bool              `json:"enable_replica_load_balancer,omitempty"`
 	CustomServiceAnnotations  map[string]string `json:"custom_service_annotations,omitempty"`

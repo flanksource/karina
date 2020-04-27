@@ -35,29 +35,34 @@ func main() {
 	}
 
 	root.AddCommand(
-		cmd.Dependencies,
-		cmd.Images,
-		cmd.MachineImages,
-		cmd.Upgrade,
-		cmd.Test,
-		cmd.Provision,
-		cmd.Cleanup,
-		cmd.Status,
 		cmd.Access,
-		cmd.Deploy,
-		cmd.Harbor,
-		cmd.DNS,
-		cmd.Render,
-		cmd.Snapshot,
-		cmd.Conformance,
-		cmd.Backup,
 		cmd.APIDocs,
-		cmd.CA,
 		cmd.Apply,
+		cmd.Backup,
+		cmd.CA,
+		cmd.Cleanup,
+		cmd.Config,
+		cmd.Conformance,
+		cmd.Consul,
 		cmd.DB,
+		cmd.Deploy,
+		cmd.DNS,
 		cmd.Exec,
 		cmd.ExecNode,
+		cmd.Harbor,
+		cmd.Images,
+		cmd.Logs,
+		cmd.MachineImages,
 		cmd.NSX,
+		cmd.Opa,
+		cmd.Provision,
+		cmd.Render,
+		cmd.Rolling,
+		cmd.Snapshot,
+		cmd.Status,
+		cmd.Test,
+		cmd.Upgrade,
+		cmd.Vault,
 	)
 
 	if len(commit) > 8 {
@@ -97,7 +102,7 @@ func main() {
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
-	root.PersistentFlags().Bool("show-config", false, "Print out combined config")
+	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 
 	if err := root.Execute(); err != nil {

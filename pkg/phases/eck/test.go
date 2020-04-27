@@ -12,5 +12,5 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("ECK", "ECK not configured")
 		return
 	}
-	k8s.TestNamespace(client, "elastic-system", test)
+	k8s.TestNamespace(client, Namespace, test)
 }

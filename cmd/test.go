@@ -1,40 +1,60 @@
 package cmd
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/flanksource/commons/console"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
+	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
+	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
+	"github.com/moshloop/platform-cli/pkg/phases/consul"
 	"github.com/moshloop/platform-cli/pkg/phases/dex"
 	"github.com/moshloop/platform-cli/pkg/phases/eck"
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
+	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
+	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresOperator"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
+	"github.com/moshloop/platform-cli/pkg/phases/quack"
+	"github.com/moshloop/platform-cli/pkg/phases/registrycreds"
+	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
 	"github.com/moshloop/platform-cli/pkg/phases/stubs"
+	"github.com/moshloop/platform-cli/pkg/phases/vault"
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/spf13/cobra"
+	"github.com/vbauerster/mpb/v5"
 )
 
-var wait int
-var failOnError bool
-var waitInterval int
-var junitPath, suiteName string
-var p *platform.Platform
+var (
+	wait                  int
+	failOnError           bool
+	waitInterval          int
+	junitPath, suiteName  string
+	p                     *platform.Platform
+	progress              *mpb.Progress
+	test                  *console.TestResults
+	testE2E, showProgress bool
+	concurrency           int
+	ch                    chan int
+	wg                    *sync.WaitGroup
+	stdout                bytes.Buffer
+)
 
 var Test = &cobra.Command{
 	Use: "test",
 }
 
-func end(test console.TestResults) {
+func end(test *console.TestResults) {
 	if junitPath != "" {
 		if suiteName == "" {
 			test.SuiteName(p.Name)
@@ -42,159 +62,137 @@ func end(test console.TestResults) {
 			test.SuiteName(suiteName)
 		}
 		xml, _ := test.ToXML()
-		os.MkdirAll(path.Dir(junitPath), 0755)
-		ioutil.WriteFile(junitPath, []byte(xml), 0644)
+		os.MkdirAll(path.Dir(junitPath), 0755)         // nolint: errcheck
+		ioutil.WriteFile(junitPath, []byte(xml), 0644) // nolint: errcheck
 	}
 	if test.FailCount > 0 && failOnError {
 		os.Exit(1)
 	}
 }
 
-func run(fn func(p *platform.Platform, test *console.TestResults)) {
-	start := time.Now()
-	for {
-		test := console.TestResults{}
-		fn(p, &test)
-		test.Done()
-		elapsed := time.Now().Sub(start)
-		if test.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
-			end(test)
-			return
-		} else {
-			log.Debugf("Waiting to re-run tests\n")
-			time.Sleep(time.Duration(waitInterval) * time.Second)
-			log.Infof("Re-running tests\n")
+type TestFn func(p *platform.Platform, test *console.TestResults)
 
+func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		localTest := &console.TestResults{Writer: &stdout}
+		var bar console.Progress
+		if showProgress {
+			bar = console.NewTerminalProgress(name, localTest, progress)
+		} else {
+			bar = console.NewTextProgress(name, localTest)
 		}
-	}
+		start := time.Now()
+		bar.Start()
+		for {
+			ch <- 1
+			fn(p.WithLogOutput(localTest.Writer).WithField("test", name), localTest)
+			elapsed := time.Since(start)
+			if localTest.FailCount == 0 || wait == 0 || int(elapsed.Seconds()) >= wait {
+				test.Append(localTest)
+				bar.Done()
+				<-ch
+				return
+			}
+			localTest.Retry()
+			bar.Status(fmt.Sprintf("Waiting to re-run tests, retry: %d", localTest.Retries))
+			time.Sleep(time.Duration(waitInterval) * time.Second)
+			bar.Status("Re-running tests")
+			<-ch
+		}
+	}()
 }
 
 func init() {
 	Test.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		p = getPlatform(cmd)
+		wg = &sync.WaitGroup{}
+		ch = make(chan int, concurrency)
+		progress = mpb.New(mpb.WithWaitGroup(wg), mpb.WithWidth(40))
+		test = &console.TestResults{
+			Writer: &stdout,
+		}
+	}
+	Test.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		progress.Wait()
+		wg.Wait()
+		fmt.Println(stdout.String())
+		end(test)
+	}
+
+	tests := map[string]TestFn{
+		"audit":              audit.Test,
+		"base":               base.Test,
+		"configmap-reloader": configmapreloader.Test,
+		"consul":             consul.Test,
+		"dex":                dex.Test,
+		"eck":                eck.Test,
+		"elasticsearch":      elasticsearch.Test,
+		"fluentd":            fluentdoperator.Test,
+		"gitops":             flux.Test,
+		"harbor":             harbor.Test,
+		"monitoring":         monitoring.Test,
+		"nsx":                nsx.Test,
+		"opa":                opa.Test,
+		"postgres-operator":  postgresoperator.Test,
+		"promtheus":          monitoring.TestPrometheus,
+		"quack":              quack.Test,
+		"registry-creds":     registrycreds.Test,
+		"sealed-secrets":     sealedsecrets.Test,
+		"stubs":              stubs.Test,
+		"thanos":             monitoring.TestThanos,
+		"vault":              vault.Test,
+		"velero":             velero.Test,
+	}
+
+	var Phases = &cobra.Command{
+		Use: "phases",
+		Run: func(cmd *cobra.Command, args []string) {
+			for name, fn := range tests {
+				_name := name
+				_fn := fn
+				flag, _ := cmd.Flags().GetBool(name)
+				if !flag {
+					continue
+				}
+				queue(_name, _fn, wg, ch)
+			}
+		},
+	}
+
+	Test.AddCommand(Phases)
+
+	for name, fn := range tests {
+		_name := name
+		_fn := fn
+		Phases.Flags().Bool(name, false, "Test "+name)
+		Test.AddCommand(&cobra.Command{
+			Use:  name,
+			Args: cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+				queue(_name, _fn, wg, ch)
+			},
+		})
+	}
+
+	testAllCmd := &cobra.Command{
+		Use:   "all",
+		Short: "Test all components",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			for name, fn := range tests {
+				queue(name, fn, wg, ch)
+			}
+		},
 	}
 	Test.PersistentFlags().IntVar(&wait, "wait", 0, "Time in seconds to wait for tests to pass")
 	Test.PersistentFlags().IntVar(&waitInterval, "wait-interval", 5, "Time in seconds to wait between repeated tests")
 	Test.PersistentFlags().StringVar(&junitPath, "junit-path", "", "Path to export JUnit formatted test results")
 	Test.PersistentFlags().StringVar(&suiteName, "suite-name", "", "Name of the Test Suite, defaults to platform name")
 	Test.PersistentFlags().BoolVar(&failOnError, "fail-on-error", true, "Return an exit code of 1 if any tests fail")
-	Test.AddCommand(&cobra.Command{
-		Use:   "harbor",
-		Short: "Test harbor",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(harbor.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "dex",
-		Short: "Test dex",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(dex.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "opa",
-		Short: "Test opa policies using a fixtures director",
-		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(func(p *platform.Platform, test *console.TestResults) {
-				opa.TestPolicies(p, args[0], test)
-			})
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "base",
-		Short: "Test base",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(base.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "nsx",
-		Short: "Test NSX-T CNI",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(nsx.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "velero",
-		Short: "Test velero",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(velero.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "monitoring",
-		Short: "Test monitoring stack",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(monitoring.Test)
-		},
-	})
-	Test.AddCommand(&cobra.Command{
-		Use:   "fluentd",
-		Short: "Test fluentd",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(fluentdOperator.Test)
-		},
-	})
-	Test.AddCommand(&cobra.Command{
-		Use:   "eck",
-		Short: "Test eck",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(eck.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "postgres-operator",
-		Short: "Test postgres-operator",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(postgresOperator.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "stubs",
-		Short: "Test stubs",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(stubs.Test)
-		},
-	})
-
-	Test.AddCommand(&cobra.Command{
-		Use:   "all",
-		Short: "Test all components",
-		Args:  cobra.MinimumNArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(func(p *platform.Platform, test *console.TestResults) {
-				client, _ := p.GetClientset()
-				base.Test(p, test)
-				velero.Test(p, test)
-				opa.TestNamespace(p, client, test)
-				harbor.Test(p, test)
-				dex.Test(p, test)
-				monitoring.Test(p, test)
-				nsx.Test(p, test)
-				fluentdOperator.Test(p, test)
-				eck.Test(p, test)
-				postgresOperator.Test(p, test)
-			})
-		},
-	})
+	Test.PersistentFlags().BoolVarP(&testE2E, "e2e", "", false, "Run e2e tests")
+	Test.PersistentFlags().BoolVar(&showProgress, "progress", true, "Display progress as tests run")
+	Test.PersistentFlags().IntVar(&concurrency, "concurrency", 8, "Number of tests to run concurrently")
+	Test.AddCommand(testAllCmd)
 }

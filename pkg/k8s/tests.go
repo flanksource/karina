@@ -3,11 +3,11 @@ package k8s
 import (
 	"fmt"
 
+	"github.com/flanksource/commons/console"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/flanksource/commons/console"
 )
 
 func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResults) {
@@ -20,7 +20,12 @@ func TestNamespace(client kubernetes.Interface, ns string, t *console.TestResult
 	}
 
 	if len(list.Items) == 0 {
-		t.Failf(ns, "[%s] Expected pods but none running - did you deploy?", ns)
+		_, err := client.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			t.Skipf(ns, "[%s] namespace not found, skipping", ns)
+		} else {
+			t.Failf(ns, "[%s] Expected pods but none running - did you deploy?", ns)
+		}
 	}
 	for _, pod := range list.Items {
 		conditions := true

@@ -15,6 +15,7 @@ import (
 const Namespace = "postgres-operator"
 const OperatorConfig = "default"
 
+// nolint: golint
 type PostgresDB struct {
 	Name      string
 	Namespace string
@@ -23,7 +24,6 @@ type PostgresDB struct {
 	Superuser string
 	op        *api.OperatorConfiguration
 	client    *k8s.Client
-	s3        *minio.Client
 }
 
 func GetGenericPostgresDB(client *k8s.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
@@ -88,6 +88,11 @@ func (db *PostgresDB) Backup() error {
 	}
 
 	return db.client.StreamLogs(db.Namespace, job.Name)
+}
+
+func (db *PostgresDB) ScheduleBackup(schedule string) error {
+	job := db.GenerateBackupJob().AsCronJob(schedule)
+	return db.client.Apply(db.Namespace, job)
 }
 
 func (db *PostgresDB) ListBackups() ([]string, error) {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/moshloop/platform-cli/pkg/k8s"
@@ -14,8 +13,14 @@ import (
 )
 
 func Install(p *platform.Platform) error {
-	log.Infof("Deploying %d gitops controllers", len(p.GitOps))
+	p.Infof("Deploying %d gitops controllers", len(p.GitOps))
 	for _, gitops := range p.GitOps {
+		if gitops.Namespace != "" {
+			if err := p.CreateOrUpdateNamespace(gitops.Namespace, nil, nil); err != nil {
+				return fmt.Errorf("install: failed to create namespace: %s: %v", gitops.Namespace, err)
+			}
+		}
+
 		if err := p.Apply(gitops.Namespace, NewFluxDeployment(&gitops)...); err != nil {
 			return fmt.Errorf("install: failed to apply deployment: %v", err)
 		}
@@ -74,7 +79,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 	sshConfig := fmt.Sprintf("flux-ssh-%s", cr.Name)
 	saName := fmt.Sprintf("flux-" + cr.Name)
 	argMap := map[string]string{
-		"git-url":                cr.GitUrl,
+		"git-url":                cr.GitURL,
 		"git-branch":             cr.GitBranch,
 		"git-path":               cr.GitPath,
 		"git-poll-interval":      cr.GitPollInterval,
@@ -112,7 +117,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 	if cr.Namespace == "kube-system" {
 		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
 	} else {
-		spec.ServiceAccount(saName).AddRole("cluster-admin")
+		spec.ServiceAccount(saName).AddClusterRole("namespace-admin").AddClusterRole("namespace-creator")
 	}
 
 	data, _ := base64.StdEncoding.DecodeString(cr.GitKey)

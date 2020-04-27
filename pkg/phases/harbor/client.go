@@ -4,46 +4,90 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/dghubble/sling"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/text"
+	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type HarborClient struct {
-	sling *sling.Sling
-	url   string
+type Client struct {
+	logger.Logger
+	sling  *sling.Sling
+	client *http.Client
+	url    string
 }
 
-func NewHarborClient(p *platform.Platform) *HarborClient {
-	client := &http.Client{Transport: &http.Transport{
+func NewClient(p *platform.Platform) (*Client, error) {
+	clientset, err := p.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+
+	pods, err := clientset.CoreV1().Pods(Namespace).List(metav1.ListOptions{
+		LabelSelector: "app=harbor,component=core",
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("no running harbor-core pods")
+	}
+	dialer, _ := p.GetProxyDialer(proxy.Proxy{
+		Namespace:    Namespace,
+		Kind:         "pods",
+		ResourceName: pods.Items[0].Name,
+		Port:         8080,
+	})
+	tr := &http.Transport{
+		DialContext:     dialer.DialContext,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}}
-	return &HarborClient{
-		url: p.Harbor.URL,
-		sling: sling.New().Client(client).Base(p.Harbor.URL).
+	}
+
+	client := &http.Client{Transport: tr}
+	return &Client{
+		Logger: p.Logger,
+		client: client,
+		url:    p.Harbor.URL,
+		sling: sling.New().Client(client).Base("http://harbor-core").
 			SetBasicAuth("admin", p.Harbor.AdminPassword).
 			Set("accept", "application/json").
 			Set("content-type", "application/json"),
-	}
+	}, nil
 }
 
-func (harbor *HarborClient) ListReplicationPolicies() (policies []ReplicationPolicy, customErr error) {
-	_, err := harbor.sling.New().
+func (harbor *Client) GetStatus() (*Status, error) {
+	resp, err := harbor.client.Get("http://harbor-core/api/health")
+	if err != nil {
+		return nil, err
+	}
+	status := Status{}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &status); err != nil {
+		harbor.Errorf("Failed to unmarshall :%v", err)
+	}
+	return &status, nil
+}
+
+func (harbor *Client) ListReplicationPolicies() (policies []ReplicationPolicy, customErr error) {
+	resp, err := harbor.sling.New().
 		Get("api/replication/policies").
 		Receive(&policies, &customErr)
 	if err == nil {
 		err = customErr
 	}
+	defer resp.Body.Close()
 	return policies, err
 }
 
-func (harbor *HarborClient) TriggerReplication(id int) (*Replication, error) {
+func (harbor *Client) TriggerReplication(id int) (*Replication, error) {
 	req := Replication{PolicyID: id}
 	r, err := harbor.sling.New().
 		BodyJSON(&req).
@@ -52,14 +96,20 @@ func (harbor *HarborClient) TriggerReplication(id int) (*Replication, error) {
 	if err != nil {
 		return nil, fmt.Errorf("TriggerReplication: failed to trigger replication: %v", err)
 	}
-	_, err = harbor.sling.New().Get(r.Header["Location"][0]).Receive(&req, &req)
-	return &req, err
+	defer r.Body.Close()
+
+	resp, err := harbor.sling.New().Get(r.Header["Location"][0]).Receive(&req, &req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return &req, nil
 }
 
-func (harbor *HarborClient) UpdateSettings(settings types.HarborSettings) error {
+func (harbor *Client) UpdateSettings(settings types.HarborSettings) error {
 	data, _ := json.Marshal(settings)
-	log.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
-	log.Infof("Updating harbor using: %s \n", harbor.url)
+	harbor.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
+	harbor.Infof("Updating harbor using: %s \n", harbor.url)
 	r, err := harbor.sling.New().
 		Put("api/configurations").
 		BodyJSON(&settings).
@@ -67,15 +117,16 @@ func (harbor *HarborClient) UpdateSettings(settings types.HarborSettings) error 
 	if err != nil {
 		return fmt.Errorf("failed to update harbor settings: %v", err)
 	}
-	log.Debugf("Updated settings: %s:\n%+v", r.Status, text.SafeRead(r.Body))
+	defer r.Body.Close()
+	harbor.Debugf("Updated settings: %s:\n%+v", r.Status, text.SafeRead(r.Body))
 	return nil
 }
 
-func (harbor *HarborClient) ListMembers(project string) ([]ProjectMember, error) {
+func (harbor *Client) ListMembers(project string) ([]ProjectMember, error) {
 	return nil, nil
 }
 
-type HarborProject struct {
+type Project struct {
 }
 
 type Replication struct {
@@ -145,4 +196,12 @@ type ProjectMember struct {
 	RoleID     int    `json:"role_id,omitempty"`
 	EntityID   int    `json:"entity_id,omitempty"`
 	EntityType string `json:"entity_type,omitempty"`
+}
+
+type Status struct {
+	Status     string `json:"status"`
+	Components []struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	} `json:"components"`
 }

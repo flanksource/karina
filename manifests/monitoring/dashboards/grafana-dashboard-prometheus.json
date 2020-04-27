@@ -24,7 +24,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 1,
                     "id": 1,
                     "legend": {
@@ -246,7 +246,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 1,
                     "id": 2,
                     "legend": {
@@ -332,7 +332,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 3,
                     "legend": {
@@ -430,7 +430,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 1,
                     "id": 4,
                     "legend": {
@@ -516,7 +516,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 5,
                     "legend": {
@@ -626,7 +626,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 6,
                     "legend": {
@@ -724,7 +724,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 7,
                     "legend": {
@@ -810,7 +810,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 8,
                     "legend": {
@@ -908,7 +908,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 9,
                     "legend": {
@@ -994,7 +994,7 @@
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 10,
                     "id": 10,
                     "legend": {
@@ -1112,7 +1112,7 @@
                     "text": "All",
                     "value": "$__all"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": true,
                 "label": "job",
@@ -1140,7 +1140,7 @@
                     "text": "All",
                     "value": "$__all"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": true,
                 "label": "instance",
@@ -1160,6 +1160,15 @@
                 "tagsQuery": "",
                 "type": "query",
                 "useTags": false
+            },
+            {
+                "datasource": "$datasource",
+                "filters": [],
+                "hide": 0,
+                "label": "Filter",
+                "name": "filter",
+                "skipUrlSync": false,
+                "type": "adhoc"
             }
         ]
     },

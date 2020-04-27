@@ -23,9 +23,9 @@ import (
 	"os"
 	"sync"
 
+	"github.com/flanksource/commons/logger"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -39,6 +39,7 @@ var sessionMU sync.Mutex
 
 // Session is a vSphere session with a configured Finder.
 type Session struct {
+	logger.Logger
 	*govmomi.Client
 	Finder     *find.Finder
 	datacenter *object.Datacenter
@@ -56,7 +57,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 		}
 	}
 
-	log.Infof("Logging into vcenter: %s@%s", user, vcenter)
+	logger.Infof("Logging into vcenter: %s@%s", user, vcenter)
 	soapURL, err := soap.ParseURL(vcenter)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error parsing vSphere URL %q", vcenter)
@@ -68,15 +69,13 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 	soapURL.User = url.UserPassword(user, pass)
 
 	// Temporarily setting the insecure flag True
-	// TODO(ssurana): handle the certs better
 	client, err := govmomi.NewClient(context.TODO(), soapURL, true)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error setting up new vSphere SOAP client")
 	}
 
-	session := Session{Client: client}
+	session := Session{Client: client, Logger: logger.StandardLogger()}
 
-	// TODO(frapposelli): replace `dev` with version string
 	session.UserAgent = "platform-cli"
 
 	// Assign the finder to the session.
@@ -124,18 +123,18 @@ func (s *Session) FindByUUID(ctx context.Context, uuid string) (object.Reference
 }
 
 // FindVM finds a template based either on a UUID or name.
-func (s Session) FindVM(nameOrId string) (*object.VirtualMachine, error) {
-	tpl, err := s.findVmByUuid(nameOrId)
+func (s Session) FindVM(nameOrID string) (*object.VirtualMachine, error) {
+	tpl, err := s.findVMByUUID(nameOrID)
 	if err != nil {
 		return nil, fmt.Errorf("findVM: failed to find VM by UUID: %v", err)
 	}
 	if tpl != nil {
 		return tpl, nil
 	}
-	return s.findVmByName(nameOrId)
+	return s.findVMByName(nameOrID)
 }
 
-func (s Session) findVmByUuid(templateID string) (*object.VirtualMachine, error) {
+func (s Session) findVMByUUID(templateID string) (*object.VirtualMachine, error) {
 	if !isValidUUID(templateID) {
 		return nil, nil
 	}
@@ -149,8 +148,7 @@ func (s Session) findVmByUuid(templateID string) (*object.VirtualMachine, error)
 	return nil, nil
 }
 
-func (s Session) findVmByName(templateID string) (*object.VirtualMachine, error) {
-
+func (s Session) findVMByName(templateID string) (*object.VirtualMachine, error) {
 	tpl, err := s.Finder.VirtualMachine(context.TODO(), templateID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to find tempate by name %q", templateID)

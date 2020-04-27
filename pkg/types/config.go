@@ -1,21 +1,27 @@
 package types
 
 type PlatformConfig struct {
-	Brand                 Brand             `yaml:"brand,omitempty"`
-	Version               string            `yaml:"version"`
-	Velero                *Velero           `yaml:"velero,omitempty"`
-	CA                    *CA               `yaml:"ca"`
-	Calico                Calico            `yaml:"calico,omitempty"`
-	CertManager           *Enabled          `yaml:"certManager,omitempty"`
-	Consul                string            `yaml:"consul"`
-	Dashboard             Dashboard         `yaml:"dashboard,omitempty"`
-	Datacenter            string            `yaml:"datacenter"`
-	DNS                   *DynamicDNS       `yaml:"dns,omitempty"`
-	DockerRegistry        string            `yaml:"dockerRegistry,omitempty"`
-	Domain                string            `yaml:"domain"`
-	EventRouter           *Enabled          `yaml:"eventRouter,omitempty"`
-	Harbor                *Harbor           `yaml:"harbor,omitempty"`
+	Brand       Brand       `yaml:"brand,omitempty"`
+	Version     string      `yaml:"version"`
+	Velero      *Velero     `yaml:"velero,omitempty"`
+	CA          *CA         `yaml:"ca"`
+	Calico      Calico      `yaml:"calico,omitempty"`
+	CertManager CertManager `yaml:"certmanager,omitempty"`
+	// Consul specifies the endpoint for externally hosted consul cluster
+	// NOTE: a working consol config required to verify
+	//       that primary master is available for a vSphere cluster.
+	Consul         string      `yaml:"consul"`
+	Dashboard      Dashboard   `yaml:"dashboard,omitempty"`
+	Datacenter     string      `yaml:"datacenter"`
+	DNS            *DynamicDNS `yaml:"dns,omitempty"`
+	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
+	// Domain specifies the domain that cluster will be available at
+	Domain      string   `yaml:"domain"`
+	EventRouter *Enabled `yaml:"eventRouter,omitempty"`
+	Harbor      *Harbor  `yaml:"harbor,omitempty"`
+	// HostPrefix specifies a prefix to be added to VM hostnames.
 	HostPrefix            string            `yaml:"hostPrefix"`
+	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA               `yaml:"ingressCA"`
 	GitOps                []GitOps          `yaml:"gitops,omitempty"`
 	Kubernetes            Kubernetes        `yaml:"kubernetes"`
@@ -35,28 +41,37 @@ type PlatformConfig struct {
 	PodSubnet             string            `yaml:"podSubnet"`
 	Policies              []string          `yaml:"policies,omitempty"`
 	// A list of strategic merge patches that will be applied to all resources created
-	Patches          []string          `yaml:"patches,omitempty"`
-	Quack            *Enabled          `yaml:"quack,omitempty"`
-	Resources        map[string]string `yaml:"resources,omitempty"`
-	S3               S3                `yaml:"s3,omitempty"`
-	ServiceSubnet    string            `yaml:"serviceSubnet"`
-	SMTP             Smtp              `yaml:"smtp,omitempty"`
-	Specs            []string          `yaml:"specs,omitempty"`
-	TrustedCA        string            `yaml:"trustedCA,omitempty"`
-	Versions         map[string]string `yaml:"versions,omitempty"`
-	PlatformOperator *Enabled          `yaml:"platformOperator,omitempty"`
-	Nginx            *Nginx            `yaml:"nginx,omitempty"`
-	Minio            *Enabled          `yaml:"minio,omitempty"`
-	FluentdOperator  *FluentdOperator  `yaml:"fluentd,omitempty"`
-	ECK              *ECK              `yaml:"eck,omitempty"`
-	Thanos           *Thanos           `yaml:"thanos,omitempty"`
-	Filebeat         *Filebeat         `yaml:"filebeat,omitempty"`
+	Patches             []string             `yaml:"patches,omitempty"`
+	Quack               *Enabled             `yaml:"quack,omitempty"`
+	RegistryCredentials *RegistryCredentials `yaml:"registryCredentials,omitempty"`
+	Resources           map[string]string    `yaml:"resources,omitempty"`
+	S3                  S3                   `yaml:"s3,omitempty"`
+	SealedSecrets       *SealedSecrets       `yaml:"sealedSecrets,omitempty"`
+	ServiceSubnet       string               `yaml:"serviceSubnet"`
+	SMTP                SMTP                 `yaml:"smtp,omitempty"`
+	Specs               []string             `yaml:"specs,omitempty"`
+	TrustedCA           string               `yaml:"trustedCA,omitempty"`
+	Versions            map[string]string    `yaml:"versions,omitempty"`
+	PlatformOperator    *Enabled             `yaml:"platformOperator,omitempty"`
+	Nginx               *Nginx               `yaml:"nginx,omitempty"`
+	Minio               *Enabled             `yaml:"minio,omitempty"`
+	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
+	ECK                 *ECK                 `yaml:"eck,omitempty"`
+	Thanos              *Thanos              `yaml:"thanos,omitempty"`
+	Filebeat            *Filebeat            `yaml:"filebeat,omitempty"`
+	Vault               *Vault               `yaml:"vault,omitempty"`
+	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
+	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`
+
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`
 	BootstrapToken        string `yaml:"-"`
 	DryRun                bool   `yaml:"-"`
+	Trace                 bool   `yaml:"-"`
 	JoinEndpoint          string `yaml:"-"`
 	Source                string `yaml:"-"`
 	ControlPlaneEndpoint  string `yaml:"-"`
+	// E2E is true if end to end tests are being run
+	E2E bool `yaml:"-"`
 }

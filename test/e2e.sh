@@ -1,7 +1,7 @@
 #!/bin/bash
 BIN=./.bin/platform-cli
 mkdir -p .bin
-export PLATFORM_CONFIG=test/common.yml
+export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
 NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
@@ -27,55 +27,39 @@ else
 fi
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
-  $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca-crt.pem --private-key-path .certs/ingress-ca-key.pem --password foobar  --expiry 1
+  $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+  $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
+  $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
   $BIN provision kind-cluster
 fi
 
 $BIN version
 
-$BIN deploy calico -v
+$BIN deploy phases --base --stubs --dex --calico -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
+# wait for the base deployment with stubs to come up healthy
+$BIN test phases --base --stubs --wait 120 --progress=false
 
-$BIN deploy base -v
+$BIN deploy phases --vault --postgres-operator -v
 
-$BIN deploy stubs -v
-
-$BIN deploy dex -v
-
-$BIN test stubs --wait 200
-
-$BIN test dex --wait 200
-
-$BIN deploy postgres-operator install -v
-
-$BIN test base --wait 200
-
-$BIN test postgres-operator --wait 200
-
-$BIN deploy harbor -v
+$BIN vault init -v
 
 $BIN deploy all -v
 
-$BIN deploy opa bundle automobile -v
-
-$BIN deploy opa install  -v
-
-$BIN deploy velero
-
-$BIN deploy fluentd
-
-$BIN deploy eck
-
-$BIN deploy opa policies test/opa/policies -v
+# deploy the opa bundles first, as they can take some time to load, this effectively
+# parallelizes this work to make the entire test complete faster
+$BIN opa bundle automobile -v
+# wait for up to 4 minutes, rerunning tests if they fail
+# this allows for all resources to reconcile and images to finish downloading etc..
+$BIN test all -v --wait 240 --progress=false
 
 failed=false
-if ! $BIN test all -v --wait 240 --junit-path test-results/results.xml; then
-  failed=true
-fi
 
-if ! $BIN test opa test/opa/opa-fixtures --wait 180 --junit-path test-results/opa-results.xml; then
+# e2e do not use --wait at the run level, if needed each individual test implements
+# its own wait. e2e tests should always pass once the non e2e have passed
+if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
   failed=true
 fi
 
@@ -86,4 +70,3 @@ zip -r artifacts/snapshot.zip snapshot/*
 if [[ "$failed" = true ]]; then
   exit 1
 fi
-

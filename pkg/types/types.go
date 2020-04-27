@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
+	"github.com/flanksource/commons/certs"
+	"github.com/flanksource/yaml"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 
@@ -14,6 +14,25 @@ type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
 
+type CertManager struct {
+	Version string `yaml:"version"`
+
+	// Details of a vault server to use for signing ingress certificates
+	Vault *VaultClient `yaml:"vault,omitempty"`
+}
+
+type VaultClient struct {
+	// The address of a remote Vault server to use for signinig
+	Address string `yaml:"address"`
+
+	// The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca
+	Path string `yaml:"path"`
+
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token"`
+}
+
+// VM captures the specifications of a virtual machine
 type VM struct {
 	Name   string `yaml:"name,omitempty"`
 	Prefix string `yaml:"prefix,omitempty"`
@@ -32,10 +51,13 @@ type VM struct {
 	// Tags to be applied to the VM
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
-	IP       string            `yaml:"-"`
+	// A path to a konfigadm specification used for configuring the VM on creation.
+	KonfigadmFile string `yaml:"konfigadm,omitempty"`
+	IP            string `yaml:"-"`
 }
 
 type Calico struct {
+	Disabled  bool                    `yaml:"disabled,omitempty"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
 	Version   string                  `yaml:"version,omitempty"`
@@ -50,13 +72,20 @@ type OPA struct {
 	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
 	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
 	Version            string   `yaml:"version,omitempty"`
-	BundleUrl          string   `yaml:"bundleUrl,omitempty"`
+	BundleURL          string   `yaml:"bundleUrl,omitempty"`
 	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
 	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
 	LogFormat          string   `yaml:"logFormat,omitempty"`
 	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
+	// Policies is a path to directory containing .rego policy files
+	Policies string `yaml:"policies,omitempty"`
 	// Log level for opa server, one of: debug,info,error, defaults to error
 	LogLevel string `yaml:"logLevel,omitempty"`
+	E2E      OPAE2E `yaml:"e2e,omitempty"`
+}
+
+type OPAE2E struct {
+	Fixtures string `yaml:"fixtures,omitempty"`
 }
 
 type Harbor struct {
@@ -141,7 +170,7 @@ type PostgresOperator struct {
 	BackupImage    string `yaml:"backupImage,omitempty"`
 }
 
-type Smtp struct {
+type SMTP struct {
 	Server   string `yaml:"server,omitempty"`
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
@@ -163,6 +192,17 @@ type S3 struct {
 	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
 	// S3 buckets
 	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
+	// Provide a KMS Master Key
+	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
+	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
+	UsePathStyle bool `yaml:"usePathStyle"`
+	// Skip TLS verify when connecting to S3
+	SkipTLSVerify bool  `yaml:"skipTLSVerify"`
+	E2E           S3E2E `yaml:"e2e,omitempty"`
+}
+
+type S3E2E struct {
+	Minio bool `yaml:"minio,omitempty"`
 }
 
 func (s3 S3) GetExternalEndpoint() string {
@@ -214,13 +254,73 @@ type Ldap struct {
 	// GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS
 	GroupObjectClass string `yaml:"groupObjectClass,omitempty"`
 	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
-	GroupNameAttr string `yaml:"groupNameAttr,omitempty"`
+	GroupNameAttr string  `yaml:"groupNameAttr,omitempty"`
+	E2E           LdapE2E `yaml:"e2e,omitempty"`
+}
+
+type LdapE2E struct {
+	// if true, deploy a mock LDAP server for testing
+	Mock bool `yaml:"mock,omitempty"`
+	// Username to be used for OIDC integration tests
+	Username string `yaml:"username,omitempty"`
+	// Password to be used for or OIDC integration tests
+	Password string `yaml:"password,omitempty"`
+}
+
+func (ldap Ldap) GetConnectionURL() string {
+	return fmt.Sprintf("ldaps://%s:%s", ldap.Host, ldap.Port)
 }
 
 type Kubernetes struct {
-	Version          string            `yaml:"version"`
+	Version string `yaml:"version"`
+	// KubeletExtraArgs is used to configure additional kubelet command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
-	MasterIP         string            `yaml:"masterIP,omitempty"`
+	// ControlllerExtraArgs is used to configure additional kube-controller-manager command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+	ControllerExtraArgs map[string]string `yaml:"controllerExtraArgs,omitempty"`
+	// SchedulerExtraArgs is used to configure additional kube-scheduler command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+	SchedulerExtraArgs map[string]string `yaml:"schedulerExtraArgs,omitempty"`
+	// APIServerExtraArgs is used to configure additional kube-apiserver command line flags
+	// The list of available flags can be viewed here:
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+	APIServerExtraArgs map[string]string `yaml:"apiServerExtraArgs,omitempty"`
+	// EtcdExtraArgs is used to configure additional etcd command line flags
+	// The list of available flags can be viewed here:
+	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
+	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
+	MasterIP      string            `yaml:"masterIP,omitempty"`
+	// AuditConfig is used to specify the audit policy file.
+	// If a policy file is specified the cluster audit is enabled.
+	// Several api-server flags can be added to APIServerExtraArgs to further
+	// customize the logging configuration.
+	// The relevant flags are:
+	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
+	AuditConfig *AuditConfig `yaml:"auditing,omitempty"`
+}
+
+// UnmarshalYAML is used to customize the YAML unmarshalling of
+// Kubernetes objects. It makes sure that if a audit policy is specified
+// that a default audit-log-path will be supplied.
+func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawKubernetes Kubernetes
+	raw := rawKubernetes{}
+
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	if raw.AuditConfig != nil && raw.AuditConfig.PolicyFile != "" {
+		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
+			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
+		}
+	}
+
+	*c = Kubernetes(raw)
+	return nil
 }
 
 type Dashboard struct {
@@ -247,29 +347,44 @@ type DynamicDNS struct {
 }
 
 type Monitoring struct {
-	Disabled           bool       `yaml:"disabled,omitempty"`
-	AlertEmail         string     `yaml:"alert_email,omitempty"`
-	Version            string     `yaml:"version,omitempty" json:"version,omitempty"`
-	Prometheus         Prometheus `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
-	Grafana            Grafana    `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager       string     `yaml:"alertMmanager,omitempty"`
-	KubeStateMetrics   string     `yaml:"kubeStateMetrics,omitempty"`
-	KubeRbacProxy      string     `yaml:"kubeRbacProxy,omitempty"`
-	NodeExporter       string     `yaml:"nodeExporter,omitempty"`
-	AddonResizer       string     `yaml:"addonResizer,omitempty"`
-	PrometheusOperator string     `yaml:"prometheus_operator,omitempty"`
+	Disabled           bool          `yaml:"disabled,omitempty"`
+	AlertEmail         string        `yaml:"alert_email,omitempty"`
+	Version            string        `yaml:"version,omitempty" json:"version,omitempty"`
+	Prometheus         Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Grafana            Grafana       `yaml:"grafana,omitempty" json:"grafana,omitempty"`
+	AlertManager       string        `yaml:"alertMmanager,omitempty"`
+	KubeStateMetrics   string        `yaml:"kubeStateMetrics,omitempty"`
+	KubeRbacProxy      string        `yaml:"kubeRbacProxy,omitempty"`
+	NodeExporter       string        `yaml:"nodeExporter,omitempty"`
+	AddonResizer       string        `yaml:"addonResizer,omitempty"`
+	PrometheusOperator string        `yaml:"prometheus_operator,omitempty"`
+	E2E                MonitoringE2E `yaml:"e2e,omitempty"`
+}
+
+type MonitoringE2E struct {
+	// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
+	// can be one of critical, warning, info
+	MinAlertLevel string `yaml:"minAlertLevel,omitempty"`
 }
 
 type Prometheus struct {
-	Version     string                `yaml:"version,omitempty"`
-	Disabled    bool                  `yaml:"disabled,omitempty"`
-	Persistence PrometheusPersistence `yaml:"persistence,omitempty"` // Persistence settings
+	Version     string      `yaml:"version,omitempty"`
+	Disabled    bool        `yaml:"disabled,omitempty"`
+	Persistence Persistence `yaml:"persistence,omitempty"`
 }
 
-type PrometheusPersistence struct {
-	Enabled      bool   `yaml:"enabled,omitempty"`      // Enable persistence for Prometheus
-	StorageClass string `yaml:"storageClass,omitempty"` // Storage class to use. If not set default one will be used
-	Capacity     string `yaml:"capacity,omitempty"`     // Capacity. Required if persistence is enabled
+type Persistence struct {
+	// Enable persistence for Prometheus
+	Enabled bool `yaml:"enabled,omitempty"`
+	// Storage class to use. If not set default one will be used
+	StorageClass string `yaml:"storageClass,omitempty"`
+	// Capacity. Required if persistence is enabled
+	Capacity string `yaml:"capacity,omitempty"`
+}
+
+type Memory struct {
+	Requests string `yaml:"requests,omitempty"`
+	Limits   string `yaml:"limits,omitempty"`
 }
 
 type Grafana struct {
@@ -291,7 +406,7 @@ type GitOps struct {
 	Namespace string `yaml:"namespace,omitempty"`
 
 	// The URL to git repository to clone
-	GitUrl string `yaml:"gitUrl"`
+	GitURL string `yaml:"gitUrl"`
 
 	// The git branch to use (default: master)
 	GitBranch string `yaml:"gitBranch,omitempty"`
@@ -342,13 +457,21 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled              bool     `yaml:"disabled"`
-	Version               string   `yaml:"version"`
-	Mode                  string   `yaml:"mode,omitempty"`                  // Mode. Should be client or obeservability.
-	ThanosSidecarEndpoint string   `yaml:"thanosSidecarEndpoint,omitempty"` // Only for client mode. Endpoint for thanos sidecar ingress rule.
-	ThanosSidecarPort     string   `yaml:"thanosSidecarPort,omitempty"`     // Only for client mode. Port for thanos sidecar ingress rule.
-	Bucket                string   `yaml:"bucket,omitempty"`                // Bucket to store metrics. Should be the same across all environments
-	ClientSidecars        []string `yaml:"clientSidecars,omitempty"`        // Only for observability mode. List of client sidecars in <hostname>:<port> format
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version"`
+	// Mode. Should be client or obeservability.
+	Mode string `yaml:"mode,omitempty"`
+	// Bucket to store metrics. Should be the same across all environments
+	Bucket string `yaml:"bucket,omitempty"`
+	// Only for observability mode. List of client sidecars in <hostname>:<port> format
+	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
+	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
+	EnableCompactor bool      `yaml:"enableCompactor,omitempty"`
+	E2E             ThanosE2E `yaml:"e2e,omitempty"`
+}
+
+type ThanosE2E struct {
+	Server string `yaml:"server,omitempty"`
 }
 
 type FluentdOperator struct {
@@ -364,6 +487,81 @@ type Filebeat struct {
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
 }
+
+type Consul struct {
+	Version        string `yaml:"version"`
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Bucket         string `yaml:"bucket,omitempty"`
+	BackupSchedule string `yaml:"backupSchedule,omitempty"`
+	BackupImage    string `yaml:"backupImage,omitempty"`
+}
+
+type Vault struct {
+	Version string `yaml:"version"`
+	// A VAULT_TOKEN to use when authenticating with Vault
+	Token string `yaml:"token,omitempty"`
+	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
+	Roles         map[string]map[string]interface{} `yaml:"roles,omitempty"`
+	Policies      map[string]VaultPolicy            `yaml:"policies,omitempty"`
+	GroupMappings map[string][]string               `yaml:"groupMappings,omitempty"`
+	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
+	ExtraConfig map[string]map[string]interface{} `yaml:"config,omitempty"`
+	Disabled    bool                              `yaml:"disabled,omitempty"`
+	AccessKey   string                            `yaml:"accessKey,omitempty"`
+	SecretKey   string                            `yaml:"secretKey,omitempty"`
+	// The AWS KMS ARN Id to use to unseal vault
+	KmsKeyID string `yaml:"kmsKeyId,omitempty"`
+	Region   string `yaml:"region,omitempty"`
+	Consul   Consul `yaml:"consul,omitempty"`
+}
+type VaultPolicy map[string]VaultPolicyPath
+
+type VaultPolicyPath struct {
+	Capabilities      []string            `yaml:"capabilities,omitempty"`
+	DeniedParameters  map[string][]string `yaml:"denied_parameters,omitempty"`
+	AllowedParameters map[string][]string `yaml:"allowed_parameters,omitempty"`
+}
+
+func (vaultPolicy VaultPolicy) String() string {
+	s := ""
+	for path, policy := range vaultPolicy {
+		s += fmt.Sprintf(`
+		path "%s" {
+			capabilities = [%s]
+			denied_parameters = {
+				%s
+			}
+			allowed_parameters {
+				%s
+			}
+		}
+
+		`, path, getCapabilities(policy.Capabilities),
+			getParameters(policy.DeniedParameters),
+			getParameters(policy.AllowedParameters))
+	}
+	return s
+}
+
+func getParameters(params map[string][]string) string {
+	s := []string{}
+	for param, keys := range params {
+		s = append(s, fmt.Sprintf(`"%s" = [%s]`, param, strings.Join(wrap("\"", keys...), ",")))
+	}
+	return strings.Join(s, "\n")
+}
+func getCapabilities(capabilities []string) string {
+	return strings.Join(wrap("\"", capabilities...), ",")
+}
+
+func wrap(with string, array ...string) []string {
+	out := []string{}
+	for _, item := range array {
+		out = append(out, with+item+with)
+	}
+	return out
+}
+
 type ECK struct {
 	Disabled bool   `yaml:"disabled,omitempty"`
 	Version  string `yaml:"version"`
@@ -376,6 +574,52 @@ type NodeLocalDNS struct {
 	DNSDomain string `yaml:"dnsDomain,omitempty"`
 }
 
+type SealedSecrets struct {
+	Enabled
+	Version     string             `yaml:"version,omitempty"`
+	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
+}
+
+type RegistryCredentials struct {
+	Disabled              bool                   `yaml:"disabled,omitempty"`
+	Version               string                 `yaml:"version,omitempty"`
+	Namespace             string                 `yaml:"namespace,omitempty"`
+	Aws                   RegistryCredentialsECR `yaml:"aws,omitempty"`
+	DockerPrivateRegistry RegistryCredentialsDPR `yaml:"dockerRegistry,omitempty"`
+	GCR                   RegistryCredentialsGCR `yaml:"gcr,omitempty"`
+	ACR                   RegistryCredentialsACR `yaml:"azure,omitempty"`
+}
+
+type RegistryCredentialsECR struct {
+	Enabled      bool   `yaml:"enabled,omitempty"`
+	AccessKey    string `yaml:"accessKey,omitempty"`
+	SecretKey    string `yaml:"secretKey,omitempty"`
+	SessionToken string `yaml:"secretToken,omitempty"`
+	Account      string `yaml:"account,omitempty"`
+	Region       string `yaml:"region,omitempty"`
+	AssumeRole   string `yaml:"assumeRole,omitempty"`
+}
+
+type RegistryCredentialsDPR struct {
+	Enabled  bool   `yaml:"enabled,omitempty"`
+	Server   string `yaml:"server,omitempty"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+}
+
+type RegistryCredentialsGCR struct {
+	Enabled                bool   `yaml:"enabled,omitempty"`
+	URL                    string `yaml:"url,omitempty"`
+	ApplicationCredentials string `yaml:"applicationCredentials,omitempty"`
+}
+
+type RegistryCredentialsACR struct {
+	Enabled  bool   `yaml:"enabled,omitempty"`
+	URL      string `yaml:"string,omitempty"`
+	ClientID string `yaml:"clientId,omitempty"`
+	Password string `yaml:"password,omitempty"`
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`
@@ -383,6 +627,23 @@ type Connection struct {
 	Port     string `yaml:"port,omitempty"`
 	Scheme   string `yaml:"scheme,omitempty"`
 	Verify   string `yaml:"verify,omitempty"`
+}
+
+type AuditConfig struct {
+	PolicyFile string `yaml:"policyFile,omitempty"`
+}
+
+type ConfigMapReloader struct {
+	Version  string `yaml:"version"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+}
+
+type Elasticsearch struct {
+	Version     string       `yaml:"version"`
+	Mem         *Memory      `yaml:"mem,omitempty"`
+	Replicas    int          `yaml:"replicas,omitempty"`
+	Persistence *Persistence `yaml:"persistence,omitempty"`
+	Disabled    bool         `yaml:"disabled,omitempty"`
 }
 
 func (c Connection) GetURL() string {

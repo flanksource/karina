@@ -6,7 +6,8 @@ build/
 *.env
 config*.yaml
 config*.yml
-docs/*.md
+#TODO: verify intent of ignoring docs/*.md at PR
+#docs/*.md
 .DS_Store
 *-packr.go
 packrd/
@@ -17,9 +18,13 @@ hack/
 .manifests/
 kind
 test-results/
+artifacts/
 manifests/static.go
 templates/static.go
 snapshot/
+vendor/
 .idea
 .vscode
 .certs
+#goland ide generated files:
+__debug_bin

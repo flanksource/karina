@@ -6,10 +6,9 @@ import (
 	"github.com/flanksource/commons/text"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
-	log "github.com/sirupsen/logrus"
 )
 
-func IngressNginxAccessSnippet(platform *platform.Platform, c types.LdapAccessConfig) string {
+func NginxAccessSnippet(platform *platform.Platform, c types.LdapAccessConfig) string {
 	if !c.Enabled {
 		var s = `
 auth_request_set $authHeader0 $upstream_http_x_auth_request_user;
@@ -24,7 +23,7 @@ proxy_set_header 'authorization' $authHeader2;
 
 	raw, err := platform.GetResourceByName("ldap_access.tmpl", "manifests")
 	if err != nil {
-		log.Fatalf("Failed to open ldap_access.tmpl: %v", err)
+		platform.Errorf("Failed to open ldap_access.tmpl: %v", err)
 		return ""
 	}
 
@@ -39,7 +38,7 @@ proxy_set_header 'authorization' $authHeader2;
 
 	template, err := text.Template(raw, data)
 	if err != nil {
-		log.Fatalf("Failed to open ldap_access.tmpl: %v", err)
+		platform.Errorf("Failed to open ldap_access.tmpl: %v", err)
 		return ""
 	}
 

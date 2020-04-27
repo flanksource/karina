@@ -1,10 +1,6 @@
 {
-    "__inputs": [
-
-    ],
-    "__requires": [
-
-    ],
+    "__inputs": [],
+    "__requires": [],
     "annotations": {
         "list": [
             {
@@ -23,9 +19,7 @@
     "graphTooltip": 0,
     "hideControls": false,
     "id": null,
-    "links": [
-
-    ],
+    "links": [],
     "panels": [
         {
             "collapse": false,
@@ -37,9 +31,7 @@
                 "y": 0
             },
             "id": 2,
-            "panels": [
-
-            ],
+            "panels": [],
             "repeat": null,
             "repeatIteration": null,
             "repeatRowId": null,
@@ -49,16 +41,14 @@
             "type": "row"
         },
         {
-            "aliasColors": {
-
-            },
+            "aliasColors": {},
             "breakpoint": "50%",
             "cacheTimeout": null,
             "combine": {
                 "label": "Others",
                 "threshold": 0
             },
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fontSize": "80%",
             "format": "Bps",
             "gridPos": {
@@ -94,16 +84,14 @@
             "valueName": "current"
         },
         {
-            "aliasColors": {
-
-            },
+            "aliasColors": {},
             "breakpoint": "50%",
             "cacheTimeout": null,
             "combine": {
                 "label": "Others",
                 "threshold": 0
             },
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fontSize": "80%",
             "format": "Bps",
             "gridPos": {
@@ -181,7 +169,7 @@
                     "value": ""
                 }
             ],
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 1,
             "fontSize": "90%",
             "gridPos": {
@@ -208,180 +196,140 @@
                 {
                     "alias": "Time",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "hidden",
                     "unit": "short"
                 },
                 {
                     "alias": "Current Bandwidth Received",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "Bps"
                 },
                 {
                     "alias": "Current Bandwidth Transmitted",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "Bps"
                 },
                 {
                     "alias": "Average Bandwidth Received",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "Bps"
                 },
                 {
                     "alias": "Average Bandwidth Transmitted",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "Bps"
                 },
                 {
                     "alias": "Rate of Received Packets",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "pps"
                 },
                 {
                     "alias": "Rate of Transmitted Packets",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "pps"
                 },
                 {
                     "alias": "Rate of Received Packets Dropped",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "pps"
                 },
                 {
                     "alias": "Rate of Transmitted Packets Dropped",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": false,
                     "linkTooltip": "Drill down",
                     "linkUrl": "",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "pps"
                 },
                 {
                     "alias": "Workload",
                     "colorMode": null,
-                    "colors": [
-
-                    ],
+                    "colors": [],
                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
                     "decimals": 2,
                     "link": true,
                     "linkTooltip": "Drill down",
                     "linkUrl": "d/728bf77cc1166d2f3133bf25846876cc/kubernetes-networking-workload?orgId=1&refresh=30s&var-namespace=$namespace&var-type=$type&var-workload=$__cell",
                     "pattern": "",
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "type": "number",
                     "unit": "short"
                 }
@@ -475,16 +423,14 @@
             "id": 6,
             "panels": [
                 {
-                    "aliasColors": {
-
-                    },
+                    "aliasColors": {},
                     "breakpoint": "50%",
                     "cacheTimeout": null,
                     "combine": {
                         "label": "Others",
                         "threshold": 0
                     },
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fontSize": "80%",
                     "format": "Bps",
                     "gridPos": {
@@ -520,16 +466,14 @@
                     "valueName": "current"
                 },
                 {
-                    "aliasColors": {
-
-                    },
+                    "aliasColors": {},
                     "breakpoint": "50%",
                     "cacheTimeout": null,
                     "combine": {
                         "label": "Others",
                         "threshold": 0
                     },
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fontSize": "80%",
                     "format": "Bps",
                     "gridPos": {
@@ -583,9 +527,7 @@
                 "y": 29
             },
             "id": 9,
-            "panels": [
-
-            ],
+            "panels": [],
             "repeat": null,
             "repeatIteration": null,
             "repeatRowId": null,
@@ -595,13 +537,11 @@
             "type": "row"
         },
         {
-            "aliasColors": {
-
-            },
+            "aliasColors": {},
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 2,
             "gridPos": {
                 "h": 9,
@@ -625,9 +565,7 @@
             },
             "lines": true,
             "linewidth": 2,
-            "links": [
-
-            ],
+            "links": [],
             "minSpan": 12,
             "nullPointMode": "connected",
             "paceLength": 10,
@@ -636,9 +574,7 @@
             "points": false,
             "renderer": "flot",
             "repeat": null,
-            "seriesOverrides": [
-
-            ],
+            "seriesOverrides": [],
             "spaceLength": 10,
             "span": 12,
             "stack": true,
@@ -653,9 +589,7 @@
                     "step": 10
                 }
             ],
-            "thresholds": [
-
-            ],
+            "thresholds": [],
             "timeFrom": null,
             "timeShift": null,
             "title": "Receive Bandwidth",
@@ -670,9 +604,7 @@
                 "mode": "time",
                 "name": null,
                 "show": true,
-                "values": [
-
-                ]
+                "values": []
             },
             "yaxes": [
                 {
@@ -694,13 +626,11 @@
             ]
         },
         {
-            "aliasColors": {
-
-            },
+            "aliasColors": {},
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": "prometheus",
+            "datasource": "$datasource",
             "fill": 2,
             "gridPos": {
                 "h": 9,
@@ -724,9 +654,7 @@
             },
             "lines": true,
             "linewidth": 2,
-            "links": [
-
-            ],
+            "links": [],
             "minSpan": 12,
             "nullPointMode": "connected",
             "paceLength": 10,
@@ -735,9 +663,7 @@
             "points": false,
             "renderer": "flot",
             "repeat": null,
-            "seriesOverrides": [
-
-            ],
+            "seriesOverrides": [],
             "spaceLength": 10,
             "span": 12,
             "stack": true,
@@ -752,9 +678,7 @@
                     "step": 10
                 }
             ],
-            "thresholds": [
-
-            ],
+            "thresholds": [],
             "timeFrom": null,
             "timeShift": null,
             "title": "Transmit Bandwidth",
@@ -769,9 +693,7 @@
                 "mode": "time",
                 "name": null,
                 "show": true,
-                "values": [
-
-                ]
+                "values": []
             },
             "yaxes": [
                 {
@@ -804,13 +726,11 @@
             "id": 12,
             "panels": [
                 {
-                    "aliasColors": {
-
-                    },
+                    "aliasColors": {},
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -834,9 +754,7 @@
                     },
                     "lines": true,
                     "linewidth": 2,
-                    "links": [
-
-                    ],
+                    "links": [],
                     "minSpan": 12,
                     "nullPointMode": "connected",
                     "paceLength": 10,
@@ -845,9 +763,7 @@
                     "points": false,
                     "renderer": "flot",
                     "repeat": null,
-                    "seriesOverrides": [
-
-                    ],
+                    "seriesOverrides": [],
                     "spaceLength": 10,
                     "span": 12,
                     "stack": true,
@@ -862,9 +778,7 @@
                             "step": 10
                         }
                     ],
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "timeFrom": null,
                     "timeShift": null,
                     "title": "Rate of Received Packets",
@@ -879,9 +793,7 @@
                         "mode": "time",
                         "name": null,
                         "show": true,
-                        "values": [
-
-                        ]
+                        "values": []
                     },
                     "yaxes": [
                         {
@@ -903,13 +815,11 @@
                     ]
                 },
                 {
-                    "aliasColors": {
-
-                    },
+                    "aliasColors": {},
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -933,9 +843,7 @@
                     },
                     "lines": true,
                     "linewidth": 2,
-                    "links": [
-
-                    ],
+                    "links": [],
                     "minSpan": 12,
                     "nullPointMode": "connected",
                     "paceLength": 10,
@@ -944,9 +852,7 @@
                     "points": false,
                     "renderer": "flot",
                     "repeat": null,
-                    "seriesOverrides": [
-
-                    ],
+                    "seriesOverrides": [],
                     "spaceLength": 10,
                     "span": 12,
                     "stack": true,
@@ -961,9 +867,7 @@
                             "step": 10
                         }
                     ],
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "timeFrom": null,
                     "timeShift": null,
                     "title": "Rate of Transmitted Packets",
@@ -978,9 +882,7 @@
                         "mode": "time",
                         "name": null,
                         "show": true,
-                        "values": [
-
-                        ]
+                        "values": []
                     },
                     "yaxes": [
                         {
@@ -1022,13 +924,11 @@
             "id": 15,
             "panels": [
                 {
-                    "aliasColors": {
-
-                    },
+                    "aliasColors": {},
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -1052,9 +952,7 @@
                     },
                     "lines": true,
                     "linewidth": 2,
-                    "links": [
-
-                    ],
+                    "links": [],
                     "minSpan": 12,
                     "nullPointMode": "connected",
                     "paceLength": 10,
@@ -1063,9 +961,7 @@
                     "points": false,
                     "renderer": "flot",
                     "repeat": null,
-                    "seriesOverrides": [
-
-                    ],
+                    "seriesOverrides": [],
                     "spaceLength": 10,
                     "span": 12,
                     "stack": true,
@@ -1080,9 +976,7 @@
                             "step": 10
                         }
                     ],
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "timeFrom": null,
                     "timeShift": null,
                     "title": "Rate of Received Packets Dropped",
@@ -1097,9 +991,7 @@
                         "mode": "time",
                         "name": null,
                         "show": true,
-                        "values": [
-
-                        ]
+                        "values": []
                     },
                     "yaxes": [
                         {
@@ -1121,13 +1013,11 @@
                     ]
                 },
                 {
-                    "aliasColors": {
-
-                    },
+                    "aliasColors": {},
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": "prometheus",
+                    "datasource": "$datasource",
                     "fill": 2,
                     "gridPos": {
                         "h": 9,
@@ -1151,9 +1041,7 @@
                     },
                     "lines": true,
                     "linewidth": 2,
-                    "links": [
-
-                    ],
+                    "links": [],
                     "minSpan": 12,
                     "nullPointMode": "connected",
                     "paceLength": 10,
@@ -1162,9 +1050,7 @@
                     "points": false,
                     "renderer": "flot",
                     "repeat": null,
-                    "seriesOverrides": [
-
-                    ],
+                    "seriesOverrides": [],
                     "spaceLength": 10,
                     "span": 12,
                     "stack": true,
@@ -1179,9 +1065,7 @@
                             "step": 10
                         }
                     ],
-                    "thresholds": [
-
-                    ],
+                    "thresholds": [],
                     "timeFrom": null,
                     "timeShift": null,
                     "title": "Rate of Transmitted Packets Dropped",
@@ -1196,9 +1080,7 @@
                         "mode": "time",
                         "name": null,
                         "show": true,
-                        "values": [
-
-                        ]
+                        "values": []
                     },
                     "yaxes": [
                         {
@@ -1230,9 +1112,7 @@
         }
     ],
     "refresh": "30s",
-    "rows": [
-
-    ],
+    "rows": [],
     "schemaVersion": 18,
     "style": "dark",
     "tags": [
@@ -1240,6 +1120,23 @@
     ],
     "templating": {
         "list": [
+            {
+                "current": {
+                    "text": "prometheus",
+                    "value": "prometheus"
+                },
+                "hide": 0,
+                "includeAll": false,
+                "label": null,
+                "multi": false,
+                "name": "datasource",
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "type": "datasource"
+            },
             {
                 "allValue": null,
                 "auto": false,
@@ -1249,25 +1146,21 @@
                     "text": "kube-system",
                     "value": "kube-system"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "definition": "label_values(container_network_receive_packets_total, namespace)",
                 "hide": 0,
                 "includeAll": false,
                 "label": null,
                 "multi": false,
                 "name": "namespace",
-                "options": [
-
-                ],
+                "options": [],
                 "query": "label_values(container_network_receive_packets_total, namespace)",
                 "refresh": 1,
                 "regex": "",
                 "skipUrlSync": false,
                 "sort": 1,
                 "tagValuesQuery": "",
-                "tags": [
-
-                ],
+                "tags": [],
                 "tagsQuery": "",
                 "type": "query",
                 "useTags": false
@@ -1281,25 +1174,21 @@
                     "text": "deployment",
                     "value": "deployment"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "definition": "label_values(mixin_pod_workload{namespace=~\"$namespace\", workload=~\".+\"}, workload_type)",
                 "hide": 0,
                 "includeAll": false,
                 "label": null,
                 "multi": false,
                 "name": "type",
-                "options": [
-
-                ],
+                "options": [],
                 "query": "label_values(mixin_pod_workload{namespace=~\"$namespace\", workload=~\".+\"}, workload_type)",
                 "refresh": 1,
                 "regex": "",
                 "skipUrlSync": false,
                 "sort": 0,
                 "tagValuesQuery": "",
-                "tags": [
-
-                ],
+                "tags": [],
                 "tagsQuery": "",
                 "type": "query",
                 "useTags": false
@@ -1313,7 +1202,7 @@
                     "text": "5m",
                     "value": "5m"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 0,
                 "includeAll": false,
                 "label": null,
@@ -1342,9 +1231,7 @@
                 "skipUrlSync": false,
                 "sort": 1,
                 "tagValuesQuery": "",
-                "tags": [
-
-                ],
+                "tags": [],
                 "tagsQuery": "",
                 "type": "interval",
                 "useTags": false
@@ -1358,7 +1245,7 @@
                     "text": "5m",
                     "value": "5m"
                 },
-                "datasource": "prometheus",
+                "datasource": "$datasource",
                 "hide": 2,
                 "includeAll": false,
                 "label": null,
@@ -1377,12 +1264,19 @@
                 "skipUrlSync": false,
                 "sort": 1,
                 "tagValuesQuery": "",
-                "tags": [
-
-                ],
+                "tags": [],
                 "tagsQuery": "",
                 "type": "interval",
                 "useTags": false
+            },
+            {
+                "datasource": "$datasource",
+                "filters": [],
+                "hide": 0,
+                "label": "Filter",
+                "name": "filter",
+                "skipUrlSync": false,
+                "type": "adhoc"
             }
         ]
     },

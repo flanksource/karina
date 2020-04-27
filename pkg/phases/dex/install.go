@@ -2,6 +2,7 @@ package dex
 
 import (
 	"fmt"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -12,20 +13,19 @@ const (
 	ConfigName    = "dex.cfg"
 )
 
-func Install(platform *platform.Platform) error {
+func dexLabels() map[string]string {
+	return map[string]string{
+		"app": "dex",
+	}
+}
 
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+func Install(platform *platform.Platform) error {
+	if err := platform.CreateOrUpdateNamespace(Namespace, dexLabels(), nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if !platform.HasSecret(Namespace, CertName) {
-		cert, err := platform.CreateIngressCertificate("dex")
-		if err != nil {
-			return fmt.Errorf("install: failed to create ingress certificate: %v", err)
-		}
-		if err := platform.CreateOrUpdateSecret(CertName, Namespace, cert.AsTLSSecret()); err != nil {
-			return fmt.Errorf("install: failed to create/update secret: %v", err)
-		}
+	if err := platform.CreateTLSSecret(Namespace, "dex", CertName); err != nil {
+		return err
 	}
 
 	cfg, _ := platform.Template("dex.cfg", "manifests")

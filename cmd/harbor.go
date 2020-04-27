@@ -14,7 +14,6 @@ var Harbor = &cobra.Command{
 }
 
 func init() {
-
 	Harbor.AddCommand(&cobra.Command{
 		Use:   "deploy",
 		Short: "Build and deploy the harbor registry",
@@ -47,5 +46,4 @@ func init() {
 			}
 		},
 	})
-
 }

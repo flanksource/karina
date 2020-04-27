@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
+	"github.com/moshloop/platform-cli/pkg/client/postgres"
+	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"github.com/moshloop/platform-cli/pkg/client/postgres"
 )
 
 var DB = &cobra.Command{
@@ -36,18 +37,66 @@ func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 }
 
 func init() {
-
-	DB.AddCommand(&cobra.Command{
+	create := &cobra.Command{
 		Use: "create",
 		Run: func(cmd *cobra.Command, args []string) {
+			config := pgapi.NewClusterConfig(clusterName, "test")
+			config.Namespace = namespace
+			config.BackupSchedule, _ = cmd.Flags().GetString("wal-schedule")
+			config.EnableWalArchiving, _ = cmd.Flags().GetBool("wal-archiving")
+			config.EnableWalClusterID, _ = cmd.Flags().GetBool("wal-enable-cluster-uid")
+			config.UseWalgRestore, _ = cmd.Flags().GetBool("wal-use-walg-restore")
 
-			db, err := getPlatform(cmd).GetOrCreateDB(clusterName, "test")
+			db, err := postgresoperator.GetOrCreateDB(getPlatform(cmd), config)
 			if err != nil {
 				log.Fatalf("Error creating db: %v", err)
 			}
 			log.Infof("Created: %+v", db)
 		},
-	})
+	}
+
+	create.Flags().String("wal-schedule", "*/5 * * * *", "A cron schedule to backup wal logs")
+	create.Flags().Bool("wal-archiving", true, "Enable wal archiving")
+	create.Flags().Bool("wal-enable-cluster-uid", false, "Enable cluster UID in wal logs s3 path")
+	create.Flags().Bool("wal-use-walg-restore", true, "Enable wal-g for wal restore")
+	DB.AddCommand(create)
+
+	clone := &cobra.Command{
+		Use: "clone",
+		Run: func(cmd *cobra.Command, args []string) {
+			config := pgapi.NewClusterConfig(clusterName, "test")
+			config.Namespace = namespace
+			config.BackupSchedule, _ = cmd.Flags().GetString("wal-schedule")
+			config.EnableWalArchiving, _ = cmd.Flags().GetBool("wal-archiving")
+			config.EnableWalClusterID, _ = cmd.Flags().GetBool("wal-enable-cluster-uid")
+			config.UseWalgRestore, _ = cmd.Flags().GetBool("wal-use-walg-restore")
+			cloneClusterName, _ := cmd.Flags().GetString("clone-cluster-name")
+			cloneTimestamp, _ := cmd.Flags().GetString("clone-timestamp")
+			config.Clone = &pgapi.CloneConfig{
+				ClusterName: cloneClusterName,
+				Timestamp:   cloneTimestamp,
+			}
+			if config.EnableWalClusterID {
+				config.Clone.ClusterID, _ = cmd.Flags().GetString("clone-cluster-uid")
+			}
+
+			db, err := postgresoperator.GetOrCreateDB(getPlatform(cmd), config)
+			if err != nil {
+				log.Fatalf("Error creating db: %v", err)
+			}
+			log.Infof("Created: %+v", db)
+		},
+	}
+
+	clone.Flags().String("wal-schedule", "*/5 * * * *", "A cron schedule to backup wal logs")
+	clone.Flags().Bool("wal-archiving", true, "Enable wal archiving")
+	clone.Flags().Bool("wal-enable-cluster-uid", false, "Enable cluster UID in wal logs s3 path")
+	clone.Flags().Bool("wal-use-walg-restore", true, "Enable wal-g for wal restore")
+	clone.Flags().String("clone-cluster-name", "", "Name of the cluster to clone")
+	clone.Flags().String("clone-cluster-uid", "", "UID of the cluster to clone")
+	clone.Flags().String("clone-timestamp", "", "Timestamp of the wal to clone")
+	DB.AddCommand(clone)
+
 	DB.AddCommand(&cobra.Command{
 		Use:   "restore [backup path]",
 		Short: "Restore a database from backups",
@@ -64,26 +113,37 @@ func init() {
 		},
 	})
 
-	DB.AddCommand(&cobra.Command{
+	backup := &cobra.Command{
 		Use:   "backup",
 		Short: "Create a new database backup",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			schedule, _ := cmd.Flags().GetString("schedule")
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
-			log.Infof("Backing up %s", db)
 
-			if err := db.Backup(); err != nil {
-				log.Fatalf("Error backing up db %s\n", err)
+			if schedule != "" {
+				log.Infof("Creating backup schedule: %s: %s", schedule, db)
+				if err := db.ScheduleBackup(schedule); err != nil {
+					log.Fatalf("Failed to create backup schedule: %v", err)
+				}
+			} else {
+				log.Infof("Backing up %s", db)
+
+				if err := db.Backup(); err != nil {
+					log.Fatalf("Error backing up db %s\n", err)
+				}
 			}
 		},
-	})
+	}
+
+	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
+	DB.AddCommand(backup)
 
 	DB.PersistentFlags().StringVar(&clusterName, "name", "", "Name of the postgres cluster / service")
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")
 	DB.PersistentFlags().StringVar(&secret, "secret", "", "Name of the secret that contains the postgres user credentials")
 	DB.PersistentFlags().StringVar(&superuser, "superuser", "postgres", "Superuser user")
-
 }

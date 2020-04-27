@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/text"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -45,8 +44,8 @@ aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
 	if err := velero("install --provider aws --plugins velero/velero-plugin-for-aws:v1.0.0 --bucket %s --secret-file %s --backup-location-config %s", platform.Velero.Bucket, secret, backupConfig); err != nil {
 		return fmt.Errorf("install: failed to install velero: %v", err)
 	}
-	return nil
 
+	return nil
 }
 
 func CreateBackup(platform *platform.Platform) (*Backup, error) {
@@ -59,7 +58,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 		},
 		Spec: BackupSpec{
 			IncludedNamespaces: []string{"*"},
-			TTL:                metav1.Duration{time.Duration(30) * 24 * time.Hour},
+			TTL:                metav1.Duration{Duration: time.Duration(30) * 24 * time.Hour},
 			StorageLocation:    "default",
 			SnapshotVolumes:    &no,
 		},
@@ -72,7 +71,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 	}
 	start := time.Now()
 
-	log.Infof("Waiting for %s to complete", backup.Metadata.Name)
+	platform.Infof("Waiting for %s to complete", backup.Metadata.Name)
 	for {
 		backup = &Backup{}
 		if err := platform.Get(Namespace, name, backup); err != nil {
@@ -86,9 +85,7 @@ func CreateBackup(platform *platform.Platform) (*Backup, error) {
 
 		if time.Now().After(start.Add(5 * time.Minute)) {
 			return nil, fmt.Errorf("timeout exceeded")
-		} else {
-			time.Sleep(5 * time.Second)
 		}
+		time.Sleep(5 * time.Second)
 	}
-
 }
