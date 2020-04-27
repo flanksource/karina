@@ -127,8 +127,10 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 		base.FluentdOperator.Elasticsearch.Password = template(base.FluentdOperator.Elasticsearch.Password)
 	}
 
-	if base.Filebeat != nil && base.Filebeat.Elasticsearch != nil {
-		base.Filebeat.Elasticsearch.Password = template(base.Filebeat.Elasticsearch.Password)
+	for i := range base.Filebeat {
+		if base.Filebeat[i].Elasticsearch != nil {
+			base.Filebeat[i].Elasticsearch.Password = template(base.Filebeat[i].Elasticsearch.Password)
+		}
 	}
 
 	if base.Vault != nil {

@@ -55,6 +55,8 @@ metadata:
 spec:
   version: 7.6.0
   count: 1
+  config:
+    elasticsearch.ssl.certificateAuthorities: /usr/share/kibana/config/elasticsearch-certs/ca.crt
   elasticsearchRef:
     name: logs
 ---

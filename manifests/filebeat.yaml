@@ -1,24 +1,27 @@
+{{- $PLATFORM_NAME := .name }}
+{{ range .filebeat}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: filebeat-config
+  name: filebeat-{{ .name }}-config
   namespace: platform-system
   labels:
-    k8s-app: filebeat
+    k8s-app: filebeat-{{ .name }}
 data:
   filebeat.yml: |-
     fields:
-      cluster: "{{.name}}"
-    filebeat.inputs:
-    - type: container
-      paths:
-        - /var/log/containers/*.log
-      processors:
-        - add_kubernetes_metadata:
-            host: ${NODE_NAME}
-            matchers:
-            - logs_path:
-                logs_path: "/var/log/containers/"
+      cluster: "{{ $PLATFORM_NAME}}-{{.name}}"
+
+    filebeat.autodiscover:
+       providers:
+         - type: kubernetes
+        {{ if eq .prefix "" }}
+           prefix: co.elastic #default
+        {{ else }}
+           prefix: {{ .prefix }}
+        {{ end }}
+           hints.enabled: true
+           hints.default_config.enabled: false
 
     processors:
       - add_cloud_metadata:
@@ -54,7 +57,7 @@ data:
             - host.os.family
           ignore_missing: true
 
-{{ if .filebeat.elasticsearch}}
+{{ if .elasticsearch}}
     output.elasticsearch:
       hosts: ['${ELASTIC_URL}']
       username: ${ELASTIC_USERNAME}
@@ -62,7 +65,17 @@ data:
       protocol: https
       ssl.verification_mode: none
       ssl.supported_protocols: [TLSv1.2, TLSv1.3]
-{{ else if .filebeat.logstash }}
+  {{- if ne .index "" }}
+      index: "{{ .index }}-%{[agent.version]}-%{+yyyy.MM.dd}"
+    setup:
+      template:
+        name: '{{ .index }}'
+        pattern: '{{ .index }}-*'
+        enabled: false
+      ilm:
+        rollover_alias: "{{ .index }}-%{[agent.version]}"
+  {{ end }}
+{{ else if .logstash }}
     output.logstash:
       hosts: ["${LOGSTASH_HOST}"]
       ssl.verification_mode: none
@@ -71,35 +84,32 @@ data:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: filebeat
+  name: filebeat-{{ .name }}
   namespace: platform-system
   labels:
-    k8s-app: filebeat
+    k8s-app: filebeat-{{ .name }}
   annotations:
     reload/all: "true" #restart on cm/secret change
-
 spec:
   selector:
     matchLabels:
-      k8s-app: filebeat
+      k8s-app: filebeat-{{ .name }}
   template:
     metadata:
       labels:
-        k8s-app: filebeat
+        k8s-app: filebeat-{{ .name }}
     spec:
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: filebeat
-          image: docker.elastic.co/beats/filebeat:{{.filebeat.version}}
+          image: docker.elastic.co/beats/filebeat:{{ .version }}
           envFrom:
             - secretRef:
-                name: elastic
+                name: elastic-{{ .name }}
                 optional: true
             - secretRef:
-                name: logstash
+                name: logstash-{{ .name }}
                 optional: true
           args: ["-c", "/etc/filebeat.yml", "-e"]
           env:
@@ -132,7 +142,7 @@ spec:
         - name: config
           configMap:
             defaultMode: 0600
-            name: filebeat-config
+            name: filebeat-{{ .name }}-config
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
@@ -142,9 +152,10 @@ spec:
         # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
         - name: data
           hostPath:
-            path: /var/lib/filebeat-data
+            path: /var/lib/filebeat-{{ .name }}-data
             type: DirectoryOrCreate
 ---
+{{end}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

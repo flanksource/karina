@@ -360,7 +360,7 @@ type Prometheus struct {
 
 type Persistence struct {
 	// Enable persistence for Prometheus
-	Enabled bool `yaml:"enabled,omitempty"`
+	Enabled bool `yaml:"enabled"`
 	// Storage class to use. If not set default one will be used
 	StorageClass string `yaml:"storageClass,omitempty"`
 	// Capacity. Required if persistence is enabled
@@ -472,6 +472,9 @@ type FluentdOperator struct {
 type Filebeat struct {
 	Version       string      `yaml:"version"`
 	Disabled      bool        `yaml:"disabled,omitempty"`
+	Name          string      `yaml:"name"`
+	Index         string      `yaml:"index"`
+	Prefix        string      `yaml:"prefix"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
 }
