@@ -22,7 +22,7 @@ ARTIFACTS=$PWD/artifacts
 CERTS=$PWD/test/vsphere/openvpn/certs
 
 # Binary
-GO_VERSION=${GO_VERSION:-1.12}
+GO_VERSION=${GO_VERSION:-1.13}
 SOPS_VERSION=${SOPS_VERSION:-3.5.0}
 
 install_platformcli() {
