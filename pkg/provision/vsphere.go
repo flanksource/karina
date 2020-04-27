@@ -23,6 +23,7 @@ func WithVmwareCluster(platform *platform.Platform) error {
 		return err
 	}
 	platform.Cluster = cluster
+	platform.Init()
 	return nil
 }
 
@@ -51,7 +52,7 @@ func VsphereCluster(platform *platform.Platform) error {
 
 	if platform.Master.Count != len(masters) {
 		// upload control plane certs first
-		kubeadm.UploadControlPaneCerts(platform) // nolint: errcheck
+		kubeadm.UploadControlPlaneCerts(platform) // nolint: errcheck
 	}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)
@@ -226,6 +227,8 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	} else {
 		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
 			platform.Warnf("Failed to delete node for %s: %v", vm, err)
+		} else {
+			platform.Infof("Deleted node %s", vm.Name())
 		}
 	}
 

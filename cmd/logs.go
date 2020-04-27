@@ -19,15 +19,17 @@ var Logs = &cobra.Command{
 		since, _ := cmd.Flags().GetString("since")
 		from, _ := cmd.Flags().GetString("from")
 		to, _ := cmd.Flags().GetString("to")
+		timestamps, _ := cmd.Flags().GetBool("timestamps")
 		if err := elastic.ExportLogs(getPlatform(cmd), elastic.Query{
-			Pod:       pod,
-			Count:     count,
-			Cluster:   cluster,
-			Namespace: namespace,
-			Since:     since,
-			Query:     kql,
-			From:      from,
-			To:        to,
+			Pod:        pod,
+			Count:      count,
+			Cluster:    cluster,
+			Namespace:  namespace,
+			Since:      since,
+			Query:      kql,
+			From:       from,
+			Timestamps: timestamps,
+			To:         to,
 		}); err != nil {
 			log.Fatalf("Failed to export logs, %s", err)
 		}
@@ -43,4 +45,5 @@ func init() {
 	Logs.Flags().Int("count", 100000, "Number of log entries to return")
 	Logs.Flags().StringP("pod", "p", "", "Restrict to pod")
 	Logs.Flags().StringP("namespace", "n", "", "Restruct to namespace")
+	Logs.Flags().Bool("timestamps", false, "export timestamps per entry")
 }

@@ -7,18 +7,20 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/google/martian/log"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/olivere/elastic/v7"
 )
 
 type Query struct {
-	Namespace string
-	Cluster   string
-	Pod       string
-	Count     int
-	Query     string
-	Since     string
-	From, To  string
+	Namespace  string
+	Cluster    string
+	Pod        string
+	Count      int
+	Query      string
+	Since      string
+	From, To   string
+	Timestamps bool
 }
 
 type Fields struct {
@@ -70,6 +72,7 @@ func (query Query) ToQuery() elastic.Query {
 }
 
 func ExportLogs(p *platform.Platform, query Query) error {
+	log.Infof("Exporting logs from %s@%s", p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.GetURL())
 	es, err := elastic.NewSimpleClient(
 		elastic.SetBasicAuth(p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.Password),
 		elastic.SetURL(p.Filebeat.Elasticsearch.GetURL()),
@@ -97,7 +100,11 @@ func ExportLogs(p *platform.Platform, query Query) error {
 	for result.ScrollId != "" && count < query.Count {
 		for _, hit := range result.Each(reflect.TypeOf(Message{})) {
 			msg := hit.(Message)
-			fmt.Printf("[%s/%s/%s] %v\n", msg.Fields.Cluster, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			if query.Timestamps {
+				fmt.Printf("[%s/%s/%s] %s %v\n", msg.Fields.Cluster, msg.Timestamp, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			} else {
+				fmt.Printf("[%s/%s/%s] %v\n", msg.Fields.Cluster, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			}
 			count++
 			if count >= query.Count {
 				break
