@@ -40,6 +40,7 @@ install_platformcli() {
 }
 
 install_sops() {
+  sudo apt-get install -y curl
   curl -L https://github.com/mozilla/sops/releases/download/v"$SOPS_VERSION"/sops-v"$SOPS_VERSION".linux -o /tmp/sops
   sudo mv /tmp/sops /usr/local/bin/sops
   sudo chmod +x /usr/local/bin/sops
