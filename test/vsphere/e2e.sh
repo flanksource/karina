@@ -152,7 +152,7 @@ components=("base" "stubs" "all")
 for component in "${components[@]}"; do
   # Deploy the platform configuration
   # shellcheck disable=SC2086
-  platform-cli deploy "$component" $PLATFORM_OPTIONS_FLAGS
+  platform-cli deploy "$component" $PLATFORM_OPTIONS_FLAGS || echo $?
 done
 
 set +o errexit # test failures are reported by Junit

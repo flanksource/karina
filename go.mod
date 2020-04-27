@@ -35,7 +35,7 @@ require (
 	github.com/vmware/govmomi v0.21.0
 	github.com/voxelbrain/goptions v0.0.0-20180630082107-58cddc247ea2 // indirect
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	golang.org/x/tools v0.0.0-20200426102838-f3a5411a4c3b // indirect
+	golang.org/x/tools v0.0.0-20200427125506-479cc23432b1 // indirect
 	google.golang.org/grpc v1.26.0
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
