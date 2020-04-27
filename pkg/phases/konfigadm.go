@@ -78,7 +78,7 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	if err != nil {
 		return nil, fmt.Errorf("createSecondaryMaster: failed to get/create bootstrap token: %v", err)
 	}
-	certKey, err := kubeadm.UploadControlPaneCerts(platform)
+	certKey, err := kubeadm.UploadControlPlaneCerts(platform)
 	if err != nil {
 		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
 	}
