@@ -41,7 +41,7 @@ nav:
                       - Templating: ./admin-guide/configuration/templating.md
                       - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
               - Provisioning:
-                      - vSphere: ./admin-guide/vsphere.md
+                      - vSphere: ./admin-guide/provisioning/vsphere.md
                       - KIND: ./admin-guide/provisioning/kind.md
               - Security:
                       - Protecting secrets with SOPS: ./admin-guide/index.md
