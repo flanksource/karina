@@ -10,6 +10,7 @@ extra:
   social:
     - type: "github"
       link: "https://github.com/flanksource"
+      icon: fontawesome/brands/github-alt
 markdown_extensions:
   - admonition
   - fenced_code
