@@ -55,7 +55,9 @@ build-api-docs:
 
 .PHONY: build-docs
 build-docs:
-	docker run --rm -v $(PWD):/docs -w /docs squidfunk/mkdocs-material:5.1.5 build -d build/docs
+	#docker run --rm -v $(PWD):/docs -w /docs squidfunk/mkdocs-material:5.1.5 build -d build/docs
+	which mkdocs || pip install mkdocs mkdocs-material
+	mkdocs build -d build/docs
 
 
 .PHONY: deploy-docs
