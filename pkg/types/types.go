@@ -303,7 +303,6 @@ type Kubernetes struct {
 	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
 	// EncryptionConfig is used to specify the encryption configuration file.
 	EncryptionConfig EncryptionConfig `yaml:"encryption,omitempty"`
-
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of
