@@ -2,21 +2,22 @@ repo_url: https://github.com/flanksource/platform-cli
 repo_name: platform-cli
 site_name: platform-cli
 theme:
-      name: "material"
-      palette:
-            primary: "royalblue"
-      logo: "img/favicon.png"
+  name: "material"
+  palette:
+    primary: "royalblue"
+  logo: "img/favicon.png"
 extra:
-      social:
-            - type: "github"
-              link: "https://github.com/flanksource"
+  social:
+    - type: "github"
+      link: "https://github.com/flanksource"
+      icon: fontawesome/brands/github-alt
 markdown_extensions:
-      - admonition
-      - fenced_code
-      - pymdownx.smartsymbols
-      - pymdownx.superfences
-      - codehilite:
-              linenums: true
+  - admonition
+  - fenced_code
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - codehilite:
+      linenums: true
 nav:
       - User Guide:
               - Logging In: ./user-guide/login.md
@@ -42,7 +43,7 @@ nav:
                       - Templating: ./admin-guide/configuration/templating.md
                       - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
               - Provisioning:
-                      - vSphere: ./admin-guide/vsphere.md
+                      - vSphere: ./admin-guide/provisioning/vsphere.md
                       - KIND: ./admin-guide/provisioning/kind.md
               - Security:
                       - Protecting secrets with SOPS: ./admin-guide/index.md

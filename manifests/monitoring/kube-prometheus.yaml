@@ -299,8 +299,7 @@ spec:
 ---
 {{- if index . "filebeat" }}
 {{- if not (index .filebeat "disabled") }}
-{{- if index . "elasticsearch" }}
-{{- if not (index .elasticsearch "disabled") }}
+{{- if index .filebeat "elasticsearch" }}
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
@@ -324,13 +323,11 @@ spec:
       jsonData:
         tlsSkipVerify: true
         timeInterval: "5s"
-
         timeField: "@timestamp"
         esVersion: 70
         logMessageField: message
         logLevelField: fields.level
 ---
-{{- end}}
 {{- end}}
 {{- end}}
 {{- end}}

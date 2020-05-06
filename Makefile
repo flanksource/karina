@@ -15,7 +15,6 @@ setup:
 	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
 	which github-release 2>&1 > /dev/null || go get github.com/aktau/github-release
 
-
 .PHONY: build
 build:
 	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
@@ -35,9 +34,7 @@ darwin:
 
 .PHONY: compress
 compress:
-	# upx 3.95 has issues compressing darwin binaries - https://github.com/upx/upx/issues/301
-	which upx 2>&1 >  /dev/null  || (sudo apt-get update && sudo apt-get install -y xz-utils && wget -nv -O upx.tar.xz https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz; tar xf upx.tar.xz; mv upx-3.96-amd64_linux/upx /usr/bin )
-	upx -5 ./.bin/$(NAME) ./.bin/$(NAME)_osx
+	upx -5 ./.bin/*
 
 .PHONY: install
 install:
@@ -49,7 +46,7 @@ docker:
 
 .PHONY: serve-docs
 serve-docs:
-	docker run --rm -it -p 8000:8000 -v $(PWD):/docs -w /docs squidfunk/mkdocs-material
+	docker run --rm -it -p 8000:8000 -v $(PWD):/docs -w /docs squidfunk/mkdocs-material:5.1.5
 
 .PHONY: build-api-docs
 build-api-docs:
@@ -58,8 +55,10 @@ build-api-docs:
 
 .PHONY: build-docs
 build-docs:
-	which mkdocs 2>&1 > /dev/null || pip install mkdocs mkdocs-material
+	#docker run --rm -v $(PWD):/docs -w /docs squidfunk/mkdocs-material:5.1.5 build -d build/docs
+	which mkdocs || pip install mkdocs mkdocs-material
 	mkdocs build -d build/docs
+
 
 .PHONY: deploy-docs
 deploy-docs:
