@@ -57,6 +57,7 @@ func main() {
 		cmd.Opa,
 		cmd.Provision,
 		cmd.Render,
+		cmd.Report,
 		cmd.Rolling,
 		cmd.Snapshot,
 		cmd.Status,

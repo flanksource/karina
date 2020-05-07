@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"time"
 
 	"github.com/google/martian/log"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -110,14 +111,26 @@ func ExportLogs(p *platform.Platform, query Query) error {
 				break
 			}
 		}
-		result, err = scroll.ScrollId(result.ScrollId).Do(context.Background())
+		scollID := result.ScrollId
+		result, err = scroll.ScrollId(scollID).Do(context.Background())
 		if err != nil && errors.Is(err, io.EOF) {
 			p.Infof("Exported %d results of %d total", count, result.TotalHits())
 			return nil
 		}
+
+		if err != nil {
+			time.Sleep(5 * time.Second)
+			p.Infof("Retrying %s", err)
+			result, err = scroll.ScrollId(scollID).Do(context.Background())
+			if err != nil && errors.Is(err, io.EOF) {
+				p.Infof("Exported %d results of %d total", count, result.TotalHits())
+				return nil
+			}
+		}
 		if err != nil {
 			return err
 		}
+
 		p.Infof("Exported %d results of %d total", count, result.TotalHits())
 	}
 

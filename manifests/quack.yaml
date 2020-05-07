@@ -232,8 +232,8 @@ webhooks:
           - statefulsets
           - ingresses
           - services
-    failurePolicy: Ignore
-    timeoutSeconds: 3
+    failurePolicy: Fail
+    timeoutSeconds: 10
     namespaceSelector:
       matchExpressions:
         - key: quack.pusher.com/enabled
