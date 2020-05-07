@@ -19,38 +19,39 @@ markdown_extensions:
   - codehilite:
       linenums: true
 nav:
-      - User Guide:
-              - Logging In: ./user-guide/login.md
-              - Usage: ./user-guide/usage.md
-      - Administrator Guide:
-              - Audit: ./admin-guide/audit/audit.md
-              - Authentication:
-                      - Setting up SSO: ./admin-guide/authentication/sso.md
-                      - Generating Kubeconfigs: ./admin-guide/authentication/generate-kubeconfig.md
-              - Administration:
-                  - Postgres Databases: ./admin-guide/administration/databases.md
-                  - Consul: ./admin-guide/administration/consul.md
-              - Cluster Lifecycle: ./admin-guide/cluster-lifecycle.md
-              - Multi-Tenancy: ./admin-guide/index.md
-              - Monitoring:
-                      - Alerting: ./admin-guide/index.md
-                      - Canaries: ./admin-guide/index.md
-                      - Dashboards: ./admin-guide/index.md
-                      - Multi-Cluster (Thanos): ./admin-guide/index.md
-              - Docker Registry (Harbor): ./admin-guide/index.md
-              - Configuration:
-                      - Templating: ./admin-guide/configuration/templating.md
-                      - Sealed secrets: ./admin-guide/configuration/sealed_secrets.md
-              - Provisioning:
-                      - vSphere: ./admin-guide/provisioning/vsphere.md
-                      - KIND: ./admin-guide/provisioning/kind.md
-              - Security:
-                      - Protecting secrets with SOPS: ./admin-guide/index.md
-      - Developer Guide:
-              - Quickstart: ./developer-guide/index.html#quickstart
-              - Documentation: ./developer-guide/index.html#documentation
-              - Common Issues: ./developer-guide/index.html#common-issues
-              - Reference: ./developer-guide/make-targets.md
-      - Reference:
-              - CLI: ./cli/platform-cli.md
-              - Configuration: ./reference/config.md
+        - User Guide:
+              - Quickstart: ./user-guide/login.md
+              - Ingress: ./user-guide/ingress.md
+              - Logging: ./user-guide/logging.md
+              - Templating:  ./user-guide/templating.md
+        - Production Runtime:
+                - Overview: ./admin-guide/runtime.md
+                - Cert Manager: ./admin-guide/cert-manager.md
+                - Single Sign On: ./admin-guide/sso.md
+                - DBaaS (Postgres): ./admin-guide/postgres.md
+                - Consul: ./admin-guide/consul.md
+                - Open Policy Agent: ./admin-guide/opa.md
+                - Elastic on K8S: ./admin-guide/eck.yml
+                - Image Registry (Harbor): ./admin-guide/harbor.md
+                - Monitoring: ./admin-guide/monitoring.md
+                - Vault: ./admin-guide/vault.md
+        - Administrator Guide:
+                - Quickstart with vSphere: ./admin-guide/provisioning/vsphere.md
+                - Quickstart with Kind: ./admin-guide/provisioning/kind.md
+                - NSX NCP: ./admin-guide/ncp.md
+                - Configuration: ./admin-guide/configuration.md
+                - Backup/Restore: ./admin-guide/backup.md
+                - Persistent Volumes: ./admin-guide/persistent-volumes.md
+                - Multi-Tenancy: ./admin-guide/index.md
+                - Auditing: ./admin-guide/auditing.md
+                - Encryption: ./admin-guide/Encryption.md
+                - Sealed Secrets: ./admin-guide/sealed_secrets.md
+        - Developer Guide:
+                - Quickstart: ./developer-guide/index.html#quickstart
+                - Documentation: ./developer-guide/index.html#documentation
+                - Common Issues: ./developer-guide/index.html#common-issues
+                - Mocks/Stubs: ./developer-guide/index.html#common-issues
+                - Reference: ./developer-guide/make-targets.md
+        - Reference:
+                - CLI: ./cli/platform-cli.md
+                - Configuration: ./reference/config.md

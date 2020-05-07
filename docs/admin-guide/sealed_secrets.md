@@ -11,7 +11,7 @@ sealedSecrets:
     cert: .certs/sealed-secrets-crt.pem
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
-``` 
+```
 
 ### Certificate generation
 

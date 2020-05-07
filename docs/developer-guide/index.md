@@ -1,8 +1,13 @@
 # Developer Guide
 
-platform-cli is built using Make as defined in it's Makefile
-
 ## Quickstart
+
+#### Clone the repo
+
+```bash
+git clone git@github.com:flanksource/platform-cli.git
+cd platform-cli
+```
 
 Run the following to get going:
 
