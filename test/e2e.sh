@@ -10,13 +10,20 @@ GITHUB_OWNER=${GITHUB_OWNER##*:}
 MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
 
 PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
+COMMIT_SHA="$CIRCLE_SHA1"
 
 echo "PR_NUM = $PR_NUM"
+
+pwd
+ls -l
 
 
 if go version | grep  go$GO_VERSION; then
   go get github.com/philipstaffordwood/build-tools@master
-  go run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
+  go run github.com/philipstaffordwood/build-tools \
+    gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message="commit $COMMIT_SHA"
 
 else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint go -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION get github.com/philipstaffordwood/build-tools@master
@@ -27,7 +34,10 @@ else
       --env GITHUB_OWNER \
       --env PR_NUM \
       --env GIT_API_KEY \
-    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
+    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools \
+      gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message="commit $COMMIT_SHA"
 fi
 # TODO: move to flanksource and latest
 
