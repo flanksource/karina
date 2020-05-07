@@ -67,6 +67,10 @@ mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
 zip -r artifacts/snapshot.zip snapshot/*
 
+# TODO: move to flanksource and latest
+go get github.com/philipstaffordwood/build-tools master
+go run github.com/philipstaffordwood/build-tools gh report-junit philipstaffordwood/hello-go-githubapp 8 ./fixtures/junit/results.xml --auth-token DUMMY_TO_TEST_RUN
+
 if [[ "$failed" = true ]]; then
   exit 1
 fi
