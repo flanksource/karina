@@ -13,9 +13,23 @@ PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
 
 echo "PR_NUM = $PR_NUM"
 
+
+if go version | grep  go$GO_VERSION; then
+  go get github.com/philipstaffordwood/build-tools@master
+  go run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
+
+else
+  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint go -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION get github.com/philipstaffordwood/build-tools@master
+  docker run --rm -it
+      -v $PWD:$PWD -v /go:/go -w $PWD \
+      --entrypoint go \
+      --env GOPROXY=https://proxy.golang.org \
+      --env GITHUB_OWNER \
+      --env PR_NUM \
+      --env GIT_API_KEY \
+    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
+fi
 # TODO: move to flanksource and latest
-go get github.com/philipstaffordwood/build-tools@master
-go run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
 
 
 if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
