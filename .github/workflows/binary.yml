@@ -1,6 +1,6 @@
 name: Publish Binary
 on:
-  create:
+  push:
     tags:
       - "*"
 jobs:
