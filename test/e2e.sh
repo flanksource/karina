@@ -14,7 +14,7 @@ PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
 echo "PR_NUM = $PR_NUM"
 
 # TODO: move to flanksource and latest
-go get github.com/philipstaffordwood/build-tools master
+go get github.com/philipstaffordwood/build-tools@master
 go run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
 
 
