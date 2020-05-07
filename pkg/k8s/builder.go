@@ -280,6 +280,9 @@ func (d *DeploymentBuilder) PodAffinity(labels map[string]string, topologyKey st
 
 func (d *DeploymentBuilder) Labels(labels map[string]string) *DeploymentBuilder {
 	for k, v := range labels {
+		if d.labels == nil {
+			d.labels = make(map[string]string)
+		}
 		d.labels[k] = v
 	}
 	return d
@@ -287,6 +290,9 @@ func (d *DeploymentBuilder) Labels(labels map[string]string) *DeploymentBuilder 
 
 func (d *DeploymentBuilder) Annotations(annotations map[string]string) *DeploymentBuilder {
 	for k, v := range annotations {
+		if d.annotations == nil {
+			d.annotations = make(map[string]string)
+		}
 		d.annotations[k] = v
 	}
 	return d
