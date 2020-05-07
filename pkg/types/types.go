@@ -402,6 +402,9 @@ type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
 
+	// Do not scan container image registries to fill in the registry cache, implies --git-read-only (default: true)
+	DisableScanning *bool `yaml:"disableScanning,omitempty"`
+
 	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
 	Namespace string `yaml:"namespace,omitempty"`
 
@@ -420,7 +423,7 @@ type GitOps struct {
 	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s)
 	SyncInterval string `yaml:"syncInterval,omitempty"`
 
-	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME)
+	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy)
 	GitKey string `yaml:"gitKey,omitempty"`
 
 	// The contents of the known_hosts file to mount into Flux and helm-operator
@@ -429,10 +432,10 @@ type GitOps struct {
 	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
 	SSHConfig string `yaml:"sshConfig,omitempty"`
 
-	// The version to use for flux (default: 1.4.0 or $FLUX_VERSION)
+	// The version to use for flux (default: 1.9.0 )
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
-	// a map of args to pass to flux without -- prepended
+	// a map of args to pass to flux without -- prepended. See https://docs.fluxcd.io/en/1.19.0/references/daemon/ for a full list
 	Args map[string]string `yaml:"args,omitempty"`
 }
 
