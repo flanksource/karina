@@ -610,6 +610,7 @@ type RegistryCredentialsACR struct {
 
 type PlatformOperator struct {
 	Enabled
+	Version                   string   `yaml:"version"`
 	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
 }
 

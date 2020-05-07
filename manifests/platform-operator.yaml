@@ -440,7 +440,7 @@ spec:
             - --annotations={{ conv.Join .platformOperator.whitelistedPodAnnotations "," }}
           command:
             - /manager
-          image: quay.io/toni0/platform-operator:add-pods-annotations
+          image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"
           imagePullPolicy: Always
           name: manager
           ports:
