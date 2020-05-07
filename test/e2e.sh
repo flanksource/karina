@@ -4,14 +4,19 @@ mkdir -p .bin
 export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
-NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
-GITHUB_USER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
-GITHUB_USER=${GITHUB_USER##*:}
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_USER/$NAME/commits/master | jq -r '.sha')
+REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
+GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
+GITHUB_OWNER=${GITHUB_OWNER##*:}
+MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
 
 PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
 
 echo "PR_NUM = $PR_NUM"
+
+# TODO: move to flanksource and latest
+go get github.com/philipstaffordwood/build-tools master
+go run github.com/philipstaffordwood/build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY
+
 
 if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
   circleci-agent step halt
@@ -71,9 +76,6 @@ mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
 zip -r artifacts/snapshot.zip snapshot/*
 
-# TODO: move to flanksource and latest
-go get github.com/philipstaffordwood/build-tools master
-go run github.com/philipstaffordwood/build-tools gh report-junit philipstaffordwood/hello-go-githubapp 8 ./test-results/results.xml --auth-token DUMMY_TO_TEST_RUN
 
 if [[ "$failed" = true ]]; then
   exit 1
