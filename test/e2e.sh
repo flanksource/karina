@@ -20,7 +20,7 @@ if go version | grep  go$GO_VERSION; then
 
 else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint go -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION get github.com/philipstaffordwood/build-tools@master
-  docker run --rm -it
+  docker run --rm -it \
       -v $PWD:$PWD -v /go:/go -w $PWD \
       --entrypoint go \
       --env GOPROXY=https://proxy.golang.org \
