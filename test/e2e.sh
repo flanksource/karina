@@ -12,49 +12,6 @@ MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/mast
 PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
 COMMIT_SHA="$CIRCLE_SHA1"
 
-echo "PR_NUM = $PR_NUM"
-
-pwd
-ls -l
-
-
-if go version | grep  go$GO_VERSION; then
-  go get github.com/philipstaffordwood/build-tools@master
-  go run github.com/philipstaffordwood/build-tools \
-    gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
-      --success-message="commit $COMMIT_SHA" \
-      --failure-message="commit $COMMIT_SHA"
-
-else
-  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint go -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION get github.com/philipstaffordwood/build-tools@master
-  docker run --rm -it \
-      -v $PWD:$PWD -v /go:/go -w $PWD \
-      --entrypoint go \
-      --env GOPROXY=https://proxy.golang.org \
-      --env GITHUB_OWNER \
-      --env PR_NUM \
-      --env GIT_API_KEY \
-    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools \
-      gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
-      --success-message="commit $COMMIT_SHA" \
-      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
-
-  docker run --rm -it \
-      -v $PWD:$PWD -v /go:/go -w $PWD \
-      --entrypoint go \
-      --env GOPROXY=https://proxy.golang.org \
-      --env GITHUB_OWNER \
-      --env PR_NUM \
-      --env GIT_API_KEY \
-    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools \
-      gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/succeed-results.xml --auth-token $GIT_API_KEY \
-      --success-message="commit $COMMIT_SHA" \
-      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
-
-fi
-# TODO: move to flanksource and latest
-
-
 if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
   circleci-agent step halt
   exit 0
@@ -107,6 +64,28 @@ failed=false
 # its own wait. e2e tests should always pass once the non e2e have passed
 if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
   failed=true
+fi
+
+# TODO: move to flanksource and latest
+if go version | grep  go$GO_VERSION; then
+  go get github.com/philipstaffordwood/build-tools@master
+  go run github.com/philipstaffordwood/build-tools \
+    gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+else
+  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint go -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION get github.com/philipstaffordwood/build-tools@master
+  docker run --rm -it \
+      -v $PWD:$PWD -v /go:/go -w $PWD \
+      --entrypoint go \
+      --env GOPROXY=https://proxy.golang.org \
+      --env GITHUB_OWNER \
+      --env PR_NUM \
+      --env GIT_API_KEY \
+    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools \
+      gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 fi
 
 mkdir -p artifacts
