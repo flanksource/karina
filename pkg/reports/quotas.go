@@ -48,7 +48,7 @@ func Quotas(opts ReportOptions) error {
 		}
 
 		if !found {
-			limit, found, _ = unstructured.NestedString(quota.Object, "spec", "hard", "limits.memory")
+			limit, _, _ = unstructured.NestedString(quota.Object, "spec", "hard", "limits.memory")
 		}
 
 		annotations := namespaces[quota.GetNamespace()]
@@ -65,7 +65,7 @@ func Quotas(opts ReportOptions) error {
 		}
 
 		if !found {
-			limit, found, _ = unstructured.NestedString(quota.Object, "spec", "hard", "limits.memory")
+			limit, _, _ = unstructured.NestedString(quota.Object, "spec", "hard", "limits.memory")
 		}
 		annotations := quota.GetAnnotations()
 		fmt.Fprintf(w, "dynamic%s", SEP)

@@ -55,7 +55,7 @@ func (specs Specs) FilterBy(kind string) []unstructured.Unstructured {
 	items := []unstructured.Unstructured{}
 	for _, spec := range specs {
 		for _, item := range spec.Items {
-			if strings.ToLower(item.GetKind()) == strings.ToLower(kind) {
+			if strings.EqualFold(item.GetKind(), kind) {
 				items = append(items, item)
 			}
 		}
