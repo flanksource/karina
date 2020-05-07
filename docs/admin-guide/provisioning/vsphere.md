@@ -4,19 +4,6 @@
 
 Choose to build from source, download a release or use docker.
 
-#### Clone, build from source and install:
-
-```bash
-git clone git@github.com:flanksource/platform-cli.git
-cd platform-cli
-make setup
-make pack
-make
-sudo make install #enter password when prompted
-```
-
-_or_
-
 #### Download release and install:
 
 Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/platform-cli/releases/latest).
@@ -35,8 +22,7 @@ docker pull flanksource/platform-cli:latest
 
 ## 2. Setup and verify vSphere connectivity
 
-`platform-cli` uses the [VMWare govmomi library](https://github.com/vmware/govmomi) 
-which normally uses the following environment variables for connectivity parameters.
+`platform-cli` uses the [VMWare govmomi library](https://github.com/vmware/govmomi)  which normally uses the following environment variables for connectivity parameters.
 
 Make sure the following environment variables are set:
 
@@ -65,21 +51,20 @@ govc about
 
 Create a Certificate Authority for the cluster and the cluster ingress by running:
 
-```yaml
+```shell
 platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar
 platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar
 ```
 
 ## 4. Configure the platform config
 
-`platform-cli` uses a YAML platform configuration file.
+`platform-cli` uses a YAML configuration file.
 
 Below is a small working sample.
 
 See other examples in the [test vSphere platform fixtures](https://github.com/flanksource/platform-cli/tree/master/test/vsphere).
 
-See the
-[Configuration Reference](./reference/config.md) for details of available configurations.
+See the [Configuration Reference](./reference/config.md) for details of available configurations.
 
 ```yaml
 ##
@@ -166,8 +151,6 @@ platform-cli deploy calico -c cluster.yaml
 
 ## 7. Deploy base configs
 
-Run:
-
 ```bash
 platform-cli deploy base -c cluster.yaml
 ```
@@ -187,7 +170,7 @@ For the session `kubectl` commands can then be used to access the cluster, e.g.:
 kubectl get nodes
 ```
 
-## 9. Run Conformance Tests
+## 9. Run conformance tests
 
 Run:
 
@@ -195,7 +178,7 @@ Run:
 platform-cli test all -c cluster.yaml
 ```
 
-## 10. Tear Down the cluster
+## 10. Tear down the cluster
 
 Run:
 
