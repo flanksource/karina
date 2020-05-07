@@ -9,6 +9,10 @@ GITHUB_USER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_USER=${GITHUB_USER##*:}
 MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_USER/$NAME/commits/master | jq -r '.sha')
 
+PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
+
+echo "PR_NUM = $PR_NUM"
+
 if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
   circleci-agent step halt
   exit 0
@@ -69,7 +73,7 @@ zip -r artifacts/snapshot.zip snapshot/*
 
 # TODO: move to flanksource and latest
 go get github.com/philipstaffordwood/build-tools master
-go run github.com/philipstaffordwood/build-tools gh report-junit philipstaffordwood/hello-go-githubapp 8 ./fixtures/junit/results.xml --auth-token DUMMY_TO_TEST_RUN
+go run github.com/philipstaffordwood/build-tools gh report-junit philipstaffordwood/hello-go-githubapp 8 ./test-results/results.xml --auth-token DUMMY_TO_TEST_RUN
 
 if [[ "$failed" = true ]]; then
   exit 1
