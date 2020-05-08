@@ -66,7 +66,7 @@ if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.x
   failed=true
 fi
 
-# TODO: move to flanksource and latest
+# TODO: move to flanksource and latest as soon as build-utils is merged
 if go version | grep  go$GO_VERSION; then
   go get github.com/philipstaffordwood/build-tools@master
   go run github.com/philipstaffordwood/build-tools \
