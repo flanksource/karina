@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -154,4 +157,96 @@ func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (inter
 		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
 	}
 	return metav1.Time{Time: d}, nil
+}
+
+func IsPodCrashLoopBackoff(pod v1.Pod) bool {
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.State.Waiting != nil && status.State.Waiting.Reason == "CrashLoopBackOff" {
+			return true
+		}
+	}
+	return false
+}
+
+func IsPodHealthy(pod v1.Pod) bool {
+	conditions := true
+	for _, condition := range pod.Status.Conditions {
+		if condition.Status == v1.ConditionFalse {
+			conditions = false
+		}
+	}
+	return conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded)
+}
+
+func IsPodFinished(pod v1.Pod) bool {
+	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
+}
+
+func IsPodPending(pod v1.Pod) bool {
+	return pod.Status.Phase == v1.PodPending
+}
+
+func IsMasterNode(node v1.Node) bool {
+	_, ok := node.Labels["node-role.kubernetes.io/master"]
+	return ok
+}
+
+func IsDeleted(object metav1.Object) bool {
+	return object.GetDeletionTimestamp() != nil && !object.GetDeletionTimestamp().IsZero()
+}
+
+func IsPodDaemonSet(pod v1.Pod) bool {
+	controllerRef := metav1.GetControllerOf(&pod)
+	return controllerRef != nil && controllerRef.Kind == apps.SchemeGroupVersion.WithKind("DaemonSet").Kind
+}
+
+func GetNodeStatus(node v1.Node) string {
+	s := ""
+	for _, condition := range node.Status.Conditions {
+		if condition.Status == v1.ConditionFalse {
+			continue
+		}
+		if s != "" {
+			s += ", "
+		}
+		s += string(condition.Type)
+	}
+	return s
+}
+
+type Health struct {
+	RunningPods, PendingPods, ErrorPods, CrashLoopBackOff int
+	ReadyNodes, UnreadyNodes                              int
+	Error                                                 error
+}
+
+func (h Health) IsDegradedComparedTo(h2 Health) bool {
+	if h2.RunningPods > h.RunningPods ||
+		h.PendingPods-1 > h2.PendingPods || h.ErrorPods > h2.ErrorPods || h.CrashLoopBackOff > h2.CrashLoopBackOff {
+		return true
+	}
+	return h.UnreadyNodes > h2.UnreadyNodes
+}
+
+func (h Health) String() string {
+	return fmt.Sprintf("pods(running=%d, pending=%d, crashloop=%d, error=%d)  nodes(ready=%d, notready=%d)",
+		h.RunningPods, h.PendingPods, h.CrashLoopBackOff, h.ErrorPods, h.ReadyNodes, h.UnreadyNodes)
+}
+
+func GetUnstructuredObjects(data []byte) ([]unstructured.Unstructured, error) {
+	var items []unstructured.Unstructured
+	for _, chunk := range strings.Split(string(data), "---\n") {
+		if strings.TrimSpace(chunk) == "" {
+			continue
+		}
+
+		decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(chunk)), 1024)
+		var resource *unstructured.Unstructured
+
+		if err := decoder.Decode(&resource); err != nil {
+			return nil, fmt.Errorf("error decoding %s: %s", chunk, err)
+		}
+		items = append(items, *resource)
+	}
+	return items, nil
 }

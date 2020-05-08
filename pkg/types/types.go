@@ -79,7 +79,7 @@ type OPA struct {
 	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
 	// Policies is a path to directory containing .rego policy files
 	Policies string `yaml:"policies,omitempty"`
-	// Log level for opa server, one of: debug,info,error, defaults to error
+	// Log level for opa server, one of: `debug`,`info`,`error` (default: `error`)
 	LogLevel string `yaml:"logLevel,omitempty"`
 	E2E      OPAE2E `yaml:"e2e,omitempty"`
 }
@@ -95,7 +95,7 @@ type Harbor struct {
 	AdminPassword   string `yaml:"-"`
 	ClairVersion    string `yaml:"clairVersion"`
 	RegistryVersion string `yaml:"registryVersion"`
-	// Logging level for various components, defaults to warn - valid options are info,warn,debug
+	// Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`)
 	LogLevel string                   `yaml:"logLevel,omitempty"`
 	DB       *DB                      `yaml:"db,omitempty"`
 	URL      string                   `yaml:"url,omitempty"`
@@ -184,7 +184,7 @@ type S3 struct {
 	Bucket    string `yaml:"bucket,omitempty"`
 	Region    string `yaml:"region,omitempty"`
 	// The endpoint at which the S3-like object storage will be available from inside the cluster
-	// e.g. if minio is deployed inside the cluster, specify: *http://minio.minio.svc:9000*
+	// e.g. if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000`
 	Endpoint string `yaml:"endpoint,omitempty"`
 	// The endpoint at which S3 is accessible outside the cluster,
 	// When deploying locally on kind specify: *minio.127.0.0.1.nip.io*
@@ -218,18 +218,18 @@ type NFS struct {
 }
 
 // Configures the Nginx Ingress Controller, the controller Docker image is forked from upstream
-// to include more LUA packages for OAuth.
-// To configure global settings not available below, override the 'ingress-nginx/nginx-configuration` configmap with
-// settings from https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+// to include more LUA packages for OAuth. <br>
+// To configure global settings not available below, override the <b>ingress-nginx/nginx-configuration</b> configmap with
+// settings from [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
 type Nginx struct {
 	Disabled bool `yaml:"disabled"`
-	// The version of the nginx controller to deploy, defaults to: 0.25.1.flanksource.1
+	// The version of the nginx controller to deploy (default: `0.25.1.flanksource.1`)
 	Version string `yaml:"version"`
 	// Disable access logs
 	DisableAccessLog bool `yaml:"disableAccessLog,omitempty"`
-	// Size of request body buffer, defaults to 16M
+	// Size of request body buffer (default: `16M`)
 	RequestBodyBuffer string `yaml:"requestBodyBuffer,omitempty"`
-	// Max size of request body, defaults to 32M
+	// Max size of request body (default: `32M`)
 	RequestBodyMax string `yaml:"requestBodyMax,omitempty"`
 }
 
@@ -259,7 +259,7 @@ type Ldap struct {
 }
 
 type LdapE2E struct {
-	// if true, deploy a mock LDAP server for testing
+	// Ff true, deploy a mock LDAP server for testing
 	Mock bool `yaml:"mock,omitempty"`
 	// Username to be used for OIDC integration tests
 	Username string `yaml:"username,omitempty"`
@@ -273,34 +273,19 @@ func (ldap Ldap) GetConnectionURL() string {
 
 type Kubernetes struct {
 	Version string `yaml:"version"`
-	// KubeletExtraArgs is used to configure additional kubelet command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+	// Configure additional kubelet [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/)
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
-	// ControlllerExtraArgs is used to configure additional kube-controller-manager command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+	// Configure additional kube-controller-manager [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/)
 	ControllerExtraArgs map[string]string `yaml:"controllerExtraArgs,omitempty"`
-	// SchedulerExtraArgs is used to configure additional kube-scheduler command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+	// Configure additional kube-scheduler [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/)
 	SchedulerExtraArgs map[string]string `yaml:"schedulerExtraArgs,omitempty"`
-	// APIServerExtraArgs is used to configure additional kube-apiserver command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+	// Configure additional kube-apiserver [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/)
 	APIServerExtraArgs map[string]string `yaml:"apiServerExtraArgs,omitempty"`
-	// EtcdExtraArgs is used to configure additional etcd command line flags
-	// The list of available flags can be viewed here:
-	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
+	// Configure additional etcd [flags](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md)
 	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
 	MasterIP      string            `yaml:"masterIP,omitempty"`
-	// AuditConfig is used to specify the audit policy file.
-	// If a policy file is specified the cluster audit is enabled.
-	// Several api-server flags can be added to APIServerExtraArgs to further
-	// customize the logging configuration.
-	// The relevant flags are:
-	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
-	AuditConfig *AuditConfig `yaml:"auditing,omitempty"`
+	// Configure Kubernetes auditing
+	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of
@@ -313,7 +298,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
-	if raw.AuditConfig != nil && raw.AuditConfig.PolicyFile != "" {
+	if raw.AuditConfig.PolicyFile != "" {
 		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
 			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
 		}
@@ -402,25 +387,28 @@ type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
 
+	// Do not scan container image registries to fill in the registry cache, implies `--git-read-only` (default: true)
+	DisableScanning *bool `yaml:"disableScanning,omitempty"`
+
 	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
 	Namespace string `yaml:"namespace,omitempty"`
 
 	// The URL to git repository to clone
 	GitURL string `yaml:"gitUrl"`
 
-	// The git branch to use (default: master)
+	// The git branch to use (default: `master`)
 	GitBranch string `yaml:"gitBranch,omitempty"`
 
-	// The path with in the git repository to look for YAML in (default: .)
+	// The path with in the git repository to look for YAML in (default: `.`)
 	GitPath string `yaml:"gitPath,omitempty"`
 
-	// The frequency with which to fetch the git repository (default: 5m0s)
+	// The frequency with which to fetch the git repository (default: `5m0s`)
 	GitPollInterval string `yaml:"gitPollInterval,omitempty"`
 
-	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s)
+	// The frequency with which to sync the manifests in the repository to the cluster (default: `5m0s`)
 	SyncInterval string `yaml:"syncInterval,omitempty"`
 
-	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME)
+	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: `flux-$name-git-deploy`)
 	GitKey string `yaml:"gitKey,omitempty"`
 
 	// The contents of the known_hosts file to mount into Flux and helm-operator
@@ -429,10 +417,10 @@ type GitOps struct {
 	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
 	SSHConfig string `yaml:"sshConfig,omitempty"`
 
-	// The version to use for flux (default: 1.4.0 or $FLUX_VERSION)
+	// The version to use for flux (default: 1.9.0 )
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
-	// a map of args to pass to flux without -- prepended
+	// a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list
 	Args map[string]string `yaml:"args,omitempty"`
 }
 
@@ -459,11 +447,11 @@ type CA struct {
 type Thanos struct {
 	Disabled bool   `yaml:"disabled"`
 	Version  string `yaml:"version"`
-	// Mode. Should be client or obeservability.
+	// Must be either `client` or `obeservability`.
 	Mode string `yaml:"mode,omitempty"`
-	// Bucket to store metrics. Should be the same across all environments
+	// Bucket to store metrics. Must be the same across all environments
 	Bucket string `yaml:"bucket,omitempty"`
-	// Only for observability mode. List of client sidecars in <hostname>:<port> format
+	// Only for observability mode. List of client sidecars in `<hostname>:<port>`` format
 	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
 	EnableCompactor bool      `yaml:"enableCompactor,omitempty"`
@@ -500,7 +488,7 @@ type Vault struct {
 	Version string `yaml:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
 	Token string `yaml:"token,omitempty"`
-	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
+	// A map of PKI secret roles to create/update See [pki](https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role)
 	Roles         map[string]map[string]interface{} `yaml:"roles,omitempty"`
 	Policies      map[string]VaultPolicy            `yaml:"policies,omitempty"`
 	GroupMappings map[string][]string               `yaml:"groupMappings,omitempty"`
@@ -629,6 +617,9 @@ type Connection struct {
 	Verify   string `yaml:"verify,omitempty"`
 }
 
+// AuditConfig is used to specify the audit policy file.
+// If a policy file is specified them cluster auditing is enabled.
+// Configure additional `--audit-log-*` flags under kubernetes.apiServerExtraArgs
 type AuditConfig struct {
 	PolicyFile string `yaml:"policyFile,omitempty"`
 }

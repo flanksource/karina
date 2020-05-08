@@ -18,6 +18,8 @@ type Machine interface {
 	PowerOff() error
 	Terminate() error
 	Name() string
+	GetAge() time.Duration
+	GetTemplate() string
 	IP() string
 }
 

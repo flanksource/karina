@@ -43,3 +43,21 @@ platform-cli db restore http://path/to/backup --name test1
 
 See [platform-cli db restore](../../../cli/platform-cli_db_restore/) documentation for all command line arguments.
 
+### Connect to an exsiting database
+
+1) Retrieve the password
+
+```shell
+kubectl get secret postgres.postgres-{DB-NAME}.credentials -o json -n postgres-operator | jq -r '.data.password' | base64 -D
+```
+
+2) Port forward the DB port
+
+```shell
+kubectl port-forward  po postgres-{DB-NAME}-0 5432 -n postgres-operator
+```
+
+3) Connect to the database via `localhost:5432`
+
+
+

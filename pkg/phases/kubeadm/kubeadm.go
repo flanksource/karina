@@ -5,8 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/api"
+	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -43,7 +45,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
 
-	if cfg.Kubernetes.AuditConfig != nil && cfg.Kubernetes.AuditConfig.PolicyFile != "" {
+	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
 		cluster.APIServer.ExtraArgs["audit-policy-file"] = AuditPolicyPath
 		mnt := api.HostPathMount{
 			Name:      "auditpolicy",
@@ -129,6 +131,35 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func GetEtcdLeaderClient(platform *platform.Platform) (*etcd.Client, error) {
+	return nil, nil
+}
+
+func UploadEtcdCerts(platform *platform.Platform) (*certs.Certificate, error) {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+
+	masterNode, err := platform.GetMasterNode()
+	if err != nil {
+		return nil, err
+	}
+
+	secrets := client.CoreV1().Secrets("kube-system")
+	secret, err := secrets.Get("etcd-certs", metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		platform.Infof("Uploading etcd certs from %s", masterNode)
+		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system create secret tls etcd-certs --cert=/etc/kubernetes/pki/etcd/ca.crt --key=/etc/kubernetes/pki/etcd/ca.key")
+		platform.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
+		secret, err = secrets.Get("etcd-certs", metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return certs.DecodeCertificate(secret.Data["tls.crt"], secret.Data["tls.key"])
 }
 
 func UploadControlPlaneCerts(platform *platform.Platform) (string, error) {
