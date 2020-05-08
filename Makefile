@@ -2,13 +2,19 @@
 default: build
 NAME:=platform-cli
 
+ifeq ($(GITHUB_REF),)
+GITHUB_REF := dev
+endif
 ifeq ($(VERSION),)
-VERSION := v$(shell git describe --tags --exclude "*-g*" ) built $(shell date)
+VERSION := $(shell echo $(GITHUB_REF) | sed 's|refs/tags/||')  built $(shell date)
 endif
 
 .PHONY: help
 help:
 	@cat docs/developer-guide/make-targets.md
+
+.PHONY: release
+release: setup pack linux darwin compress
 
 .PHONY: setup
 setup:
