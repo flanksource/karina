@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-    <testsuite tests="1" failures="0" time="" name="test">
-        <testcase classname="test.deployment-valid.yaml" name="deployment-valid.yaml accepted as expected" time=""></testcase>
-    </testsuite>
-</testsuites>
