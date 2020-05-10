@@ -220,7 +220,7 @@ registryCredentials:
     account: 745897381572
     region: us-east-1
 platformOperator:
-  version: 0.3
+  version: 2020050908180831
   whitelistedPodAnnotations:
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
