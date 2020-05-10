@@ -13,7 +13,6 @@ import (
 )
 
 func Status(p *platform.Platform) error {
-
 	cluster, err := GetCluster(p)
 	if err != nil {
 		return err

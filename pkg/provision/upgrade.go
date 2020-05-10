@@ -9,9 +9,8 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
-// Perform a rolling update of nodes
+// Upgrade the kubernetes control plane to the declared version
 func Upgrade(platform *platform.Platform) error {
-
 	cluster, err := GetCluster(platform)
 	if err != nil {
 		return err
