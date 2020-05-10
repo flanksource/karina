@@ -65,7 +65,6 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 	}
 
 	test.Passf("platform-operator", "Successfully cleaned up namespace %s with auto-delete=10s", namespace)
-
 }
 
 func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.TestResults) {
@@ -124,7 +123,7 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 	}
 
 	if fetchedPod.Annotations[annotationKey2] != "" {
-		test.Failf("platform-operator", "expected key %s was not inherited from namespace %s", annotationKey2)
+		test.Failf("platform-operator", "expected key %s was not inherited from namespace", annotationKey2)
 		return
 	}
 
@@ -325,6 +324,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 	test.Passf("platform-operator", "cluster resource quota test 2 passed")
 }
 
+// nolint: unparam
 func newResourceQuota(name, namespace, cpu, memory string) *v1.ResourceQuota {
 	rq := &v1.ResourceQuota{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ResourceQuota"},
