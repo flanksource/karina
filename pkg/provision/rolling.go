@@ -9,7 +9,6 @@ import (
 	"github.com/flanksource/commons/timer"
 	"github.com/google/martian/log"
 	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 	v1 "k8s.io/api/core/v1"
@@ -25,74 +24,15 @@ type RollingOptions struct {
 	MigrateLocalVolumes    bool
 }
 
-type nodeMachine struct {
-	Node    v1.Node
-	Machine types.Machine
-}
-
-type nodeMachines []nodeMachine
-
-func (n nodeMachines) Less(i, j int) bool {
-	return n[j].Machine.GetAge() < n[i].Machine.GetAge()
-}
-
-func (n nodeMachines) Len() int {
-	return len(n)
-}
-
-func (n nodeMachines) Swap(i, j int) {
-	n[i], n[j] = n[j], n[i]
-}
-
 // Perform a rolling update of nodes
 func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
-	client, err := platform.GetClientset()
+	ctx := context.TODO()
+	cluster, err := GetCluster(platform)
 	if err != nil {
 		return err
 	}
-	if err := WithVmwareCluster(platform); err != nil {
-		return err
-	}
-
-	// make sure admin kubeconfig is available
-	platform.GetKubeConfig() // nolint: errcheck
-	if platform.JoinEndpoint == "" {
-		platform.JoinEndpoint = "localhost:8443"
-	}
-
-	// upload control plane certs first
-	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
-		return err
-	}
-	// upload etcd certs so that we can connect to etcd
-	cert, err := kubeadm.UploadEtcdCerts(platform)
-	if err != nil {
-		return err
-	}
-
-	etcdClientGenerator, err := platform.GetEtcdClientGenerator(cert)
-	if err != nil {
-		return err
-	}
-	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
 	rolled := 0
-	nodes := nodeMachines{}
-	ctx := context.Background()
-	for _, node := range list.Items {
-		machine, err := platform.Cluster.GetMachine(node.Name)
-		if err != nil {
-			return err
-		}
-		nodes = append(nodes, nodeMachine{Node: node, Machine: machine})
-	}
-	// roll nodes from oldest to newest
-	sort.Sort(nodes)
-
-	for _, nodeMachine := range nodes {
+	for _, nodeMachine := range cluster.Nodes {
 		machine := nodeMachine.Machine
 		node := nodeMachine.Node
 		age := machine.GetAge()
@@ -106,7 +46,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		}
 
 		if k8s.IsMasterNode(node) {
-			etcdClient, err := etcdClientGenerator.ForNode(ctx, node.Name)
+			etcdClient, err := cluster.GetEtcdClient(node)
 			if err != nil {
 				return err
 			}
@@ -130,7 +70,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 				}
 			}
 
-			leaderClient, err := etcdClientGenerator.ForLeader(ctx, list)
+			leaderClient, err := cluster.GetEtcdLeader()
 			if err != nil {
 				return err
 			}
@@ -140,7 +80,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 				return err
 			}
 
-			// proactivly remove server from consul so that we can get a new connection to k8s
+			// proactively remove server from consul so that we can get a new connection to k8s
 			if err := platform.GetConsulClient().RemoveMember(node.Name); err != nil {
 				return err
 			}
@@ -195,13 +135,13 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			platform.Errorf("Health degraded after waiting %v", timer)
 		}
 		if platform.GetHealth().IsDegradedComparedTo(health) {
-			return fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, nodes.Len())
+			return fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, cluster.Nodes.Len())
 		}
 		if rolled >= opts.Max {
 			break
 		}
 	}
-	log.Infof("Rollout finished, rolled %d of %d ", rolled, nodes.Len())
+	log.Infof("Rollout finished, rolled %d of %d ", rolled, cluster.Nodes.Len())
 	return nil
 }
 
