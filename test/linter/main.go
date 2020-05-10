@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
