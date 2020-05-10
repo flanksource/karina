@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/timer"
-	"github.com/google/martian/log"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
@@ -141,7 +140,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			break
 		}
 	}
-	log.Infof("Rollout finished, rolled %d of %d ", rolled, cluster.Nodes.Len())
+	platform.Infof("Rollout finished, rolled %d of %d ", rolled, cluster.Nodes.Len())
 	return nil
 }
 

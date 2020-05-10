@@ -8,7 +8,7 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"

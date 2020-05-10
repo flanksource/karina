@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flanksource/commons/logger"
-	"github.com/google/martian/log"
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -25,9 +23,9 @@ func Upgrade(platform *platform.Platform) error {
 	}
 
 	if platform.Kubernetes.Version == version {
-		logger.Infof("At least 1 master has been upgraded to : %s\n", platform.Kubernetes.Version)
+		platform.Infof("At least 1 master has been upgraded to : %s\n", platform.Kubernetes.Version)
 	} else {
-		logger.Infof("Starting upgrade from %s to %s", version, platform.Kubernetes.Version)
+		platform.Infof("Starting upgrade from %s to %s", version, platform.Kubernetes.Version)
 	}
 
 	var toUpgrade = []string{}
@@ -46,15 +44,15 @@ func Upgrade(platform *platform.Platform) error {
 		}
 	}
 
-	logger.Infof("Nodes needing upgrade: %s", toUpgrade)
-	logger.Infof("Nodes already upgraded: %s", upgraded)
+	platform.Infof("Nodes needing upgrade: %s", toUpgrade)
+	platform.Infof("Nodes already upgraded: %s", upgraded)
 
 	if len(upgraded) == 0 {
 		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, "kubeadm upgrade apply -y %s", platform.Kubernetes.Version)
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
-		log.Infof("Completed upgrade via %s: %s", toUpgrade[0], out)
+		platform.Infof("Completed upgrade via %s: %s", toUpgrade[0], out)
 		toUpgrade = toUpgrade[1:]
 	}
 	for _, node := range toUpgrade {
@@ -62,7 +60,7 @@ func Upgrade(platform *platform.Platform) error {
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
-		log.Infof("Upgraded node via %s: %s", node, out)
+		platform.Infof("Upgraded node via %s: %s", node, out)
 	}
 
 	return nil

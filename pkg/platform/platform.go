@@ -24,7 +24,7 @@ import (
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/moshloop/platform-cli/manifests"

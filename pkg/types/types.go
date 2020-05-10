@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
 )
 

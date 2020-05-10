@@ -13,7 +13,7 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 	"github.com/imdario/mergo"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
