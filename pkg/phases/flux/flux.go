@@ -54,7 +54,11 @@ func defaults(cr *types.GitOps) {
 	}
 
 	if cr.FluxVersion == "" {
-		cr.FluxVersion = "1.16.0"
+		cr.FluxVersion = "1.19.0"
+	}
+	if cr.DisableScanning == nil {
+		t := true
+		cr.DisableScanning = &t
 	}
 }
 
@@ -83,7 +87,6 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		"git-branch":             cr.GitBranch,
 		"git-path":               cr.GitPath,
 		"git-poll-interval":      cr.GitPollInterval,
-		"git-readonly":           "true",
 		"sync-interval":          cr.SyncInterval,
 		"k8s-secret-name":        secretName,
 		"ssh-keygen-dir":         "/etc/fluxd/ssh",
@@ -96,17 +99,23 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 
 	spec := k8s.Builder{
 		Namespace: cr.Namespace,
-		Labels: map[string]string{
-			"app": "flux",
-		},
 	}
 
-	spec.Deployment(memcacheName, "docker.io/memcached:1.4.36-alpine").
-		Args("-m 512", "-p 11211", "-I 5m").
-		Expose(11211).
-		Build()
+	if *cr.DisableScanning {
+		argMap["git-readonly"] = "true"
+		argMap["registry-disable-scanning"] = "true"
+	} else {
+		// memecache is only deployed for scanning
+		spec.Deployment(memcacheName, "docker.io/memcached:1.4.36-alpine").
+			Args("-m 512", "-p 11211", "-I 5m").
+			Expose(11211).
+			Build()
+	}
 
 	spec.Deployment("flux-"+cr.Name, fmt.Sprintf("%s:%s", "docker.io/fluxcd/flux", cr.FluxVersion)).
+		Labels(map[string]string{
+			"app": "flux",
+		}).
 		Args(getArgs(cr, argMap)...).
 		ServiceAccount(saName).
 		MountSecret(secretName, "/etc/fluxd/ssh", int32(0400)).
@@ -117,7 +126,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 	if cr.Namespace == "kube-system" {
 		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
 	} else {
-		spec.ServiceAccount(saName).AddClusterRole("namespace-admin").AddClusterRole("namespace-creator")
+		spec.ServiceAccount(saName).AddRole("namespace-admin").AddRole("namespace-creator")
 	}
 
 	data, _ := base64.StdEncoding.DecodeString(cr.GitKey)

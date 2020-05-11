@@ -7,19 +7,18 @@ type PlatformConfig struct {
 	CA          *CA         `yaml:"ca"`
 	Calico      Calico      `yaml:"calico,omitempty"`
 	CertManager CertManager `yaml:"certmanager,omitempty"`
-	// Consul specifies the endpoint for externally hosted consul cluster
-	// NOTE: a working consol config required to verify
-	//       that primary master is available for a vSphere cluster.
+	// The endpoint for an externally hosted consul cluster
+	// that is used for master discovery
 	Consul         string      `yaml:"consul"`
 	Dashboard      Dashboard   `yaml:"dashboard,omitempty"`
 	Datacenter     string      `yaml:"datacenter"`
 	DNS            *DynamicDNS `yaml:"dns,omitempty"`
 	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
-	// Domain specifies the domain that cluster will be available at
+	// The wildcard domain that cluster will be available at
 	Domain      string   `yaml:"domain"`
 	EventRouter *Enabled `yaml:"eventRouter,omitempty"`
 	Harbor      *Harbor  `yaml:"harbor,omitempty"`
-	// HostPrefix specifies a prefix to be added to VM hostnames.
+	// A prefix to be added to VM hostnames.
 	HostPrefix            string            `yaml:"hostPrefix"`
 	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA               `yaml:"ingressCA"`

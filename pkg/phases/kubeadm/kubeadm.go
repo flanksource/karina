@@ -8,8 +8,8 @@ import (
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/utils"
 	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -148,10 +148,6 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 	return token, nil
 }
 
-func GetEtcdLeaderClient(platform *platform.Platform) (*etcd.Client, error) {
-	return nil, nil
-}
-
 func UploadEtcdCerts(platform *platform.Platform) (*certs.Certificate, error) {
 	client, err := platform.GetClientset()
 	if err != nil {
@@ -208,7 +204,7 @@ func UploadControlPlaneCerts(platform *platform.Platform) (string, error) {
 		}
 		return key, nil
 	} else if err == nil {
-		platform.Infof("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
+		platform.Debugf("Found existing control plane certs created: %v", secret.GetCreationTimestamp())
 		return secret.Annotations["key"], nil
 	}
 	return "", err
@@ -229,4 +225,33 @@ func GetOrCreateBootstrapToken(platform *platform.Platform) (string, error) {
 	platform.BootstrapToken = token
 
 	return platform.BootstrapToken, nil
+}
+
+func GetClusterVersion(platform *platform.Platform) (string, error) {
+	config := api.ClusterConfiguration{}
+	data := (*platform.GetConfigMap("kube-system", "kubeadm-config"))["ClusterConfiguration"]
+	if err := yaml.Unmarshal([]byte(data), &config); err != nil {
+		return "", err
+	}
+	return config.KubernetesVersion, nil
+}
+
+func GetNodeVersion(platform *platform.Platform, node v1.Node) string {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return "<err>"
+	}
+	pods, err := client.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{
+		FieldSelector: "spec.nodeName=" + node.Name,
+		LabelSelector: "component=kube-apiserver",
+	})
+	if err != nil {
+		return "<err>"
+	}
+	for _, pod := range pods.Items {
+		for _, container := range pod.Spec.Containers {
+			return strings.Split(container.Image, ":")[1]
+		}
+	}
+	return "?"
 }

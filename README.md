@@ -1,6 +1,6 @@
 
 
-<h1 align="center">Karina</h1>
+<h1 align="center"><img src="https://github.com/flanksource/platform-cli/raw/master/docs/img/logo.png"></i></h1>
   <p align="center">Kubernetes Platform Toolkit</p>
 <p align="center">
 <a href="https://circleci.com/gh/flanksource/platform-cli"><img src="https://circleci.com/gh/flanksource/platform-cli.svg?style=svg"></a>
@@ -13,7 +13,7 @@
 
 ---
 
-**Karina** is a toolkit for building and operating kubernetes based, multi-cluster platforms. It includes the following high level functions:
+**karina** is a toolkit for building and operating kubernetes based, multi-cluster platforms. It includes the following high level functions:
 
 * **Provisioning** clusters on vSphere and Kind
   * `karina provision`
@@ -27,9 +27,9 @@
   * `karina rolling update`
 * **API/CLI Wrappers** for day-2 operations (backup, restore, configuration) of runtime components including Harbor, Postgres, Consul, Vault and NSX-T/NCP
   * `karina snapshot` dumps specs (excluding secrets), events and logs for troubleshooting
-  * `karina logs` exports logs from Elasticsearch using the paging API
+  * `karina logs` exports logs from ElasticSearch using the paging API
   * `karina nsx set-logs` updates runtime logging levels of all nsx components
-  * `karina ca generate` create CA key/cert pair suitable for bootstraping
+  * `karina ca generate` create CA key/cert pair suitable for bootstrapping
   * `karina kubeconfig` generates kuebconfigs via the master CA or for use with OIDC based login
   * `karina exec` executes a command in every matching pod
   * `karina exec-node` executes a command on every matching node
@@ -38,55 +38,11 @@
   * `karina consul`
   * `karina backup/restore`
 
-#### Cluster Specification
 
-```yaml
-# DNS Wildcard domain that this cluster will be accessible under
-domain:
-# Endpoint for externally hosted consul cluster
-consul:
-name:
-ldap:
-  dn:  DC=local,DC=corp
-  user: !!env LDAP_USER
-  pass: !!env LDAP_PASS
-  host:
-  adminGroup:
-versions:
-  kubernetes: v1.17.0
-serviceSubnet: 10.96.0.0/16
-podSubnet: 10.97.0.0/16
-# Prefix to be added to VM hostnames,
-hostPrefix:
-# The root CA used to sign generated certs
-ca:
-  cert: .certs/root-ca.crt
-  privateKey: .certs/root-ca.key
-  password: foobar
- The VM configuration for master nodes
-master:
-  count: 5
-  cpu: 4
-  memory: 16
-  disk: 200
-  network:
-  cluster:
-  template:
-# The VM configuration for worker nodes, multiple groups can be specified
-workers:
-  worker:
-    count: 8
-    cpu: 16
-    memory: 64
-    disk: 300
-    network:
- 	  cluster:
-    template:
-```
+### Getting Started
+To get started provisioning see the quickstart's for [Kind](https://karina.docs.flanksource.com/admin-guide/provisioning/kind.md) and [vSphere](https://karina.docs.flanksource.com/admin-guide/provisioning/vsphere.md) <br>
 
-See [config](https://karina.docs.flanksource.com/reference/config/) for the full list of available fields
-
-#### Production Runtime
+### Production Runtime
 
 * **Docker Registry** (Harbor)
 * **Certificate Management** (Cert-Manager)

@@ -12,7 +12,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
