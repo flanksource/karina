@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/martian/log"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/olivere/elastic/v7"
 )
@@ -73,7 +72,7 @@ func (query Query) ToQuery() elastic.Query {
 }
 
 func ExportLogs(p *platform.Platform, query Query) error {
-	log.Infof("Exporting logs from %s@%s", p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.GetURL())
+	p.Infof("Exporting logs from %s@%s", p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.GetURL())
 	es, err := elastic.NewSimpleClient(
 		elastic.SetBasicAuth(p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.Password),
 		elastic.SetURL(p.Filebeat.Elasticsearch.GetURL()),

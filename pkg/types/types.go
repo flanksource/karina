@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/flanksource/yaml"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
+	"gopkg.in/flanksource/yaml.v3"
 )
 
 type Enabled struct {

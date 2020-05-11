@@ -24,7 +24,6 @@ import (
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/flanksource/yaml"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/moshloop/platform-cli/manifests"
@@ -37,6 +36,7 @@ import (
 	"github.com/moshloop/platform-cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/flanksource/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
