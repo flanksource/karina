@@ -7,12 +7,42 @@ import (
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"gopkg.in/yaml.v2"
 )
+
+const ClusterConfiguration = "ClusterConfiguration"
+
+const upgradeCommand =
+// install the correct version kubeadm
+"apt-get install -y --allow-change-held-packages kubeadm=%s-00;" +
+	// prevent it from being automatically updated
+	" apt-mark hold kubeadm &&" +
+	// download the most recent kubeadm configuration
+	" kubectl get cm kubeadm-config -o json -n kube-system | jq -r '.data.ClusterConfiguration' > /etc/kubernetes/kubeadm.conf" +
+	// perform the upgrade
+	" kubeadm upgrade apply -y --allow-experimental-upgrades --allow-release-candidate-upgrades --config /etc/kubernetes/kubeadm.conf %s"
+
+const upgradeNode = "apt-get install -y --allow-change-held-packages kubeadm=%s-00;" +
+	" apt-mark hold kubeadm &&" +
+	" kubeadm upgrade node"
 
 // Upgrade the kubernetes control plane to the declared version
 func Upgrade(platform *platform.Platform) error {
 	cluster, err := GetCluster(platform)
 	if err != nil {
+		return err
+	}
+
+	newConfig := kubeadm.NewClusterConfig(platform)
+	newData, err := yaml.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+	kubeadmConfig := (*platform.GetConfigMap("kube-system", "kubeadm-config"))
+	kubeadmConfig[ClusterConfiguration] = string(newData)
+
+	// update kubeadm-config with any changes introduced since last provision/update
+	if err := platform.CreateOrUpdateConfigMap("kubeadm-config", "kube-system", kubeadmConfig); err != nil {
 		return err
 	}
 
@@ -47,7 +77,7 @@ func Upgrade(platform *platform.Platform) error {
 	platform.Infof("Nodes already upgraded: %s", upgraded)
 
 	if len(upgraded) == 0 {
-		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, "apt-get install -y --allow-change-held-packages kubeadm=%s-00; apt-mark hold kubeadm && kubeadm upgrade apply -y %s", platform.Kubernetes.Version[1:], platform.Kubernetes.Version)
+		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, upgradeCommand, platform.Kubernetes.Version[1:], platform.Kubernetes.Version)
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
@@ -55,7 +85,7 @@ func Upgrade(platform *platform.Platform) error {
 		toUpgrade = toUpgrade[1:]
 	}
 	for _, node := range toUpgrade {
-		out, err := platform.Executef(node, 5*time.Minute, "apt-get install -y --allow-change-held-packages kubeadm=%s-00; apt-mark hold kubeadm && kubeadm upgrade node", platform.Kubernetes.Version[1:])
+		out, err := platform.Executef(node, 5*time.Minute, upgradeNode, platform.Kubernetes.Version[1:])
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
