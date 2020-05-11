@@ -68,7 +68,7 @@ fi
 
 wget https://github.com/flanksource/build-tools/releases/download/latest/build-tools
 chmod +x build-tools
-./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
       --success-message="commit $COMMIT_SHA" \
       --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 
