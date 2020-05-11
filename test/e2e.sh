@@ -4,10 +4,13 @@ mkdir -p .bin
 export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
-NAME=$(basename $(git remote get-url origin | sed 's/\.git//'))
-GITHUB_USER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
-GITHUB_USER=${GITHUB_USER##*:}
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_USER/$NAME/commits/master | jq -r '.sha')
+REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
+GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
+GITHUB_OWNER=${GITHUB_OWNER##*:}
+MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
+
+PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
+COMMIT_SHA="$CIRCLE_SHA1"
 
 if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
   circleci-agent step halt
@@ -63,9 +66,16 @@ if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.x
   failed=true
 fi
 
+wget https://github.com/flanksource/build-tools/releases/download/latest/build-tools
+chmod +x build-tools
+./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
 zip -r artifacts/snapshot.zip snapshot/*
+
 
 if [[ "$failed" = true ]]; then
   exit 1
