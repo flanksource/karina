@@ -41,6 +41,9 @@ func (cluster *Cluster) GetEtcdLeader() (*etcd.Client, error) {
 }
 
 func (n NodeMachines) Less(i, j int) bool {
+	if n[j].Machine == nil || n[i].Machine == nil {
+		return true
+	}
 	return n[j].Machine.GetAge() < n[i].Machine.GetAge()
 }
 
@@ -93,6 +96,9 @@ func GetCluster(platform *platform.Platform) (*Cluster, error) {
 		machine, err := platform.Cluster.GetMachine(node.Name)
 		if err != nil {
 			return nil, err
+		}
+		if machine == nil {
+			machine = types.NullMachine{Hostname: node.Name}
 		}
 		nodes = append(nodes, NodeMachine{Node: node, Machine: machine})
 	}
