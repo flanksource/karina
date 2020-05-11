@@ -608,6 +608,12 @@ type RegistryCredentialsACR struct {
 	Password string `yaml:"password,omitempty"`
 }
 
+type PlatformOperator struct {
+	Enabled
+	Version                   string   `yaml:"version"`
+	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`

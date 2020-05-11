@@ -51,7 +51,7 @@ type PlatformConfig struct {
 	Specs               []string             `yaml:"specs,omitempty"`
 	TrustedCA           string               `yaml:"trustedCA,omitempty"`
 	Versions            map[string]string    `yaml:"versions,omitempty"`
-	PlatformOperator    *Enabled             `yaml:"platformOperator,omitempty"`
+	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`
 	Nginx               *Nginx               `yaml:"nginx,omitempty"`
 	Minio               *Enabled             `yaml:"minio,omitempty"`
 	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
