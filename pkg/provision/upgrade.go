@@ -47,7 +47,7 @@ func Upgrade(platform *platform.Platform) error {
 	platform.Infof("Nodes already upgraded: %s", upgraded)
 
 	if len(upgraded) == 0 {
-		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, "kubeadm upgrade apply -y %s", platform.Kubernetes.Version)
+		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, "apt-get install -y --allow-change-held-packages kubeadm=%s-00; apt-mark hold kubeadm && kubeadm upgrade apply -y %s", platform.Kubernetes.Version[1:], platform.Kubernetes.Version)
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
@@ -55,7 +55,7 @@ func Upgrade(platform *platform.Platform) error {
 		toUpgrade = toUpgrade[1:]
 	}
 	for _, node := range toUpgrade {
-		out, err := platform.Executef(node, 5*time.Minute, "kubeadm upgrade node")
+		out, err := platform.Executef(node, 5*time.Minute, "apt-get install -y --allow-change-held-packages kubeadm=%s-00; apt-mark hold kubeadm && kubeadm upgrade node")
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
