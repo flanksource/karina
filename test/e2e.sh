@@ -66,27 +66,20 @@ if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.x
   failed=true
 fi
 
-# TODO: move to flanksource and latest as soon as build-utils is merged
-if go version | grep  go$GO_VERSION; then
-  go get github.com/philipstaffordwood/build-tools@master
-  go run github.com/philipstaffordwood/build-tools \
-    gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
-      --success-message="commit $COMMIT_SHA" \
-      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
-else
-  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint go -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION get github.com/philipstaffordwood/build-tools@master
-  docker run --rm -it \
-      -v $PWD:$PWD -v /go:/go -w $PWD \
-      --entrypoint go \
-      --env GOPROXY=https://proxy.golang.org \
-      --env GITHUB_OWNER \
-      --env PR_NUM \
-      --env GIT_API_KEY \
-    golang:$GO_VERSION run github.com/philipstaffordwood/build-tools \
+
+docker run --rm \
+    -v $PWD:$PWD -v /go:/go -w $PWD \
+    --entrypoint build-tools \
+    --env GOPROXY=https://proxy.golang.org \
+    --env GITHUB_OWNER \
+    --env PR_NUM \
+    --env GIT_API_KEY \
+  flanksource/build-tools:latest \
+    run github.com/philipstaffordwood/build-tools \
       gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
       --success-message="commit $COMMIT_SHA" \
       --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
-fi
+
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
