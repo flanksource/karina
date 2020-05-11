@@ -57,7 +57,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 		}
 	}
 
-	logger.Infof("Logging into vcenter: %s@%s", user, vcenter)
+	logger.Debugf("Logging into vcenter: %s@%s", user, vcenter)
 	soapURL, err := soap.ParseURL(vcenter)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error parsing vSphere URL %q", vcenter)
