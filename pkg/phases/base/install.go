@@ -21,6 +21,10 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base rbac: %s", err)
 	}
 
+	if err := platform.ApplySpecs("", "kube-system.yaml"); err != nil {
+		platform.Errorf("Error deploying base kube-system annotations: %s", err)
+	}
+
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
 		platform.Errorf("Error deploying service monitor crd: %s", err)
 	}
