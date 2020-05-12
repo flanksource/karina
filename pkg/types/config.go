@@ -57,7 +57,7 @@ type PlatformConfig struct {
 	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
 	ECK                 *ECK                 `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
-	Filebeat            *Filebeat            `yaml:"filebeat,omitempty"`
+	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`

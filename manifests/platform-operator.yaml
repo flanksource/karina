@@ -1,9 +1,11 @@
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: platform-system
   labels:
     control-plane: controller-manager
-  name: platform-system
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition

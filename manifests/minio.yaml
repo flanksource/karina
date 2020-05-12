@@ -4,6 +4,8 @@ metadata:
   name: minio
   labels:
     openpolicyagent.org/webhook: ignore
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 apiVersion: apps/v1
 kind: Deployment

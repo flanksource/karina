@@ -4,7 +4,8 @@ metadata:
   name: local-path-storage
   labels:
     openpolicyagent.org/webhook: ignore
----
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 apiVersion: v1
 kind: ServiceAccount

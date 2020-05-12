@@ -1,9 +1,11 @@
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: ldap
   labels:
     app: ldap
-  name: ldap
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 kind: ConfigMap
 apiVersion: v1

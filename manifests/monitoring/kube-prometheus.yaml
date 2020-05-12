@@ -298,12 +298,14 @@ spec:
     {{ end }}
 ---
 {{- if index . "filebeat" }}
-{{- if not (index .filebeat "disabled") }}
-{{- if index .filebeat "elasticsearch" }}
+{{- if index . "elasticsearch" }}
+{{- if not (index .elasticsearch "disabled") }}
+{{ range .filebeat}}
+{{- if index . "elasticsearch" }}
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
-  name: elasticsearch
+  name: elasticsearch-{{.name}}
   namespace: monitoring
 spec:
   name: elasticsearch.yaml
@@ -312,12 +314,16 @@ spec:
       type: elasticsearch
       access: proxy
       basicAuth: true
-      url: "https://{{.filebeat.elasticsearch.url}}:{{.filebeat.elasticsearch.port}}"
-      basicAuthUser: {{.filebeat.elasticsearch.user}}
+      url: "https://{{.elasticsearch.url}}:{{.elasticsearch.port}}"
+      basicAuthUser: {{.elasticsearch.user}}
       secureJsonData:
-        basicAuthPassword: {{.filebeat.elasticsearch.password}}
+        basicAuthPassword: {{.elasticsearch.password}}
       isDefault: false
-      database: "filebeat-{{.filebeat.version}}-*"
+  {{- if ne .index "" }}
+      database: "{{ .index }}-{{.version}}-*"
+  {{- else }}
+      database: "filebeat-{{.version}}-*"
+  {{ end }}
       version: 1
       editable: true
       jsonData:
@@ -328,6 +334,8 @@ spec:
         logMessageField: message
         logLevelField: fields.level
 ---
+{{- end}}
+{{- end}}
 {{- end}}
 {{- end}}
 {{- end}}
