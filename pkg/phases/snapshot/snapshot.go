@@ -30,6 +30,7 @@ type Options struct {
 	Concurrency   int
 }
 
+// nolint: golint
 type SnapshotFetcher struct {
 	*platform.Platform
 	k8s        *kubernetes.Clientset
