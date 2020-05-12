@@ -36,12 +36,14 @@ require (
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.17.2
 	k8s.io/klog v1.0.0
+	sigs.k8s.io/controller-runtime v0.4.0
 	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.0.0+incompatible
 	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115

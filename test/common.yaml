@@ -219,3 +219,8 @@ registryCredentials:
     secretKey: $AWS_SECRET_ACCESS_KEY
     account: 745897381572
     region: us-east-1
+platformOperator:
+  version: 2020050908180831
+  whitelistedPodAnnotations:
+    - foo.flanksource.com/bar
+    - foo.flanksource.com/baz

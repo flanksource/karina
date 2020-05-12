@@ -23,6 +23,50 @@ type Machine interface {
 	IP() string
 }
 
+type NullMachine struct {
+	Hostname string
+}
+
+func (n NullMachine) String() string {
+	return n.Hostname
+}
+func (n NullMachine) WaitForPoweredOff() error {
+	return nil
+}
+func (n NullMachine) GetIP(timeout time.Duration) (string, error) {
+	return "", nil
+}
+func (n NullMachine) WaitForIP() (string, error) {
+	return "", nil
+}
+func (n NullMachine) SetAttributes(attributes map[string]string) error {
+	return nil
+}
+func (n NullMachine) GetAttributes() (map[string]string, error) {
+	return nil, nil
+}
+func (n NullMachine) Shutdown() error {
+	return nil
+}
+func (n NullMachine) PowerOff() error {
+	return nil
+}
+func (n NullMachine) Terminate() error {
+	return nil
+}
+func (n NullMachine) Name() string {
+	return n.Hostname
+}
+func (n NullMachine) GetAge() time.Duration {
+	return 0
+}
+func (n NullMachine) GetTemplate() string {
+	return "unknown"
+}
+func (n NullMachine) IP() string {
+	return "unknown"
+}
+
 type Cluster interface {
 	Clone(template VM, config *konfigadm.Config) (Machine, error)
 	GetMachine(name string) (Machine, error)

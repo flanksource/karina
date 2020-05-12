@@ -101,7 +101,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
+	if platform.PlatformOperator == nil || !platform.PlatformOperator.Disabled {
 		platform.Infof("Installing platform operator")
 		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
 			platform.Errorf("Error deploying platform-operator: %s", err)
