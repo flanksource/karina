@@ -59,17 +59,17 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 		Source: paths[0],
 	}
 
-	defaultConfig := types.DefaultPlatformConfig()
-	if err := mergo.Merge(&base, defaultConfig); err != nil {
-		log.Fatalf("Failed to merge default config, %v", err)
-	}
-
 	if err := mergeConfigs(&base, base.ImportConfigs); err != nil {
 		log.Fatalf("Failed to merge configs: %v", err)
 	}
 
 	if err := mergeConfigs(&base, paths); err != nil {
 		log.Fatalf("Failed to merge configs: %v", err)
+	}
+
+	defaultConfig := types.DefaultPlatformConfig()
+	if err := mergo.Merge(&base, defaultConfig); err != nil {
+		log.Fatalf("Failed to merge default config, %v", err)
 	}
 
 	base.S3.AccessKey = template(base.S3.AccessKey)
