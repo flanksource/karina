@@ -689,3 +689,10 @@ func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*
 
 	return pgdb, nil
 }
+
+func (platform *Platform) DefaultNamespaceAnnotations() map[string]string {
+	annotations := map[string]string{
+		"com.flanksource.infra.logs/enabled": "true",
+	}
+	return annotations
+}

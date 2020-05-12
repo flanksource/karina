@@ -4,6 +4,8 @@ metadata:
   name: quack
   labels:
     openpolicyagent.org/webhook: ignore
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1

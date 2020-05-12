@@ -21,6 +21,10 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base rbac: %s", err)
 	}
 
+	if err := platform.ApplySpecs("", "kube-system.yaml"); err != nil {
+		platform.Errorf("Error deploying base kube-system annotations: %s", err)
+	}
+
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
 		platform.Errorf("Error deploying service monitor crd: %s", err)
 	}
@@ -53,7 +57,7 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
 		"quack.pusher.com/enabled": "true",
-	}, nil); err != nil {
+	}, platform.DefaultNamespaceAnnotations()); err != nil {
 		return err
 	}
 

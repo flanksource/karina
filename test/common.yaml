@@ -30,6 +30,7 @@ kubernetes:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
   masterIP: localhost
+  containerRuntime: containerd
 dashboard:
   accessRestricted:
     enabled: true
@@ -120,13 +121,16 @@ fluentd:
     port: 9200
     scheme: https
 filebeat:
-  version: 7.6.0
-  elasticsearch:
-    url: logs-es-http.eck.svc.cluster.local
-    user: filebeat
-    password: filebeat
-    port: 9200
-    scheme: https
+  - name: platform
+    version: 7.6.0
+    index: filebeat-infra
+    prefix: com.flanksource.infra
+    elasticsearch:
+      url: logs-es-http.eck.svc.cluster.local
+      user: elastic
+      password: !!env ELASTIC_PASSWORD
+      port: 9200
+      scheme: https
 eck:
   version: 1.0.1
 oauth2Proxy:
@@ -222,5 +226,9 @@ registryCredentials:
 platformOperator:
   version: 2020050908180831
   whitelistedPodAnnotations:
+    # used by filebeat
+    - com.flanksource.infra.logs/enabled
+    - co.elastic.logs/enabled
+    # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
