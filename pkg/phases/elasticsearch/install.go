@@ -13,7 +13,7 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
 		return err
 	}
 	if p.Elasticsearch.Mem == nil {
