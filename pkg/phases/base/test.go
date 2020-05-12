@@ -48,7 +48,7 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 		"auto-delete": "10s",
 	}
 
-	if err := p.CreateOrUpdateNamespace(namespace, nil, annotations); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace, nil, annotations, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace, err)
 		return
 	}
@@ -79,7 +79,7 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 		annotationKey2: utils.RandomString(6),
 	}
 
-	if err := p.CreateOrUpdateNamespace(namespace, nil, annotations); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace, nil, annotations, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace, err)
 		return
 	}
@@ -135,7 +135,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	namespace2 := fmt.Sprintf("platform-operator-e2e-resource-quota2-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
-	if err := p.CreateOrUpdateNamespace(namespace1, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace1, nil, nil, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace1, err)
 		return
 	}
@@ -144,7 +144,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 		client.CoreV1().Namespaces().Delete(namespace1, nil) // nolint: errcheck
 	}()
 
-	if err := p.CreateOrUpdateNamespace(namespace2, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace2, nil, nil, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace2, err)
 		return
 	}
@@ -246,7 +246,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 	namespace2 := fmt.Sprintf("platform-operator-e2e-resource-quota2-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
-	if err := p.CreateOrUpdateNamespace(namespace1, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace1, nil, nil, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace1, err)
 		return
 	}
@@ -255,7 +255,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 		client.CoreV1().Namespaces().Delete(namespace1, nil) // nolint: errcheck
 	}()
 
-	if err := p.CreateOrUpdateNamespace(namespace2, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace2, nil, nil, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace2, err)
 		return
 	}

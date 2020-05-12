@@ -24,12 +24,12 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{
 		"app": "opa",
-	}, nil); err != nil {
+	}, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
 	for index := range platform.OPA.NamespaceWhitelist {
-		err := platform.CreateOrUpdateNamespace(platform.OPA.NamespaceWhitelist[index], nil, nil)
+		err := platform.CreateOrUpdateNamespace(platform.OPA.NamespaceWhitelist[index], nil, nil, nil)
 		if err != nil {
 			fmt.Println(err)
 		}

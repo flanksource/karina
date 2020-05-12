@@ -87,7 +87,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := p.CreateOrUpdateNamespace(namespace, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(namespace, nil, nil, nil); err != nil {
 		test.Failf("sealed-secrets", "Failed to create test namespace %s: %v", namespace, err)
 		return
 	}

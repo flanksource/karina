@@ -53,7 +53,7 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
 		"quack.pusher.com/enabled": "true",
-	}, nil); err != nil {
+	}, nil, nil); err != nil {
 		return err
 	}
 

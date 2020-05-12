@@ -657,7 +657,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	return nil
 }
 
-func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string, finalizers []string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
@@ -682,6 +682,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		cm.Name = name
 		cm.Labels = labels
 		cm.Annotations = annotations
+		cm.Finalizers = finalizers
 
 		c.Debugf("Creating namespace %s", name)
 		if !c.ApplyDryRun {
