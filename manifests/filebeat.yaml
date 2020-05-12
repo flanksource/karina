@@ -1,4 +1,5 @@
 {{- $PLATFORM_NAME := .name }}
+{{- $CONTAINER_RUNTIME := .kubernetes.containerRuntime}}
 {{ range .filebeat}}
 apiVersion: v1
 kind: ConfigMap
@@ -21,10 +22,18 @@ data:
            prefix: {{ .prefix }}
         {{ end }}
            hints.enabled: true
-           hints.default_config.enabled: false
+           hints.default_config:
+             enabled: false
+           {{ if eq $CONTAINER_RUNTIME "containerd" }}
+             type: container
+             paths:
+               - /var/log/containers/*${data.kubernetes.container.id}.log
+           {{ end }}
 
     processors:
       - add_cloud_metadata:
+      - add_kubernetes_metadata:
+      - add_docker_metadata:
       - drop_event:
           when:
             or:

@@ -286,6 +286,8 @@ type Kubernetes struct {
 	MasterIP      string            `yaml:"masterIP,omitempty"`
 	// Configure Kubernetes auditing
 	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
+	// Configure container runtime: docker/containerd
+	ContainerRuntime string `yaml:"containerRuntime"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of

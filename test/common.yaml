@@ -30,6 +30,7 @@ kubernetes:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
   masterIP: localhost
+  containerRuntime: containerd
 dashboard:
   accessRestricted:
     enabled: true
@@ -222,5 +223,9 @@ registryCredentials:
 platformOperator:
   version: 2020050908180831
   whitelistedPodAnnotations:
+    # used by filebeat
+    - com.flanksource.infra.logs/enabled
+    - co.elastic.logs/enabled
+    # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
