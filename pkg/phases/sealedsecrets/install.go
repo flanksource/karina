@@ -33,6 +33,11 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.SealedSecrets.Certificate != nil {
+		ca, err := platform.ReadCA(platform.SealedSecrets.Certificate)
+		if err != nil {
+			return errors.Wrap(err, "failed to read platform ca")
+		}
+
 		client, err := platform.GetClientset()
 		if err != nil {
 			return errors.Wrap(err, "failed to get k8s client")
@@ -62,7 +67,7 @@ func Install(platform *platform.Platform) error {
 						SealedSecretsKeyLabel: "active",
 					},
 				},
-				Data: platform.SealedSecrets.Certificate.AsTLSSecret(),
+				Data: ca.AsTLSSecret(),
 				Type: "kubernetes.io/tls",
 			}
 
@@ -73,7 +78,7 @@ func Install(platform *platform.Platform) error {
 			}
 		} else {
 			secret := items[len(items)-1]
-			secret.Data = platform.SealedSecrets.Certificate.AsTLSSecret()
+			secret.Data = ca.AsTLSSecret()
 
 			platform.Infof("Updating %s/secret/%s", Namespace, secret.Name)
 

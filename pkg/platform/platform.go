@@ -36,7 +36,7 @@ import (
 	"github.com/moshloop/platform-cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/flanksource/yaml.v3"
+	yaml "gopkg.in/flanksource/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -151,7 +151,7 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
 	}
-	ca, err := readCA(platform.CA)
+	ca, err := platform.ReadCA(platform.CA)
 	if err != nil {
 		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
@@ -159,9 +159,9 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	return ca
 }
 
-// readCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
+// ReadCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
 // with key password ca.Password.
-func readCA(ca *types.CA) (*certs.Certificate, error) {
+func (platform *Platform) ReadCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
 	if cert == "" {
 		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
@@ -190,7 +190,7 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 		return platform.ingressCA
 	}
 	platform.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
-	ca, err := readCA(platform.IngressCA)
+	ca, err := platform.ReadCA(platform.IngressCA)
 	if err != nil {
 		platform.Fatalf("Unable to open Ingress CA: %v", err)
 	}

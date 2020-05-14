@@ -5,9 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/flanksource/commons/certs"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
-	"gopkg.in/flanksource/yaml.v3"
+	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
 type Enabled struct {
@@ -569,8 +568,8 @@ type NodeLocalDNS struct {
 
 type SealedSecrets struct {
 	Enabled
-	Version     string             `yaml:"version,omitempty"`
-	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
+	Version     string `yaml:"version,omitempty"`
+	Certificate *CA    `yaml:"certificate,omitempty"`
 }
 
 type RegistryCredentials struct {
