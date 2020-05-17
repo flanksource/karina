@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/is"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
 	"github.com/imdario/mergo"
@@ -57,10 +59,6 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	paths = splitPaths
 	base := types.PlatformConfig{
 		Source: paths[0],
-	}
-
-	if err := mergeConfigs(&base, base.ImportConfigs); err != nil {
-		log.Fatalf("Failed to merge configs: %v", err)
 	}
 
 	if err := mergeConfigs(&base, paths); err != nil {
@@ -187,6 +185,7 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 
 func mergeConfigs(base *types.PlatformConfig, paths []string) error {
 	for _, path := range paths {
+		logger.Debugf("Merging %s", path)
 		cfg := types.PlatformConfig{
 			Source: path,
 		}
@@ -211,6 +210,13 @@ func mergeConfigs(base *types.PlatformConfig, paths []string) error {
 
 		if err := mergo.Merge(base, cfg); err != nil {
 			return errors.Wrapf(err, "Failed to merge in %s", path)
+		}
+
+		for _, config := range cfg.ImportConfigs {
+			fullPath := filepath.Dir(path) + "/" + config
+			if err := mergeConfigs(base, []string{fullPath}); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -551,7 +551,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		platform.Debugf("Applying %s", spec)
+		platform.Debugf("Applying %s", console.Greenf("%s", spec))
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)

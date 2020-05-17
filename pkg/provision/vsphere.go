@@ -18,7 +18,7 @@ import (
 )
 
 func WithVmwareCluster(platform *platform.Platform) error {
-	cluster, err := vmware.NewVMwareCluster(platform.HostPrefix + "-" + platform.Name)
+	cluster, err := vmware.NewVMwareCluster(platform.PlatformConfig)
 	if err != nil {
 		return err
 	}
