@@ -8,9 +8,10 @@ import (
 )
 
 var Cleanup = &cobra.Command{
-	Use:   "cleanup",
-	Short: "Cleanup a cluster and terminate all VM's and resources associated with it",
-	Args:  cobra.MinimumNArgs(0),
+	Use:     "cleanup",
+	Aliases: []string{"terminate"},
+	Short:   "Terminate a cluster and destroy all VM's and resources associated with it",
+	Args:    cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := provision.Cleanup(getPlatform(cmd)); err != nil {
 			log.Fatalf("Failed to cleanup cluster, %s", err)
