@@ -619,6 +619,42 @@ type PlatformOperator struct {
 	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
 }
 
+type Vsphere struct {
+	// GOVC_USER
+	Username string `yaml:"username,omitempty"`
+	// GOVC_PASS
+	Password string `yaml:"password,omitempty"`
+	// GOVC_DATACENTER
+	Datacenter string `yaml:"datacenter,omitempty"`
+	// e.g. ds:///vmfs/volumes/vsan:<id>/
+	DatastoreURL string `yaml:"datastoreUrl,omitempty"`
+	// GOVC_DATASTORE
+	Datastore string `yaml:"datastore,omitempty"`
+	// GOVC_NETWORK
+	Network string `yaml:"network,omitempty"`
+	// Cluster for VM placement via DRS (GOVC_CLUSTER)
+	Cluster string `yaml:"cluster,omitempty"`
+	// GOVC_RESOURCE_POOL
+	ResourcePool string `yaml:"resourcePool,omitempty"`
+	//  Inventory folder (GOVC_FOLDER)
+	Folder string `yaml:"folder,omitempty"`
+	// GOVC_FQDN
+	Hostname string `yaml:"hostname,omitempty"`
+	// Version of the vSphere CSI Driver
+	CSIVersion string `yaml:"csiVersion,omitempty"`
+	// Version of the vSphere External Cloud Provider
+	CPIVersion string `yaml:"cpiVersion,omitempty"`
+	// Skip verification of server certificate
+	SkipVerify bool `yaml:"verify"`
+}
+
+func (v Vsphere) GetSecret() map[string][]byte {
+	return map[string][]byte{
+		v.Hostname + ".username": []byte(v.Username),
+		v.Hostname + ".password": []byte(v.Password),
+	}
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`

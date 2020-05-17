@@ -590,18 +590,33 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			_, err = client.Create(unstructuredObj, metav1.CreateOptions{})
 			if err != nil {
 				c.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+			} else {
+				c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			}
-			c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 		} else {
 			if unstructuredObj.GetKind() == "Service" {
 				// Workaround for immutable spec.clusterIP error message
 				spec := unstructuredObj.Object["spec"].(map[string]interface{})
 				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
+			} else if unstructuredObj.GetKind() == "ServiceAccount" {
+				unstructuredObj.Object["secrets"] = existing.Object["secrets"]
 			}
 			//apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
 
 			c.trace("updating", unstructuredObj)
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
+			unstructuredObj.SetSelfLink(existing.GetSelfLink())
+			unstructuredObj.SetUID(existing.GetUID())
+			unstructuredObj.SetCreationTimestamp(existing.GetCreationTimestamp())
+			unstructuredObj.SetGeneration(existing.GetGeneration())
+			if existing.GetAnnotations() != nil && existing.GetAnnotations()["deployment.kubernetes.io/revision"] != "" {
+				annotations := unstructuredObj.GetAnnotations()
+				if annotations == nil {
+					annotations = make(map[string]string)
+				}
+				annotations["deployment.kubernetes.io/revision"] = existing.GetAnnotations()["deployment.kubernetes.io/revision"]
+				unstructuredObj.SetAnnotations(annotations)
+			}
 			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
 			if err != nil {
 				c.Errorf("error updating: %s/%s/%s : %+v", unstructuredObj.GetNamespace(), resource.Resource, unstructuredObj.GetName(), err)
@@ -751,62 +766,18 @@ func (c *Client) GetOrCreateSecret(name, ns string, data map[string][]byte) erro
 }
 
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
-	client, err := c.GetClientset()
-	if err != nil {
-		return fmt.Errorf("createOrUpdateSecret: failed to get clientset: %v", err)
-	}
-	secrets := client.CoreV1().Secrets(ns)
-	cm, err := secrets.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data,
-		}
-		c.Infof("Creating %s/secret/%s", ns, name)
-		if !c.ApplyDryRun {
-			if _, err := secrets.Create(cm); err != nil {
-				return fmt.Errorf("createOrUpdateSecret: failed to namespace: %v", err)
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !c.ApplyDryRun {
-			c.Infof("Updating %s/secret/%s", ns, name)
-			if _, err := secrets.Update(cm); err != nil {
-				return fmt.Errorf("createOrUpdateSecret: failed to update configmap: %v", err)
-			}
-		}
-	}
-	return nil
+	return c.Apply(ns, &v1.Secret{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+		Data:       data,
+	})
 }
 
 func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
-	client, err := c.GetClientset()
-	if err != nil {
-		return fmt.Errorf("createOrUpdateConfigMap: failed to get client set: %v", err)
-	}
-	configs := client.CoreV1().ConfigMaps(ns)
-	cm, err := configs.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data}
-		c.Infof("Creating %s/cm/%s", ns, name)
-		if !c.ApplyDryRun {
-			if _, err := configs.Create(cm); err != nil {
-				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !c.ApplyDryRun {
-			c.Infof("Updating %s/cm/%s", ns, name)
-			if _, err := configs.Update(cm); err != nil {
-				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
-			}
-		}
-	}
-	return nil
+	return c.Apply(ns, &v1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+		Data:       data})
 }
 
 func (c *Client) ExposeIngress(namespace, service string, domain string, port int, annotations map[string]string) error {

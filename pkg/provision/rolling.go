@@ -21,6 +21,7 @@ type RollingOptions struct {
 	Force                  bool
 	ScaleSingleDeployments bool
 	MigrateLocalVolumes    bool
+	Masters, Workers       bool
 }
 
 // Perform a rolling update of nodes
@@ -41,6 +42,12 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			platform.Infof("Replacing %s,  age=%s, template=%s ", machine.Name(), age, template)
 		} else {
 			platform.Infof("Skipping %s, age=%s, template=%s ", machine.Name(), age, template)
+			continue
+		}
+
+		if k8s.IsMasterNode(node) && !opts.Masters {
+			continue
+		} else if !k8s.IsMasterNode(node) && !opts.Workers {
 			continue
 		}
 
@@ -113,9 +120,9 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			}
 		}
 
-		platform.Infof("waiting for replacement for %s to become ready", node.Name)
+		platform.Infof("[%s] waiting for replacement to become ready", replacement.Name())
 		if status, err := platform.WaitForNode(replacement.Name(), opts.Timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
-			return fmt.Errorf("new worker %s did not come up healthy: %v", node.Name, status)
+			return fmt.Errorf("[%s] replacement did not come up healthy: %v", replacement.Name(), status)
 		}
 
 		terminate(platform, machine)

@@ -40,7 +40,6 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.Etcd.Local.DataDir = "/var/lib/etcd"
 	cluster.Etcd.Local.ExtraArgs = cfg.Kubernetes.EtcdExtraArgs
 	cluster.Etcd.Local.ExtraArgs["listen-metrics-urls"] = "http://0.0.0.0:2381"
-
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
 	cluster.APIServer.TimeoutForControlPlane = "4m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
@@ -64,6 +63,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		cluster.APIServer.ExtraArgs["oidc-username-claim"] = "email"
 		cluster.APIServer.ExtraArgs["oidc-groups-claim"] = "groups"
 	}
+
 	if strings.HasPrefix(cluster.KubernetesVersion, "v1.16") {
 		runtimeConfigs := []string{
 			"apps/v1beta1=true",
@@ -83,15 +83,79 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	return cluster
 }
 
+func getKubeletArgs(cfg *platform.Platform) map[string]string {
+	args := cfg.Kubernetes.KubeletExtraArgs
+	if cfg.Vsphere != nil && cfg.Vsphere.CPIVersion != "" {
+		if args == nil {
+			args = make(map[string]string)
+		}
+		args["cloud-provider"] = "external"
+	}
+	return args
+}
+
 func NewInitConfig(cfg *platform.Platform) api.InitConfiguration {
-	config := api.InitConfiguration{
-		Kind: "InitConfiguration",
+	return api.InitConfiguration{
+		APIVersion: "kubeadm.k8s.io/v1beta2",
+		Kind:       "InitConfiguration",
 		NodeRegistration: api.NodeRegistration{
-			KubeletExtraArgs: cfg.Kubernetes.KubeletExtraArgs,
+			KubeletExtraArgs: getKubeletArgs(cfg),
 		},
 	}
+}
 
-	return config
+func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
+	token, err := GetOrCreateBootstrapToken(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
+	}
+	certKey, err := UploadControlPlaneCerts(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload control plane certs: %v", err)
+	}
+	return yaml.Marshal(api.JoinConfiguration{
+		APIVersion: "kubeadm.k8s.io/v1beta2",
+		Kind:       "JoinConfiguration",
+		ControlPlane: &api.JoinControlPlane{
+			CertificateKey: certKey,
+			LocalAPIEndpoint: api.APIEndpoint{
+				AdvertiseAddress: "0.0.0.0",
+				BindPort:         6443,
+			},
+		},
+		Discovery: api.Discovery{
+			BootstrapToken: &api.BootstrapTokenDiscovery{
+				APIServerEndpoint:        cfg.JoinEndpoint,
+				Token:                    token,
+				UnsafeSkipCAVerification: true,
+			},
+		},
+		NodeRegistration: api.NodeRegistration{
+			KubeletExtraArgs: getKubeletArgs(cfg),
+		},
+	})
+}
+
+func NewJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
+	token, err := GetOrCreateBootstrapToken(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
+	}
+
+	return yaml.Marshal(api.JoinConfiguration{
+		APIVersion: "kubeadm.k8s.io/v1beta2",
+		Kind:       "JoinConfiguration",
+		NodeRegistration: api.NodeRegistration{
+			KubeletExtraArgs: getKubeletArgs(cfg),
+		},
+		Discovery: api.Discovery{
+			BootstrapToken: &api.BootstrapTokenDiscovery{
+				APIServerEndpoint:        cfg.JoinEndpoint,
+				Token:                    token,
+				UnsafeSkipCAVerification: true,
+			},
+		},
+	})
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go
