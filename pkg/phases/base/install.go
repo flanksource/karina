@@ -12,6 +12,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/phases/quack"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 func Install(platform *platform.Platform) error {
@@ -107,6 +108,15 @@ func Install(platform *platform.Platform) error {
 
 	if platform.PlatformOperator == nil || !platform.PlatformOperator.Disabled {
 		platform.Infof("Installing platform operator")
+		if platform.PlatformOperator == nil {
+			platform.PlatformOperator = &types.PlatformOperator{}
+		}
+		if platform.PlatformOperator.WhitelistedPodAnnotations == nil {
+			platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
+		}
+		if platform.PlatformOperator.Version == "" {
+			platform.PlatformOperator.Version = "0.3"
+		}
 		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
 			platform.Errorf("Error deploying platform-operator: %s", err)
 		}
