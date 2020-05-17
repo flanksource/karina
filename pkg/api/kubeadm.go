@@ -90,6 +90,7 @@ type JoinControlPlane struct {
 	CertificateKey string `yaml:"certificateKey,omitempty"`
 }
 
+//nolint: golint
 type APIEndpoint struct {
 	// AdvertiseAddress sets the IP address for the API server to advertise.
 	AdvertiseAddress string `yaml:"advertiseAddress,omitempty"`

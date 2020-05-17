@@ -117,6 +117,7 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 // baseKonfig generates a base konfigadm configuration.
 // It copies in the required environment variables and
 // initial commands.
+//nolint:unparam
 func baseKonfig(initialKonfigadmFile string, platform *platform.Platform) (*konfigadm.Config, error) {
 	var cfg *konfigadm.Config
 	var err error
