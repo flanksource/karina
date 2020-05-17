@@ -61,7 +61,7 @@ type PlatformConfig struct {
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`
-
+	Vsphere             *Vsphere             `yaml:"vsphere,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`

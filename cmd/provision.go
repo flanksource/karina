@@ -55,7 +55,7 @@ var vm = &cobra.Command{
 		platform := getPlatform(cmd)
 		//copy master config
 		vm := platform.Master
-		vmware.LoadGovcEnvVars(&vm)
+		vmware.LoadGovcEnvVars(*platform.Vsphere, &vm)
 		vm.MemoryGB = int64(mem)
 		vm.DiskGB = disk
 		vm.CPUs = int32(cpu)
