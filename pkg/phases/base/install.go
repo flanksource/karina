@@ -134,6 +134,40 @@ func Install(platform *platform.Platform) error {
 			platform.Errorf("Failed to deploy NFS %+v", err)
 		}
 	}
+	if platform.Vsphere != nil {
+		v := platform.Vsphere
+		if err := platform.CreateOrUpdateSecret("vsphere-secrets", "kube-system", platform.Vsphere.GetSecret()); err != nil {
+			platform.Errorf("Failed to create vsphere secrets: %s", err)
+		}
+		if err := platform.CreateOrUpdateSecret("vsphere-config", "kube-system", map[string][]byte{
+			"vsphere.conf": []byte(fmt.Sprintf(`
+[Global]
+cluster-id = "%s"
+port = "443"
+insecure-flag = "true"
+secret-name = "vsphere-secrets"
+secret-namespace = "kube-system"
+
+[VirtualCenter "%s"]
+datacenters = "%s"
+user = "%s"
+password = "%s"
+			`, platform.Name, v.Hostname, v.Datacenter, v.Username, v.Password)),
+		}); err != nil {
+			platform.Errorf("Failed to create vsphere config: %s", err)
+		}
+
+		if platform.Vsphere.CPIVersion != "" {
+			if err := platform.ApplySpecs("kube-system", "vsphere-cpi.yaml"); err != nil {
+				platform.Errorf("Failed to deploy vSphere CPI: %v", err)
+			}
+		}
+		if platform.Vsphere.CSIVersion != "" {
+			if err := platform.ApplySpecs("kube-system", "vsphere-csi.yaml"); err != nil {
+				platform.Errorf("Failed to deploy vSphere CSI: %v", err)
+			}
+		}
+	}
 
 	return nil
 }
