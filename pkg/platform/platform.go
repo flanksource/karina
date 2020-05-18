@@ -330,7 +330,7 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 func (platform *Platform) GetConsulClient() api.Consul {
 	return api.Consul{
 		Logger:  platform.Logger,
-		Host:    platform.Consul,
+		Host:    fmt.Sprintf("http://%s:8500", platform.Consul),
 		Service: platform.Name,
 	}
 }
