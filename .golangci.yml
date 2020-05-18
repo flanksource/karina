@@ -9,7 +9,8 @@ run:
     - ./pkg/k8s/etcd
     - ./pkg/k8s/drain
     - ./pkg/k8s/proxy
-  skip-files: []
+  skip-files:
+    - pkg/api/certmanager/types.go
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.

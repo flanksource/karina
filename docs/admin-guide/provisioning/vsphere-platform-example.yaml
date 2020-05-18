@@ -8,6 +8,19 @@ name: example-cluster
 ## Prefix to be added to VM hostnames,
 hostPrefix: ex
 
+vsphere:
+  username: kubernetes@vsphere.local
+  datacenter: dc1
+  cluster: cluster1
+  folder: folder1
+  datastore: ds1
+  datastore: ds:///vmfs/volumes/vsan:52e80611d24d0122-77aaecacaa383c67/
+  password: !!env GOVC_PASS
+  hostname: vcenter1.corp
+  resourcePool: K8
+  csiVersion: v2.0.0
+  cpiVersion: v1.1.0
+
 ## Endpoint for externally hosted consul cluster
 ## NOTE: a working consol config required to verify
 ##       that primary master is available.
@@ -33,9 +46,9 @@ ingressCA:
   privateKey: .certs/ingress-ca.key
   password: foobar
 
-# A list of folders of kubernetes specs to apply, 
+# A list of folders of kubernetes specs to apply,
 # these will be templatized
-specs: 
+specs:
   - ./manifests
 versions:
   kubernetes: v1.16.4

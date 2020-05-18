@@ -71,12 +71,12 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			Annotation: "Created by platform-cli from " + vm.Template,
-
+			Annotation:   "Created by platform-cli from " + vm.Template,
 			Flags:        newVMFlagInfo(),
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
+			Version:      "15",
 		},
 		Location: types.VirtualMachineRelocateSpec{
 			Datastore:    types.NewReference(datastore.Reference()),
@@ -88,7 +88,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	}
 
 	s.Infof("Cloning %s to %s", vm.Template, vm.Name)
-
 	s.Tracef("VM Spec: %# v", pretty.Formatter(spec))
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
@@ -134,15 +133,14 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 		}
 		op = types.VirtualDeviceConfigSpecOperationAdd
 	}
-	s.Infof("Creating ISO for %s", vm.Name)
+	s.Debugf("Creating ISO for %s", vm.Name)
 	iso, err := cloudinit.CreateISO(vm.Name, config.ToCloudInit().String())
 	if err != nil {
 		return nil, fmt.Errorf("getCdrom: failed to create ISO: %v", err)
 	}
 	path := fmt.Sprintf("cloud-init/%s.iso", vm.Name)
-	s.Infof("Uploading to [%s] %s", datastore.Name(), path)
+	s.Debugf("Uploading to [%s] %s", datastore.Name(), path)
 	if err = datastore.UploadFile(context.TODO(), iso, path, &soap.DefaultUpload); err != nil {
-		s.Infof("%+v\n", err)
 		return nil, err
 	}
 	s.Tracef("Uploaded to %s", path)

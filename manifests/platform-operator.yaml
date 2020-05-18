@@ -1,47 +1,514 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-system
+  labels:
+    control-plane: controller-manager
+    openpolicyagent.org/webhook: ignore
+    quack.pusher.com/enabled: "true"
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: platform-system/platform-serving-cert
+    controller-gen.kubebuilder.io/version: v0.2.4
+  creationTimestamp: null
+  name: clusterresourcequotas.platform.flanksource.com
+spec:
+  group: platform.flanksource.com
+  names:
+    kind: ClusterResourceQuota
+    listKind: ClusterResourceQuotaList
+    plural: clusterresourcequotas
+    singular: clusterresourcequota
+  scope: Cluster
+  validation:
+    openAPIV3Schema:
+      description:
+        ClusterResourceQuota is the Schema for the clusterresourcequotas
+        API
+      properties:
+        apiVersion:
+          description:
+            "APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
+          type: string
+        kind:
+          description:
+            "Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: Spec defines the desired quota
+          properties:
+            quota:
+              description:
+                Quota sets aggregate quota restrictions enforced across
+                all namespaces
+              properties:
+                hard:
+                  additionalProperties:
+                    type: string
+                  description:
+                    "hard is the set of desired hard limits for each named
+                    resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/"
+                  type: object
+                scopeSelector:
+                  description:
+                    scopeSelector is also a collection of filters like
+                    scopes that must match each object tracked by a quota but expressed
+                    using ScopeSelectorOperator in combination with possible values.
+                    For a resource to match, both scopes AND scopeSelector (if specified
+                    in spec), must be matched.
+                  properties:
+                    matchExpressions:
+                      description:
+                        A list of scope selector requirements by scope
+                        of the resources.
+                      items:
+                        description:
+                          A scoped-resource selector requirement is a selector
+                          that contains values, a scope name, and an operator that
+                          relates the scope name and values.
+                        properties:
+                          operator:
+                            description:
+                              Represents a scope's relationship to a set
+                              of values. Valid operators are In, NotIn, Exists, DoesNotExist.
+                            type: string
+                          scopeName:
+                            description:
+                              The name of the scope that the selector applies
+                              to.
+                            type: string
+                          values:
+                            description:
+                              An array of string values. If the operator
+                              is In or NotIn, the values array must be non-empty.
+                              If the operator is Exists or DoesNotExist, the values
+                              array must be empty. This array is replaced during a
+                              strategic merge patch.
+                            items:
+                              type: string
+                            type: array
+                        required:
+                          - operator
+                          - scopeName
+                        type: object
+                      type: array
+                  type: object
+                scopes:
+                  description:
+                    A collection of filters that must match each object
+                    tracked by a quota. If not specified, the quota matches all objects.
+                  items:
+                    description:
+                      A ResourceQuotaScope defines a filter that must match
+                      each object tracked by a quota
+                    type: string
+                  type: array
+              type: object
+          type: object
+        status:
+          description: Status defines the actual enforced quota and its current usage
+          properties:
+            namespaces:
+              description: Slices the quota used per namespace
+              items:
+                description:
+                  ResourceQuotaStatusByNamespace gives status for a particular
+                  name
+                properties:
+                  namespace:
+                    description: Namespace the project this status applies to
+                    type: string
+                  status:
+                    description:
+                      Status indicates how many resources have been consumed
+                      by this project
+                    properties:
+                      hard:
+                        additionalProperties:
+                          type: string
+                        description:
+                          "Hard is the set of enforced hard limits for
+                          each named resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/"
+                        type: object
+                      used:
+                        additionalProperties:
+                          type: string
+                        description:
+                          Used is the current observed total usage of the
+                          resource in the namespace.
+                        type: object
+                    type: object
+                required:
+                  - namespace
+                  - status
+                type: object
+              type: array
+            total:
+              description:
+                Total defines the actual enforced quota and its current
+                usage across all namespaces
+              properties:
+                hard:
+                  additionalProperties:
+                    type: string
+                  description:
+                    "Hard is the set of enforced hard limits for each named
+                    resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/"
+                  type: object
+                used:
+                  additionalProperties:
+                    type: string
+                  description:
+                    Used is the current observed total usage of the resource
+                    in the namespace.
+                  type: object
+              type: object
+          required:
+            - namespaces
+          type: object
+      type: object
+  version: v1
+  versions:
+    - name: v1
+      served: true
+      storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: platform-system/platform-serving-cert
+  creationTimestamp: null
+  name: platform-mutating-webhook-configuration
+  namespace: platform-system
+webhooks:
+  - clientConfig:
+      caBundle: Cg==
+      service:
+        name: platform-webhook-service
+        namespace: platform-system
+        path: /mutate-v1-pod
+    failurePolicy: Ignore
+    name: annotate-pods-v1.platform.flanksource.com
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: platform-system/platform-serving-cert
+  creationTimestamp: null
+  name: platform-validating-webhook-configuration
+  namespace: platform-system
+webhooks:
+  - clientConfig:
+      caBundle: Cg==
+      service:
+        name: platform-webhook-service
+        namespace: platform-system
+        path: /validate-clusterresourcequota-platform-flanksource-com-v1
+    failurePolicy: Fail
+    name: clusterresourcequotas-validation-v1.platform.flanksource.com
+    rules:
+      - apiGroups:
+          - platform.flanksource.com
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - clusterresourcequotas
+  - clientConfig:
+      caBundle: Cg==
+      service:
+        name: platform-webhook-service
+        namespace: platform-system
+        path: /validate-resourcequota-v1
+    failurePolicy: Fail
+    name: resourcequotas-validation-v1.platform.flanksource.com
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - resourcequotas
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: platform-operator
-  namespace: kube-system
+  namespace: platform-system
 ---
-kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  name: platform-operator
+  name: platform-leader-election
+  namespace: platform-system
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platform-clusterresourcequota-editor
+rules:
+  - apiGroups:
+      - platform.flanksource.com
+    resources:
+      - clusterresourcequotas
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - platform.flanksource.com
+    resources:
+      - clusterresourcequotas/status
+    verbs:
+      - get
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platform-clusterresourcequota-viewer
+rules:
+  - apiGroups:
+      - platform.flanksource.com
+    resources:
+      - clusterresourcequotas
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - platform.flanksource.com
+    resources:
+      - clusterresourcequotas/status
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: platform-manager
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - resourcequotas
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - platform.flanksource.com
+    resources:
+      - clusterresourcequotas
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - platform.flanksource.com
+    resources:
+      - clusterresourcequotas/status
+    verbs:
+      - get
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-leader-election
+  namespace: platform-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-leader-election
 subjects:
   - kind: ServiceAccount
     name: platform-operator
-    namespace: kube-system
+    namespace: platform-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: platform-manager
 roleRef:
-  kind: ClusterRole
-  name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
-
+  kind: ClusterRole
+  name: platform-manager
+subjects:
+  - kind: ServiceAccount
+    name: platform-operator
+    namespace: platform-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-webhook-service
+  namespace: platform-system
+spec:
+  ports:
+    - port: 443
+      targetPort: 9443
+  selector:
+    control-plane: controller-manager
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    control-plane: controller-manager
   name: platform-operator
-  namespace: kube-system
+  namespace: platform-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: platform-operator
+      control-plane: controller-manager
   template:
     metadata:
       labels:
-        name: platform-operator
+        control-plane: controller-manager
     spec:
-      serviceAccountName: platform-operator
       containers:
-        - name: platform-operator
-          image: docker.io/moshloop/platform-operator:0.1
+        - args:
+            - --enable-leader-election
+            - --annotations={{ conv.Join .platformOperator.whitelistedPodAnnotations "," }}
+          command:
+            - /manager
+          image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"
+          imagePullPolicy: Always
+          name: manager
+          ports:
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
           resources:
-            requests:
-              cpu: 10m
-              memory: 20Mi
             limits:
               cpu: 100m
-              memory: 256Mi
+              memory: 30Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          volumeMounts:
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: cert
+              readOnly: true
+      serviceAccountName: platform-operator
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: platform-serving-cert
+  namespace: platform-system
+spec:
+  dnsNames:
+    - platform-webhook-service.platform-system.svc
+    - platform-webhook-service.platform-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: platform-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: platform-selfsigned-issuer
+  namespace: platform-system
+spec:
+  selfSigned: {}

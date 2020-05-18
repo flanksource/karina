@@ -12,6 +12,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/phases/quack"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 func Install(platform *platform.Platform) error {
@@ -19,6 +20,10 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.ApplySpecs("", "rbac.yaml"); err != nil {
 		platform.Errorf("Error deploying base rbac: %s", err)
+	}
+
+	if err := platform.ApplySpecs("", "kube-system.yaml"); err != nil {
+		platform.Errorf("Error deploying base kube-system annotations: %s", err)
 	}
 
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
@@ -53,7 +58,7 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
 		"quack.pusher.com/enabled": "true",
-	}, nil); err != nil {
+	}, platform.DefaultNamespaceAnnotations()); err != nil {
 		return err
 	}
 
@@ -101,8 +106,17 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
+	if platform.PlatformOperator == nil || !platform.PlatformOperator.Disabled {
 		platform.Infof("Installing platform operator")
+		if platform.PlatformOperator == nil {
+			platform.PlatformOperator = &types.PlatformOperator{}
+		}
+		if platform.PlatformOperator.WhitelistedPodAnnotations == nil {
+			platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
+		}
+		if platform.PlatformOperator.Version == "" {
+			platform.PlatformOperator.Version = "0.3"
+		}
 		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
 			platform.Errorf("Error deploying platform-operator: %s", err)
 		}
@@ -128,6 +142,40 @@ func Install(platform *platform.Platform) error {
 		platform.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
 		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
 			platform.Errorf("Failed to deploy NFS %+v", err)
+		}
+	}
+	if platform.Vsphere != nil {
+		v := platform.Vsphere
+		if err := platform.CreateOrUpdateSecret("vsphere-secrets", "kube-system", platform.Vsphere.GetSecret()); err != nil {
+			platform.Errorf("Failed to create vsphere secrets: %s", err)
+		}
+		if err := platform.CreateOrUpdateSecret("vsphere-config", "kube-system", map[string][]byte{
+			"vsphere.conf": []byte(fmt.Sprintf(`
+[Global]
+cluster-id = "%s"
+port = "443"
+insecure-flag = "true"
+secret-name = "vsphere-secrets"
+secret-namespace = "kube-system"
+
+[VirtualCenter "%s"]
+datacenters = "%s"
+user = "%s"
+password = "%s"
+			`, platform.Name, v.Hostname, v.Datacenter, v.Username, v.Password)),
+		}); err != nil {
+			platform.Errorf("Failed to create vsphere config: %s", err)
+		}
+
+		if platform.Vsphere.CPIVersion != "" {
+			if err := platform.ApplySpecs("kube-system", "vsphere-cpi.yaml"); err != nil {
+				platform.Errorf("Failed to deploy vSphere CPI: %v", err)
+			}
+		}
+		if platform.Vsphere.CSIVersion != "" {
+			if err := platform.ApplySpecs("kube-system", "vsphere-csi.yaml"); err != nil {
+				platform.Errorf("Failed to deploy vSphere CSI: %v", err)
+			}
 		}
 	}
 

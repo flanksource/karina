@@ -66,7 +66,7 @@ if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.x
   failed=true
 fi
 
-wget https://github.com/flanksource/build-tools/releases/download/latest/build-tools
+wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
 chmod +x build-tools
 ./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
       --success-message="commit $COMMIT_SHA" \

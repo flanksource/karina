@@ -5,9 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/flanksource/commons/certs"
 	"github.com/moshloop/platform-cli/pkg/api/calico"
-	"gopkg.in/flanksource/yaml.v3"
+	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
 type Enabled struct {
@@ -288,6 +287,8 @@ type Kubernetes struct {
 	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
 	// EncryptionConfig is used to specify the encryption configuration file.
 	EncryptionConfig EncryptionConfig `yaml:"encryption,omitempty"`
+	// Configure container runtime: docker/containerd
+	ContainerRuntime string `yaml:"containerRuntime"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of
@@ -362,7 +363,7 @@ type Prometheus struct {
 
 type Persistence struct {
 	// Enable persistence for Prometheus
-	Enabled bool `yaml:"enabled,omitempty"`
+	Enabled bool `yaml:"enabled"`
 	// Storage class to use. If not set default one will be used
 	StorageClass string `yaml:"storageClass,omitempty"`
 	// Capacity. Required if persistence is enabled
@@ -474,6 +475,9 @@ type FluentdOperator struct {
 type Filebeat struct {
 	Version       string      `yaml:"version"`
 	Disabled      bool        `yaml:"disabled,omitempty"`
+	Name          string      `yaml:"name"`
+	Index         string      `yaml:"index"`
+	Prefix        string      `yaml:"prefix"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
 }
@@ -566,8 +570,8 @@ type NodeLocalDNS struct {
 
 type SealedSecrets struct {
 	Enabled
-	Version     string             `yaml:"version,omitempty"`
-	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
+	Version     string `yaml:"version,omitempty"`
+	Certificate *CA    `yaml:"certificate,omitempty"`
 }
 
 type RegistryCredentials struct {
@@ -608,6 +612,48 @@ type RegistryCredentialsACR struct {
 	URL      string `yaml:"string,omitempty"`
 	ClientID string `yaml:"clientId,omitempty"`
 	Password string `yaml:"password,omitempty"`
+}
+
+type PlatformOperator struct {
+	Enabled
+	Version                   string   `yaml:"version"`
+	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
+}
+
+type Vsphere struct {
+	// GOVC_USER
+	Username string `yaml:"username,omitempty"`
+	// GOVC_PASS
+	Password string `yaml:"password,omitempty"`
+	// GOVC_DATACENTER
+	Datacenter string `yaml:"datacenter,omitempty"`
+	// e.g. ds:///vmfs/volumes/vsan:<id>/
+	DatastoreURL string `yaml:"datastoreUrl,omitempty"`
+	// GOVC_DATASTORE
+	Datastore string `yaml:"datastore,omitempty"`
+	// GOVC_NETWORK
+	Network string `yaml:"network,omitempty"`
+	// Cluster for VM placement via DRS (GOVC_CLUSTER)
+	Cluster string `yaml:"cluster,omitempty"`
+	// GOVC_RESOURCE_POOL
+	ResourcePool string `yaml:"resourcePool,omitempty"`
+	//  Inventory folder (GOVC_FOLDER)
+	Folder string `yaml:"folder,omitempty"`
+	// GOVC_FQDN
+	Hostname string `yaml:"hostname,omitempty"`
+	// Version of the vSphere CSI Driver
+	CSIVersion string `yaml:"csiVersion,omitempty"`
+	// Version of the vSphere External Cloud Provider
+	CPIVersion string `yaml:"cpiVersion,omitempty"`
+	// Skip verification of server certificate
+	SkipVerify bool `yaml:"verify"`
+}
+
+func (v Vsphere) GetSecret() map[string][]byte {
+	return map[string][]byte{
+		v.Hostname + ".username": []byte(v.Username),
+		v.Hostname + ".password": []byte(v.Password),
+	}
 }
 
 type Connection struct {

@@ -29,6 +29,7 @@ func TestGetConfigSetDefaults(t *testing.T) {
 		SchedulerExtraArgs:  map[string]string{},
 		KubeletExtraArgs:    map[string]string{},
 		EtcdExtraArgs:       map[string]string{},
+		ContainerRuntime:    "docker",
 	}))
 }
 
