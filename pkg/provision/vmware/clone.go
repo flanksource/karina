@@ -11,7 +11,6 @@ import (
 
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/kr/pretty"
 	ptypes "github.com/moshloop/platform-cli/pkg/types"
 )
 
@@ -76,7 +75,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
-			Version:      "15",
 		},
 		Location: types.VirtualMachineRelocateSpec{
 			Datastore:    types.NewReference(datastore.Reference()),
@@ -88,7 +86,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	}
 
 	s.Infof("Cloning %s to %s", vm.Template, vm.Name)
-	s.Tracef("VM Spec: %# v", pretty.Formatter(spec))
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
