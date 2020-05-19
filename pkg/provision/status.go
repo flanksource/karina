@@ -47,6 +47,18 @@ func Status(p *platform.Platform) error {
 		fmt.Fprintf(w, "%s\t", node.Status.NodeInfo.ContainerRuntimeVersion)
 		fmt.Fprintf(w, "\n")
 	}
+
+	for _, orphan := range cluster.Orphans {
+		fmt.Fprintf(w, "%s\t", orphan.Name())
+		fmt.Fprintf(w, "%s\t", "orphan")
+		fmt.Fprintf(w, "\t\t")
+		fmt.Fprintf(w, "%s\t", orphan.IP())
+		fmt.Fprintf(w, "%s\t", age(orphan.GetAge()))
+		fmt.Fprintf(w, "%s\t", orphan.GetTemplate())
+		fmt.Fprintf(w, "\n")
+
+	}
+
 	_ = w.Flush()
 	return nil
 }
