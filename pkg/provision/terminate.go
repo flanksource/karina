@@ -47,9 +47,7 @@ func TerminateNodes(platform *platform.Platform, nodes []string) error {
 		}
 		terminate(platform, machine)
 	}
-
 	return nil
-
 }
 
 // Cleanup stops and deletes all VM's for a cluster;

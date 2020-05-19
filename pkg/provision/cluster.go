@@ -169,7 +169,6 @@ func (cluster *Cluster) GetHealth(node v1.Node) string {
 func (cluster *Cluster) Cordon(node v1.Node) error {
 	ctx := context.TODO()
 	if k8s.IsMasterNode(node) {
-
 		// we always interact via the etcd leader, as a previous node may have become unavailable
 		leaderClient, err := cluster.GetEtcdLeader()
 		if err != nil {
@@ -182,10 +181,8 @@ func (cluster *Cluster) Cordon(node v1.Node) error {
 			return err
 		}
 		var etcdMember *etcd.Member
-		var etcdMembersNames []string
 		var candidateLeader *etcd.Member
 		for _, member := range members {
-			etcdMembersNames = append(etcdMembersNames, member.Name)
 			if member.Name == node.Name {
 				// find the etcd member for the node
 				etcdMember = member

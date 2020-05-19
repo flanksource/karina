@@ -56,7 +56,6 @@ func Status(p *platform.Platform) error {
 		fmt.Fprintf(w, "%s\t", age(orphan.GetAge()))
 		fmt.Fprintf(w, "%s\t", orphan.GetTemplate())
 		fmt.Fprintf(w, "\n")
-
 	}
 
 	_ = w.Flush()
