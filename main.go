@@ -62,6 +62,8 @@ func main() {
 		cmd.Snapshot,
 		cmd.Status,
 		cmd.Test,
+		cmd.TerminateNodes,
+		cmd.TerminateOrphans,
 		cmd.Upgrade,
 		cmd.Vault,
 	)
