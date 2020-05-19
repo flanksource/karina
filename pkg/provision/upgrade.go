@@ -12,15 +12,15 @@ import (
 
 const ClusterConfiguration = "ClusterConfiguration"
 
-const upgradeCommand =
+const upgradePrepCommand =
 // install the correct version kubeadm
-"apt-get install -y --allow-change-held-packages kubeadm=%s-00;" +
+"apt-get install -y --allow-change-held-packages kubeadm=%s-00 ;" +
 	// prevent it from being automatically updated
 	" apt-mark hold kubeadm &&" +
 	// download the most recent kubeadm configuration
-	" kubectl get cm kubeadm-config -o json -n kube-system | jq -r '.data.ClusterConfiguration' > /etc/kubernetes/kubeadm.conf" +
+	" (kubectl get cm kubeadm-config -o json -n kube-system | jq -r '.data.ClusterConfiguration' > /etc/kubernetes/kubeadm.conf)"
 	// perform the upgrade
-	" kubeadm upgrade apply -y --allow-experimental-upgrades --allow-release-candidate-upgrades --config /etc/kubernetes/kubeadm.conf %s"
+const upgradeCluster = "kubeadm upgrade apply -y --allow-experimental-upgrades --allow-release-candidate-upgrades --config /etc/kubernetes/kubeadm.conf %s"
 
 const upgradeNode = "apt-get install -y --allow-change-held-packages kubeadm=%s-00;" +
 	" apt-mark hold kubeadm &&" +
@@ -77,7 +77,11 @@ func Upgrade(platform *platform.Platform) error {
 	platform.Infof("Nodes already upgraded: %s", upgraded)
 
 	if len(upgraded) == 0 {
-		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, upgradeCommand, platform.Kubernetes.Version[1:], platform.Kubernetes.Version)
+		out, err := platform.Executef(toUpgrade[0], 5*time.Minute, upgradePrepCommand, platform.Kubernetes.Version[1:], platform.Kubernetes.Version)
+		if err != nil {
+			return fmt.Errorf("failed to prep for upgrade: %s, %s", err, out)
+		}
+		out, err = platform.Executef(toUpgrade[0], 5*time.Minute, upgradeCluster, platform.Kubernetes.Version[1:], platform.Kubernetes.Version)
 		if err != nil {
 			return fmt.Errorf("failed to upgrade: %s, %s", err, out)
 		}
