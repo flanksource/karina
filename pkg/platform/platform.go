@@ -330,7 +330,7 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 func (platform *Platform) GetConsulClient() api.Consul {
 	return api.Consul{
 		Logger:  platform.Logger,
-		Host:    platform.Consul,
+		Host:    fmt.Sprintf("http://%s:8500", platform.Consul),
 		Service: platform.Name,
 	}
 }
@@ -341,6 +341,22 @@ func (platform *Platform) GetMasterIPs() []string {
 		return []string{platform.Kubernetes.MasterIP}
 	}
 	return platform.GetConsulClient().GetMembers()
+}
+
+func (platform *Platform) GetNodeNames() map[string]bool {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil
+	}
+	existingNodes := map[string]bool{}
+	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	for _, node := range nodeList.Items {
+		existingNodes[node.Name] = true
+	}
+	return existingNodes
 }
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary

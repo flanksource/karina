@@ -44,7 +44,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.Etcd.Local.ExtraArgs = cfg.Kubernetes.EtcdExtraArgs
 	cluster.Etcd.Local.ExtraArgs["listen-metrics-urls"] = "http://0.0.0.0:2381"
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
-	cluster.APIServer.TimeoutForControlPlane = "4m0s"
+	cluster.APIServer.TimeoutForControlPlane = "10m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
 
 	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
@@ -198,7 +198,7 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 		Data: map[string][]byte{
 			bootstrapapi.BootstrapTokenIDKey:               []byte(tokenID),
 			bootstrapapi.BootstrapTokenSecretKey:           []byte(tokenSecret),
-			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().UTC().Add(2 * time.Hour).Format(time.RFC3339)),
+			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().UTC().Add(4 * time.Hour).Format(time.RFC3339)),
 			bootstrapapi.BootstrapTokenUsageSigningKey:     []byte("true"),
 			bootstrapapi.BootstrapTokenUsageAuthentication: []byte("true"),
 			bootstrapapi.BootstrapTokenExtraGroupsKey:      []byte("system:bootstrappers:kubeadm:default-node-token"),

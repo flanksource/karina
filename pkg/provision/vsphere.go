@@ -62,10 +62,22 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 
 	wg := sync.WaitGroup{}
+	existingNodes := platform.GetNodeNames()
+
 	for nodeGroup, worker := range platform.Nodes {
 		vms, err := platform.Cluster.GetMachinesByPrefix(worker.Prefix)
 		if err != nil {
 			return err
+		}
+		missing := []string{}
+		for _, vm := range vms {
+			if _, ok := existingNodes[vm.Name()]; !ok {
+				missing = append(missing, vm.Name())
+			}
+		}
+		for _, m := range missing {
+			platform.Errorf("vm did not join kubernetes cluster: %s", m)
+			delete(vms, m)
 		}
 
 		for i := 0; i < worker.Count-len(vms); i++ {

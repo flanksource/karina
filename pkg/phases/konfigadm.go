@@ -24,8 +24,8 @@ var envVars = map[string]string{
 }
 
 const updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
-const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log"
-const kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log"
+const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
+const kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
 
 const noCAErrorText = `Must specify a 'ca'' section in the platform config.
 e.g.:
