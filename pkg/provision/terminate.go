@@ -8,6 +8,50 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
+// TerminateOrphans deletes all vm's that have not yet joined the cluster
+func TerminateOrphans(platform *platform.Platform) error {
+	cluster, err := GetCluster(platform)
+	if err != nil {
+		return err
+	}
+
+	for _, orphan := range cluster.Orphans {
+		time.Sleep(1 * time.Second) // sleep to allow for cancellation
+		platform.Infof("Deleting %s", orphan.Name())
+		terminate(platform, orphan)
+	}
+	return nil
+}
+
+// TerminateNodes deletes all of the specified nodes stops and deletes all VM's for a cluster;
+func TerminateNodes(platform *platform.Platform, nodes []string) error {
+	cluster, err := GetCluster(platform)
+	if err != nil {
+		return err
+	}
+	toDelete := map[string]bool{}
+	for _, node := range nodes {
+		toDelete[node] = true
+	}
+
+	for _, nodeMachine := range cluster.Nodes {
+		if !toDelete[nodeMachine.Node.Name] {
+			continue
+		}
+		machine := nodeMachine.Machine
+		node := nodeMachine.Node
+		platform.Infof("Deleting %s", node.Name)
+
+		if err := cluster.Cordon(node); err != nil {
+			return err
+		}
+		terminate(platform, machine)
+	}
+
+	return nil
+
+}
+
 // Cleanup stops and deletes all VM's for a cluster;
 func Cleanup(platform *platform.Platform) error {
 	if platform.TerminationProtection {

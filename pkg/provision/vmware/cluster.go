@@ -9,11 +9,12 @@ import (
 )
 
 type vmwareCluster struct {
-	ctx     context.Context
-	vsphere types.Vsphere
-	prefix  string
-	session *Session
-	DryRun  bool
+	ctx        context.Context
+	vsphere    types.Vsphere
+	prefix     string
+	session    *Session
+	vmPrefixes []string
+	DryRun     bool
 }
 
 // NewVMwareCluster opens a new vmware session using environment variables
@@ -33,6 +34,10 @@ func NewVMwareCluster(platform types.PlatformConfig) (types.Cluster, error) {
 	}
 	cluster.session = session
 	cluster.vsphere = *platform.Vsphere
+	cluster.vmPrefixes = []string{platform.Master.Prefix}
+	for _, vm := range platform.Nodes {
+		cluster.vmPrefixes = append(cluster.vmPrefixes, vm.Prefix)
+	}
 	return &cluster, nil
 }
 
@@ -47,7 +52,20 @@ func (cluster *vmwareCluster) Clone(template types.VM, config *konfigadm.Config)
 
 // GetVMs returns a list of all VM's associated with the cluster
 func (cluster *vmwareCluster) GetMachines() (map[string]types.Machine, error) {
-	return cluster.GetMachinesByPrefix("")
+	machines := map[string]types.Machine{}
+
+	// To list all machines for a cluster we search by each prefix combination
+	// we cannot search just using the cluster prefix as it may return incorrect startsWith results
+	for _, prefix := range cluster.vmPrefixes {
+		list, err := cluster.GetMachinesByPrefix(prefix)
+		if err != nil {
+			return nil, err
+		}
+		for name, machine := range list {
+			machines[name] = machine
+		}
+	}
+	return machines, nil
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
