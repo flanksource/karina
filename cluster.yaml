@@ -3,10 +3,10 @@
 ##
 
 ## Cluster name
-name: example-cluster
+name: encryption-cluster
 
 ## Prefix to be added to VM hostnames
-hostPrefix: vsphere-k8s-
+hostPrefix: vsphere-k8s
 
 vsphere:
   username:  !!env GOVC_USER
@@ -52,13 +52,17 @@ versions:
 serviceSubnet: 10.96.0.0/16
 podSubnet: 10.97.0.0/16
 
+kubernetes:
+  encryption:
+    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
+
 ## The VM configuration for master nodes
 master:
   count: 1
   cpu: 2  #NOTE: minimum of 2
   memory: 4
   disk: 10
-  networks:
+  networks: 
     - !!env GOVC_NETWORK
   cluster: !!env GOVC_CLUSTER
   prefix: m
@@ -66,7 +70,8 @@ master:
 workers:
   worker-group-a:
     prefix: w
-    network: !!env GOVC_NETWORK
+    networks: 
+      - !!env GOVC_NETWORK
     cluster: !!env GOVC_CLUSTER
     count: 1
     cpu: 2
