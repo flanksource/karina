@@ -18,3 +18,24 @@ var Cleanup = &cobra.Command{
 		}
 	},
 }
+
+var TerminateNodes = &cobra.Command{
+	Use:   "terminate-node [nodes]",
+	Short: "Cordon and terminate the specified nodes",
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := provision.TerminateNodes(getPlatform(cmd), args); err != nil {
+			log.Fatalf("Failed terminate nodes %s", err)
+		}
+	},
+}
+
+var TerminateOrphans = &cobra.Command{
+	Use:   "terminate-orphans",
+	Short: "Terminate all orphaned VM's that have not successfully joined the cluster",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := provision.TerminateOrphans(getPlatform(cmd)); err != nil {
+			log.Fatalf("Failed terminate nodes %s", err)
+		}
+	},
+}

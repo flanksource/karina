@@ -127,6 +127,11 @@ func VsphereCluster(platform *platform.Platform) error {
 }
 
 func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
+	// upload control plane certs first
+	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
+		return nil, err
+	}
+
 	vm := platform.Master
 	vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
 	if vm.Tags == nil {
@@ -245,8 +250,12 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	}
 
 	if err := RemoveDNS(platform, vm); err != nil {
-		platform.Warnf("Failed to remove dns for %s: %v", vm, err)
+		platform.Warnf("Failed to remove dns for %s: %v", vm.Name(), err)
 	}
+	if err := platform.GetConsulClient().RemoveMember(vm.Name()); err != nil {
+		return
+	}
+
 	if err := vm.Terminate(); err != nil {
 		platform.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}
