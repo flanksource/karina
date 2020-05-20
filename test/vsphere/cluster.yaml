@@ -54,7 +54,7 @@ podSubnet: 10.97.0.0/16
 
 kubernetes:
   encryption:
-    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
+    encryptionProviderConfigFile: ../fixtures/encryption-config.yaml
 
 ## The VM configuration for master nodes
 master:
