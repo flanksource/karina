@@ -99,7 +99,7 @@ func TestEncryption(p *platform.Platform, tr *console.TestResults) {
 		" --cacert /etc/kubernetes/pki/etcd/ca.crt"+
 		" --cert /etc/kubernetes/pki/etcd/peer.crt"+
 		" --key /etc/kubernetes/pki/etcd/peer.key"+
-		" | strings -n 6 -", ns, secretName)
+		"| tr -sc '[[:print:]]' '#'", ns, secretName)
 	tr.Debugf("verificationCommand: %v", verificationCommand)
 	stdout, stderr, err := p.ExecutePodf("kube-system", etcdPod.Name, "etcd",
 		"/bin/sh", "-c", verificationCommand)
