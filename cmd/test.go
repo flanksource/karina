@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
+
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/phases/audit"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
 	"github.com/moshloop/platform-cli/pkg/phases/consul"
@@ -122,13 +123,14 @@ func init() {
 	}
 
 	tests := map[string]TestFn{
-		"audit":              audit.Test,
+		"audit":              kubeadm.TestAudit,
 		"base":               base.Test,
 		"configmap-reloader": configmapreloader.Test,
 		"consul":             consul.Test,
 		"dex":                dex.Test,
 		"eck":                eck.Test,
 		"elasticsearch":      elasticsearch.Test,
+		"encryption":         kubeadm.TestEncryption,
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,

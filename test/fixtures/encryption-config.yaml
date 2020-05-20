@@ -1,0 +1,15 @@
+# Starting with example config from
+# https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/#encrypting-your-data
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+# Key secret generated with:
+# `head -c 32 /dev/urandom | base64`
+            - name: demokey
+              secret: busQyI67d2EnNqIkWhSWJaF2Wz1UnUCu8DNn07nb1fA=
+      - identity: {}

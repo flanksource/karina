@@ -44,7 +44,7 @@ nav:
                 - Persistent Volumes: ./admin-guide/persistent-volumes.md
                 - Multi-Tenancy: ./admin-guide/index.md
                 - Auditing: ./admin-guide/auditing.md
-                - Encryption: ./admin-guide/Encryption.md
+                - Encryption: ./admin-guide/encryption.md
                 - Sealed Secrets: ./admin-guide/sealed_secrets.md
         - Developer Guide:
                 - Quickstart: ./developer-guide/index.html#quickstart

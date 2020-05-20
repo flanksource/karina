@@ -285,6 +285,8 @@ type Kubernetes struct {
 	MasterIP      string            `yaml:"masterIP,omitempty"`
 	// Configure Kubernetes auditing
 	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
+	// EncryptionConfig is used to specify the encryption configuration file.
+	EncryptionConfig EncryptionConfig `yaml:"encryption,omitempty"`
 	// Configure container runtime: docker/containerd
 	ContainerRuntime string `yaml:"containerRuntime"`
 }
@@ -668,6 +670,12 @@ type Connection struct {
 // Configure additional `--audit-log-*` flags under kubernetes.apiServerExtraArgs
 type AuditConfig struct {
 	PolicyFile string `yaml:"policyFile,omitempty"`
+}
+
+// Specifies Cluster Encryption Provider Config,
+// primarily by specifying the Encryption Provider Config File supplied to the cluster API Server.
+type EncryptionConfig struct {
+	EncryptionProviderConfigFile string `yaml:"encryptionProviderConfigFile,omitempty"`
 }
 
 type ConfigMapReloader struct {
