@@ -9,14 +9,11 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.2.0
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
-	github.com/flanksource/yaml v0.0.0-20200325175021-f76146a3718a
 	github.com/go-pg/pg/v9 v9.1.6
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
-	github.com/google/martian v2.1.0+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.8
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pretty v0.2.0
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
@@ -37,18 +34,22 @@ require (
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 	golang.org/x/tools v0.0.0-20200427125506-479cc23432b1 // indirect
 	google.golang.org/grpc v1.26.0
+	gopkg.in/flanksource/yaml.v3 v3.1.0
+	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
 	k8s.io/cli-runtime v0.17.3
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.17.2
 	k8s.io/klog v1.0.0
+	sigs.k8s.io/controller-runtime v0.4.0
 	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.0.0+incompatible
 	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115

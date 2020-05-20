@@ -63,7 +63,8 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: nsx-system
-
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 # Create a ServiceAccount for NCP namespace
 apiVersion: v1
@@ -224,8 +225,6 @@ kind: Deployment
 metadata:
   name: nsx-ncp
   namespace: nsx-system
-  annotations:
-    reload/all: "true" # restart on cm/secret change
   labels:
     tier: nsx-networking
     component: nsx-ncp
@@ -275,31 +274,19 @@ spec:
             periodSeconds: 10
             failureThreshold: 5
           volumeMounts:
-            - name: config-volume
-              # NCP expects ncp.ini is present in /etc/nsx-ujo
-              mountPath: /etc/nsx-ujo/ncp.ini
-              subPath: ncp.ini
+            - name: projected-volume
+              mountPath: /etc/nsx-ujo
               readOnly: true
-            - name: nsx-cert
-              mountPath: /etc/nsx-ujo/nsx-cert
-              readOnly: true
-          # To add default LB cert, uncomment the volumeMount
-          # Update ncp.ini with the mounted cert and key file paths
-          #- name: lb-cert
-          #  mountPath: /etc/nsx-ujo/lb-cert
-          #  readOnly: true
       volumes:
-        - name: config-volume
-          # ConfigMap nsx-ncp-config is expected to supply ncp.ini
-          configMap:
-            name: nsx-ncp-config
-        - name: nsx-cert
-          secret:
-            secretName: nsx-secret
-        # To add default LB cert, uncomment and update the secretName
-        #- name: lb-cert
-        #  secret:
-        #    secretName: lb-secret
+        - name: projected-volume
+          projected:
+            sources:
+              # ConfigMap nsx-ncp-config is expected to supply ncp.ini
+              - configMap:
+                  name: nsx-ncp-config
+                  items:
+                    - key: ncp.ini
+                      path: ncp.ini
 
 ---
 apiVersion: apps/v1
@@ -458,8 +445,6 @@ kind: DaemonSet
 metadata:
   name: nsx-node-agent
   namespace: nsx-system
-  annotations:
-    reload/all: "true" #restart on cm/secret change
   labels:
     tier: nsx-networking
     component: nsx-node-agent
@@ -490,7 +475,6 @@ spec:
       # If configured with ServiceAccount, update the ServiceAccount
       # name below.
       serviceAccountName: nsx-node-agent-svc-account
-      terminationGracePeriodSeconds: 120
       containers:
         - name: nsx-node-agent
           # Docker image for NCP
@@ -504,10 +488,10 @@ spec:
                 - /bin/sh
                 - -c
                 - timeout 5 check_pod_liveness nsx-node-agent
-            initialDelaySeconds: 5
+            initialDelaySeconds: 60
             timeoutSeconds: 5
             periodSeconds: 10
-            failureThreshold: 2
+            failureThreshold: 5
           securityContext:
             capabilities:
               add:
@@ -517,15 +501,14 @@ spec:
                 - DAC_READ_SEARCH
           volumeMounts:
             # ncp.ini
-            - name: config-volume
-              mountPath: /etc/nsx-ujo/ncp.ini
-              subPath: ncp.ini
+            - name: projected-volume
+              mountPath: /etc/nsx-ujo
               readOnly: true
             # mount openvswitch dir
             - name: openvswitch
               mountPath: /var/run/openvswitch
             # mount CNI socket path
-            - name: cni-sock
+            - name: var-run-ujo
               mountPath: /var/run/nsx-ujo
             # mount container namespace
             - name: netns
@@ -534,7 +517,6 @@ spec:
             - name: proc
               mountPath: /host/proc
               readOnly: true
-
         - name: nsx-kube-proxy
           # Docker image for NCP
           image: "{{ .nsx.image }}"
@@ -556,18 +538,14 @@ spec:
                 - SYS_ADMIN
                 - SYS_PTRACE
                 - DAC_READ_SEARCH
-
           volumeMounts:
             # ncp.ini
-            - name: config-volume
-              mountPath: /etc/nsx-ujo/ncp.ini
-              subPath: ncp.ini
+            - name: projected-volume
+              mountPath: /etc/nsx-ujo
               readOnly: true
-
             # mount openvswitch dir
             - name: openvswitch
               mountPath: /var/run/openvswitch
-
         # nsx-ovs is not needed on BAREMETAL
         - name: nsx-ovs
           # Docker image for NCP
@@ -595,10 +573,13 @@ spec:
             periodSeconds: 5
           volumeMounts:
             # ncp.ini
-            - name: config-volume
-              mountPath: /etc/nsx-ujo/ncp.ini
-              subPath: ncp.ini
+            - name: projected-volume
+              mountPath: /etc/nsx-ujo
               readOnly: true
+            # mount openvswitch-db dir
+            - name: var-run-ujo
+              mountPath: /etc/openvswitch
+              subPath: openvswitch-db
             # mount openvswitch dir
             - name: openvswitch
               mountPath: /var/run/openvswitch
@@ -607,8 +588,8 @@ spec:
               mountPath: /sys
               readOnly: true
             # mount host config openvswitch dir
-            - name: host-config-openvswitch
-              mountPath: /etc/openvswitch
+            - name: host-original-ovs-db
+              mountPath: /host/etc/openvswitch
             # mount host lib modules to insert OVS kernel module if needed
             - name: host-modules
               mountPath: /lib/modules
@@ -617,15 +598,24 @@ spec:
             - name: host-os-release
               mountPath: /host/etc/os-release
               readOnly: true
-
+            # OVS puts logs into this mountPath by default
+            - name: host-var-log-ujo
+              mountPath: /var/log/openvswitch
+              subPath: openvswitch
       volumes:
-        - name: config-volume
-          configMap:
-            name: nsx-node-agent-config
+        - name: projected-volume
+          projected:
+            sources:
+              - configMap:
+                  name: nsx-node-agent-config
+                  items:
+                    - key: ncp.ini
+                      path: ncp.ini
+
         - name: openvswitch
           hostPath:
             path: /var/run/openvswitch
-        - name: cni-sock
+        - name: var-run-ujo
           hostPath:
             path: /var/run/nsx-ujo
         - name: netns
@@ -640,9 +630,16 @@ spec:
         - name: host-modules
           hostPath:
             path: /lib/modules
-        - name: host-config-openvswitch
+        # This is the directory where OVS that runs on the host stores
+        # its conf.db file. OVS uses this directory by default but if
+        # you had a it configured differently, please update it here
+        - name: host-original-ovs-db
           hostPath:
             path: /etc/openvswitch
         - name: host-os-release
           hostPath:
             path: /etc/os-release
+        - name: host-var-log-ujo
+          hostPath:
+            path: /var/log/nsx-ujo
+            type: DirectoryOrCreate

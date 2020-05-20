@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/flanksource/yaml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/flanksource/yaml.v3"
 )
 
 const (

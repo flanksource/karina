@@ -8,17 +8,17 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/yaml"
 	"github.com/moshloop/platform-cli/pkg/phases"
 	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/provision/vmware"
 	"github.com/moshloop/platform-cli/pkg/types"
+	"gopkg.in/flanksource/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func WithVmwareCluster(platform *platform.Platform) error {
-	cluster, err := vmware.NewVMwareCluster(platform.HostPrefix + "-" + platform.Name)
+	cluster, err := vmware.NewVMwareCluster(platform.PlatformConfig)
 	if err != nil {
 		return err
 	}
@@ -62,10 +62,22 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 
 	wg := sync.WaitGroup{}
+	existingNodes := platform.GetNodeNames()
+
 	for nodeGroup, worker := range platform.Nodes {
 		vms, err := platform.Cluster.GetMachinesByPrefix(worker.Prefix)
 		if err != nil {
 			return err
+		}
+		missing := []string{}
+		for _, vm := range vms {
+			if _, ok := existingNodes[vm.Name()]; !ok {
+				missing = append(missing, vm.Name())
+			}
+		}
+		for _, m := range missing {
+			platform.Errorf("vm did not join kubernetes cluster: %s", m)
+			delete(vms, m)
 		}
 
 		for i := 0; i < worker.Count-len(vms); i++ {
@@ -115,6 +127,11 @@ func VsphereCluster(platform *platform.Platform) error {
 }
 
 func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
+	// upload control plane certs first
+	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
+		return nil, err
+	}
+
 	vm := platform.Master
 	vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
 	if vm.Tags == nil {
@@ -233,8 +250,12 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	}
 
 	if err := RemoveDNS(platform, vm); err != nil {
-		platform.Warnf("Failed to remove dns for %s: %v", vm, err)
+		platform.Warnf("Failed to remove dns for %s: %v", vm.Name(), err)
 	}
+	if err := platform.GetConsulClient().RemoveMember(vm.Name()); err != nil {
+		return
+	}
+
 	if err := vm.Terminate(); err != nil {
 		platform.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}

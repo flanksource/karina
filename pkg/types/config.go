@@ -7,19 +7,18 @@ type PlatformConfig struct {
 	CA          *CA         `yaml:"ca"`
 	Calico      Calico      `yaml:"calico,omitempty"`
 	CertManager CertManager `yaml:"certmanager,omitempty"`
-	// Consul specifies the endpoint for externally hosted consul cluster
-	// NOTE: a working consol config required to verify
-	//       that primary master is available for a vSphere cluster.
+	// The endpoint for an externally hosted consul cluster
+	// that is used for master discovery
 	Consul         string      `yaml:"consul"`
 	Dashboard      Dashboard   `yaml:"dashboard,omitempty"`
 	Datacenter     string      `yaml:"datacenter"`
 	DNS            *DynamicDNS `yaml:"dns,omitempty"`
 	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
-	// Domain specifies the domain that cluster will be available at
+	// The wildcard domain that cluster will be available at
 	Domain      string   `yaml:"domain"`
 	EventRouter *Enabled `yaml:"eventRouter,omitempty"`
 	Harbor      *Harbor  `yaml:"harbor,omitempty"`
-	// HostPrefix specifies a prefix to be added to VM hostnames.
+	// A prefix to be added to VM hostnames.
 	HostPrefix            string            `yaml:"hostPrefix"`
 	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA               `yaml:"ingressCA"`
@@ -52,17 +51,17 @@ type PlatformConfig struct {
 	Specs               []string             `yaml:"specs,omitempty"`
 	TrustedCA           string               `yaml:"trustedCA,omitempty"`
 	Versions            map[string]string    `yaml:"versions,omitempty"`
-	PlatformOperator    *Enabled             `yaml:"platformOperator,omitempty"`
+	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`
 	Nginx               *Nginx               `yaml:"nginx,omitempty"`
 	Minio               *Enabled             `yaml:"minio,omitempty"`
 	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
 	ECK                 *ECK                 `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
-	Filebeat            *Filebeat            `yaml:"filebeat,omitempty"`
+	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`
-
+	Vsphere             *Vsphere             `yaml:"vsphere,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`

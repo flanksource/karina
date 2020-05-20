@@ -109,6 +109,9 @@ func (vm *vm) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 
 // WaitForIP waits for a non-local IPv4 address to be reported by vCenter
 func (vm *vm) GetIP(timeout time.Duration) (string, error) {
+	if !vm.IsPoweredOn() {
+		return "<powered off>", nil
+	}
 	deadline := time.Now().Add(timeout)
 	for {
 		if time.Now().After(deadline) {
@@ -232,6 +235,11 @@ func (vm *vm) Shutdown() error {
 		return errors.Wrapf(err, "Failed to shutdown %s: %v", vm.Name(), err)
 	}
 	return nil
+}
+
+func (vm *vm) IsPoweredOn() bool {
+	power, _ := vm.vm.PowerState(vm.ctx)
+	return power == vim.VirtualMachinePowerStatePoweredOn
 }
 
 func (vm *vm) Terminate() error {

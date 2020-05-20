@@ -4,6 +4,8 @@ metadata:
   name: quack
   labels:
     openpolicyagent.org/webhook: ignore
+  annotations:
+    com.flanksource.infra.logs/enabled: "true"
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
@@ -232,8 +234,8 @@ webhooks:
           - statefulsets
           - ingresses
           - services
-    failurePolicy: Ignore
-    timeoutSeconds: 3
+    failurePolicy: Fail
+    timeoutSeconds: 10
     namespaceSelector:
       matchExpressions:
         - key: quack.pusher.com/enabled

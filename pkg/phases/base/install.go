@@ -11,7 +11,9 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/ingress"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
 	"github.com/moshloop/platform-cli/pkg/phases/quack"
+	"github.com/moshloop/platform-cli/pkg/phases/vsphere"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 func Install(platform *platform.Platform) error {
@@ -21,8 +23,16 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base rbac: %s", err)
 	}
 
+	if err := platform.ApplySpecs("", "kube-system.yaml"); err != nil {
+		platform.Errorf("Error deploying base kube-system annotations: %s", err)
+	}
+
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
 		platform.Errorf("Error deploying service monitor crd: %s", err)
+	}
+
+	if err := vsphere.Install(platform); err != nil {
+		return err
 	}
 
 	if err := certmanager.Install(platform); err != nil {
@@ -53,7 +63,7 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
 		"quack.pusher.com/enabled": "true",
-	}, nil); err != nil {
+	}, platform.DefaultNamespaceAnnotations()); err != nil {
 		return err
 	}
 
@@ -101,8 +111,17 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
+	if platform.PlatformOperator == nil || !platform.PlatformOperator.Disabled {
 		platform.Infof("Installing platform operator")
+		if platform.PlatformOperator == nil {
+			platform.PlatformOperator = &types.PlatformOperator{}
+		}
+		if platform.PlatformOperator.WhitelistedPodAnnotations == nil {
+			platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
+		}
+		if platform.PlatformOperator.Version == "" {
+			platform.PlatformOperator.Version = "0.3"
+		}
 		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
 			platform.Errorf("Error deploying platform-operator: %s", err)
 		}

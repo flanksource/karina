@@ -69,7 +69,13 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := ioutil.WriteFile(certFile.Name(), p.SealedSecrets.Certificate.EncodedCertificate(), 0644); err != nil {
+	certPem, err := ioutil.ReadFile(p.SealedSecrets.Certificate.Cert)
+	if err != nil {
+		test.Failf("sealed-secrets", "Failed to read certificate file %s", p.SealedSecrets.Certificate.Cert)
+		return
+	}
+
+	if err := ioutil.WriteFile(certFile.Name(), certPem, 0644); err != nil {
 		test.Failf("sealed-secrets", "Failed to write certificate file %v", err)
 		return
 	}

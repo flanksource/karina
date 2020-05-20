@@ -1,16 +1,20 @@
 package k8s
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/flanksource/commons/console"
 	log "github.com/sirupsen/logrus"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -226,6 +230,24 @@ func (h Health) IsDegradedComparedTo(h2 Health) bool {
 }
 
 func (h Health) String() string {
-	return fmt.Sprintf("pods(running=%d, pending=%d, crashloop=%d, error=%d)  nodes(ready=%d, notready=%d)",
-		h.RunningPods, h.PendingPods, h.CrashLoopBackOff, h.ErrorPods, h.ReadyNodes, h.UnreadyNodes)
+	return fmt.Sprintf("pods(running=%d, pending=%s, crashloop=%s, error=%s)  nodes(ready=%d, notready=%s)",
+		h.RunningPods, console.Yellowf("%d", h.PendingPods), console.Redf("%d", h.CrashLoopBackOff), console.Redf("%d", h.ErrorPods), h.ReadyNodes, console.Redf("%d", h.UnreadyNodes))
+}
+
+func GetUnstructuredObjects(data []byte) ([]unstructured.Unstructured, error) {
+	var items []unstructured.Unstructured
+	for _, chunk := range strings.Split(string(data), "---\n") {
+		if strings.TrimSpace(chunk) == "" {
+			continue
+		}
+
+		decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(chunk)), 1024)
+		var resource *unstructured.Unstructured
+
+		if err := decoder.Decode(&resource); err != nil {
+			return nil, fmt.Errorf("error decoding %s: %s", chunk, err)
+		}
+		items = append(items, *resource)
+	}
+	return items, nil
 }

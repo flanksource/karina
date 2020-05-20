@@ -57,10 +57,13 @@ func main() {
 		cmd.Opa,
 		cmd.Provision,
 		cmd.Render,
+		cmd.Report,
 		cmd.Rolling,
 		cmd.Snapshot,
 		cmd.Status,
 		cmd.Test,
+		cmd.TerminateNodes,
+		cmd.TerminateOrphans,
 		cmd.Upgrade,
 		cmd.Vault,
 	)

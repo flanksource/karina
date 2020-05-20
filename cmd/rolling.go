@@ -42,5 +42,7 @@ func init() {
 	Rolling.PersistentFlags().IntVar(&rollingOpts.Max, "max", 100, "Max number of nodes to roll")
 	Rolling.PersistentFlags().BoolVar(&rollingOpts.MigrateLocalVolumes, "migrate-local-volumes", true, "Delete and recreate local PVC's")
 	Rolling.PersistentFlags().BoolVar(&rollingOpts.Force, "force", false, "ignore errors and continue with the rolling action regardless of health")
+	Rolling.PersistentFlags().BoolVar(&rollingOpts.Masters, "masters", true, "include master nodes")
+	Rolling.PersistentFlags().BoolVar(&rollingOpts.Workers, "workers", true, "include worker nodes")
 	Rolling.AddCommand(RollingRestart, RollingUpdate)
 }

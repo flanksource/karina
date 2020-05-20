@@ -9,56 +9,81 @@ import (
 )
 
 type vmwareCluster struct {
-	ctx     context.Context
-	prefix  string
-	session *Session
-	DryRun  bool
+	ctx        context.Context
+	vsphere    types.Vsphere
+	prefix     string
+	session    *Session
+	vmPrefixes []string
+	DryRun     bool
 }
 
 // NewVMwareCluster opens a new vmware session using environment variables
-func NewVMwareCluster(prefix string) (types.Cluster, error) {
+func NewVMwareCluster(platform types.PlatformConfig) (types.Cluster, error) {
 	cluster := vmwareCluster{
 		ctx:    context.TODO(),
-		prefix: prefix,
+		prefix: platform.HostPrefix + "-" + platform.Name,
 	}
-	session, err := GetSessionFromEnv()
+
+	session, err := GetOrCreateCachedSession(
+		platform.Vsphere.Datacenter,
+		platform.Vsphere.Username,
+		platform.Vsphere.Password,
+		platform.Vsphere.Hostname)
 	if err != nil {
-		return nil, fmt.Errorf("openViaEnv: failed to get session from env: %v", err)
+		return nil, fmt.Errorf("failed to get session from env: %v", err)
 	}
 	cluster.session = session
+	cluster.vsphere = *platform.Vsphere
+	cluster.vmPrefixes = []string{platform.Master.Prefix}
+	for _, vm := range platform.Nodes {
+		cluster.vmPrefixes = append(cluster.vmPrefixes, vm.Prefix)
+	}
 	return &cluster, nil
 }
 
-func (p *vmwareCluster) Clone(template types.VM, config *konfigadm.Config) (types.Machine, error) {
-	LoadGovcEnvVars(&template)
-	vm, err := p.session.Clone(template, config)
+func (cluster *vmwareCluster) Clone(template types.VM, config *konfigadm.Config) (types.Machine, error) {
+	LoadGovcEnvVars(cluster.vsphere, &template)
+	vm, err := cluster.session.Clone(template, config)
 	if err != nil {
 		return nil, err
 	}
-	return NewVM(p.ctx, p.DryRun, vm), nil
+	return NewVM(cluster.ctx, cluster.DryRun, vm), nil
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
-func (p *vmwareCluster) GetMachines() (map[string]types.Machine, error) {
-	return p.GetMachinesByPrefix("")
+func (cluster *vmwareCluster) GetMachines() (map[string]types.Machine, error) {
+	machines := map[string]types.Machine{}
+
+	// To list all machines for a cluster we search by each prefix combination
+	// we cannot search just using the cluster prefix as it may return incorrect startsWith results
+	for _, prefix := range cluster.vmPrefixes {
+		list, err := cluster.GetMachinesByPrefix(prefix)
+		if err != nil {
+			return nil, err
+		}
+		for name, machine := range list {
+			machines[name] = machine
+		}
+	}
+	return machines, nil
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
-func (p *vmwareCluster) GetMachinesByPrefix(prefix string) (map[string]types.Machine, error) {
+func (cluster *vmwareCluster) GetMachinesByPrefix(prefix string) (map[string]types.Machine, error) {
 	var vms = make(map[string]types.Machine)
-	list, err := p.session.Finder.VirtualMachineList(
-		p.ctx, fmt.Sprintf("%s-%s*", p.prefix, prefix))
+	list, err := cluster.session.Finder.VirtualMachineList(
+		cluster.ctx, fmt.Sprintf("%s-%s*", cluster.prefix, prefix))
 	if err != nil {
 		//ignore not found error
 		return nil, nil
 	}
 	for _, vm := range list {
-		vms[vm.Name()] = NewVM(p.ctx, p.DryRun, vm)
+		vms[vm.Name()] = NewVM(cluster.ctx, cluster.DryRun, vm)
 	}
 	return vms, nil
 }
 
-func (p *vmwareCluster) GetMachine(name string) (types.Machine, error) {
-	machines, err := p.GetMachines()
+func (cluster *vmwareCluster) GetMachine(name string) (types.Machine, error) {
+	machines, err := cluster.GetMachines()
 	return machines[name], err
 }
