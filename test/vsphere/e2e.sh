@@ -102,8 +102,9 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 
 export PLATFORM_CONFIG=$PWD/test/vsphere/e2e.yaml
 
+#TODO: Update these
 # These variables are required to configure access to vSphere, they also work with govc
-export GOVC_FQDN="vcenter.lab.flanksource.com"
+export GOVC_FQDN="vcenter2.lab.flanksource.com"
 export GOVC_DATACENTER="lab"
 export GOVC_CLUSTER="cluster"
 export GOVC_NETWORK="VM Network"

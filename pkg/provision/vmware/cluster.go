@@ -24,6 +24,10 @@ func NewVMwareCluster(platform types.PlatformConfig) (types.Cluster, error) {
 		prefix: platform.HostPrefix + "-" + platform.Name,
 	}
 
+	if platform.Vsphere == nil {
+		return nil, fmt.Errorf("failed to get session from env")
+	}
+
 	session, err := GetOrCreateCachedSession(
 		platform.Vsphere.Datacenter,
 		platform.Vsphere.Username,
