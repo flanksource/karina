@@ -45,5 +45,4 @@ func Install(platform *platform.Platform) error {
 	}
 
 	return platform.ApplySpecs("", "platform-operator.yaml")
-
 }
