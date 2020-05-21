@@ -14,6 +14,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	testNamespaceLabels = map[string]string{
+		"openpolicyagent.org/webhook": "ignore",
+	}
+)
+
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.SealedSecrets == nil || p.SealedSecrets.Disabled {
 		test.Skipf("sealed-secrets", "sealed-secrets not installed or disabled")
@@ -93,7 +99,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := p.CreateOrUpdateWorkloadNamespace(namespace, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace, testNamespaceLabels, nil); err != nil {
 		test.Failf("sealed-secrets", "Failed to create test namespace %s: %v", namespace, err)
 		return
 	}
