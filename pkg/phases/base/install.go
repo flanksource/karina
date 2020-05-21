@@ -6,14 +6,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/moshloop/platform-cli/pkg/constants"
 	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/ingress"
 	"github.com/moshloop/platform-cli/pkg/phases/nginx"
+	"github.com/moshloop/platform-cli/pkg/phases/platformoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/quack"
 	"github.com/moshloop/platform-cli/pkg/phases/vsphere"
 	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 func Install(platform *platform.Platform) error {
@@ -39,6 +38,10 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
+	if err := platformoperator.Install(platform); err != nil {
+		return err
+	}
+
 	if !platform.NodeLocalDNS.Disabled {
 		client, err := platform.GetClientset()
 		if err != nil {
@@ -59,26 +62,6 @@ func Install(platform *platform.Platform) error {
 		if err := platform.ApplySpecs("", "node-local-dns.yaml"); err != nil {
 			platform.Errorf("Error deploying node-local-dns: %s", err)
 		}
-	}
-
-	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
-		"quack.pusher.com/enabled": "true",
-	}, platform.DefaultNamespaceAnnotations()); err != nil {
-		return err
-	}
-
-	var secrets = make(map[string][]byte)
-
-	secrets["AWS_ACCESS_KEY_ID"] = []byte(platform.S3.AccessKey)
-	secrets["AWS_SECRET_ACCESS_KEY"] = []byte(platform.S3.SecretKey)
-
-	if platform.Ldap != nil {
-		secrets["LDAP_USERNAME"] = []byte(platform.Ldap.Username)
-		secrets["LDAP_PASSWORD"] = []byte(platform.Ldap.Password)
-	}
-
-	if err := platform.CreateOrUpdateSecret("secrets", constants.PlatformSystem, secrets); err != nil {
-		return err
 	}
 
 	if err := nginx.Install(platform); err != nil {
@@ -108,22 +91,6 @@ func Install(platform *platform.Platform) error {
 		platform.Infof("Installing namespace configurator")
 		if err := platform.ApplySpecs("", "namespace-configurator.yaml"); err != nil {
 			platform.Errorf("Error deploying namespace configurator: %s", err)
-		}
-	}
-
-	if platform.PlatformOperator == nil || !platform.PlatformOperator.Disabled {
-		platform.Infof("Installing platform operator")
-		if platform.PlatformOperator == nil {
-			platform.PlatformOperator = &types.PlatformOperator{}
-		}
-		if platform.PlatformOperator.WhitelistedPodAnnotations == nil {
-			platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
-		}
-		if platform.PlatformOperator.Version == "" {
-			platform.PlatformOperator.Version = "0.3"
-		}
-		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
-			platform.Errorf("Error deploying platform-operator: %s", err)
 		}
 	}
 
