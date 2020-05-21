@@ -221,8 +221,8 @@ registryCredentials:
   namespace: "registry-credentials"
   aws:
     enabled: true
-    accessKey: $AWS_ACCESS_KEY_ID
-    secretKey: $AWS_SECRET_ACCESS_KEY
+    accessKey: !!env AWS_ACCESS_KEY_ID
+    secretKey: !!env AWS_SECRET_ACCESS_KEY
     account: 745897381572
     region: us-east-1
 platformOperator:
