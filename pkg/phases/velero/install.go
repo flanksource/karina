@@ -24,7 +24,7 @@ func Install(platform *platform.Platform) error {
 	if platform.Velero.Version == "" {
 		platform.Velero.Version = "v1.3.2"
 	}
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, platform.DefaultNamespaceAnnotations()); err != nil {
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

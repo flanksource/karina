@@ -16,7 +16,7 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 	p.Infof("Deploying ECK %s", p.ECK.Version)
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

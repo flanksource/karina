@@ -29,7 +29,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := p.CreateOrUpdateNamespace(testNamespace, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(testNamespace, nil, nil); err != nil {
 		test.Failf("registry-creds", "failed to create namespace %s", testNamespace)
 		return
 	}
