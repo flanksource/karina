@@ -1,0 +1,243 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: namespace-k8s-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: namespace-recording-rules
+      rules:
+        - expr: |
+            rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[15m]) *
+              on (namespace) group_left(label_owner) kube_namespace_labels
+            * 60 * 5 > 0
+          record: namespace:container_status_restarts:15m
+        - record: namespace:KubePodCrashLooping
+          expr: |
+            (rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[15m]) * on (namespace) group_left(label_owner) kube_namespace_labels)  * 60 * 5 > 0
+        - record: namespace:namespace:KubePodNotReady
+          expr: |
+            sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="kube-state-metrics", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"}))  * on (namespace) group_left(label_owner) kube_namespace_labels > 0
+        - record: namespace:KubeDeploymentGenerationMismatch
+          expr: |
+            kube_deployment_status_observed_generation{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+              !=
+            kube_deployment_metadata_generation{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+        - record: namespace:KubeDeploymentReplicasMismatch
+          expr: |
+            kube_deployment_spec_replicas{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+              !=
+            kube_deployment_status_replicas_available{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+        - record: namespace:KubeStatefulSetReplicasMismatch
+          expr: |
+            kube_statefulset_status_replicas_ready{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+              !=
+            kube_statefulset_status_replicas{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+        - record: namespace:KubeStatefulSetGenerationMismatch
+          expr: |
+            kube_statefulset_status_observed_generation{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+              !=
+            kube_statefulset_metadata_generation{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+        - record: namespace:KubeStatefulSetUpdateNotRolledOut
+          expr: |
+            max without (revision) (
+              kube_statefulset_status_current_revision{job="kube-state-metrics"}  * on (namespace) group_left(label_owner) kube_namespace_labels
+                unless
+              kube_statefulset_status_update_revision{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+            )
+              *
+            (
+              kube_statefulset_replicas{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+                !=
+              kube_statefulset_status_replicas_updated{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+            )
+        - record: namespace:KubeDaemonSetRolloutStuck
+          expr: |
+            kube_daemonset_status_number_ready{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+              /
+            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels < 1.00
+        - record: namespace:KubeContainerWaiting
+          expr: |
+            sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="kube-state-metrics"}) *
+            on (namespace) group_left(label_owner) kube_namespace_labels > 0
+        - record: namespace:KubeDaemonSetNotScheduled
+          expr: |
+            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels
+              -
+            kube_daemonset_status_current_number_scheduled{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels > 0
+        - record: namespace:KubeDaemonSetMisScheduled
+          expr: |
+            kube_daemonset_status_number_misscheduled{job="kube-state-metrics"} * on (namespace) group_left(label_owner) kube_namespace_labels  > 0
+        - record: namespace:KubeCronJobRunning
+          expr: |
+            time() - kube_cronjob_next_schedule_time{job="kube-state-metrics"}  * on (namespace) group_left(label_owner) kube_namespace_labels > 3600
+        - record: namespace:KubeJobCompletion
+          expr: |
+            kube_job_spec_completions{job="kube-state-metrics"}  * on (namespace) group_left(label_owner) kube_namespace_labels   - kube_job_status_succeeded{job="kube-state-metrics"}  * on (namespace) group_left(label_owner) kube_namespace_labels  > 0
+        - record: namespace:KubeJobFailed
+          expr: |
+            kube_job_failed{job="kube-state-metrics"}  * on (namespace) group_left(label_owner) kube_namespace_labels > 0
+
+        - record: namespace:CPUThrottlingHigh
+          expr: |
+            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", }[5m])) by (container, pod, namespace)  * on (namespace) group_left(label_owner) kube_namespace_labels
+            /
+            sum(increase(container_cpu_cfs_periods_total{}[5m])) by (container, pod, namespace) * on (namespace) group_left(label_owner) kube_namespace_labels
+            > ( 25 / 100 )
+
+    - name: namespace-alerts
+      rules:
+        - alert: KubePodCrashLooping
+          annotations:
+            message:
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container
+              }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodcrashlooping
+          expr: namespace:KubePodCrashLooping{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubePodNotReady
+          annotations:
+            message:
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready
+              state for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodnotready
+          expr: namespace:KubePodNotReady{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeDeploymentGenerationMismatch
+          annotations:
+            message:
+              Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment
+              }} does not match, this indicates that the Deployment has failed but has
+              not been rolled back.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedeploymentgenerationmismatch
+          expr: namespace:KubeDeploymentGenerationMismatch{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeDeploymentReplicasMismatch
+          annotations:
+            message:
+              Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not
+              matched the expected number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedeploymentreplicasmismatch
+          expr: namespace:KubeDeploymentReplicasMismatch{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeStatefulSetReplicasMismatch
+          annotations:
+            message:
+              StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has
+              not matched the expected number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetreplicasmismatch
+          expr: namespace:KubeStatefulSetReplicasMismatch{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeStatefulSetGenerationMismatch
+          annotations:
+            message:
+              StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset
+              }} does not match, this indicates that the StatefulSet has failed but has
+              not been rolled back.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetgenerationmismatch
+          expr: namespace:KubeStatefulSetGenerationMismatch{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeStatefulSetUpdateNotRolledOut
+          annotations:
+            message:
+              StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} update
+              has not been rolled out.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetupdatenotrolledout
+          expr: namespace:KubeStatefulSetUpdateNotRolledOut{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeDaemonSetRolloutStuck
+          annotations:
+            message:
+              Only {{ $value | humanizePercentage }} of the desired Pods of DaemonSet
+              {{ $labels.namespace }}/{{ $labels.daemonset }} are scheduled and ready.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetrolloutstuck
+          expr: namespace:KubeDaemonSetRolloutStuck{label_owner=~"|platform"}
+          labels:
+            severity: critical
+        - alert: KubeContainerWaiting
+          annotations:
+            message:
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container}}
+              has been in waiting state for longer than 1 hour.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecontainerwaiting
+          expr: namespace:KubeContainerWaiting{label_owner=~"|platform"}
+          for: 1h
+          labels:
+            severity: warning
+        - alert: KubeDaemonSetNotScheduled
+          annotations:
+            message:
+              "{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
+              }} are not scheduled."
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetnotscheduled
+          expr: namespace:KubeDaemonSetNotScheduled{label_owner=~"|platform"}
+          for: 10m
+          labels:
+            severity: warning
+        - alert: KubeDaemonSetMisScheduled
+          annotations:
+            message:
+              "{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
+              }} are running where they are not supposed to run."
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetmisscheduled
+          expr: namespace:KubeDaemonSetMisScheduled{label_owner=~"|platform"}
+          for: 10m
+          labels:
+            severity: warning
+        - alert: KubeCronJobRunning
+          annotations:
+            message:
+              CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} is taking more
+              than 1h to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecronjobrunning
+          expr: namespace:KubeCronJobRunning{label_owner=~"|platform"}
+          for: 1h
+          labels:
+            severity: warning
+        - alert: KubeJobCompletion
+          annotations:
+            message:
+              Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+              than one hour to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
+          expr: namespace:KubeJobCompletion{label_owner=~"|platform"}
+          for: 1h
+          labels:
+            severity: warning
+        - alert: KubeJobFailed
+          annotations:
+            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobfailed
+          expr: namespace:KubeJobFailed
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: CPUThrottlingHigh
+          annotations:
+            message:
+              "{{ $value | humanizePercentage }} throttling of CPU in namespace
+              {{ $labels.namespace }} for container {{ $labels.container }} in pod {{
+              $labels.pod }}."
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-cputhrottlinghigh
+          expr: namespace:CPUThrottlingHigh{label_owner=~"|platform"}
+          for: 15m
+          labels:
+            severity: warning
