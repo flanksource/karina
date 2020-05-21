@@ -9,46 +9,32 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
-      },
-      {
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "iconSize": 0,
-        "lineColor": "",
-        "name": "Annotations & Alerts",
-        "query": "",
-        "showLine": false,
-        "tags": "",
-        "tagsField": "",
-        "textField": ""
       }
     ]
   },
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 35,
-  "iteration": 1590084551248,
+  "id": 36,
   "links": [],
   "panels": [
     {
       "columns": [],
-      "datasource": "$datasource",
+      "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 22,
+        "h": 23,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 34,
+      "id": 2,
       "options": {},
       "pageSize": null,
       "showHeader": true,
       "sort": {
-        "col": 1,
-        "desc": false
+        "col": 4,
+        "desc": true
       },
       "styles": [
         {
@@ -59,56 +45,7 @@
           "type": "hidden"
         },
         {
-          "alias": "Mem Requests",
-          "align": "left",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 0,
-          "pattern": "Value #B",
-          "thresholds": [],
-          "type": "number",
-          "unit": "bytes"
-        },
-        {
-          "alias": "Namespace",
-          "align": "auto",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "namespace",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "alias": "Limits",
-          "align": "auto",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #C",
-          "thresholds": [],
-          "type": "number",
-          "unit": "bytes"
-        },
-        {
-          "alias": "CPU Requests",
+          "alias": "Memory",
           "align": "auto",
           "colorMode": null,
           "colors": [
@@ -120,12 +57,73 @@
           "decimals": 0,
           "mappingType": 1,
           "pattern": "Value #A",
-          "thresholds": [],
+          "thresholds": [
+            "4",
+            "10"
+          ],
           "type": "number",
-          "unit": "short"
+          "unit": "bytes"
         },
         {
-          "alias": "Limits",
+          "alias": "Load",
+          "align": "right",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "decimals": 0,
+          "pattern": "Value #B",
+          "thresholds": [
+            "0.5",
+            "0.8"
+          ],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
+          "alias": "CPU",
+          "align": "auto",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #C",
+          "thresholds": [
+            "0.5",
+            "0.8"
+          ],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
+          "alias": "Mem",
+          "align": "auto",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #D",
+          "thresholds": [
+            "0.7",
+            "0.8"
+          ],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
+          "alias": "Disk Usage",
           "align": "auto",
           "colorMode": null,
           "colors": [
@@ -136,32 +134,15 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
-          "pattern": "Value #D",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "alias": "Usage",
-          "align": "center",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
           "pattern": "Value #E",
           "thresholds": [],
           "type": "number",
-          "unit": "short"
+          "unit": "bytes"
         },
         {
-          "alias": "Usage",
-          "align": "center",
-          "colorMode": null,
+          "alias": "Free Space",
+          "align": "auto",
+          "colorMode": "cell",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -171,12 +152,15 @@
           "decimals": 0,
           "mappingType": 1,
           "pattern": "Value #F",
-          "thresholds": [],
+          "thresholds": [
+            "0.25",
+            "0.5"
+          ],
           "type": "number",
-          "unit": "bytes"
+          "unit": "percentunit"
         },
         {
-          "alias": "Pods",
+          "alias": "CPUs",
           "align": "auto",
           "colorMode": null,
           "colors": [
@@ -193,47 +177,86 @@
           "unit": "short"
         },
         {
-          "alias": "Usage/Limit",
+          "alias": "Net RX",
           "align": "auto",
-          "colorMode": "cell",
+          "colorMode": null,
           "colors": [
-            "rgba(50, 172, 45, 0.97)",
+            "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
-            "rgba(245, 54, 54, 0.9)"
+            "rgba(50, 172, 45, 0.97)"
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
           "pattern": "Value #H",
-          "thresholds": [
-            "0.8",
-            "1"
-          ],
+          "thresholds": [],
           "type": "number",
-          "unit": "percentunit"
+          "unit": "bytes"
         },
         {
-          "alias": "Usage/Limit",
+          "alias": "Net TX",
           "align": "auto",
-          "colorMode": "cell",
+          "colorMode": null,
           "colors": [
-            "rgba(50, 172, 45, 0.97)",
+            "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
-            "rgba(245, 54, 54, 0.9)"
+            "rgba(50, 172, 45, 0.97)"
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
           "pattern": "Value #I",
-          "thresholds": [
-            "0.8",
-            "1"
-          ],
+          "thresholds": [],
           "type": "number",
-          "unit": "percentunit"
+          "unit": "bytes"
         },
         {
-          "alias": "Alerts",
+          "alias": "Net Drop",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #J",
+          "thresholds": [],
+          "type": "number",
+          "unit": "bytes"
+        },
+        {
+          "alias": "Ready",
+          "align": "auto",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "Value #K",
+          "preserveFormat": false,
+          "sanitize": false,
+          "thresholds": [
+            "\"1\"",
+            "\"0\""
+          ],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "text": "✔️",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "alias": "Pods",
           "align": "auto",
           "colorMode": "cell",
           "colors": [
@@ -244,86 +267,116 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
-          "pattern": "Value #J",
+          "pattern": "Value #L",
           "thresholds": [
-            "5",
-            "10"
+            "60",
+            "90"
           ],
           "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Node",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "",
+          "linkUrl": "/d/fa49a4706d07a042595b664c87fb33ea/nodes?var-instance=${__cell} ",
+          "mappingType": 1,
+          "pattern": "instance",
+          "thresholds": [],
+          "type": "string",
           "unit": "short"
         }
       ],
       "targets": [
         {
-          "expr": "sum(ALERTS) by (namespace)",
+          "expr": "sum(label_replace(\ncount(node_namespace_pod:kube_pod_info:) by (node), \"instance\", \"$1\", \"node\", \"(.+)\"\n)) by (instance)",
           "format": "table",
           "instant": true,
           "legendFormat": "",
-          "refId": "J"
+          "refId": "L"
         },
         {
-          "expr": "count(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate)  by (namespace)  ",
+          "expr": "sum(node_memory_MemTotal_bytes) by (instance )",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "sum(instance:node_memory_utilisation:ratio)by (instance )",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(instance:node_num_cpu:sum) by (instance)",
           "format": "table",
           "instant": true,
           "refId": "G"
         },
         {
-          "expr": "sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)  ",
+          "expr": "sum(instance:node_cpu:ratio) by (instance )",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "expr": "sum(instance:node_load1_per_cpu:ratio) by (instance)",
           "format": "table",
           "instant": true,
           "refId": "B"
         },
         {
-          "expr": "sum(namespace:container_memory_usage_bytes:sum ) by (namespace)",
+          "expr": "sum(instance:node_filesystem_usage:sum) by (instance)",
           "format": "table",
           "instant": true,
-          "legendFormat": "",
+          "refId": "E"
+        },
+        {
+          "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}) by ( instance)",
+          "format": "table",
+          "instant": true,
           "refId": "F"
         },
         {
-          "expr": "sum(namespace:container_memory_usage_bytes:sum ) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)  ",
+          "expr": "max(instance:node_network_receive_bytes_excluding_lo:rate1m) by (instance)",
           "format": "table",
           "instant": true,
           "refId": "H"
         },
         {
-          "expr": "sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)  ",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "",
-          "refId": "C"
-        },
-        {
-          "expr": "sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)  ",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(namespace:container_cpu_usage_seconds_total:sum_rate) by (namespace)",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "",
-          "refId": "E"
-        },
-        {
-          "expr": "sum(namespace:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)  ",
+          "expr": "max(instance:node_network_transmit_bytes_excluding_lo:rate1m) by (instance)",
           "format": "table",
           "instant": true,
           "refId": "I"
         },
         {
-          "expr": "sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)  ",
+          "expr": "max(instance:node_network_receive_drop_excluding_lo:rate1m) by (instance) + max(instance:node_network_transmit_drop_excluding_lo:rate1m) by (instance)",
+          "format": "table",
+          "instant": true,
+          "refId": "J"
+        },
+        {
+          "expr": "sum(label_replace(\n  min(kube_node_status_condition{condition=\"Ready\", status=\"true\"}) by  (node), \"instance\", \"$1\", \"node\", \"(.+)\"\n)) by (instance)",
           "format": "table",
           "instant": true,
           "legendFormat": "",
-          "refId": "D"
+          "refId": "K"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Namespaces",
+      "title": "Nodes",
       "transform": "table",
       "transparent": true,
       "type": "table"
@@ -335,60 +388,16 @@
     "summary"
   ],
   "templating": {
-    "list": [
-      {
-        "allFormat": "",
-        "allValue": "",
-        "current": {
-          "text": "thanos",
-          "value": "thanos"
-        },
-        "datasource": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "",
-        "multi": false,
-        "multiFormat": "",
-        "name": "datasource",
-        "options": [],
-        "query": "prometheus",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "datasource"
-      },
-      {
-        "allFormat": "",
-        "allValue": "",
-        "current": {
-          "text": "",
-          "value": null
-        },
-        "datasource": "$datasource",
-        "filters": [],
-        "hide": 0,
-        "includeAll": false,
-        "label": "",
-        "multi": false,
-        "multiFormat": "",
-        "name": "Filter",
-        "options": null,
-        "query": "",
-        "refresh": false,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "adhoc"
-      }
-    ]
+    "list": []
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
+      "5s",
+      "10s",
       "30s",
       "1m",
       "5m",
@@ -397,11 +406,10 @@
       "1h",
       "2h",
       "1d"
-    ],
-    "time_options": null
+    ]
   },
   "timezone": "",
-  "title": "Summary - Namespaces",
-  "uid": "NVr_xXXZkaaa",
-  "version": 17
+  "title": "Summary - Nodes",
+  "uid": "A4ET_CRGz",
+  "version": 8
 }

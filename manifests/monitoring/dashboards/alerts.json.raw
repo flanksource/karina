@@ -12,7 +12,7 @@
       },
       {
         "datasource": "$datasource",
-        "enable": true,
+        "enable": false,
         "expr": "ALERTS_FOR_STATE{alertname=~\"$alertname\"} * 1000",
         "hide": false,
         "iconColor": "#37872D",
@@ -46,8 +46,8 @@
   "editable": true,
   "gnetId": 11098,
   "graphTooltip": 1,
-  "id": 26,
-  "iteration": 1584690806775,
+  "id": 18,
+  "iteration": 1590070223470,
   "links": [
     {
       "icon": "external link",
@@ -72,28 +72,27 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "$datasource",
-      "description": "",
-      "fill": 1,
-      "fillGradient": 10,
+      "datasource": null,
+      "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
-        "h": 10,
-        "w": 17,
+        "h": 8,
+        "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 440,
+      "hiddenSeries": false,
+      "id": 4,
       "legend": {
         "alignAsTable": true,
         "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
+        "current": true,
+        "max": true,
+        "min": true,
         "rightSide": true,
         "show": true,
-        "sideWidth": null,
         "total": false,
-        "values": false
+        "values": true
       },
       "lines": true,
       "linewidth": 1,
@@ -102,46 +101,17 @@
         "dataLinks": []
       },
       "percentage": false,
-      "pointradius": 1,
+      "pointradius": 2,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "alias": "/firing/",
-          "stack": "B",
-          "transform": "negative-Y",
-          "zindex": -3
-        },
-        {
-          "alias": "/pending/",
-          "stack": "A"
-        },
-        {
-          "alias": ""
-        },
-        {
-          "alias": "/help_series_x_axes_in_center/",
-          "bars": false,
-          "hideTooltip": true,
-          "legend": false,
-          "lines": false,
-          "stack": false,
-          "yaxis": 2
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
-      "steppedLine": true,
+      "steppedLine": false,
       "targets": [
         {
-          "expr": "ALERTS{alertname=~\"$alertname\", alertstate=~\"$alertstate\"}",
-          "legendFormat": "{{alertname}} {{instance}} {{alertstate}} {{severity}}",
-          "refId": "C"
-        },
-        {
-          "expr": "1",
-          "hide": false,
-          "legendFormat": "help_series_x_axes_in_center",
+          "expr": "sum(ALERTS) by (cluster  ) > 0",
+          "legendFormat": "{{cluster}}",
           "refId": "A"
         }
       ],
@@ -149,12 +119,13 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Alerts History",
+      "title": "Clusters",
       "tooltip": {
         "shared": true,
         "sort": 0,
-        "value_type": "cumulative"
+        "value_type": "individual"
       },
+      "transparent": true,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -165,9 +136,8 @@
       },
       "yaxes": [
         {
-          "decimals": null,
           "format": "short",
-          "label": "Firing (-)   /  Pending (+)  ",
+          "label": null,
           "logBase": 1,
           "max": null,
           "min": null,
@@ -177,211 +147,201 @@
           "format": "short",
           "label": null,
           "logBase": 1,
-          "max": "1",
-          "min": "-1",
-          "show": false
+          "max": null,
+          "min": null,
+          "show": true
         }
       ],
       "yaxis": {
-        "align": true,
-        "alignLevel": 0
+        "align": false,
+        "alignLevel": null
       }
     },
     {
-      "columns": [],
-      "datasource": "$datasource",
-      "description": "Alerts list for all alerts in a selected time range. For filling this table `Alerts annotations` have to be switched on.",
-      "fontSize": "100%",
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
-        "h": 10,
-        "w": 7,
-        "x": 17,
+        "h": 8,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
-      "id": 442,
-      "options": {},
-      "pageSize": null,
-      "showHeader": true,
-      "sort": {
-        "col": 3,
-        "desc": false
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
       },
-      "styles": [
-        {
-          "alias": "time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "link": false,
-          "linkUrl": "",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "alias": "instance",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Title",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "alias": "alertname",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Tags",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Text",
-          "thresholds": [],
-          "type": "hidden",
-          "unit": "short"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        }
-      ],
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
-          "expr": "",
+          "expr": "sum(ALERTS * on (cluster,namespace) group_left(label_owner) kube_namespace_labels) by (label_owner)",
+          "legendFormat": "{{label_owner}}",
           "refId": "A"
         }
       ],
+      "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
-      "title": "Alerts Start List",
-      "transform": "annotations",
-      "type": "table"
+      "title": "By Owner",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
-      "columns": [],
-      "datasource": "$datasource",
-      "description": "Shows how many times was particular alert started in a defined time range. Alert can be started either directly as `firing` or as a `pending`. Pending alerts wait for a defined time before it flips to a `firing` alert. This is specified with the `FOR` clause in a Prometheus `rules` file.",
-      "fontSize": "100%",
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
-        "h": 13,
-        "w": 24,
+        "h": 8,
+        "w": 12,
         "x": 0,
-        "y": 10
+        "y": 8
       },
-      "id": 414,
-      "options": {},
-      "pageSize": null,
-      "showHeader": true,
-      "sort": {
-        "col": 10,
-        "desc": true
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
       },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "link": false,
-          "pattern": "Time",
-          "type": "hidden"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "instance",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "alias": "count",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Value",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        }
-      ],
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
-          "expr": "changes( ALERTS_FOR_STATE{alertname=~\"$alertname\"}[$__range] ) + 1",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "refId": "B"
+          "expr": "sum(ALERTS) by (cluster,namespace) > 0",
+          "legendFormat": "{{cluster}}/{{namespace}}",
+          "refId": "A"
         }
       ],
+      "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
-      "title": "Total Alert Counts",
-      "transform": "table",
-      "type": "table"
+      "title": "Namespaces",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": false,
-  "schemaVersion": 20,
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [
     "prometheus",
@@ -530,5 +490,5 @@
   "timezone": "",
   "title": "Prometheus Alerts",
   "uid": "eea-9_sik",
-  "version": 6
+  "version": 3
 }
