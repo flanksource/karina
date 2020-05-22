@@ -38,7 +38,7 @@ var Logs = &cobra.Command{
 }
 
 func init() {
-	Logs.Flags().String("name", "", "Filebeat name")
+	Logs.Flags().String("name", "infra", "Filebeat name")
 	Logs.Flags().String("from", "", "Logs since")
 	Logs.Flags().String("to", "", "Logs to")
 	Logs.Flags().String("since", "1d", "Logs since")

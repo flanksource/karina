@@ -5,7 +5,10 @@ import (
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
+	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
 	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
+	"github.com/moshloop/platform-cli/pkg/phases/platformoperator"
+	"github.com/moshloop/platform-cli/pkg/phases/vsphere"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/spf13/cobra"
 
@@ -56,6 +59,12 @@ func init() {
 		"velero":             velero.Install,
 	}
 
+	extra := map[string]DeployFn{
+		"cert-manager":      certmanager.Install,
+		"platform-operator": platformoperator.Install,
+		"vsphere":           vsphere.Install,
+	}
+
 	order := []string{"calico", "nsx", "base", "stubs", "postgres-operator", "dex", "vault"}
 
 	var Phases = &cobra.Command{
@@ -99,6 +108,21 @@ func init() {
 		_name := name
 		_fn := fn
 		Phases.Flags().Bool(name, false, "Deploy "+name)
+		Deploy.AddCommand(&cobra.Command{
+			Use:  name,
+			Args: cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+				p := getPlatform(cmd)
+				if err := _fn(p); err != nil {
+					log.Fatalf("Failed to deploy %s: %v", _name, err)
+				}
+			},
+		})
+	}
+
+	for name, fn := range extra {
+		_name := name
+		_fn := fn
 		Deploy.AddCommand(&cobra.Command{
 			Use:  name,
 			Args: cobra.MinimumNArgs(0),
