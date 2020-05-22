@@ -1,7 +1,8 @@
 name: vSphere e2e Test
 
 on:
-  pr
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
 
 jobs:
   test-e2e:
