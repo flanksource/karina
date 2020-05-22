@@ -1,0 +1,16 @@
+name: vSphere e2e Test
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test-e2e:
+    runs-on: [self-hosted]
+    steps:
+      - name: Run e2e testing script
+        run: |
+          pwd
+          whoami
+          ls -l

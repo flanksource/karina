@@ -45,20 +45,6 @@ jobs:
       - store_artifacts:
           path: artifacts
 
-  test-vsphere:
-    resource_class: large
-    environment:
-      VERSION: v1.15.3
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - run: bash -x ./test/vsphere/e2e.sh
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: artifacts
-
   release-docs:
     docker:
       - image: flanksource/build-tools
@@ -72,5 +58,4 @@ workflows:
     jobs:
       - test
       - test-next
-      - test-vsphere
       - lint

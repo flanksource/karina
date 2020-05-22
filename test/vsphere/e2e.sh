@@ -1,165 +1,69 @@
 #!/bin/bash
+BIN=./.bin/platform-cli
+mkdir -p .bin
+export PLATFORM_CONFIG=test/vsphere/e2e.yaml
+export GO_VERSION=${GO_VERSION:-1.13}
+export KUBECONFIG=~/.kube/config
+REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
+GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
+GITHUB_OWNER=${GITHUB_OWNER##*:}
+MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
 
-# Copyright 2020 The Kubernetes Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+PR_NUM=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+COMMIT_SHA="$GITHUB_SHA"
 
-set -o errexit  # exits immediately on any unexpected error (does not bypass traps)
-set -o nounset  # will error if variables are used without first being defined
-set -o pipefail # any non-zero exit code in a piped command causes the pipeline to fail with that code
+if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
+  #TODO: more halt required here?
+  exit 0
+fi
 
-ARTIFACTS=$PWD/artifacts
-CERTS=$PWD/test/vsphere/openvpn/certs
+if ! which gojsontoyaml 2>&1 > /dev/null; then
+  go get -u github.com/brancz/gojsontoyaml
+fi
 
-# Binary
-GO_VERSION=${GO_VERSION:-1.13}
-SOPS_VERSION=${SOPS_VERSION:-3.5.0}
+go version
 
-install_platformcli() {
-  docker run --rm -it -v "$PWD":"$PWD" -v "$PWD"/go:"$PWD"/go \
-    -u "$(id -u)":"$(id -g)" \
-    -w "$PWD" --entrypoint make \
-    -e GOPROXY=https://proxy.golang.org \
-    -e XDG_CACHE_HOME=/tmp/.cache \
-    golang:"$GO_VERSION" pack build
+if go version | grep  go$GO_VERSION; then
+  make pack build
+else
+  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
+fi
 
-  sudo mv "$PWD"/.bin/platform-cli /usr/local/bin/platform-cli
-  sudo chmod +x /usr/local/bin/platform-cli
-  sudo apt-get update
-  sudo apt-get install -y genisoimage
-}
+if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
+  $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+  $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
+  $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
+  $BIN provision kind-cluster || exit 1
+fi
 
-install_sops() {
-  sudo apt-get install -y curl
-  curl -L https://github.com/mozilla/sops/releases/download/v"$SOPS_VERSION"/sops-v"$SOPS_VERSION".linux -o /tmp/sops
-  sudo mv /tmp/sops /usr/local/bin/sops
-  sudo chmod +x /usr/local/bin/sops
-}
+$BIN version
 
-decrypt_vpn_certs() {
-  export AWS_ACCESS_KEY_ID=$SOPS_AWS_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$SOPS_AWS_SECRET_ACCESS_KEY
+$BIN deploy phases --base --stubs --dex --calico -v
 
-  for filename in "$CERTS"/*.enc; do
-    # save the decrypted certs in the same folder w/o the ext .enc
-    sops --config "$PWD"/test/vsphere/.sops.yaml -d \
-      --input-type binary --output-type binary "$filename" >"${filename%.*}"
-  done
+[[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
-  # clean a WARNING in openvpn
-  # WARNING: file '/openvpn/certs/user.key' is group or others accessible
-  chmod 400 "$CERTS"/user.key
-}
+# wait for the base deployment with stubs to come up healthy
+$BIN test phases --base --stubs --wait 120 --progress=false
 
-dump_logs() {
-  mkdir -p "$ARTIFACTS"/snapshot
-  platform-cli snapshot --output-dir "$ARTIFACTS"/snapshot || echo "Failed to take cluster snapshot."
-}
+$BIN deploy phases --vault --postgres-operator -v
 
-on_exit() {
+$BIN vault init -v
 
-  # remove the cluster
-  # shellcheck disable=SC2086
-  platform-cli cleanup $PLATFORM_OPTIONS_FLAGS
+$BIN deploy all -v
 
-  # kill the VPN
-  docker kill vpn
+# deploy the opa bundles first, as they can take some time to load, this effectively
+# parallelizes this work to make the entire test complete faster
+$BIN opa bundle automobile -v
+# wait for up to 4 minutes, rerunning tests if they fail
+# this allows for all resources to reconcile and images to finish downloading etc..
+$BIN test all -v --wait 240 --progress=false
 
-  # clean certs dir - remove all except enc
-  rm -fv "$CERTS"/{*.crt,*.key}
-}
-
-wait_for_vpn() {
-  timeout 10 bash -c 'while [ -n "$(ip addr show tun3 2>&1 >/dev/null)" ]; do echo -n ".";sleep 0.1; done'
-}
-
-generate_cluster_id() {
-  local prefix
-
-  prefix=$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)
-  echo "e2e-${prefix}"
-}
-
-# These are used inside e2e.yaml
-PLATFORM_CLUSTER_ID=$(generate_cluster_id)
-export PLATFORM_CLUSTER_ID
-export PLATFORM_CA=$PWD/.certs/ca.crt.pem
-export PLATFORM_PRIVATE_KEY=$PWD/.certs/ca.key.pem
-export PLATFORM_CA_CEK=foobar
-export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
-
-export PLATFORM_CONFIG=$PWD/test/vsphere/e2e.yaml
-
-#TODO: Update these
-# These variables are required to configure access to vSphere, they also work with govc
-export GOVC_FQDN="vcenter2.lab.flanksource.com"
-export GOVC_DATACENTER="lab"
-export GOVC_CLUSTER="cluster"
-export GOVC_NETWORK="VM Network"
-export GOVC_PASS="${GOVC_PASS}"
-export GOVC_USER="${GOVC_USER}"
-export GOVC_DATASTORE="datastore1"
-export GOVC_INSECURE=1
-export GOVC_URL="$GOVC_USER:$GOVC_PASS@$GOVC_FQDN"
-
-trap on_exit EXIT
-
-install_platformcli
-
-install_sops
-
-# Decrypt certs encrypted with SOPS and KMS Key from https://github.com/flanksource/vsphere-lab/blob/master/.sops.yaml
-decrypt_vpn_certs
-
-# Run the vpn client in container
-docker run --rm -d --name vpn -v "${PWD}/test/vsphere/openvpn/:/openvpn/" \
-  -w "/openvpn/" --cap-add=NET_ADMIN --net=host --device=/dev/net/tun \
-  gcr.io/cluster-api-provider-vsphere/extra/openvpn:latest
-
-echo "nameserver 10.255.0.2" | sudo tee -a /run/resolvconf/resolv.conf >/dev/null
-
-## Wait for VPN
-wait_for_vpn
-
-# Tail the vpn logs
-docker logs vpn
-
-# Generate Ingress certs
-platform-cli ca generate --name ingress-ca \
-  --cert-path "$PLATFORM_CA" --private-key-path "$PLATFORM_PRIVATE_KEY" \
-  --password "$PLATFORM_CA_CEK" --expiry 1
-
-# Create the cluster using the config from PLATFORM_CONFIG
-# shellcheck disable=SC2086
-platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
-
-# Install CNI
-# shellcheck disable=SC2086
-platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
-components=("base" "stubs" "all")
-for component in "${components[@]}"; do
-  # Deploy the platform configuration
-  # shellcheck disable=SC2086
-  platform-cli deploy "$component" $PLATFORM_OPTIONS_FLAGS || echo $?
-done
-
-set +o errexit # test failures are reported by Junit
-
-# Run conformance tests
-# shellcheck disable=SC2086
 failed=false
-if ! platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240  --junit-path test-results/results.xml; then
-   failed=true
+
+# e2e do not use --wait at the run level, if needed each individual test implements
+# its own wait. e2e tests should always pass once the non e2e have passed
+if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
+  failed=true
 fi
 
 wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
@@ -168,11 +72,10 @@ chmod +x build-tools
       --success-message="commit $COMMIT_SHA" \
       --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 
-
-# dump the logs into the ARTIFACTS directory
 mkdir -p artifacts
-platform-cli snapshot $PLATFORM_OPTIONS_FLAGS --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true 
+$BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
 zip -r artifacts/snapshot.zip snapshot/*
+
 
 if [[ "$failed" = true ]]; then
   exit 1
