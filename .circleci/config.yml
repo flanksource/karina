@@ -53,12 +53,12 @@ jobs:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
-      - run: bash -x ./test/vsphere/e2e.sh
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: artifacts
-
+#       - run: bash -x ./test/vsphere/e2e.sh
+#       - store_test_results:
+#           path: test-results
+#       - store_artifacts:
+#           path: artifacts
+#
   release-docs:
     docker:
       - image: flanksource/build-tools
