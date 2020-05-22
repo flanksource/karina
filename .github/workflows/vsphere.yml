@@ -11,7 +11,4 @@ jobs:
       - uses: actions/checkout@master
       - name: Run e2e testing script
         run: |
-          pwd
-          whoami
-          ls -l
           bash -x ./test/vsphere/e2e.sh

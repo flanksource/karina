@@ -1,6 +1,11 @@
 #!/bin/bash
 BIN=./.bin/platform-cli
 mkdir -p .bin
+
+export GOPATH=$HOME/go
+export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+
+
 export PLATFORM_CONFIG=test/vsphere/e2e.yaml
 export GO_VERSION=${GO_VERSION:-1.14}
 export KUBECONFIG=~/.kube/config
