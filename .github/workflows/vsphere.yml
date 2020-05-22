@@ -10,5 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Run e2e testing script
+        env:
+          # AWS Access Keys Used by SOPS to decrypt secrets
+          AWS_ACCESS_KEY_ID: ${{ secrets.SOPS_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SOPS_AWS_SECRET_ACCESS_KEY }}
         run: |
-          bash -x ./test/vsphere/e2e.sh
+          # Run the testing commands in subshell with decoded environment
+          sops exec-env test/vsphere/lab.enc.env '/bin/bash -x ./test/vsphere/e2e.sh'

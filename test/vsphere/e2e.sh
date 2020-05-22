@@ -1,4 +1,10 @@
 #!/bin/bash
+
+#export AWS_ACCESS_KEY_ID=$SOPS_AWS_ACCESS_KEY_ID
+#export AWS_SECRET_ACCESS_KEY=$SOPS_AWS_SECRET_ACCESS_KEY
+
+
+
 BIN=./.bin/platform-cli
 mkdir -p .bin
 
