@@ -38,6 +38,9 @@ datacenter: lab
 dns:
   disabled: true
 
+ldap:
+  disabled: true
+
 # The CA certs generated in step 3
 ca:
   cert: .certs/root-ca.crt
