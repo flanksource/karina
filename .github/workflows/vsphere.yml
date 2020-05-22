@@ -14,3 +14,4 @@ jobs:
           pwd
           whoami
           ls -l
+          bash -x ./test/vsphere/e2e.sh
