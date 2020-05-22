@@ -1,9 +1,7 @@
 name: vSphere e2e Test
 
 on:
-  pr:
-    branches:
-      - master
+  pr
 
 jobs:
   test-e2e:
