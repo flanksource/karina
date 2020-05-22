@@ -8,6 +8,7 @@ jobs:
   test-e2e:
     runs-on: [self-hosted]
     steps:
+      - uses: actions/checkout@master
       - name: Run e2e testing script
         run: |
           pwd
