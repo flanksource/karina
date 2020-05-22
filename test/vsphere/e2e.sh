@@ -21,6 +21,8 @@ if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
 fi
 
+make setup
+
 go version
 
 if go version | grep  go$GO_VERSION; then
