@@ -2,7 +2,7 @@
 BIN=./.bin/platform-cli
 mkdir -p .bin
 export PLATFORM_CONFIG=test/vsphere/e2e.yaml
-export GO_VERSION=${GO_VERSION:-1.13}
+export GO_VERSION=${GO_VERSION:-1.14}
 export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
