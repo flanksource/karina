@@ -1,7 +1,7 @@
 name: vSphere e2e Test
 
 on:
-  pull-request:
+  pr:
     branches:
       - master
 
