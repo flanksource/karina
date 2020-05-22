@@ -80,9 +80,7 @@ on_exit() {
 }
 
 wait_for_vpn() {
-  while [ -n "$(ip addr show tun0 2>&1 >/dev/null)" ]; do
-    sleep 0.1
-  done
+  timeout 10 bash -c 'while [ -n "$(ip addr show tun3 2>&1 >/dev/null)" ]; do echo -n ".";sleep 0.1; done'
 }
 
 generate_cluster_id() {
@@ -148,7 +146,6 @@ platform-cli provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 # Install CNI
 # shellcheck disable=SC2086
 platform-cli deploy calico $PLATFORM_OPTIONS_FLAGS
-
 components=("base" "stubs" "all")
 for component in "${components[@]}"; do
   # Deploy the platform configuration
@@ -164,6 +161,13 @@ failed=false
 if ! platform-cli test all $PLATFORM_OPTIONS_FLAGS --wait 240  --junit-path test-results/results.xml; then
    failed=true
 fi
+
+wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
+chmod +x build-tools
+./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+
 
 # dump the logs into the ARTIFACTS directory
 mkdir -p artifacts
