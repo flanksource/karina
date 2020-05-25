@@ -38,7 +38,6 @@ require (
 	golang.org/x/mod v0.3.0 // indirect
 	golang.org/x/tools v0.0.0-20200519205726-57a9e4404bf7 // indirect
 	google.golang.org/grpc v1.26.0
-	gopkg.in/flanksource/yaml.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
@@ -50,7 +49,9 @@ require (
 	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.2.0
-	github.com/philipstaffordwood/yaml v0.0.0-20200521045317-e791b2a8a655
+	//TODO: revert after fix-double-quotes is merged
+	github.com/philipstaffordwood/yaml v0.0.0-20200521045317-e791b2a8a655 // branch fix-double-quotes
+	//	gopkg.in/flanksource/yaml.v3 v3.1.0
 )
 
 replace (
