@@ -15,7 +15,12 @@ const Namespace = "quack"
 func Install(platform *platform.Platform) error {
 	if platform.Quack == nil || !platform.Quack.Disabled {
 		platform.Infof("Installing Quack")
-		return platform.ApplySpecs("", "quack.yaml")
+		return platform.ApplySpecs(Namespace, "quack.yaml")
 	}
+
+	if err := platform.DeleteSpecs(Namespace, "quack.yaml"); err != nil {
+		platform.Warnf("failed to delete specs: %v", err)
+	}
+
 	return nil
 }

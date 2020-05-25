@@ -85,12 +85,20 @@ func Install(platform *platform.Platform) error {
 		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
 			platform.Errorf("Error installing K8s dashboard: %s", err)
 		}
+	} else {
+		if err := platform.DeleteSpecs("", "k8s-dashboard.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 	}
 
 	if platform.NamespaceConfigurator == nil || !platform.NamespaceConfigurator.Disabled {
 		platform.Infof("Installing namespace configurator")
 		if err := platform.ApplySpecs("", "namespace-configurator.yaml"); err != nil {
 			platform.Errorf("Error deploying namespace configurator: %s", err)
+		}
+	} else {
+		if err := platform.DeleteSpecs("", "namespace-configurator.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
 		}
 	}
 
@@ -108,12 +116,20 @@ func Install(platform *platform.Platform) error {
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
 			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}
+	} else {
+		if err := platform.DeleteSpecs("", "csi-s3.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 	}
 
 	if platform.NFS != nil {
 		platform.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
 		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
 			platform.Errorf("Failed to deploy NFS %+v", err)
+		}
+	} else {
+		if err := platform.DeleteSpecs("", "nfs.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
 		}
 	}
 
