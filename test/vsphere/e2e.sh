@@ -51,7 +51,10 @@ fi
 
 $BIN version
 
-$BIN deploy phases --base --stubs --dex --calico -v
+$BIN deploy phases --calico -v
+$BIN deploy phases --base -v
+$BIN deploy phases --stubs -v
+$BIN deploy phases --dex -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
