@@ -1,20 +1,13 @@
 #!/bin/bash
 
-#export AWS_ACCESS_KEY_ID=$SOPS_AWS_ACCESS_KEY_ID
-#export AWS_SECRET_ACCESS_KEY=$SOPS_AWS_SECRET_ACCESS_KEY
-
-
-
-BIN=./.bin/karina
 mkdir -p .bin
+BIN=./.bin/karina
 
 export GOPATH=$HOME/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 
-
-
 export GO_VERSION=${GO_VERSION:-1.14}
-export KUBECONFIG=~/.kube/config
+
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
 GITHUB_OWNER=${GITHUB_OWNER##*:}
@@ -35,10 +28,10 @@ export PLATFORM_CLUSTER_ID
 
 export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
 
-if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
-  #TODO: more halt required here?
-  exit 0
-fi
+#if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
+#  #TODO: more halt required here?
+#  exit 0
+#fi
 
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
@@ -60,7 +53,7 @@ export PLATFORM_CONFIG=test/vsphere/e2e.yaml
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
 $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
 $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
-$BIN provision vsphere-cluster || exit 1
+$BIN provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 
 $BIN version
 
