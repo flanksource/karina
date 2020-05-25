@@ -23,6 +23,18 @@ MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/mast
 PR_NUM=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
 COMMIT_SHA="$GITHUB_SHA"
 
+generate_cluster_id() {
+  local prefix
+
+  prefix=$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)
+  echo "e2e-${prefix}"
+}
+
+PLATFORM_CLUSTER_ID=$(generate_cluster_id)
+export PLATFORM_CLUSTER_ID
+
+export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
+
 if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
   #TODO: more halt required here?
   exit 0

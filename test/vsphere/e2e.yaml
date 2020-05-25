@@ -3,7 +3,7 @@
 ##
 
 ## Cluster name
-name: e2e-cluster-002
+#name: e2e-cluster-002
 
 ## Prefix to be added to VM hostnames
 hostPrefix: vsphere-k8s
@@ -32,7 +32,7 @@ consul: 10.100.0.13
 
 ## Domain that cluster will be available at
 ## NOTE: domain must be supplied for vSphere clusters
-domain: 10.100.0.0.nip.io
+#domain: 10.100.0.0.nip.io
 
 # Name of consul datacenter
 datacenter: lab
