@@ -122,6 +122,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	}
 
 	if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
+		platform.Infof("WARNING: Using KUBECONFIG from %s", os.Getenv("KUBECONFIG"))
 		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
 	}
 
