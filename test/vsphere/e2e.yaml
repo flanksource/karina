@@ -19,7 +19,9 @@ vsphere:
   password: !!env GOVC_PASS
   hostname: !!env GOVC_FQDN
   resourcePool: !!env GOVC_RESOURCE_POOL
-  network: !!env GOVC_NETWORK
+  network: "VM Network"
+#  TODO: revert after YAML fix
+#  network: !!env GOVC_NETWORK
 #  csiVersion: v2.0.0
 #  cpiVersion: v1.1.0
 
@@ -67,7 +69,9 @@ master:
   memory: 4
   disk: 10
   networks:
-    - !!env GOVC_NETWORK
+    - "VM Network"
+#  TODO: revert after YAML fix
+#    - !!env GOVC_NETWORK
   cluster: !!env GOVC_CLUSTER
   prefix: m
   template: "k8s-1.16.4"
@@ -75,7 +79,9 @@ workers:
   worker-group-a:
     prefix: w
     networks:
-      - !!env GOVC_NETWORK
+      - "VM Network"
+    #  TODO: revert after YAML fix
+    #    - !!env GOVC_NETWORK
     cluster: !!env GOVC_CLUSTER
     count: 1
     cpu: 2
