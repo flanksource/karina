@@ -5,7 +5,7 @@
 
 
 
-BIN=./.bin/platform-cli
+BIN=./.bin/karina
 mkdir -p .bin
 
 export GOPATH=$HOME/go
