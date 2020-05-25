@@ -3,7 +3,7 @@
 ##
 
 ## Cluster name
-#name: e2e-cluster-002
+name: e2e-cluster-003
 
 ## Prefix to be added to VM hostnames
 hostPrefix: vsphere-k8s
