@@ -1,6 +1,6 @@
 # Sealed Secrets
 
-[Sealed Secrets controller](https://github.com/bitnami-labs/sealed-secrets) is automatically deployed by `platform-cli deploy base`.
+[Sealed Secrets controller](https://github.com/bitnami-labs/sealed-secrets) is automatically deployed by `karina deploy base`.
 
 ### Configuration
 
@@ -20,7 +20,7 @@ If certificate is not provided, sealed secrets controller will automatically gen
 You can override this settings and provide your own certificate for encrypting secrets.
 
 ```bash
-$ platform-cli ca generate --name sealed-secrets \
+$ karina ca generate --name sealed-secrets \
                            --cert-path .certs/sealed-secrets-crt.pem \
                            --private-key-path .certs/sealed-secrets-key.pem \
                            --password foobar \

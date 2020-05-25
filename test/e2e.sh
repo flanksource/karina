@@ -1,5 +1,5 @@
 #!/bin/bash
-BIN=./.bin/platform-cli
+BIN=./.bin/karina
 mkdir -p .bin
 export PLATFORM_CONFIG=test/common.yaml
 export GO_VERSION=${GO_VERSION:-1.13}
@@ -68,7 +68,7 @@ fi
 
 wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
 chmod +x build-tools
-./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
+./build-tools gh report-junit $GITHUB_OWNER/karina $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
       --success-message="commit $COMMIT_SHA" \
       --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 

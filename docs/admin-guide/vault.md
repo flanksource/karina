@@ -15,7 +15,7 @@ vault:
 ```
 
 ```shell
-platform-cli vault init
+karina vault init
 ```
 
 This will print out the Root and Recovery tokens that need to be saved
@@ -85,7 +85,7 @@ vault:
 ```
 
 ```shell
-platform-cli vault init
+karina vault init
 ```
 
 ### Configuring Cert-Manager to issue certs via Vault

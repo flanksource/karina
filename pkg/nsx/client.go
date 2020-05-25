@@ -43,7 +43,7 @@ func (c *NSXClient) Init() error {
 		BasePath:   "/api/v1",
 		Host:       c.Host,
 		Scheme:     "https",
-		UserAgent:  "platform-cli",
+		UserAgent:  "karina",
 		RemoteAuth: c.RemoteAuth,
 		DefaultHeader: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(c.Username+":"+c.Password)),

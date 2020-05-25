@@ -20,7 +20,7 @@ var (
 
 func main() {
 	var root = &cobra.Command{
-		Use: "platform-cli",
+		Use: "karina",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			level, _ := cmd.Flags().GetCount("loglevel")
 			switch {
@@ -73,7 +73,7 @@ func main() {
 	}
 	root.AddCommand(&cobra.Command{
 		Use:   "version",
-		Short: "Print the version of platform-cli",
+		Short: "Print the version of karina",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(version)
