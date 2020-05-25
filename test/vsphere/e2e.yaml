@@ -3,7 +3,7 @@
 ##
 
 ## Cluster name
-name: e2e-cluster
+name: e2e-cluster-002
 
 ## Prefix to be added to VM hostnames
 hostPrefix: vsphere-k8s
@@ -88,6 +88,10 @@ workers:
     memory: 4
     disk: 10
     template: k8s-1.16.4
+calico:
+  ipip: Never
+  vxlan: Never
+  version: v3.8.2
 #consul: 10.100.0.13
 #hostPrefix: k8s
 #datacenter: lab
