@@ -42,6 +42,7 @@ else
   docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
 fi
 
+unset KUBECONFIG
 export PLATFORM_CONFIG=test/vsphere/e2e.yaml
 
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
