@@ -1,13 +1,13 @@
 # Kind Quickstart
 
-### 1) Install platform-cli
+### 1) Install karina
 
-Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/platform-cli/releases/latest).
+Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/karina/releases/latest).
 
 ```shell
-wget https://github.com/flanksource/platform-cli/releases/download/0.11.1-646-g9bbfb5c/platform-cli_osx
-chmod +x platform-cli_osx
-mv platform-cli_osx /usr/localbin/platform-cli
+wget https://github.com/flanksource/karina/releases/download/0.11.1-646-g9bbfb5c/karina_osx
+chmod +x karina_osx
+mv karina_osx /usr/localbin/karina
 ```
 
 #### 2) Create a configuration file:
@@ -35,38 +35,38 @@ ingressCA:
 
 ```shell
 # generate CA for kubernetes api-server authentication
-platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+karina ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
 
 # generate ingressCA for ingress certificates
-platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
+karina ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
 
 ```
 
 #### 4) Provision the cluster in kind:
 
 ```shell
-platform-cli provision kind-cluster -c test-cluster.yml
+karina provision kind-cluster -c test-cluster.yml
 ```
 
 #### 5) Deploy the bare minimum configuration:
 
 ```shell
-platform-cli deploy phases --base --dex --calico -c test-cluster.yml
+karina deploy phases --base --dex --calico -c test-cluster.yml
 ```
 
 #### 6) Deploy everything else that may be configured:
 
 ```shell
-platform-cli deploy all
+karina deploy all
 ```
 
 
 
 ## Troubleshooting
 
-KIND cluster creation issues can be debugged by specifying the `--trace` argument to `platform-cli` during creation:
+KIND cluster creation issues can be debugged by specifying the `--trace` argument to `karina` during creation:
 
 ```bash
-platform-cli provision kind-cluster --trace
+karina provision kind-cluster --trace
 ```
 

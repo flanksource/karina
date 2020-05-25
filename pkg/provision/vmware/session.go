@@ -76,7 +76,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 
 	session := Session{Client: client, Logger: logger.StandardLogger()}
 
-	session.UserAgent = "platform-cli"
+	session.UserAgent = "karina"
 
 	// Assign the finder to the session.
 	session.Finder = find.NewFinder(session.Client.Client, false)

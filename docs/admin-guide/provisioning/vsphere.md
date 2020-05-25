@@ -8,13 +8,13 @@
 * A ResourcePool and folder to place VM's
 * A VM/Template available with the matching versions of `kubeadm`, `kubectl` and `kubelet` preinstalled
 
-### 1. Install platform-cli
+### 1. Install karina
 
 Choose to build from source, download a release or use docker.
 
 #### Download release and install:
 
-Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/platform-cli/releases/latest).
+Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/karina/releases/latest).
 
 Make it executable and place in your path.
 
@@ -25,7 +25,7 @@ _or_
 Use latest docker image:
 
 ```
-docker pull flanksource/platform-cli:v0.13.4
+docker pull flanksource/karina:v0.13.4
 ```
 
 ## 2. Setup and verify vSphere connectivity
@@ -58,19 +58,19 @@ Create a Certificate Authority for the cluster and the cluster ingress by runnin
 
 ```shell
 # generate CA for kubernetes api-server authentication
-platform-cli ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+karina ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
 
 # generate ingressCA for ingress certificates
-platform-cli ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar
+karina ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar
 ```
 
 ## 4. Configure the platform config
 
-`platform-cli` uses a YAML configuration file.
+`karina` uses a YAML configuration file.
 
 Below is a small working sample.
 
-See other examples in the [test vSphere platform fixtures](https://github.com/flanksource/platform-cli/tree/master/test/vsphere).
+See other examples in the [test vSphere platform fixtures](https://github.com/flanksource/karina/tree/master/test/vsphere).
 
 See the [Configuration Reference](./reference/config.md) for details of available configurations.
 
@@ -158,7 +158,7 @@ workers:
 Provision the cluster with:
 
 ```bash
-platform-cli provision vsphere-cluster -c cluster.yaml
+karina provision vsphere-cluster -c cluster.yaml
 ```
 
 ## 6. Deploy a CNI
@@ -166,13 +166,13 @@ platform-cli provision vsphere-cluster -c cluster.yaml
 Deploy Calico:
 
 ```bash
-platform-cli deploy calico -c cluster.yaml
+karina deploy calico -c cluster.yaml
 ```
 
 ## 7. Deploy base configs
 
 ```bash
-platform-cli deploy base -c cluster.yaml
+karina deploy base -c cluster.yaml
 ```
 
 ## 8. Access the cluster
@@ -180,7 +180,7 @@ platform-cli deploy base -c cluster.yaml
 Export a kubeconfig file (using an X509 admin example):
 
 ```bash
-platform-cli kubeconfig admin -c cluster.yaml > kubeconfig.yaml
+karina kubeconfig admin -c cluster.yaml > kubeconfig.yaml
 export KUBECONFIG=$PWD/kubeconfig.yaml
 ```
 
@@ -195,7 +195,7 @@ kubectl get nodes
 Run:
 
 ```bash
-platform-cli test all --e2e -c cluster.yaml
+karina test all --e2e -c cluster.yaml
 ```
 
 ## 10. Tear down the cluster
@@ -203,5 +203,5 @@ platform-cli test all --e2e -c cluster.yaml
 Run:
 
 ```bash
-platform-cli terminate -c cluster.yaml
+karina terminate -c cluster.yaml
 ```

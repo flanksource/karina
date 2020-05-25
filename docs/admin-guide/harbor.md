@@ -13,7 +13,7 @@ There are 2 components to the backup of Harbor:
 Run a database restore:
 
 ```shell
-platform-cli db restore --name postgres-harbor s3://path/to/logical_backup.tgz
+karina db restore --name postgres-harbor s3://path/to/logical_backup.tgz
 ```
 
 !!! warning
