@@ -70,7 +70,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			Annotation:   "Created by platform-cli from " + vm.Template,
+			Annotation:   "Created by karina from " + vm.Template,
 			Flags:        newVMFlagInfo(),
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,

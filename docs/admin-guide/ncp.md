@@ -2,17 +2,17 @@
 
 ```yaml
 # private docker registry
-dockerRegistry: 
+dockerRegistry:
 calico:
 	disabled: true
 nsx:
   # T0 router id
-  tier0: 
+  tier0:
   # version of container to use, the container must be published to {{dockerRegistry}}/library/nsx-ncp-ubuntu:{{version}}
   version: 2.5.1.15287458
   use_stderr: true
   # load balancer pool id
-  loadbalancer_ip_pool: 
+  loadbalancer_ip_pool:
   debug: false
   nsx_k8s:
     loglevel: WARNING
@@ -35,7 +35,7 @@ nsx:
     # TO router name
     top_tier_router:
     # Overlay TZ ID
-    overlay_tz: 
+    overlay_tz:
     # List of IP pool's for pod IP's
     no_snat_ip_blocks:
     # list of NSX API Managers
@@ -54,7 +54,7 @@ nsx:
 To update the logging level of all the node agents and controllers, run:
 
 ```shell
-platform-cli nsx set-log-level --log-level INFO
+karina nsx set-log-level --log-level INFO
 ```
 
 

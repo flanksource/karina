@@ -1,6 +1,6 @@
 
 default: build
-NAME:=platform-cli
+NAME:=karina
 
 ifeq ($(GITHUB_REF),)
 GITHUB_REF := dev

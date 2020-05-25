@@ -1,13 +1,13 @@
 
 
-<h1 align="center"><img src="https://github.com/flanksource/platform-cli/raw/master/docs/img/logo.png"></i></h1>
+<h1 align="center"><img src="https://github.com/flanksource/karina/raw/master/docs/img/logo.png"></i></h1>
   <p align="center">Kubernetes Platform Toolkit</p>
 <p align="center">
-<a href="https://circleci.com/gh/flanksource/platform-cli"><img src="https://circleci.com/gh/flanksource/platform-cli.svg?style=svg"></a>
-<a href="https://goreportcard.com/report/github.com/flanksource/platform-cli"><img src="https://goreportcard.com/badge/github.com/flanksource/platform-cli"></a>
+<a href="https://circleci.com/gh/flanksource/karina"><img src="https://circleci.com/gh/flanksource/karina.svg?style=svg"></a>
+<a href="https://goreportcard.com/report/github.com/flanksource/karina"><img src="https://goreportcard.com/badge/github.com/flanksource/karina"></a>
 <img src="https://img.shields.io/badge/K8S-1.15%20%7C%201.16-lightgrey.svg"/>
 <img src="https://img.shields.io/badge/Infra-vSphere%20%7C%20Kind-lightgrey.svg"/>
-<img src="https://img.shields.io/github/license/flanksource/platform-cli.svg?style=flat-square"/>
+<img src="https://img.shields.io/github/license/flanksource/karina.svg?style=flat-square"/>
 <a href="https://karina.docs.flanksource.com"> <img src="https://img.shields.io/badge/☰-Docs-lightgrey.svg"/> </a>
 </p>
 
