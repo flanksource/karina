@@ -34,6 +34,10 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
+	if err := quack.Install(platform); err != nil {
+		platform.Fatalf("Error installing quack %s", err)
+	}
+
 	if err := certmanager.Install(platform); err != nil {
 		return err
 	}
@@ -66,10 +70,6 @@ func Install(platform *platform.Platform) error {
 
 	if err := nginx.Install(platform); err != nil {
 		platform.Fatalf("Error deploying nginx %s", err)
-	}
-
-	if err := quack.Install(platform); err != nil {
-		platform.Fatalf("Error installing quack %s", err)
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {

@@ -581,7 +581,7 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		}
 		for _, object := range objects {
 			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
-				platform.Debugf("resources already deleted skipping, %v", err)
+				platform.Tracef("resources already deleted skipping, %v", err)
 				return nil
 			}
 			platform.Debugf("Deleting %s", console.Redf("%s", spec))
@@ -625,6 +625,7 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 			return nil
 		}
 	}
+	os.Mkdir(".bin", 0755) //nolint: golint
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
