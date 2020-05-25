@@ -49,9 +49,7 @@ require (
 	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.2.0
-	//TODO: revert after fix-double-quotes is merged
-	github.com/philipstaffordwood/yaml v0.0.0-20200521045317-e791b2a8a655 // branch fix-double-quotes
-	//	gopkg.in/flanksource/yaml.v3 v3.1.0
+	gopkg.in/flanksource/yaml.v3 v3.1.0
 )
 
 replace (
@@ -60,6 +58,5 @@ replace (
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
 	gopkg.in/hairyhenderson/yaml.v2 => github.com/maxaudron/yaml v0.0.0-20190411130442-27c13492fe3c
-	github.com/philipstaffordwood/yaml v0.0.0-20200521045317-e791b2a8a655 => gopkg.in/flanksource/yaml.v3 v3.1.0
 	k8s.io/client-go => k8s.io/client-go v0.17.0
 )
