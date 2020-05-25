@@ -34,12 +34,12 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	if err := quack.Install(platform); err != nil {
-		platform.Fatalf("Error installing quack %s", err)
-	}
-
 	if err := certmanager.Install(platform); err != nil {
 		return err
+	}
+
+	if err := quack.Install(platform); err != nil {
+		platform.Fatalf("Error installing quack %s", err)
 	}
 
 	if err := platformoperator.Install(platform); err != nil {
