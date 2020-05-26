@@ -1,7 +1,9 @@
 #!/bin/bash
+export TERM=xterm-256color
 
 mkdir -p .bin
 BIN=./.bin/karina
+DBIN=dlv debug --headless --listen=:2345 --api-version=2 --accept-multiclient main.go --
 
 export GOPATH=$HOME/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
@@ -62,7 +64,7 @@ $BIN deploy phases --base $PLATFORM_OPTIONS_FLAGS
 $BIN deploy phases --stubs $PLATFORM_OPTIONS_FLAGS
 $BIN deploy phases --dex $PLATFORM_OPTIONS_FLAGS
 
-[[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
+#[[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 # wait for the base deployment with stubs to come up healthy
 $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
@@ -78,7 +80,7 @@ $BIN deploy all $PLATFORM_OPTIONS_FLAGS
 $BIN opa bundle automobile -v
 # wait for up to 4 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
-$BIN test all -v --wait 240 --progress=false
+$DBIN test all -v --wait 240 --progress=false
 
 failed=false
 
