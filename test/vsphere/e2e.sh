@@ -116,6 +116,7 @@ $BIN test  base --wait 240 --progress=false $PLATFORM_OPTIONS_FLAGS
 failed=false
 
 # TODO: restore
+$BIN test  base --wait 240 --progress=false --junit-path test-results/results.xml $PLATFORM_OPTIONS_FLAGS
 ## e2e do not use --wait at the run level, if needed each individual test implements
 ## its own wait. e2e tests should always pass once the non e2e have passed
 #if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
@@ -132,7 +133,7 @@ chmod +x build-tools
 
 
 mkdir -p artifacts
-$BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
+$BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
 zip -r artifacts/snapshot.zip snapshot/*
 
 
