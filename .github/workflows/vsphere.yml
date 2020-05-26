@@ -9,16 +9,6 @@ jobs:
     runs-on: [self-hosted]
     steps:
       - uses: actions/checkout@master
-      - name: Test Uploading
-        run: |
-          printenv
-          mkdir -p test-results/
-          echo 'A basic result' > test-results/results.xml
-      - name: Upload test results
-        uses: actions/upload-artifact@v1
-        with:
-          name: test-results
-          path: test-results/results.xml
       - name: Run e2e testing script
         env:
           # AWS Access Keys Used by SOPS to decrypt secrets
@@ -34,3 +24,8 @@ jobs:
           date; hostname; whoami;
           pwd; ls -l
           find .
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: test-results/results.xml
