@@ -10,7 +10,9 @@ const Namespace = "elastic-system"
 
 func Deploy(p *platform.Platform) error {
 	if p.ECK == nil || p.ECK.Disabled {
-		p.Infof("Skipping deployment of ECK, it is disabled")
+		if err := p.DeleteSpecs(Namespace, "eck.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	p.Infof("Deploying ECK %s", p.ECK.Version)

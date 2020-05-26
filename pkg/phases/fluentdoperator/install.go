@@ -10,7 +10,9 @@ const (
 
 func Deploy(p *platform.Platform) error {
 	if p.FluentdOperator == nil || p.FluentdOperator.Disabled {
-		p.Infof("Skipping deployment of fluentd-operator, it is disabled")
+		if err := p.DeleteSpecs("", "kube-fluentd-operator.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	p.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)

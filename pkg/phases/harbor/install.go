@@ -12,7 +12,9 @@ import (
 
 func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
-		p.Infof("Skipping deployment of harbor, it is disabled")
+		if err := p.DeleteSpecs("", "harbor.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	p.Infof("Deploying harbor %s", p.Harbor.Version)

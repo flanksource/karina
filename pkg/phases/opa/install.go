@@ -12,6 +12,9 @@ const (
 
 func Install(platform *platform.Platform) error {
 	if platform.OPA == nil || platform.OPA.Disabled {
+		if err := platform.DeleteSpecs("", "opa.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	if platform.OPA.KubeMgmtVersion == "" {

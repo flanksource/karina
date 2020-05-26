@@ -22,8 +22,21 @@ var specs = []string{
 	"service-monitors.yaml",
 }
 
+var cleanup = []string{
+	"observability/thanos-compactor.yaml",
+	"observability/thanos-querier.yaml",
+	"observability/thanos-store.yaml",
+	"thanos-config.yaml",
+	"thanos-sidecar.yaml",
+}
+
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
+		for _, spec := range append(specs, cleanup...) {
+			if err := p.DeleteSpecs(Namespace, "monitoring/"+spec); err != nil {
+				p.Warnf("failed to delete specs: %v", err)
+			}
+		}
 		return nil
 	}
 
@@ -52,7 +65,6 @@ func Install(p *platform.Platform) error {
 	}
 
 	for _, spec := range specs {
-		p.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
 			return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
 		}

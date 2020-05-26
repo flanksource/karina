@@ -18,6 +18,9 @@ const (
 
 func Install(p *platform.Platform) error {
 	if p.NSX == nil || p.NSX.Disabled {
+		if err := p.DeleteSpecs(Namespace, "nsx.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 
