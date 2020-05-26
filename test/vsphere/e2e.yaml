@@ -43,6 +43,9 @@ dns:
 ldap:
   disabled: true
 
+configmapReloader:
+  disabled: true
+
 # The CA certs generated in step 3
 ca:
   cert: .certs/root-ca.crt
@@ -92,6 +95,7 @@ calico:
   ipip: Never
   vxlan: Never
   version: v3.8.2
+
 #consul: 10.100.0.13
 #hostPrefix: k8s
 #datacenter: lab
