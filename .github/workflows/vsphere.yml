@@ -30,7 +30,7 @@ jobs:
           date; hostname; whoami;
           pwd; ls -l
           find .
-          sops exec-env test/vsphere/lab.enc.env '/bin/bash -x ./test/vsphere/e2e.sh'
+          sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
           date; hostname; whoami;
           pwd; ls -l
           find .
