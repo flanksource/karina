@@ -9,7 +9,9 @@ const Namespace = "eck"
 
 func Deploy(p *platform.Platform) error {
 	if p.Elasticsearch == nil || p.Elasticsearch.Disabled {
-		p.Infof("Skipping deployment of elasticsearch, it is disabled")
+		if err := p.DeleteSpecs(Namespace, "elasticsearch.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 

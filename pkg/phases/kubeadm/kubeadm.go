@@ -71,7 +71,7 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt)
 	}
 
-	if !cfg.Ldap.Disabled {
+	if !cfg.Ldap.Disabled && cfg.IngressCA != nil {
 		cluster.APIServer.ExtraArgs["oidc-issuer-url"] = "https://dex." + cfg.Domain
 		cluster.APIServer.ExtraArgs["oidc-client-id"] = "kubernetes"
 		cluster.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/certs/openid-ca.pem"

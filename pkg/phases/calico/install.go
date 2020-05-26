@@ -4,10 +4,15 @@ import (
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
+const Namespace = "kube-system"
+
 func Install(platform *platform.Platform) error {
 	if platform.Calico.Disabled {
-		platform.Debugf("Not installing calico, it is disabled")
+		if err := platform.DeleteSpecs(Namespace, "calico.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
-	return platform.ApplySpecs("kube-system", "calico.yaml")
+
+	return platform.ApplySpecs(Namespace, "calico.yaml")
 }
