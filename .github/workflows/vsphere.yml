@@ -9,6 +9,14 @@ jobs:
     runs-on: [self-hosted]
     steps:
       - uses: actions/checkout@master
+      - name: Test Uploading
+        run: |
+          echo 'A basic result' > test-results/results.xml
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: test-results/results.xml
       - name: Run e2e testing script
         env:
           # AWS Access Keys Used by SOPS to decrypt secrets
@@ -17,8 +25,6 @@ jobs:
         run: |
           # Run the testing commands in subshell with decoded environment
           sops exec-env test/vsphere/lab.enc.env '/bin/bash -x ./test/vsphere/e2e.sh'
-      - name: Upload test results
-        uses: actions/upload-artifact@v1
-        with:
-          name: test-results
-          path: test-results/results.xml
+          date; host; whoami;
+          pwd; ls -l
+          find .
