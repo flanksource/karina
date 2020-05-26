@@ -37,6 +37,14 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 
 printenv
 
+# Test Comments
+wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
+chmod +x build-tools
+./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+      --success-message="commit $COMMIT_SHA" \
+      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+
+
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
 fi
@@ -95,11 +103,7 @@ failed=false
 #  failed=true
 #fi
 
-wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
-chmod +x build-tools
-./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GITHUB_TOKEN \
-      --success-message="commit $COMMIT_SHA" \
-      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
