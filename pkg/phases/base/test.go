@@ -41,6 +41,9 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
+	if p.PlatformOperator == nil {
+		test.Skipf("platform-operator","No platform operator configured - skipping")
+	}
 	namespace := fmt.Sprintf("platform-operator-e2e-auto-delete-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
