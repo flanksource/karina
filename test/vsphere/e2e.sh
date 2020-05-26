@@ -22,7 +22,7 @@ generate_cluster_id() {
   local prefix
 
   prefix=$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)
-  echo "e2e-${prefix}"
+  echo "e2e-${GITHUB_OWNER}-${prefix}"
 }
 
 PLATFORM_CLUSTER_ID=$(generate_cluster_id)
@@ -34,6 +34,8 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 #  #TODO: more halt required here?
 #  exit 0
 #fi
+
+printenv
 
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
