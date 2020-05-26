@@ -32,9 +32,18 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to generate kubeadm patches")
 	}
 
-	caPath, err := filepath.Abs(platform.IngressCA.Cert)
-	if err != nil {
-		return errors.Wrap(err, "failed to expand ca file path")
+	var extraMounts []kindapi.Mount
+	if platform.IngressCA != nil {
+		caPath, err := filepath.Abs(platform.IngressCA.Cert)
+		if err != nil {
+			return errors.Wrap(err, "failed to expand ca file path")
+		}
+		extraMounts = []kindapi.Mount{
+			{
+				ContainerPath: kindCADir,
+				HostPath:      path.Dir(caPath),
+				Readonly:      true,
+			}}
 	}
 
 	kindConfig := kindapi.Cluster{
@@ -67,13 +76,7 @@ func KindCluster(platform *platform.Platform) error {
 					},
 				},
 				KubeadmConfigPatches: kubeadmPatches,
-				ExtraMounts: []kindapi.Mount{
-					{
-						ContainerPath: kindCADir,
-						HostPath:      path.Dir(caPath),
-						Readonly:      true,
-					},
-				},
+				ExtraMounts:          extraMounts,
 			},
 		},
 	}
@@ -136,16 +139,18 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig.APIServer.CertSANs = nil
 
 	vol := &clusterConfig.APIServer.ExtraVolumes
-	*vol = append(*vol, api.HostPathMount{
-		Name:      "oidc-certificates",
-		HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
-		MountPath: "/etc/ssl/oidc/ingress-ca.pem",
-		ReadOnly:  true,
-		PathType:  api.HostPathFile,
-	})
 
-	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+	if platform.IngressCA != nil {
+		*vol = append(*vol, api.HostPathMount{
+			Name:      "oidc-certificates",
+			HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
+			MountPath: "/etc/ssl/oidc/ingress-ca.pem",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		})
 
+		clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+	}
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""

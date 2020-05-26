@@ -565,6 +565,34 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	k8s.WaitForNamespace(client, ns, timeout)
 }
 
+func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
+	if platform.TerminationProtection {
+		platform.Warnf("Skipping deletion of resources when termination protection is enabled ")
+		return nil
+	}
+	for _, spec := range specs {
+		template, err := platform.Template(spec, "manifests")
+		if err != nil {
+			return err
+		}
+		objects, err := k8s.GetUnstructuredObjects([]byte(template))
+		if err != nil {
+			return err
+		}
+		for _, object := range objects {
+			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
+				platform.Tracef("resources already deleted skipping, %v", err)
+				return nil
+			}
+			platform.Debugf("Deleting %s", console.Redf("%s", spec))
+			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
 		platform.Debugf("Applying %s", console.Greenf("%s", spec))
@@ -597,6 +625,7 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 			return nil
 		}
 	}
+	os.Mkdir(".bin", 0755) //nolint: errcheck
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 

@@ -3,6 +3,7 @@ package nginx
 import (
 	"fmt"
 
+	"github.com/apex/log"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -13,7 +14,9 @@ const (
 
 func Install(platform *platform.Platform) error {
 	if platform.Nginx != nil && platform.Nginx.Disabled {
-		platform.Debugf("Skipping nginx deployment")
+		if err := platform.DeleteSpecs(Namespace, "nginx.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 
@@ -37,12 +40,15 @@ func Install(platform *platform.Platform) error {
 		platform.Nginx.RequestBodyMax = "32M"
 	}
 
-	if err := platform.ApplySpecs("", "nginx.yaml"); err != nil {
+	if err := platform.ApplySpecs(Namespace, "nginx.yaml"); err != nil {
 		platform.Errorf("Error deploying nginx: %s\n", err)
 	}
 
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {
-		return platform.ApplySpecs("", "nginx-oauth.yaml")
+		return platform.ApplySpecs(Namespace, "nginx-oauth.yaml")
+	}
+	if err := platform.DeleteSpecs(Namespace, "nginx-oauth.yaml"); err != nil {
+		log.Warnf("failed to delete specs: %v", err)
 	}
 	return nil
 }

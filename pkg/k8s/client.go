@@ -570,6 +570,25 @@ func (c *Client) trace(msg string, objects ...runtime.Object) {
 	}
 }
 
+func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
+	for _, unstructuredObj := range objects {
+		client, err := c.GetRestClient(*unstructuredObj)
+		if err != nil {
+			return err
+		}
+
+		if c.ApplyDryRun {
+			c.Infof("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+		} else {
+			if _, err := client.Delete(namespace, unstructuredObj.GetName()); err != nil {
+				return err
+			}
+			c.Infof("%s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+		}
+	}
+	return nil
+}
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
