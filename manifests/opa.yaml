@@ -54,15 +54,6 @@ spec:
     kind: ClusterIssuer
 
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: opa-server
-  namespace: opa
-  annotations:
-    cert-manager.io/allow-direct-injection: "true"
-
----
 kind: Service
 apiVersion: v1
 metadata:

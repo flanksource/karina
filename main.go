@@ -20,18 +20,8 @@ var (
 
 func main() {
 	var root = &cobra.Command{
-		Use: "karina",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			level, _ := cmd.Flags().GetCount("loglevel")
-			switch {
-			case level > 1:
-				log.SetLevel(log.TraceLevel)
-			case level > 0:
-				log.SetLevel(log.DebugLevel)
-			default:
-				log.SetLevel(log.InfoLevel)
-			}
-		},
+		Use:              "karina",
+		PersistentPreRun: cmd.GlobalPreRun,
 	}
 
 	root.AddCommand(
@@ -103,6 +93,7 @@ func main() {
 
 	root.PersistentFlags().StringArrayP("config", "c", []string{utils.GetEnvOrDefault("PLATFORM_CONFIG", "config.yml")}, "Path to config file")
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
+	root.PersistentFlags().StringP("kubeconfig", "k", fmt.Sprintf("%s/.kube/config", os.Getenv("HOME")), "Set kubeconfig location")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
 	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")
