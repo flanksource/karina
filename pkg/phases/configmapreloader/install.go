@@ -1,7 +1,6 @@
 package configmapreloader
 
 import (
-	"github.com/apex/log"
 	"github.com/flanksource/commons/utils"
 
 	"github.com/moshloop/platform-cli/pkg/platform"
@@ -14,7 +13,7 @@ const (
 func Deploy(p *platform.Platform) error {
 	if p.ConfigMapReloader.Disabled {
 		if err := p.DeleteSpecs(Namespace, "configmap-reloader.yaml"); err != nil {
-			log.Warnf("failed to delete specs: %v", err)
+			p.Warnf("failed to delete specs: %v", err)
 		}
 		return nil
 	}

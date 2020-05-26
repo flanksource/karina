@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-
 	"github.com/flanksource/commons/console"
 	"github.com/moshloop/platform-cli/pkg/phases/base"
 	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
@@ -21,6 +19,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
 	"github.com/moshloop/platform-cli/pkg/phases/flux"
 	"github.com/moshloop/platform-cli/pkg/phases/harbor"
+	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
 	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
 	"github.com/moshloop/platform-cli/pkg/phases/nsx"
 	"github.com/moshloop/platform-cli/pkg/phases/opa"
@@ -33,7 +32,7 @@ import (
 	"github.com/moshloop/platform-cli/pkg/phases/velero"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v5"
+	mpb "github.com/vbauerster/mpb/v5"
 )
 
 var (
@@ -107,6 +106,7 @@ func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
 
 func init() {
 	Test.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		GlobalPreRun(cmd, args)
 		p = getPlatform(cmd)
 		wg = &sync.WaitGroup{}
 		ch = make(chan int, concurrency)
