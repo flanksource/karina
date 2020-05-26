@@ -625,7 +625,7 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 			return nil
 		}
 	}
-	os.Mkdir(".bin", 0755) //nolint: golint
+	os.Mkdir(".bin", 0755) //nolint: errcheck
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
