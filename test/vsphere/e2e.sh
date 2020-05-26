@@ -107,7 +107,7 @@ printf "\n\n\n\n$(tput bold)Tests$(tput setaf 7)\n"
 #TODO: Restore
 ## deploy the opa bundles first, as they can take some time to load, this effectively
 ## parallelizes this work to make the entire test complete faster
-#$BIN opa bundle automobile -v
+$BIN opa bundle automobile -v $PLATFORM_OPTIONS_FLAGS
 # wait for up to 4 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
 # TODO: base-> all
