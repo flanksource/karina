@@ -17,15 +17,9 @@ jobs:
           GIT_API_KEY: ${{ secrets.GIT_API_KEY }}
         run: |
           # Run the testing commands in subshell with decoded environment
-          date; hostname; whoami;
-          pwd; ls -l
-          find .
           sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
-          date; hostname; whoami;
-          pwd; ls -l
-          find .
       - name: Upload test results
         uses: actions/upload-artifact@v1
         with:
           name: test-results
-          path: test-results/results.xml
+          path: test-results/**

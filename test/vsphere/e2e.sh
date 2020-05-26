@@ -115,13 +115,11 @@ $BIN test  base --wait 240 --progress=false $PLATFORM_OPTIONS_FLAGS
 
 failed=false
 
-# TODO: restore
-$BIN test  base --wait 240 --progress=false --junit-path test-results/results.xml $PLATFORM_OPTIONS_FLAGS
 ## e2e do not use --wait at the run level, if needed each individual test implements
 ## its own wait. e2e tests should always pass once the non e2e have passed
-#if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
-#  failed=true
-#fi
+if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml $PLATFORM_OPTIONS_FLAGS; then
+  failed=true
+fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
 # Test Comments
