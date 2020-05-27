@@ -3,6 +3,9 @@ package opa
 import (
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
@@ -31,11 +34,17 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	for index := range platform.OPA.NamespaceWhitelist {
-		err := platform.CreateOrUpdateNamespace(platform.OPA.NamespaceWhitelist[index], nil, nil)
-		if err != nil {
-			fmt.Println(err)
-		}
+	if err := platform.Apply(Namespace, &v1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "opa-server",
+			Namespace: Namespace,
+			Annotations: map[string]string{
+				"cert-manager.io/allow-direct-injection": "true",
+			},
+		},
+	}); err != nil {
+		return fmt.Errorf("install: failed to create secret opa-server: %v", err)
 	}
 
 	if err := platform.ApplySpecs(Namespace, "opa.yaml"); err != nil {

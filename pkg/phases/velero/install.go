@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/flanksource/commons/text"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -20,7 +19,7 @@ const (
 func Install(platform *platform.Platform) error {
 	if platform.Velero == nil || platform.Velero.Disabled {
 		if err := platform.DeleteSpecs(Namespace, "velero.yaml"); err != nil {
-			log.Warnf("failed to delete specs: %v", err)
+			platform.Warnf("failed to delete specs: %v", err)
 		}
 		return nil
 	}

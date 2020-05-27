@@ -3,7 +3,6 @@ package nginx
 import (
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/moshloop/platform-cli/pkg/types"
 )
@@ -48,7 +47,7 @@ func Install(platform *platform.Platform) error {
 		return platform.ApplySpecs(Namespace, "nginx-oauth.yaml")
 	}
 	if err := platform.DeleteSpecs(Namespace, "nginx-oauth.yaml"); err != nil {
-		log.Warnf("failed to delete specs: %v", err)
+		platform.Warnf("failed to delete specs: %v", err)
 	}
 	return nil
 }

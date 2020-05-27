@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -153,6 +154,25 @@ func mergeConfigs(base *types.PlatformConfig, paths []string) error {
 	}
 
 	return nil
+}
+
+func GlobalPreRun(cmd *cobra.Command, args []string) {
+	level, _ := cmd.Flags().GetCount("loglevel")
+	switch {
+	case level > 1:
+		log.SetLevel(log.TraceLevel)
+	case level > 0:
+		log.SetLevel(log.DebugLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+	}
+	kubeconfig, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		log.Infof("Kubeconfig: %s", kubeconfig)
+		log.Fatalln("Failed to get kubeconfig argument:", err)
+	}
+	log.Debugf("Using kube config %s", kubeconfig)
+	os.Setenv("KUBECONFIG", kubeconfig)
 }
 
 var Render = &cobra.Command{

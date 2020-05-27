@@ -33,8 +33,13 @@ func testE2E(p *platform.Platform, test *console.TestResults) {
 	}
 
 	kubectl := p.GetKubectl()
+	kubeconfig, err := p.GetKubeConfig()
+	if err != nil {
+		test.Failf("opa", "Failed to get kube config: %v", err)
+		return
+	}
 
-	if err := kubectl("apply -f %s/resources", p.OPA.E2E.Fixtures); err != nil {
+	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.OPA.E2E.Fixtures, kubeconfig); err != nil {
 		test.Failf("opa", "Failed to setup namespaces: %v", err)
 		return
 	}
@@ -60,7 +65,7 @@ func testE2E(p *platform.Platform, test *console.TestResults) {
 	}
 
 	for _, rejectedFixture := range rejectedFixtureFiles {
-		if err := kubectl("apply -f %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name()); err != nil {
+		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name(), kubeconfig); err != nil {
 			test.Passf(rejectedFixture.Name(), "%s rejected as expected", rejectedFixture.Name())
 		} else {
 			test.Failf(rejectedFixture.Name(), "%s accepted as not expected", rejectedFixture.Name())
@@ -68,7 +73,7 @@ func testE2E(p *platform.Platform, test *console.TestResults) {
 	}
 
 	for _, acceptedFixture := range acceptedFixtureFiles {
-		if err := kubectl("apply -f %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name()); err != nil {
+		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name(), kubeconfig); err != nil {
 			test.Failf(acceptedFixture.Name(), "%s rejected as not expected", acceptedFixture.Name())
 		} else {
 			test.Passf(acceptedFixture.Name(), "%s accepted as expected", acceptedFixture.Name())
