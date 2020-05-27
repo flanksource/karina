@@ -1,6 +1,5 @@
 #!/bin/bash
 BIN=./.bin/karina
-DBIN="dlv debug --headless --listen=:2345 --api-version=2 --accept-multiclient main.go --"
 mkdir -p .bin
 export PLATFORM_CONFIG=test/e2e-platform-minimal.yaml
 export GO_VERSION=${GO_VERSION:-1.14}
@@ -33,7 +32,7 @@ if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
   $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
   $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
-  $DBIN provision kind-cluster -vv || exit 1
+  $BIN provision kind-cluster -vv || exit 1
 fi
 
 $BIN version
