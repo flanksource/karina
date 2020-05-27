@@ -1027,6 +1027,7 @@ gopkg.in/cheggaaa/pb.v1 v1.0.25/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qS
 gopkg.in/cheggaaa/pb.v1 v1.0.27/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/flanksource/yaml.v3 v3.1.0 h1:tYGhEGpdqc681ZcEGL6s26fNIokfAk6HzqEo58veeg0=
 gopkg.in/flanksource/yaml.v3 v3.1.0/go.mod h1:XTAr+MvmMB4eW84BBt+oqGaE4sy6Tlow979t+9RTNFo=
+gopkg.in/flanksource/yaml.v3 v3.1.1/go.mod h1:XTAr+MvmMB4eW84BBt+oqGaE4sy6Tlow979t+9RTNFo=
 gopkg.in/fsnotify.v1 v1.4.7 h1:xOHLXZwVvI9hhs+cLKq5+I5onOuwQLhQwiu63xxlHs4=
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=
 gopkg.in/inf.v0 v0.9.0/go.mod h1:cWUDdTG/fYaXco+Dcufb5Vnc6Gp2YChqWtbxRZE0mXw=
