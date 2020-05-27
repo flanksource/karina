@@ -55,22 +55,16 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 unset KUBECONFIG
 export PLATFORM_CONFIG=test/vsphere/e2e-platform-minimal.yaml
 
-#if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
-#  #TODO: more halt required here?
-#  exit 0
-#fi
+if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
+  exit 0
+fi
 
 printenv | grep -v GOVC
 
 printf "\n\n\n\n$(tput bold)Build steps$(tput setaf 7)\n"
-make setup
 go version
-
-if go version | grep  go$GO_VERSION; then
-  make pack build
-else
-  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
-fi
+make setup
+make pack build
 
 $BIN version
 
