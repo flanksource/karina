@@ -58,6 +58,7 @@ type PlatformConfig struct {
 	ECK                 *ECK                 `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
 	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
+	Journalbeat         Journalbeat          `yaml:"journalbeat,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`

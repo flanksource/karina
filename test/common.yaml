@@ -130,9 +130,17 @@ filebeat:
     elasticsearch:
       url: logs-es-http.eck.svc.cluster.local
       user: elastic
-      password: !!env ELASTIC_PASSWORD
+      password: elastic
       port: 9200
       scheme: https
+journalbeat:
+  version: 7.6.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: https
 eck:
   version: 1.0.1
 oauth2Proxy:

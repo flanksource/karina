@@ -5,30 +5,30 @@ import (
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/base"
-	"github.com/flanksource/karina/pkg/phases/certmanager"
-	"github.com/flanksource/karina/pkg/phases/elasticsearch"
-	"github.com/flanksource/karina/pkg/phases/platformoperator"
-	"github.com/flanksource/karina/pkg/phases/vsphere"
-	"github.com/flanksource/karina/pkg/platform"
-	"github.com/spf13/cobra"
-
 	"github.com/flanksource/karina/pkg/phases/calico"
+	"github.com/flanksource/karina/pkg/phases/certmanager"
 	"github.com/flanksource/karina/pkg/phases/configmapreloader"
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
+	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/filebeat"
 	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/journalbeat"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/spf13/cobra"
 )
 
 var Deploy = &cobra.Command{
@@ -48,6 +48,7 @@ func init() {
 		"filebeat":           filebeat.Deploy,
 		"gitops":             flux.Install,
 		"harbor":             harbor.Deploy,
+		"journalbeat":        journalbeat.Deploy,
 		"monitoring":         monitoring.Install,
 		"opa":                opa.Install,
 		"nsx":                nsx.Install,

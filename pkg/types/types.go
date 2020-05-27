@@ -474,13 +474,19 @@ type FluentdOperator struct {
 }
 
 type Filebeat struct {
+	Enabled
 	Version       string      `yaml:"version"`
-	Disabled      bool        `yaml:"disabled,omitempty"`
 	Name          string      `yaml:"name"`
 	Index         string      `yaml:"index"`
 	Prefix        string      `yaml:"prefix"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
+}
+
+type Journalbeat struct {
+	Enabled
+	Version       string      `yaml:"version"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Consul struct {
