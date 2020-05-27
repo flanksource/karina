@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/aktau/github-release v0.8.1 // indirect
-	github.com/apex/log v1.3.0
 	github.com/aws/aws-sdk-go v1.29.25
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0

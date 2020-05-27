@@ -51,7 +51,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
 	if p.PlatformOperator == nil {
-		test.Skipf("platform-operator","No platform operator configured - skipping")
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
 	namespace := fmt.Sprintf("platform-operator-e2e-auto-delete-%s", utils.RandomString(6))
@@ -82,7 +82,7 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 
 func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.TestResults) {
 	if p.PlatformOperator == nil {
-		test.Skipf("platform-operator","No platform operator configured - skipping")
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
 	namespace := fmt.Sprintf("platform-operator-e2e-pod-annotations-%s", utils.RandomString(6))
@@ -149,7 +149,7 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 
 func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *console.TestResults) {
 	if p.PlatformOperator == nil {
-		test.Skipf("platform-operator","No platform operator configured - skipping")
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
 	namespace1 := fmt.Sprintf("platform-operator-e2e-resource-quota1-%s", utils.RandomString(6))
@@ -264,7 +264,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 
 func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *console.TestResults) {
 	if p.PlatformOperator == nil {
-		test.Skipf("platform-operator","No platform operator configured - skipping")
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
 	namespace1 := fmt.Sprintf("platform-operator-e2e-resource-quota1-%s", utils.RandomString(6))
