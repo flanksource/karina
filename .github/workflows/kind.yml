@@ -7,8 +7,6 @@ on:
 jobs:
   test-e2e:
     runs-on: ubuntu-latest
-    container:
-      image: flanksource/build-tools:latest
     steps:
       - uses: actions/checkout@master
       - name: Run e2e testing script
@@ -21,3 +19,8 @@ jobs:
         with:
           name: test-results
           path: test-results/
+      - name: Upload snapshots
+        uses: actions/upload-artifact@v1
+        with:
+          name: snapshot
+          path: artifacts/snapshot.zip
