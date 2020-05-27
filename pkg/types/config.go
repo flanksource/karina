@@ -59,6 +59,7 @@ type PlatformConfig struct {
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
 	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
 	Journalbeat         Journalbeat          `yaml:"journalbeat,omitempty"`
+	Auditbeat           Auditbeat            `yaml:"auditbeat,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`

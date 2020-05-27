@@ -4,6 +4,7 @@ import (
 	"os"
 
 	log "github.com/flanksource/commons/logger"
+	"github.com/flanksource/karina/pkg/phases/auditbeat"
 	"github.com/flanksource/karina/pkg/phases/base"
 	"github.com/flanksource/karina/pkg/phases/calico"
 	"github.com/flanksource/karina/pkg/phases/certmanager"
@@ -28,6 +29,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
 	"github.com/flanksource/karina/pkg/platform"
+
 	"github.com/spf13/cobra"
 )
 
@@ -38,6 +40,7 @@ var Deploy = &cobra.Command{
 func init() {
 	type DeployFn func(p *platform.Platform) error
 	phases := map[string]DeployFn{
+		"auditbeat":          auditbeat.Deploy,
 		"base":               base.Install,
 		"calico":             calico.Install,
 		"configmap-reloader": configmapreloader.Deploy,

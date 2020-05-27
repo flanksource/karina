@@ -489,6 +489,12 @@ type Journalbeat struct {
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
+type Auditbeat struct {
+	Enabled
+	Version       string      `yaml:"version"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+}
+
 type Consul struct {
 	Version        string `yaml:"version"`
 	Disabled       bool   `yaml:"disabled,omitempty"`
