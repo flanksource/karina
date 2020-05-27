@@ -495,6 +495,12 @@ type Auditbeat struct {
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
+type EventRouter struct {
+	Enabled
+	Version        string `yaml:"version"`
+	FilebeatPrefix string `yaml:"filebeatPrefix"`
+}
+
 type Consul struct {
 	Version        string `yaml:"version"`
 	Disabled       bool   `yaml:"disabled,omitempty"`

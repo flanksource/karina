@@ -17,6 +17,9 @@ func DefaultPlatformConfig() PlatformConfig {
 			EtcdExtraArgs:       map[string]string{},
 			ContainerRuntime:    "docker",
 		},
+		EventRouter: EventRouter{
+			FilebeatPrefix: "com.flanksource.infra",
+		},
 	}
 	return config
 }

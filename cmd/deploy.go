@@ -12,6 +12,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
+	"github.com/flanksource/karina/pkg/phases/eventrouter"
 	"github.com/flanksource/karina/pkg/phases/filebeat"
 	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
 	"github.com/flanksource/karina/pkg/phases/flux"
@@ -29,7 +30,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
 	"github.com/flanksource/karina/pkg/platform"
-
 	"github.com/spf13/cobra"
 )
 
@@ -47,6 +47,7 @@ func init() {
 		"dex":                dex.Install,
 		"eck":                eck.Deploy,
 		"elasticsearch":      elasticsearch.Deploy,
+		"eventrouter":        eventrouter.Deploy,
 		"fluentd":            fluentdoperator.Deploy,
 		"filebeat":           filebeat.Deploy,
 		"gitops":             flux.Install,

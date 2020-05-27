@@ -141,6 +141,15 @@ journalbeat:
     password: elastic
     port: 9200
     scheme: https
+auditbeat:
+  disabled: true
+  version: 7.7.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: !!env ELASTIC_PASSWORD
+    port: 9200
+    scheme: http
 eck:
   version: 1.0.1
 oauth2Proxy:

@@ -15,9 +15,9 @@ type PlatformConfig struct {
 	DNS            *DynamicDNS `yaml:"dns,omitempty"`
 	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
-	Domain      string   `yaml:"domain"`
-	EventRouter *Enabled `yaml:"eventRouter,omitempty"`
-	Harbor      *Harbor  `yaml:"harbor,omitempty"`
+	Domain      string      `yaml:"domain"`
+	EventRouter EventRouter `yaml:"eventrouter,omitempty"`
+	Harbor      *Harbor     `yaml:"harbor,omitempty"`
 	// A prefix to be added to VM hostnames.
 	HostPrefix            string            `yaml:"hostPrefix"`
 	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
