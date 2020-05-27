@@ -18,8 +18,7 @@ if ! which jq 2>&1 > /dev/null; then
   exit 1
 fi
 if ! which mkisofs 2>&1 > /dev/null; then
-  echo "mkisofs required"
-  exit 1
+  sudo apt-get install -y mkisofs
 fi
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml
