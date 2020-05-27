@@ -44,25 +44,11 @@ jobs:
           path: test-results
       - store_artifacts:
           path: artifacts
-  test-minimal:
-    resource_class: xlarge
-    environment:
-      VERSION: v1.16.9
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - run: ./test/e2e-minimal.sh
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: artifacts
 
 workflows:
   version: 2
   build:
     jobs:
-      - test-minimal
       - test
       - test-next
       - lint
