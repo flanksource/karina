@@ -15,8 +15,8 @@ import (
 func Install(p *platform.Platform) error {
 	p.Infof("Deploying %d gitops controllers", len(p.GitOps))
 	for _, gitops := range p.GitOps {
-		if gitops.Namespace != "" {
-			if err := p.CreateOrUpdateNamespace(gitops.Namespace, nil, nil); err != nil {
+		if gitops.Namespace != "" && gitops.Namespace != "kube-system" && gitops.Namespace != "platform-system" {
+			if err := p.CreateOrUpdateWorkloadNamespace(gitops.Namespace, nil, nil); err != nil {
 				return fmt.Errorf("install: failed to create namespace: %s: %v", gitops.Namespace, err)
 			}
 		}
