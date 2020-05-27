@@ -23,8 +23,10 @@ fi
 go version
 
 if go version | grep  go$GO_VERSION; then
+  make setup
   make pack build
 else
+  docker run --rm -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION setup
   docker run --rm -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
 fi
 
