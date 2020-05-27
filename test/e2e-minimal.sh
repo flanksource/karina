@@ -76,7 +76,6 @@ mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
 zip -r artifacts/snapshot.zip snapshot/*
 
-
 if [[ "$failed" = true ]]; then
   exit 1
 fi
