@@ -3,7 +3,7 @@ BIN=./.bin/karina
 DBIN="dlv debug --headless --listen=:2345 --api-version=2 --accept-multiclient main.go --"
 mkdir -p .bin
 export PLATFORM_CONFIG=test/e2e-platform-minimal.yaml
-export GO_VERSION=${GO_VERSION:-1.13}
+export GO_VERSION=${GO_VERSION:-1.14}
 export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
@@ -26,7 +26,7 @@ go version
 if go version | grep  go$GO_VERSION; then
   make pack build
 else
-  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
+  docker run --rm -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
 fi
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
