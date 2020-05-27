@@ -14,6 +14,10 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.Ldap.Disabled {
+		test.Skipf("dex", "LDAP is disabled in platform config - skipping.")
+		return
+	}
 	client, _ := p.GetClientset()
 	k8s.TestNamespace(client, "dex", test)
 	if !p.E2E {

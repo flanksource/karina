@@ -1,0 +1,26 @@
+name: Kind e2e Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run e2e testing script
+        env:
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./test/e2e-minimal.sh
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: test-results/
+      - name: Upload snapshots
+        uses: actions/upload-artifact@v1
+        with:
+          name: snapshot
+          path: artifacts/snapshot.zip
