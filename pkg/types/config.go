@@ -60,6 +60,7 @@ type PlatformConfig struct {
 	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
 	Journalbeat         Journalbeat          `yaml:"journalbeat,omitempty"`
 	Auditbeat           Auditbeat            `yaml:"auditbeat,omitempty"`
+	Packetbeat          Packetbeat           `yaml:"packetbeat,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`

@@ -495,6 +495,13 @@ type Auditbeat struct {
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
+type Packetbeat struct {
+	Enabled
+	Version       string      `yaml:"version"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Kibana        *Connection `yaml:"kibana,omitempty"`
+}
+
 type EventRouter struct {
 	Enabled
 	Version        string `yaml:"version"`

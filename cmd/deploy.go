@@ -21,6 +21,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
+	"github.com/flanksource/karina/pkg/phases/packetbeat"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
@@ -56,6 +57,7 @@ func init() {
 		"monitoring":         monitoring.Install,
 		"opa":                opa.Install,
 		"nsx":                nsx.Install,
+		"packetbeat":         packetbeat.Deploy,
 		"postgres-operator":  postgresoperator.Deploy,
 		"registry-creds":     registrycreds.Install,
 		"sealed-secrets":     sealedsecrets.Install,
