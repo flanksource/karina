@@ -3,6 +3,8 @@ BIN=./.bin/karina
 mkdir -p .bin
 export PLATFORM_CONFIG=test/e2e-platform-minimal.yaml
 export GO_VERSION=${GO_VERSION:-1.14}
+export GOPATH=$HOME/go
+export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
