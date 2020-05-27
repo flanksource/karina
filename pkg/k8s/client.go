@@ -691,36 +691,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	return nil
 }
 
-func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
-	// set default labels
-	defaultLabels := make(map[string]string)
-	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
-	if labels != nil {
-		for k, v := range defaultLabels {
-			labels[k] = v
-		}
-	} else {
-		labels = defaultLabels
-	}
-	// set default annotations
-	defaultAnnotations := make(map[string]string)
-	defaultAnnotations["com.flanksource.infra.logs/enabled"] = "true"
-	if annotations != nil {
-		for k, v := range defaultAnnotations {
-			annotations[k] = v
-		}
-	} else {
-		annotations = defaultAnnotations
-	}
-
-	return c.createOrUpdateNamespace(name, labels, annotations)
-}
-
-func (c *Client) CreateOrUpdateWorkloadNamespace(name string, labels map[string]string, annotations map[string]string) error {
-	return c.createOrUpdateNamespace(name, labels, annotations)
-}
-
-func (c *Client) createOrUpdateNamespace(name string, labels, annotations map[string]string) error {
+func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
