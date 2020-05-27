@@ -8,7 +8,7 @@ jobs:
   test-e2e:
     runs-on: ubuntu-latest
     container:
-      image: flanksource/build-tools:0.7
+      image: flanksource/build-tools:latest
     steps:
       - uses: actions/checkout@master
       - name: Run e2e testing script
