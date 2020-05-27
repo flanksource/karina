@@ -23,6 +23,9 @@ ldap:
 configmapReloader:
   disabled: true
 
+vault:
+  disabled: true
+
 calico:
   ipip: Never
   vxlan: Never
