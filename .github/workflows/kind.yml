@@ -7,13 +7,15 @@ on:
 jobs:
   test-e2e:
     runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.7
     steps:
       - uses: actions/checkout@master
       - name: Run e2e testing script
         env:
           GIT_API_KEY: ${{ secrets.GIT_API_KEY }}
         run: |
-          /bin/bash -i -x ./test/e2e-minimal.sh
+          ./test/e2e-minimal.sh
       - name: Upload test results
         uses: actions/upload-artifact@v1
         with:
