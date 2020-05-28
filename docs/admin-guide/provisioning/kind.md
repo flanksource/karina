@@ -4,11 +4,19 @@
 
 Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/karina/releases/latest).
 
-```shell
-wget https://github.com/flanksource/karina/releases/download/0.11.1-646-g9bbfb5c/karina_osx
-chmod +x karina_osx
-mv karina_osx /usr/localbin/karina
+=== "Linux"
+```bash
+wget https://github.com/flanksource/karina/releases/download/v0.15.1/karina
+chmod +x karina
+mv karina /usr/local/bin/karina
 ```
+=== "MacOSX"
+```bash
+wget https://github.com/flanksource/karina/releases/download/v0.15.1/karina_osx
+chmod +x karina_osx
+mv karina_osx /usr/local/bin/karina
+```
+
 
 #### 2) Create a configuration file:
 
@@ -19,8 +27,10 @@ domain: 127.0.0.1.nip.io
 name: test-cluster
 calico:
   version: v3.8.2
-versions:
-  kubernetes: v1.16.4
+kubernetes:
+  version: v1.16.9
+  masterIP: localhost
+  containerRuntime: containerd
 ca:
   cert: .certs/root-ca.crt
   privateKey: .certs/root-ca.key

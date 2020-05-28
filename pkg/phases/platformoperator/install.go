@@ -9,7 +9,8 @@ import (
 const Namespace = constants.PlatformSystem
 
 func Install(platform *platform.Platform) error {
-	if platform.PlatformOperator != nil && platform.PlatformOperator.Disabled {
+	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
+		platform.PlatformOperator = &types.PlatformOperator{}
 		if err := platform.DeleteSpecs("", "platform-operator.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}

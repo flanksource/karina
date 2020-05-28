@@ -16,14 +16,18 @@ markdown_extensions:
   - fenced_code
   - pymdownx.smartsymbols
   - pymdownx.superfences
+  - pymdownx.tabbed
   - codehilite:
       linenums: true
 nav:
   - User Guide:
+      - Overview: ../user-guide/index.md
       - Quickstart: ./user-guide/login.md
       - Ingress: ./user-guide/ingress.md
       - Logging: ./user-guide/logging.md
       - Templating: ./user-guide/templating.md
+      - Dynamic Namespaces: ./user-guide/dynamic-namespaces.md
+      - GitOps: ./user-guide/gitops.md
   - Production Runtime:
       - Overview: ./admin-guide/runtime.md
       - Cert Manager: ./admin-guide/cert-manager.md
