@@ -580,12 +580,19 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		if err != nil {
 			return err
 		}
+		// reverse the order of the objects so that they can be deleted in reverse-order
+		for i, j := 0, len(objects)-1; i < j; i, j = i+1, j-1 {
+			objects[i], objects[j] = objects[j], objects[i]
+		}
+
+		platform.Debugf("Deleting %s", console.Redf("%s", spec))
 		for _, object := range objects {
 			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
 				platform.Tracef("resources already deleted skipping, %v", err)
 				return nil
 			}
-			platform.Debugf("Deleting %s", console.Redf("%s", spec))
+
+			platform.Tracef("Deleting %s/%s/%s", object.GetNamespace(), object.GetKind(), object.GetName())
 			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
 				return err
 			}
