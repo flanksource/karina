@@ -21,10 +21,12 @@ kind: Ingress
 metadata:
   name: kibana-ing
   annotations:
-    kubernetes.io/tls-acme: "true"  # <------ Turn on automatic cert generation for this ingress
+    # Turn on automatic cert generation for this ingress
+    kubernetes.io/tls-acme: "true"
 spec:
   tls:
-    - secretName: kibana-tls        # <------   Must specify a secretName to store the cert, it does not need to exist.
+    # Must specify a secretName to store the cert, it does not need to exist.
+    - secretName: kibana-tls
       hosts:
         - kibana.{{.Domain}}
 
@@ -41,7 +43,8 @@ metadata:
   name: example-com
   namespace: sandbox
 spec:
-  secretName: example-com-tls # <------ Specify this secretName in your ingress
+  # Specify this secretName in your ingress
+  secretName: example-com-tls
   duration: 2160h # 90d
   renewBefore: 360h # 15d
   organization:
@@ -60,7 +63,8 @@ spec:
   - example.com
   - www.example.com
   issuerRef:
-    name: ingress-issuer  # <------ ingress-issuer is created by default, but you can specify any CertManager issuer available on the cluster
+    # ingress-issuer is created by default, but you can specify any CertManager issuer available on the cluster
+    name: ingress-issuer
     kind: ClusterIssuer
 ```
 
