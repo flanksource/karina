@@ -97,7 +97,6 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	if platform.PlatformConfig.Trace {
-		platform.Infof("KIND Config YAML:")
 		platform.Infof(string(yml))
 	}
 
