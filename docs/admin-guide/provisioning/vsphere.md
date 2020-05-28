@@ -25,7 +25,7 @@ _or_
 Use latest docker image:
 
 ```
-docker pull flanksource/karina:v0.13.4
+docker pull flanksource/karina:v0.15.0
 ```
 
 ## 2. Setup and verify vSphere connectivity

@@ -5,6 +5,7 @@ import (
 
 	"github.com/moshloop/platform-cli/pkg/k8s"
 	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 const (
@@ -32,6 +33,10 @@ var cleanup = []string{
 
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
+		// setup default values so that all resources are rendered
+		// so that we know what to try and delete
+		p.Monitoring = &types.Monitoring{}
+		p.Thanos = &types.Thanos{Version: "deleted", Mode: "observability"}
 		for _, spec := range append(specs, cleanup...) {
 			if err := p.DeleteSpecs(Namespace, "monitoring/"+spec); err != nil {
 				p.Warnf("failed to delete specs: %v", err)

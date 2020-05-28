@@ -434,11 +434,12 @@ type Versions struct {
 }
 
 type Velero struct {
-	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version"`
-	Schedule string `yaml:"schedule,omitempty"`
-	Bucket   string `yaml:"bucket,omitempty"`
-	Volumes  bool   `yaml:"volumes"`
+	Disabled bool              `yaml:"disabled,omitempty"`
+	Version  string            `yaml:"version"`
+	Schedule string            `yaml:"schedule,omitempty"`
+	Bucket   string            `yaml:"bucket,omitempty"`
+	Volumes  bool              `yaml:"volumes"`
+	Config   map[string]string `yaml:"config,omitempty"`
 }
 
 type CA struct {
@@ -615,7 +616,7 @@ type RegistryCredentialsACR struct {
 }
 
 type PlatformOperator struct {
-	Enabled
+	Disabled                  bool     `yaml:"disabled,omitempty"`
 	Version                   string   `yaml:"version"`
 	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
 }

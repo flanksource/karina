@@ -110,7 +110,6 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	for _, activeTarget := range targets.Active {
 		targetEndpointName := activeTarget.DiscoveredLabels["__meta_kubernetes_endpoints_name"]
 		targetEndpointAddress := activeTarget.DiscoveredLabels["__address__"]
-		test.Tracef("Testing endpoint: %s -> %s", targetEndpointName, activeTarget)
 		if activeTarget.Health == "down" {
 			test.Failf(targetEndpointName, "%s (%s) endpoint is down\n %s", targetEndpointName, targetEndpointAddress, activeTarget.LastError)
 		} else {
