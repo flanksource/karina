@@ -99,6 +99,11 @@ func Deploy(p *platform.Platform) error {
 	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
 		return err
 	}
+
+	if err := p.ApplySpecs(Namespace, "harbor-exporter.yaml"); err != nil {
+		return err
+	}
+
 	client, err := NewClient(p)
 	if err != nil {
 		return err
