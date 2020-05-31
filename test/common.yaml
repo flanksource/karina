@@ -269,3 +269,8 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
+s3uploadCleaner:
+  version: 202005230952550fa4eb
+  endpoint: http://minio.minio.svc.cluster.local:9000
+  bucket: sandbox
+  schedule: "*/5 * * * *"

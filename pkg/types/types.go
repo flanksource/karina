@@ -619,6 +619,14 @@ type SealedSecrets struct {
 	Certificate *CA    `yaml:"certificate,omitempty"`
 }
 
+type S3UploadCleaner struct {
+	Enabled
+	Version  string `yaml:"version"`
+	Endpoint string `yaml:"endpoint"`
+	Bucket   string `yaml:"bucket"`
+	Schedule string `yaml:"schedule"`
+}
+
 type RegistryCredentials struct {
 	Disabled              bool                   `yaml:"disabled,omitempty"`
 	Version               string                 `yaml:"version,omitempty"`

@@ -21,6 +21,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
+	"github.com/flanksource/karina/pkg/phases/s3uploadcleaner"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
 	"github.com/flanksource/karina/pkg/phases/tekton"
@@ -49,6 +50,7 @@ var Phases = map[string]DeployFn{
 	"nsx":                nsx.Install,
 	"postgres-operator":  postgresoperator.Deploy,
 	"registry-creds":     registrycreds.Install,
+	"s3-upload-cleaner":  s3uploadcleaner.Deploy,
 	"sealed-secrets":     sealedsecrets.Install,
 	"stubs":              stubs.Install,
 	"tekton":             tekton.Install,
