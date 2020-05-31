@@ -5,9 +5,8 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/moshloop/platform-cli/pkg/platform"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
