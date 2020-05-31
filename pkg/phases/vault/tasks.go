@@ -9,8 +9,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/hashicorp/vault/api"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/hashicorp/vault/api"
 )
 
 func Init(p *platform.Platform) error {

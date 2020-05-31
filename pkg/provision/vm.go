@@ -3,9 +3,9 @@ package provision
 import (
 	"fmt"
 
-	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 )
 
 // VM provisions a new standalone VM

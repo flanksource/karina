@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/flanksource/karina/pkg/types"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 )
 
 type vmwareCluster struct {

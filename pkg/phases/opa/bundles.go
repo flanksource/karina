@@ -3,8 +3,8 @@ package opa
 import (
 	"fmt"
 
-	minio "github.com/minio/minio-go/v6"
 	"github.com/flanksource/karina/pkg/platform"
+	minio "github.com/minio/minio-go/v6"
 )
 
 func DeployBundle(p *platform.Platform, bundleName string) error {

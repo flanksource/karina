@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flanksource/konfigadm/pkg/utils"
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/konfigadm/pkg/utils"
 )
 
 func Deploy(p *platform.Platform) error {

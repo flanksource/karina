@@ -8,10 +8,10 @@ import (
 	"gopkg.in/flanksource/yaml.v3"
 
 	"github.com/flanksource/commons/certs"
-	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
-	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/pkg/errors"
 )
 

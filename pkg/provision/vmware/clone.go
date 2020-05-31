@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	ptypes "github.com/flanksource/karina/pkg/types"
+	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-
-	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
-	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	ptypes "github.com/flanksource/karina/pkg/types"
 )
 
 const (
