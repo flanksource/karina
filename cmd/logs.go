@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/elastic"
+	"github.com/flanksource/karina/pkg/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

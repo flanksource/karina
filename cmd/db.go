@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
-	"github.com/moshloop/platform-cli/pkg/client/postgres"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
+	pgapi "github.com/flanksource/karina/pkg/api/postgres"
+	"github.com/flanksource/karina/pkg/client/postgres"
+	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

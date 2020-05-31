@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases/velero"
+	"github.com/flanksource/karina/pkg/phases/velero"
 )
 
 var Backup = &cobra.Command{

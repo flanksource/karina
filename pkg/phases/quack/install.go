@@ -1,7 +1,7 @@
 package quack
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 	v1 "k8s.io/api/core/v1"
 )
 

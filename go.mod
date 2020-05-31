@@ -1,4 +1,4 @@
-module github.com/moshloop/platform-cli
+module github.com/flanksource/karina
 
 go 1.12
 
