@@ -13,23 +13,6 @@ data:
       # Reload module configs as they change:
       reload.enabled: false
 
-    {{ if eq .kubernetes.containerRuntime "containerd" }}
-    # When using containerd as runtime, a configuration like the following one
-    # can be used to monitor files in containers using autodiscover.
-    auditbeat.autodiscover:
-      providers:
-      - type: kubernetes
-        host: ${NODE_NAME}
-        templates:
-          - config:
-            - module: 'file_integrity'
-              paths:
-                - '/run/containerd/io.containerd.runtime.v1.linux/k8s.io/${data.kubernetes.container.id}/rootfs/bin'
-                - '/run/containerd/io.containerd.runtime.v1.linux/k8s.io/${data.kubernetes.container.id}/rootfs/etc'
-              scan_at_start: false
-              recursive: true
-    {{ end }}
-
     processors:
       - add_cloud_metadata:
       - add_process_metadata:
@@ -122,7 +105,7 @@ spec:
                   fieldPath: spec.nodeName
           envFrom:
             - secretRef:
-                name: elastic-auditbeat
+                name: elastic-infra
                 optional: true
           securityContext:
             runAsUser: 0

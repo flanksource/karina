@@ -62,7 +62,7 @@ spec:
           ]
           envFrom:
             - secretRef:
-                name: elastic-journalbeat
+                name: elastic-infra
                 optional: true
           securityContext:
             runAsUser: 0

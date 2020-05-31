@@ -484,19 +484,19 @@ type Filebeat struct {
 }
 
 type Journalbeat struct {
-	Enabled
+	Enabled       bool        `yaml:"enabled"`
 	Version       string      `yaml:"version"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Auditbeat struct {
-	Enabled
+	Enabled       bool        `yaml:"enabled"`
 	Version       string      `yaml:"version"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Packetbeat struct {
-	Enabled
+	Enabled       bool        `yaml:"enabled"`
 	Version       string      `yaml:"version"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Kibana        *Connection `yaml:"kibana,omitempty"`

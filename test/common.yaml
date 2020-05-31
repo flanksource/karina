@@ -123,7 +123,7 @@ fluentd:
     port: 9200
     scheme: https
 filebeat:
-  - name: platform
+  - name: infra
     version: 7.6.0
     index: filebeat-infra
     prefix: com.flanksource.infra
