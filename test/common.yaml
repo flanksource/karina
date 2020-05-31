@@ -270,6 +270,7 @@ platformOperator:
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
 s3uploadCleaner:
+  disabled: true
   version: 202005230952550fa4eb
   endpoint: http://minio.minio.svc.cluster.local:9000
   bucket: sandbox
