@@ -11,7 +11,7 @@ import (
 
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	ptypes "github.com/moshloop/platform-cli/pkg/types"
+	ptypes "github.com/flanksource/karina/pkg/types"
 )
 
 const (

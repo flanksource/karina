@@ -9,10 +9,10 @@ import (
 	"net/http"
 
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/api/elasticsearch"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api/elasticsearch"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {

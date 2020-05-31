@@ -7,9 +7,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 func Install(p *platform.Platform) error {

@@ -12,9 +12,9 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	platformv1 "github.com/moshloop/platform-cli/pkg/api/platformoperator"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	platformv1 "github.com/flanksource/karina/pkg/api/platformoperator"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

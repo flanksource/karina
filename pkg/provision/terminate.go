@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 // TerminateOrphans deletes all vm's that have not yet joined the cluster

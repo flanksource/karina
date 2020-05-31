@@ -159,9 +159,9 @@ sealedSecrets:
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
 gitops:
-  - name: platform-cli
+  - name: karina
     namespace: gitops-e2e-test
-    gitUrl: https://github.com/teodor-pripoae/platform-cli.git
+    gitUrl: https://github.com/flanksource/karina.git
     gitBranch: issue-170-e2e-git-ops
     gitPath: test/gitops/
 vault:

@@ -31,7 +31,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 var sessionCache = map[string]Session{}

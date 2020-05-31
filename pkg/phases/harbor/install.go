@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/flanksource/konfigadm/pkg/utils"
-	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	pgapi "github.com/flanksource/karina/pkg/api/postgres"
+	"github.com/flanksource/karina/pkg/phases/postgresoperator"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Deploy(p *platform.Platform) error {

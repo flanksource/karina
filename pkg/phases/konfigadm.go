@@ -10,8 +10,8 @@ import (
 	"github.com/flanksource/commons/certs"
 	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 )
 
@@ -34,7 +34,7 @@ ca:
    privateKey: .certs/root-ca-key.pem
    password: foobar
 
-CA certs are generated using platform-cli ca generate
+CA certs are generated using karina ca generate
 `
 
 // CreatePrimaryMaster creates a konfigadm config for the primary master.

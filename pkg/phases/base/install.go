@@ -6,13 +6,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
-	"github.com/moshloop/platform-cli/pkg/phases/ingress"
-	"github.com/moshloop/platform-cli/pkg/phases/nginx"
-	"github.com/moshloop/platform-cli/pkg/phases/platformoperator"
-	"github.com/moshloop/platform-cli/pkg/phases/quack"
-	"github.com/moshloop/platform-cli/pkg/phases/vsphere"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/phases/certmanager"
+	"github.com/flanksource/karina/pkg/phases/ingress"
+	"github.com/flanksource/karina/pkg/phases/nginx"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
+	"github.com/flanksource/karina/pkg/phases/quack"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {

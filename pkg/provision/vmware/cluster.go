@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 type vmwareCluster struct {

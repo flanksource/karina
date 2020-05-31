@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/moshloop/platform-cli/pkg/api/calico"
+	"github.com/flanksource/karina/pkg/api/calico"
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
 

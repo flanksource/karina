@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/moshloop/platform-cli/cmd"
+	"github.com/flanksource/karina/cmd"
 )
 
 var (

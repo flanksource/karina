@@ -10,7 +10,7 @@ import (
 
 	"github.com/flanksource/commons/certs"
 	"github.com/hashicorp/vault/api"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Init(p *platform.Platform) error {

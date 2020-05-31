@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	minio "github.com/minio/minio-go/v6"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func DeployBundle(p *platform.Platform, bundleName string) error {
