@@ -8,11 +8,11 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/moshloop/platform-cli/pkg/phases"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/provision/vmware"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/phases"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/provision/vmware"
+	"github.com/flanksource/karina/pkg/types"
 	"gopkg.in/flanksource/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

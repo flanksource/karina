@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 	elastic "github.com/olivere/elastic/v7"
 )
 

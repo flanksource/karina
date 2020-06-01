@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/harbor"
 )
 
 // Harbor is the parent command for interactor with the harbor docker registry

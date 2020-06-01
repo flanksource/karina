@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/moshloop/platform-cli/pkg/constants"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
+
 )
 
 func Install(p *platform.Platform) error {

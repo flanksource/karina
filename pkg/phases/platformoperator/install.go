@@ -1,9 +1,9 @@
 package platformoperator
 
 import (
-	"github.com/moshloop/platform-cli/pkg/constants"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/constants"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 const Namespace = constants.PlatformSystem

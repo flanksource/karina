@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (

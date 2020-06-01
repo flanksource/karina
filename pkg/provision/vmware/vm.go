@@ -15,7 +15,7 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	vim "github.com/vmware/govmomi/vim25/types"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 // VM represents a specific instance of a VM
