@@ -23,6 +23,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
+	"github.com/flanksource/karina/pkg/phases/tekton"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
@@ -50,6 +51,7 @@ var Phases = map[string]DeployFn{
 	"registry-creds":     registrycreds.Install,
 	"sealed-secrets":     sealedsecrets.Install,
 	"stubs":              stubs.Install,
+	"tekton":             tekton.Install,
 	"vault":              vault.Deploy,
 	"velero":             velero.Install,
 }

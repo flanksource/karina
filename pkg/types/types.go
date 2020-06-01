@@ -730,6 +730,14 @@ type Elasticsearch struct {
 	Disabled    bool         `yaml:"disabled,omitempty"`
 }
 
+type Tekton struct {
+	Version          string            `yaml:"version,omitempty"`
+	DashboardVersion string            `yaml:"dashboardVersion,omitempty"`
+	Disabled         bool              `yaml:"disabled,omitempty"`
+	Persistence      Persistence       `yaml:"persistence,omitempty"`
+	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
+}
+
 func (c Connection) GetURL() string {
 	url := c.URL
 	if c.Port != "" && !strings.Contains(url, ":") {
