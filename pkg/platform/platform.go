@@ -28,7 +28,6 @@ import (
 	"github.com/flanksource/karina/pkg/client/dns"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/k8s/proxy"
-	"github.com/flanksource/karina/pkg/nsx"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/karina/templates"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
@@ -43,12 +42,13 @@ import (
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
+	CNI                  CNIProvider
+	LoadBalancerProvider LoadBalancerProvider
 	logger.Logger
 	logFields map[string]interface{}
 	k8s.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
 	ctx        context.Context //nolint
-	nsx        *nsx.NSXClient
 	kubeConfig []byte
 	ca         certs.CertificateAuthority
 	ingressCA  certs.CertificateAuthority
@@ -66,6 +66,9 @@ func (platform *Platform) Init() {
 	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
 	platform.Client.Logger = platform.Logger
 	platform.logFields = make(map[string]interface{})
+	if platform.LoadBalancerProvider == nil && platform.DNS != nil && !platform.DNS.Disabled {
+		platform.LoadBalancerProvider = NewDnsProvider(platform.GetDNSClient())
+	}
 }
 
 func (platform *Platform) clone() *Platform {
@@ -74,17 +77,18 @@ func (platform *Platform) clone() *Platform {
 		logFields[k] = v
 	}
 	return &Platform{
-		Cluster:        platform.Cluster,
-		PlatformConfig: platform.PlatformConfig,
-		Logger:         platform.Logger,
-		logFields:      logFields,
-		Client:         platform.Client,
-		ctx:            context.TODO(),
-		nsx:            platform.nsx,
-		kubeConfig:     platform.kubeConfig,
-		ca:             platform.ca,
-		ingressCA:      platform.ingressCA,
-		Terminating:    platform.Terminating,
+		Cluster:              platform.Cluster,
+		PlatformConfig:       platform.PlatformConfig,
+		Logger:               platform.Logger,
+		logFields:            logFields,
+		Client:               platform.Client,
+		ctx:                  context.TODO(),
+		CNI:                  platform.CNI,
+		LoadBalancerProvider: platform.LoadBalancerProvider,
+		kubeConfig:           platform.kubeConfig,
+		ca:                   platform.ca,
+		ingressCA:            platform.ingressCA,
+		Terminating:          platform.Terminating,
 	}
 }
 
@@ -240,38 +244,18 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	}
 }
 
-func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
-	if platform.nsx != nil {
-		return platform.nsx, nil
-	}
-	if platform.NSX == nil || platform.NSX.Disabled {
-		return nil, fmt.Errorf("NSX not configured or disabled")
-	}
-	if platform.NSX.NsxV3 == nil || len(platform.NSX.NsxV3.NsxAPIManagers) == 0 {
-		return nil, fmt.Errorf("nsx_v3.nsx_api_managers not configured")
-	}
-
-	client := &nsx.NSXClient{
-		Logger:   platform.Logger,
-		Host:     platform.NSX.NsxV3.NsxAPIManagers[0],
-		Username: platform.NSX.NsxV3.NsxAPIUser,
-		Password: platform.NSX.NsxV3.NsxAPIPass,
-	}
-	platform.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
-
-	if err := client.Init(); err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
-	}
-	platform.nsx = client
-	version, err := platform.nsx.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
-	}
-	platform.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
-	return platform.nsx, nil
-}
-
 func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Machine, error) {
+	if platform.LoadBalancerProvider != nil {
+		if err := platform.LoadBalancerProvider.BeforeProvision(platform, vm); err != nil {
+			return types.NullMachine{}, err
+		}
+	}
+	if platform.CNI != nil {
+		if err := platform.CNI.BeforeProvision(platform, vm); err != nil {
+			return types.NullMachine{}, err
+		}
+	}
+
 	for _, cmd := range vm.Commands {
 		config.AddCommand(cmd)
 	}
@@ -294,35 +278,14 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 	}
 	vm.IP = ip
 	platform.Tracef("[%s] found ip %s", vm.Name, ip)
-	if platform.NSX != nil && !platform.NSX.Disabled {
-		ctx := context.TODO()
-		nsxClient, err := platform.GetNSXClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get NSX client: %v", err)
+	if platform.LoadBalancerProvider != nil {
+		if err := platform.LoadBalancerProvider.AfterProvision(platform, VM); err != nil {
+			return types.NullMachine{}, err
 		}
-
-		ports, err := nsxClient.GetLogicalPorts(ctx, vm.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find ports for %s: %v", vm.Name, err)
-		}
-		if len(ports) != 2 {
-			return nil, fmt.Errorf("expected to find 2 ports, found %d", len(ports))
-		}
-		managementNic := make(map[string]string)
-		transportNic := make(map[string]string)
-
-		for k, v := range vm.Tags {
-			managementNic[k] = v
-		}
-
-		transportNic["ncp/node_name"] = vm.Name
-		transportNic["ncp/cluster"] = platform.Name
-
-		if err := nsxClient.TagLogicalPort(ctx, ports[0].Id, managementNic); err != nil {
-			return nil, fmt.Errorf("failed to tag management nic %s: %v", ports[0].Id, err)
-		}
-		if err := nsxClient.TagLogicalPort(ctx, ports[1].Id, transportNic); err != nil {
-			return nil, fmt.Errorf("failed to tag transport nic %s: %v", ports[1].Id, err)
+	}
+	if platform.CNI != nil {
+		if err := platform.CNI.AfterProvision(platform, VM); err != nil {
+			return types.NullMachine{}, err
 		}
 	}
 	return VM, nil
@@ -568,7 +531,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 	if platform.TerminationProtection {
-		platform.Warnf("Skipping deletion of resources when termination protection is enabled ")
+		platform.Debugf("Skipping deletion of resources when termination protection is enabled ")
 		return nil
 	}
 	for _, spec := range specs {

@@ -24,6 +24,20 @@ func WithVmwareCluster(platform *platform.Platform) error {
 	}
 	platform.Cluster = cluster
 	platform.Init()
+	if platform.NSX != nil && !platform.NSX.Disabled {
+		nsx, err := vmware.NewNSXProvider(platform)
+		if err != nil {
+			return err
+		}
+		platform.CNI = nsx
+		platform.LoadBalancerProvider = nsx
+	}
+
+	joinEndpoint, err := platform.LoadBalancerProvider.GetControlPlaneEndpoint(platform)
+	if err != nil {
+		return err
+	}
+	platform.JoinEndpoint = joinEndpoint
 	return nil
 }
 
@@ -39,12 +53,6 @@ func VsphereCluster(platform *platform.Platform) error {
 		if err != nil {
 			platform.Fatalf("Failed to create master: %v", err)
 		}
-	}
-
-	// make sure admin kubeconfig is available
-	platform.GetKubeConfig() // nolint: errcheck
-	if platform.JoinEndpoint == "" {
-		platform.JoinEndpoint = "localhost:8443"
 	}
 
 	masters = platform.GetMasterIPs()
@@ -113,16 +121,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 	wg.Wait()
 
-	path, err := platform.GetKubeConfig()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: kubectl --kubeconfig %s get nodes\n\n Next deploy the CNI and addons\n\n\n", platform.Name, path)
-	masterLB, workerLB, err := provisionLoadbalancers(platform)
-	if err != nil {
-		platform.Errorf("Failed to provision load balancers: %v", err)
-	}
-	fmt.Printf("Provisioned LoadBalancers:\n Masters: %s\nWorkers: %s\n", masterLB, workerLB)
+	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: https://%s \n\n\n", platform.Name, platform.JoinEndpoint)
 	return nil
 }
 
@@ -150,11 +149,8 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone secondary master: %s", err)
 	}
-	if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), cloned.IP()); err != nil {
-		platform.Warnf("Failed to update DNS for %s", cloned.IP())
-	} else {
-		platform.Infof("Provisioned new master: %s\n", cloned.IP())
-	}
+
+	platform.Infof("Provisioned new master: %s\n", cloned.IP())
 	return cloned, nil
 }
 
@@ -186,9 +182,6 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 
 		if err != nil {
 			return nil, err
-		}
-		if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), machine.IP()); err != nil {
-			platform.Errorf("Failed to update DNS record for %s: %v", machine, err)
 		}
 		platform.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
 	}
@@ -224,11 +217,7 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone worker: %s", err)
 	}
-	if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), cloned.IP()); err != nil {
-		platform.Warnf("Failed to update DNS for %s", cloned.IP())
-	} else {
-		platform.Infof("Provisioned new worker: %s\n", cloned.IP())
-	}
+	platform.Infof("Provisioned new worker: %s\n", cloned.IP())
 	return cloned, nil
 }
 

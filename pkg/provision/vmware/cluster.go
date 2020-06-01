@@ -51,7 +51,7 @@ func (cluster *vmwareCluster) Clone(template types.VM, config *konfigadm.Config)
 	if err != nil {
 		return nil, err
 	}
-	return NewVM(cluster.ctx, cluster.DryRun, vm), nil
+	return NewVM(cluster.ctx, cluster.DryRun, vm, &template), nil
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
@@ -82,7 +82,7 @@ func (cluster *vmwareCluster) GetMachinesByPrefix(prefix string) (map[string]typ
 		return nil, nil
 	}
 	for _, vm := range list {
-		vms[vm.Name()] = NewVM(cluster.ctx, cluster.DryRun, vm)
+		vms[vm.Name()] = NewVM(cluster.ctx, cluster.DryRun, vm, nil)
 	}
 	return vms, nil
 }

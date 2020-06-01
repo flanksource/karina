@@ -83,18 +83,13 @@ func (n NodeMachines) Swap(i, j int) {
 }
 
 func GetCluster(platform *platform.Platform) (*Cluster, error) {
-	client, err := platform.GetClientset()
-	if err != nil {
-		return nil, err
-	}
 	if err := WithVmwareCluster(platform); err != nil {
 		return nil, err
 	}
 
-	// make sure admin kubeconfig is available
-	platform.GetKubeConfig() // nolint: errcheck
-	if platform.JoinEndpoint == "" {
-		platform.JoinEndpoint = "localhost:8443"
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil, err
 	}
 
 	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
