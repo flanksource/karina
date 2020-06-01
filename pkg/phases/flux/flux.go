@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"sort"
 
-
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
-
 )
 
 func Install(p *platform.Platform) error {
