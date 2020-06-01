@@ -1,7 +1,7 @@
 package fluentdoperator
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -17,7 +17,7 @@ func Deploy(p *platform.Platform) error {
 	}
 	p.Infof("Deploying fluentd-operator %s", p.FluentdOperator.Version)
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 

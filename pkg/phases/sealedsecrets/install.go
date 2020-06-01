@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,7 @@ func Install(platform *platform.Platform) error {
 		return nil
 	}
 
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, platform.DefaultNamespaceAnnotations()); err != nil {
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

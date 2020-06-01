@@ -23,17 +23,17 @@ import (
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
+	"github.com/flanksource/karina/manifests"
+	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/client/dns"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
+	"github.com/flanksource/karina/pkg/nsx"
+	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/karina/templates"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
-	"github.com/moshloop/platform-cli/manifests"
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/client/dns"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
-	"github.com/moshloop/platform-cli/pkg/nsx"
-	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/flanksource/yaml.v3"
@@ -580,12 +580,19 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		if err != nil {
 			return err
 		}
+		// reverse the order of the objects so that they can be deleted in reverse-order
+		for i, j := 0, len(objects)-1; i < j; i, j = i+1, j-1 {
+			objects[i], objects[j] = objects[j], objects[i]
+		}
+
+		platform.Debugf("Deleting %s", console.Redf("%s", spec))
 		for _, object := range objects {
 			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
 				platform.Tracef("resources already deleted skipping, %v", err)
 				return nil
 			}
-			platform.Debugf("Deleting %s", console.Redf("%s", spec))
+
+			platform.Tracef("Deleting %s/%s/%s", object.GetNamespace(), object.GetKind(), object.GetName())
 			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
 				return err
 			}
@@ -734,6 +741,42 @@ func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*
 	})
 
 	return pgdb, nil
+}
+
+func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	// set default labels
+	defaultLabels := make(map[string]string)
+	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
+	if labels != nil {
+		for k, v := range defaultLabels {
+			labels[k] = v
+		}
+	} else {
+		labels = defaultLabels
+	}
+	// set default annotations
+	defaultAnnotations := make(map[string]string)
+	defaultAnnotations["com.flanksource.infra.logs/enabled"] = "true"
+	if annotations != nil {
+		for k, v := range defaultAnnotations {
+			annotations[k] = v
+		}
+	} else {
+		annotations = defaultAnnotations
+	}
+
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
+}
+
+func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
+}
+
+func (platform *Platform) DefaultNamespaceLabels() map[string]string {
+	annotations := map[string]string{
+		"openpolicyagent.org/webhook": "ignore",
+	}
+	return annotations
 }
 
 func (platform *Platform) DefaultNamespaceAnnotations() map[string]string {

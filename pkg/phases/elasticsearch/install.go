@@ -1,21 +1,22 @@
 package elasticsearch
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 const Namespace = "eck"
 
 func Deploy(p *platform.Platform) error {
 	if p.Elasticsearch == nil || p.Elasticsearch.Disabled {
+		p.Elasticsearch = &types.Elasticsearch{Mem: &types.Memory{Limits: "1Gi", Requests: "1Gi"}, Persistence: &types.Persistence{Enabled: true}}
 		if err := p.DeleteSpecs(Namespace, "elasticsearch.yaml"); err != nil {
 			p.Warnf("failed to delete specs: %v", err)
 		}
 		return nil
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 	if p.Elasticsearch.Mem == nil {

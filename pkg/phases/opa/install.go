@@ -6,7 +6,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -30,7 +30,7 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{
 		"app": "opa",
-	}, platform.DefaultNamespaceAnnotations()); err != nil {
+	}, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

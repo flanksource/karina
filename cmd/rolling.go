@@ -3,7 +3,7 @@ package cmd
 import (
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/provision"
+	"github.com/flanksource/karina/pkg/provision"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

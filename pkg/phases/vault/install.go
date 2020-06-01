@@ -3,7 +3,7 @@ package vault
 import (
 	"strconv"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -18,7 +18,7 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 var dbCluster = "harbor"

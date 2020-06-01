@@ -16,9 +16,9 @@ import (
 
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 var (
@@ -97,7 +97,6 @@ func KindCluster(platform *platform.Platform) error {
 	}
 
 	if platform.PlatformConfig.Trace {
-		platform.Infof("KIND Config YAML:")
 		platform.Infof(string(yml))
 	}
 

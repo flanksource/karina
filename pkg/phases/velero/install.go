@@ -2,14 +2,12 @@ package velero
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/flanksource/commons/text"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/flanksource/karina/pkg/platform"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 const (
@@ -23,7 +21,10 @@ func Install(platform *platform.Platform) error {
 		}
 		return nil
 	}
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, platform.DefaultNamespaceAnnotations()); err != nil {
+	if platform.Velero.Version == "" {
+		platform.Velero.Version = "v1.3.2"
+	}
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
@@ -31,24 +32,28 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	secret := text.ToFile(fmt.Sprintf(`[default]
-aws_access_key_id=%s
-aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey), "")
+	if err := platform.CreateOrUpdateSecret("cloud-credentials", Namespace, map[string][]byte{
+		"cloud": []byte(fmt.Sprintf(`[default]
+	aws_access_key_id=%s
+	aws_secret_access_key=%s`, platform.S3.AccessKey, platform.S3.SecretKey)),
+	}); err != nil {
+		return err
+	}
 
-	defer os.Remove(secret)
+	if platform.Velero.Config == nil {
+		platform.Velero.Config = make(map[string]string)
+	}
 
-	velero := platform.GetBinaryWithKubeConfig("velero")
 	endpoint := platform.S3.Endpoint
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
-	backupConfig := fmt.Sprintf("region=%s,insecureSkipTLSVerify=true,s3ForcePathStyle=\"true\",s3Url=%s", platform.S3.Region, endpoint)
+	platform.Velero.Config["s3Url"] = endpoint
+	platform.Velero.Config["region"] = platform.S3.Region
+	platform.Velero.Config["insecureSkipTLSVerify"] = "true"
+	platform.Velero.Config["s3ForcePathStyle"] = "true"
 
-	if err := velero("install --provider aws --plugins velero/velero-plugin-for-aws:v1.0.0 --bucket %s --secret-file %s --backup-location-config %s", platform.Velero.Bucket, secret, backupConfig); err != nil {
-		return fmt.Errorf("install: failed to install velero: %v", err)
-	}
-
-	return nil
+	return platform.ApplySpecs(Namespace, "velero.yaml")
 }
 
 func CreateBackup(platform *platform.Platform) (*Backup, error) {

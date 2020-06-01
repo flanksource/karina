@@ -1,24 +1,27 @@
 package platformoperator
 
 import (
-	"github.com/moshloop/platform-cli/pkg/constants"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/constants"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 const Namespace = constants.PlatformSystem
 
 func Install(platform *platform.Platform) error {
-	if platform.PlatformOperator != nil && platform.PlatformOperator.Disabled {
+	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
+		platform.PlatformOperator = &types.PlatformOperator{}
 		if err := platform.DeleteSpecs("", "platform-operator.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}
 		return nil
 	}
 
-	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
+	labels := map[string]string{
+		"control-plane":            "controller-manager",
 		"quack.pusher.com/enabled": "true",
-	}, platform.DefaultNamespaceAnnotations()); err != nil {
+	}
+	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, labels, nil); err != nil {
 		return err
 	}
 

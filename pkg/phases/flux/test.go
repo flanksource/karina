@@ -2,14 +2,18 @@ package flux
 
 import (
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if !p.E2E {
+		return
+	}
+	if len(p.GitOps) < 1 {
+		test.Skipf("gitops", "No GitOps config specified - skipping.")
 		return
 	}
 	if len(p.GitOps) < 1 {

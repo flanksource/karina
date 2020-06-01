@@ -18,12 +18,12 @@ import (
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/logger"
 	utils "github.com/flanksource/commons/utils"
+	"github.com/flanksource/karina/pkg/k8s/drain"
+	"github.com/flanksource/karina/pkg/k8s/etcd"
+	"github.com/flanksource/karina/pkg/k8s/kustomize"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
-	"github.com/moshloop/platform-cli/pkg/k8s/drain"
-	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
-	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -692,21 +692,10 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	return nil
 }
 
-func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
-	}
-
-	// set default labels
-	defaultLabels := make(map[string]string)
-	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
-	if labels != nil {
-		for k, v := range defaultLabels {
-			labels[k] = v
-		}
-	} else {
-		labels = defaultLabels
 	}
 
 	ns := k8s.CoreV1().Namespaces()
@@ -734,10 +723,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		}
 
 		// update incoming and current annotations
-		switch {
-		case cm.ObjectMeta.Annotations != nil && annotations == nil:
-			annotations = cm.ObjectMeta.Annotations
-		case cm.ObjectMeta.Annotations != nil && annotations != nil:
+		if cm.ObjectMeta.Annotations != nil && annotations != nil {
 			for k, v := range annotations {
 				cm.ObjectMeta.Annotations[k] = v
 			}

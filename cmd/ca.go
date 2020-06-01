@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/ca"
+	"github.com/flanksource/karina/pkg/ca"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
