@@ -53,6 +53,7 @@ type Client struct {
 	logger.Logger
 	GetKubeConfigBytes  func() ([]byte, error)
 	ApplyDryRun         bool
+	ApplyHook           ApplyHook
 	Trace               bool
 	GetKustomizePatches func() ([]string, error)
 	client              *kubernetes.Clientset
@@ -534,8 +535,11 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 			return err
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
-			c.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
 			_, err = client.Create(namespace, true, unstructuredObj, &metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
@@ -578,7 +582,7 @@ func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.U
 		}
 
 		if c.ApplyDryRun {
-			c.Infof("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
 		} else {
 			if _, err := client.Delete(namespace, unstructuredObj.GetName()); err != nil {
 				return err
@@ -589,6 +593,8 @@ func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.U
 	return nil
 }
 
+type ApplyHook func(namespace string, obj unstructured.Unstructured)
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
@@ -596,9 +602,12 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
 			c.trace("apply", unstructuredObj)
-			c.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
 			continue
 		}
 
