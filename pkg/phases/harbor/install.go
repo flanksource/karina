@@ -19,7 +19,7 @@ func Deploy(p *platform.Platform) error {
 	}
 	p.Infof("Deploying harbor %s", p.Harbor.Version)
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 	var nonce string
