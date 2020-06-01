@@ -352,7 +352,7 @@ type Monitoring struct {
 	Version            string        `yaml:"version,omitempty" json:"version,omitempty"`
 	Prometheus         Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
 	Grafana            Grafana       `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager       string        `yaml:"alertMmanager,omitempty"`
+	AlertManager       AlertManager  `yaml:"alertmanager,omitempty"`
 	KubeStateMetrics   string        `yaml:"kubeStateMetrics,omitempty"`
 	KubeRbacProxy      string        `yaml:"kubeRbacProxy,omitempty"`
 	NodeExporter       string        `yaml:"nodeExporter,omitempty"`
@@ -371,6 +371,11 @@ type Prometheus struct {
 	Version     string      `yaml:"version,omitempty"`
 	Disabled    bool        `yaml:"disabled,omitempty"`
 	Persistence Persistence `yaml:"persistence,omitempty"`
+}
+
+type AlertManager struct {
+	Version  string `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
 }
 
 type Persistence struct {

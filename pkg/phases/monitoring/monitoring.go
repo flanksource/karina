@@ -45,6 +45,13 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
+	if p.Monitoring.Prometheus.Version == "" {
+		p.Monitoring.Prometheus.Version = "v2.16.0"
+	}
+	if p.Monitoring.AlertManager.Version == "" {
+		p.Monitoring.AlertManager.Version = "v0.18.0"
+	}
+
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
