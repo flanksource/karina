@@ -5,6 +5,12 @@ on:
     types: [assigned, opened, synchronize, reopened]
 
 jobs:
+  build_id:
+    steps:
+      - name: 'Set cluster ID'
+        id: cluster_id
+        # add a step output `steps.cluster_id.outputs.id` as the unique id
+        run: echo "::set-output name=id::$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)"
   test-e2e:
     runs-on: [self-hosted]
     steps:
