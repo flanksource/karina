@@ -117,14 +117,15 @@ func (platform *Platform) ResetMasterConnection() {
 }
 
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
-	if platform.kubeConfig != nil {
-		return platform.kubeConfig, nil
-	}
+	//TODO: remove this workaround before PR merge
+	//if platform.kubeConfig != nil {
+	//	return platform.kubeConfig, nil
+	//}
 
-	if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
-		platform.Infof("WARNING: Using KUBECONFIG from %s", os.Getenv("KUBECONFIG"))
-		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
-	}
+	//if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
+	//	platform.Infof("WARNING: Using KUBECONFIG from %s", os.Getenv("KUBECONFIG"))
+	//	return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
+	//}
 
 	masters := platform.GetMasterIPs()
 	if len(masters) == 0 {
