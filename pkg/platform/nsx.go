@@ -1,4 +1,4 @@
-package vmware
+package platform
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/flanksource/karina/pkg/nsx"
 	nsxapi "github.com/flanksource/karina/pkg/nsx"
-	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/prometheus/common/log"
 )
@@ -15,7 +14,7 @@ type NSXProvider struct {
 	nsx.NSXClient
 }
 
-func NewNSXProvider(platform *platform.Platform) (*NSXProvider, error) {
+func NewNSXProvider(platform *Platform) (*NSXProvider, error) {
 	switch platform.MasterDiscovery.(type) {
 	case *NSXProvider:
 		return platform.MasterDiscovery.(*NSXProvider), nil
@@ -52,11 +51,11 @@ func (nsx *NSXProvider) String() string {
 	return fmt.Sprintf("NSX[%s]", nsx.NSXClient.Host)
 }
 
-func (nsx *NSXProvider) BeforeProvision(platform *platform.Platform, machine *types.VM) error {
+func (nsx *NSXProvider) BeforeProvision(platform *Platform, machine *types.VM) error {
 	return nil
 }
 
-func (nsx *NSXProvider) AfterProvision(platform *platform.Platform, vm types.Machine) error {
+func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) error {
 	if platform.NSX == nil || platform.NSX.Disabled {
 		return nil
 	}
@@ -89,7 +88,7 @@ func (nsx *NSXProvider) AfterProvision(platform *platform.Platform, vm types.Mac
 	return nil
 }
 
-func (nsx *NSXProvider) GetExternalEndpoints(platform *platform.Platform) ([]string, error) {
+func (nsx *NSXProvider) GetExternalEndpoints(platform *Platform) ([]string, error) {
 	endpoints := []string{}
 	if platform.DNS != nil && !platform.DNS.Disabled {
 		endpoints = append(endpoints, "k8s-api."+platform.Domain)
@@ -105,7 +104,7 @@ func (nsx *NSXProvider) GetExternalEndpoints(platform *platform.Platform) ([]str
 	return endpoints, nil
 }
 
-func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (string, error) {
+func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, error) {
 	if platform.NSX == nil || platform.NSX.Disabled {
 		return "", fmt.Errorf("NSX not configured")
 	}
@@ -156,10 +155,10 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (st
 	return masterDNS + ":6443", nil
 }
 
-func (nsx *NSXProvider) BeforeTerminate(platform *platform.Platform, machine types.Machine) error {
+func (nsx *NSXProvider) BeforeTerminate(platform *Platform, machine types.Machine) error {
 	return nil
 }
 
-func (nsx NSXProvider) AfterTerminate(platform *platform.Platform, machine types.Machine) error {
+func (nsx NSXProvider) AfterTerminate(platform *Platform, machine types.Machine) error {
 	return nil
 }

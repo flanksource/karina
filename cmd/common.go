@@ -30,7 +30,9 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 	if kubeconfig != "" {
 		platform.KubeConfigPath = kubeconfig
 	}
-	platform.Init()
+	if err := platform.Init(); err != nil {
+		log.Fatalf("failed to initialise: %v", err)
+	}
 	return &platform
 }
 

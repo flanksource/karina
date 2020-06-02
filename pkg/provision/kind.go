@@ -26,15 +26,17 @@ var (
 )
 
 // KindCluster provisions a new Kind cluster
-func KindCluster(platform *platform.Platform) error {
-	kubeadmPatches, err := createKubeAdmPatches(platform)
+func KindCluster(p *platform.Platform) error {
+	p.MasterDiscovery = platform.KindProvider{}
+	p.ProvisionHook = platform.CompositeHook{}
+	kubeadmPatches, err := createKubeAdmPatches(p)
 	if err != nil {
 		return errors.Wrap(err, "failed to generate kubeadm patches")
 	}
 
 	var extraMounts []kindapi.Mount
-	if platform.IngressCA != nil {
-		caPath, err := filepath.Abs(platform.IngressCA.Cert)
+	if p.IngressCA != nil {
+		caPath, err := filepath.Abs(p.IngressCA.Cert)
 		if err != nil {
 			return errors.Wrap(err, "failed to expand ca file path")
 		}
@@ -57,7 +59,7 @@ func KindCluster(platform *platform.Platform) error {
 		Nodes: []kindapi.Node{
 			{
 				Role:  "control-plane",
-				Image: fmt.Sprintf("kindest/node:%s", platform.Kubernetes.Version),
+				Image: fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
 				ExtraPortMappings: []kindapi.PortMapping{
 					{
 						ContainerPort: 80,
@@ -81,12 +83,12 @@ func KindCluster(platform *platform.Platform) error {
 		},
 	}
 
-	err = configureAuditMappings(platform, &kindConfig)
+	err = configureAuditMappings(p, &kindConfig)
 	if err != nil {
 		return err
 	}
 
-	err = configureEncryptionMappings(platform, &kindConfig)
+	err = configureEncryptionMappings(p, &kindConfig)
 	if err != nil {
 		return err
 	}
@@ -96,8 +98,8 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to marshal config")
 	}
 
-	if platform.PlatformConfig.Trace {
-		platform.Infof(string(yml))
+	if p.PlatformConfig.Trace {
+		p.Infof(string(yml))
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")
@@ -110,23 +112,19 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to write kind config file")
 	}
 
-	if platform.DryRun {
+	if p.DryRun {
 		fmt.Println(string(yml))
 		return nil
 	}
 
-	kind := platform.GetBinary("kind")
-	kubeConfig, err := platform.GetKubeConfig()
-	if err != nil {
-		return errors.Wrap(err, "failed to get kube config")
-	}
+	kind := p.GetBinary("kind")
 
-	if err := kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), kubeConfig); err != nil {
+	if err := kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), p.KubeConfigPath); err != nil {
 		return err
 	}
 
 	// delete the default storageclass created by kind as we install our own
-	return platform.GetKubectl()("delete sc standard")
+	return p.GetKubectl()("delete sc standard")
 }
 
 // createKubeAdmPatches reads a Platform config, creates a new ClusterConfiguration from it and

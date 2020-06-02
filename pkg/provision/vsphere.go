@@ -21,18 +21,8 @@ func WithVmwareCluster(p *platform.Platform) error {
 		return err
 	}
 	p.Cluster = cluster
-	p.Init()
-	if p.NSX != nil && !p.NSX.Disabled {
-		nsx, err := vmware.NewNSXProvider(p)
-		if err != nil {
-			return err
-		}
-		p.MasterDiscovery = nsx
-		if p.ProvisionHook == nil {
-			p.ProvisionHook = nsx
-		} else {
-			p.ProvisionHook = platform.CompositeHook{Hooks: []platform.ProvisionHook{nsx, p.ProvisionHook}}
-		}
+	if err := p.Init(); err != nil {
+		return err
 	}
 
 	joinEndpoint, err := p.MasterDiscovery.GetControlPlaneEndpoint(p)

@@ -57,7 +57,7 @@ type Platform struct {
 	Terminating bool
 }
 
-func (platform *Platform) Init() {
+func (platform *Platform) Init() error {
 	if platform.Client.GetKubeConfigBytes == nil {
 		platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
 	}
@@ -72,7 +72,19 @@ func (platform *Platform) Init() {
 	platform.logFields = make(map[string]interface{})
 	consul := NewConsulProvider(platform)
 	dns := NewDNSProvider(platform.GetDNSClient())
-	if platform.Consul != "" && platform.DNS != nil && !platform.DNS.Disabled {
+
+	if platform.NSX != nil && !platform.NSX.Disabled {
+		nsx, err := NewNSXProvider(platform)
+		if err != nil {
+			return err
+		}
+		platform.MasterDiscovery = nsx
+		if platform.DNS != nil && !platform.DNS.Disabled {
+			platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{nsx, dns}}
+		} else {
+			platform.ProvisionHook = nsx
+		}
+	} else if platform.Consul != "" && platform.DNS != nil && !platform.DNS.Disabled {
 		// when both consul and DNS are specified, Consul is used for master discovery
 		// and DNS used for external access
 		platform.MasterDiscovery = consul
@@ -83,7 +95,19 @@ func (platform *Platform) Init() {
 	} else if platform.DNS != nil && !platform.DNS.Disabled {
 		platform.MasterDiscovery = dns
 		platform.ProvisionHook = dns
+	} else {
+		platform.MasterDiscovery = KindProvider{}
+		platform.ProvisionHook = CompositeHook{}
 	}
+
+	if platform.KubeConfigPath == "" {
+		if os.Getenv("KUBECONFIG") == "" {
+			platform.KubeConfigPath = os.ExpandEnv("$HOME/.kube/config")
+		} else {
+			platform.KubeConfigPath = os.Getenv("KUBECONFIG")
+		}
+	}
+	return nil
 }
 
 func (platform *Platform) clone() *Platform {
@@ -168,8 +192,10 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return platform.kubeConfig, nil
 	}
 
-	if platform.KubeConfigPath != "" {
-		platform.Infof("WARNING: Using KUBECONFIG from %s", platform.KubeConfigPath)
+	context := k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath)
+	platform.Tracef("Current KUBECONFIG: path=%s, context=%s", platform.KubeConfigPath, context)
+	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		platform.Debugf("Using existing KUBECONFIG, to dynamically generate a KUBECONFIG specify a path without a matching context")
 		return ioutil.ReadFile(platform.KubeConfigPath)
 	}
 
@@ -178,6 +204,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
 	}
 
+	platform.Debugf("Generating a new kubeconfig for %s", ip)
 	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {
 		return nil, err
@@ -260,7 +287,7 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	if platform.DNS == nil || platform.DNS.Disabled {
 		return &dns.DummyDNSClient{
 			Logger: platform.Logger,
-			Zone:   platform.DNS.Zone,
+			Zone:   "nip.io",
 		}
 	}
 
@@ -351,18 +378,22 @@ func (platform *Platform) GetNodeNames() map[string]bool {
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
-	cwd, _ := os.Getwd()
-	name := cwd + "/" + platform.Name + "-admin.yml"
-	if !is.File(name) {
+	// if the current kubeconfig context already has a reference to the cluster
+	// then we can just reuse it
+	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		return platform.KubeConfigPath, nil
+	}
+
+	if !is.File(platform.KubeConfigPath) {
 		data, err := platform.GetKubeConfigBytes()
 		if err != nil {
 			return "", err
 		}
-		if err := ioutil.WriteFile(name, data, 0644); err != nil {
+		if err := ioutil.WriteFile(platform.KubeConfigPath, data, 0644); err != nil {
 			return "", err
 		}
 	}
-	return name, nil
+	return platform.KubeConfigPath, nil
 }
 
 func (platform *Platform) GetBinaryWithKubeConfig(binary string) deps.BinaryFunc {
