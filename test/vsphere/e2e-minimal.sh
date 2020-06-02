@@ -51,7 +51,7 @@ generate_cluster_id() {
 
 PLATFORM_CLUSTER_ID=$(generate_cluster_id)
 export PLATFORM_CLUSTER_ID
-export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com --kubeconfig=./${PLATFORM_CLUSTER_ID}.yaml -vv"
+export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
 unset KUBECONFIG
 export PLATFORM_CONFIG=test/vsphere/e2e-platform-minimal.yaml
 
