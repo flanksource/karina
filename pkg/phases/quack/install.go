@@ -27,6 +27,5 @@ func Install(platform *platform.Platform) error {
 	if err := platform.DeleteSpecs(v1.NamespaceAll, "quack.yaml"); err != nil {
 		platform.Warnf("failed to delete specs: %v", err)
 	}
-
 	return nil
 }

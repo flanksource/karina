@@ -42,6 +42,7 @@ COMMIT_SHA="$GITHUB_SHA"
 
 unset KUBECONFIG
 export PLATFORM_CONFIG=test/e2e-platform-minimal.yaml
+export PLATFORM_CLUSTER_ID=${PLATFORM_CLUSTER_I:-e2e-minimal}
 export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
 
 if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then

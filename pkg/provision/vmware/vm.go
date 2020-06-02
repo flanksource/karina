@@ -24,18 +24,24 @@ type vm struct {
 	name, ip string
 	dryRun   bool
 	ctx      context.Context
+	config   *types.VM
 	vm       *object.VirtualMachine
 }
 
-func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine) types.Machine {
+func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine, config *types.VM) types.Machine {
 	_vm := vm{
 		Logger: logrus.WithField("vm", obj.Name()),
 		ctx:    ctx,
 		dryRun: dryRun,
 		vm:     obj,
+		config: config,
 		name:   obj.Name(),
 	}
 	return &_vm
+}
+
+func (vm *vm) GetTags() map[string]string {
+	return vm.config.Tags
 }
 
 func (vm *vm) IP() string {

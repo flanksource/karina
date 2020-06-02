@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -27,7 +26,13 @@ func getPlatform(cmd *cobra.Command) *platform.Platform {
 	platform := platform.Platform{
 		PlatformConfig: getConfig(cmd),
 	}
-	platform.Init()
+	kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
+	if kubeconfig != "" {
+		platform.KubeConfigPath = kubeconfig
+	}
+	if err := platform.Init(); err != nil {
+		log.Fatalf("failed to initialise: %v", err)
+	}
 	return &platform
 }
 
@@ -166,13 +171,6 @@ func GlobalPreRun(cmd *cobra.Command, args []string) {
 	default:
 		log.SetLevel(log.InfoLevel)
 	}
-	kubeconfig, err := cmd.Flags().GetString("kubeconfig")
-	if err != nil {
-		log.Infof("Kubeconfig: %s", kubeconfig)
-		log.Fatalln("Failed to get kubeconfig argument:", err)
-	}
-	log.Debugf("Using kube config %s", kubeconfig)
-	os.Setenv("KUBECONFIG", kubeconfig)
 }
 
 var Render = &cobra.Command{

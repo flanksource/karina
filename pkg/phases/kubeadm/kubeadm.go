@@ -27,14 +27,13 @@ const (
 // NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster := api.ClusterConfiguration{
-		APIVersion:        "kubeadm.k8s.io/v1beta2",
-		Kind:              "ClusterConfiguration",
-		KubernetesVersion: cfg.Kubernetes.Version,
-		CertificatesDir:   "/etc/kubernetes/pki",
-		ClusterName:       cfg.Name,
-		ImageRepository:   "k8s.gcr.io",
-		// Control plane endpoint is load balanced client side using haproxy + consul service discovery
-		ControlPlaneEndpoint: "localhost:8443",
+		APIVersion:           "kubeadm.k8s.io/v1beta2",
+		Kind:                 "ClusterConfiguration",
+		KubernetesVersion:    cfg.Kubernetes.Version,
+		CertificatesDir:      "/etc/kubernetes/pki",
+		ClusterName:          cfg.Name,
+		ImageRepository:      "k8s.gcr.io",
+		ControlPlaneEndpoint: cfg.JoinEndpoint,
 	}
 	cluster.Networking.DNSDomain = "cluster.local"
 	cluster.Networking.ServiceSubnet = cfg.ServiceSubnet

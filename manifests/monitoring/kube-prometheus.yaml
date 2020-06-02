@@ -5,6 +5,8 @@ metadata:
     alertmanager: main
   name: main
   namespace: monitoring
+  annotations:
+    image: "quay.io/prometheus/alertmanager:{{.monitoring.alertmanager.version}}"
 spec:
   baseImage: quay.io/prometheus/alertmanager
   nodeSelector:
@@ -16,7 +18,7 @@ spec:
     runAsNonRoot: true
     runAsUser: 1000
   serviceAccountName: alertmanager-main
-  version: v0.18.0
+  version: {{.monitoring.alertmanager.version}}
 ---
 apiVersion: v1
 kind: Service
@@ -110,6 +112,8 @@ metadata:
     prometheus: k8s
   name: k8s
   namespace: monitoring
+  annotations:
+    image: "quay.io/prometheus/prometheus:{{.monitoring.prometheus.version}}"
 spec:
   alerting:
     alertmanagers:
@@ -146,7 +150,7 @@ spec:
   serviceMonitorSelector: {}
   externalLabels:
     cluster: {{.name}}
-  version: v2.11.0
+  version: {{.monitoring.prometheus.version}}
   {{- if (index .monitoring "prometheus")  }}
   {{- if (index .monitoring.prometheus "persistence") }}
   storage:
