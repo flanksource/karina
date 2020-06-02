@@ -6,7 +6,7 @@ import (
 )
 
 func Deploy(p *platform.Platform) error {
-	if !p.Journalbeat.Enabled {
+	if p.Journalbeat.IsDisabled() {
 		p.Infof("Skipping deployment of journalbeat, it is disabled")
 		return p.DeleteSpecs(constants.PlatformSystem, "journalbeat.yaml")
 	}

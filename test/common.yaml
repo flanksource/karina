@@ -164,6 +164,8 @@ packetbeat:
     password: elastic
     port: 443
     scheme: https
+eventrouter:
+  version: v0.3
 eck:
   version: 1.0.1
 oauth2Proxy:

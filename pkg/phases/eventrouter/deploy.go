@@ -6,7 +6,7 @@ import (
 )
 
 func Deploy(p *platform.Platform) error {
-	if p.EventRouter.Disabled {
+	if p.EventRouter.IsDisabled() {
 		p.Infof("Skipping deployment of eventrouter, it is disabled")
 		return nil
 	}

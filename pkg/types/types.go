@@ -13,6 +13,18 @@ type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
 
+type DisabledValue struct {
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version"`
+}
+
+func (d DisabledValue) IsDisabled() bool {
+	if d.Disabled {
+		return true
+	}
+	return d.Version == ""
+}
+
 type CertManager struct {
 	Version string `yaml:"version"`
 
@@ -484,27 +496,23 @@ type Filebeat struct {
 }
 
 type Journalbeat struct {
-	Enabled       bool        `yaml:"enabled"`
-	Version       string      `yaml:"version"`
+	DisabledValue
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Auditbeat struct {
-	Enabled       bool        `yaml:"enabled"`
-	Version       string      `yaml:"version"`
+	DisabledValue
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Packetbeat struct {
-	Enabled       bool        `yaml:"enabled"`
-	Version       string      `yaml:"version"`
+	DisabledValue
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Kibana        *Connection `yaml:"kibana,omitempty"`
 }
 
 type EventRouter struct {
-	Enabled
-	Version        string `yaml:"version"`
+	DisabledValue
 	FilebeatPrefix string `yaml:"filebeatPrefix"`
 }
 

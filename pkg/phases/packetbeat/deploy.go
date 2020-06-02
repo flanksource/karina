@@ -6,7 +6,7 @@ import (
 )
 
 func Deploy(p *platform.Platform) error {
-	if !p.Packetbeat.Enabled {
+	if p.Packetbeat.IsDisabled() {
 		p.Infof("Skipping deployment of packetbeat, it is disabled")
 		return p.DeleteSpecs(constants.PlatformSystem, "packetbeat.yaml")
 	}
