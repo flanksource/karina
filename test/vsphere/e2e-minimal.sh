@@ -128,6 +128,8 @@ mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
 zip -r artifacts/snapshot.zip snapshot/*
 
+$BIN cleanup $PLATFORM_OPTIONS_FLAGS
+$BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS
 
 if [[ "$failed" = true ]]; then
   exit 1
