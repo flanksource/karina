@@ -42,21 +42,24 @@ import (
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
-	CNI                  CNIProvider
-	LoadBalancerProvider LoadBalancerProvider
+	MasterDiscovery MasterDiscovery
+	ProvisionHook   ProvisionHook
 	logger.Logger
 	logFields map[string]interface{}
 	k8s.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
+	ctx            context.Context //nolint
 	kubeConfig     []byte
 	KubeConfigPath string
+	ca             certs.CertificateAuthority
+	ingressCA      certs.CertificateAuthority
 	// Terminating is true if the cluster is in a terminating state
 	Terminating bool
 }
 
 func (platform *Platform) Init() {
 	if platform.Client.GetKubeConfigBytes == nil {
-	platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+		platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
 	}
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
@@ -65,9 +68,21 @@ func (platform *Platform) Init() {
 	platform.Client.Trace = platform.PlatformConfig.Trace
 	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
 	platform.Client.Logger = platform.Logger
+
 	platform.logFields = make(map[string]interface{})
-	if platform.LoadBalancerProvider == nil && platform.DNS != nil && !platform.DNS.Disabled {
-		platform.LoadBalancerProvider = NewDnsProvider(platform.GetDNSClient())
+	consul := NewConsulProvider(platform)
+	dns := NewDNSProvider(platform.GetDNSClient())
+	if platform.Consul != "" && platform.DNS != nil && !platform.DNS.Disabled {
+		// when both consul and DNS are specified, Consul is used for master discovery
+		// and DNS used for external access
+		platform.MasterDiscovery = consul
+		platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{consul, dns}}
+	} else if platform.Consul != "" {
+		platform.MasterDiscovery = consul
+		platform.ProvisionHook = consul
+	} else if platform.DNS != nil && !platform.DNS.Disabled {
+		platform.MasterDiscovery = dns
+		platform.ProvisionHook = dns
 	}
 }
 
@@ -77,8 +92,19 @@ func (platform *Platform) clone() *Platform {
 		logFields[k] = v
 	}
 	return &Platform{
+		Cluster:         platform.Cluster,
+		PlatformConfig:  platform.PlatformConfig,
+		Logger:          platform.Logger,
+		logFields:       logFields,
+		Client:          platform.Client,
+		ctx:             context.TODO(),
+		MasterDiscovery: platform.MasterDiscovery,
+		ProvisionHook:   platform.ProvisionHook,
 		kubeConfig:      platform.kubeConfig,
+		ca:              platform.ca,
+		ingressCA:       platform.ingressCA,
 		KubeConfigPath:  platform.KubeConfigPath,
+		Terminating:     platform.Terminating,
 	}
 }
 
@@ -110,27 +136,32 @@ func (platform *Platform) ResetMasterConnection() {
 	platform.Client.ResetConnection()
 }
 
-func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
-	if platform.kubeConfig != nil {
-		return platform.kubeConfig, nil
+// GetAPIEndpoint returns an endpoint for reaching a master node that is reachable on 6443 or
+// an error otherwise
+func (platform *Platform) GetAPIEndpoint() (string, error) {
+	if platform.DNS != nil && !platform.DNS.Disabled {
+		ip := fmt.Sprintf("k8s-api.%s", platform.Domain)
+		if net.Ping(ip, 6443, 10) {
+			return ip, nil
+		}
+		platform.Warnf("DNS endpoint is not healthy, failing back to master IP")
 	}
 
-	if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
-		platform.Infof("WARNING: Using KUBECONFIG from %s", os.Getenv("KUBECONFIG"))
-		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
+	masters, err := platform.MasterDiscovery.GetExternalEndpoints(platform)
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to discover any external endpoints")
 	}
-
-	masters := platform.GetMasterIPs()
 	if len(masters) == 0 {
-		return nil, fmt.Errorf("could not find any master ips")
+		return "", fmt.Errorf("could not find any master ips")
 	}
-
-	var ip string
 
 	for _, master := range masters {
 		if net.Ping(master, 6443, 10) {
-			ip = master
+			return master, nil
 		}
+	}
+	return "", fmt.Errorf("none of the masters are up: %v", masters)
+}
 
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	if platform.kubeConfig != nil {
@@ -146,7 +177,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
 
-}
+	}
 
 	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {
@@ -213,11 +244,15 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 
 // WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
+	if platform.DryRun {
+		return nil
+	}
 	for {
-		masters := platform.GetMasterIPs()
-		if len(masters) > 0 && net.Ping(masters[0], 6443, 3) && platform.PingMaster() {
+		api, _ := platform.GetAPIEndpoint()
+		if api != "" && platform.PingMaster() {
 			return nil
 		}
+		platform.ResetMasterConnection()
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -252,15 +287,13 @@ func (platform *Platform) GetDNSClient() dns.Client {
 }
 
 func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Machine, error) {
-	if platform.LoadBalancerProvider != nil {
-		if err := platform.LoadBalancerProvider.BeforeProvision(platform, vm); err != nil {
-			return types.NullMachine{}, err
-		}
+	if platform.DryRun {
+		return types.NullMachine{}, nil
 	}
-	if platform.CNI != nil {
-		if err := platform.CNI.BeforeProvision(platform, vm); err != nil {
-			return types.NullMachine{}, err
-		}
+	vm.Konfigadm = config
+
+	if err := platform.ProvisionHook.BeforeProvision(platform, &vm); err != nil {
+		return types.NullMachine{}, err
 	}
 
 	for _, cmd := range vm.Commands {
@@ -285,16 +318,11 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 	}
 	vm.IP = ip
 	platform.Tracef("[%s] found ip %s", vm.Name, ip)
-	if platform.LoadBalancerProvider != nil {
-		if err := platform.LoadBalancerProvider.AfterProvision(platform, VM); err != nil {
-			return types.NullMachine{}, err
-		}
+
+	if err := platform.ProvisionHook.AfterProvision(platform, VM); err != nil {
+		return types.NullMachine{}, err
 	}
-	if platform.CNI != nil {
-		if err := platform.CNI.AfterProvision(platform, VM); err != nil {
-			return types.NullMachine{}, err
-		}
-	}
+
 	return VM, nil
 }
 
@@ -304,14 +332,6 @@ func (platform *Platform) GetConsulClient() api.Consul {
 		Host:    fmt.Sprintf("http://%s:8500", platform.Consul),
 		Service: platform.Name,
 	}
-}
-
-// GetMasterIPs returns a list of all healthy master IP's
-func (platform *Platform) GetMasterIPs() []string {
-	if platform.Kubernetes.MasterIP != "" {
-		return []string{platform.Kubernetes.MasterIP}
-	}
-	return platform.GetConsulClient().GetMembers()
 }
 
 func (platform *Platform) GetNodeNames() map[string]bool {
@@ -332,10 +352,6 @@ func (platform *Platform) GetNodeNames() map[string]bool {
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
-	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
-		platform.Tracef("Using KUBECONFIG from ENV")
-		return os.Getenv("KUBECONFIG"), nil
-	}
 	cwd, _ := os.Getwd()
 	name := cwd + "/" + platform.Name + "-admin.yml"
 	if !is.File(name) {
@@ -387,7 +403,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 
 func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
 	if platform.HasSecret(namespace, secretName) {
-		platform.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
+		platform.Debugf("secret/%s/%s' for %s already exists", namespace, secretName, subDomain)
 		//TODO(moshloop) check certificate expiry and renew if necessary
 		return nil
 	}
@@ -754,4 +770,8 @@ func (platform *Platform) DefaultNamespaceAnnotations() map[string]string {
 		"com.flanksource.infra.logs/enabled": "true",
 	}
 	return annotations
+}
+
+func (platform *Platform) IsMaster(machine types.TagInterface) bool {
+	return machine.GetTags()["Role"] == platform.Name+"-masters"
 }

@@ -1299,14 +1299,34 @@ func (c *Client) GetMasterNode() (string, error) {
 		return "", err
 	}
 
-	var masterNode string
 	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
+		if IsMasterNode(node) {
+			return node.Name, nil
 		}
 	}
-	return masterNode, nil
+	return "", fmt.Errorf("no master nodes found")
+}
+
+// GetMasterNode returns a list of all master nodes
+func (c *Client) GetMasterNodes() ([]string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, nil
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, nil
+	}
+
+	var nodeNames []string
+	for _, node := range nodes.Items {
+		if IsMasterNode(node) {
+			nodeNames = append(nodeNames, node.Name)
+
+		}
+	}
+	return nodeNames, nil
 }
 
 // Returns the first pod found by label

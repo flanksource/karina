@@ -16,8 +16,9 @@ type NSXProvider struct {
 }
 
 func NewNSXProvider(platform *platform.Platform) (*NSXProvider, error) {
-	if platform.CNI != nil {
-		return platform.CNI.(*NSXProvider), nil
+	switch platform.MasterDiscovery.(type) {
+	case *NSXProvider:
+		return platform.MasterDiscovery.(*NSXProvider), nil
 	}
 	if platform.NSX == nil || platform.NSX.Disabled {
 		return nil, fmt.Errorf("NSX not configured or disabled")
@@ -47,11 +48,15 @@ func NewNSXProvider(platform *platform.Platform) (*NSXProvider, error) {
 	return nsx, nil
 }
 
-func (nsx NSXProvider) BeforeProvision(platform *platform.Platform, machine types.VM) error {
+func (nsx *NSXProvider) String() string {
+	return fmt.Sprintf("NSX[%s]", nsx.NSXClient.Host)
+}
+
+func (nsx *NSXProvider) BeforeProvision(platform *platform.Platform, machine *types.VM) error {
 	return nil
 }
 
-func (nsx NSXProvider) AfterProvision(platform *platform.Platform, vm types.Machine) error {
+func (nsx *NSXProvider) AfterProvision(platform *platform.Platform, vm types.Machine) error {
 	if platform.NSX == nil || platform.NSX.Disabled {
 		return nil
 	}
@@ -84,7 +89,23 @@ func (nsx NSXProvider) AfterProvision(platform *platform.Platform, vm types.Mach
 	return nil
 }
 
-func (nsx NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (string, error) {
+func (nsx *NSXProvider) GetExternalEndpoints(platform *platform.Platform) ([]string, error) {
+	endpoints := []string{}
+	if platform.DNS != nil && !platform.DNS.Disabled {
+		endpoints = append(endpoints, "k8s-api."+platform.Domain)
+	}
+	lb, err := nsx.GetLoadBalancer(platform.Name + "-masters")
+	if err != nil {
+		return nil, err
+	}
+	if lb != nil {
+		endpoints = append(endpoints, lb.IpAddress)
+	}
+	platform.Tracef("Discovered %s masters via NSX", endpoints)
+	return endpoints, nil
+}
+
+func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (string, error) {
 	if platform.NSX == nil || platform.NSX.Disabled {
 		return "", fmt.Errorf("NSX not configured")
 	}
@@ -93,7 +114,7 @@ func (nsx NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (str
 	masterIP, existing, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-masters",
 		IPPool:   platform.NSX.LoadBalancerIPPool,
-		Protocol: nsxapi.TcpProtocol,
+		Protocol: nsxapi.TCPProtocol,
 		Ports:    []string{"6443"},
 		Tier0:    platform.NSX.Tier0,
 		MemberTags: map[string]string{
@@ -103,6 +124,10 @@ func (nsx NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (str
 	if err != nil {
 		return "", err
 	}
+	if platform.DNS == nil || platform.DNS.Disabled {
+		masterDNS = masterIP
+	}
+
 	if !existing {
 		if err := platform.GetDNSClient().Append(masterDNS, masterIP); err != nil {
 			log.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", masterDNS, masterIP, err)
@@ -113,7 +138,7 @@ func (nsx NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (str
 	workerIP, existing, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-workers",
 		IPPool:   platform.NSX.LoadBalancerIPPool,
-		Protocol: nsxapi.TcpProtocol,
+		Protocol: nsxapi.TCPProtocol,
 		Ports:    []string{"80", "443"},
 		Tier0:    platform.NSX.Tier0,
 		MemberTags: map[string]string{
@@ -131,7 +156,7 @@ func (nsx NSXProvider) GetControlPlaneEndpoint(platform *platform.Platform) (str
 	return masterDNS + ":6443", nil
 }
 
-func (nsx NSXProvider) BeforeTerminate(platform *platform.Platform, machine types.Machine) error {
+func (nsx *NSXProvider) BeforeTerminate(platform *platform.Platform, machine types.Machine) error {
 	return nil
 }
 

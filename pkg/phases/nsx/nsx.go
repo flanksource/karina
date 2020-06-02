@@ -50,8 +50,9 @@ func Install(p *platform.Platform) error {
 
 	s := "[DEFAULT]\n" + mapToINI(ini)
 
-	p.Tracef("Using NSX config: %s", console.StripSecrets(s))
-
+	if p.PlatformConfig.Trace {
+		p.Tracef("Using NSX config: %s", console.StripSecrets(s))
+	}
 	if err := p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
 		"ncp.ini": s,
 	}); err != nil {

@@ -7,20 +7,24 @@ import (
 	"github.com/flanksource/karina/pkg/types"
 )
 
-type DnsProvider struct {
+type DNSProvider struct {
 	dns.Client
 }
 
-func NewDnsProvider(client dns.Client) DnsProvider {
-	provider := DnsProvider{}
+func NewDNSProvider(client dns.Client) DNSProvider {
+	provider := DNSProvider{}
 	provider.Client = client
 	return provider
 }
 
-func (dns DnsProvider) BeforeProvision(platform *Platform, machine types.VM) error { return nil }
-func (dns DnsProvider) AfterProvision(platform *Platform, machine types.Machine) error {
+func (dns DNSProvider) String() string {
+	return fmt.Sprintf("DNS(%s)", dns.Client)
+}
+
+func (dns DNSProvider) BeforeProvision(platform *Platform, machine *types.VM) error { return nil }
+func (dns DNSProvider) AfterProvision(platform *Platform, machine types.Machine) error {
 	zone := "*."
-	if machine.GetTags()["Role"] == platform.Name+"-masters" {
+	if platform.IsMaster(machine) {
 		zone = "k8s-api."
 	}
 
@@ -31,9 +35,9 @@ func (dns DnsProvider) AfterProvision(platform *Platform, machine types.Machine)
 	return nil
 }
 
-func (dns DnsProvider) BeforeTerminate(platform *Platform, machine types.Machine) error {
+func (dns DNSProvider) BeforeTerminate(platform *Platform, machine types.Machine) error {
 	zone := "*."
-	if machine.GetTags()["Role"] == platform.Name+"-masters" {
+	if platform.IsMaster(machine) {
 		zone = "k8s-api."
 	}
 
@@ -43,8 +47,13 @@ func (dns DnsProvider) BeforeTerminate(platform *Platform, machine types.Machine
 	return nil
 }
 
-func (dns DnsProvider) AfterTerminate(platform *Platform, machine types.Machine) error { return nil }
+func (dns DNSProvider) AfterTerminate(platform *Platform, machine types.Machine) error { return nil }
 
-func (dns DnsProvider) GetControlPlaneEndpoint(platform *Platform) (string, error) {
+func (dns DNSProvider) GetControlPlaneEndpoint(platform *Platform) (string, error) {
 	return fmt.Sprintf("k8s-api.%s", platform.Domain), nil
+}
+
+func (dns DNSProvider) GetExternalEndpoints(platform *Platform) ([]string, error) {
+	platform.Tracef("Using DNS endpoint for master discovery")
+	return []string{"k8s-api." + platform.Domain}, nil
 }

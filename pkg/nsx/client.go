@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	TcpProtocol = "TCP"
+	TCPProtocol = "TCP"
 )
 
 // nolint: golint
@@ -257,29 +257,39 @@ type virtualServersList struct {
 	Results []loadbalancer.LbVirtualServer `json:"results,omitempty"`
 }
 
+func (c *NSXClient) GetLoadBalancer(name string) (*loadbalancer.LbVirtualServer, error) {
+	// ServicesApi.GetVirtualServers() is not implemented
+	body, err := c.GET("/loadbalancer/virtual-servers")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list existing virtual servers: %v", err)
+	}
+
+	var virtualServers virtualServersList
+
+	if err := json.Unmarshal(body, &virtualServers); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall existing virtual server list: %v", err)
+	}
+
+	for _, server := range virtualServers.Results {
+		if server.DisplayName == name {
+			return &server, nil
+		}
+	}
+	return nil, nil
+}
+
 // CreateLoadBalancer creates a new loadbalancer or returns the existing loadbalancer's IP
 func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, error) {
 	ctx := c.api.Context
 	api := c.api.ServicesApi
 	routing := c.api.LogicalRoutingAndServicesApi
 
-	// ServicesApi.GetVirtualServers() is not implemented
-	body, err := c.GET("/loadbalancer/virtual-servers")
+	existingServer, err := c.GetLoadBalancer(opts.Name)
 	if err != nil {
-		return "", false, fmt.Errorf("failed to list existing virtual servers: %v", err)
+		return "", false, err
 	}
-
-	var virtualServers virtualServersList
-
-	if err := json.Unmarshal(body, &virtualServers); err != nil {
-		return "", false, fmt.Errorf("failed to unmarshall existing virtual server list: %v", err)
-	}
-
-	for _, server := range virtualServers.Results {
-		if server.DisplayName == opts.Name {
-			c.Debugf("LoadBalancer %s found, returning its IP %s ", opts.Name, server.IpAddress)
-			return server.IpAddress, true, nil
-		}
+	if existingServer != nil {
+		return existingServer.IpAddress, true, nil
 	}
 
 	t0, resp, err := routing.ReadLogicalRouter(ctx, opts.Tier0)
@@ -333,7 +343,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		return "", false, err
 	}
 	var monitorID string
-	if opts.Protocol == TcpProtocol {
+	if opts.Protocol == TCPProtocol {
 		monitorID, err = c.GetOrCreateTCPHealthCheck(opts.Ports[0])
 		if err != nil {
 			return "", false, fmt.Errorf("unable to create tcp loadbalancer monitor: %v", err)
@@ -343,7 +353,6 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		if err != nil {
 			return "", false, fmt.Errorf("unable to create http loadbalancer monitor: %v", err)
 		}
-
 	}
 	pool, resp, err := api.CreateLoadBalancerPool(ctx, loadbalancer.LbPool{
 		Id:               opts.Name,

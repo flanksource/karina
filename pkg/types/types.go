@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/flanksource/karina/pkg/api/calico"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
@@ -63,8 +64,13 @@ type VM struct {
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
 	// A path to a konfigadm specification used for configuring the VM on creation.
-	KonfigadmFile string `yaml:"konfigadm,omitempty"`
-	IP            string `yaml:"-"`
+	KonfigadmFile string            `yaml:"konfigadm,omitempty"`
+	IP            string            `yaml:"-"`
+	Konfigadm     *konfigadm.Config `yaml:"-"`
+}
+
+func (vm VM) GetTags() map[string]string {
+	return vm.Tags
 }
 
 type Calico struct {

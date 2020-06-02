@@ -6,38 +6,41 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/phases"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/provision/vmware"
 	"github.com/flanksource/karina/pkg/types"
-	"gopkg.in/flanksource/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func WithVmwareCluster(platform *platform.Platform) error {
-	cluster, err := vmware.NewVMwareCluster(platform.PlatformConfig)
+func WithVmwareCluster(p *platform.Platform) error {
+	cluster, err := vmware.NewVMwareCluster(p.PlatformConfig)
 	if err != nil {
 		return err
 	}
-	platform.Cluster = cluster
-	platform.Init()
-	if platform.NSX != nil && !platform.NSX.Disabled {
-		nsx, err := vmware.NewNSXProvider(platform)
+	p.Cluster = cluster
+	p.Init()
+	if p.NSX != nil && !p.NSX.Disabled {
+		nsx, err := vmware.NewNSXProvider(p)
 		if err != nil {
 			return err
 		}
-		platform.CNI = nsx
-		platform.LoadBalancerProvider = nsx
+		p.MasterDiscovery = nsx
+		if p.ProvisionHook == nil {
+			p.ProvisionHook = nsx
+		} else {
+			p.ProvisionHook = platform.CompositeHook{Hooks: []platform.ProvisionHook{nsx, p.ProvisionHook}}
+		}
 	}
 
-	joinEndpoint, err := platform.LoadBalancerProvider.GetControlPlaneEndpoint(platform)
+	joinEndpoint, err := p.MasterDiscovery.GetControlPlaneEndpoint(p)
 	if err != nil {
 		return err
 	}
-	platform.JoinEndpoint = joinEndpoint
+	p.JoinEndpoint = joinEndpoint
+
 	return nil
 }
 
@@ -47,21 +50,24 @@ func VsphereCluster(platform *platform.Platform) error {
 		return err
 	}
 
-	masters := platform.GetMasterIPs()
-	if len(masters) == 0 {
+	api, err := platform.GetAPIEndpoint()
+	if api == "" || err != nil || !platform.PingMaster() {
+		platform.Tracef("No healthy master nodes, creating new master: %v", err)
+		// no healthy master endpoint is detected, so we need to create the first control plane
+		// node -
+		// FIXME: Detect situations where all control pane nodes have failed
 		_, err := createMaster(platform)
 		if err != nil {
 			platform.Fatalf("Failed to create master: %v", err)
 		}
 	}
 
-	masters = platform.GetMasterIPs()
+	masters, err := platform.GetMasterNodes()
+	if err != nil {
+		return err
+	}
 	platform.Infof("Detected %d existing masters: %s", len(masters), masters)
 
-	if platform.Master.Count != len(masters) {
-		// upload control plane certs first
-		kubeadm.UploadControlPlaneCerts(platform) // nolint: errcheck
-	}
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)
 		if err != nil {
@@ -73,7 +79,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	existingNodes := platform.GetNodeNames()
 
 	for nodeGroup, worker := range platform.Nodes {
-		vms, err := platform.Cluster.GetMachinesByPrefix(worker.Prefix)
+		vms, err := platform.Cluster.GetMachinesFor(&worker)
 		if err != nil {
 			return err
 		}
@@ -121,7 +127,8 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 	wg.Wait()
 
-	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: https://%s \n\n\n", platform.Name, platform.JoinEndpoint)
+	endpoint, _ := platform.GetAPIEndpoint()
+	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: https://%s \n\n\n", platform.Name, endpoint)
 	return nil
 }
 
@@ -161,30 +168,21 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-masters"
-	platform.Infof("No masters detected, deploying new master %s", vm.Name)
+	platform.Infof("No masters detected, deploying new master with %s for master discovery and %s for load balancing", platform.MasterDiscovery, platform.ProvisionHook)
 	config, err := phases.CreatePrimaryMaster(platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create primary master: %s", err)
 	}
 
-	data, err := yaml.Marshal(platform.PlatformConfig)
+	machine, err := platform.Clone(vm, config)
+
 	if err != nil {
-		return nil, fmt.Errorf("error saving config %s", err)
+		return nil, err
 	}
+	platform.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
 
-	platform.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
-
-	var machine types.Machine
-	if !platform.DryRun {
-		//Note: = not :=, otherwise the new `machine` shadows the one declared
-		//                outside the if and this function always return nil
-		machine, err = platform.Clone(vm, config)
-
-		if err != nil {
-			return nil, err
-		}
-		platform.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
-	}
+	// reset any cached connection details
+	platform.ResetMasterConnection()
 	if err := platform.WaitFor(); err != nil {
 		return nil, fmt.Errorf("primary master failed to come up %s ", err)
 	}
@@ -209,19 +207,21 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	}
 	vm.Tags["Role"] = platform.Name + "-workers"
 	platform.Infof("Creating new worker %s", vm.Name)
-	if platform.DryRun {
-		return nil, nil
-	}
 
 	cloned, err := platform.Clone(vm, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone worker: %s", err)
 	}
-	platform.Infof("Provisioned new worker: %s\n", cloned.IP())
+
+	platform.Infof("Provisioned new worker: %s", cloned.IP())
 	return cloned, nil
 }
 
 func terminate(platform *platform.Platform, vm types.Machine) {
+	if err := platform.ProvisionHook.BeforeTerminate(platform, vm); err != nil {
+		platform.Warnf("%v", err)
+	}
+
 	if !platform.Terminating {
 		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
 			platform.Warnf("[%s] failed to drain: %v", vm.Name(), err)
@@ -238,30 +238,11 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 		}
 	}
 
-	if err := RemoveDNS(platform, vm); err != nil {
-		platform.Warnf("Failed to remove dns for %s: %v", vm.Name(), err)
-	}
-	if err := platform.GetConsulClient().RemoveMember(vm.Name()); err != nil {
-		return
+	if err := platform.ProvisionHook.AfterTerminate(platform, vm); err != nil {
+		platform.Warnf("%v")
 	}
 
 	if err := vm.Terminate(); err != nil {
 		platform.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}
-}
-
-func RemoveDNS(p *platform.Platform, vm types.Machine) error {
-	ip, err := vm.GetIP(time.Second * 5)
-	if err != nil {
-		return fmt.Errorf("failed to get IP for %s, unable to remove DNS: %v", vm, err)
-	}
-	if ip != "" {
-		if err := p.GetDNSClient().Delete(fmt.Sprintf("*.%s", p.Domain), ip); err != nil {
-			return err
-		}
-		if err := p.GetDNSClient().Delete(fmt.Sprintf("k8s-api.%s", p.Domain), ip); err != nil {
-			return err
-		}
-	}
-	return nil
 }
