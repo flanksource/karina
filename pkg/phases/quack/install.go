@@ -1,9 +1,8 @@
 package quack
 
 import (
-
-	"github.com/pkg/errors"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 )
 
