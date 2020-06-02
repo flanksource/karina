@@ -6,6 +6,7 @@ on:
 
 jobs:
   build_id:
+    runs-on: ubuntu-latest
     steps:
       - name: 'Set cluster ID'
         id: cluster_id
