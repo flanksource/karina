@@ -48,16 +48,16 @@ type Platform struct {
 	logFields map[string]interface{}
 	k8s.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
-	ctx        context.Context //nolint
-	kubeConfig []byte
-	ca         certs.CertificateAuthority
-	ingressCA  certs.CertificateAuthority
+	kubeConfig     []byte
+	KubeConfigPath string
 	// Terminating is true if the cluster is in a terminating state
 	Terminating bool
 }
 
 func (platform *Platform) Init() {
+	if platform.Client.GetKubeConfigBytes == nil {
 	platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+	}
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
@@ -77,18 +77,8 @@ func (platform *Platform) clone() *Platform {
 		logFields[k] = v
 	}
 	return &Platform{
-		Cluster:              platform.Cluster,
-		PlatformConfig:       platform.PlatformConfig,
-		Logger:               platform.Logger,
-		logFields:            logFields,
-		Client:               platform.Client,
-		ctx:                  context.TODO(),
-		CNI:                  platform.CNI,
-		LoadBalancerProvider: platform.LoadBalancerProvider,
-		kubeConfig:           platform.kubeConfig,
-		ca:                   platform.ca,
-		ingressCA:            platform.ingressCA,
-		Terminating:          platform.Terminating,
+		kubeConfig:      platform.kubeConfig,
+		KubeConfigPath:  platform.KubeConfigPath,
 	}
 }
 
@@ -141,12 +131,29 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		if net.Ping(master, 6443, 10) {
 			ip = master
 		}
-	}
-	if ip == "" {
-		return nil, fmt.Errorf("none of the masters are up: %v", masters)
+
+func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
+	if platform.kubeConfig != nil {
+		return platform.kubeConfig, nil
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	if platform.KubeConfigPath != "" {
+		platform.Infof("WARNING: Using KUBECONFIG from %s", platform.KubeConfigPath)
+		return ioutil.ReadFile(platform.KubeConfigPath)
+	}
+
+	ip, err := platform.GetAPIEndpoint()
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
+
+}
+
+	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	if err != nil {
+		return nil, err
+	}
+	platform.kubeConfig = kubeConfig
+	return platform.kubeConfig, nil
 }
 
 // GetCA retrieves the cert.CertificateAuthority
