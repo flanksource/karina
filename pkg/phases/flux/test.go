@@ -13,7 +13,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	if len(p.GitOps) < 1 {
-		test.Skipf("gitops","No GitOps config specified - skipping.")
+		test.Skipf("gitops", "No GitOps config specified - skipping.")
 		return
 	}
 	namespace := "gitops-e2e-test"
