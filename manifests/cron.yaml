@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: crontesting
+  labels:
+    openpolicyagent.org/webhook: "ignore"
   annotations:
     com.flanksource.infra.logs/enabled: "true"
 ---

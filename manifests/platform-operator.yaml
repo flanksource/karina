@@ -1,15 +1,3 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: platform-system
-  labels:
-    control-plane: controller-manager
-    openpolicyagent.org/webhook: ignore
-    quack.pusher.com/enabled: "true"
-  annotations:
-    com.flanksource.infra.logs/enabled: "true"
-
----
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:

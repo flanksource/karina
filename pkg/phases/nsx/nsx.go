@@ -24,7 +24,7 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
