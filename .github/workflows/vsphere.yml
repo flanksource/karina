@@ -7,7 +7,6 @@ on:
 jobs:
   test-minimal-e2e:
     runs-on: [self-hosted]
-#    container: flanksource/build-tools:latest
     steps:
       - uses: actions/checkout@master
       - name: Run e2e minimal testing script
