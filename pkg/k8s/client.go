@@ -1323,7 +1323,6 @@ func (c *Client) GetMasterNodes() ([]string, error) {
 	for _, node := range nodes.Items {
 		if IsMasterNode(node) {
 			nodeNames = append(nodeNames, node.Name)
-
 		}
 	}
 	return nodeNames, nil

@@ -176,7 +176,6 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	ip, err := platform.GetAPIEndpoint()
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
-
 	}
 
 	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)

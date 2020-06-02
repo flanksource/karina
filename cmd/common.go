@@ -169,7 +169,6 @@ func GlobalPreRun(cmd *cobra.Command, args []string) {
 	default:
 		log.SetLevel(log.InfoLevel)
 	}
-
 }
 
 var Render = &cobra.Command{

@@ -25,10 +25,10 @@ func NewConsulProvider(platform *Platform) ConsulProvider {
 
 func (consul ConsulProvider) BeforeProvision(platform *Platform, machine *types.VM) error {
 	if platform.Datacenter == "" {
-		return errors.New("Must specify a platform datacenter")
+		return errors.New("must specify a platform datacenter")
 	}
 	if platform.Consul == "" {
-		return errors.New("Must specify a consul host")
+		return errors.New("must specify a consul host")
 	}
 	if platform.IsMaster(*machine) {
 		createConsulService(machine.Name, platform, machine.Konfigadm)
@@ -58,7 +58,6 @@ func (consul ConsulProvider) GetExternalEndpoints(platform *Platform) ([]string,
 	members := consul.GetMembers()
 	platform.Tracef("Discovered %s masters via consul", members)
 	return members, nil
-
 }
 
 func (consul ConsulProvider) String() string {
