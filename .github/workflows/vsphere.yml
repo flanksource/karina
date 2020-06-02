@@ -5,33 +5,9 @@ on:
     types: [assigned, opened, synchronize, reopened]
 
 jobs:
-  build_id:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Set cluster ID'
-        id: cluster_id
-        # add a step output `steps.cluster_id.outputs.id` as the unique id
-        run: echo "::set-output name=id::$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)"
-  test-e2e:
-    runs-on: [self-hosted]
-    steps:
-      - uses: actions/checkout@master
-      - name: Run e2e testing script
-        env:
-          # AWS Access Keys Used by SOPS to decrypt secrets
-          AWS_ACCESS_KEY_ID: ${{ secrets.SOPS_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SOPS_AWS_SECRET_ACCESS_KEY }}
-          GIT_API_KEY: ${{ secrets.GIT_API_KEY }}
-        run: |
-          # Run the testing commands in subshell with decoded environment
-          sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
-      - name: Upload test results
-        uses: actions/upload-artifact@v1
-        with:
-          name: test-results
-          path: test-results/
   test-minimal-e2e:
     runs-on: [self-hosted]
+    container: flanksource/build-tools:latest
     steps:
       - uses: actions/checkout@master
       - name: Run e2e testing script

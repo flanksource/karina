@@ -2,7 +2,9 @@ name: Kind e2e Tests
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    #Skip for now
+    types: [reopened]
+#    types: [opened, synchronize, reopened]
 
 jobs:
   test-e2e:
