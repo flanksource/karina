@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/flanksource/karina/pkg/nsx"
 	nsxapi "github.com/flanksource/karina/pkg/nsx"
 	"github.com/flanksource/karina/pkg/types"
-	"github.com/prometheus/common/log"
 )
 
 type NSXProvider struct {
-	nsx.NSXClient
+	nsxapi.NSXClient
 }
 
 func NewNSXProvider(platform *Platform) (*NSXProvider, error) {
@@ -129,7 +127,7 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 
 	if !existing {
 		if err := platform.GetDNSClient().Append(masterDNS, masterIP); err != nil {
-			log.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", masterDNS, masterIP, err)
+			platform.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", masterDNS, masterIP, err)
 			masterDNS = masterIP
 		}
 	}
@@ -149,7 +147,7 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	}
 	if !existing {
 		if err := platform.GetDNSClient().Append(workerDNS, workerIP); err != nil {
-			log.Warnf("Failed to create DNS entry for %s: %v", workerDNS, err)
+			platform.Warnf("Failed to create DNS entry for %s: %v", workerDNS, err)
 		}
 	}
 	return masterDNS + ":6443", nil

@@ -13,7 +13,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if 1 == 1 {
+	if 1 == 1 { //nolint: staticcheck
 		// FIXME: quarantine flakey gitops e2e tests
 		return
 	}
