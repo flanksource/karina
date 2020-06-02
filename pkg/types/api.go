@@ -6,8 +6,13 @@ import (
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 )
 
+type TagInterface interface {
+	GetTags() map[string]string
+}
+
 // Machine represents a running instance of a VM
 type Machine interface {
+	TagInterface
 	String() string
 	WaitForPoweredOff() error
 	GetIP(timeout time.Duration) (string, error)
@@ -66,10 +71,13 @@ func (n NullMachine) GetTemplate() string {
 func (n NullMachine) IP() string {
 	return "unknown"
 }
+func (n NullMachine) GetTags() map[string]string {
+	return make(map[string]string)
+}
 
 type Cluster interface {
 	Clone(template VM, config *konfigadm.Config) (Machine, error)
 	GetMachine(name string) (Machine, error)
 	GetMachines() (map[string]Machine, error)
-	GetMachinesByPrefix(prefix string) (map[string]Machine, error)
+	GetMachinesFor(vm *VM) (map[string]Machine, error)
 }

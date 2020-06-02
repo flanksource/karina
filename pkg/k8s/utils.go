@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func GetValidName(name string) string {
@@ -250,4 +251,19 @@ func GetUnstructuredObjects(data []byte) ([]unstructured.Unstructured, error) {
 		items = append(items, *resource)
 	}
 	return items, nil
+}
+
+// GetCurrentClusterNameFrom returns the name of the cluster associated with the currentContext of the
+// specified kubeconfig file
+func GetCurrentClusterNameFrom(kubeConfigPath string) string {
+	config, err := clientcmd.LoadFromFile(kubeConfigPath)
+	if err != nil {
+		return err.Error()
+	}
+	ctx, ok := config.Contexts[config.CurrentContext]
+	if !ok {
+		return fmt.Sprintf("invalid context name: %s", config.CurrentContext)
+	}
+	// we strip the prefix that kind automatically adds to cluster names
+	return strings.Replace(ctx.Cluster, "kind-", "", 1)
 }

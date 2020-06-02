@@ -42,11 +42,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if platform.Name == "" {
 		return nil, errors.New("Must specify a platform name")
 	}
-	if platform.Datacenter == "" {
-		return nil, errors.New("Must specify a platform datacenter")
-	}
-	hostname := ""
-	platform.Init()
 	cfg, err := baseKonfig(platform.Master.KonfigadmFile, platform)
 	if err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
@@ -60,8 +55,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addEncryptionConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
 	}
-	createConsulService(hostname, platform, cfg)
-	createClientSideLoadbalancers(platform, cfg)
 	if err := addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to add certs")
 	}
@@ -71,8 +64,6 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 
 // CreateSecondaryMaster creates a konfigadm config for a secondary master.
 func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
-	hostname := ""
-	platform.Init()
 	cfg, err := baseKonfig(platform.Master.KonfigadmFile, platform)
 	if err != nil {
 		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
@@ -89,8 +80,6 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	if err := addEncryptionConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
 	}
-	createConsulService(hostname, platform, cfg)
-	createClientSideLoadbalancers(platform, cfg)
 	if err = addCerts(platform, cfg); err != nil {
 		return nil, errors.Wrap(err, "Failed to add certs")
 	}
@@ -100,7 +89,6 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 
 // CreateWorker creates a konfigadm config for a worker in node group nodegroup
 func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Config, error) {
-	platform.Init()
 	if platform.Nodes == nil {
 		return nil, fmt.Errorf("CreateWorker failed to create worker - nil Nodes supplied")
 	}
@@ -118,7 +106,6 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
 	}
 
-	createClientSideLoadbalancers(platform, cfg)
 	cfg.AddCommand(kubeadmNodeJoinCmd)
 	return cfg, nil
 }
@@ -217,14 +204,16 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 
 	cluster := kubeadm.NewClusterConfig(platform)
 	data, err := yaml.Marshal(cluster)
-	return addKubeadmConf(data, err, cfg)
+	return addKubeadmConf(platform, data, err, cfg)
 }
 
-func addKubeadmConf(data []byte, err error, cfg *konfigadm.Config) error {
+func addKubeadmConf(platform *platform.Platform, data []byte, err error, cfg *konfigadm.Config) error {
 	if err != nil {
 		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
 	}
-	logger.Tracef("Using kubeadm config: \n%s", string(data))
+	if platform.PlatformConfig.Trace {
+		logger.Tracef("Using kubeadm config: \n%s", string(data))
+	}
 	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	return nil
 }
@@ -233,63 +222,12 @@ func addKubeadmConf(data []byte, err error, cfg *konfigadm.Config) error {
 // config and adds it to its konfigadm files
 func addJoinKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
 	data, err := kubeadm.NewJoinConfiguration(platform)
-	return addKubeadmConf(data, err, cfg)
+	return addKubeadmConf(platform, data, err, cfg)
 }
 
 // addJoinKubeadmConfig derives the initial kubeadm config for a cluster from its platform
 // config and adds it to its konfigadm files
 func addControlPlaneJoinConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
 	data, err := kubeadm.NewControlPlaneJoinConfiguration(platform)
-	return addKubeadmConf(data, err, cfg)
-}
-
-// createConsulService derives the initial consul config for a cluster from its platform
-// config and adds it to its konfigadm files
-func createConsulService(hostname string, platform *platform.Platform, cfg *konfigadm.Config) {
-	cfg.Files["/etc/kubernetes/consul/api.json"] = fmt.Sprintf(`
-{
-	"leave_on_terminate": true,
-  "rejoin_after_leave": true,
-	"service": {
-		"id": "%s",
-		"name": "%s",
-		"address": "",
-		"check": {
-			"id": "api-server",
-			"name": " TCP on port 6443",
-			"tcp": "localhost:6443",
-			"interval": "120s",
-			"timeout": "60s"
-		},
-		"port": 6443,
-		"enable_tag_override": false
-	}
-}
-	`, hostname, platform.Name)
-}
-
-// createClientSideLoadbalancers derives the client side loadbalancer configs for a cluster from its platform
-// config and adds it to its konfigadm containers
-func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.Config) {
-	cfg.Containers = append(cfg.Containers, konfigadm.Container{
-		Image: platform.GetImagePath("docker.io/consul:1.3.1"),
-		Env: map[string]string{
-			"CONSUL_CLIENT_INTERFACE": "ens160",
-			"CONSUL_BIND_INTERFACE":   "ens160",
-		},
-		Args:       fmt.Sprintf("agent -join=%s:8301 -datacenter=%s -data-dir=/consul/data -domain=consul -config-dir=/consul-configs", platform.Consul, platform.Datacenter),
-		DockerOpts: "--net host",
-		Volumes: []string{
-			"/etc/kubernetes/consul:/consul-configs",
-		},
-	}, konfigadm.Container{
-		Image:      platform.GetImagePath("docker.io/moshloop/tcp-loadbalancer:0.1"),
-		Service:    "haproxy",
-		DockerOpts: "--net host -p 8443:8443",
-		Env: map[string]string{
-			"CONSUL_CONNECT": platform.Consul + ":8500",
-			"SERVICE_NAME":   platform.Name,
-			"PORT":           "8443",
-		},
-	})
+	return addKubeadmConf(platform, data, err, cfg)
 }

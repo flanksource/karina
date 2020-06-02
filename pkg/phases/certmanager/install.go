@@ -54,7 +54,6 @@ func Install(platform *platform.Platform) error {
 		}
 	} else {
 		// TODO(moshloop): delete previously imported CA
-
 		platform.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
 			"token": []byte(platform.CertManager.Vault.Token),

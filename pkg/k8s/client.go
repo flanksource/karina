@@ -53,6 +53,7 @@ type Client struct {
 	logger.Logger
 	GetKubeConfigBytes  func() ([]byte, error)
 	ApplyDryRun         bool
+	ApplyHook           ApplyHook
 	Trace               bool
 	GetKustomizePatches func() ([]string, error)
 	client              *kubernetes.Clientset
@@ -534,8 +535,11 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 			return err
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
-			c.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
 			_, err = client.Create(namespace, true, unstructuredObj, &metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
@@ -578,7 +582,7 @@ func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.U
 		}
 
 		if c.ApplyDryRun {
-			c.Infof("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
 		} else {
 			if _, err := client.Delete(namespace, unstructuredObj.GetName()); err != nil {
 				return err
@@ -589,6 +593,8 @@ func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.U
 	return nil
 }
 
+type ApplyHook func(namespace string, obj unstructured.Unstructured)
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
@@ -596,9 +602,12 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
 			c.trace("apply", unstructuredObj)
-			c.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
 			continue
 		}
 
@@ -1290,14 +1299,33 @@ func (c *Client) GetMasterNode() (string, error) {
 		return "", err
 	}
 
-	var masterNode string
 	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
+		if IsMasterNode(node) {
+			return node.Name, nil
 		}
 	}
-	return masterNode, nil
+	return "", fmt.Errorf("no master nodes found")
+}
+
+// GetMasterNode returns a list of all master nodes
+func (c *Client) GetMasterNodes() ([]string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, nil
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, nil
+	}
+
+	var nodeNames []string
+	for _, node := range nodes.Items {
+		if IsMasterNode(node) {
+			nodeNames = append(nodeNames, node.Name)
+		}
+	}
+	return nodeNames, nil
 }
 
 // Returns the first pod found by label

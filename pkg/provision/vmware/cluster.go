@@ -13,15 +13,16 @@ type vmwareCluster struct {
 	vsphere    types.Vsphere
 	prefix     string
 	session    *Session
-	vmPrefixes []string
+	vmPrefixes map[string]types.VM
 	DryRun     bool
 }
 
 // NewVMwareCluster opens a new vmware session using environment variables
 func NewVMwareCluster(platform types.PlatformConfig) (types.Cluster, error) {
 	cluster := vmwareCluster{
-		ctx:    context.TODO(),
-		prefix: platform.HostPrefix + "-" + platform.Name,
+		ctx:        context.TODO(),
+		vmPrefixes: make(map[string]types.VM),
+		prefix:     platform.HostPrefix + "-" + platform.Name,
 	}
 
 	if platform.Vsphere == nil {
@@ -38,10 +39,10 @@ func NewVMwareCluster(platform types.PlatformConfig) (types.Cluster, error) {
 	}
 	cluster.session = session
 	cluster.vsphere = *platform.Vsphere
-	cluster.vmPrefixes = []string{platform.Master.Prefix}
 	for _, vm := range platform.Nodes {
-		cluster.vmPrefixes = append(cluster.vmPrefixes, vm.Prefix)
+		cluster.vmPrefixes[vm.Prefix] = vm
 	}
+	cluster.vmPrefixes[platform.Master.Prefix] = platform.Master
 	return &cluster, nil
 }
 
@@ -51,7 +52,7 @@ func (cluster *vmwareCluster) Clone(template types.VM, config *konfigadm.Config)
 	if err != nil {
 		return nil, err
 	}
-	return NewVM(cluster.ctx, cluster.DryRun, vm), nil
+	return NewVM(cluster.ctx, cluster.DryRun, vm, &template), nil
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
@@ -60,8 +61,8 @@ func (cluster *vmwareCluster) GetMachines() (map[string]types.Machine, error) {
 
 	// To list all machines for a cluster we search by each prefix combination
 	// we cannot search just using the cluster prefix as it may return incorrect startsWith results
-	for _, prefix := range cluster.vmPrefixes {
-		list, err := cluster.GetMachinesByPrefix(prefix)
+	for _, vm := range cluster.vmPrefixes {
+		list, err := cluster.GetMachinesFor(&vm)
 		if err != nil {
 			return nil, err
 		}
@@ -73,16 +74,16 @@ func (cluster *vmwareCluster) GetMachines() (map[string]types.Machine, error) {
 }
 
 // GetVMs returns a list of all VM's associated with the cluster
-func (cluster *vmwareCluster) GetMachinesByPrefix(prefix string) (map[string]types.Machine, error) {
+func (cluster *vmwareCluster) GetMachinesFor(vm *types.VM) (map[string]types.Machine, error) {
 	var vms = make(map[string]types.Machine)
 	list, err := cluster.session.Finder.VirtualMachineList(
-		cluster.ctx, fmt.Sprintf("%s-%s*", cluster.prefix, prefix))
+		cluster.ctx, fmt.Sprintf("%s-%s*", cluster.prefix, vm.Prefix))
 	if err != nil {
 		//ignore not found error
 		return nil, nil
 	}
-	for _, vm := range list {
-		vms[vm.Name()] = NewVM(cluster.ctx, cluster.DryRun, vm)
+	for _, _vm := range list {
+		vms[_vm.Name()] = NewVM(cluster.ctx, cluster.DryRun, _vm, vm)
 	}
 	return vms, nil
 }
