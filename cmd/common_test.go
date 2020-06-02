@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/moshloop/platform-cli/cmd"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/cmd"
+	"github.com/flanksource/karina/pkg/types"
 	. "github.com/onsi/gomega"
 )
 

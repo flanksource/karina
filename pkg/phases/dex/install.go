@@ -3,7 +3,7 @@ package dex
 import (
 	"fmt"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -20,7 +20,7 @@ func dexLabels() map[string]string {
 }
 
 func Install(platform *platform.Platform) error {
-	if err := platform.CreateOrUpdateNamespace(Namespace, dexLabels(), platform.DefaultNamespaceAnnotations()); err != nil {
+	if err := platform.CreateOrUpdateNamespace(Namespace, dexLabels(), nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

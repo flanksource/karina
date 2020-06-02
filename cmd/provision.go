@@ -6,8 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/provision"
-	"github.com/moshloop/platform-cli/pkg/provision/vmware"
+	"github.com/flanksource/karina/pkg/provision"
+	"github.com/flanksource/karina/pkg/provision/vmware"
 )
 
 var Provision = &cobra.Command{

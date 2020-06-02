@@ -7,7 +7,7 @@ import (
 
 	"github.com/flanksource/commons/files"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func readFile(filename string) (string, error) {

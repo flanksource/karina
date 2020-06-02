@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/moshloop/platform-cli/pkg/api/certmanager"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api/certmanager"
+	"github.com/flanksource/karina/pkg/platform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -19,7 +19,7 @@ const (
 func Install(platform *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it
 	// so it cannot be disabled
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, platform.DefaultNamespaceAnnotations()); err != nil {
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

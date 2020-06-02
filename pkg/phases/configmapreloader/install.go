@@ -3,7 +3,7 @@ package configmapreloader
 import (
 	"github.com/flanksource/commons/utils"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -26,7 +26,7 @@ func Deploy(p *platform.Platform) error {
 
 	p.Infof("Deploying configmap-reloader %s into %s", p.ConfigMapReloader.Version, Namespace)
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 

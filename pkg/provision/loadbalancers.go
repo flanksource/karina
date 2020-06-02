@@ -1,8 +1,8 @@
 package provision
 
 import (
-	"github.com/moshloop/platform-cli/pkg/nsx"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/nsx"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func provisionLoadbalancers(p *platform.Platform) (masters string, workers string, err error) {

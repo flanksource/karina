@@ -6,13 +6,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
-	"github.com/moshloop/platform-cli/pkg/phases/ingress"
-	"github.com/moshloop/platform-cli/pkg/phases/nginx"
-	"github.com/moshloop/platform-cli/pkg/phases/platformoperator"
-	"github.com/moshloop/platform-cli/pkg/phases/quack"
-	"github.com/moshloop/platform-cli/pkg/phases/vsphere"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/phases/certmanager"
+	"github.com/flanksource/karina/pkg/phases/ingress"
+	"github.com/flanksource/karina/pkg/phases/nginx"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
+	"github.com/flanksource/karina/pkg/phases/quack"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {
@@ -22,8 +22,8 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base rbac: %s", err)
 	}
 
-	if err := platform.ApplySpecs("", "kube-system.yaml"); err != nil {
-		platform.Errorf("Error deploying base kube-system annotations: %s", err)
+	if err := platform.CreateOrUpdateNamespace("kube-system", nil, nil); err != nil {
+		platform.Errorf("Error deploying base kube-system labels/annotations: %s", err)
 	}
 
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
@@ -74,6 +74,9 @@ func Install(platform *platform.Platform) error {
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
 		platform.Infof("Installing local path volumes")
+		if err := platform.CreateOrUpdateNamespace("local-path-storage", nil, nil); err != nil {
+			platform.Errorf("Error creating namespace local-path-storage: %s", err)
+		}
 		if err := platform.ApplySpecs("", "local-path.yaml"); err != nil {
 			platform.Errorf("Error deploying local path volumes: %s", err)
 		}

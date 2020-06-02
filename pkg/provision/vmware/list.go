@@ -6,7 +6,7 @@ import (
 
 	"github.com/vmware/govmomi/object"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 func (s Session) GetVMs(ctx context.Context, prefix string, vm *types.VM) ([]*object.VirtualMachine, error) {

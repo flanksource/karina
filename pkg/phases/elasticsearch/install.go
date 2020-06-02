@@ -1,8 +1,8 @@
 package elasticsearch
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 const Namespace = "eck"
@@ -16,7 +16,7 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, p.DefaultNamespaceAnnotations()); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 	if p.Elasticsearch.Mem == nil {

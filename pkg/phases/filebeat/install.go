@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/moshloop/platform-cli/pkg/constants"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/constants"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Deploy(p *platform.Platform) error {

@@ -3,9 +3,9 @@ package provision
 import (
 	"fmt"
 
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
 )
 
 // VM provisions a new standalone VM

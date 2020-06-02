@@ -6,7 +6,7 @@ go: &go
     GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.13
-  working_directory: /go/src/github.com/moshloop/platform-cli
+  working_directory: /go/src/github.com/flanksource/karina
 jobs:
   lint:
     <<: *go

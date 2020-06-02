@@ -1,12 +1,12 @@
 package stubs
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {
 	if platform.S3.E2E.Minio {
-		if err := platform.CreateOrUpdateNamespace("minio", nil, platform.DefaultNamespaceAnnotations()); err != nil {
+		if err := platform.CreateOrUpdateNamespace("minio", nil, nil); err != nil {
 			return err
 		}
 		platform.Infof("Installing minio")
@@ -19,7 +19,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 	if platform.Ldap != nil && platform.Ldap.E2E.Mock {
-		if err := platform.CreateOrUpdateNamespace("ldap", nil, platform.DefaultNamespaceAnnotations()); err != nil {
+		if err := platform.CreateOrUpdateNamespace("ldap", nil, nil); err != nil {
 			return err
 		}
 		if err := platform.ApplySpecs("", "apacheds.yaml"); err != nil {

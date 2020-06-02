@@ -17,7 +17,7 @@ limitations under the License.
 package util
 
 import (
-	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
+	"github.com/flanksource/karina/pkg/k8s/etcd"
 )
 
 // MemberForName returns the etcd member with the matching name.
