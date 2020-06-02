@@ -104,7 +104,7 @@ fi
 
 wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
 chmod +x build-tools
-./build-tools gh report-junit $GITHUB_OWNER/karina $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
       --success-message="minimal Kind e2e tests for commit $COMMIT_SHA" \
       --failure-message="minimal Kind e2e tests :neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 
