@@ -264,5 +264,6 @@ func GetCurrentClusterNameFrom(kubeConfigPath string) string {
 	if !ok {
 		return fmt.Sprintf("invalid context name: %s", config.CurrentContext)
 	}
-	return ctx.Cluster
+	// we strip the prefix that kind automatically adds to cluster names
+	return strings.Replace(ctx.Cluster, "kind-", "", 1)
 }

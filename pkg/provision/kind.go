@@ -119,7 +119,7 @@ func KindCluster(p *platform.Platform) error {
 
 	kind := p.GetBinary("kind")
 
-	if err := kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), p.KubeConfigPath); err != nil {
+	if err := kind("create cluster --config %s --kubeconfig %s --name %s", tmpfile.Name(), p.KubeConfigPath, p.Name); err != nil {
 		return err
 	}
 
