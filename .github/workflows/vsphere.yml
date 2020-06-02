@@ -10,7 +10,7 @@ jobs:
     container: flanksource/build-tools:latest
     steps:
       - uses: actions/checkout@master
-      - name: Run e2e testing script
+      - name: Run e2e minimal testing script
         env:
           # AWS Access Keys Used by SOPS to decrypt secrets
           AWS_ACCESS_KEY_ID: ${{ secrets.SOPS_AWS_ACCESS_KEY_ID }}
