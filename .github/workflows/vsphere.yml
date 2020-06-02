@@ -12,8 +12,8 @@ jobs:
       - name: Run e2e minimal testing script
         env:
           # AWS Access Keys Used by SOPS to decrypt secrets
-          AWS_ACCESS_KEY_ID: ${{ secrets.SOPS_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SOPS_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Run the testing commands in subshell with decoded environment
