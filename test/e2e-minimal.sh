@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # dependencies
 if ! which make 2>&1 > /dev/null; then
   echo "make required"
