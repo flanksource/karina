@@ -33,6 +33,10 @@ type DynamicDNSClient struct {
 	Insecure   bool
 }
 
+func (client DynamicDNSClient) String() string {
+	return fmt.Sprintf("DNS(%s@%s)", client.Zone, client.Nameserver)
+}
+
 func (client DynamicDNSClient) Append(domain string, records ...string) error {
 	domain = subdomain(domain, client.Zone)
 	client.Debugf("Appending %s.%s %s", domain, client.Zone, records)

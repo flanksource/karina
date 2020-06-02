@@ -21,17 +21,10 @@ func init() {
 		Short: "Generate a new kubeconfig file for accessing the cluster using an X509 Certificate",
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
-			ips := platform.GetMasterIPs()
 
-			var endpoint string
-			if platform.DNS != nil && !platform.DNS.Disabled {
-				endpoint = fmt.Sprintf("k8s-api.%s", platform.Domain)
-			} else {
-				// No DNS available using the first masters IP as an endpoint
-				if len(ips) == 0 {
-					log.Fatalf("No healthy endpoints")
-				}
-				endpoint = ips[0]
+			endpoint, err := platform.GetAPIEndpoint()
+			if err != nil {
+				log.Fatalf("Unable to get API endpoint: %v", err)
 			}
 			group, _ := cmd.Flags().GetString("group")
 			name, _ := cmd.Flags().GetString("name")
