@@ -36,9 +36,7 @@ export GO_VERSION=${GO_VERSION:-1.14}
 BIN=./.bin/karina
 
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
-GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
-GITHUB_OWNER=${GITHUB_OWNER##*:}
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
+MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_REPOSITORY/commits/master | jq -r '.sha')
 PR_NUM=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
 COMMIT_SHA="$GITHUB_SHA"
 
@@ -46,7 +44,7 @@ generate_cluster_id() {
   local prefix
 
   prefix=$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)
-  echo "e2e-${GITHUB_OWNER}-${prefix}"
+  echo "e2e-${prefix}"
 }
 
 PLATFORM_CLUSTER_ID=$(generate_cluster_id)
@@ -117,7 +115,7 @@ fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
 # Test Comments
-wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
+wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
 chmod +x build-tools
 ./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
       --success-message="commit $COMMIT_SHA" \
