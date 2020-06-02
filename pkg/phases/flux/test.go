@@ -12,6 +12,12 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	if !p.E2E {
 		return
 	}
+
+	if 1 == 1 {
+		// FIXME: quarantine flakey gitops e2e tests
+		return
+	}
+
 	if len(p.GitOps) < 1 {
 		test.Skipf("gitops", "No GitOps config specified - skipping.")
 		return
