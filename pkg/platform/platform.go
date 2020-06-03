@@ -160,7 +160,6 @@ func (platform *Platform) ResetMasterConnection() {
 	platform.Client.ResetConnection()
 }
 
-
 // GetAPIEndpoint returns an endpoint for reaching a master node that is reachable on 6443 or
 // an error otherwise
 func (platform *Platform) GetAPIEndpoint() (string, error) {
@@ -176,7 +175,7 @@ func (platform *Platform) GetAPIEndpoint() (string, error) {
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to discover any external endpoints")
 	}
-  
+
 	if len(masters) == 0 {
 		return "", fmt.Errorf("could not find any master ips")
 	}

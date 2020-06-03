@@ -85,24 +85,15 @@ printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
 # wait for the base deployment with stubs to come up healthy
 $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
 
-#TODO: Restore
-#$BIN deploy phases --vault --postgres-operator $PLATFORM_OPTIONS_FLAGS
-
-#TODO: Restore
-#$BIN vault init $PLATFORM_OPTIONS_FLAGS
-
-
 printf "\n\n\n\n$(tput bold)All Deployments$(tput setaf 7)\n"
 $BIN deploy all $PLATFORM_OPTIONS_FLAGS
 
 printf "\n\n\n\n$(tput bold)Tests$(tput setaf 7)\n"
-#TODO: Restore
 ## deploy the opa bundles first, as they can take some time to load, this effectively
 ## parallelizes this work to make the entire test complete faster
 $BIN opa bundle automobile -v $PLATFORM_OPTIONS_FLAGS
 # wait for up to 4 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
-# TODO: base-> all
 $BIN test  base --wait 240 --progress=false $PLATFORM_OPTIONS_FLAGS
 
 failed=false
