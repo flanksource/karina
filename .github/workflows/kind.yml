@@ -4,7 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-
 jobs:
   binary:
     runs-on: ubuntu-latest
@@ -35,7 +34,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/download-artifact@v1
         with:
-          name: karinq
+          name: karina
       - name: Run e2e testing script
         env:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
