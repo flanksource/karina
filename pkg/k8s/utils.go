@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flanksource/commons/console"
 	log "github.com/sirupsen/logrus"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func GetValidName(name string) string {
@@ -229,8 +231,8 @@ func (h Health) IsDegradedComparedTo(h2 Health) bool {
 }
 
 func (h Health) String() string {
-	return fmt.Sprintf("pods(running=%d, pending=%d, crashloop=%d, error=%d)  nodes(ready=%d, notready=%d)",
-		h.RunningPods, h.PendingPods, h.CrashLoopBackOff, h.ErrorPods, h.ReadyNodes, h.UnreadyNodes)
+	return fmt.Sprintf("pods(running=%d, pending=%s, crashloop=%s, error=%s)  nodes(ready=%d, notready=%s)",
+		h.RunningPods, console.Yellowf("%d", h.PendingPods), console.Redf("%d", h.CrashLoopBackOff), console.Redf("%d", h.ErrorPods), h.ReadyNodes, console.Redf("%d", h.UnreadyNodes))
 }
 
 func GetUnstructuredObjects(data []byte) ([]unstructured.Unstructured, error) {
@@ -249,4 +251,19 @@ func GetUnstructuredObjects(data []byte) ([]unstructured.Unstructured, error) {
 		items = append(items, *resource)
 	}
 	return items, nil
+}
+
+// GetCurrentClusterNameFrom returns the name of the cluster associated with the currentContext of the
+// specified kubeconfig file
+func GetCurrentClusterNameFrom(kubeConfigPath string) string {
+	config, err := clientcmd.LoadFromFile(kubeConfigPath)
+	if err != nil {
+		return err.Error()
+	}
+	ctx, ok := config.Contexts[config.CurrentContext]
+	if !ok {
+		return fmt.Sprintf("invalid context name: %s", config.CurrentContext)
+	}
+	// we strip the prefix that kind automatically adds to cluster names
+	return strings.Replace(ctx.Cluster, "kind-", "", 1)
 }

@@ -1,0 +1,41 @@
+##
+## Minimal platform config as test fixture for flushing out
+## config bugs (e.g. nil pointers for unspecified config sections)
+##
+
+name: e2e-kind-minimal
+domain: 127.0.0.1.nip.io
+
+hostPrefix: vsphere-k8s
+
+versions:
+  kubernetes: v1.15.7
+
+kubernetes:
+  version: v1.15.7
+
+dns:
+  disabled: true
+
+ldap:
+  disabled: true
+
+configmapReloader:
+  disabled: true
+
+vault:
+  disabled: true
+
+calico:
+  ipip: Never
+  vxlan: Never
+  version: v3.8.2
+
+ca:
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ingressCA:
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
+  password: foobar

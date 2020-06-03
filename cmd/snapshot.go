@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases/snapshot"
+	"github.com/flanksource/karina/pkg/phases/snapshot"
 )
 
 var opts = snapshot.Options{}
@@ -29,4 +29,5 @@ func init() {
 	Snapshot.Flags().BoolVarP(&opts.IncludeSpecs, "include-specs", "", false, "Export yaml specs")
 	Snapshot.Flags().BoolVarP(&opts.IncludeEvents, "include-events", "", true, "Export events")
 	Snapshot.Flags().BoolVarP(&opts.IncludeLogs, "include-logs", "", true, "Export logs for pods")
+	Snapshot.Flags().IntVar(&opts.Concurrency, "concurrency", 1, "Run the export concurrently")
 }

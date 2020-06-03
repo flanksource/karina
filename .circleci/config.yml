@@ -6,7 +6,7 @@ go: &go
     GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.13
-  working_directory: /go/src/github.com/moshloop/platform-cli
+  working_directory: /go/src/github.com/flanksource/karina
 jobs:
   lint:
     <<: *go
@@ -20,7 +20,7 @@ jobs:
   test:
     resource_class: xlarge
     environment:
-      VERSION: v1.15.3
+      VERSION: v1.16.9
     machine:
       image: ubuntu-1604:201903-01
     steps:
@@ -34,7 +34,7 @@ jobs:
   test-next:
     resource_class: xlarge
     environment:
-      VERSION: v1.16.3
+      VERSION: v1.17.5
     machine:
       image: ubuntu-1604:201903-01
     steps:
@@ -44,7 +44,6 @@ jobs:
           path: test-results
       - store_artifacts:
           path: artifacts
-
 
 workflows:
   version: 2

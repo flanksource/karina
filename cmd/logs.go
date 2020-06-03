@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/elastic"
+	"github.com/flanksource/karina/pkg/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -11,6 +11,7 @@ var Logs = &cobra.Command{
 	Short: "Retrieve and export logs from ElasticSearch",
 	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		name, _ := cmd.Flags().GetString("name")
 		kql, _ := cmd.Flags().GetString("query")
 		pod, _ := cmd.Flags().GetString("pod")
 		count, _ := cmd.Flags().GetInt("count")
@@ -20,7 +21,7 @@ var Logs = &cobra.Command{
 		from, _ := cmd.Flags().GetString("from")
 		to, _ := cmd.Flags().GetString("to")
 		timestamps, _ := cmd.Flags().GetBool("timestamps")
-		if err := elastic.ExportLogs(getPlatform(cmd), elastic.Query{
+		if err := elastic.ExportLogs(getPlatform(cmd), name, elastic.Query{
 			Pod:        pod,
 			Count:      count,
 			Cluster:    cluster,
@@ -37,6 +38,7 @@ var Logs = &cobra.Command{
 }
 
 func init() {
+	Logs.Flags().String("name", "infra", "Filebeat name")
 	Logs.Flags().String("from", "", "Logs since")
 	Logs.Flags().String("to", "", "Logs to")
 	Logs.Flags().String("since", "1d", "Logs since")

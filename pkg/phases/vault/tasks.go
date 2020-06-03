@@ -9,11 +9,15 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/flanksource/commons/certs"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/hashicorp/vault/api"
-	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Init(p *platform.Platform) error {
+	if p.Vault == nil || p.Vault.Disabled {
+		p.Infof("Vault is not configured or disabled. Nothing to be done")
+		return nil
+	}
 	p.Infof("Waiting for vault/vault-0 to be running")
 	if err := p.WaitForPod("vault", "vault-0", 300*time.Second, v1.PodRunning); err != nil {
 		return err

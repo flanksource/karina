@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func ConformanceTest(p *platform.Platform, options ConformanceTestOptions) error {

@@ -3,6 +3,8 @@ package provision
 import (
 	"fmt"
 
+	"github.com/flanksource/commons/files"
+
 	"github.com/pkg/errors"
 
 	"io/ioutil"
@@ -14,9 +16,9 @@ import (
 
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 var (
@@ -24,15 +26,26 @@ var (
 )
 
 // KindCluster provisions a new Kind cluster
-func KindCluster(platform *platform.Platform) error {
-	kubeadmPatches, err := createKubeAdmPatches(platform)
+func KindCluster(p *platform.Platform) error {
+	p.MasterDiscovery = platform.KindProvider{}
+	p.ProvisionHook = platform.CompositeHook{}
+	kubeadmPatches, err := createKubeAdmPatches(p)
 	if err != nil {
 		return errors.Wrap(err, "failed to generate kubeadm patches")
 	}
 
-	caPath, err := filepath.Abs(platform.IngressCA.Cert)
-	if err != nil {
-		return errors.Wrap(err, "failed to expand ca file path")
+	var extraMounts []kindapi.Mount
+	if p.IngressCA != nil {
+		caPath, err := filepath.Abs(p.IngressCA.Cert)
+		if err != nil {
+			return errors.Wrap(err, "failed to expand ca file path")
+		}
+		extraMounts = []kindapi.Mount{
+			{
+				ContainerPath: kindCADir,
+				HostPath:      path.Dir(caPath),
+				Readonly:      true,
+			}}
 	}
 
 	kindConfig := kindapi.Cluster{
@@ -46,7 +59,7 @@ func KindCluster(platform *platform.Platform) error {
 		Nodes: []kindapi.Node{
 			{
 				Role:  "control-plane",
-				Image: fmt.Sprintf("kindest/node:%s", platform.Kubernetes.Version),
+				Image: fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
 				ExtraPortMappings: []kindapi.PortMapping{
 					{
 						ContainerPort: 80,
@@ -65,35 +78,19 @@ func KindCluster(platform *platform.Platform) error {
 					},
 				},
 				KubeadmConfigPatches: kubeadmPatches,
-				ExtraMounts: []kindapi.Mount{
-					{
-						ContainerPath: kindCADir,
-						HostPath:      path.Dir(caPath),
-						Readonly:      true,
-					},
-				},
+				ExtraMounts:          extraMounts,
 			},
 		},
 	}
 
-	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile; policyFile != "" {
-		// for kind clusters audit policy files are mapped in via a dual
-		// host -> master,
-		// master -> kube-api-server pod
-		// mapping
+	err = configureAuditMappings(p, &kindConfig)
+	if err != nil {
+		return err
+	}
 
-		absFile, err := filepath.Abs(policyFile)
-		if err != nil {
-			return errors.Wrap(err, "failed to expand audit policy file path")
-		}
-
-		mnts := &kindConfig.Nodes[0].ExtraMounts
-
-		*mnts = append(*mnts, kindapi.Mount{
-			ContainerPath: kubeadm.AuditPolicyPath,
-			HostPath:      absFile,
-			Readonly:      true,
-		})
+	err = configureEncryptionMappings(p, &kindConfig)
+	if err != nil {
+		return err
 	}
 
 	yml, err := yaml.Marshal(kindConfig)
@@ -101,9 +98,8 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to marshal config")
 	}
 
-	if platform.PlatformConfig.Trace {
-		platform.Infof("KIND Config YAML:")
-		platform.Infof(string(yml))
+	if p.PlatformConfig.Trace {
+		p.Infof(string(yml))
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")
@@ -116,23 +112,19 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to write kind config file")
 	}
 
-	if platform.DryRun {
+	if p.DryRun {
 		fmt.Println(string(yml))
 		return nil
 	}
 
-	kind := platform.GetBinary("kind")
-	kubeConfig, err := platform.GetKubeConfig()
-	if err != nil {
-		return errors.Wrap(err, "failed to get kube config")
-	}
+	kind := p.GetBinary("kind")
 
-	if err := kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), kubeConfig); err != nil {
+	if err := kind("create cluster --config %s --kubeconfig %s --name %s", tmpfile.Name(), p.KubeConfigPath, p.Name); err != nil {
 		return err
 	}
 
 	// delete the default storageclass created by kind as we install our own
-	return platform.GetKubectl()("delete sc standard")
+	return p.GetKubectl()("delete sc standard")
 }
 
 // createKubeAdmPatches reads a Platform config, creates a new ClusterConfiguration from it and
@@ -144,16 +136,18 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig.APIServer.CertSANs = nil
 
 	vol := &clusterConfig.APIServer.ExtraVolumes
-	*vol = append(*vol, api.HostPathMount{
-		Name:      "oidc-certificates",
-		HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
-		MountPath: "/etc/ssl/oidc/ingress-ca.pem",
-		ReadOnly:  true,
-		PathType:  api.HostPathFile,
-	})
 
-	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+	if platform.IngressCA != nil {
+		*vol = append(*vol, api.HostPathMount{
+			Name:      "oidc-certificates",
+			HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
+			MountPath: "/etc/ssl/oidc/ingress-ca.pem",
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		})
 
+		clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
+	}
 	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
@@ -174,4 +168,67 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// configureAuditMappings configures the mapping of the audit policy config files into the
+// KIND cluster config
+func configureAuditMappings(platform *platform.Platform, kindConfig *kindapi.Cluster) error {
+	policyFile := platform.Kubernetes.AuditConfig.PolicyFile
+	if policyFile == "" {
+		platform.Debugf("No audit policy specified for KIND cluster")
+		return nil
+	}
+	// for kind clusters audit policy files are mapped in via a dual
+	// host -> master,
+	// master -> kube-api-server pod
+	// mapping
+
+	absFile, err := filepath.Abs(policyFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to expand audit policy file path")
+	}
+	if content := files.SafeRead(absFile); len(content) == 0 {
+		return fmt.Errorf("failed to read audit policy file %v", absFile)
+	}
+
+	mnts := &kindConfig.Nodes[0].ExtraMounts
+
+	*mnts = append(*mnts, kindapi.Mount{
+		ContainerPath: kubeadm.AuditPolicyPath,
+		HostPath:      absFile,
+		Readonly:      true,
+	})
+
+	return nil
+}
+
+// configureEncryptionMappings configures the mapping of the encryption provider config files into the
+// KIND cluster config
+func configureEncryptionMappings(platform *platform.Platform, kindConfig *kindapi.Cluster) error {
+	encryptionFile := platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile
+	if encryptionFile == "" {
+		platform.Debugf("No encryption provider config specified for KIND cluster")
+		return nil
+	}
+	// for kind clusters encryption provider config files are mapped in via a dual
+	// host -> master,
+	// master -> kube-api-server pod
+	// mapping
+
+	absFile, err := filepath.Abs(encryptionFile)
+	if err != nil {
+		return errors.Wrapf(err, "failed to expand encryption provider file path for %v", encryptionFile)
+	}
+	if content := files.SafeRead(absFile); len(content) == 0 {
+		return fmt.Errorf("failed to read encryption provider file %v", absFile)
+	}
+
+	mnts := &kindConfig.Nodes[0].ExtraMounts
+
+	*mnts = append(*mnts, kindapi.Mount{
+		ContainerPath: kubeadm.EncryptionProviderConfigPath,
+		HostPath:      absFile,
+		Readonly:      true,
+	})
+	return nil
 }

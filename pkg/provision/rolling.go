@@ -1,15 +1,14 @@
 package provision
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"time"
 
 	"github.com/flanksource/commons/timer"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -21,11 +20,11 @@ type RollingOptions struct {
 	Force                  bool
 	ScaleSingleDeployments bool
 	MigrateLocalVolumes    bool
+	Masters, Workers       bool
 }
 
 // Perform a rolling update of nodes
 func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
-	ctx := context.TODO()
 	cluster, err := GetCluster(platform)
 	if err != nil {
 		return err
@@ -37,58 +36,19 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		age := machine.GetAge()
 		template := machine.GetTemplate()
 
+		if k8s.IsMasterNode(node) && !opts.Masters {
+			continue
+		} else if !k8s.IsMasterNode(node) && !opts.Workers {
+			continue
+		}
 		if age > opts.MinAge {
 			platform.Infof("Replacing %s,  age=%s, template=%s ", machine.Name(), age, template)
 		} else {
-			platform.Infof("Skipping %s, age=%s, template=%s ", machine.Name(), age, template)
 			continue
 		}
 
-		if k8s.IsMasterNode(node) {
-			etcdClient, err := cluster.GetEtcdClient(node)
-			if err != nil {
-				return err
-			}
-			if etcdClient.IsLeader {
-				members, err := etcdClient.Members(ctx)
-				if err != nil {
-					return err
-				}
-
-				var nextLeaderID uint64
-				for _, member := range members {
-					if member.ID != etcdClient.MemberID {
-						platform.Infof("Moving etcd leader from %s to %s", etcdClient.Name, member.Name)
-						nextLeaderID = member.ID
-						break
-					}
-				}
-
-				if err := etcdClient.MoveLeader(ctx, nextLeaderID); err != nil {
-					return fmt.Errorf("failed to move leader: %v", err)
-				}
-			}
-
-			leaderClient, err := cluster.GetEtcdLeader()
-			if err != nil {
-				return err
-			}
-
-			platform.Infof("Removing etcd member %s", node.Name)
-			if err := leaderClient.RemoveMember(ctx, etcdClient.MemberID); err != nil {
-				return err
-			}
-
-			// proactively remove server from consul so that we can get a new connection to k8s
-			if err := platform.GetConsulClient().RemoveMember(node.Name); err != nil {
-				return err
-			}
-			// reset the connection to the existing master (which may be the one we just removed)
-			platform.ResetMasterConnection()
-			// wait for a new connection to be healthy before continuing
-			if err := platform.WaitFor(); err != nil {
-				return err
-			}
+		if err := cluster.Cordon(node); err != nil {
+			return err
 		}
 
 		health := platform.GetHealth()
@@ -97,9 +57,6 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 
 		timer := timer.NewTimer()
 
-		if err := platform.Cordon(node.Name); err != nil {
-			return fmt.Errorf("failed to cordon %s: %v", node.Name, err)
-		}
 		var replacement types.Machine
 		if k8s.IsMasterNode(node) {
 			replacement, err = createSecondaryMaster(platform)
@@ -113,9 +70,9 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			}
 		}
 
-		platform.Infof("waiting for replacement for %s to become ready", node.Name)
+		platform.Infof("[%s] waiting for replacement to become ready", replacement.Name())
 		if status, err := platform.WaitForNode(replacement.Name(), opts.Timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
-			return fmt.Errorf("new worker %s did not come up healthy: %v", node.Name, status)
+			return fmt.Errorf("[%s] replacement did not come up healthy: %v", replacement.Name(), status)
 		}
 
 		terminate(platform, machine)

@@ -1,4 +1,6 @@
-name: test
+# in order to connect to cluster after provisioning
+# the kubeconfig cluster name needs to match this name
+name: kind-kind
 patches:
   - ./test/patch1.yaml
 domain: 127.0.0.1.nip.io
@@ -19,6 +21,8 @@ ldap:
 kubernetes:
   auditing:
     policyFile: ./test/fixtures/audit-policy.yaml
+  encryption:
+    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
   apiServerExtraArgs:
     "audit-log-path": /var/log/audit/cluster-audit.log
     "audit-log-maxsize": 1024
@@ -30,6 +34,7 @@ kubernetes:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
   masterIP: localhost
+  containerRuntime: containerd
 dashboard:
   accessRestricted:
     enabled: true
@@ -120,13 +125,49 @@ fluentd:
     port: 9200
     scheme: https
 filebeat:
+  - name: infra
+    version: 7.6.0
+    index: filebeat-infra
+    prefix: com.flanksource.infra
+    elasticsearch:
+      url: logs-es-http.eck.svc.cluster.local
+      user: elastic
+      password: elastic
+      port: 9200
+      scheme: https
+journalbeat:
   version: 7.6.0
   elasticsearch:
     url: logs-es-http.eck.svc.cluster.local
-    user: filebeat
-    password: filebeat
+    user: elastic
+    password: elastic
     port: 9200
     scheme: https
+auditbeat:
+  disabled: true
+  version: 7.7.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: http
+packetbeat:
+  version: 7.6.1
+  elasticsearch:
+    url: logs.127.0.0.1.nip.io
+    user: elastic
+    password: elastic
+    port: 443
+    scheme: https
+  kibana:
+    url: kibana.127.0.0.1.nip.io
+    user: elastic
+    password: elastic
+    port: 443
+    scheme: https
+eventrouter:
+  version: v0.3
 eck:
   version: 1.0.1
 oauth2Proxy:
@@ -153,11 +194,11 @@ sealedSecrets:
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
 gitops:
-  - name: platform-cli
+  - name: karina
     namespace: gitops-e2e-test
-    gitUrl: https://github.com/teodor-pripoae/platform-cli.git
-    gitBranch: issue-170-e2e-git-ops
-    gitPath: test/gitops/
+    gitUrl: https://github.com/flanksource/gitops-test.git
+    gitBranch: master
+    gitPath: .
 vault:
   version: 1.3.2
   kmsKeyId: arn:aws:kms:us-east-1:745897381572:key/dde327f5-3b77-41b7-b42a-f9ae2270d90d
@@ -215,12 +256,16 @@ registryCredentials:
   namespace: "registry-credentials"
   aws:
     enabled: true
-    accessKey: $AWS_ACCESS_KEY_ID
-    secretKey: $AWS_SECRET_ACCESS_KEY
+    accessKey: !!env AWS_ACCESS_KEY_ID
+    secretKey: !!env AWS_SECRET_ACCESS_KEY
     account: 745897381572
     region: us-east-1
 platformOperator:
   version: 2020050908180831
   whitelistedPodAnnotations:
+    # used by filebeat
+    - com.flanksource.infra.logs/enabled
+    - co.elastic.logs/enabled
+    # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz

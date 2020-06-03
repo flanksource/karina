@@ -15,9 +15,9 @@ type PlatformConfig struct {
 	DNS            *DynamicDNS `yaml:"dns,omitempty"`
 	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
-	Domain      string   `yaml:"domain"`
-	EventRouter *Enabled `yaml:"eventRouter,omitempty"`
-	Harbor      *Harbor  `yaml:"harbor,omitempty"`
+	Domain      string      `yaml:"domain"`
+	EventRouter EventRouter `yaml:"eventrouter,omitempty"`
+	Harbor      *Harbor     `yaml:"harbor,omitempty"`
 	// A prefix to be added to VM hostnames.
 	HostPrefix            string            `yaml:"hostPrefix"`
 	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
@@ -57,11 +57,15 @@ type PlatformConfig struct {
 	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
 	ECK                 *ECK                 `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
-	Filebeat            *Filebeat            `yaml:"filebeat,omitempty"`
+	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
+	Journalbeat         Journalbeat          `yaml:"journalbeat,omitempty"`
+	Auditbeat           Auditbeat            `yaml:"auditbeat,omitempty"`
+	Packetbeat          Packetbeat           `yaml:"packetbeat,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`
-
+	Tekton              Tekton               `yaml:"tekton,omitempty"`
+	Vsphere             *Vsphere             `yaml:"vsphere,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters
 	TerminationProtection bool   `yaml:"terminationProtection,omitempty"`

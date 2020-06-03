@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases/nsx"
+	"github.com/flanksource/karina/pkg/phases/nsx"
 )
 
 var NSX = &cobra.Command{

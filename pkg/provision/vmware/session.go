@@ -31,7 +31,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 var sessionCache = map[string]Session{}
@@ -76,7 +76,7 @@ func GetOrCreateCachedSession(datacenter, user, pass, vcenter string) (*Session,
 
 	session := Session{Client: client, Logger: logger.StandardLogger()}
 
-	session.UserAgent = "platform-cli"
+	session.UserAgent = "karina"
 
 	// Assign the finder to the session.
 	session.Finder = find.NewFinder(session.Client.Client, false)
@@ -161,22 +161,22 @@ func isValidUUID(str string) bool {
 	return err == nil
 }
 
-func LoadGovcEnvVars(vm *types.VM) {
+func LoadGovcEnvVars(vsphere types.Vsphere, vm *types.VM) {
 	if vm.Datastore == "" {
-		vm.Datastore = os.Getenv("GOVC_DATASTORE")
+		vm.Datastore = vsphere.Datastore
 	}
 	if len(vm.Network) == 0 {
-		vm.Network = []string{os.Getenv("GOVC_NETWORK")}
+		vm.Network = []string{vsphere.Network}
 	}
 
 	if vm.Folder == "" {
-		vm.Folder = os.Getenv("GOVC_FOLDER")
+		vm.Folder = vsphere.Folder
 	}
 	if vm.Cluster == "" {
-		vm.Cluster = os.Getenv("GOVC_CLUSTER")
+		vm.Cluster = vsphere.Cluster
 	}
 	if vm.ResourcePool == "" {
-		vm.ResourcePool = os.Getenv("GOVC_RESOURCE_POOL")
+		vm.ResourcePool = vsphere.ResourcePool
 	}
 	if vm.Tags == nil {
 		vm.Tags = make(map[string]string)

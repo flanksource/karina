@@ -6,12 +6,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/moshloop/platform-cli/pkg/constants"
-	"github.com/moshloop/platform-cli/pkg/phases/certmanager"
-	"github.com/moshloop/platform-cli/pkg/phases/ingress"
-	"github.com/moshloop/platform-cli/pkg/phases/nginx"
-	"github.com/moshloop/platform-cli/pkg/phases/quack"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/phases/certmanager"
+	"github.com/flanksource/karina/pkg/phases/ingress"
+	"github.com/flanksource/karina/pkg/phases/nginx"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
+	"github.com/flanksource/karina/pkg/phases/quack"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Install(platform *platform.Platform) error {
@@ -21,11 +22,27 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base rbac: %s", err)
 	}
 
+	if err := platform.CreateOrUpdateNamespace("kube-system", nil, nil); err != nil {
+		platform.Errorf("Error deploying base kube-system labels/annotations: %s", err)
+	}
+
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
 		platform.Errorf("Error deploying service monitor crd: %s", err)
 	}
 
+	if err := vsphere.Install(platform); err != nil {
+		return err
+	}
+
 	if err := certmanager.Install(platform); err != nil {
+		return err
+	}
+
+	if err := quack.Install(platform); err != nil {
+		platform.Fatalf("Error installing quack %s", err)
+	}
+
+	if err := platformoperator.Install(platform); err != nil {
 		return err
 	}
 
@@ -51,36 +68,15 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{
-		"quack.pusher.com/enabled": "true",
-	}, nil, nil); err != nil {
-		return err
-	}
-
-	var secrets = make(map[string][]byte)
-
-	secrets["AWS_ACCESS_KEY_ID"] = []byte(platform.S3.AccessKey)
-	secrets["AWS_SECRET_ACCESS_KEY"] = []byte(platform.S3.SecretKey)
-
-	if platform.Ldap != nil {
-		secrets["LDAP_USERNAME"] = []byte(platform.Ldap.Username)
-		secrets["LDAP_PASSWORD"] = []byte(platform.Ldap.Password)
-	}
-
-	if err := platform.CreateOrUpdateSecret("secrets", constants.PlatformSystem, secrets); err != nil {
-		return err
-	}
-
 	if err := nginx.Install(platform); err != nil {
 		platform.Fatalf("Error deploying nginx %s", err)
 	}
 
-	if err := quack.Install(platform); err != nil {
-		platform.Fatalf("Error installing quack %s", err)
-	}
-
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
 		platform.Infof("Installing local path volumes")
+		if err := platform.CreateOrUpdateNamespace("local-path-storage", nil, nil); err != nil {
+			platform.Errorf("Error creating namespace local-path-storage: %s", err)
+		}
 		if err := platform.ApplySpecs("", "local-path.yaml"); err != nil {
 			platform.Errorf("Error deploying local path volumes: %s", err)
 		}
@@ -92,6 +88,10 @@ func Install(platform *platform.Platform) error {
 		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
 			platform.Errorf("Error installing K8s dashboard: %s", err)
 		}
+	} else {
+		if err := platform.DeleteSpecs("", "k8s-dashboard.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 	}
 
 	if platform.NamespaceConfigurator == nil || !platform.NamespaceConfigurator.Disabled {
@@ -99,12 +99,9 @@ func Install(platform *platform.Platform) error {
 		if err := platform.ApplySpecs("", "namespace-configurator.yaml"); err != nil {
 			platform.Errorf("Error deploying namespace configurator: %s", err)
 		}
-	}
-
-	if platform.PlatformOperator == nil || !platform.PlatformOperator.Disabled {
-		platform.Infof("Installing platform operator")
-		if err := platform.ApplySpecs("", "platform-operator.yaml"); err != nil {
-			platform.Errorf("Error deploying platform-operator: %s", err)
+	} else {
+		if err := platform.DeleteSpecs("", "namespace-configurator.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
 		}
 	}
 
@@ -122,12 +119,20 @@ func Install(platform *platform.Platform) error {
 		if err := platform.ApplySpecs("", "csi-s3.yaml"); err != nil {
 			return fmt.Errorf("install: Failed to apply specs: %v", err)
 		}
+	} else {
+		if err := platform.DeleteSpecs("", "csi-s3.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 	}
 
 	if platform.NFS != nil {
 		platform.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
 		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
 			platform.Errorf("Failed to deploy NFS %+v", err)
+		}
+	} else {
+		if err := platform.DeleteSpecs("", "nfs.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
 		}
 	}
 

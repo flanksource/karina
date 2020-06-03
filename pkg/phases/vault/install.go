@@ -3,7 +3,7 @@ package vault
 import (
 	"strconv"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -12,7 +12,9 @@ const (
 
 func Deploy(p *platform.Platform) error {
 	if p.Vault == nil || p.Vault.Disabled {
-		p.Infof("Skipping deployment of vault, it is disabled")
+		if err := p.DeleteSpecs(Namespace, "vault.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 

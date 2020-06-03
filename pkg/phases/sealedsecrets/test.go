@@ -8,10 +8,16 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var (
+	testNamespaceLabels = map[string]string{
+		"openpolicyagent.org/webhook": "ignore",
+	}
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -69,7 +75,13 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := ioutil.WriteFile(certFile.Name(), p.SealedSecrets.Certificate.EncodedCertificate(), 0644); err != nil {
+	certPem, err := ioutil.ReadFile(p.SealedSecrets.Certificate.Cert)
+	if err != nil {
+		test.Failf("sealed-secrets", "Failed to read certificate file %s", p.SealedSecrets.Certificate.Cert)
+		return
+	}
+
+	if err := ioutil.WriteFile(certFile.Name(), certPem, 0644); err != nil {
 		test.Failf("sealed-secrets", "Failed to write certificate file %v", err)
 		return
 	}
@@ -87,7 +99,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := p.CreateOrUpdateNamespace(namespace, nil, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace, testNamespaceLabels, nil); err != nil {
 		test.Failf("sealed-secrets", "Failed to create test namespace %s: %v", namespace, err)
 		return
 	}

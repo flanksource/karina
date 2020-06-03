@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/flanksource/commons/logger"
-	"github.com/moshloop/platform-cli/pkg/provision"
+	"github.com/flanksource/karina/pkg/provision"
 	"github.com/spf13/cobra"
 )
 

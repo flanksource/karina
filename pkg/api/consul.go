@@ -17,7 +17,7 @@ type Consul struct {
 }
 
 func (consul Consul) GetMembers() []string {
-	url := fmt.Sprintf("http://%s/v1/health/service/%s", consul.Host, consul.Service)
+	url := fmt.Sprintf("%s/v1/health/service/%s", consul.Host, consul.Service)
 	consul.Tracef("Finding masters via consul: %s\n", url)
 	response, _ := net.GET(url)
 	var resp consulResponse
@@ -44,7 +44,7 @@ func (consul Consul) RemoveMember(name string) error {
 	}
 	client := &http.Client{Transport: tr}
 
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("http://%s/v1/catalog/deregister", consul.Host), strings.NewReader(fmt.Sprintf("{\"Node\": \"%s\"}", name)))
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("%s/v1/catalog/deregister", consul.Host), strings.NewReader(fmt.Sprintf("{\"Node\": \"%s\"}", name)))
 
 	resp, err := client.Do(req)
 

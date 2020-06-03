@@ -18,12 +18,12 @@ import (
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/logger"
 	utils "github.com/flanksource/commons/utils"
+	"github.com/flanksource/karina/pkg/k8s/drain"
+	"github.com/flanksource/karina/pkg/k8s/etcd"
+	"github.com/flanksource/karina/pkg/k8s/kustomize"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
-	"github.com/moshloop/platform-cli/pkg/k8s/drain"
-	"github.com/moshloop/platform-cli/pkg/k8s/etcd"
-	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -53,6 +53,7 @@ type Client struct {
 	logger.Logger
 	GetKubeConfigBytes  func() ([]byte, error)
 	ApplyDryRun         bool
+	ApplyHook           ApplyHook
 	Trace               bool
 	GetKustomizePatches func() ([]string, error)
 	client              *kubernetes.Clientset
@@ -534,8 +535,11 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 			return err
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
-			c.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
 			_, err = client.Create(namespace, true, unstructuredObj, &metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
@@ -570,6 +574,27 @@ func (c *Client) trace(msg string, objects ...runtime.Object) {
 	}
 }
 
+func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
+	for _, unstructuredObj := range objects {
+		client, err := c.GetRestClient(*unstructuredObj)
+		if err != nil {
+			return err
+		}
+
+		if c.ApplyDryRun {
+			c.Debugf("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+		} else {
+			if _, err := client.Delete(namespace, unstructuredObj.GetName()); err != nil {
+				return err
+			}
+			c.Infof("%s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+		}
+	}
+	return nil
+}
+
+type ApplyHook func(namespace string, obj unstructured.Unstructured)
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
@@ -577,9 +602,12 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
 			c.trace("apply", unstructuredObj)
-			c.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
 			continue
 		}
 
@@ -590,18 +618,33 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			_, err = client.Create(unstructuredObj, metav1.CreateOptions{})
 			if err != nil {
 				c.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+			} else {
+				c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			}
-			c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 		} else {
 			if unstructuredObj.GetKind() == "Service" {
 				// Workaround for immutable spec.clusterIP error message
 				spec := unstructuredObj.Object["spec"].(map[string]interface{})
 				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
+			} else if unstructuredObj.GetKind() == "ServiceAccount" {
+				unstructuredObj.Object["secrets"] = existing.Object["secrets"]
 			}
 			//apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
 
 			c.trace("updating", unstructuredObj)
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
+			unstructuredObj.SetSelfLink(existing.GetSelfLink())
+			unstructuredObj.SetUID(existing.GetUID())
+			unstructuredObj.SetCreationTimestamp(existing.GetCreationTimestamp())
+			unstructuredObj.SetGeneration(existing.GetGeneration())
+			if existing.GetAnnotations() != nil && existing.GetAnnotations()["deployment.kubernetes.io/revision"] != "" {
+				annotations := unstructuredObj.GetAnnotations()
+				if annotations == nil {
+					annotations = make(map[string]string)
+				}
+				annotations["deployment.kubernetes.io/revision"] = existing.GetAnnotations()["deployment.kubernetes.io/revision"]
+				unstructuredObj.SetAnnotations(annotations)
+			}
 			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
 			if err != nil {
 				c.Errorf("error updating: %s/%s/%s : %+v", unstructuredObj.GetNamespace(), resource.Resource, unstructuredObj.GetName(), err)
@@ -663,17 +706,6 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
 	}
 
-	// set default labels
-	defaultLabels := make(map[string]string)
-	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
-	if labels != nil {
-		for k, v := range defaultLabels {
-			labels[k] = v
-		}
-	} else {
-		labels = defaultLabels
-	}
-
 	ns := k8s.CoreV1().Namespaces()
 	cm, err := ns.Get(name, metav1.GetOptions{})
 
@@ -706,10 +738,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		}
 
 		// update incoming and current annotations
-		switch {
-		case cm.ObjectMeta.Annotations != nil && annotations == nil:
-			annotations = cm.ObjectMeta.Annotations
-		case cm.ObjectMeta.Annotations != nil && annotations != nil:
+		if cm.ObjectMeta.Annotations != nil && annotations != nil {
 			for k, v := range annotations {
 				cm.ObjectMeta.Annotations[k] = v
 			}
@@ -778,62 +807,18 @@ func (c *Client) GetOrCreateSecret(name, ns string, data map[string][]byte) erro
 }
 
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
-	client, err := c.GetClientset()
-	if err != nil {
-		return fmt.Errorf("createOrUpdateSecret: failed to get clientset: %v", err)
-	}
-	secrets := client.CoreV1().Secrets(ns)
-	cm, err := secrets.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data,
-		}
-		c.Infof("Creating %s/secret/%s", ns, name)
-		if !c.ApplyDryRun {
-			if _, err := secrets.Create(cm); err != nil {
-				return fmt.Errorf("createOrUpdateSecret: failed to namespace: %v", err)
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !c.ApplyDryRun {
-			c.Infof("Updating %s/secret/%s", ns, name)
-			if _, err := secrets.Update(cm); err != nil {
-				return fmt.Errorf("createOrUpdateSecret: failed to update configmap: %v", err)
-			}
-		}
-	}
-	return nil
+	return c.Apply(ns, &v1.Secret{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+		Data:       data,
+	})
 }
 
 func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
-	client, err := c.GetClientset()
-	if err != nil {
-		return fmt.Errorf("createOrUpdateConfigMap: failed to get client set: %v", err)
-	}
-	configs := client.CoreV1().ConfigMaps(ns)
-	cm, err := configs.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data}
-		c.Infof("Creating %s/cm/%s", ns, name)
-		if !c.ApplyDryRun {
-			if _, err := configs.Create(cm); err != nil {
-				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !c.ApplyDryRun {
-			c.Infof("Updating %s/cm/%s", ns, name)
-			if _, err := configs.Update(cm); err != nil {
-				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
-			}
-		}
-	}
-	return nil
+	return c.Apply(ns, &v1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+		Data:       data})
 }
 
 func (c *Client) ExposeIngress(namespace, service string, domain string, port int, annotations map[string]string) error {
@@ -1341,14 +1326,33 @@ func (c *Client) GetMasterNode() (string, error) {
 		return "", err
 	}
 
-	var masterNode string
 	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
+		if IsMasterNode(node) {
+			return node.Name, nil
 		}
 	}
-	return masterNode, nil
+	return "", fmt.Errorf("no master nodes found")
+}
+
+// GetMasterNode returns a list of all master nodes
+func (c *Client) GetMasterNodes() ([]string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, nil
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, nil
+	}
+
+	var nodeNames []string
+	for _, node := range nodes.Items {
+		if IsMasterNode(node) {
+			nodeNames = append(nodeNames, node.Name)
+		}
+	}
+	return nodeNames, nil
 }
 
 // Returns the first pod found by label

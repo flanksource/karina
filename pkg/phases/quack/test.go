@@ -5,8 +5,8 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
@@ -23,7 +23,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 
 	namespace := fmt.Sprintf("quack-test-%s", utils.RandomKey(6))
 
-	if err := platform.CreateOrUpdateNamespace(namespace, EnabledLabels, nil, nil); err != nil {
+	if err := platform.CreateOrUpdateWorkloadNamespace(namespace, EnabledLabels, nil); err != nil {
 		test.Failf("quack", "Failed to create test namespace %s: %v", namespace, err)
 		return
 	}

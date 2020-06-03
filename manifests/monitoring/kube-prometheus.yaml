@@ -5,6 +5,8 @@ metadata:
     alertmanager: main
   name: main
   namespace: monitoring
+  annotations:
+    image: "quay.io/prometheus/alertmanager:{{.monitoring.alertmanager.version}}"
 spec:
   baseImage: quay.io/prometheus/alertmanager
   nodeSelector:
@@ -16,7 +18,7 @@ spec:
     runAsNonRoot: true
     runAsUser: 1000
   serviceAccountName: alertmanager-main
-  version: v0.18.0
+  version: {{.monitoring.alertmanager.version}}
 ---
 apiVersion: v1
 kind: Service
@@ -110,6 +112,8 @@ metadata:
     prometheus: k8s
   name: k8s
   namespace: monitoring
+  annotations:
+    image: "quay.io/prometheus/prometheus:{{.monitoring.prometheus.version}}"
 spec:
   alerting:
     alertmanagers:
@@ -146,7 +150,7 @@ spec:
   serviceMonitorSelector: {}
   externalLabels:
     cluster: {{.name}}
-  version: v2.11.0
+  version: {{.monitoring.prometheus.version}}
   {{- if (index .monitoring "prometheus")  }}
   {{- if (index .monitoring.prometheus "persistence") }}
   storage:
@@ -298,12 +302,14 @@ spec:
     {{ end }}
 ---
 {{- if index . "filebeat" }}
-{{- if not (index .filebeat "disabled") }}
-{{- if index .filebeat "elasticsearch" }}
+{{- if index . "elasticsearch" }}
+{{- if not (index .elasticsearch "disabled") }}
+{{ range .filebeat}}
+{{- if index . "elasticsearch" }}
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
-  name: elasticsearch
+  name: elasticsearch-{{.name}}
   namespace: monitoring
 spec:
   name: elasticsearch.yaml
@@ -312,12 +318,16 @@ spec:
       type: elasticsearch
       access: proxy
       basicAuth: true
-      url: "https://{{.filebeat.elasticsearch.url}}:{{.filebeat.elasticsearch.port}}"
-      basicAuthUser: {{.filebeat.elasticsearch.user}}
+      url: "https://{{.elasticsearch.url}}:{{.elasticsearch.port}}"
+      basicAuthUser: {{.elasticsearch.user}}
       secureJsonData:
-        basicAuthPassword: {{.filebeat.elasticsearch.password}}
+        basicAuthPassword: {{.elasticsearch.password}}
       isDefault: false
-      database: "filebeat-{{.filebeat.version}}-*"
+  {{- if ne .index "" }}
+      database: "{{ .index }}-{{.version}}-*"
+  {{- else }}
+      database: "filebeat-{{.version}}-*"
+  {{ end }}
       version: 1
       editable: true
       jsonData:
@@ -328,6 +338,8 @@ spec:
         logMessageField: message
         logLevelField: fields.level
 ---
+{{- end}}
+{{- end}}
 {{- end}}
 {{- end}}
 {{- end}}
@@ -377,10 +389,12 @@ spec:
       version: "1.0.2"
     - name: "grafana-polystat-panel"
       version: "1.0.16"
-    - name: "kubernetes-app"
-      version: "1.0.1"
-    - name: "elasticsearch"
-      version: "5.0.0"
+    - name: "digrich-bubblechart-panel"
+      version: "1.1.0"
+    - name: "briangann-datatable-panel"
+      version: "0.0.9"
+    - name: "michaeldmoore-multistat-panel"
+      version: "1.2.5"
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

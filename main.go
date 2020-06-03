@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/moshloop/platform-cli/cmd"
+	"github.com/flanksource/karina/cmd"
 )
 
 var (
@@ -20,18 +20,8 @@ var (
 
 func main() {
 	var root = &cobra.Command{
-		Use: "platform-cli",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			level, _ := cmd.Flags().GetCount("loglevel")
-			switch {
-			case level > 1:
-				log.SetLevel(log.TraceLevel)
-			case level > 0:
-				log.SetLevel(log.DebugLevel)
-			default:
-				log.SetLevel(log.InfoLevel)
-			}
-		},
+		Use:              "karina",
+		PersistentPreRun: cmd.GlobalPreRun,
 	}
 
 	root.AddCommand(
@@ -62,6 +52,8 @@ func main() {
 		cmd.Snapshot,
 		cmd.Status,
 		cmd.Test,
+		cmd.TerminateNodes,
+		cmd.TerminateOrphans,
 		cmd.Upgrade,
 		cmd.Vault,
 	)
@@ -71,7 +63,7 @@ func main() {
 	}
 	root.AddCommand(&cobra.Command{
 		Use:   "version",
-		Short: "Print the version of platform-cli",
+		Short: "Print the version of karina",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(version)
@@ -101,6 +93,7 @@ func main() {
 
 	root.PersistentFlags().StringArrayP("config", "c", []string{utils.GetEnvOrDefault("PLATFORM_CONFIG", "config.yml")}, "Path to config file")
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
+	root.PersistentFlags().StringP("kubeconfig", "", "", "Specify a kubeconfig to use, if empty a new kubeconfig is generated from master CA's at runtime")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
 	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/moshloop/platform-cli/pkg/phases/opa"
+	"github.com/flanksource/karina/pkg/phases/opa"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

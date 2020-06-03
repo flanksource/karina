@@ -3,7 +3,10 @@ package opa
 import (
 	"fmt"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -12,6 +15,9 @@ const (
 
 func Install(platform *platform.Platform) error {
 	if platform.OPA == nil || platform.OPA.Disabled {
+		if err := platform.DeleteSpecs("", "opa.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	if platform.OPA.KubeMgmtVersion == "" {
@@ -24,15 +30,21 @@ func Install(platform *platform.Platform) error {
 
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{
 		"app": "opa",
-	}, nil, nil); err != nil {
+	}, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	for index := range platform.OPA.NamespaceWhitelist {
-		err := platform.CreateOrUpdateNamespace(platform.OPA.NamespaceWhitelist[index], nil, nil, nil)
-		if err != nil {
-			fmt.Println(err)
-		}
+	if err := platform.Apply(Namespace, &v1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "opa-server",
+			Namespace: Namespace,
+			Annotations: map[string]string{
+				"cert-manager.io/allow-direct-injection": "true",
+			},
+		},
+	}); err != nil {
+		return fmt.Errorf("install: failed to create secret opa-server: %v", err)
 	}
 
 	if err := platform.ApplySpecs(Namespace, "opa.yaml"); err != nil {

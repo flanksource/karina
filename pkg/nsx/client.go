@@ -16,6 +16,10 @@ import (
 	"github.com/vmware/go-vmware-nsxt/manager"
 )
 
+const (
+	TCPProtocol = "TCP"
+)
+
 // nolint: golint
 type NSXClient struct {
 	api *nsxt.APIClient
@@ -43,7 +47,7 @@ func (c *NSXClient) Init() error {
 		BasePath:   "/api/v1",
 		Host:       c.Host,
 		Scheme:     "https",
-		UserAgent:  "platform-cli",
+		UserAgent:  "karina",
 		RemoteAuth: c.RemoteAuth,
 		DefaultHeader: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(c.Username+":"+c.Password)),
@@ -253,33 +257,44 @@ type virtualServersList struct {
 	Results []loadbalancer.LbVirtualServer `json:"results,omitempty"`
 }
 
-func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error) {
-	ctx := c.api.Context
-	api := c.api.ServicesApi
-	routing := c.api.LogicalRoutingAndServicesApi
-
+func (c *NSXClient) GetLoadBalancer(name string) (*loadbalancer.LbVirtualServer, error) {
 	// ServicesApi.GetVirtualServers() is not implemented
 	body, err := c.GET("/loadbalancer/virtual-servers")
 	if err != nil {
-		return "", fmt.Errorf("failed to list existing virtual servers: %v", err)
+		return nil, fmt.Errorf("failed to list existing virtual servers: %v", err)
 	}
 
 	var virtualServers virtualServersList
 
 	if err := json.Unmarshal(body, &virtualServers); err != nil {
-		return "", fmt.Errorf("failed to unmarshall existing virtual server list: %v", err)
+		return nil, fmt.Errorf("failed to unmarshall existing virtual server list: %v", err)
 	}
 
 	for _, server := range virtualServers.Results {
-		if server.DisplayName == opts.Name {
-			c.Infof("LoadBalancer %s found, returning its IP %s ", opts.Name, server.IpAddress)
-			return server.IpAddress, nil
+		if server.DisplayName == name {
+			return &server, nil
 		}
+	}
+	return nil, nil
+}
+
+// CreateLoadBalancer creates a new loadbalancer or returns the existing loadbalancer's IP
+func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, error) {
+	ctx := c.api.Context
+	api := c.api.ServicesApi
+	routing := c.api.LogicalRoutingAndServicesApi
+
+	existingServer, err := c.GetLoadBalancer(opts.Name)
+	if err != nil {
+		return "", false, err
+	}
+	if existingServer != nil {
+		return existingServer.IpAddress, true, nil
 	}
 
 	t0, resp, err := routing.ReadLogicalRouter(ctx, opts.Tier0)
 	if err != nil {
-		return "", fmt.Errorf("failed to read T0 router %s: %s", opts.Tier0, errorString(resp, err))
+		return "", false, fmt.Errorf("failed to read T0 router %s: %s", opts.Tier0, errorString(resp, err))
 	}
 
 	t0Port, resp, err := routing.CreateLogicalRouterLinkPortOnTier0(ctx, manager.LogicalRouterLinkPortOnTier0{
@@ -288,7 +303,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("unable to create T0 Local router port %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to create T0 Local router port %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	t1, resp, err := routing.CreateLogicalRouter(ctx, manager.LogicalRouter{
@@ -297,7 +312,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 		EdgeClusterId: t0.EdgeClusterId,
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to create T1 router %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to create T1 router %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	_, resp, err = routing.UpdateAdvertisementConfig(ctx, t1.Id, manager.AdvertisementConfig{
@@ -306,7 +321,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 		Enabled:           true,
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to update advertisement config %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to update advertisement config %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	c.Infof("Created T1 router %s/%s", t1.DisplayName, t1.Id)
@@ -320,15 +335,28 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 		},
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to link T1 (%s) to T0 (%s): %s", t1.Id, t0Port.Id, errorString(resp, err))
+		return "", false, fmt.Errorf("failed to link T1 (%s) to T0 (%s): %s", t1.Id, t0Port.Id, errorString(resp, err))
 	}
 
 	group, err := c.CreateOrUpdateNSGroup(opts.Name, "LogicalPort", opts.MemberTags)
 	if err != nil {
-		return "", err
+		return "", false, err
+	}
+	var monitorID string
+	if opts.Protocol == TCPProtocol {
+		monitorID, err = c.GetOrCreateTCPHealthCheck(opts.Ports[0])
+		if err != nil {
+			return "", false, fmt.Errorf("unable to create tcp loadbalancer monitor: %v", err)
+		}
+	} else {
+		monitorID, err = c.GetOrCreateHTTPHealthCheck(opts.Ports[0])
+		if err != nil {
+			return "", false, fmt.Errorf("unable to create http loadbalancer monitor: %v", err)
+		}
 	}
 	pool, resp, err := api.CreateLoadBalancerPool(ctx, loadbalancer.LbPool{
-		Id: opts.Name,
+		Id:               opts.Name,
+		ActiveMonitorIds: []string{monitorID},
 		SnatTranslation: &loadbalancer.LbSnatTranslation{
 			Type_: "LbSnatAutoMap",
 		},
@@ -340,12 +368,12 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 		},
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to create load balancer pool %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to create load balancer pool %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	ip, err := c.AllocateIP(opts.IPPool)
 	if err != nil {
-		return "", fmt.Errorf("unable to allocate VIP %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to allocate VIP %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	server, resp, err := api.CreateLoadBalancerVirtualServer(ctx, loadbalancer.LbVirtualServer{
@@ -358,7 +386,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("unable to create virtual server %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to create virtual server %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	lb := loadbalancer.LbService{
@@ -375,9 +403,71 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, error)
 
 	_, resp, err = api.CreateLoadBalancerService(c.api.Context, lb)
 	if err != nil {
-		return "", fmt.Errorf("unable to create load balancer %s: %s", opts.Name, errorString(resp, err))
+		return "", false, fmt.Errorf("unable to create load balancer %s: %s", opts.Name, errorString(resp, err))
 	}
 
 	c.Infof("Created LoadBalancer service: %s/%s", server.Id, ip)
-	return ip, nil
+	return ip, false, nil
+}
+
+func (c *NSXClient) GetOrCreateHTTPHealthCheck(port string) (string, error) {
+	id := fmt.Sprintf("http-%s", port)
+	// ServicesApi.GetMonitors() is not implemented
+	_, err := c.GET("/loadbalancer/monitors/" + id)
+
+	if err == nil {
+		// Get returned OK, so the monitor has been created already
+		return id, nil
+	}
+
+	monitor, resp, err := c.api.ServicesApi.CreateLoadBalancerHttpMonitor(context.TODO(), loadbalancer.LbHttpMonitor{
+		Id:                  id,
+		DisplayName:         id,
+		ResourceType:        "LbHttpMonitor",
+		ResponseStatusCodes: []int32{200, 300, 301, 302, 304, 307, 404},
+		MonitorPort:         port,
+		RequestMethod:       "GET",
+		RequestUrl:          "/",
+		RequestVersion:      "HTTP_VERSION_1_1",
+		Timeout:             15,
+		Interval:            5,
+		RiseCount:           5,
+		FallCount:           3,
+	})
+	if resp != nil && resp.Body != nil {
+		resp.Body.Close()
+	}
+	if err != nil {
+		return "", err
+	}
+	return monitor.Id, nil
+}
+
+func (c *NSXClient) GetOrCreateTCPHealthCheck(port string) (string, error) {
+	id := fmt.Sprintf("tcp-%s", port)
+	// ServicesApi.GetMonitors() is not implemented
+	_, err := c.GET("/loadbalancer/monitors/" + id)
+
+	if err == nil {
+		// Get returned OK, so the monitor has been created already
+		return id, nil
+	}
+
+	monitor, resp, err := c.api.ServicesApi.CreateLoadBalancerTcpMonitor(context.TODO(), loadbalancer.LbTcpMonitor{
+		Id:           id,
+		DisplayName:  id,
+		ResourceType: "LbTcpMonitor",
+		MonitorPort:  port,
+		Timeout:      15,
+		Interval:     5,
+		RiseCount:    5,
+		FallCount:    3,
+	})
+	if resp != nil && resp.Body != nil {
+		resp.Body.Close()
+	}
+	if err != nil {
+		return "", err
+	}
+	return monitor.Id, nil
 }

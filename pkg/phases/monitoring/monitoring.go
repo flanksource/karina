@@ -3,8 +3,9 @@ package monitoring
 import (
 	"fmt"
 
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 const (
@@ -22,12 +23,36 @@ var specs = []string{
 	"service-monitors.yaml",
 }
 
+var cleanup = []string{
+	"observability/thanos-compactor.yaml",
+	"observability/thanos-querier.yaml",
+	"observability/thanos-store.yaml",
+	"thanos-config.yaml",
+	"thanos-sidecar.yaml",
+}
+
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
+		// setup default values so that all resources are rendered
+		// so that we know what to try and delete
+		p.Monitoring = &types.Monitoring{}
+		p.Thanos = &types.Thanos{Version: "deleted", Mode: "observability"}
+		for _, spec := range append(specs, cleanup...) {
+			if err := p.DeleteSpecs(Namespace, "monitoring/"+spec); err != nil {
+				p.Warnf("failed to delete specs: %v", err)
+			}
+		}
 		return nil
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil, nil); err != nil {
+	if p.Monitoring.Prometheus.Version == "" {
+		p.Monitoring.Prometheus.Version = "v2.16.0"
+	}
+	if p.Monitoring.AlertManager.Version == "" {
+		p.Monitoring.AlertManager.Version = "v0.18.0"
+	}
+
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
@@ -52,7 +77,6 @@ func Install(p *platform.Platform) error {
 	}
 
 	for _, spec := range specs {
-		p.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
 			return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
 		}

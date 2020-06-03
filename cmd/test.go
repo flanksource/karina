@@ -10,29 +10,29 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/phases/audit"
-	"github.com/moshloop/platform-cli/pkg/phases/base"
-	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
-	"github.com/moshloop/platform-cli/pkg/phases/consul"
-	"github.com/moshloop/platform-cli/pkg/phases/dex"
-	"github.com/moshloop/platform-cli/pkg/phases/eck"
-	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
-	"github.com/moshloop/platform-cli/pkg/phases/flux"
-	"github.com/moshloop/platform-cli/pkg/phases/harbor"
-	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
-	"github.com/moshloop/platform-cli/pkg/phases/nsx"
-	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
-	"github.com/moshloop/platform-cli/pkg/phases/quack"
-	"github.com/moshloop/platform-cli/pkg/phases/registrycreds"
-	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
-	"github.com/moshloop/platform-cli/pkg/phases/stubs"
-	"github.com/moshloop/platform-cli/pkg/phases/vault"
-	"github.com/moshloop/platform-cli/pkg/phases/velero"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/phases/base"
+	"github.com/flanksource/karina/pkg/phases/configmapreloader"
+	"github.com/flanksource/karina/pkg/phases/consul"
+	"github.com/flanksource/karina/pkg/phases/dex"
+	"github.com/flanksource/karina/pkg/phases/eck"
+	"github.com/flanksource/karina/pkg/phases/elasticsearch"
+	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
+	"github.com/flanksource/karina/pkg/phases/flux"
+	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/phases/monitoring"
+	"github.com/flanksource/karina/pkg/phases/nsx"
+	"github.com/flanksource/karina/pkg/phases/opa"
+	"github.com/flanksource/karina/pkg/phases/postgresoperator"
+	"github.com/flanksource/karina/pkg/phases/quack"
+	"github.com/flanksource/karina/pkg/phases/registrycreds"
+	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
+	"github.com/flanksource/karina/pkg/phases/stubs"
+	"github.com/flanksource/karina/pkg/phases/vault"
+	"github.com/flanksource/karina/pkg/phases/velero"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v5"
+	mpb "github.com/vbauerster/mpb/v5"
 )
 
 var (
@@ -106,6 +106,7 @@ func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
 
 func init() {
 	Test.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		GlobalPreRun(cmd, args)
 		p = getPlatform(cmd)
 		wg = &sync.WaitGroup{}
 		ch = make(chan int, concurrency)
@@ -122,13 +123,14 @@ func init() {
 	}
 
 	tests := map[string]TestFn{
-		"audit":              audit.Test,
+		"audit":              kubeadm.TestAudit,
 		"base":               base.Test,
 		"configmap-reloader": configmapreloader.Test,
 		"consul":             consul.Test,
 		"dex":                dex.Test,
 		"eck":                eck.Test,
 		"elasticsearch":      elasticsearch.Test,
+		"encryption":         kubeadm.TestEncryption,
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,

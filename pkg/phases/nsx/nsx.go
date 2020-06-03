@@ -8,7 +8,7 @@ import (
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -18,6 +18,9 @@ const (
 
 func Install(p *platform.Platform) error {
 	if p.NSX == nil || p.NSX.Disabled {
+		if err := p.DeleteSpecs(Namespace, "nsx.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 
@@ -47,8 +50,9 @@ func Install(p *platform.Platform) error {
 
 	s := "[DEFAULT]\n" + mapToINI(ini)
 
-	p.Tracef("Using NSX config: %s", console.StripSecrets(s))
-
+	if p.PlatformConfig.Trace {
+		p.Tracef("Using NSX config: %s", console.StripSecrets(s))
+	}
 	if err := p.CreateOrUpdateConfigMap("nsx-ncp-config", Namespace, map[string]string{
 		"ncp.ini": s,
 	}); err != nil {

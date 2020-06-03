@@ -12,14 +12,29 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	platformv1 "github.com/moshloop/platform-cli/pkg/api/platformoperator"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	platformv1 "github.com/flanksource/karina/pkg/api/platformoperator"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	testNamespaceLabels = map[string]string{
+		"openpolicyagent.org/webhook": "ignore",
+	}
+)
+
 func Test(platform *platform.Platform, test *console.TestResults) {
-	client, _ := platform.GetClientset()
+	client, err := platform.GetClientset()
+	if err != nil {
+		test.Errorf("Base tests failed to get clientset: %v", err)
+		return
+	}
+	if client == nil {
+		test.Errorf("Base tests failed to get clientset: nil clientset ")
+		return
+	}
+
 	k8s.TestNamespace(client, "kube-system", test)
 	k8s.TestNamespace(client, "local-path-storage", test)
 	k8s.TestNamespace(client, "cert-manager", test)
@@ -41,6 +56,10 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
+	if p.PlatformOperator == nil {
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
+		return
+	}
 	namespace := fmt.Sprintf("platform-operator-e2e-auto-delete-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
@@ -48,7 +67,7 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 		"auto-delete": "10s",
 	}
 
-	if err := p.CreateOrUpdateNamespace(namespace, nil, annotations, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace, testNamespaceLabels, annotations); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace, err)
 		return
 	}
@@ -68,6 +87,10 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 }
 
 func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.TestResults) {
+	if p.PlatformOperator == nil {
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
+		return
+	}
 	namespace := fmt.Sprintf("platform-operator-e2e-pod-annotations-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
@@ -79,7 +102,7 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 		annotationKey2: utils.RandomString(6),
 	}
 
-	if err := p.CreateOrUpdateNamespace(namespace, nil, annotations, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace, testNamespaceLabels, annotations); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace, err)
 		return
 	}
@@ -131,11 +154,15 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 }
 
 func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *console.TestResults) {
+	if p.PlatformOperator == nil {
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
+		return
+	}
 	namespace1 := fmt.Sprintf("platform-operator-e2e-resource-quota1-%s", utils.RandomString(6))
 	namespace2 := fmt.Sprintf("platform-operator-e2e-resource-quota2-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
-	if err := p.CreateOrUpdateNamespace(namespace1, nil, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace1, testNamespaceLabels, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace1, err)
 		return
 	}
@@ -144,7 +171,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 		client.CoreV1().Namespaces().Delete(namespace1, nil) // nolint: errcheck
 	}()
 
-	if err := p.CreateOrUpdateNamespace(namespace2, nil, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace2, testNamespaceLabels, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace2, err)
 		return
 	}
@@ -242,11 +269,15 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 }
 
 func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *console.TestResults) {
+	if p.PlatformOperator == nil {
+		test.Skipf("platform-operator", "No platform operator configured - skipping")
+		return
+	}
 	namespace1 := fmt.Sprintf("platform-operator-e2e-resource-quota1-%s", utils.RandomString(6))
 	namespace2 := fmt.Sprintf("platform-operator-e2e-resource-quota2-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
-	if err := p.CreateOrUpdateNamespace(namespace1, nil, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace1, testNamespaceLabels, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace1, err)
 		return
 	}
@@ -255,7 +286,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 		client.CoreV1().Namespaces().Delete(namespace1, nil) // nolint: errcheck
 	}()
 
-	if err := p.CreateOrUpdateNamespace(namespace2, nil, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(namespace2, testNamespaceLabels, nil); err != nil {
 		test.Failf("platform-operator", "failed to create namespace %s: %v", namespace2, err)
 		return
 	}

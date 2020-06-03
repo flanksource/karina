@@ -23,41 +23,44 @@ import (
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
+	"github.com/flanksource/karina/manifests"
+	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/client/dns"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
+	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/karina/templates"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
-	"github.com/moshloop/platform-cli/manifests"
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/client/dns"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
-	"github.com/moshloop/platform-cli/pkg/nsx"
-	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/flanksource/yaml.v3"
+	yaml "gopkg.in/flanksource/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
+	MasterDiscovery MasterDiscovery
+	ProvisionHook   ProvisionHook
 	logger.Logger
 	logFields map[string]interface{}
 	k8s.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
-	ctx        context.Context //nolint
-	nsx        *nsx.NSXClient
-	kubeConfig []byte
-	ca         certs.CertificateAuthority
-	ingressCA  certs.CertificateAuthority
+	ctx            context.Context //nolint
+	kubeConfig     []byte
+	KubeConfigPath string
+	ca             certs.CertificateAuthority
+	ingressCA      certs.CertificateAuthority
 	// Terminating is true if the cluster is in a terminating state
 	Terminating bool
 }
 
-func (platform *Platform) Init() {
-	platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+func (platform *Platform) Init() error {
+	if platform.Client.GetKubeConfigBytes == nil {
+		platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+	}
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
@@ -65,7 +68,46 @@ func (platform *Platform) Init() {
 	platform.Client.Trace = platform.PlatformConfig.Trace
 	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
 	platform.Client.Logger = platform.Logger
+
 	platform.logFields = make(map[string]interface{})
+	consul := NewConsulProvider(platform)
+	dns := NewDNSProvider(platform.GetDNSClient())
+
+	if platform.NSX != nil && !platform.NSX.Disabled {
+		nsx, err := NewNSXProvider(platform)
+		if err != nil {
+			return err
+		}
+		platform.MasterDiscovery = nsx
+		if platform.DNS != nil && !platform.DNS.Disabled {
+			platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{nsx, dns}}
+		} else {
+			platform.ProvisionHook = nsx
+		}
+	} else if platform.Consul != "" && platform.DNS != nil && !platform.DNS.Disabled {
+		// when both consul and DNS are specified, Consul is used for master discovery
+		// and DNS used for external access
+		platform.MasterDiscovery = consul
+		platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{consul, dns}}
+	} else if platform.Consul != "" {
+		platform.MasterDiscovery = consul
+		platform.ProvisionHook = consul
+	} else if platform.DNS != nil && !platform.DNS.Disabled {
+		platform.MasterDiscovery = dns
+		platform.ProvisionHook = dns
+	} else {
+		platform.MasterDiscovery = KindProvider{}
+		platform.ProvisionHook = CompositeHook{}
+	}
+
+	if platform.KubeConfigPath == "" {
+		if os.Getenv("KUBECONFIG") == "" {
+			platform.KubeConfigPath = os.ExpandEnv("$HOME/.kube/config")
+		} else {
+			platform.KubeConfigPath = os.Getenv("KUBECONFIG")
+		}
+	}
+	return nil
 }
 
 func (platform *Platform) clone() *Platform {
@@ -74,17 +116,19 @@ func (platform *Platform) clone() *Platform {
 		logFields[k] = v
 	}
 	return &Platform{
-		Cluster:        platform.Cluster,
-		PlatformConfig: platform.PlatformConfig,
-		Logger:         platform.Logger,
-		logFields:      logFields,
-		Client:         platform.Client,
-		ctx:            context.TODO(),
-		nsx:            platform.nsx,
-		kubeConfig:     platform.kubeConfig,
-		ca:             platform.ca,
-		ingressCA:      platform.ingressCA,
-		Terminating:    platform.Terminating,
+		Cluster:         platform.Cluster,
+		PlatformConfig:  platform.PlatformConfig,
+		Logger:          platform.Logger,
+		logFields:       logFields,
+		Client:          platform.Client,
+		ctx:             context.TODO(),
+		MasterDiscovery: platform.MasterDiscovery,
+		ProvisionHook:   platform.ProvisionHook,
+		kubeConfig:      platform.kubeConfig,
+		ca:              platform.ca,
+		ingressCA:       platform.ingressCA,
+		KubeConfigPath:  platform.KubeConfigPath,
+		Terminating:     platform.Terminating,
 	}
 }
 
@@ -116,32 +160,57 @@ func (platform *Platform) ResetMasterConnection() {
 	platform.Client.ResetConnection()
 }
 
+// GetAPIEndpoint returns an endpoint for reaching a master node that is reachable on 6443 or
+// an error otherwise
+func (platform *Platform) GetAPIEndpoint() (string, error) {
+	if platform.DNS != nil && !platform.DNS.Disabled {
+		ip := fmt.Sprintf("k8s-api.%s", platform.Domain)
+		if net.Ping(ip, 6443, 10) {
+			return ip, nil
+		}
+		platform.Warnf("DNS endpoint is not healthy, failing back to master IP")
+	}
+
+	masters, err := platform.MasterDiscovery.GetExternalEndpoints(platform)
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to discover any external endpoints")
+	}
+	if len(masters) == 0 {
+		return "", fmt.Errorf("could not find any master ips")
+	}
+
+	for _, master := range masters {
+		if net.Ping(master, 6443, 10) {
+			return master, nil
+		}
+	}
+	return "", fmt.Errorf("none of the masters are up: %v", masters)
+}
+
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	if platform.kubeConfig != nil {
 		return platform.kubeConfig, nil
 	}
 
-	if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
-		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
+	context := k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath)
+	platform.Tracef("Current KUBECONFIG: path=%s, context=%s", platform.KubeConfigPath, context)
+	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		platform.Debugf("Using existing KUBECONFIG, to dynamically generate a KUBECONFIG specify a path without a matching context")
+		return ioutil.ReadFile(platform.KubeConfigPath)
 	}
 
-	masters := platform.GetMasterIPs()
-	if len(masters) == 0 {
-		return nil, fmt.Errorf("could not find any master ips")
+	ip, err := platform.GetAPIEndpoint()
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
 	}
 
-	var ip string
-
-	for _, master := range masters {
-		if net.Ping(master, 6443, 10) {
-			ip = master
-		}
+	platform.Debugf("Generating a new kubeconfig for %s", ip)
+	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	if err != nil {
+		return nil, err
 	}
-	if ip == "" {
-		return nil, fmt.Errorf("none of the masters are up: %v", masters)
-	}
-
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	platform.kubeConfig = kubeConfig
+	return platform.kubeConfig, nil
 }
 
 // GetCA retrieves the cert.CertificateAuthority
@@ -151,7 +220,7 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
 	}
-	ca, err := readCA(platform.CA)
+	ca, err := platform.ReadCA(platform.CA)
 	if err != nil {
 		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
@@ -159,9 +228,9 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	return ca
 }
 
-// readCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
+// ReadCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
 // with key password ca.Password.
-func readCA(ca *types.CA) (*certs.Certificate, error) {
+func (platform *Platform) ReadCA(ca *types.CA) (*certs.Certificate, error) {
 	cert := files.SafeRead(ca.Cert)
 	if cert == "" {
 		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
@@ -190,7 +259,7 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 		return platform.ingressCA
 	}
 	platform.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
-	ca, err := readCA(platform.IngressCA)
+	ca, err := platform.ReadCA(platform.IngressCA)
 	if err != nil {
 		platform.Fatalf("Unable to open Ingress CA: %v", err)
 	}
@@ -201,11 +270,15 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 
 // WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
+	if platform.DryRun {
+		return nil
+	}
 	for {
-		masters := platform.GetMasterIPs()
-		if len(masters) > 0 && net.Ping(masters[0], 6443, 3) && platform.PingMaster() {
+		api, _ := platform.GetAPIEndpoint()
+		if api != "" && platform.PingMaster() {
 			return nil
 		}
+		platform.ResetMasterConnection()
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -214,7 +287,7 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	if platform.DNS == nil || platform.DNS.Disabled {
 		return &dns.DummyDNSClient{
 			Logger: platform.Logger,
-			Zone:   platform.DNS.Zone,
+			Zone:   "nip.io",
 		}
 	}
 
@@ -239,38 +312,16 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	}
 }
 
-func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
-	if platform.nsx != nil {
-		return platform.nsx, nil
-	}
-	if platform.NSX == nil || platform.NSX.Disabled {
-		return nil, fmt.Errorf("NSX not configured or disabled")
-	}
-	if platform.NSX.NsxV3 == nil || len(platform.NSX.NsxV3.NsxAPIManagers) == 0 {
-		return nil, fmt.Errorf("nsx_v3.nsx_api_managers not configured")
-	}
-
-	client := &nsx.NSXClient{
-		Logger:   platform.Logger,
-		Host:     platform.NSX.NsxV3.NsxAPIManagers[0],
-		Username: platform.NSX.NsxV3.NsxAPIUser,
-		Password: platform.NSX.NsxV3.NsxAPIPass,
-	}
-	platform.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
-
-	if err := client.Init(); err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
-	}
-	platform.nsx = client
-	version, err := platform.nsx.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
-	}
-	platform.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
-	return platform.nsx, nil
-}
-
 func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Machine, error) {
+	if platform.DryRun {
+		return types.NullMachine{}, nil
+	}
+	vm.Konfigadm = config
+
+	if err := platform.ProvisionHook.BeforeProvision(platform, &vm); err != nil {
+		return types.NullMachine{}, err
+	}
+
 	for _, cmd := range vm.Commands {
 		config.AddCommand(cmd)
 	}
@@ -293,74 +344,56 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 	}
 	vm.IP = ip
 	platform.Tracef("[%s] found ip %s", vm.Name, ip)
-	if platform.NSX != nil && !platform.NSX.Disabled {
-		ctx := context.TODO()
-		nsxClient, err := platform.GetNSXClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get NSX client: %v", err)
-		}
 
-		ports, err := nsxClient.GetLogicalPorts(ctx, vm.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find ports for %s: %v", vm.Name, err)
-		}
-		if len(ports) != 2 {
-			return nil, fmt.Errorf("expected to find 2 ports, found %d", len(ports))
-		}
-		managementNic := make(map[string]string)
-		transportNic := make(map[string]string)
-
-		for k, v := range vm.Tags {
-			managementNic[k] = v
-		}
-
-		transportNic["ncp/node_name"] = vm.Name
-		transportNic["ncp/cluster"] = platform.Name
-
-		if err := nsxClient.TagLogicalPort(ctx, ports[0].Id, managementNic); err != nil {
-			return nil, fmt.Errorf("failed to tag management nic %s: %v", ports[0].Id, err)
-		}
-		if err := nsxClient.TagLogicalPort(ctx, ports[1].Id, transportNic); err != nil {
-			return nil, fmt.Errorf("failed to tag transport nic %s: %v", ports[1].Id, err)
-		}
+	if err := platform.ProvisionHook.AfterProvision(platform, VM); err != nil {
+		return types.NullMachine{}, err
 	}
+
 	return VM, nil
 }
 
 func (platform *Platform) GetConsulClient() api.Consul {
 	return api.Consul{
 		Logger:  platform.Logger,
-		Host:    platform.Consul,
+		Host:    fmt.Sprintf("http://%s:8500", platform.Consul),
 		Service: platform.Name,
 	}
 }
 
-// GetMasterIPs returns a list of all healthy master IP's
-func (platform *Platform) GetMasterIPs() []string {
-	if platform.Kubernetes.MasterIP != "" {
-		return []string{platform.Kubernetes.MasterIP}
+func (platform *Platform) GetNodeNames() map[string]bool {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil
 	}
-	return platform.GetConsulClient().GetMembers()
+	existingNodes := map[string]bool{}
+	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	for _, node := range nodeList.Items {
+		existingNodes[node.Name] = true
+	}
+	return existingNodes
 }
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
-	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
-		platform.Tracef("Using KUBECONFIG from ENV")
-		return os.Getenv("KUBECONFIG"), nil
+	// if the current kubeconfig context already has a reference to the cluster
+	// then we can just reuse it
+	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		return platform.KubeConfigPath, nil
 	}
-	cwd, _ := os.Getwd()
-	name := cwd + "/" + platform.Name + "-admin.yml"
-	if !is.File(name) {
+
+	if !is.File(platform.KubeConfigPath) {
 		data, err := platform.GetKubeConfigBytes()
 		if err != nil {
 			return "", err
 		}
-		if err := ioutil.WriteFile(name, data, 0644); err != nil {
+		if err := ioutil.WriteFile(platform.KubeConfigPath, data, 0644); err != nil {
 			return "", err
 		}
 	}
-	return name, nil
+	return platform.KubeConfigPath, nil
 }
 
 func (platform *Platform) GetBinaryWithKubeConfig(binary string) deps.BinaryFunc {
@@ -400,7 +433,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 
 func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
 	if platform.HasSecret(namespace, secretName) {
-		platform.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
+		platform.Debugf("secret/%s/%s' for %s already exists", namespace, secretName, subDomain)
 		//TODO(moshloop) check certificate expiry and renew if necessary
 		return nil
 	}
@@ -549,9 +582,44 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	k8s.WaitForNamespace(client, ns, timeout)
 }
 
+func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
+	if platform.TerminationProtection {
+		platform.Debugf("Skipping deletion of resources when termination protection is enabled ")
+		return nil
+	}
+	for _, spec := range specs {
+		template, err := platform.Template(spec, "manifests")
+		if err != nil {
+			return err
+		}
+		objects, err := k8s.GetUnstructuredObjects([]byte(template))
+		if err != nil {
+			return err
+		}
+		// reverse the order of the objects so that they can be deleted in reverse-order
+		for i, j := 0, len(objects)-1; i < j; i, j = i+1, j-1 {
+			objects[i], objects[j] = objects[j], objects[i]
+		}
+
+		platform.Debugf("Deleting %s", console.Redf("%s", spec))
+		for _, object := range objects {
+			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
+				platform.Tracef("resources already deleted skipping, %v", err)
+				return nil
+			}
+
+			platform.Tracef("Deleting %s/%s/%s", object.GetNamespace(), object.GetKind(), object.GetName())
+			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		platform.Debugf("Applying %s", spec)
+		platform.Debugf("Applying %s", console.Greenf("%s", spec))
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
@@ -581,6 +649,7 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 			return nil
 		}
 	}
+	os.Mkdir(".bin", 0755) //nolint: errcheck
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
@@ -688,4 +757,51 @@ func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*
 	})
 
 	return pgdb, nil
+}
+
+func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	// set default labels
+	defaultLabels := make(map[string]string)
+	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
+	if labels != nil {
+		for k, v := range defaultLabels {
+			labels[k] = v
+		}
+	} else {
+		labels = defaultLabels
+	}
+	// set default annotations
+	defaultAnnotations := make(map[string]string)
+	defaultAnnotations["com.flanksource.infra.logs/enabled"] = "true"
+	if annotations != nil {
+		for k, v := range defaultAnnotations {
+			annotations[k] = v
+		}
+	} else {
+		annotations = defaultAnnotations
+	}
+
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations, nil)
+}
+
+func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations, nil)
+}
+
+func (platform *Platform) DefaultNamespaceLabels() map[string]string {
+	annotations := map[string]string{
+		"openpolicyagent.org/webhook": "ignore",
+	}
+	return annotations
+}
+
+func (platform *Platform) DefaultNamespaceAnnotations() map[string]string {
+	annotations := map[string]string{
+		"com.flanksource.infra.logs/enabled": "true",
+	}
+	return annotations
+}
+
+func (platform *Platform) IsMaster(machine types.TagInterface) bool {
+	return machine.GetTags()["Role"] == platform.Name+"-masters"
 }

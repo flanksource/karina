@@ -7,16 +7,17 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/constants"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 func Install(p *platform.Platform) error {
 	p.Infof("Deploying %d gitops controllers", len(p.GitOps))
 	for _, gitops := range p.GitOps {
-		if gitops.Namespace != "" {
-			if err := p.CreateOrUpdateNamespace(gitops.Namespace, nil, nil, nil); err != nil {
+		if gitops.Namespace != "" && gitops.Namespace != constants.KubeSystem && gitops.Namespace != constants.PlatformSystem {
+			if err := p.CreateOrUpdateWorkloadNamespace(gitops.Namespace, nil, nil,nil); err != nil {
 				return fmt.Errorf("install: failed to create namespace: %s: %v", gitops.Namespace, err)
 			}
 		}
@@ -31,7 +32,7 @@ func Install(p *platform.Platform) error {
 // Create flux command arguments from CR
 func defaults(cr *types.GitOps) {
 	if cr.Namespace == "" {
-		cr.Namespace = "kube-system"
+		cr.Namespace = constants.KubeSystem
 	}
 	if cr.Name == "" {
 		cr.Name = cr.Namespace
@@ -123,7 +124,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		Expose(3030).
 		Build()
 
-	if cr.Namespace == "kube-system" {
+	if cr.Namespace == constants.KubeSystem {
 		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
 	} else {
 		spec.ServiceAccount(saName).AddRole("namespace-admin").AddRole("namespace-creator")

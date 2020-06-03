@@ -58,13 +58,6 @@ spec:
       - nsxlo
 
 ---
-# Create Namespace for NSX owned resources
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: nsx-system
-
----
 # Create a ServiceAccount for NCP namespace
 apiVersion: v1
 kind: ServiceAccount

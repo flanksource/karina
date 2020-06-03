@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/moshloop/platform-cli/pkg/api/certmanager"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api/certmanager"
+	"github.com/flanksource/karina/pkg/platform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,7 +54,6 @@ func Install(platform *platform.Platform) error {
 		}
 	} else {
 		// TODO(moshloop): delete previously imported CA
-
 		platform.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
 			"token": []byte(platform.CertManager.Vault.Token),

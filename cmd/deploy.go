@@ -4,80 +4,91 @@ import (
 	"os"
 
 	log "github.com/flanksource/commons/logger"
-	"github.com/moshloop/platform-cli/pkg/phases/base"
-	"github.com/moshloop/platform-cli/pkg/phases/elasticsearch"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/phases/base"
+	"github.com/flanksource/karina/pkg/phases/calico"
+	"github.com/flanksource/karina/pkg/phases/certmanager"
+	"github.com/flanksource/karina/pkg/phases/configmapreloader"
+	"github.com/flanksource/karina/pkg/phases/dex"
+	"github.com/flanksource/karina/pkg/phases/eck"
+	"github.com/flanksource/karina/pkg/phases/elasticsearch"
+	"github.com/flanksource/karina/pkg/phases/filebeat"
+	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
+	"github.com/flanksource/karina/pkg/phases/flux"
+	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/monitoring"
+	"github.com/flanksource/karina/pkg/phases/nsx"
+	"github.com/flanksource/karina/pkg/phases/opa"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
+	"github.com/flanksource/karina/pkg/phases/postgresoperator"
+	"github.com/flanksource/karina/pkg/phases/registrycreds"
+	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
+	"github.com/flanksource/karina/pkg/phases/stubs"
+	"github.com/flanksource/karina/pkg/phases/tekton"
+	"github.com/flanksource/karina/pkg/phases/vault"
+	"github.com/flanksource/karina/pkg/phases/velero"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/spf13/cobra"
-
-	"github.com/moshloop/platform-cli/pkg/phases/calico"
-	"github.com/moshloop/platform-cli/pkg/phases/configmapreloader"
-	"github.com/moshloop/platform-cli/pkg/phases/dex"
-	"github.com/moshloop/platform-cli/pkg/phases/eck"
-	"github.com/moshloop/platform-cli/pkg/phases/filebeat"
-	"github.com/moshloop/platform-cli/pkg/phases/fluentdoperator"
-	"github.com/moshloop/platform-cli/pkg/phases/flux"
-	"github.com/moshloop/platform-cli/pkg/phases/harbor"
-	"github.com/moshloop/platform-cli/pkg/phases/monitoring"
-	"github.com/moshloop/platform-cli/pkg/phases/nsx"
-	"github.com/moshloop/platform-cli/pkg/phases/opa"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
-	"github.com/moshloop/platform-cli/pkg/phases/registrycreds"
-	"github.com/moshloop/platform-cli/pkg/phases/sealedsecrets"
-	"github.com/moshloop/platform-cli/pkg/phases/stubs"
-	"github.com/moshloop/platform-cli/pkg/phases/vault"
-	"github.com/moshloop/platform-cli/pkg/phases/velero"
 )
+
+type DeployFn func(p *platform.Platform) error
+
+var Phases = map[string]DeployFn{
+	"base":               base.Install,
+	"calico":             calico.Install,
+	"configmap-reloader": configmapreloader.Deploy,
+	"dex":                dex.Install,
+	"eck":                eck.Deploy,
+	"elasticsearch":      elasticsearch.Deploy,
+	"fluentd":            fluentdoperator.Deploy,
+	"filebeat":           filebeat.Deploy,
+	"gitops":             flux.Install,
+	"harbor":             harbor.Deploy,
+	"monitoring":         monitoring.Install,
+	"opa":                opa.Install,
+	"nsx":                nsx.Install,
+	"postgres-operator":  postgresoperator.Deploy,
+	"registry-creds":     registrycreds.Install,
+	"sealed-secrets":     sealedsecrets.Install,
+	"stubs":              stubs.Install,
+	"tekton":             tekton.Install,
+	"vault":              vault.Deploy,
+	"velero":             velero.Install,
+}
+
+var PhasesExtra = map[string]DeployFn{
+	"cert-manager":      certmanager.Install,
+	"platform-operator": platformoperator.Install,
+	"vsphere":           vsphere.Install,
+}
+
+var PhaseOrder = []string{"calico", "nsx", "base", "stubs", "postgres-operator", "dex", "vault"}
 
 var Deploy = &cobra.Command{
 	Use: "deploy",
 }
 
 func init() {
-	type DeployFn func(p *platform.Platform) error
-	phases := map[string]DeployFn{
-		"base":               base.Install,
-		"calico":             calico.Install,
-		"configmap-reloader": configmapreloader.Deploy,
-		"dex":                dex.Install,
-		"eck":                eck.Deploy,
-		"elasticsearch":      elasticsearch.Deploy,
-		"fluentd":            fluentdoperator.Deploy,
-		"filebeat":           filebeat.Deploy,
-		"gitops":             flux.Install,
-		"harbor":             harbor.Deploy,
-		"monitoring":         monitoring.Install,
-		"opa":                opa.Install,
-		"nsx":                nsx.Install,
-		"postgres-operator":  postgresoperator.Deploy,
-		"registry-creds":     registrycreds.Install,
-		"sealed-secrets":     sealedsecrets.Install,
-		"stubs":              stubs.Install,
-		"vault":              vault.Deploy,
-		"velero":             velero.Install,
-	}
-
-	order := []string{"calico", "nsx", "base", "stubs", "postgres-operator", "dex", "vault"}
-
-	var Phases = &cobra.Command{
+	var PhasesCmd = &cobra.Command{
 		Use: "phases",
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
 			// we track the failure status, and continue on failure to allow degraded operations
 			failed := false
 			// first deploy strictly ordered phases, these phases are often dependencies for other phases
-			for _, name := range order {
+			for _, name := range PhaseOrder {
 				flag, _ := cmd.Flags().GetBool(name)
 				if !flag {
 					continue
 				}
-				if err := phases[name](p); err != nil {
+				if err := Phases[name](p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
 					failed = true
 				}
 				// remove the phase from the map so it isn't run again
-				delete(phases, name)
+				delete(Phases, name)
 			}
-			for name, fn := range phases {
+			for name, fn := range Phases {
 				flag, _ := cmd.Flags().GetBool(name)
 				if !flag {
 					continue
@@ -93,12 +104,27 @@ func init() {
 		},
 	}
 
-	Deploy.AddCommand(Phases)
+	Deploy.AddCommand(PhasesCmd)
 
-	for name, fn := range phases {
+	for name, fn := range Phases {
 		_name := name
 		_fn := fn
-		Phases.Flags().Bool(name, false, "Deploy "+name)
+		PhasesCmd.Flags().Bool(name, false, "Deploy "+name)
+		Deploy.AddCommand(&cobra.Command{
+			Use:  name,
+			Args: cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+				p := getPlatform(cmd)
+				if err := _fn(p); err != nil {
+					log.Fatalf("Failed to deploy %s: %v", _name, err)
+				}
+			},
+		})
+	}
+
+	for name, fn := range PhasesExtra {
+		_name := name
+		_fn := fn
 		Deploy.AddCommand(&cobra.Command{
 			Use:  name,
 			Args: cobra.MinimumNArgs(0),
@@ -121,16 +147,16 @@ func init() {
 			failed := false
 
 			// first deploy strictly ordered phases, these phases are often dependencies for other phases
-			for _, name := range order {
-				if err := phases[name](p); err != nil {
+			for _, name := range PhaseOrder {
+				if err := Phases[name](p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
 					failed = true
 				}
 				// remove the phase from the map so it isn't run again
-				delete(phases, name)
+				delete(Phases, name)
 			}
 
-			for name, fn := range phases {
+			for name, fn := range Phases {
 				if err := fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
 					failed = true

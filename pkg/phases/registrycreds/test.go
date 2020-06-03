@@ -7,8 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -29,7 +29,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := p.CreateOrUpdateNamespace(testNamespace, nil, nil, nil); err != nil {
+	if err := p.CreateOrUpdateWorkloadNamespace(testNamespace, nil, nil); err != nil {
 		test.Failf("registry-creds", "failed to create namespace %s", testNamespace)
 		return
 	}

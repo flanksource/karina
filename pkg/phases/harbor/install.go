@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"strings"
 
+	pgapi "github.com/flanksource/karina/pkg/api/postgres"
+	"github.com/flanksource/karina/pkg/phases/postgresoperator"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/konfigadm/pkg/utils"
-	pgapi "github.com/moshloop/platform-cli/pkg/api/postgres"
-	"github.com/moshloop/platform-cli/pkg/phases/postgresoperator"
-	"github.com/moshloop/platform-cli/pkg/platform"
 )
 
 func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
-		p.Infof("Skipping deployment of harbor, it is disabled")
+		if err := p.DeleteSpecs("", "harbor.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	p.Infof("Deploying harbor %s", p.Harbor.Version)
@@ -97,6 +99,11 @@ func Deploy(p *platform.Platform) error {
 	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
 		return err
 	}
+
+	if err := p.ApplySpecs(Namespace, "harbor-exporter.yaml"); err != nil {
+		return err
+	}
+
 	client, err := NewClient(p)
 	if err != nil {
 		return err

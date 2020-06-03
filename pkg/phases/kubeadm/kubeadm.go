@@ -7,8 +7,8 @@ import (
 
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/utils"
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/platform"
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,20 +18,22 @@ import (
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 )
 
-// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
-const AuditPolicyPath = "/etc/kubernetes/policies/audit-policy.yaml"
+const (
+	// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
+	AuditPolicyPath              = "/etc/kubernetes/policies/audit-policy.yaml"
+	EncryptionProviderConfigPath = "/etc/kubernetes/policies/encryption-provider-config.yaml"
+)
 
 // NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
 func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster := api.ClusterConfiguration{
-		APIVersion:        "kubeadm.k8s.io/v1beta2",
-		Kind:              "ClusterConfiguration",
-		KubernetesVersion: cfg.Kubernetes.Version,
-		CertificatesDir:   "/etc/kubernetes/pki",
-		ClusterName:       cfg.Name,
-		ImageRepository:   "k8s.gcr.io",
-		// Control plane endpoint is load balanced client side using haproxy + consul service discovery
-		ControlPlaneEndpoint: "localhost:8443",
+		APIVersion:           "kubeadm.k8s.io/v1beta2",
+		Kind:                 "ClusterConfiguration",
+		KubernetesVersion:    cfg.Kubernetes.Version,
+		CertificatesDir:      "/etc/kubernetes/pki",
+		ClusterName:          cfg.Name,
+		ImageRepository:      "k8s.gcr.io",
+		ControlPlaneEndpoint: cfg.JoinEndpoint,
 	}
 	cluster.Networking.DNSDomain = "cluster.local"
 	cluster.Networking.ServiceSubnet = cfg.ServiceSubnet
@@ -40,9 +42,8 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	cluster.Etcd.Local.DataDir = "/var/lib/etcd"
 	cluster.Etcd.Local.ExtraArgs = cfg.Kubernetes.EtcdExtraArgs
 	cluster.Etcd.Local.ExtraArgs["listen-metrics-urls"] = "http://0.0.0.0:2381"
-
 	cluster.APIServer.CertSANs = []string{"localhost", "127.0.0.1", "k8s-api." + cfg.Domain}
-	cluster.APIServer.TimeoutForControlPlane = "4m0s"
+	cluster.APIServer.TimeoutForControlPlane = "10m0s"
 	cluster.APIServer.ExtraArgs = cfg.Kubernetes.APIServerExtraArgs
 
 	if cfg.Kubernetes.AuditConfig.PolicyFile != "" {
@@ -57,13 +58,26 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt)
 	}
 
-	if !cfg.Ldap.Disabled {
+	if cfg.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile != "" {
+		cluster.APIServer.ExtraArgs["encryption-provider-config"] = EncryptionProviderConfigPath
+		mnt := api.HostPathMount{
+			Name:      "encryption-config",
+			HostPath:  EncryptionProviderConfigPath,
+			MountPath: EncryptionProviderConfigPath,
+			ReadOnly:  true,
+			PathType:  api.HostPathFile,
+		}
+		cluster.APIServer.ExtraVolumes = append(cluster.APIServer.ExtraVolumes, mnt)
+	}
+
+	if !cfg.Ldap.Disabled && cfg.IngressCA != nil {
 		cluster.APIServer.ExtraArgs["oidc-issuer-url"] = "https://dex." + cfg.Domain
 		cluster.APIServer.ExtraArgs["oidc-client-id"] = "kubernetes"
 		cluster.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/certs/openid-ca.pem"
 		cluster.APIServer.ExtraArgs["oidc-username-claim"] = "email"
 		cluster.APIServer.ExtraArgs["oidc-groups-claim"] = "groups"
 	}
+
 	if strings.HasPrefix(cluster.KubernetesVersion, "v1.16") {
 		runtimeConfigs := []string{
 			"apps/v1beta1=true",
@@ -83,15 +97,79 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	return cluster
 }
 
+func getKubeletArgs(cfg *platform.Platform) map[string]string {
+	args := cfg.Kubernetes.KubeletExtraArgs
+	if cfg.Vsphere != nil && cfg.Vsphere.CPIVersion != "" {
+		if args == nil {
+			args = make(map[string]string)
+		}
+		args["cloud-provider"] = "external"
+	}
+	return args
+}
+
 func NewInitConfig(cfg *platform.Platform) api.InitConfiguration {
-	config := api.InitConfiguration{
-		Kind: "InitConfiguration",
+	return api.InitConfiguration{
+		APIVersion: "kubeadm.k8s.io/v1beta2",
+		Kind:       "InitConfiguration",
 		NodeRegistration: api.NodeRegistration{
-			KubeletExtraArgs: cfg.Kubernetes.KubeletExtraArgs,
+			KubeletExtraArgs: getKubeletArgs(cfg),
 		},
 	}
+}
 
-	return config
+func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
+	token, err := GetOrCreateBootstrapToken(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
+	}
+	certKey, err := UploadControlPlaneCerts(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload control plane certs: %v", err)
+	}
+	return yaml.Marshal(api.JoinConfiguration{
+		APIVersion: "kubeadm.k8s.io/v1beta2",
+		Kind:       "JoinConfiguration",
+		ControlPlane: &api.JoinControlPlane{
+			CertificateKey: certKey,
+			LocalAPIEndpoint: api.APIEndpoint{
+				AdvertiseAddress: "0.0.0.0",
+				BindPort:         6443,
+			},
+		},
+		Discovery: api.Discovery{
+			BootstrapToken: &api.BootstrapTokenDiscovery{
+				APIServerEndpoint:        cfg.JoinEndpoint,
+				Token:                    token,
+				UnsafeSkipCAVerification: true,
+			},
+		},
+		NodeRegistration: api.NodeRegistration{
+			KubeletExtraArgs: getKubeletArgs(cfg),
+		},
+	})
+}
+
+func NewJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
+	token, err := GetOrCreateBootstrapToken(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
+	}
+
+	return yaml.Marshal(api.JoinConfiguration{
+		APIVersion: "kubeadm.k8s.io/v1beta2",
+		Kind:       "JoinConfiguration",
+		NodeRegistration: api.NodeRegistration{
+			KubeletExtraArgs: getKubeletArgs(cfg),
+		},
+		Discovery: api.Discovery{
+			BootstrapToken: &api.BootstrapTokenDiscovery{
+				APIServerEndpoint:        cfg.JoinEndpoint,
+				Token:                    token,
+				UnsafeSkipCAVerification: true,
+			},
+		},
+	})
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go
@@ -119,11 +197,11 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 		Data: map[string][]byte{
 			bootstrapapi.BootstrapTokenIDKey:               []byte(tokenID),
 			bootstrapapi.BootstrapTokenSecretKey:           []byte(tokenSecret),
-			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().UTC().Add(2 * time.Hour).Format(time.RFC3339)),
+			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().UTC().Add(4 * time.Hour).Format(time.RFC3339)),
 			bootstrapapi.BootstrapTokenUsageSigningKey:     []byte("true"),
 			bootstrapapi.BootstrapTokenUsageAuthentication: []byte("true"),
 			bootstrapapi.BootstrapTokenExtraGroupsKey:      []byte("system:bootstrappers:kubeadm:default-node-token"),
-			bootstrapapi.BootstrapTokenDescriptionKey:      []byte("token generated by platform-cli"),
+			bootstrapapi.BootstrapTokenDescriptionKey:      []byte("token generated by karina"),
 		},
 	}
 

@@ -21,7 +21,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
