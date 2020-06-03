@@ -700,7 +700,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	return nil
 }
 
-func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string, finalizers []string) error {
+func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[string]string, finalizers []string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
@@ -721,6 +721,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 			fin[i] = v1.FinalizerName(f)
 		}
 		cm.Spec.Finalizers = fin
+
 
 		c.Debugf("Creating namespace %s", name)
 		if !c.ApplyDryRun {
@@ -757,7 +758,8 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 	return nil
 }
 
-// ForceDeleteNamespace forcefully deletes a namespace by forcefully overriding it's finalizers
+// ForceDeleteNamespace allows a namespace to be forcibly deleted
+// by overriding it's finalizers
 func (c *Client) ForceDeleteNamespace(ns string, timeout time.Duration) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
