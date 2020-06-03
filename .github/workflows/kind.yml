@@ -33,6 +33,9 @@ jobs:
           - platform
     steps:
       - uses: actions/checkout@master
+      - uses: actions/download-artifact@v1
+        with:
+          name: karinq
       - name: Run e2e testing script
         env:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}

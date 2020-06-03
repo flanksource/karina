@@ -1,3 +1,5 @@
+importConfigs:
+  - minimal.yaml
 fluentd-operator:
   version: v1.11.0
   repository: jvassev/kube-fluentd-operator

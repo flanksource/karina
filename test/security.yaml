@@ -1,4 +1,4 @@
-oauth2Proxy:
+ oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
   cookieSecret: !!template '{{ base64.Encode "d0b0681d5babefb164b4d6e03b53967b" }}'
