@@ -14,12 +14,12 @@ type Enabled struct {
 	Disabled bool `yaml:"disabled"`
 }
 
-type DisabledValue struct {
+type Disabled struct {
 	Disabled bool   `yaml:"disabled"`
 	Version  string `yaml:"version"`
 }
 
-func (d DisabledValue) IsDisabled() bool {
+func (d Disabled) IsDisabled() bool {
 	if d.Disabled {
 		return true
 	}
@@ -330,7 +330,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Dashboard struct {
-	Enabled
+	Enabled          `yaml:",inline"`
 	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
 }
 
@@ -497,7 +497,7 @@ type FluentdOperator struct {
 }
 
 type Filebeat struct {
-	Enabled
+	Enabled       `yaml:",inline"`
 	Version       string      `yaml:"version"`
 	Name          string      `yaml:"name"`
 	Index         string      `yaml:"index"`
@@ -507,23 +507,23 @@ type Filebeat struct {
 }
 
 type Journalbeat struct {
-	DisabledValue
+	Disabled      `yaml:",inline"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Auditbeat struct {
-	DisabledValue
+	Disabled      `yaml:",inline"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 }
 
 type Packetbeat struct {
-	DisabledValue
+	Disabled      `yaml:",inline"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Kibana        *Connection `yaml:"kibana,omitempty"`
 }
 
 type EventRouter struct {
-	DisabledValue
+	Disabled       `yaml:",inline"`
 	FilebeatPrefix string `yaml:"filebeatPrefix"`
 }
 
@@ -614,9 +614,17 @@ type NodeLocalDNS struct {
 }
 
 type SealedSecrets struct {
-	Enabled
+	Enabled     `yaml:",inline"`
 	Version     string `yaml:"version,omitempty"`
 	Certificate *CA    `yaml:"certificate,omitempty"`
+}
+
+type S3UploadCleaner struct {
+	Enabled  `yaml:",inline"`
+	Version  string `yaml:"version"`
+	Endpoint string `yaml:"endpoint"`
+	Bucket   string `yaml:"bucket"`
+	Schedule string `yaml:"schedule"`
 }
 
 type RegistryCredentials struct {
