@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - run: make pack linux compress
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v2
         with:
           name: karina
           path: ./.bin/karina
@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: binary
     strategy:
+      fail-fast: false
       matrix:
         k8s:
           - v1.16.9
@@ -32,7 +33,7 @@ jobs:
           - platform
     steps:
       - uses: actions/checkout@master
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v2
         with:
           name: karina
       - name: Run e2e testing script
