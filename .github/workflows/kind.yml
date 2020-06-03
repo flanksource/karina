@@ -1,17 +1,43 @@
-name: Kind e2e Tests
+name: E2E
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+
 jobs:
-  test-e2e:
+  binary:
     runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.6
+    steps:
+      - uses: actions/checkout@master
+      - run: make pack linux compress
+      - uses: actions/upload-artifact@v1
+        with:
+          name: karina
+          path: ./.bin/karina
+  test:
+    runs-on: ubuntu-latest
+    needs: binary
+    strategy:
+      matrix:
+        k8s:
+          - v1.16.9
+        suite:
+          - minimal
+          - monitoring
+          - harbor
+          - elastic
+          - security
+          - platform
     steps:
       - uses: actions/checkout@master
       - name: Run e2e testing script
         env:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
         run: |
           ./test/e2e-minimal.sh
       - name: Upload test results
@@ -20,7 +46,7 @@ jobs:
         with:
           name: test-results
           path: test-results/
-      - name: Upload snapshotsA
+      - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:

@@ -8,11 +8,8 @@ domain: 127.0.0.1.nip.io
 
 hostPrefix: vsphere-k8s
 
-versions:
-  kubernetes: v1.15.7
-
 kubernetes:
-  version: v1.15.7
+  version: v1.16.9
 
 dns:
   disabled: true
