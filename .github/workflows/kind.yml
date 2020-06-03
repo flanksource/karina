@@ -11,7 +11,7 @@ jobs:
       image: flanksource/build-tools:0.6
     steps:
       - uses: actions/checkout@master
-      - run: make pack linux compress
+      - run: make pack linux
       - uses: actions/upload-artifact@v2
         with:
           name: karina
@@ -36,6 +36,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: karina
+          path: ./.bin
       - name: Run e2e testing script
         env:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
