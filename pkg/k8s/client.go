@@ -682,7 +682,13 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		cm.Name = name
 		cm.Labels = labels
 		cm.Annotations = annotations
-		cm.Finalizers = finalizers
+
+		fin := make([]v1.FinalizerName, len(finalizers))
+		for i, f := range finalizers {
+
+			fin[i] = v1.FinalizerName(f)
+		}
+		cm.Spec.Finalizers = fin
 
 		c.Debugf("Creating namespace %s", name)
 		if !c.ApplyDryRun {
@@ -733,7 +739,7 @@ func (c *Client) ForceDeleteNamespace(ns string, timeout time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("ForceDeleteNamespace: failed to get namespace: %v", err)
 	}
-	namespace.Finalizers = []string{}
+	namespace.Spec.Finalizers = []v1.FinalizerName{}
 	_namespace, err := k8s.CoreV1().Namespaces().Finalize(namespace)
 	if err != nil {
 		return fmt.Errorf("ForceDeleteNamespace: error removing finalisers: %v", err)
