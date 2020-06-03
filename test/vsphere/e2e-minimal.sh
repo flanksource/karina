@@ -105,7 +105,6 @@ if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml
 fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
-# Test Comments
 wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
 chmod +x build-tools
 ./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
