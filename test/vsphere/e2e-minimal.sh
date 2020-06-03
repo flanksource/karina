@@ -111,7 +111,6 @@ chmod +x build-tools
       --success-message="commit $COMMIT_SHA" \
       --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 
-
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
 zip -r artifacts/snapshot.zip snapshot/*
