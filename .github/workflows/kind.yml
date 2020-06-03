@@ -43,6 +43,12 @@ jobs:
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
         run: ./test/test.sh
+      - uses: ashley-taylor/junit-report-annotations-action@v1.1
+        if: ${{ always() }}
+        with:
+          access-token: ${{ secrets.GITHUB_TOKEN }}
+          path: test-results/*.xml
+          numFailures: 20
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
