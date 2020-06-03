@@ -40,8 +40,7 @@ jobs:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
-        run: |
-          ./test/e2e-minimal.sh
+        run: ./test/test.sh
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
