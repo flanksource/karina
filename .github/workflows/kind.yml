@@ -47,11 +47,11 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: test-results
+          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: snapshot
+          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
