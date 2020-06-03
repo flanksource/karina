@@ -10,7 +10,7 @@ GITHUB_OWNER=${GITHUB_OWNER##*:}
 MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
 
 
-export PLATFORM_CONFIG=$SUITE.yaml
+export PLATFORM_CONFIG=test/$SUITE.yaml
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
