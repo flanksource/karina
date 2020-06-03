@@ -1,5 +1,6 @@
 #!/bin/bash
 BIN=./.bin/karina
+chmod +x $BIN
 mkdir -p .bin
 export GO_VERSION=${GO_VERSION:-1.13}
 export KUBECONFIG=~/.kube/config
