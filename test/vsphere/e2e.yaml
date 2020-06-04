@@ -14,7 +14,22 @@ versions:
   kubernetes: v1.16.4
 
 kubernetes:
+  auditing:
+    policyFile: ./test/fixtures/audit-policy.yaml
+  encryption:
+    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
+  apiServerExtraArgs:
+    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-maxsize": 1024
+    "audit-log-maxage": 2
+    "audit-log-maxbackup": 3
+    "audit-log-format": legacy # default is json
   version: v1.16.4
+  kubeletExtraArgs:
+    node-labels: "ingress-ready=true"
+    authorization-mode: "AlwaysAllow"
+  masterIP: localhost
+  containerRuntime: containerd
 
 dns:
   disabled: true
