@@ -56,8 +56,8 @@ func init() {
 			if err != nil {
 				log.Fatalf("Error getting CA: %v", err)
 			}
-			data, = k8s.CreateOIDCKubeConfig(platform.Name, ca, fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
-			if err != err :nil {
+			data, err := k8s.CreateOIDCKubeConfig(platform.Name, ca, fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
+			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}
 			fmt.Println(string(data))
