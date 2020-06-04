@@ -29,7 +29,7 @@ kubernetes:
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
     "audit-log-format": legacy # default is json
-  version: v1.15.7
+  version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
