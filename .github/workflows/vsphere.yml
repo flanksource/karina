@@ -14,7 +14,7 @@ jobs:
           # Run the testing commands in subshell with decoded environment
           sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
       - name: Upload test results
-          if: ${{ always() }}
+        if: ${{ always() }}
           uses: actions/upload-artifact@v1
           with:
             name: vsphere-test-results
