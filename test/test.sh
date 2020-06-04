@@ -1,4 +1,5 @@
 #!/bin/bash
+export
 BIN=./.bin/karina
 chmod +x $BIN
 mkdir -p .bin
