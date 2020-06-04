@@ -173,7 +173,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
 	platformCA, err := platform.GetCA()
 	if err != nil {
-		return fmt.Errorf("Error getting CA: %v", err)
+		return fmt.Errorf("error getting CA: %v", err)
 	}
 	clusterCA, err = platformCA.SignCertificate(clusterCA, 10)
 	if err != nil {
@@ -185,7 +185,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	// any cert signed by the global CA should be allowed
 	platformCA, err = platform.GetCA()
 	if err != nil {
-		return fmt.Errorf("Error getting CA: %v", err)
+		return fmt.Errorf("error getting CA: %v", err)
 	}
 	crt = crt + string(platformCA.GetPublicChain()[0].EncodedCertificate()) + "\n"
 	// csrsigning controller doesn't like having more than 1 CA cert passed to it

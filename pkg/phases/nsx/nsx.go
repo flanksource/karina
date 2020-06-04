@@ -32,7 +32,7 @@ func Install(p *platform.Platform) error {
 		cert := certs.NewCertificateBuilder("kubernetes-client").Certificate
 		platformCA, err := p.GetCA()
 		if err != nil {
-			return fmt.Errorf("Error getting CA: %", err)
+			return fmt.Errorf("error getting CA: %v", err)
 		}
 		cert, err = platformCA.SignCertificate(cert, 10)
 		if err != nil {

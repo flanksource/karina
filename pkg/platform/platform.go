@@ -42,11 +42,10 @@ import (
 const ErrNoCaSection = "no ca section specified. A root CA is mandatory"
 const ErrNoIngressCaSection = "no ingressCA section specified. A ingress CA is mandatory"
 const ErrInvalidCA = "invalid CA"
-const ErrNoCalicoVersion = "no Calico version specified."
+const ErrNoCalicoVersion = "no Calico version specified"
 const ErrInsufficientVms = "a Master needs at least 2 VMs specified"
 const ErrK8sVersionUnset = "kubernetes version is unset"
 const ErrNoConsulSpecified = "no consul hostname/ip specified"
-
 
 type Platform struct {
 	Cluster types.Cluster
@@ -216,7 +215,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	platform.Debugf("Generating a new kubeconfig for %s", ip)
 	platformCA, err := platform.GetCA()
 	if err != nil {
-		return nil, fmt.Errorf("Error getting CA: %v", err)
+		return nil, fmt.Errorf("error getting CA: %v", err)
 	}
 	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platformCA, ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {
