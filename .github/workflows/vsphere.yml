@@ -1,0 +1,21 @@
+name: vSphere e2e Test
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+
+jobs:
+  test-e2e:
+    runs-on: [self-hosted]
+    steps:
+      - uses: actions/checkout@master
+      - name: Run e2e testing script
+        run: |
+          # Run the testing commands in subshell with decoded environment
+          sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: test-results/
