@@ -42,9 +42,9 @@ if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.x
   failed=true
 fi
 
-wget https://github.com/flanksource/build-tools/releases/download/v0.8.0/build-tools
+wget -nv https://github.com/flanksource/build-tools/releases/download/v0.8.0/build-tools
 chmod +x build-tools
-./build-tools gh actions report-junit test-results/results.xml
+./build-tools gh actions report-junit test-results/results.xml --token $GIT_API_KEY
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true
