@@ -49,6 +49,12 @@ ldap:
     username: test
     password: secret
 
+dashboard:
+  accessRestricted:
+    enabled: true
+    groups:
+      - cn=k8s,ou=groups,dc=example,dc=com
+
 configmapReloader:
   disabled: true
 
