@@ -42,9 +42,9 @@ import (
 const ErrNoCaSection = "no ca section specified. A root CA is mandatory"
 const ErrNoIngressCaSection = "no ingressCA section specified. A ingress CA is mandatory"
 const ErrInvalidCA = "invalid CA"
-const ErrNoCalicoVersion = "No Calico version specified."
-const ErrInsufficientVms = "A Master needs at least 2 VMs specified"
-const ErrK8sVersionUnset = "Kubernetes version is unset"
+const ErrNoCalicoVersion = "no Calico version specified."
+const ErrInsufficientVms = "a Master needs at least 2 VMs specified"
+const ErrK8sVersionUnset = "kubernetes version is unset"
 
 type Platform struct {
 	Cluster types.Cluster
@@ -214,7 +214,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	platform.Debugf("Generating a new kubeconfig for %s", ip)
 	platformCA, err := platform.GetCA()
 	if err != nil {
-		return nil, fmt.Errorf("Error getting CA: %", err)
+		return nil, fmt.Errorf("Error getting CA: %v", err)
 	}
 	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platformCA, ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {
@@ -233,7 +233,7 @@ func (platform *Platform) GetCA() (certs.CertificateAuthority, error) {
 	}
 	ca, err := platform.ReadCA(platform.CA)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to open %s: %v", platform.CA.PrivateKey, err)
+		return nil, fmt.Errorf("unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
 	platform.ca = ca
 	return ca, nil
@@ -819,7 +819,6 @@ func (platform *Platform) IsMaster(machine types.TagInterface) bool {
 
 // validateCluster is to validate common platform configs
 func validateCluster(platform *Platform) error {
-
 	if platform.CA == nil {
 		return fmt.Errorf(ErrNoCaSection)
 	}
@@ -835,7 +834,6 @@ func validateCluster(platform *Platform) error {
 
 // ValidateKindCluster is to validate a platform config
 func (platform *Platform) ValidateKindCluster() error {
-
 	err := validateCluster(platform)
 	if err != nil {
 		return err
@@ -848,7 +846,6 @@ func (platform *Platform) ValidateKindCluster() error {
 
 // ValidateVSphereCluster is to validate a platform config
 func (platform *Platform) ValidateVSphereCluster() error {
-
 	err := validateCluster(platform)
 	if err != nil {
 		return err

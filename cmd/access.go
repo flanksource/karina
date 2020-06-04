@@ -31,7 +31,7 @@ func init() {
 			expiry, _ := cmd.Flags().GetDuration("expiry")
 			ca, err := platform.GetCA()
 			if err != nil {
-				log.Fatalf("Error getting CA: %", err)
+				log.Fatalf("Error getting CA: %v", err)
 			}
 
 			data, err := k8s.CreateKubeConfig(platform.Name, ca, endpoint, group, name, expiry)
@@ -54,10 +54,10 @@ func init() {
 			platform := getPlatform(cmd)
 			ca, err := platform.GetCA()
 			if err != nil {
-				log.Fatalf("Error getting CA: %", err)
+				log.Fatalf("Error getting CA: %v", err)
 			}
-			data, err := k8s.CreateOIDCKubeConfig(platform.Name, ca, fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
-			if err != nil {
+			data, = k8s.CreateOIDCKubeConfig(platform.Name, ca, fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
+			if err != err :nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}
 			fmt.Println(string(data))
