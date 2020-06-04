@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/hako/durafmt"
 
 	"github.com/spf13/cobra"
@@ -35,15 +36,10 @@ var namespaceForceDelete = &cobra.Command{
 		}
 
 		return nil
-		},
-	}
-
-
-
-func init() {
-
-	namespaceForceDelete.Flags().DurationVar(&timeout, "timeout",time.Minute * 2, "specify the timeout")
-
-	Namespace.AddCommand(namespaceForceDelete)
+	},
 }
 
+func init() {
+	namespaceForceDelete.Flags().DurationVar(&timeout, "timeout", time.Minute*2, "specify the timeout")
+	Namespace.AddCommand(namespaceForceDelete)
+}
