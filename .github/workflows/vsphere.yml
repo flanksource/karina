@@ -15,10 +15,10 @@ jobs:
           sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
       - name: Upload test results
         if: ${{ always() }}
-          uses: actions/upload-artifact@v1
-          with:
-            name: vsphere-test-results
-            path: test-results/
+        uses: actions/upload-artifact@v1
+        with:
+          name: vsphere-test-results
+          path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
