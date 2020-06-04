@@ -43,11 +43,6 @@ jobs:
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
         run: ./test/test.sh
-      - uses: IgnusG/jest-report-action@v2.3.2
-        if: ${{ always() }}
-        with:
-          access-token: ${{ secrets.GITHUB_TOKEN }}
-          junit-file: test-results/results.xml
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
