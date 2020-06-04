@@ -85,6 +85,10 @@ printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
 # wait for the base deployment with stubs to come up healthy
 $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
 
+$BIN deploy phases --vault --postgres-operator -v
+
+$BIN vault init -v
+
 printf "\n\n\n\n$(tput bold)All Deployments$(tput setaf 7)\n"
 $BIN deploy all $PLATFORM_OPTIONS_FLAGS
 
