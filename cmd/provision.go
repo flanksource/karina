@@ -22,7 +22,7 @@ var vsphereCluster = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		p := getPlatform(cmd)
 		if err := p.ValidateVSphereCluster(); err != nil {
-			return fmt.Errorf("Failed to validate cluster configuration, %s", err)
+			return fmt.Errorf("failed to validate cluster configuration, %s", err)
 		}
 		if err := provision.VsphereCluster(p); err != nil {
 			return fmt.Errorf("failed to provision cluster, %s", err)
@@ -38,7 +38,7 @@ var kindCluster = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		p := getPlatform(cmd)
 		if err := p.ValidateKindCluster(); err != nil {
-			return fmt.Errorf("Failed to validate cluster configuration, %s", err)
+			return fmt.Errorf("failed to validate cluster configuration, %s", err)
 		}
 		if err := provision.KindCluster(p); err != nil {
 			return fmt.Errorf("failed to provision cluster, %s", err)
