@@ -522,11 +522,7 @@ type Packetbeat struct {
 }
 
 type EventRouter struct {
-<<<<<<< Updated upstream
 	Disabled       `yaml:",inline"`
-=======
-	DisabledValue  `yaml:"inline"`
->>>>>>> Stashed changes
 	FilebeatPrefix string `yaml:"filebeatPrefix"`
 }
 
