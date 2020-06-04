@@ -7,6 +7,9 @@ metadata:
     k8s-app: auditbeat
 data:
   auditbeat.yml: |-
+    fields:
+      cluster: "{{ .name }}"
+
     auditbeat.config.modules:
       # Mounted `auditbeat-daemonset-modules` configmap:
       path: ${path.config}/modules.d/*.yml
