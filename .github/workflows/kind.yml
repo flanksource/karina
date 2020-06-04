@@ -18,11 +18,11 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: test-results
+          name: kind-minimal-test-results
           path: test-results/
-      - name: Upload snapshotsA
+      - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: snapshot
+          name: kind-minimal-snapshot
           path: artifacts/snapshot.zip
