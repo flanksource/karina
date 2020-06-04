@@ -8,6 +8,8 @@ metadata:
     k8s-app: packetbeat
 data:
   packetbeat.yml: |-
+    fields:
+      cluster: "{{ .name }}"
     setup.dashboards.enabled: true
     setup.template.enabled: true
     setup.template.settings:

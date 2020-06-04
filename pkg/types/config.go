@@ -45,6 +45,7 @@ type PlatformConfig struct {
 	RegistryCredentials *RegistryCredentials `yaml:"registryCredentials,omitempty"`
 	Resources           map[string]string    `yaml:"resources,omitempty"`
 	S3                  S3                   `yaml:"s3,omitempty"`
+	S3UploadCleaner     S3UploadCleaner      `yaml:"s3uploadCleaner,omitempty"`
 	SealedSecrets       *SealedSecrets       `yaml:"sealedSecrets,omitempty"`
 	ServiceSubnet       string               `yaml:"serviceSubnet"`
 	SMTP                SMTP                 `yaml:"smtp,omitempty"`
