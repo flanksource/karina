@@ -55,6 +55,15 @@ dashboard:
     groups:
       - cn=k8s,ou=groups,dc=example,dc=com
 
+monitoring:
+  version: dfb626837f04756ed5a8805845f51ebd29d342ec
+harbor:
+  replicas: 1
+  bucket: harbor-blobs
+  version: v1.10.0
+postgresOperator:
+  version: v1.3.4.flanksource.1
+
 configmapReloader:
   disabled: true
 
