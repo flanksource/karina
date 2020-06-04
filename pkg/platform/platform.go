@@ -45,6 +45,8 @@ const ErrInvalidCA = "invalid CA"
 const ErrNoCalicoVersion = "no Calico version specified."
 const ErrInsufficientVms = "a Master needs at least 2 VMs specified"
 const ErrK8sVersionUnset = "kubernetes version is unset"
+const ErrNoConsulSpecified = "no consul hostname/ip specified"
+
 
 type Platform struct {
 	Cluster types.Cluster
@@ -857,6 +859,10 @@ func (platform *Platform) ValidateVSphereCluster() error {
 
 	if platform.Calico.Version == "" {
 		return fmt.Errorf(ErrNoCalicoVersion)
+	}
+
+	if platform.Consul == "" {
+		return fmt.Errorf(ErrNoConsulSpecified)
 	}
 
 	return nil
