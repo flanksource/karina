@@ -717,11 +717,9 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[st
 
 		fin := make([]v1.FinalizerName, len(finalizers))
 		for i, f := range finalizers {
-
 			fin[i] = v1.FinalizerName(f)
 		}
 		cm.Spec.Finalizers = fin
-
 
 		c.Debugf("Creating namespace %s", name)
 		if !c.ApplyDryRun {
