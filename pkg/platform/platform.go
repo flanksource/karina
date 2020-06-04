@@ -781,11 +781,11 @@ func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string
 		annotations = defaultAnnotations
 	}
 
-	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations, nil)
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
 }
 
 func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels map[string]string, annotations map[string]string) error {
-	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations, nil)
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
 }
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {
