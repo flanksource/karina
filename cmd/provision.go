@@ -36,7 +36,7 @@ var kindCluster = &cobra.Command{
 	Short: "Provision a new kind cluster",
 	Args:  cobra.MinimumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		p:= getPlatform(cmd)
+		p := getPlatform(cmd)
 		if err := p.ValidateKindCluster(); err != nil {
 			return fmt.Errorf("Failed to validate cluster configuration, %s", err)
 		}

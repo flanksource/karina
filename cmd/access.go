@@ -29,7 +29,7 @@ func init() {
 			group, _ := cmd.Flags().GetString("group")
 			name, _ := cmd.Flags().GetString("name")
 			expiry, _ := cmd.Flags().GetDuration("expiry")
-			ca, err :=  platform.GetCA()
+			ca, err := platform.GetCA()
 			if err != nil {
 				log.Fatalf("Error getting CA: %", err)
 			}
@@ -52,7 +52,7 @@ func init() {
 		Short: "Generate a new kubeconfig file for accessing the cluster using sso",
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
-			ca, err :=  platform.GetCA()
+			ca, err := platform.GetCA()
 			if err != nil {
 				log.Fatalf("Error getting CA: %", err)
 			}

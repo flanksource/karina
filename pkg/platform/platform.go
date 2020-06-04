@@ -46,8 +46,6 @@ const ErrNoCalicoVersion = "No Calico version specified."
 const ErrInsufficientVms = "A Master needs at least 2 VMs specified"
 const ErrK8sVersionUnset = "Kubernetes version is unset"
 
-
-
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
@@ -214,7 +212,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	}
 
 	platform.Debugf("Generating a new kubeconfig for %s", ip)
-	platformCA, err :=  platform.GetCA()
+	platformCA, err := platform.GetCA()
 	if err != nil {
 		return nil, fmt.Errorf("Error getting CA: %", err)
 	}
@@ -819,8 +817,6 @@ func (platform *Platform) IsMaster(machine types.TagInterface) bool {
 	return machine.GetTags()["Role"] == platform.Name+"-masters"
 }
 
-
-
 // validateCluster is to validate common platform configs
 func validateCluster(platform *Platform) error {
 
@@ -865,7 +861,6 @@ func (platform *Platform) ValidateVSphereCluster() error {
 	if platform.Calico.Version == "" {
 		return fmt.Errorf(ErrNoCalicoVersion)
 	}
-
 
 	return nil
 }

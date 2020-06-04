@@ -171,7 +171,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	}
 
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
-	platformCA, err :=  platform.GetCA()
+	platformCA, err := platform.GetCA()
 	if err != nil {
 		return fmt.Errorf("Error getting CA: %", err)
 	}
@@ -183,7 +183,7 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	// plus any cert signed by this cluster specific CA
 	crt := string(clusterCA.EncodedCertificate()) + "\n"
 	// any cert signed by the global CA should be allowed
-	platformCA, err =  platform.GetCA()
+	platformCA, err = platform.GetCA()
 	if err != nil {
 		return fmt.Errorf("Error getting CA: %", err)
 	}
