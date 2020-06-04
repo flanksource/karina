@@ -171,7 +171,11 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	}
 
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
-	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
+	platformCA, err :=  platform.GetCA()
+	if err != nil {
+		return fmt.Errorf("Error getting CA: %", err)
+	}
+	clusterCA, err = platformCA.SignCertificate(clusterCA, 10)
 	if err != nil {
 		return fmt.Errorf("addCerts: failed to sign certificate: %v", err)
 	}
@@ -179,7 +183,11 @@ func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
 	// plus any cert signed by this cluster specific CA
 	crt := string(clusterCA.EncodedCertificate()) + "\n"
 	// any cert signed by the global CA should be allowed
-	crt = crt + string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
+	platformCA, err =  platform.GetCA()
+	if err != nil {
+		return fmt.Errorf("Error getting CA: %", err)
+	}
+	crt = crt + string(platformCA.GetPublicChain()[0].EncodedCertificate()) + "\n"
 	// csrsigning controller doesn't like having more than 1 CA cert passed to it
 	cfg.Files["/etc/kubernetes/pki/csr-ca.crt"] = string(clusterCA.EncodedCertificate())
 	cfg.Files["/etc/kubernetes/pki/csr-ca.key"] = string(clusterCA.EncodedPrivateKey())

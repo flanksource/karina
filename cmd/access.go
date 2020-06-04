@@ -29,7 +29,12 @@ func init() {
 			group, _ := cmd.Flags().GetString("group")
 			name, _ := cmd.Flags().GetString("name")
 			expiry, _ := cmd.Flags().GetDuration("expiry")
-			data, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), endpoint, group, name, expiry)
+			ca, err :=  platform.GetCA()
+			if err != nil {
+				log.Fatalf("Error getting CA: %", err)
+			}
+
+			data, err := k8s.CreateKubeConfig(platform.Name, ca, endpoint, group, name, expiry)
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}
@@ -47,7 +52,11 @@ func init() {
 		Short: "Generate a new kubeconfig file for accessing the cluster using sso",
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
-			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
+			ca, err :=  platform.GetCA()
+			if err != nil {
+				log.Fatalf("Error getting CA: %", err)
+			}
+			data, err := k8s.CreateOIDCKubeConfig(platform.Name, ca, fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}

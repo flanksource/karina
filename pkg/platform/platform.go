@@ -39,6 +39,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const ErrNoCaSection = "no ca section specified. A root CA is mandatory"
+const ErrNoIngressCaSection = "no ingressCA section specified. A ingress CA is mandatory"
+const ErrInvalidCA = "invalid CA"
+const ErrNoCalicoVersion = "No Calico version specified."
+const ErrInsufficientVms = "A Master needs at least 2 VMs specified"
+const ErrK8sVersionUnset = "Kubernetes version is unset"
+
+
+
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
@@ -205,7 +214,11 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	}
 
 	platform.Debugf("Generating a new kubeconfig for %s", ip)
-	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	platformCA, err :=  platform.GetCA()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting CA: %", err)
+	}
+	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platformCA, ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {
 		return nil, err
 	}
@@ -216,16 +229,16 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 // GetCA retrieves the cert.CertificateAuthority
 // for the given platform, initialising it (platform.ca) if it hasn't been read from
 // the specified config (platform.CA) yet.
-func (platform *Platform) GetCA() certs.CertificateAuthority {
+func (platform *Platform) GetCA() (certs.CertificateAuthority, error) {
 	if platform.ca != nil {
-		return platform.ca
+		return platform.ca, nil
 	}
 	ca, err := platform.ReadCA(platform.CA)
 	if err != nil {
-		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
+		return nil, fmt.Errorf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
 	platform.ca = ca
-	return ca
+	return ca, nil
 }
 
 // ReadCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
@@ -804,4 +817,55 @@ func (platform *Platform) DefaultNamespaceAnnotations() map[string]string {
 
 func (platform *Platform) IsMaster(machine types.TagInterface) bool {
 	return machine.GetTags()["Role"] == platform.Name+"-masters"
+}
+
+
+
+// validateCluster is to validate common platform configs
+func validateCluster(platform *Platform) error {
+
+	if platform.CA == nil {
+		return fmt.Errorf(ErrNoCaSection)
+	}
+	if platform.IngressCA == nil {
+		return fmt.Errorf(ErrNoIngressCaSection)
+	}
+	if _, err := platform.GetCA(); err != nil {
+		return errors.Wrap(err, ErrInvalidCA)
+	}
+
+	return nil
+}
+
+// ValidateKindCluster is to validate a platform config
+func (platform *Platform) ValidateKindCluster() error {
+
+	err := validateCluster(platform)
+	if err != nil {
+		return err
+	}
+	if platform.Kubernetes.Version == "" {
+		return fmt.Errorf(ErrK8sVersionUnset)
+	}
+	return nil
+}
+
+// ValidateVSphereCluster is to validate a platform config
+func (platform *Platform) ValidateVSphereCluster() error {
+
+	err := validateCluster(platform)
+	if err != nil {
+		return err
+	}
+
+	if platform.Master.CPUs < 2 {
+		return fmt.Errorf(ErrInsufficientVms)
+	}
+
+	if platform.Calico.Version == "" {
+		return fmt.Errorf(ErrNoCalicoVersion)
+	}
+
+
+	return nil
 }

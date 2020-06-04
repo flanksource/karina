@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -18,10 +19,15 @@ var vsphereCluster = &cobra.Command{
 	Use:   "vsphere-cluster",
 	Short: "Provision a new vsphere cluster",
 	Args:  cobra.MinimumNArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := provision.VsphereCluster(getPlatform(cmd)); err != nil {
-			log.Fatalf("Failed to provision cluster, %s", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		p := getPlatform(cmd)
+		if err := p.ValidateVSphereCluster(); err != nil {
+			return fmt.Errorf("Failed to validate cluster configuration, %s", err)
 		}
+		if err := provision.VsphereCluster(p); err != nil {
+			return fmt.Errorf("failed to provision cluster, %s", err)
+		}
+		return nil
 	},
 }
 
@@ -29,10 +35,15 @@ var kindCluster = &cobra.Command{
 	Use:   "kind-cluster",
 	Short: "Provision a new kind cluster",
 	Args:  cobra.MinimumNArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := provision.KindCluster(getPlatform(cmd)); err != nil {
-			log.Fatalf("Failed to provision cluster, %s", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		p:= getPlatform(cmd)
+		if err := p.ValidateKindCluster(); err != nil {
+			return fmt.Errorf("Failed to validate cluster configuration, %s", err)
 		}
+		if err := provision.KindCluster(p); err != nil {
+			return fmt.Errorf("failed to provision cluster, %s", err)
+		}
+		return nil
 	},
 }
 
