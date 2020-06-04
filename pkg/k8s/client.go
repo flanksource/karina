@@ -700,7 +700,7 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	return nil
 }
 
-func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[string]string, finalizers []string) error {
+func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
@@ -714,13 +714,6 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[st
 		cm.Name = name
 		cm.Labels = labels
 		cm.Annotations = annotations
-
-		fin := make([]v1.FinalizerName, len(finalizers))
-		for i, f := range finalizers {
-
-			fin[i] = v1.FinalizerName(f)
-		}
-		cm.Spec.Finalizers = fin
 
 		c.Debugf("Creating namespace %s", name)
 		if !c.ApplyDryRun {
@@ -775,6 +768,7 @@ func (c *Client) ForceDeleteNamespace(ns string, timeout time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("ForceDeleteNamespace: error removing finalisers: %v", err)
 	}
+
 	return nil
 }
 
