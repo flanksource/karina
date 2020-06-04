@@ -36,9 +36,7 @@ export GO_VERSION=${GO_VERSION:-1.14}
 BIN=./.bin/karina
 
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
-GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
-GITHUB_OWNER=${GITHUB_OWNER##*:}
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
+MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_REPOSITORY/commits/master | jq -r '.sha')
 PR_NUM=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
 COMMIT_SHA="$GITHUB_SHA"
 
@@ -46,7 +44,7 @@ generate_cluster_id() {
   local prefix
 
   prefix=$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)
-  echo "e2e-${GITHUB_OWNER}-${prefix}"
+  echo "e2e-${prefix}"
 }
 
 PLATFORM_CLUSTER_ID=$(generate_cluster_id)
@@ -55,22 +53,16 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 unset KUBECONFIG
 export PLATFORM_CONFIG=test/vsphere/e2e.yaml
 
-#if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
-#  #TODO: more halt required here?
-#  exit 0
-#fi
+if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
+  exit 0
+fi
 
 printenv | grep -v GOVC
 
 printf "\n\n\n\n$(tput bold)Build steps$(tput setaf 7)\n"
-make setup
 go version
-
-if go version | grep  go$GO_VERSION; then
-  make pack build
-else
-  docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:$GO_VERSION pack build
-fi
+make setup
+make pack build
 
 $BIN version
 
@@ -93,24 +85,15 @@ printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
 # wait for the base deployment with stubs to come up healthy
 $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
 
-#TODO: Restore
-#$BIN deploy phases --vault --postgres-operator $PLATFORM_OPTIONS_FLAGS
-
-#TODO: Restore
-#$BIN vault init $PLATFORM_OPTIONS_FLAGS
-
-
 printf "\n\n\n\n$(tput bold)All Deployments$(tput setaf 7)\n"
 $BIN deploy all $PLATFORM_OPTIONS_FLAGS
 
 printf "\n\n\n\n$(tput bold)Tests$(tput setaf 7)\n"
-#TODO: Restore
 ## deploy the opa bundles first, as they can take some time to load, this effectively
 ## parallelizes this work to make the entire test complete faster
 $BIN opa bundle automobile -v $PLATFORM_OPTIONS_FLAGS
 # wait for up to 4 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
-# TODO: base-> all
 $BIN test  base --wait 240 --progress=false $PLATFORM_OPTIONS_FLAGS
 
 failed=false
@@ -122,18 +105,18 @@ if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml
 fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
-# Test Comments
-wget https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
+wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
 chmod +x build-tools
-./build-tools gh report-junit $GITHUB_OWNER/platform-cli $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
-      --success-message="commit $COMMIT_SHA" \
-      --failure-message=":neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
-
+./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+      --success-message="vSphere e2e tests - commit $COMMIT_SHA" \
+      --failure-message="vSphere e2e tests - :neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
 zip -r artifacts/snapshot.zip snapshot/*
 
+$BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
+$BIN cleanup $PLATFORM_OPTIONS_FLAGS
 
 if [[ "$failed" = true ]]; then
   exit 1
