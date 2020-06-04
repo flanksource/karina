@@ -53,7 +53,7 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 unset KUBECONFIG
 export PLATFORM_CONFIG=test/vsphere/e2e-platform-minimal.yaml
 
-if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
+if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
   exit 0
 fi
 
