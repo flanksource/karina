@@ -29,6 +29,8 @@ jobs:
           - minimal
           - monitoring
           - harbor
+          - harbor2
+          - postgres
           - elastic
           - security
           - platform
