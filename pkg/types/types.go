@@ -751,6 +751,11 @@ type Tekton struct {
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
 }
 
+type Test struct {
+	// A list of tests to exclude from testings
+	Exclude []string `yaml:"exclude,omitempty"`
+}
+
 func (c Connection) GetURL() string {
 	url := c.URL
 	if c.Port != "" && !strings.Contains(url, ":") {
