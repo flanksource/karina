@@ -908,7 +908,7 @@ spec:
                 path: passwd
         - name: registry-root-certificate
           secret:
-            secretName: harbor-core
+            secretName: token-key
         - name: registry-config
           configMap:
             name: "harbor-registry"

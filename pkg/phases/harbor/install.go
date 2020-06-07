@@ -62,15 +62,19 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if !p.HasSecret(Namespace, "token-key") {
-		var tokenKey []byte
+		var tokenKey, tokenCrt []byte
 		if harborCore != nil && (*harborCore)["tls.key"] != nil {
 			// migrate key over from existing installation
 			tokenKey = (*harborCore)["tls.key"]
+			tokenCrt = (*harborCore)["tls.crt"]
 		} else {
-			tokenKey = p.NewSelfSigned("registry-token").EncodedPrivateKey()
+			token := p.NewSelfSigned("registry-token")
+			tokenKey = token.EncodedPrivateKey()
+			tokenCrt = token.EncodedCertificate()
 		}
 		if err := p.CreateOrUpdateSecret("token-key", Namespace, map[string][]byte{
 			"tls.key": tokenKey,
+			"tls.crt": tokenCrt,
 		}); err != nil {
 			return err
 		}
