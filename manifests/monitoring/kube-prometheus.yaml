@@ -318,7 +318,7 @@ spec:
       type: elasticsearch
       access: proxy
       basicAuth: true
-      url: "https://{{.elasticsearch.url}}:{{.elasticsearch.port}}"
+      url: "{{.elasticsearch.url}}"
       basicAuthUser: {{.elasticsearch.user}}
       secureJsonData:
         basicAuthPassword: {{.elasticsearch.password}}
