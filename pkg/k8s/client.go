@@ -1110,7 +1110,6 @@ func (c *Client) WaitForResource(kind, namespace, name string, timeout time.Dura
 		}
 		time.Sleep(1 * time.Second)
 	}
-	return nil
 }
 
 // WaitForPod waits for a pod to be in the specified phase, or returns an
