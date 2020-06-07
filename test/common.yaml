@@ -29,7 +29,7 @@ kubernetes:
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
     "audit-log-format": legacy # default is json
-  version: v1.15.7
+  version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
@@ -68,18 +68,6 @@ opa:
   bundleServiceName: automobile
   logFormat: json-pretty
   setDecisionLogs: true
-  namespaceWhitelist:
-    - kube-system
-    - nsx-system
-    - quack
-    - cert-manager
-    - harbor
-    - pgo
-    - dex
-    - local-path-storage
-    - kube-node-lease
-    - monitoring
-    - minio
 calico:
   ipip: Never
   vxlan: Never
