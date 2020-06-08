@@ -9,11 +9,11 @@ type PlatformConfig struct {
 	CertManager CertManager `yaml:"certmanager,omitempty"`
 	// The endpoint for an externally hosted consul cluster
 	// that is used for master discovery
-	Consul         string      `yaml:"consul"`
-	Dashboard      Dashboard   `yaml:"dashboard,omitempty"`
-	Datacenter     string      `yaml:"datacenter"`
-	DNS            *DynamicDNS `yaml:"dns,omitempty"`
-	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
+	Consul         string     `yaml:"consul"`
+	Dashboard      Dashboard  `yaml:"dashboard,omitempty"`
+	Datacenter     string     `yaml:"datacenter"`
+	DNS            DynamicDNS `yaml:"dns,omitempty"`
+	DockerRegistry string     `yaml:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
 	Domain      string      `yaml:"domain"`
 	EventRouter EventRouter `yaml:"eventrouter,omitempty"`
