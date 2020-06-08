@@ -13,14 +13,8 @@ const (
 	ConfigName    = "dex.cfg"
 )
 
-func dexLabels() map[string]string {
-	return map[string]string{
-		"app": "dex",
-	}
-}
-
 func Install(platform *platform.Platform) error {
-	if err := platform.CreateOrUpdateNamespace(Namespace, dexLabels(), nil); err != nil {
+	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 

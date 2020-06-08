@@ -1,0 +1,69 @@
+importConfigs:
+  - minimal.yaml
+fluentd-operator:
+  version: v1.11.0
+  repository: jvassev/kube-fluentd-operator
+fluentd:
+  version: 1.11.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: https
+filebeat:
+  - name: infra
+    version: 7.6.0
+    index: filebeat-infra
+    prefix: com.flanksource.infra
+    elasticsearch:
+      url: logs-es-http.eck.svc.cluster.local
+      user: elastic
+      password: elastic
+      port: 9200
+      scheme: https
+journalbeat:
+  version: 7.6.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: https
+auditbeat:
+  disabled: true
+  version: 7.7.0
+  elasticsearch:
+    url: logs-es-http.eck.svc.cluster.local
+    user: elastic
+    password: elastic
+    port: 9200
+    scheme: http
+packetbeat:
+  version: 7.6.1
+  elasticsearch:
+    url: logs.127.0.0.1.nip.io
+    user: elastic
+    password: elastic
+    port: 443
+    scheme: https
+  kibana:
+    url: kibana.127.0.0.1.nip.io
+    user: elastic
+    password: elastic
+    port: 443
+    scheme: https
+eventrouter:
+  version: v0.3
+eck:
+  version: 1.0.0
+platformOperator:
+  version: 2020050908180831
+  whitelistedPodAnnotations:
+    # used by filebeat
+    - com.flanksource.infra.logs/enabled
+    - co.elastic.logs/enabled
+    # used in e2e tests
+    - foo.flanksource.com/bar
+    - foo.flanksource.com/baz
+

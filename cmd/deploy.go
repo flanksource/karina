@@ -24,6 +24,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/packetbeat"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
+	"github.com/flanksource/karina/pkg/phases/quack"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/s3uploadcleaner"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
@@ -70,6 +71,7 @@ var PhasesExtra = map[string]DeployFn{
 	"cert-manager":      certmanager.Install,
 	"platform-operator": platformoperator.Install,
 	"vsphere":           vsphere.Install,
+	"quack":             quack.Install,
 }
 
 var PhaseOrder = []string{"calico", "nsx", "base", "stubs", "postgres-operator", "dex", "vault"}

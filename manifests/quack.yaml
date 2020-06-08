@@ -98,28 +98,6 @@ subjects:
   - kind: ServiceAccount
     name: quack
     namespace: quack
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: quack-certs
-  namespace: quack
-  annotations:
-    cert-manager.io/allow-direct-injection: "true"
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: quack-certs
-  namespace: quack
-spec:
-  secretName: quack-certs
-  dnsNames:
-    - quack.quack.svc
-  issuerRef:
-    name: default-issuer
-    kind: ClusterIssuer
 ---
 apiVersion: apps/v1
 kind: Deployment
