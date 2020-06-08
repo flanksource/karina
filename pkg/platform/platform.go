@@ -42,7 +42,7 @@ import (
 const ErrNoCaSection = "no ca section specified. A root CA is mandatory"
 const ErrNoIngressCaSection = "no ingressCA section specified. A ingress CA is mandatory"
 const ErrInvalidCA = "invalid CA"
-const ErrNoCalicoVersion = "no Calico version specified"
+const ErrNoCniVersion = "either a Calico or NSX version needs to be specified"
 const ErrInsufficientVms = "a Master needs at least 2 VMs specified"
 const ErrK8sVersionUnset = "kubernetes version is unset"
 const ErrNoConsulSpecified = "no consul hostname/ip specified"
@@ -856,8 +856,8 @@ func (platform *Platform) ValidateVSphereCluster() error {
 		return fmt.Errorf(ErrInsufficientVms)
 	}
 
-	if platform.Calico.Version == "" {
-		return fmt.Errorf(ErrNoCalicoVersion)
+	if platform.Calico.Version == "" && platform.NSX.Version == "" {
+		return fmt.Errorf(ErrNoCniVersion)
 	}
 
 	if platform.Consul == "" {
