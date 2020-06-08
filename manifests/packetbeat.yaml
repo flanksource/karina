@@ -42,10 +42,10 @@ data:
           host: ${HOSTNAME}
           kube_config: /etc/kubernetes/kubelet.conf
           indexers:
-          - ip_port:
+          - ip:
           matchers:
           - field_format:
-              format: '%{[ip]}:%{[port]}'
+              format: '%{[ip]}'
     output.elasticsearch:
       {{ if .packetbeat.elasticsearch }}
       hosts: ['{{ .packetbeat.elasticsearch.url }}:{{ .packetbeat.elasticsearch.port }}']
