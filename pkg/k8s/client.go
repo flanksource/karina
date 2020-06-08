@@ -771,6 +771,31 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[st
 	return nil
 }
 
+// ForceDeleteNamespace deletes a namespace forcibly
+// by overriding it's finalizers first
+func (c *Client) ForceDeleteNamespace(ns string, timeout time.Duration) error {
+	c.Warnf("Clearing finalizers for %v", ns)
+	k8s, err := c.GetClientset()
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: failed to get client set: %v", err)
+	}
+
+	namespace, err := k8s.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: failed to get namespace: %v", err)
+	}
+	namespace.Spec.Finalizers = []v1.FinalizerName{}
+	_, err = k8s.CoreV1().Namespaces().Finalize(namespace)
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: error removing finalisers: %v", err)
+	}
+	err = k8s.CoreV1().Namespaces().Delete(ns, &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: error deleting namespace: %v", err)
+	}
+	return nil
+}
+
 func (c *Client) HasSecret(ns, name string) bool {
 	client, err := c.GetClientset()
 	if err != nil {
