@@ -507,13 +507,13 @@ type Filebeat struct {
 }
 
 type Journalbeat struct {
-	Disabled      `yaml:",inline"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
 }
 
 type Auditbeat struct {
-	Disabled      `yaml:",inline"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
 }
 
 type Packetbeat struct {
