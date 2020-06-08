@@ -203,7 +203,6 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	context := k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath)
 	platform.Tracef("Current KUBECONFIG: path=%s, context=%s", platform.KubeConfigPath, context)
 	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
-		platform.Debugf("Using existing KUBECONFIG, to dynamically generate a KUBECONFIG specify a path without a matching context")
 		return ioutil.ReadFile(platform.KubeConfigPath)
 	}
 
@@ -475,6 +474,13 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 	platform.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 3)
+}
+
+func (platform *Platform) NewSelfSigned(domain string) *certs.Certificate {
+	platform.Infof("Creating new self signed cert %s", domain)
+	cert := certs.NewCertificateBuilder(domain).Server().Certificate
+	cert, _ = cert.SignCertificate(cert, 10)
+	return cert
 }
 
 func (platform *Platform) CreateInternalCertificate(service string, namespace string, clusterDomain string) (*certs.Certificate, error) {

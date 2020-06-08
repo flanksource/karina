@@ -12,7 +12,7 @@ var Opa = &cobra.Command{
 
 func init() {
 	Opa.AddCommand(&cobra.Command{
-		Use:   "bundle",
+		Use:   "deploy-bundle",
 		Short: "deploy opa bundle",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {

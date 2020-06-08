@@ -345,6 +345,8 @@ github.com/hairyhenderson/gomplate/v3 v3.6.0/go.mod h1:RbEC6Y14nNTHCtNWpBAkwqDP4
 github.com/hairyhenderson/toml v0.3.0/go.mod h1:Qzp4VYCUWsSh/aiz4pJGa+R7aXrGdepyDeZP4+9kToA=
 github.com/hairyhenderson/toml v0.3.1-0.20191004034452-2a4f3b6160f2 h1:Dc4YWWuY02jqhCnErAH++juCTwEPLstAOOVhyPXeE7Q=
 github.com/hairyhenderson/toml v0.3.1-0.20191004034452-2a4f3b6160f2/go.mod h1:Qzp4VYCUWsSh/aiz4pJGa+R7aXrGdepyDeZP4+9kToA=
+github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4 h1:60gBOooTSmNtrqNaRvrDbi8VAne0REaek2agjnITKSw=
+github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4/go.mod h1:5Scbynm8dF1XAPwIwkGPqzkM/shndPm79Jd1003hTjE=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
 github.com/hashicorp/consul/api v1.4.0 h1:jfESivXnO5uLdH650JU/6AnjRoHrLhULq0FnC3Kp9EY=
 github.com/hashicorp/consul/api v1.4.0/go.mod h1:xc8u05kyMa3Wjr9eEAsIAo3dg8+LywT5E/Cl7cNS5nU=
