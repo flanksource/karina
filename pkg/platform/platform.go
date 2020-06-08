@@ -45,7 +45,7 @@ const ErrInvalidCA = "invalid CA"
 const ErrNoCniVersion = "either a Calico or NSX version needs to be specified"
 const ErrInsufficientVms = "a Master needs at least 2 VMs specified"
 const ErrK8sVersionUnset = "kubernetes version is unset"
-const ErrNoConsulSpecified = "no consul hostname/ip specified"
+const ErrNoVSphereMasterLocatorSpecified = "to verify masters for vSphere you can use either NSX only, DNS only, Consul only or Consul + DNS - so specify at least: Consul or DNS or NSX"
 
 type Platform struct {
 	Cluster types.Cluster
@@ -860,8 +860,9 @@ func (platform *Platform) ValidateVSphereCluster() error {
 		return fmt.Errorf(ErrNoCniVersion)
 	}
 
-	if platform.Consul == "" {
-		return fmt.Errorf(ErrNoConsulSpecified)
+	//You can use either NSX only, DNS only, Consul only or Consul + DNS
+	if platform.Consul == "" && (platform.NSX == nil || platform.NSX.Disabled == false) && (platform.DNS == nil ||  platform.DNS.Disabled)  {
+		return fmt.Errorf(ErrNoVSphereMasterLocatorSpecified)
 	}
 
 	return nil
