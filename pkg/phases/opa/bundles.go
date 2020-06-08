@@ -11,7 +11,7 @@ import (
 
 func DeployBundle(p *platform.Platform, bundlePath string) error {
 	if p.OPA == nil {
-		return fmt.Errorf("DeployBundle called with no OPA config specified.")
+		return fmt.Errorf("DeployBundle called with no OPA config specified.") //nolint DeployBundle is a capitalized name
 	}
 	if !strings.HasSuffix(bundlePath, "tar.gz") {
 		return fmt.Errorf("bundles must be a tar.gz")
