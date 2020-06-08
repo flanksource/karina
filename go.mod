@@ -13,6 +13,7 @@ require (
 	github.com/go-pg/pg/v9 v9.1.6
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
 	github.com/google/uuid v1.1.1
+	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.8
 	github.com/inconshreveable/log15 v0.0.0-20200109203555-b30bc20e4fd1 // indirect

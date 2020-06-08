@@ -1,0 +1,66 @@
+importConfigs:
+  - minimal.yaml
+test:
+  exclude:
+    - configmap-reloader
+oauth2Proxy:
+  version: "v5.0.0.flanksource.1"
+  oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
+  cookieSecret: !!template '{{ base64.Encode "d0b0681d5babefb164b4d6e03b53967b" }}'
+sealedSecrets:
+  version: "v0.10.0"
+  certificate:
+    cert: .certs/sealed-secrets-crt.pem
+    privateKey: .certs/sealed-secrets-key.pem
+    password: foobar
+vault:
+  version: 1.3.2
+  kmsKeyId: arn:aws:kms:us-east-1:745897381572:key/dde327f5-3b77-41b7-b42a-f9ae2270d90d
+  region: us-east-1
+  accessKey: !!env AWS_ACCESS_KEY_ID
+  secretKey: !!env AWS_SECRET_ACCESS_KEY
+  pkiPath: "pki/sign/ingress"
+  groupMappings:
+    "admins":
+      - admin
+      - signer
+  policies:
+    admin:
+      "auth/*":
+        capabilities:
+          - read
+          - create
+          - update
+          - sudo
+          - list
+          - delete
+      "sys/*":
+        capabilities:
+          - read
+          - create
+          - update
+          - sudo
+          - list
+          - delete
+    signer:
+      "pki/sign/ingress":
+        capabilities: ["update"]
+      "pki/*":
+        capabilities: ["list", "read"]
+  roles:
+    ingress:
+      max_ttl: 2160h
+      ttl: 2160h
+      key_type: rsa
+      key_bits: 2048
+      ou: "OU"
+      organization: org
+      locality: locality
+      province: gauteng
+      generate_lease: true
+      require_cn: false
+      allow_subdomains: true
+      allowed_domains:
+        - 127.0.0.1.nip.io
+  consul:
+    bucket: "consul-backups"

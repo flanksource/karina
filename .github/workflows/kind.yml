@@ -1,28 +1,61 @@
-name: Kind e2e Tests
+name: E2E
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  test-e2e:
+  binary:
     runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.6
+    steps:
+      - run: cat $GITHUB_EVENT_PATH
+      - uses: actions/checkout@master
+      - run: make pack linux
+      - uses: actions/upload-artifact@v2
+        with:
+          name: karina
+          path: ./.bin/karina
+  test:
+    runs-on: ubuntu-latest
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.16.9
+        suite:
+          - minimal
+          - monitoring
+          - harbor
+          - harbor2
+          - postgres
+          - elastic
+          - security
+          - platform
     steps:
       - uses: actions/checkout@master
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
       - name: Run e2e testing script
         env:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./test/e2e-minimal.sh
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+        run: ./test/test.sh
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: kind-minimal-test-results
+          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: kind-minimal-snapshot
+          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip

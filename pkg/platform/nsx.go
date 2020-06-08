@@ -35,11 +35,6 @@ func NewNSXProvider(platform *Platform) (*NSXProvider, error) {
 	if err := client.Init(); err != nil {
 		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
 	}
-	version, err := client.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
-	}
-	platform.Tracef("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
 	nsx := &NSXProvider{}
 	nsx.NSXClient = *client
 	return nsx, nil

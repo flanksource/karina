@@ -1,0 +1,4 @@
+importConfigs:
+  - minimal.yaml
+postgresOperator:
+  version: v1.3.4.flanksource.1

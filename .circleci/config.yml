@@ -49,6 +49,4 @@ workflows:
   version: 2
   build:
     jobs:
-      - test
-      - test-next
       - lint
