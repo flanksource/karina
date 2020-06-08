@@ -184,6 +184,10 @@ func init() {
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			for name, fn := range tests {
+				if Contains(p.Test.Exclude, name) {
+					test.Skipf(name, name)
+					continue
+				}
 				queue(name, fn, wg, ch)
 			}
 		},
@@ -197,4 +201,14 @@ func init() {
 	Test.PersistentFlags().BoolVar(&showProgress, "progress", true, "Display progress as tests run")
 	Test.PersistentFlags().IntVar(&concurrency, "concurrency", 8, "Number of tests to run concurrently")
 	Test.AddCommand(testAllCmd)
+}
+
+// Contains tells whether a contains x.
+func Contains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
 }

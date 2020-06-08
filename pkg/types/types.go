@@ -85,15 +85,14 @@ type Calico struct {
 }
 
 type OPA struct {
-	Disabled           bool     `yaml:"disabled,omitempty"`
-	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
-	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
-	Version            string   `yaml:"version,omitempty"`
-	BundleURL          string   `yaml:"bundleUrl,omitempty"`
-	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
-	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
-	LogFormat          string   `yaml:"logFormat,omitempty"`
-	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
+	Disabled          bool   `yaml:"disabled,omitempty"`
+	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty"`
+	Version           string `yaml:"version,omitempty"`
+	BundleURL         string `yaml:"bundleUrl,omitempty"`
+	BundlePrefix      string `yaml:"bundlePrefix,omitempty"`
+	BundleServiceName string `yaml:"bundleServiceName,omitempty"`
+	LogFormat         string `yaml:"logFormat,omitempty"`
+	SetDecisionLogs   bool   `yaml:"setDecisionLogs,omitempty"`
 	// Policies is a path to directory containing .rego policy files
 	Policies string `yaml:"policies,omitempty"`
 	// Log level for opa server, one of: `debug`,`info`,`error` (default: `error`)
@@ -750,6 +749,11 @@ type Tekton struct {
 	Disabled         bool              `yaml:"disabled,omitempty"`
 	Persistence      Persistence       `yaml:"persistence,omitempty"`
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
+}
+
+type Test struct {
+	// A list of tests to exclude from testings
+	Exclude []string `yaml:"exclude,omitempty"`
 }
 
 func (c Connection) GetURL() string {

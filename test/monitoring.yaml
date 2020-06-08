@@ -1,0 +1,12 @@
+importConfigs:
+  - minimal.yaml
+velero:
+  bucket: velero
+thanos:
+  version: v0.10.1
+  mode: client
+  bucket: thanos
+prometheus:
+  persistence:
+    capacity: 10Gi
+
