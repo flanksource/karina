@@ -1,0 +1,53 @@
+importConfigs:
+  - minimal.yaml
+opa:
+  version: 0.17.3
+  e2e:
+    fixtures: test/opa/opa-fixtures
+  policies: test/opa/policies
+  kubeMgmtVersion: 0.10
+  bundleUrl: http://minio.minio.svc:9000
+  bundlePrefix: bundles
+  bundleServiceName: automobile
+  logFormat: json-pretty
+  setDecisionLogs: true
+velero:
+  bucket: velero
+configmapReloader:
+  version: "v0.0.56"
+sealedSecrets:
+  version: "v0.10.0"
+  certificate:
+    cert: .certs/sealed-secrets-crt.pem
+    privateKey: .certs/sealed-secrets-key.pem
+    password: foobar
+gitops:
+  - name: karina
+    namespace: gitops-e2e-test
+    gitUrl: https://github.com/flanksource/gitops-test.git
+    gitBranch: master
+    gitPath: .
+registryCredentials:
+  disabled: true # quarantine registry creds
+  version: "v1.10.flanksource.2"
+  namespace: "registry-credentials"
+  aws:
+    enabled: true
+    accessKey: !!env AWS_ACCESS_KEY_ID
+    secretKey: !!env AWS_SECRET_ACCESS_KEY
+    account: 745897381572
+    region: us-east-1
+platformOperator:
+  version: 2020050908180831
+  whitelistedPodAnnotations:
+    # used by filebeat
+    - com.flanksource.infra.logs/enabled
+    - co.elastic.logs/enabled
+    # used in e2e tests
+    - foo.flanksource.com/bar
+    - foo.flanksource.com/baz
+test:
+  exclude:
+    - dex
+    - audit
+    - encryption

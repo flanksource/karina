@@ -447,6 +447,26 @@ func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
 	return c.restMapper, err
 }
 
+func (c *Client) GetClientByKind(kind string) (dynamic.NamespaceableResourceInterface, error) {
+	dynamicClient, err := c.GetDynamicClient()
+	if err != nil {
+		return nil, err
+	}
+	rm, _ := c.GetRestMapper()
+	gvk, err := rm.KindFor(schema.GroupVersionResource{
+		Resource: kind,
+	})
+	if err != nil {
+		return nil, err
+	}
+	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
+	mapping, err := rm.RESTMapping(gk, gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+	return dynamicClient.Resource(mapping.Resource), nil
+}
+
 func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	dynamicClient, err := c.GetDynamicClient()
 	if err != nil {
@@ -456,6 +476,7 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 	rm, _ := c.GetRestMapper()
+
 	mapping, err := rm.RESTMapping(gk, gvk.Version)
 	if err != nil && meta.IsNoMatchError(err) {
 		// new CRD may still becoming ready, flush caches and retry
@@ -1076,6 +1097,41 @@ func (c *Client) PingMaster() bool {
 		return false
 	}
 	return true
+}
+
+func (c *Client) WaitForResource(kind, namespace, name string, timeout time.Duration) error {
+	client, err := c.GetClientByKind(kind)
+	if err != nil {
+		return err
+	}
+	start := time.Now()
+	for {
+		item, err := client.Namespace(namespace).Get(name, metav1.GetOptions{})
+
+		if errors.IsNotFound(err) {
+			return err
+		}
+
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for %s/%s is %s, error: %v", kind, name, "", err)
+		}
+
+		if err != nil {
+			c.Debugf("Unable to get %s/%s: %v", kind, name, err)
+			continue
+		}
+
+		conditions := item.Object["status"].(map[string]interface{})["conditions"].([]interface{})
+
+		for _, raw := range conditions {
+			condition := raw.(map[string]interface{})
+			c.Debugf("%s/%s is %s/%s: %s", namespace, name, condition["type"], condition["status"], condition["message"])
+			if condition["type"] == "Ready" && condition["status"] == "True" {
+				return nil
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
 
 // WaitForPod waits for a pod to be in the specified phase, or returns an

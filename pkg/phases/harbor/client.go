@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/dghubble/sling"
 	"github.com/flanksource/commons/console"
@@ -22,6 +23,7 @@ type Client struct {
 	sling  *sling.Sling
 	client *http.Client
 	url    string
+	base   string
 }
 
 func NewClient(p *platform.Platform) (*Client, error) {
@@ -50,12 +52,19 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
+	var base string
+	if strings.HasPrefix(p.Harbor.Version, "v1") {
+		base = "/api"
+	} else {
+		base = "/api/v2.0"
+	}
 	client := &http.Client{Transport: tr}
 	return &Client{
 		Logger: p.Logger,
 		client: client,
+		base:   base,
 		url:    p.Harbor.URL,
-		sling: sling.New().Client(client).Base("http://harbor-core").
+		sling: sling.New().Client(client).Base("http://harbor-core"+base).
 			SetBasicAuth("admin", p.Harbor.AdminPassword).
 			Set("accept", "application/json").
 			Set("content-type", "application/json"),
@@ -63,7 +72,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 }
 
 func (harbor *Client) GetStatus() (*Status, error) {
-	resp, err := harbor.client.Get("http://harbor-core/api/health")
+	resp, err := harbor.client.Get("http://harbor-core" + harbor.base + "/health")
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +87,7 @@ func (harbor *Client) GetStatus() (*Status, error) {
 
 func (harbor *Client) ListReplicationPolicies() (policies []ReplicationPolicy, customErr error) {
 	resp, err := harbor.sling.New().
-		Get("api/replication/policies").
+		Get("replication/policies").
 		Receive(&policies, &customErr)
 	if err == nil {
 		err = customErr
@@ -91,7 +100,7 @@ func (harbor *Client) TriggerReplication(id int) (*Replication, error) {
 	req := Replication{PolicyID: id}
 	r, err := harbor.sling.New().
 		BodyJSON(&req).
-		Post("api/replication/executions").
+		Post("replication/executions").
 		Receive(nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("TriggerReplication: failed to trigger replication: %v", err)
@@ -109,9 +118,9 @@ func (harbor *Client) TriggerReplication(id int) (*Replication, error) {
 func (harbor *Client) UpdateSettings(settings types.HarborSettings) error {
 	data, _ := json.Marshal(settings)
 	harbor.Tracef("Harbor settings: \n%s\n", console.StripSecrets(string(data)))
-	harbor.Infof("Updating harbor using: %s \n", harbor.url)
+	harbor.Infof("Updating harbor using: %s \n", harbor.base)
 	r, err := harbor.sling.New().
-		Put("api/configurations").
+		Put(harbor.base+"/configurations").
 		BodyJSON(&settings).
 		Receive(nil, nil)
 	if err != nil {
