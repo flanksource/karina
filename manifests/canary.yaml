@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: canary-config
+  namespace: platform-system
+  labels:
+    k8s-app: canary
+data:
+  hello-world.yaml: |-
+    fields:
+      cluster: "{{ .name }}"

@@ -328,6 +328,10 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+type Canary struct {
+	Enabled 		 bool     `yaml:"enabled"`
+}
+
 type Dashboard struct {
 	Enabled          `yaml:",inline"`
 	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`

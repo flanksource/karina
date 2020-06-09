@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"github.com/flanksource/karina/pkg/phases/canary"
 	"io/ioutil"
 	"os"
 	"path"
@@ -125,6 +126,7 @@ func init() {
 	tests := map[string]TestFn{
 		"audit":              kubeadm.TestAudit,
 		"base":               base.Test,
+		"canary":             canary.TestCanary,
 		"configmap-reloader": configmapreloader.Test,
 		"consul":             consul.Test,
 		"dex":                dex.Test,
