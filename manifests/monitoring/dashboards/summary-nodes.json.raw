@@ -9,6 +9,19 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "iconSize": 0,
+        "lineColor": "",
+        "name": "Annotations & Alerts",
+        "query": "",
+        "showLine": false,
+        "tags": "",
+        "tagsField": "",
+        "textField": ""
       }
     ]
   },
@@ -387,8 +400,54 @@
   "tags": [
     "summary"
   ],
-  "templating": {
-    "list": []
+   "templating": {
+    "list": [
+      {
+        "allFormat": "",
+        "allValue": "",
+        "current": {
+          "text": "thanos",
+          "value": "thanos"
+        },
+        "datasource": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "multiFormat": "",
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "datasource"
+      },
+      {
+        "allFormat": "",
+        "allValue": "",
+        "current": {
+          "text": "",
+          "value": null
+        },
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "multiFormat": "",
+        "name": "Filter",
+        "options": null,
+        "query": "",
+        "refresh": false,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "adhoc"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
