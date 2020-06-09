@@ -73,6 +73,8 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: auditbeat
+  annotations:
+    reload/all: "true"
 spec:
   selector:
     matchLabels:

@@ -37,12 +37,33 @@ data:
     - drop_event:
         when:
           or:
-            equals:
-              # cron is very chatty
-              syslog.identifier: cron
-            equals:
-              # Ignore auditd
-              syslog.identifier: audit
+            - equals:
+               # cron is very chatty
+               syslog.identifier: CRON
+            - equals:
+               # Ignore auditd
+               syslog.identifier: audit
+            - contains:
+                message: "__main__ nsx_cni plugin invoked with arguments: VERSION"
+            - contains:
+                message: "__main__ CNI Command in environment: VERSION"
+            - contains:
+                message: "__main__ Initialized CNI configuration"
+            - contains:
+                message: "__main__ CNI Command in environment: ADD"
+            - contains:
+                message: "__main__ nsx_cni plugin invoked with arguments: ADD"
+            - contains:
+                message: "__main__ Network config from input"
+            - contains:
+                message: "__main__ Connection closed"
+            - contains:
+                message: "__main__ Reading configuration on standard input"
+            - contains:
+                message: "__main__ CNI VERSION is queried"
+            - contains:
+                message: "https://github.com/kubernetes/kubernetes/issues/69699"
+
 
     output.elasticsearch:
       hosts: ['${ELASTIC_URL}']
@@ -61,6 +82,8 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: journalbeat
+  annotations:
+    reload/all: "true"
 spec:
   selector:
     matchLabels:

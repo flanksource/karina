@@ -304,6 +304,9 @@ kind: Deployment
 metadata:
   name: grafana-operator
   namespace: monitoring
+  annotations:
+    com.flanksource.infra.logs/processors.1.decode_json_fields.fields: message
+    com.flanksource.infra.logs/processors.1.decode_json_fields.target: ""
 spec:
   replicas: 1
   selector:
