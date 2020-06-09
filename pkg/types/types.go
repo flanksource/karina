@@ -509,14 +509,13 @@ type FluentdOperator struct {
 }
 
 type Filebeat struct {
-	Enabled         `yaml:",inline"`
-	Version         string      `yaml:"version"`
-	Name            string      `yaml:"name"`
-	Index           string      `yaml:"index"`
-	Prefix          string      `yaml:"prefix"`
-	DisableOnMaster bool        `yaml:"disableOnMaster"`
-	Elasticsearch   *Connection `yaml:"elasticsearch,omitempty"`
-	Logstash        *Connection `yaml:"logstash,omitempty"`
+	Enabled       `yaml:",inline"`
+	Version       string      `yaml:"version"`
+	Name          string      `yaml:"name"`
+	Index         string      `yaml:"index"`
+	Prefix        string      `yaml:"prefix"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Logstash      *Connection `yaml:"logstash,omitempty"`
 }
 
 type Journalbeat struct {
@@ -760,6 +759,7 @@ type Elasticsearch struct {
 type Tekton struct {
 	Version          string            `yaml:"version,omitempty"`
 	DashboardVersion string            `yaml:"dashboardVersion,omitempty"`
+	EventsVersion    string            `yaml:"eventsVersion,omitempty`
 	Disabled         bool              `yaml:"disabled,omitempty"`
 	Persistence      Persistence       `yaml:"persistence,omitempty"`
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`

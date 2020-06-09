@@ -36,9 +36,14 @@ data:
               lookup_fields: ["container.id"]
     - drop_event:
         when:
-          equals:
-            # Ignore auditd
-            syslog.identifier: audit
+          or:
+            equals:
+              # cron is very chatty
+              syslog.identifier: cron
+            equals:
+              # Ignore auditd
+              syslog.identifier: audit
+
     output.elasticsearch:
       hosts: ['${ELASTIC_URL}']
       username: ${ELASTIC_USERNAME}
@@ -67,13 +72,14 @@ spec:
     spec:
       serviceAccountName: journalbeat
       terminationGracePeriodSeconds: 30
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       containers:
         - name: journalbeat
           image: docker.elastic.co/beats/journalbeat:{{ .journalbeat.version }}
-          args: [
-            "-c", "/etc/journalbeat.yml",
-            "-e",
-          ]
+          args: ["-c", "/etc/journalbeat.yml", "-e"]
           envFrom:
             - secretRef:
                 name: elastic-infra
