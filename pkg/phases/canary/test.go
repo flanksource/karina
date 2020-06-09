@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"net/http"
-	"github.com/prometheus/client_golang/api"
-
-
 )
 
 func TestCanary(p *platform.Platform, test *console.TestResults) {
-	if p.Canary.Enabled {
+	if !p.Canary.Enabled {
 		test.Skipf("canary", "canary is not enabled")
 		return
 	}
