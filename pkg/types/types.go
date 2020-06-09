@@ -343,7 +343,7 @@ type DynamicDNS struct {
 	Disabled bool `yaml:"disabled,omitempty"`
 	// Set to true if you want DNS records added to k8s-api and "*" for every new
 	// worker and master created.
-	UpdateHosts bool `yaml:updateHosts,omitempty"`
+	UpdateHosts bool `yaml:"updateHosts,omitempty"`
 	// Nameserver and port for dynamic DNS updates
 	Nameserver string `yaml:"nameserver,omitempty"`
 	// Dynamic DNS key secret
@@ -759,7 +759,7 @@ type Elasticsearch struct {
 type Tekton struct {
 	Version          string            `yaml:"version,omitempty"`
 	DashboardVersion string            `yaml:"dashboardVersion,omitempty"`
-	EventsVersion    string            `yaml:"eventsVersion,omitempty`
+	EventsVersion    string            `yaml:"eventsVersion,omitempty"`
 	Disabled         bool              `yaml:"disabled,omitempty"`
 	Persistence      Persistence       `yaml:"persistence,omitempty"`
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`

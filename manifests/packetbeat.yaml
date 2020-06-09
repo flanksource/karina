@@ -68,6 +68,8 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: packetbeat
+  annotations:
+    reload/all: "true"
 spec:
   selector:
     matchLabels:
