@@ -78,16 +78,17 @@ spec:
         k8s-app: packetbeat
     spec:
       serviceAccountName: packetbeat
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       terminationGracePeriodSeconds: 30
       hostNetwork: true
       containers:
         - name: packetbeat
           image: docker.elastic.co/beats/packetbeat:{{ .packetbeat.version }}
           imagePullPolicy: Always
-          args: [
-            "-c", "/etc/packetbeat.yml",
-            "-e",
-          ]
+          args: ["-c", "/etc/packetbeat.yml", "-e"]
           securityContext:
             runAsUser: 0
             capabilities:
