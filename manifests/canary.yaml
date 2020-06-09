@@ -2,10 +2,98 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: canary-config
-  namespace: platform-system
+  namespace: monitoring
   labels:
     k8s-app: canary
 data:
   hello-world.yaml: |-
     fields:
       cluster: "{{ .name }}"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: canary
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: canary
+    spec:
+      volumes:
+        - name: data
+          emptyDir: {}
+      containers:
+        - name: canary
+          volumeMounts:
+            - name: data
+              mountPath: "/data"
+          image: "flanksource/canary-checker:v0.8.3"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "50Mi"
+            limits:
+              cpu: "500m"
+              memory: "500Mi"
+          command:
+            - "/app/canary-checker"
+          args:
+            - serve
+          env:
+            - name: TODO
+              value: "TODO" #{{.s3.access_key}}"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8080
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8080
+            initialDelaySeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary
+  namespace: monitoring
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: canary
+
+---
+#TODO: do we need it to be available externally?
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: canary
+  namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - secretName: canary-tls
+      hosts:
+        - canary.{{.domain}}
+  rules:
+    - host: canary.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: canary
+              servicePort: 8080

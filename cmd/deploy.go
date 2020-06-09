@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/flanksource/karina/pkg/phases/canary"
 	"os"
 
 	log "github.com/flanksource/commons/logger"
@@ -43,6 +44,7 @@ var Phases = map[string]DeployFn{
 	"auditbeat":          auditbeat.Deploy,
 	"base":               base.Install,
 	"calico":             calico.Install,
+	"canary":             canary.Deploy,
 	"configmap-reloader": configmapreloader.Deploy,
 	"dex":                dex.Install,
 	"eck":                eck.Deploy,

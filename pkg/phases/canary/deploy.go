@@ -1,7 +1,6 @@
 package canary
 
 import (
-	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 )
 
@@ -12,5 +11,5 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 
-	return p.ApplySpecs(constants.PlatformSystem, "canary.yaml")
+	return p.ApplySpecs("monitoring", "canary.yaml")
 }
