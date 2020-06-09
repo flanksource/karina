@@ -40,13 +40,18 @@ data:
       - add_cloud_metadata:
       - add_kubernetes_metadata:
           host: ${HOSTNAME}
+          kube_config: /etc/kubernetes/kubelet.conf
           indexers:
-          - ip_port:
+          - ip:
           matchers:
           - field_format:
-              format: '%{[ip]}:%{[port]}'
+              format: '%{[ip]}'
     output.elasticsearch:
+      {{ if .packetbeat.elasticsearch }}
+      hosts: ['{{ .packetbeat.elasticsearch.url }}:{{ .packetbeat.elasticsearch.port }}']
+      {{ else }}
       hosts: ['${ELASTIC_URL}']
+      {{ end }}
       username: ${ELASTIC_USERNAME}
       password: ${ELASTIC_PASSWORD}
       protocol: https
@@ -96,6 +101,12 @@ spec:
               subPath: packetbeat.yml
             - name: data
               mountPath: /usr/share/packetbeat/data
+            - name: kubelet-conf
+              mountPath: /etc/kubernetes/kubelet.conf
+              readOnly: true
+            - name: kubelet-pki
+              mountPath: /var/lib/kubelet/pki/
+              readOnly: true
       volumes:
         - name: config
           configMap:
@@ -103,6 +114,14 @@ spec:
             name: packetbeat-config
         - name: data
           emptyDir: {}
+        - name: kubelet-conf
+          hostPath:
+            path: /etc/kubernetes/kubelet.conf
+            type: File
+        - name: kubelet-pki
+          hostPath:
+            path: /var/lib/kubelet/pki/
+            type: Directory
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding

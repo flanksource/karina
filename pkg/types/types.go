@@ -496,23 +496,24 @@ type FluentdOperator struct {
 }
 
 type Filebeat struct {
-	Enabled       `yaml:",inline"`
-	Version       string      `yaml:"version"`
-	Name          string      `yaml:"name"`
-	Index         string      `yaml:"index"`
-	Prefix        string      `yaml:"prefix"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
-	Logstash      *Connection `yaml:"logstash,omitempty"`
+	Enabled         `yaml:",inline"`
+	Version         string      `yaml:"version"`
+	Name            string      `yaml:"name"`
+	Index           string      `yaml:"index"`
+	Prefix          string      `yaml:"prefix"`
+	DisableOnMaster bool        `yaml:"disableOnMaster"`
+	Elasticsearch   *Connection `yaml:"elasticsearch,omitempty"`
+	Logstash        *Connection `yaml:"logstash,omitempty"`
 }
 
 type Journalbeat struct {
-	Disabled      `yaml:",inline"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
 }
 
 type Auditbeat struct {
-	Disabled      `yaml:",inline"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
 }
 
 type Packetbeat struct {
