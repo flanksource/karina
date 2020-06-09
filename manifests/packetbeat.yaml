@@ -39,13 +39,16 @@ data:
     processors:
       - add_cloud_metadata:
       - add_kubernetes_metadata:
+          in_cluster: false
           host: ${HOSTNAME}
           kube_config: /etc/kubernetes/kubelet.conf
+          default_indexers.enabled: false
+          default_matchers.enabled: false
           indexers:
-          - ip:
+          - ip_port:
           matchers:
-          - field_format:
-              format: '%{[ip]}'
+            - fields:
+                format: '%{[destination.ip]}:%{[destination.port]}'
     output.elasticsearch:
       {{ if .packetbeat.elasticsearch }}
       hosts: ['{{ .packetbeat.elasticsearch.url }}:{{ .packetbeat.elasticsearch.port }}']
