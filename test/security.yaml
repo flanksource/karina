@@ -3,6 +3,7 @@ importConfigs:
 test:
   exclude:
     - configmap-reloader
+    - consul #quarantine flakey test
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com
