@@ -21,6 +21,8 @@ var specs = []string{
 	"node-exporter.yaml",
 	"alertmanager-rules.yaml.raw",
 	"service-monitors.yaml",
+	"namespace-rules.yaml.raw",
+	"kubernetes-rules.yaml.raw",
 }
 
 var cleanup = []string{
