@@ -87,12 +87,12 @@ func (platform *Platform) Init() error {
 			return err
 		}
 		platform.MasterDiscovery = nsx
-		if platform.DNS != nil && !platform.DNS.Disabled {
+		if platform.DNS.IsEnabled() && platform.DNS.UpdateHosts {
 			platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{nsx, dns}}
 		} else {
 			platform.ProvisionHook = nsx
 		}
-	} else if platform.Consul != "" && platform.DNS != nil && !platform.DNS.Disabled {
+	} else if platform.Consul != "" && platform.DNS.IsEnabled() && platform.DNS.UpdateHosts {
 		// when both consul and DNS are specified, Consul is used for master discovery
 		// and DNS used for external access
 		platform.MasterDiscovery = consul
@@ -100,7 +100,7 @@ func (platform *Platform) Init() error {
 	} else if platform.Consul != "" {
 		platform.MasterDiscovery = consul
 		platform.ProvisionHook = consul
-	} else if platform.DNS != nil && !platform.DNS.Disabled {
+	} else if platform.DNS.IsEnabled() && platform.DNS.UpdateHosts {
 		platform.MasterDiscovery = dns
 		platform.ProvisionHook = dns
 	} else {
@@ -171,7 +171,7 @@ func (platform *Platform) ResetMasterConnection() {
 // GetAPIEndpoint returns an endpoint for reaching a master node that is reachable on 6443 or
 // an error otherwise
 func (platform *Platform) GetAPIEndpoint() (string, error) {
-	if platform.DNS != nil && !platform.DNS.Disabled {
+	if platform.DNS.IsEnabled() {
 		ip := fmt.Sprintf("k8s-api.%s", platform.Domain)
 		if net.Ping(ip, 6443, 10) {
 			return ip, nil
@@ -295,7 +295,7 @@ func (platform *Platform) WaitFor() error {
 }
 
 func (platform *Platform) GetDNSClient() dns.Client {
-	if platform.DNS == nil || platform.DNS.Disabled {
+	if !platform.DNS.IsEnabled() {
 		return &dns.DummyDNSClient{
 			Logger: platform.Logger,
 			Zone:   "nip.io",

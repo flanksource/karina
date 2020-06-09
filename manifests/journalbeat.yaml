@@ -14,6 +14,15 @@ data:
     - paths: ["/var/log/journal"]
       seek: cursor
 
+    setup.dashboards.enabled: false
+    setup.kibana:
+      host: "{{ .packetbeat.kibana.url }}:{{ .packetbeat.kibana.port }}"
+      username: ${ELASTIC_USERNAME}
+      password: ${ELASTIC_PASSWORD}
+      protocol: https
+      ssl.verification_mode: none
+      ssl.supported_protocols: [TLSv1.2, TLSv1.3]
+
     processors:
     - add_cloud_metadata: ~
     - add_kubernetes_metadata:
@@ -25,6 +34,16 @@ data:
         matchers:
           - fields:
               lookup_fields: ["container.id"]
+    - drop_event:
+        when:
+          or:
+            equals:
+              # cron is very chatty
+              syslog.identifier: cron
+            equals:
+              # Ignore auditd
+              syslog.identifier: audit
+
     output.elasticsearch:
       hosts: ['${ELASTIC_URL}']
       username: ${ELASTIC_USERNAME}
@@ -53,13 +72,14 @@ spec:
     spec:
       serviceAccountName: journalbeat
       terminationGracePeriodSeconds: 30
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       containers:
         - name: journalbeat
           image: docker.elastic.co/beats/journalbeat:{{ .journalbeat.version }}
-          args: [
-            "-c", "/etc/journalbeat.yml",
-            "-e",
-          ]
+          args: ["-c", "/etc/journalbeat.yml", "-e"]
           envFrom:
             - secretRef:
                 name: elastic-infra

@@ -16,6 +16,15 @@ data:
       # Reload module configs as they change:
       reload.enabled: false
 
+    setup.dashboards.enabled: true
+    setup.kibana:
+      host: "{{ .auditbeat.kibana.url }}:{{ .auditbeat.kibana.port }}"
+      username: ${ELASTIC_USERNAME}
+      password: ${ELASTIC_PASSWORD}
+      protocol: https
+      ssl.verification_mode: none
+      ssl.supported_protocols: [TLSv1.2, TLSv1.3]
+
     processors:
       - add_cloud_metadata:
       - add_process_metadata:
@@ -47,22 +56,6 @@ metadata:
     k8s-app: auditbeat
 data:
   system.yml: |-
-    - module: file_integrity
-      paths:
-      - /hostfs/bin
-      - /hostfs/usr/bin
-      - /hostfs/sbin
-      - /hostfs/usr/sbin
-      - /hostfs/etc
-      exclude_files:
-      - '(?i)\.sw[nop]$'
-      - '~$'
-      - '/\.git($|/)'
-      scan_at_start: true
-      scan_rate_per_sec: 50 MiB
-      max_file_size: 100 MiB
-      hash_types: [sha1]
-      recursive: true
     - module: auditd
       audit_rules: |
         # Executions
@@ -90,17 +83,18 @@ spec:
         k8s-app: auditbeat
     spec:
       serviceAccountName: auditbeat
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       terminationGracePeriodSeconds: 30
-#      hostNetwork: true
-      hostPID: true  # Required by auditd module
+      #      hostNetwork: true
+      hostPID: true # Required by auditd module
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: auditbeat
           image: docker.elastic.co/beats/auditbeat:{{ .auditbeat.version }}
-          args: [
-            "-c", "/etc/auditbeat.yml",
-            "-e",
-          ]
+          args: ["-c", "/etc/auditbeat.yml", "-e"]
           env:
             - name: NODE_NAME
               valueFrom:
@@ -116,9 +110,9 @@ spec:
             capabilities:
               add:
                 # Capabilities needed for auditd module
-                - 'AUDIT_READ'
-                - 'AUDIT_WRITE'
-                - 'AUDIT_CONTROL'
+                - "AUDIT_READ"
+                - "AUDIT_WRITE"
+                - "AUDIT_CONTROL"
           resources:
             limits:
               memory: 200Mi
@@ -224,3 +218,4 @@ metadata:
   labels:
     k8s-app: auditbeat
 ---
+

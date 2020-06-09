@@ -39,14 +39,22 @@ data:
     processors:
       - add_cloud_metadata:
       - add_kubernetes_metadata:
+          in_cluster: false
           host: ${HOSTNAME}
+          kube_config: /etc/kubernetes/kubelet.conf
+          default_indexers.enabled: false
+          default_matchers.enabled: false
           indexers:
           - ip_port:
           matchers:
-          - field_format:
-              format: '%{[ip]}:%{[port]}'
+            - fields:
+                format: '%{[destination.ip]}:%{[destination.port]}'
     output.elasticsearch:
+      {{ if .packetbeat.elasticsearch }}
+      hosts: ['{{ .packetbeat.elasticsearch.url }}:{{ .packetbeat.elasticsearch.port }}']
+      {{ else }}
       hosts: ['${ELASTIC_URL}']
+      {{ end }}
       username: ${ELASTIC_USERNAME}
       password: ${ELASTIC_PASSWORD}
       protocol: https
@@ -70,16 +78,17 @@ spec:
         k8s-app: packetbeat
     spec:
       serviceAccountName: packetbeat
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       terminationGracePeriodSeconds: 30
       hostNetwork: true
       containers:
         - name: packetbeat
           image: docker.elastic.co/beats/packetbeat:{{ .packetbeat.version }}
           imagePullPolicy: Always
-          args: [
-            "-c", "/etc/packetbeat.yml",
-            "-e",
-          ]
+          args: ["-c", "/etc/packetbeat.yml", "-e"]
           securityContext:
             runAsUser: 0
             capabilities:
@@ -96,6 +105,12 @@ spec:
               subPath: packetbeat.yml
             - name: data
               mountPath: /usr/share/packetbeat/data
+            - name: kubelet-conf
+              mountPath: /etc/kubernetes/kubelet.conf
+              readOnly: true
+            - name: kubelet-pki
+              mountPath: /var/lib/kubelet/pki/
+              readOnly: true
       volumes:
         - name: config
           configMap:
@@ -103,6 +118,14 @@ spec:
             name: packetbeat-config
         - name: data
           emptyDir: {}
+        - name: kubelet-conf
+          hostPath:
+            path: /etc/kubernetes/kubelet.conf
+            type: File
+        - name: kubelet-pki
+          hostPath:
+            path: /var/lib/kubelet/pki/
+            type: Directory
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
