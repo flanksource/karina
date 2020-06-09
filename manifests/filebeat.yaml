@@ -110,6 +110,12 @@ spec:
     spec:
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
+      {{ if not (eq .disableOnMaster true) }}
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      {{ end }}
       containers:
         - name: filebeat
           image: docker.elastic.co/beats/filebeat:{{ .version }}

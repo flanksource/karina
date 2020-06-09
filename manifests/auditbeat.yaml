@@ -16,6 +16,15 @@ data:
       # Reload module configs as they change:
       reload.enabled: false
 
+    setup.dashboards.enabled: true
+    setup.kibana:
+      host: "{{ .auditbeat.kibana.url }}:{{ .auditbeat.kibana.port }}"
+      username: ${ELASTIC_USERNAME}
+      password: ${ELASTIC_PASSWORD}
+      protocol: https
+      ssl.verification_mode: none
+      ssl.supported_protocols: [TLSv1.2, TLSv1.3]
+
     processors:
       - add_cloud_metadata:
       - add_process_metadata:
