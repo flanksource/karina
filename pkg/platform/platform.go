@@ -867,7 +867,7 @@ func (platform *Platform) ValidateVSphereCluster() error {
 	}
 
 	//You can use either NSX only, DNS only, Consul only or Consul + DNS
-	if platform.Consul == "" && (platform.NSX == nil || platform.NSX.Disabled) && (platform.DNS == nil || platform.DNS.Disabled) {
+	if platform.Consul == "" && (platform.NSX == nil || platform.NSX.Disabled) && (platform.DNS.Disabled) {
 		return fmt.Errorf(ErrNoVSphereMasterLocatorSpecified)
 	}
 
