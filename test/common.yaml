@@ -29,7 +29,7 @@ kubernetes:
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
     "audit-log-format": legacy # default is json
-  version: !!env KUBERNETES_VERSION
+  version: v1.15.7
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
@@ -78,6 +78,7 @@ monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
 canary:
   enabled: true
+  configFile: ./test/fixtures/canary-config.yaml
 harbor:
   replicas: 1
   bucket: harbor-blobs
