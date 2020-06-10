@@ -152,7 +152,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": " sum without(pod,instance)(rate(canary_check_duration_sum{type=\"pod\"}[1m]) / rate(canary_check_duration_count{type=\"pod\"}[1m]))  ",
+          "expr": " sum without(pod,instance)(rate(canary_check_duration_sum{type=\"pod\"}[5m]) / rate(canary_check_duration_count{type=\"pod\"}[5m]))  ",
           "instant": false,
           "legendFormat": "{{cluster}}",
           "refId": "A"

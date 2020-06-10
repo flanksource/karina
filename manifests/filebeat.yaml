@@ -1,6 +1,84 @@
 {{- $PLATFORM_NAME := .name }}
 {{- $CONTAINER_RUNTIME := .kubernetes.containerRuntime}}
 {{ range .filebeat}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat-{{ .name }}
+  namespace: platform-system
+  labels:
+    k8s-app: filebeat-{{ .name }}
+  annotations:
+    reload/all: "true" #restart on cm/secret change
+spec:
+  selector:
+    matchLabels:
+      k8s-app: filebeat-{{ .name }}
+  template:
+    metadata:
+      labels:
+        k8s-app: filebeat-{{ .name }}
+    spec:
+      serviceAccountName: filebeat
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        # this toleration is to have the daemonset runnable on master nodes
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:{{ .version }}
+          envFrom:
+            - secretRef:
+                name: elastic-{{ .name }}
+                optional: true
+            - secretRef:
+                name: logstash-{{ .name }}
+                optional: true
+          args: ["-c", "/etc/filebeat.yml", "-e"]
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            runAsUser: 0
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/filebeat.yml
+              readOnly: true
+              subPath: filebeat.yml
+            - name: data
+              mountPath: /usr/share/filebeat/data
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            defaultMode: 0600
+            name: filebeat-{{ .name }}-config
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: varlog
+          hostPath:
+            path: /var/log
+        # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+        - name: data
+          hostPath:
+            path: /var/lib/filebeat-{{ .name }}-data
+            type: DirectoryOrCreate
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -54,6 +132,36 @@ data:
                   message: kube-probe/
               - contains:
                   message: GET /healthz
+              - contains:
+                  message: "journalbeat successfully published"
+              - contains:
+                  message: "Health check succeeded"
+              # postgres operator logs
+              - contains:
+                  message: "no action.  i am a secondary and i am following a leader"
+              - contains:
+                  message: "no action.  i am the leader with the lock"
+              - contains:
+                  message: "INFO: Lock owner:"
+              - contains:
+                  message: "INFO: does not have lock"
+              - contains:
+                  message: "Sending probe request to CSI driver"
+              - contains:
+                  message: "csi.v1.Identity/Probe"
+              # nginx ingress controllers
+              - contains:
+                  message: "Backend successfully reloaded."
+              - contains:
+                  message: "Configuration changes detected, backend reload required."
+              - contains:
+                  message: "does not have any active Endpoint."
+              - contains:
+                  message: "Error obtaining Endpoints for Service"
+              - contains:
+                  message: "[pod/canary] request completed with 503, expected [200 201 202], retrying"
+
+
       - drop_fields:
           fields:
             - ecs.version
@@ -89,80 +197,6 @@ data:
       hosts: ["${LOGSTASH_HOST}"]
       ssl.verification_mode: none
 {{ end }}
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: filebeat-{{ .name }}
-  namespace: platform-system
-  labels:
-    k8s-app: filebeat-{{ .name }}
-  annotations:
-    reload/all: "true" #restart on cm/secret change
-spec:
-  selector:
-    matchLabels:
-      k8s-app: filebeat-{{ .name }}
-  template:
-    metadata:
-      labels:
-        k8s-app: filebeat-{{ .name }}
-    spec:
-      serviceAccountName: filebeat
-      terminationGracePeriodSeconds: 30
-      containers:
-        - name: filebeat
-          image: docker.elastic.co/beats/filebeat:{{ .version }}
-          envFrom:
-            - secretRef:
-                name: elastic-{{ .name }}
-                optional: true
-            - secretRef:
-                name: logstash-{{ .name }}
-                optional: true
-          args: ["-c", "/etc/filebeat.yml", "-e"]
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-          securityContext:
-            runAsUser: 0
-          resources:
-            limits:
-              memory: 200Mi
-            requests:
-              cpu: 100m
-              memory: 100Mi
-          volumeMounts:
-            - name: config
-              mountPath: /etc/filebeat.yml
-              readOnly: true
-              subPath: filebeat.yml
-            - name: data
-              mountPath: /usr/share/filebeat/data
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: varlog
-              mountPath: /var/log
-              readOnly: true
-      volumes:
-        - name: config
-          configMap:
-            defaultMode: 0600
-            name: filebeat-{{ .name }}-config
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: varlog
-          hostPath:
-            path: /var/log
-        # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
-        - name: data
-          hostPath:
-            path: /var/lib/filebeat-{{ .name }}-data
-            type: DirectoryOrCreate
 ---
 {{end}}
 apiVersion: rbac.authorization.k8s.io/v1

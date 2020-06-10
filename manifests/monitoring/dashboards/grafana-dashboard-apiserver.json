@@ -345,7 +345,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\", instance=~\"$instance\"}[5m])) by (verb, le))",
+          "expr": "histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\", instance=~\"$instance\", verb!~\"WATCH|CONNECT\"}[5m])) by (verb, le))",
           "format": "time_series",
           "intervalFactor": 2,
           {{ `"legendFormat": "{{verb}}"`}},
