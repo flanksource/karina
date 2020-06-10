@@ -2,6 +2,7 @@ package canary
 
 import (
 	"fmt"
+
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/karina/pkg/platform"
 )

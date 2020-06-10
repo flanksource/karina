@@ -3,11 +3,12 @@ package canary
 import (
 	"crypto/tls"
 	"fmt"
+	"net/http"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"net/http"
 )
 
 func TestCanary(p *platform.Platform, test *console.TestResults) {
@@ -29,5 +30,4 @@ func TestCanary(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	_ = v1.NewAPI(client)
-
 }

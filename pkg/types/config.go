@@ -5,7 +5,7 @@ type PlatformConfig struct {
 	Version     string      `yaml:"version"`
 	Velero      *Velero     `yaml:"velero,omitempty"`
 	CA          *CA         `yaml:"ca"`
-	Canary		Canary      `yaml:"canary,omitempty"`
+	Canary      Canary      `yaml:"canary,omitempty"`
 	Calico      Calico      `yaml:"calico,omitempty"`
 	CertManager CertManager `yaml:"certmanager,omitempty"`
 	// The endpoint for an externally hosted consul cluster

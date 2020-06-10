@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/flanksource/karina/pkg/phases/canary"
 	"os"
+
+	"github.com/flanksource/karina/pkg/phases/canary"
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
