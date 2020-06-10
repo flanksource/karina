@@ -7,7 +7,7 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 )
 
-// Deploy deploys the canary-checker into the Platform System namespace
+// Deploy deploys the canary-checker into the monitoring namespace
 func Deploy(p *platform.Platform) error {
 	if !p.Canary.Enabled {
 		if err := p.DeleteSpecs("monitoring", "canary.yaml"); err != nil {

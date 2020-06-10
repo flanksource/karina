@@ -2,32 +2,44 @@ package canary
 
 import (
 	"crypto/tls"
-	"fmt"
-	"net/http"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
-	"github.com/prometheus/client_golang/api"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"net/http"
 )
+
+const testName = "canary"
 
 func TestCanary(p *platform.Platform, test *console.TestResults) {
 	if !p.Canary.Enabled {
-		test.Skipf("canary", "canary is not enabled")
+		test.Skipf(testName, "canary is not enabled")
 		return
 	}
-	if p.Monitoring == nil || p.Monitoring.Disabled {
-		test.Skipf("canary", "prometheus monitoring is not configured or enabled")
-		return
-	}
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	client, err := api.NewClient(api.Config{
-		Address:      fmt.Sprintf("https://prometheus.%s", p.Domain),
-		RoundTripper: http.DefaultTransport,
-	})
+	client, err := p.GetClientset()
 	if err != nil {
-		test.Failf("prometheus", "Failed to get client to connect to Prometheus")
+		test.Failf(testName,"couldn't get clientset: %v", err)
 		return
 	}
-	_ = v1.NewAPI(client)
+
+	ingress, err := client.ExtensionsV1beta1().Ingresses("monitoring").Get("canary",v1.GetOptions{})
+	if err != nil {
+		test.Failf(testName,"couldn't get ingress: %v", err)
+		return
+	}
+	host := ingress.Spec.Rules[0].Host
+
+	url := "http://"+host+"/metrics"
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	resp, err := http.Get(url)
+	if err != nil {
+		test.Failf(testName,"couldn't GET %v : %v", url, err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.Status != "200 OK" {
+		test.Failf(testName,"metric status was not OK : %v", resp.Status)
+		return
+	}
+	test.Passf(testName, "canary-checker metrics page up")
+
 }
