@@ -57,8 +57,6 @@ if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
   exit 0
 fi
 
-printenv | grep -v GOVC
-
 printf "\n\n\n\n$(tput bold)Build steps$(tput setaf 7)\n"
 go version
 make setup
