@@ -10,11 +10,11 @@ type PlatformConfig struct {
 	CertManager CertManager `yaml:"certmanager,omitempty"`
 	// The endpoint for an externally hosted consul cluster
 	// that is used for master discovery
-	Consul         string      `yaml:"consul"`
-	Dashboard      Dashboard   `yaml:"dashboard,omitempty"`
-	Datacenter     string      `yaml:"datacenter"`
-	DNS            *DynamicDNS `yaml:"dns,omitempty"`
-	DockerRegistry string      `yaml:"dockerRegistry,omitempty"`
+	Consul         string     `yaml:"consul"`
+	Dashboard      Dashboard  `yaml:"dashboard,omitempty"`
+	Datacenter     string     `yaml:"datacenter"`
+	DNS            DynamicDNS `yaml:"dns,omitempty"`
+	DockerRegistry string     `yaml:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
 	Domain      string      `yaml:"domain"`
 	EventRouter EventRouter `yaml:"eventrouter,omitempty"`
@@ -46,7 +46,7 @@ type PlatformConfig struct {
 	RegistryCredentials *RegistryCredentials `yaml:"registryCredentials,omitempty"`
 	Resources           map[string]string    `yaml:"resources,omitempty"`
 	S3                  S3                   `yaml:"s3,omitempty"`
-	S3UploadCleaner     S3UploadCleaner      `yaml:"s3uploadCleaner,omitempty"`
+	S3UploadCleaner     *S3UploadCleaner     `yaml:"s3uploadCleaner,omitempty"`
 	SealedSecrets       *SealedSecrets       `yaml:"sealedSecrets,omitempty"`
 	ServiceSubnet       string               `yaml:"serviceSubnet"`
 	SMTP                SMTP                 `yaml:"smtp,omitempty"`

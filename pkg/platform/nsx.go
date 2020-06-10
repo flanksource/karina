@@ -83,7 +83,7 @@ func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) err
 
 func (nsx *NSXProvider) GetExternalEndpoints(platform *Platform) ([]string, error) {
 	endpoints := []string{}
-	if platform.DNS != nil && !platform.DNS.Disabled {
+	if platform.DNS.IsEnabled() {
 		endpoints = append(endpoints, "k8s-api."+platform.Domain)
 	}
 	lb, err := nsx.GetLoadBalancer(platform.Name + "-masters")
@@ -116,7 +116,7 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	if err != nil {
 		return "", err
 	}
-	if platform.DNS == nil || platform.DNS.Disabled {
+	if !platform.DNS.IsEnabled() {
 		masterDNS = masterIP
 	}
 

@@ -6,9 +6,8 @@ import (
 )
 
 func Deploy(p *platform.Platform) error {
-	if p.S3UploadCleaner.Disabled {
-		p.Infof("Skipping deployment of s3-upload-cleaner, it is disabled")
-		return nil
+	if p.S3UploadCleaner == nil || p.S3UploadCleaner.Disabled {
+		return p.DeleteSpecs(constants.PlatformSystem, "s3-upload-cleaner.yaml")
 	}
 
 	return p.ApplySpecs(constants.PlatformSystem, "s3-upload-cleaner.yaml")
