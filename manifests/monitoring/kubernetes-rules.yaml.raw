@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: kubernetes-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: kubernetes-recording-rules
+      rules:
+        - expr: |
+            sum(rate(apiserver_admission_webhook_admission_duration_seconds_sum[5m])) by (name) /
+              sum(rate(apiserver_admission_webhook_admission_duration_seconds_count[5m])) by (name)
+          record: kubernetes:PodAdmissionLatency:5m
+    - name: kubernetes-alerts
+      rules:
+        - alert: podAdmissionLatency
+          annotations:
+            message: pod admission latency for webhook {{ $labels.name }} is above 2 seconds for 5 minutes
+          expr: kubernetes:PodAdmissionLatency:5m > 2
+          for: "5m"
+          labels:
+            severity: warning
