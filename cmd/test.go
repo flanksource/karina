@@ -3,12 +3,13 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/flanksource/karina/pkg/phases/canary"
 	"io/ioutil"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/flanksource/karina/pkg/phases/canary"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/base"
