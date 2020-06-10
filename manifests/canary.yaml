@@ -37,9 +37,6 @@ spec:
             - serve
             - --configfile
             - "/etc/config/canary-config.yaml"
-          env:
-            - name: TODO
-              value: "TODO" #{{.s3.access_key}}"
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -67,7 +64,6 @@ spec:
     app: canary
 
 ---
-#TODO: do we need it to be available externally?
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
