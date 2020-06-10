@@ -1,16 +1,3 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: canary-config
-  namespace: monitoring
-  labels:
-    k8s-app: canary
-data:
-  hello-world.yaml: |-
-    fields:
-      cluster: "{{ .name }}"
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,13 +15,14 @@ spec:
         app: canary
     spec:
       volumes:
-        - name: data
-          emptyDir: {}
+        - name: config-volume
+          configMap:
+            name: canary-config
       containers:
         - name: canary
           volumeMounts:
-            - name: data
-              mountPath: "/data"
+            - name: config-volume
+              mountPath: /etc/config
           image: "flanksource/canary-checker:v0.8.3"
           resources:
             requests:
@@ -47,6 +35,8 @@ spec:
             - "/app/canary-checker"
           args:
             - serve
+            - --configfile
+            - "/etc/config/canary-config.yaml"
           env:
             - name: TODO
               value: "TODO" #{{.s3.access_key}}"

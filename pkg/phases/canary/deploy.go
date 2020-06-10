@@ -22,7 +22,7 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if err := p.CreateOrUpdateConfigMap("canary-config", "monitoring", map[string]string{
-		"ConfigName": cfg,
+		"canary-config.yaml": cfg,
 	}); err != nil {
 		return fmt.Errorf("install: failed to create/update configmap: %v", err)
 	}
