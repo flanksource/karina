@@ -77,19 +77,19 @@ printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
 $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
 
 # deploy the OPA bundle to the Minio instance for use by OPA
-$BIN opa deploy-bundle test/opa/bundles/automobile.tar.gz
+$BIN opa deploy-bundle test/opa/bundles/automobile.tar.gz $PLATFORM_OPTIONS_FLAGS
 
-$BIN deploy all -v
+$BIN deploy all -v $PLATFORM_OPTIONS_FLAGS
 
 # wait for up to 4 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
-$BIN test all -v --wait 240 --progress=false
+$BIN test all -v --wait 240 --progress=false $PLATFORM_OPTIONS_FLAGS
 
 failed=false
 
 # e2e do not use --wait at the run level, if needed each individual test implements
 # its own wait. e2e tests should always pass once the non e2e have passed
-if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
+if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml $PLATFORM_OPTIONS_FLAGS; then
   failed=true
 fi
 
