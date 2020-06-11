@@ -462,11 +462,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 100m
-              memory: 30Mi
+              cpu: 200m
+              memory: 150Mi
             requests:
-              cpu: 100m
-              memory: 20Mi
+              cpu: 200m
+              memory: 128Mi
           volumeMounts:
             - mountPath: /tmp/k8s-webhook-server/serving-certs
               name: cert
