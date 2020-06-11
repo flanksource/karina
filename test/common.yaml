@@ -76,6 +76,9 @@ nodeLocalDNS:
   disabled: false
 monitoring:
   version: dfb626837f04756ed5a8805845f51ebd29d342ec
+canary:
+  enabled: true
+  configFile: ./test/fixtures/canary-config.yaml
 harbor:
   replicas: 1
   bucket: harbor-blobs

@@ -78,3 +78,6 @@ workers:
     memory: 4
     disk: 10
     template: k8s-1.16.4
+
+canary:
+  enabled: true

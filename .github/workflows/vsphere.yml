@@ -1,0 +1,20 @@
+name: vSphere e2e Test
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+
+jobs:
+  test-minimal-e2e:
+    runs-on: [self-hosted]
+    steps:
+      - uses: actions/checkout@master
+      - name: Run e2e minimal testing script
+        run: |
+          # Run the testing commands in subshell with decoded environment
+          sops exec-env test/vsphere/lab.enc.env './test/vsphere/e2e-minimal.sh'
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: test-results/

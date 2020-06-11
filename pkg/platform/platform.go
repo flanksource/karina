@@ -175,6 +175,7 @@ func (platform *Platform) GetAPIEndpoint() (string, error) {
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to discover any external endpoints")
 	}
+
 	if len(masters) == 0 {
 		return "", fmt.Errorf("could not find any master ips")
 	}
