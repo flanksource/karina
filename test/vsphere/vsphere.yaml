@@ -1,46 +1,9 @@
-##
-## Minimal platform config as test fixture for flushing out
-## config bugs (e.g. nil pointers for unspecified config sections)
-##
-
-# NOTE: Overridden in e2e-minimal.sh with -e name=${PLATFORM_CLUSTER_ID}
-name: e2e-vsphere-minimal
-# NOTE: Overridden in e2e-minimal.sh with  -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com
-domain: 10.100.0.0.nip.io
-
+importConfigs:
+  - ../minimal.yaml
 hostPrefix: vsphere-k8s
-
-versions:
-  kubernetes: v1.16.4
 
 kubernetes:
   version: v1.16.4
-
-dns:
-  disabled: true
-
-ldap:
-  disabled: true
-
-configmapReloader:
-  disabled: true
-
-vault:
-  disabled: true
-
-calico:
-  ipip: Never
-  vxlan: Never
-  version: v3.8.2
-
-ca:
-  cert: .certs/root-ca.crt
-  privateKey: .certs/root-ca.key
-  password: foobar
-ingressCA:
-  cert: .certs/ingress-ca.crt
-  privateKey: .certs/ingress-ca.key
-  password: foobar
 
 ## Endpoint for externally hosted consul cluster
 ## NOTE: a working consul config required to verify
@@ -48,11 +11,11 @@ ingressCA:
 consul: 10.100.0.13
 # Name of consul datacenter
 datacenter: lab
-
+patches: []
 ## The VM configuration for master nodes
 master:
   count: 1
-  cpu: 2  #NOTE: minimum of 2
+  cpu: 2 #NOTE: minimum of 2
   memory: 4
   disk: 10
   networks:
@@ -73,7 +36,7 @@ workers:
     template: "k8s-1.16.4"
 
 vsphere:
-  username:  !!env GOVC_USER
+  username: !!env GOVC_USER
   datacenter: !!env GOVC_DATACENTER
   cluster: !!env GOVC_CLUSTER
   folder: !!env GOVC_FOLDER

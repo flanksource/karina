@@ -3,6 +3,8 @@ name: E2E
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - "docs/**"
 
 jobs:
   binary:
@@ -10,7 +12,6 @@ jobs:
     container:
       image: flanksource/build-tools:0.6
     steps:
-      - run: cat $GITHUB_EVENT_PATH
       - uses: actions/checkout@master
       - run: make pack linux
       - uses: actions/upload-artifact@v2
@@ -19,6 +20,7 @@ jobs:
           path: ./.bin/karina
   test:
     runs-on: ubuntu-latest
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
     needs: binary
     strategy:
       fail-fast: false
