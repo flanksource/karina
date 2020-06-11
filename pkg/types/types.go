@@ -340,15 +340,28 @@ type LdapAccessConfig struct {
 }
 
 type DynamicDNS struct {
-	Disabled   bool   `yaml:"disabled,omitempty"`
+	Disabled bool `yaml:"disabled,omitempty"`
+	// Set to true if you want DNS records added to k8s-api and "*" for every new
+	// worker and master created.
+	UpdateHosts bool `yaml:"updateHosts,omitempty"`
+	// Nameserver and port for dynamic DNS updates
 	Nameserver string `yaml:"nameserver,omitempty"`
-	Key        string `yaml:"key,omitempty"`
-	KeyName    string `yaml:"keyName,omitempty"`
-	Algorithm  string `yaml:"algorithm,omitempty"`
-	Zone       string `yaml:"zone,omitempty"`
-	AccessKey  string `yaml:"accessKey,omitempty"`
-	SecretKey  string `yaml:"secretKey,omitempty"`
-	Type       string `yaml:"type,omitempty"`
+	// Dynamic DNS key secret
+	Key string `yaml:"key,omitempty"`
+	// Dynamic DNS key name
+	KeyName string `yaml:"keyName,omitempty"`
+	// A Dynamic DNS signature algorithm, one of: hmac-md5, hmac-sha1, hmac-256, hmac-512
+	Algorithm string `yaml:"algorithm,omitempty"`
+	Zone      string `yaml:"zone,omitempty"`
+	AccessKey string `yaml:"accessKey,omitempty"`
+	SecretKey string `yaml:"secretKey,omitempty"`
+	// Type of DNS provider. Defaults to RFC 2136 Dynamic DNS. If using "route53" you
+	// must specify accessKey, secretKey and zone
+	Type string `yaml:"type,omitempty"`
+}
+
+func (dns DynamicDNS) IsEnabled() bool {
+	return !dns.Disabled
 }
 
 type Monitoring struct {
@@ -506,13 +519,13 @@ type Filebeat struct {
 }
 
 type Journalbeat struct {
-	Disabled      `yaml:",inline"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
 }
 
 type Auditbeat struct {
-	Disabled      `yaml:",inline"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
 }
 
 type Packetbeat struct {
@@ -746,6 +759,7 @@ type Elasticsearch struct {
 type Tekton struct {
 	Version          string            `yaml:"version,omitempty"`
 	DashboardVersion string            `yaml:"dashboardVersion,omitempty"`
+	EventsVersion    string            `yaml:"eventsVersion,omitempty"`
 	Disabled         bool              `yaml:"disabled,omitempty"`
 	Persistence      Persistence       `yaml:"persistence,omitempty"`
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
