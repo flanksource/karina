@@ -10,12 +10,18 @@ import (
 )
 
 func DeployBundle(p *platform.Platform, bundlePath string) error {
+	if p.OPA == nil {
+		return fmt.Errorf("DeployBundle called with no OPA config specified.") //nolint DeployBundle is a capitalized name
+	}
 	if !strings.HasSuffix(bundlePath, "tar.gz") {
 		return fmt.Errorf("bundles must be a tar.gz")
 	}
 	s3Client, err := p.GetS3Client()
 	if err != nil {
 		return err
+	}
+	if s3Client == nil {
+		return fmt.Errorf("DeployBundle failed - no S3 client found. ")
 	}
 
 	exists, err := s3Client.BucketExists(p.OPA.BundlePrefix)
