@@ -460,6 +460,9 @@ spec:
             - containerPort: 9443
               name: webhook-server
               protocol: TCP
+            - containerPort: 6060
+              name: pprof
+              protocol: TCP
           resources:
             limits:
               cpu: 200m

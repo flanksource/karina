@@ -237,7 +237,7 @@ registryCredentials:
     account: 745897381572
     region: us-east-1
 platformOperator:
-  version: 2020061040164038
+  version: 2020061101120147
   whitelistedPodAnnotations:
     # used by filebeat
     - com.flanksource.infra.logs/enabled
