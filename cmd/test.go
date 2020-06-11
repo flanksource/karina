@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/canary"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/base"
 	"github.com/flanksource/karina/pkg/phases/configmapreloader"
@@ -125,6 +127,7 @@ func init() {
 	tests := map[string]TestFn{
 		"audit":              kubeadm.TestAudit,
 		"base":               base.Test,
+		"canary":             canary.TestCanary,
 		"configmap-reloader": configmapreloader.Test,
 		"consul":             consul.Test,
 		"dex":                dex.Test,
