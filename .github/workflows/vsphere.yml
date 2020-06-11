@@ -5,6 +5,18 @@ on:
     types: [ opened, synchronize, reopened]
 
 jobs:
+  binary:
+    runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.6
+    steps:
+      - run: cat $GITHUB_EVENT_PATH
+      - uses: actions/checkout@master
+      - run: make pack linux
+      - uses: actions/upload-artifact@v2
+        with:
+          name: karina
+          path: ./.bin/karina
   test-vsphere:
     runs-on: [self-hosted]
     needs: binary
