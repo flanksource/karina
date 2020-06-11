@@ -14,6 +14,7 @@ const (
 )
 
 var specs = []string{
+	"karma.yaml",
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",
 	"prometheus-adapter.yaml",
@@ -47,11 +48,18 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
+	if p.Monitoring.Karma.Version == "" {
+		p.Monitoring.Karma.Version = "v0.63"
+	}
+
+	p.Monitoring.Karma.AlertManagers = append(p.Monitoring.Karma.AlertManagers, fmt.Sprintf("https://alertmanager.%s:443", p.Domain))
+
 	if p.Monitoring.Prometheus.Version == "" {
 		p.Monitoring.Prometheus.Version = "v2.16.0"
 	}
+
 	if p.Monitoring.AlertManager.Version == "" {
-		p.Monitoring.AlertManager.Version = "v0.18.0"
+		p.Monitoring.AlertManager.Version = "v0.20.0"
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
