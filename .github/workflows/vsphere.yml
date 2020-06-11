@@ -2,26 +2,59 @@ name: vSphere e2e Test
 
 on:
   pull_request:
-    types: [assigned, opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened]
 
 jobs:
-  test-e2e:
+  binary:
+    runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.6
+    steps:
+      - run: cat $GITHUB_EVENT_PATH
+      - uses: actions/checkout@master
+      - run: make pack linux
+      - uses: actions/upload-artifact@v2
+        with:
+          name: karina
+          path: ./.bin/karina
+  test-vsphere:
     runs-on: [self-hosted]
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.16.9
+        suite:
+          - minimal
+          - monitoring
+          - harbor
+          - harbor2
+          - postgres
+          - elastic
+          - security
+          - platform
     steps:
       - uses: actions/checkout@master
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
       - name: Run e2e testing script
-        run: |
-          # Run the testing commands in subshell with decoded environment
-          sops exec-env test/vsphere/lab.enc.env '/bin/bash -i -x ./test/vsphere/e2e.sh'
+        env:
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+        run: ./test/vsphere/e2e.sh
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: vsphere-test-results
+          name: vsphere-test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: vsphere-snapshot
+          name: vsphere-snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
