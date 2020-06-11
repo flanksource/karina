@@ -5,35 +5,9 @@ on:
     types: [ opened, synchronize, reopened]
 
 jobs:
-  binary:
-    runs-on: ubuntu-latest
-    container:
-      image: flanksource/build-tools:0.6
-    steps:
-      - run: cat $GITHUB_EVENT_PATH
-      - uses: actions/checkout@master
-      - run: make pack linux
-      - uses: actions/upload-artifact@v2
-        with:
-          name: karina
-          path: ./.bin/karina
   test-vsphere:
     runs-on: [self-hosted]
     needs: binary
-    strategy:
-      fail-fast: false
-      matrix:
-        k8s:
-          - v1.16.9
-        suite:
-          - minimal
-          - monitoring
-          - harbor
-          - harbor2
-          - postgres
-          - elastic
-          - security
-          - platform
     steps:
       - uses: actions/checkout@master
       - uses: actions/download-artifact@v2
@@ -42,19 +16,18 @@ jobs:
           path: ./.bin
       - name: Run e2e testing script
         env:
-          SUITE: ${{ matrix.suite }}
-          KUBERNETES_VERSION: ${{matrix.k8s}}
+          KUBERNETES_VERSION: v1.16.9
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
         run: sops exec-env test/vsphere/lab.enc.env './test/vsphere/test.sh'
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: vsphere-test-results-${{matrix.k8s}}-${{matrix.suite}}
+          name: vsphere-test-results-${{matrix.k8s}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
-          name: vsphere-snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          name: vsphere-snapshot-${{matrix.k8s}}
           path: artifacts/snapshot.zip

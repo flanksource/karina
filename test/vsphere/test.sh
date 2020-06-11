@@ -58,11 +58,6 @@ if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
   exit 0
 fi
 
-printf "\n\n\n\n$(tput bold)Build steps$(tput setaf 7)\n"
-go version
-make setup
-make pack build
-
 $BIN version
 
 printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
@@ -75,10 +70,7 @@ $BIN provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 
 printf "\n\n\n\n$(tput bold)Basic Deployments$(tput setaf 7)\n"
 
-$BIN deploy phases --calico $PLATFORM_OPTIONS_FLAGS
-$BIN deploy phases --base $PLATFORM_OPTIONS_FLAGS
-$BIN deploy phases --stubs $PLATFORM_OPTIONS_FLAGS
-$BIN deploy phases --dex $PLATFORM_OPTIONS_FLAGS
+$BIN deploy phases --calico --base --stubs --dex $PLATFORM_OPTIONS_FLAGS
 
 printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
 # wait for the base deployment with stubs to come up healthy
@@ -103,11 +95,14 @@ fi
 
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
-wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
-chmod +x build-tools
-./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
+if test -f "./test-results/results.xml"; then
+    echo "./test-results/results.xml exists."
+    wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
+    chmod +x build-tools
+    ./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
       --success-message="vSphere e2e tests - commit $COMMIT_SHA" \
       --failure-message="vSphere e2e tests - :neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+fi
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
