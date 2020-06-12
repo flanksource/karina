@@ -40,11 +40,22 @@ func VsphereCluster(platform *platform.Platform) error {
 		return err
 	}
 
+	if platform.CA == nil {
+		return fmt.Errorf("must specify a ca")
+	}
+
+	if platform.IngressCA == nil {
+		return fmt.Errorf("must specify an ingressCA")
+	}
+
+	if platform.Consul == "" && (platform.NSX == nil || platform.NSX.Disabled) && (platform.DNS.Disabled) {
+		return fmt.Errorf("must specify a master discovery service e.g. consul, NSX or DNS")
+	}
+
 	api, err := platform.GetAPIEndpoint()
 	if api == "" || err != nil || !platform.PingMaster() {
 		platform.Tracef("No healthy master nodes, creating new master: %v", err)
-		// no healthy master endpoint is detected, so we need to create the first control plane
-		// node -
+		// no healthy master endpoint is detected, so we need to create the first control plane node
 		// FIXME: Detect situations where all control pane nodes have failed
 		_, err := createMaster(platform)
 		if err != nil {

@@ -19,46 +19,19 @@ ldap:
     username: test
     password: secret
 kubernetes:
-  auditing:
-    policyFile: ./test/fixtures/audit-policy.yaml
-  encryption:
-    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
-  apiServerExtraArgs:
-    "audit-log-path": /var/log/audit/cluster-audit.log
-    "audit-log-maxsize": 1024
-    "audit-log-maxage": 2
-    "audit-log-maxbackup": 3
-    "audit-log-format": legacy # default is json
   version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
-  masterIP: localhost
   containerRuntime: containerd
 versions:
-  gomplate: v3.5.0
-  konfigadm: v0.3.6
-  jb: v0.1.0
-  jsonnet: 0.14
   sonobuoy: 0.16.4
-  govc: v0.20.0
-  gojsontoyaml: master
-  kubectl: v1.15.3
-  pgo: 4.2.0
-  helm: v2.13.0
-  velero: v1.2.0
-  expenv: v1.2.0
   ketall: v1.3.0
   apacheds: 0.7.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 calico:
-  ipip: Never
-  vxlan: Never
   version: v3.8.2
-nodeLocalDNS:
-  disabled: false
-minio:
 s3:
   endpoint: http://minio.minio.svc:9000
   externalEndpoint: minio.127.0.0.1.nip.io

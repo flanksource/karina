@@ -29,6 +29,9 @@ var (
 func KindCluster(p *platform.Platform) error {
 	p.MasterDiscovery = platform.KindProvider{}
 	p.ProvisionHook = platform.CompositeHook{}
+	if p.Kubernetes.Version == "" {
+		return fmt.Errorf("must specify kubernetes.version")
+	}
 	kubeadmPatches, err := createKubeAdmPatches(p)
 	if err != nil {
 		return errors.Wrap(err, "failed to generate kubeadm patches")

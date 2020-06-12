@@ -7,15 +7,6 @@ export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
 GITHUB_OWNER=${GITHUB_OWNER##*:}
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
-
-PR_NUM="${CIRCLE_PULL_REQUEST##*/}"
-COMMIT_SHA="$CIRCLE_SHA1"
-
-if git log $MASTER_HEAD..$CIRCLE_SHA1 | grep "skip e2e"; then
-  circleci-agent step halt
-  exit 0
-fi
 
 if ! which gojsontoyaml 2>&1 > /dev/null; then
   go get -u github.com/brancz/gojsontoyaml

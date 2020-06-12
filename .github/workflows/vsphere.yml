@@ -1,18 +1,22 @@
-name: vSphere e2e Test
+name: vSphere
 
 on:
   pull_request:
+    paths-ignore:
+      - "docs/**"
     types: [assigned, opened, synchronize, reopened]
 
 jobs:
-  test-minimal-e2e:
+  minimal:
     runs-on: [self-hosted]
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
     steps:
       - uses: actions/checkout@master
+      - run: make pack linux
       - name: Run e2e minimal testing script
         run: |
           # Run the testing commands in subshell with decoded environment
-          sops exec-env test/vsphere/lab.enc.env './test/vsphere/e2e-minimal.sh'
+          sops exec-env test/vsphere/lab.enc.env './test/vsphere/e2e.sh'
       - name: Upload test results
         uses: actions/upload-artifact@v1
         with:

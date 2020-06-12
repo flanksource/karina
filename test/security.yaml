@@ -4,6 +4,17 @@ test:
   exclude:
     - configmap-reloader
     - consul #quarantine flakey test
+kubernetes:
+  auditing:
+    policyFile: ./test/fixtures/audit-policy.yaml
+  encryption:
+    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
+  apiServerExtraArgs:
+    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-maxsize": 1024
+    "audit-log-maxage": 2
+    "audit-log-maxbackup": 3
+    "audit-log-format": legacy # default is json
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com

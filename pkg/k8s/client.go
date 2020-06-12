@@ -334,9 +334,9 @@ func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
 
 // GetClientset creates a new k8s client
 func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
-	//if c.client != nil {
-	//	return c.client, nil
-	//}
+	if c.client != nil {
+		return c.client, nil
+	}
 
 	cfg, err := c.GetRESTConfig()
 	if err != nil {

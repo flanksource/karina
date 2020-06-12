@@ -1,68 +1,22 @@
 #!/bin/bash
 
-# dependencies
-if ! which make 2>&1 > /dev/null; then
-  echo "make required"
-  exit 1
-fi
-if ! which git 2>&1 > /dev/null; then
-  echo "git required"
-  exit 1
-fi
-if ! which go 2>&1 > /dev/null; then
-  echo "go required"
-  exit 1
-fi
-if ! which jq 2>&1 > /dev/null; then
-  echo "jq required"
-  exit 1
-fi
-if ! which mkisofs 2>&1 > /dev/null; then
-  echo "mkisofs required"
-  exit 1
-fi
-if ! which gojsontoyaml 2>&1 > /dev/null; then
-  go get -u github.com/brancz/gojsontoyaml
-fi
-
 mkdir -p .bin
 mkdir -p .certs
 
 export TERM=xterm-256color
-export GOPATH=$HOME/go
-export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-export GO_VERSION=${GO_VERSION:-1.14}
-
-BIN=./.bin/karina
-
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_REPOSITORY/commits/master | jq -r '.sha')
-PR_NUM=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
-COMMIT_SHA="$GITHUB_SHA"
+BIN=.bin/karina
+
 
 generate_cluster_id() {
-  local prefix
-
-  prefix=$(tr </dev/urandom -cd 'a-f0-9' | head -c 5)
-  echo "e2e-${prefix}"
+  echo e2e-$(date "+%d%H%M")
 }
 
-PLATFORM_CLUSTER_ID=$(generate_cluster_id)
-export PLATFORM_CLUSTER_ID
-export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -vv"
+export PLATFORM_CLUSTER_ID=$(generate_cluster_id)
+export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -v"
+export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
-export PLATFORM_CONFIG=test/vsphere/e2e-platform-minimal.yaml
 
-if git log $MASTER_HEAD..$COMMIT_SHA | grep "skip e2e"; then
-  exit 0
-fi
-
-printf "\n\n\n\n$(tput bold)Build steps$(tput setaf 7)\n"
-go version
-make setup
-make pack build
-
-$BIN version
 
 printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
@@ -72,12 +26,10 @@ $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem
 printf "\n\n\n\n$(tput bold)Provision Cluster$(tput setaf 7)\n"
 $BIN provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 
+
 printf "\n\n\n\n$(tput bold)Basic Deployments$(tput setaf 7)\n"
 
-$BIN deploy phases --calico $PLATFORM_OPTIONS_FLAGS
-$BIN deploy phases --base $PLATFORM_OPTIONS_FLAGS
-$BIN deploy phases --stubs $PLATFORM_OPTIONS_FLAGS
-$BIN deploy phases --dex $PLATFORM_OPTIONS_FLAGS
+$BIN deploy phases --calico --base --stubs --dex $PLATFORM_OPTIONS_FLAGS
 
 printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
 # wait for the base deployment with stubs to come up healthy
@@ -86,13 +38,6 @@ $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FL
 printf "\n\n\n\n$(tput bold)All Deployments$(tput setaf 7)\n"
 $BIN deploy all $PLATFORM_OPTIONS_FLAGS
 
-printf "\n\n\n\n$(tput bold)Tests$(tput setaf 7)\n"
-## deploy the opa bundles first, as they can take some time to load, this effectively
-## parallelizes this work to make the entire test complete faster
-$BIN opa bundle automobile -v $PLATFORM_OPTIONS_FLAGS
-# wait for up to 4 minutes, rerunning tests if they fail
-# this allows for all resources to reconcile and images to finish downloading etc..
-$BIN test  base --wait 240 --progress=false $PLATFORM_OPTIONS_FLAGS
 
 failed=false
 
