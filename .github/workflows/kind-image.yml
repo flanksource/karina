@@ -1,4 +1,4 @@
-name: Kind Binary
+name: Kind Node Image
 
 on:
   schedule:
