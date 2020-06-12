@@ -65,10 +65,6 @@ do
     echo "ADD images/$IMAGE_NAME.tgz /kind/images" >> $KIND_DOCKERFILE
 done
 
-pushd $DOCKER_DIRECTORY
-    docker build -t $DOCKER_BUILD_IMAGE .
-popd
-
 if [[ "$CLEANUP" = true ]]; then
     echo "cleaning up"
     cat $IMAGES_FILE | while read image || [[ -n $image ]];
@@ -76,7 +72,13 @@ if [[ "$CLEANUP" = true ]]; then
         echo "removing image: $image"
         docker rmi $image
     done
+fi
 
+pushd $DOCKER_DIRECTORY
+    docker build -t $DOCKER_BUILD_IMAGE .
+popd
+
+if [[ "$CLEANUP" = true ]]; then
     rm -rf $DOCKER_DIRECTORY
 fi
 
