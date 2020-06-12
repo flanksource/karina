@@ -2,8 +2,6 @@
 
 set -e
 
-export PLATFORM_CONFIG="${PLATFORM_CONFIG:=test/common.yaml}"
-
 export IMAGES_FILE="/tmp/karina-images.txt"
 export CLEANUP=${CLEANUP:=false}
 export KIND_NODE_IMAGE="kindest/node"
