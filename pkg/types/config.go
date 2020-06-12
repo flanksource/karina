@@ -1,13 +1,13 @@
 package types
 
 type PlatformConfig struct {
-	Brand       Brand       `yaml:"brand,omitempty"`
-	Version     string      `yaml:"version"`
-	Velero      *Velero     `yaml:"velero,omitempty"`
-	CA          *CA         `yaml:"ca"`
-	Canary      Canary      `yaml:"canary,omitempty"`
-	Calico      Calico      `yaml:"calico,omitempty"`
-	CertManager CertManager `yaml:"certmanager,omitempty"`
+	Brand         Brand          `yaml:"brand,omitempty"`
+	Version       string         `yaml:"version"`
+	Velero        *Velero        `yaml:"velero,omitempty"`
+	CA            *CA            `yaml:"ca"`
+	CanaryChecker *CanaryChecker `yaml:"canaryChecker,omitempty"`
+	Calico        Calico         `yaml:"calico,omitempty"`
+	CertManager   CertManager    `yaml:"certmanager,omitempty"`
 	// The endpoint for an externally hosted consul cluster
 	// that is used for master discovery
 	Consul         string     `yaml:"consul"`
