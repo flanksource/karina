@@ -32,15 +32,17 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	// Make sure all webhook services are up an running before continuing
-	platform.WaitForNamespace(Namespace, 180*time.Second)
+	if !platform.ApplyDryRun {
+		// Make sure all webhook services are up an running before continuing
+		platform.WaitForNamespace(Namespace, 180*time.Second)
 
-	// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
-	// 1) Not polluting the audit log with unnecessary read requests to the CA Key
-	// 2) Allow running deployment with less secrets once the CA is deployed
-	if err := platform.WaitForResource("clusterissuer", v1.NamespaceAll, IngressCA, 10*time.Second); err == nil {
-		platform.Tracef("Ingress CA already configured, skipping")
-		return nil
+		// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
+		// 1) Not polluting the audit log with unnecessary read requests to the CA Key
+		// 2) Allow running deployment with less secrets once the CA is deployed
+		if err := platform.WaitForResource("clusterissuer", v1.NamespaceAll, IngressCA, 10*time.Second); err == nil {
+			platform.Tracef("Ingress CA already configured, skipping")
+			return nil
+		}
 	}
 
 	var issuerConfig certmanager.IssuerConfig

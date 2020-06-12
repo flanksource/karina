@@ -661,6 +661,10 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 }
 
 func (platform *Platform) GetOrCreateBucket(name string) error {
+	if platform.ApplyDryRun {
+		platform.Debugf("[dry-run] creating bucket %s", name)
+		return nil
+	}
 	s3Client, err := platform.GetS3Client()
 	if err != nil {
 		return fmt.Errorf("failed to get S3 client: %v", err)

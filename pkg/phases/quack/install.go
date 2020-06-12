@@ -50,6 +50,8 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	platform.WaitForNamespace(Namespace, 60*time.Second)
+	if !platform.ApplyDryRun {
+		platform.WaitForNamespace(Namespace, 60*time.Second)
+	}
 	return nil
 }

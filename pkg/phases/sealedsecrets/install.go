@@ -35,7 +35,7 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if platform.SealedSecrets.Certificate != nil {
+	if platform.SealedSecrets.Certificate != nil && !platform.ApplyDryRun {
 		ca, err := platform.ReadCA(platform.SealedSecrets.Certificate)
 		if err != nil {
 			return errors.Wrap(err, "failed to read platform ca")
