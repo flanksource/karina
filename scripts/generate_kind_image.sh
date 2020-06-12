@@ -27,7 +27,7 @@ export KARINA=${KARINA:-./.bin/karina}
 chmod +x $KARINA
 
 if [[ "$DEPLOY_KIND_CLUSTER" = true ]]; then
-    $KARINA provision kind-cluster
+    $KARINA provision kind-cluster -c test/minimal.yaml
 fi
 
 $KARINA images list -c test/minimal.yaml -o text >> $IMAGES_FILE
