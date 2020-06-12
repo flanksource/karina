@@ -1,0 +1,122 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: canary-checker
+  namespace: platform-system
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: canary-checker
+subjects:
+  - kind: ServiceAccount
+    name: canary-checker
+    namespace: platform-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary-checker-mgmt01
+  namespace: platform-system
+  labels:
+    app: canary-checker
+  annotations:
+    reload/all: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: canary-checker
+  template:
+    metadata:
+      labels:
+        name: canary-checker
+    spec:
+      serviceAccountName: canary-checker
+      securityContext:
+        runAsUser: 0
+      volumes:
+        - name: config
+          configMap:
+            name: canary-checker
+        - name: dockersock
+          hostPath:
+            path: /var/run/docker.sock
+      containers:
+        - name: canary-checker
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            runAsUser: 0
+            capabilities:
+              add:
+                - CAP_NET_RAW
+          image: docker.io/flanksource/canary-checker:{{.canaryChecker.version}}
+          envFrom:
+            - secretRef:
+                name: secrets
+          env:
+            - name: DOCKER_API_VERSION
+              value: "1.39"
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+            - name: dockersock
+              mountPath: "/var/run/docker.sock"
+          args:
+            - serve
+            - -c
+            - /conf/checks.yml
+            - --httpPort
+            - "8080"
+            - --interval
+            - "86400"
+            - -vv
+          resources:
+            requests:
+              cpu: 200m
+              memory: 200Mi
+            limits:
+              memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-checker
+  namespace: platform-system
+  labels:
+    name: canary-checker
+spec:
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    name: canary-checker
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: canary-checker
+  namespace: monitoring
+  labels:
+    name: canary-checker
+spec:
+  jobLabel: canary-checker
+  namespaceSelector:
+    matchNames:
+      - platform-system
+  endpoints:
+    - port: metrics
+      interval: 30s
+  selector:
+    matchLabels:
+      name: canary-checker

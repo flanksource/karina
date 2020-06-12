@@ -329,8 +329,9 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // Canary-checker allows for the deployment and configuration of the canary-checker
-type Canary struct {
-	Enabled    bool   `yaml:"enabled"`
+type CanaryChecker struct {
+	Enabled    `yaml:",inline"`
+	Version    string `yaml:"version"`
 	ConfigFile string `yaml:"configFile,omitempty"`
 }
 
