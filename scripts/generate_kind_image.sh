@@ -26,6 +26,8 @@ export DOCKER_IMAGE=${DOCKER_IMAGE:-flanksource/kind-node}
 export DOCKER_BUILD_IMAGE="$DOCKER_IMAGE:$DOCKER_TAG"
 export KARINA=${KARINA:-./.bin/karina}
 
+chmod +x $KARINA
+
 if [[ "$DEPLOY_KIND_CLUSTER" = true ]]; then
     $KARINA provision kind-cluster
 fi

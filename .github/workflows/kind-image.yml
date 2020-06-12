@@ -25,7 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: binary
     strategy:
-      fail-fast: false
       matrix:
         k8s:
           - v1.16.9
@@ -43,6 +42,7 @@ jobs:
           KIND_NODE_VERSION: ${{matrix.k8s}}
           DOCKER_IMAGE: flanksource/kind-node
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
+          DEPLOY_KIND_CLUSTER: "true"
         run: ./scripts/generate_kind_image.sh
       - name: Publish to Registry2
         uses: elgohr/Publish-Docker-Github-Action@master
