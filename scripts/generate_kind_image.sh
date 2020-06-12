@@ -32,7 +32,16 @@ if [[ "$DEPLOY_KIND_CLUSTER" = true ]]; then
     $KARINA provision kind-cluster
 fi
 
-$KARINA images list -o text | sort | uniq > $IMAGES_FILE
+$KARINA images list -c test/minimal.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/monitoring.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/harbor.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/harbor2.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/postgres.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/elastic.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/security.yaml -o text >> $IMAGES_FILE
+$KARINA images list -c test/platform.yaml -o text >> $IMAGES_FILE
+
+cat $IMAGES_FILE | sort | uniq > $IMAGES_FILE
 
 echo "pulling kind node image: $KIND_DOCKER_IMAGE"
 docker pull $KIND_DOCKER_IMAGE
