@@ -7,6 +7,7 @@ export CLEANUP=${CLEANUP:=false}
 export KIND_NODE_IMAGE="kindest/node"
 export KIND_NODE_VERSION=${KIND_NODE_VERSION:-"v1.16.9"}
 export KIND_DOCKER_IMAGE="$KIND_NODE_IMAGE:$KIND_NODE_VERSION"
+export KUBECONFIG=~/.kube/config
 
 export DOCKER_DIRECTORY="docker-images/build"
 export DOCKER_IMAGE_DIRECTORY="docker-images/build/images"
@@ -27,6 +28,9 @@ export KARINA=${KARINA:-./.bin/karina}
 chmod +x $KARINA
 
 if [[ "$DEPLOY_KIND_CLUSTER" = true ]]; then
+    $KARINA ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+    $KARINA ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
+    $KARINA ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
     $KARINA provision kind-cluster -c test/minimal.yaml
 fi
 
