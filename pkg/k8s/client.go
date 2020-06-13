@@ -479,7 +479,7 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 	rm, _ := c.GetRestMapper()
 
 	mapping, err := rm.RESTMapping(gk, gvk.Version)
-	if err != nil && meta.IsNoMatchError(err) {
+	if err != nil && meta.IsNoMatchError(err) && !c.ApplyDryRun {
 		// new CRD may still becoming ready, flush caches and retry
 		time.Sleep(5 * time.Second)
 		c.restMapper = nil
@@ -621,6 +621,10 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
+			if c.ApplyDryRun && strings.HasPrefix(err.Error(), "no matches for kind") {
+				c.Debugf("[dry-run] failed to get dynamic client for namespace %s", namespace)
+				continue
+			}
 			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
@@ -827,6 +831,10 @@ func (c *Client) GetOrCreateSecret(name, ns string, data map[string][]byte) erro
 }
 
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
+	if c.ApplyDryRun {
+		c.Debugf("[dry-run] secrets/%s/%s created/configured", ns, name)
+		return nil
+	}
 	return c.Apply(ns, &v1.Secret{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
@@ -835,6 +843,10 @@ func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) e
 }
 
 func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
+	if c.ApplyDryRun {
+		c.Debugf("[dry-run] configmaps/%s/%s created/configured", ns, name)
+		return nil
+	}
 	return c.Apply(ns, &v1.ConfigMap{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
