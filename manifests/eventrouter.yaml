@@ -61,7 +61,7 @@ spec:
     spec:
       containers:
         - name: kube-eventrouter
-          image: gcr.io/heptio-images/eventrouter:{{ .eventrouter.version }}
+          image: gcr.io/heptio-images/eventrouter:{{ .eventrouter.version | default "none"}}
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: config-volume

@@ -90,7 +90,7 @@ spec:
     spec:
       containers:
         - name: karma
-          image: docker.io/lmierzwa/karma:{{.monitoring.karma.version}}
+          image: docker.io/lmierzwa/karma:{{.monitoring.karma.version | default "none"}}
           args:
             - --config.file
             - /config/karma.yml
