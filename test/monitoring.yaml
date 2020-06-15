@@ -6,7 +6,7 @@ thanos:
   version: v0.10.1
   mode: client
   bucket: thanos
-prometheus:
-  persistence:
-    capacity: 10Gi
-
+monitoring:
+  prometheus:
+    persistence:
+      capacity: 10Gi
