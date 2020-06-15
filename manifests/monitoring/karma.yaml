@@ -75,8 +75,6 @@ kind: Deployment
 metadata:
   name: karma
   namespace: monitoring
-  annotations:
-    reload/all: "true"
 spec:
   replicas: 1
   selector:
@@ -87,6 +85,8 @@ spec:
       name: karma
       labels:
         k8s-app: karma
+      annotations:
+        reload/all: "true"
     spec:
       containers:
         - name: karma
@@ -109,8 +109,8 @@ spec:
             limits:
               memory: 200Mi
             requests:
-              memory: 100Mi
-              cpu: "200m"
+              memory: 50Mi
+              cpu: "20m"
           volumeMounts:
             - mountPath: /config
               name: config

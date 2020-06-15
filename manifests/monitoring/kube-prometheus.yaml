@@ -12,7 +12,7 @@ spec:
   nodeSelector:
     kubernetes.io/os: linux
   replicas: 3
-  externalUrl: alertmanager.{{.domain}}
+  externalUrl: https://alertmanager.{{.domain}}
   securityContext:
     fsGroup: 2000
     runAsNonRoot: true
@@ -456,10 +456,7 @@ metadata:
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-    // cors-allow-origin doesn't allow multiple values, so we use the $http_origin nginx variable
-    // to always set it to the origin header
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Access-Control-Allow-Origin: $http_origin";
+    nginx.ingress.kubernetes.io/configuration-snippet: 'more_set_headers "Access-Control-Allow-Origin: $http_origin";'
   {{ if .oauth2Proxy.enabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"

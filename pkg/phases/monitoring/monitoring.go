@@ -52,8 +52,9 @@ func Install(p *platform.Platform) error {
 		p.Monitoring.Karma.Version = "v0.63"
 	}
 
-	p.Monitoring.Karma.AlertManagers = append(p.Monitoring.Karma.AlertManagers, fmt.Sprintf("https://alertmanager.%s:443", p.Domain))
-
+	if len(p.Monitoring.Karma.AlertManagers) == 0 {
+		p.Monitoring.Karma.AlertManagers = []string{"http://alertmanager-main:9093"}
+	}
 	if p.Monitoring.Prometheus.Version == "" {
 		p.Monitoring.Prometheus.Version = "v2.16.0"
 	}
