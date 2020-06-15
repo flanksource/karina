@@ -12,7 +12,7 @@ spec:
   nodeSelector:
     kubernetes.io/os: linux
   replicas: 3
-  externalUrl: alertmanager.{{.domain}}
+  externalUrl: https://alertmanager.{{.domain}}
   securityContext:
     fsGroup: 2000
     runAsNonRoot: true
