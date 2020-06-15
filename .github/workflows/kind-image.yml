@@ -44,6 +44,7 @@ jobs:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
           DEPLOY_KIND_CLUSTER: "true"
           KUBERNETES_VERSION: "${{ matrix.k8s }}"
+          CLEANUP: "true"
         run: ./scripts/generate_kind_image.sh
       - name: Publish to Registry2
         uses: elgohr/Publish-Docker-Github-Action@master
