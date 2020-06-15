@@ -75,8 +75,6 @@ kind: Deployment
 metadata:
   name: karma
   namespace: monitoring
-  annotations:
-    reload/all: "true"
 spec:
   replicas: 1
   selector:
@@ -87,6 +85,8 @@ spec:
       name: karma
       labels:
         k8s-app: karma
+      annotations:
+        reload/all: "true"
     spec:
       containers:
         - name: karma
