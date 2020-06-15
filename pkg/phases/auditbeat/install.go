@@ -7,7 +7,6 @@ import (
 
 func Deploy(p *platform.Platform) error {
 	if p.Auditbeat.IsDisabled() {
-		p.Infof("Skipping deployment of auditbeat, it is disabled")
 		return p.DeleteSpecs(constants.PlatformSystem, "auditbeat.yaml")
 	}
 
