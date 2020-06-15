@@ -26,6 +26,10 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base kube-system labels/annotations: %s", err)
 	}
 
+	if err := platform.CreateOrUpdateNamespace("monitoring", nil, nil); err != nil {
+		platform.Errorf("Error deploying base monitoring labels/annotations: %s", err)
+	}
+
 	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
 		platform.Errorf("Error deploying service monitor crd: %s", err)
 	}
@@ -73,7 +77,6 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
-		platform.Infof("Installing local path volumes")
 		if err := platform.CreateOrUpdateNamespace("local-path-storage", nil, nil); err != nil {
 			platform.Errorf("Error creating namespace local-path-storage: %s", err)
 		}
@@ -82,20 +85,20 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if !platform.Dashboard.Disabled {
-		platform.Infof("Installing K8s dashboard")
+	if platform.Dashboard.Version != "" && !platform.Dashboard.Disabled {
 		platform.Dashboard.AccessRestricted.Snippet = ingress.NginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
-		if err := platform.ApplySpecs("", "k8s-dashboard.yaml"); err != nil {
+		if err := platform.ApplySpecs("kube-system", "k8s-dashboard.yaml"); err != nil {
 			platform.Errorf("Error installing K8s dashboard: %s", err)
 		}
 	} else {
-		if err := platform.DeleteSpecs("", "k8s-dashboard.yaml"); err != nil {
+		// set the version so that the spec is valid for deletion
+		platform.Dashboard.Version = "na"
+		if err := platform.DeleteSpecs("kube-system", "k8s-dashboard.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}
 	}
 
 	if platform.NamespaceConfigurator == nil || !platform.NamespaceConfigurator.Disabled {
-		platform.Infof("Installing namespace configurator")
 		if err := platform.ApplySpecs("", "namespace-configurator.yaml"); err != nil {
 			platform.Errorf("Error deploying namespace configurator: %s", err)
 		}
@@ -126,7 +129,6 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.NFS != nil {
-		platform.Infof("Deploying NFS Volume Provisioner: %s", platform.NFS.Host)
 		if err := platform.ApplySpecs("", "nfs.yaml"); err != nil {
 			platform.Errorf("Failed to deploy NFS %+v", err)
 		}

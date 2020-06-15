@@ -240,4 +240,4 @@ spec:
           expr: namespace:CPUThrottlingHigh{label_owner=~"|platform"}
           for: 15m
           labels:
-            severity: warning
+            severity: info

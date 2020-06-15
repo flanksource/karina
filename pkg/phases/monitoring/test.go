@@ -27,6 +27,10 @@ const (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
+	if p.Monitoring == nil {
+		test.Skipf("monitoring", "monitoring is not configured")
+		return
+	}
 	k8s.TestNamespace(client, "monitoring", test)
 }
 

@@ -15,6 +15,23 @@ kubernetes:
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
     "audit-log-format": legacy # default is json
+dex:
+  disabled: false
+ldap:
+  disabled: false
+  adminGroup: NA1
+  username: uid=admin,ou=system
+  password: secret
+  port: 10636
+  host: apacheds.ldap
+  userDN: ou=users,dc=example,dc=com
+  groupDN: ou=groups,dc=example,dc=com
+  groupObjectClass: groupOfNames
+  groupNameAttr: DN
+  e2e:
+    mock: true
+    username: test
+    password: secret
 oauth2Proxy:
   version: "v5.0.0.flanksource.1"
   oidcGroup: cn=k8s,ou=groups,dc=example,dc=com

@@ -4,18 +4,18 @@ kind: ClusterRole
 metadata:
   name: node-exporter
 rules:
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -26,9 +26,9 @@ roleRef:
   kind: ClusterRole
   name: node-exporter
 subjects:
-- kind: ServiceAccount
-  name: node-exporter
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: node-exporter
+    namespace: monitoring
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -44,65 +44,64 @@ spec:
       app: node-exporter
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: node-exporter
     spec:
       containers:
-      - args:
-        - --web.listen-address=127.0.0.1:9100
-        - --path.procfs=/host/proc
-        - --path.sysfs=/host/sys
-        - --path.rootfs=/host/root
-        - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)
-        - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
-        image: quay.io/prometheus/node-exporter:v0.18.1
-        imagePullPolicy: IfNotPresent
-        name: node-exporter
-        resources:
-          limits:
-            memory: 180Mi
-          requests:
-            cpu: 102m
-            memory: 180Mi
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /host/proc
-          name: proc
-        - mountPath: /host/sys
-          name: sys
-        - mountPath: /host/root
-          mountPropagation: HostToContainer
-          name: root
-          readOnly: true
-      - args:
-        - --logtostderr
-        - --secure-listen-address=[$(IP)]:9100
-        - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-        - --upstream=http://127.0.0.1:9100/
-        env:
-        - name: IP
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: status.podIP
-        image: quay.io/coreos/kube-rbac-proxy:v0.4.1
-        imagePullPolicy: IfNotPresent
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 9100
-          hostPort: 9100
-          name: https
-          protocol: TCP
-        resources:
-          limits:
-            memory: 40Mi
-          requests:
-            cpu: 10m
-            memory: 20Mi
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
+        - args:
+            - --web.listen-address=127.0.0.1:9100
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --path.rootfs=/host/root
+            - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)
+            - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
+          image: quay.io/prometheus/node-exporter:v0.18.1
+          imagePullPolicy: IfNotPresent
+          name: node-exporter
+          resources:
+            limits:
+              memory: 180Mi
+            requests:
+              cpu: 50m
+              memory: 180Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /host/proc
+              name: proc
+            - mountPath: /host/sys
+              name: sys
+            - mountPath: /host/root
+              mountPropagation: HostToContainer
+              name: root
+              readOnly: true
+        - args:
+            - --logtostderr
+            - --secure-listen-address=[$(IP)]:9100
+            - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+            - --upstream=http://127.0.0.1:9100/
+          env:
+            - name: IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          image: quay.io/coreos/kube-rbac-proxy:v0.4.1
+          imagePullPolicy: IfNotPresent
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 9100
+              hostPort: 9100
+              name: https
+              protocol: TCP
+          resources:
+            limits:
+              memory: 40Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
       dnsPolicy: ClusterFirst
       hostNetwork: true
       hostPID: true
@@ -117,20 +116,20 @@ spec:
       serviceAccountName: node-exporter
       terminationGracePeriodSeconds: 30
       tolerations:
-      - operator: Exists
+        - operator: Exists
       volumes:
-      - hostPath:
-          path: /proc
-          type: ""
-        name: proc
-      - hostPath:
-          path: /sys
-          type: ""
-        name: sys
-      - hostPath:
-          path: /
-          type: ""
-        name: root
+        - hostPath:
+            path: /proc
+            type: ""
+          name: proc
+        - hostPath:
+            path: /sys
+            type: ""
+          name: sys
+        - hostPath:
+            path: /
+            type: ""
+          name: root
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1
@@ -146,9 +145,9 @@ metadata:
 spec:
   clusterIP: None
   ports:
-  - name: https
-    port: 9100
-    targetPort: https
+    - name: https
+      port: 9100
+      targetPort: https
   selector:
     app: node-exporter
 ---
@@ -167,19 +166,19 @@ metadata:
   namespace: monitoring
 spec:
   endpoints:
-  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    interval: 15s
-    port: https
-    relabelings:
-    - action: replace
-      regex: (.*)
-      replacement: $1
-      sourceLabels:
-      - __meta_kubernetes_pod_node_name
-      targetLabel: instance
-    scheme: https
-    tlsConfig:
-      insecureSkipVerify: true
+    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      interval: 15s
+      port: https
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: instance
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
   jobLabel: k8s-app
   selector:
     matchLabels:

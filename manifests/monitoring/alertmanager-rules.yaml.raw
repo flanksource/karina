@@ -536,21 +536,6 @@ spec:
           for: 15m
           labels:
             severity: info
-        - alert: CPUThrottlingHigh
-          annotations:
-            message:
-              "{{ $value | humanizePercentage }} throttling of CPU in namespace
-              {{ $labels.namespace }} for container {{ $labels.container }} in pod {{
-              $labels.pod }}."
-            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-cputhrottlinghigh
-          expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", }[5m])) by (container, pod, namespace)
-              /
-            sum(increase(container_cpu_cfs_periods_total{}[5m])) by (container, pod, namespace)
-              > ( 25 / 100 )
-          for: 15m
-          labels:
-            severity: info
     - name: kubernetes-storage
       rules:
         - alert: KubePersistentVolumeUsageCritical

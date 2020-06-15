@@ -88,7 +88,7 @@ spec:
       hostNetwork: true
       containers:
         - name: packetbeat
-          image: docker.elastic.co/beats/packetbeat:{{ .packetbeat.version }}
+          image: docker.elastic.co/beats/packetbeat:{{ .packetbeat.version | default "none" }}
           imagePullPolicy: Always
           args: ["-c", "/etc/packetbeat.yml", "-e"]
           securityContext:

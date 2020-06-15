@@ -24,11 +24,8 @@ func Deploy(p *platform.Platform) error {
 		p.ConfigMapReloader.Version = utils.NormalizeVersion(p.ConfigMapReloader.Version)
 	}
 
-	p.Infof("Deploying configmap-reloader %s into %s", p.ConfigMapReloader.Version, Namespace)
-
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
-
 	return p.ApplySpecs("", "configmap-reloader.yaml")
 }

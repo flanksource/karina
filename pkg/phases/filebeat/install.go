@@ -10,9 +10,11 @@ import (
 )
 
 func Deploy(p *platform.Platform) error {
+	if len(p.Filebeat) == 0 {
+		return nil
+	}
 	for _, f := range p.Filebeat {
 		if f.Disabled {
-			p.Infof("Skipping deployment of filebeat %s, it is disabled", f.Name)
 			continue
 		}
 

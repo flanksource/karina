@@ -14,7 +14,7 @@ const (
 
 func Install(platform *platform.Platform) error {
 	if platform.Nginx != nil && platform.Nginx.Disabled {
-		if err := platform.DeleteSpecs(v1.NamespaceAll, "nginx.yaml"); err != nil {
+		if err := platform.DeleteSpecs(v1.NamespaceAll, "nginx.yaml", "nginx-oauth.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}
 		return nil
@@ -30,7 +30,6 @@ func Install(platform *platform.Platform) error {
 	if platform.Nginx.Version == "" {
 		platform.Nginx.Version = "0.25.1.flanksource.1"
 	}
-	platform.Infof("Installing Nginx Ingress Controller: %s", platform.Nginx.Version)
 
 	if platform.Nginx.RequestBodyBuffer == "" {
 		platform.Nginx.RequestBodyBuffer = "16M"

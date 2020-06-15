@@ -12,6 +12,7 @@ type PlatformConfig struct {
 	// that is used for master discovery
 	Consul         string     `yaml:"consul"`
 	Dashboard      Dashboard  `yaml:"dashboard,omitempty"`
+	Dex            Dex        `yaml:"dex,omitempty"`
 	Datacenter     string     `yaml:"datacenter"`
 	DNS            DynamicDNS `yaml:"dns,omitempty"`
 	DockerRegistry string     `yaml:"dockerRegistry,omitempty"`

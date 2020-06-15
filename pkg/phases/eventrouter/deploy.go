@@ -7,8 +7,7 @@ import (
 
 func Deploy(p *platform.Platform) error {
 	if p.EventRouter.IsDisabled() {
-		p.Infof("Skipping deployment of eventrouter, it is disabled")
-		return nil
+		return p.DeleteSpecs(constants.PlatformSystem, "eventrouter.yaml")
 	}
 
 	return p.ApplySpecs(constants.PlatformSystem, "eventrouter.yaml")

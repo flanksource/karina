@@ -14,7 +14,9 @@ import (
 )
 
 func Install(p *platform.Platform) error {
-	p.Infof("Deploying %d gitops controllers", len(p.GitOps))
+	if len(p.GitOps) == 0 {
+		return nil
+	}
 	for _, gitops := range p.GitOps {
 		if gitops.Namespace != "" && gitops.Namespace != constants.KubeSystem && gitops.Namespace != constants.PlatformSystem {
 			if err := p.CreateOrUpdateWorkloadNamespace(gitops.Namespace, nil, nil); err != nil {
