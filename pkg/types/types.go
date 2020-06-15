@@ -337,13 +337,13 @@ type CanaryChecker struct {
 
 type Dashboard struct {
 	Enabled          `yaml:",inline"`
-	Version          `yaml:"version,omitempty"`
+	Version          string           `yaml:"version,omitempty"`
 	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
 }
 
 type Dex struct {
 	Enabled `yaml:",inline"`
-	Version `yaml:"version,omitempty"`
+	Version string `yaml:"version,omitempty"`
 }
 
 type LdapAccessConfig struct {

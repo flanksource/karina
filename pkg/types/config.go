@@ -11,7 +11,7 @@ type PlatformConfig struct {
 	// The endpoint for an externally hosted consul cluster
 	// that is used for master discovery
 	Consul         string     `yaml:"consul"`
-	Dashboard      *Dashboard `yaml:"dashboard,omitempty"`
+	Dashboard      Dashboard  `yaml:"dashboard,omitempty"`
 	Dex            Dex        `yaml:"dex,omitempty"`
 	Datacenter     string     `yaml:"datacenter"`
 	DNS            DynamicDNS `yaml:"dns,omitempty"`
