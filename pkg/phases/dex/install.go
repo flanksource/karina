@@ -14,6 +14,13 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
+	if platform.Dex.Version == "" {
+		platform.Dex.Version = "v2.17.0"
+	}
+	if platform.Dex.Disabled {
+		return platform.DeleteSpecs(Namespace, "dex.yaml")
+	}
+
 	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}

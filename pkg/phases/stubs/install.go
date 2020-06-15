@@ -9,7 +9,6 @@ func Install(platform *platform.Platform) error {
 		if err := platform.CreateOrUpdateNamespace("minio", nil, nil); err != nil {
 			return err
 		}
-		platform.Infof("Installing minio")
 		if err := platform.ApplySpecs("", "minio.yaml"); err != nil {
 			platform.Errorf("Error deploying minio: %s\n", err)
 		}
@@ -18,7 +17,7 @@ func Install(platform *platform.Platform) error {
 			platform.Warnf("failed to delete specs: %v", err)
 		}
 	}
-	if platform.Ldap != nil && platform.Ldap.E2E.Mock {
+	if platform.Ldap != nil && !platform.Ldap.Disabled && platform.Ldap.E2E.Mock {
 		if err := platform.CreateOrUpdateNamespace("ldap", nil, nil); err != nil {
 			return err
 		}

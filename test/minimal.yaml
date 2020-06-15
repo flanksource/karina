@@ -4,20 +4,10 @@ name: kind-kind
 patches:
   - ./test/patch1.yaml
 domain: 127.0.0.1.nip.io
+dex:
+  disabled: true
 ldap:
-  adminGroup: NA1
-  username: uid=admin,ou=system
-  password: secret
-  port: 10636
-  host: apacheds.ldap
-  userDN: ou=users,dc=example,dc=com
-  groupDN: ou=groups,dc=example,dc=com
-  groupObjectClass: groupOfNames
-  groupNameAttr: DN
-  e2e:
-    mock: true
-    username: test
-    password: secret
+  disabled: true
 kubernetes:
   version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:
