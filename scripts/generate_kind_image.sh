@@ -63,16 +63,12 @@ do
     echo "exporting image: $image to $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz"
     docker save $image > $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz
     echo "ADD images/$IMAGE_NAME.tgz /kind/images" >> $KIND_DOCKERFILE
-done
 
-if [[ "$CLEANUP" = true ]]; then
-    echo "cleaning up"
-    cat $IMAGES_FILE | while read image || [[ -n $image ]];
-    do
+    if [[ "$CLEANUP" = true ]]; then
         echo "removing image: $image"
         docker rmi $image
-    done
-fi
+    fi
+done
 
 pushd $DOCKER_DIRECTORY
     docker build -t $DOCKER_BUILD_IMAGE .

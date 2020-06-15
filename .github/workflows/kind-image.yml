@@ -5,8 +5,8 @@ on:
     # * is a special character in YAML so you have to quote this string
     - cron: '0 12 * * *'
   # temporary just to test on PR
-  pull_request:
-    types: [opened, synchronize, reopened]
+  #pull_request:
+  #  types: [opened, synchronize, reopened]
 
 jobs:
   binary:
