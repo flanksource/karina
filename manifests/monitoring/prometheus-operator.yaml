@@ -12292,10 +12292,10 @@ spec:
               name: http
           resources:
             limits:
-              cpu: 500m
+              cpu: 200m
               memory: 200Mi
             requests:
-              cpu: 100m
+              cpu: 20m
               memory: 100Mi
           securityContext:
             allowPrivilegeEscalation: false

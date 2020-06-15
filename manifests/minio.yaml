@@ -25,10 +25,10 @@ spec:
           image: minio/minio:RELEASE.2019-10-12T01-39-57Z
           resources:
             requests:
-              cpu: "100m"
+              cpu: "20m"
               memory: "50Mi"
             limits:
-              cpu: "500m"
+              cpu: "200m"
               memory: "500Mi"
           args:
             - server
