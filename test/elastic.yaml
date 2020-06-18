@@ -1,16 +1,5 @@
 importConfigs:
   - minimal.yaml
-fluentd-operator:
-  version: v1.11.0
-  repository: jvassev/kube-fluentd-operator
-fluentd:
-  version: 1.11.0
-  elasticsearch:
-    url: logs-es-http.eck.svc.cluster.local
-    user: elastic
-    password: elastic
-    port: 9200
-    scheme: https
 filebeat:
   - name: infra
     version: 7.6.0
@@ -66,4 +55,3 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
-

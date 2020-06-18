@@ -21,7 +21,7 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: canary-checker-mgmt01
+  name: canary-checker
   namespace: platform-system
   labels:
     app: canary-checker
@@ -56,7 +56,7 @@ spec:
             capabilities:
               add:
                 - CAP_NET_RAW
-          image: docker.io/flanksource/canary-checker:{{.canaryChecker.version}}
+          image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "none"}}
           envFrom:
             - secretRef:
                 name: secrets
@@ -102,6 +102,27 @@ spec:
     name: canary-checker
 
 ---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: canary-checker
+  namespace: platform-system
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - hosts:
+        - canaries.{{.Domain}}
+      secretName: canary-tls
+  rules:
+    - host: canaries.{{.Domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: canary-checker
+              servicePort: 8080
+
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -120,3 +141,22 @@ spec:
   selector:
     matchLabels:
       name: canary-checker
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: canary-rules
+  namespace: platform-system
+spec:
+  groups:
+    - alert: CanaryCheckPodFailed
+        annotations:
+          message: Failed to schedule and serve a pod for 15m
+        for: 15m
+        expr: canary_check{type="pod"} > 0
+        labels:
+          severity: page
+

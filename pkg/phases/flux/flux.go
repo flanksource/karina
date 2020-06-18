@@ -108,7 +108,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		argMap["git-readonly"] = "true"
 		argMap["registry-disable-scanning"] = "true"
 	} else {
-		// memecache is only deployed for scanning
+		// memcache is only deployed for scanning
 		spec.Deployment(memcacheName, "docker.io/memcached:1.4.36-alpine").
 			Args("-m 512", "-p 11211", "-I 5m").
 			Expose(11211).
