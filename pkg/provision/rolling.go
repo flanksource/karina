@@ -25,6 +25,7 @@ type RollingOptions struct {
 
 // Perform a rolling update of nodes
 func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
+	// collect all info about cluster and vm's
 	cluster, err := GetCluster(platform)
 	if err != nil {
 		return err
@@ -36,6 +37,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		age := machine.GetAge()
 		template := machine.GetTemplate()
 
+		// check if a node is available for update
 		if k8s.IsMasterNode(node) && !opts.Masters {
 			continue
 		} else if !k8s.IsMasterNode(node) && !opts.Workers {
@@ -79,6 +81,8 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 
 		platform.Infof("Replaced %s in %s", node.Name, timer)
 		rolled++
+
+		//wait until we are the same health level as we were before
 		if succeededWithinTimeout := doUntil(opts.Timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			platform.Infof(currentHealth.String())
