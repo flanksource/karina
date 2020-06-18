@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/flanksource/commons/files"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const Namespace = "platform-system"
 
 // Deploy deploys the canary-checker into the monitoring namespace
 func Deploy(p *platform.Platform) error {
 	if p.CanaryChecker == nil || p.CanaryChecker.Disabled {
-		if err := p.DeleteSpecs(Namespace, "canary-checker.yaml"); err != nil {
+		if err := p.DeleteSpecs(v1.NamespaceAll, "canary-checker.yaml"); err != nil {
 			p.Errorf("failed to delete specs: %v", err)
 		}
 		return nil
@@ -31,11 +31,11 @@ func Deploy(p *platform.Platform) error {
 		p.Errorf("failed to read file: %v", p.CanaryChecker.ConfigFile)
 	}
 
-	if err := p.CreateOrUpdateConfigMap("canary-config", Namespace, map[string]string{
+	if err := p.CreateOrUpdateConfigMap("canary-config", constants.PlatformSystem, map[string]string{
 		"canary-config.yaml": cfg,
 	}); err != nil {
 		return err
 	}
 
-	return p.ApplySpecs(Namespace, "canary-checker.yaml")
+	return p.ApplySpecs(v1.NamespaceAll, "canary-checker.yaml")
 }
