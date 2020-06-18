@@ -11,11 +11,15 @@ const Namespace = "platform-system"
 
 // Deploy deploys the canary-checker into the monitoring namespace
 func Deploy(p *platform.Platform) error {
-	if p.CanaryChecker == nil || !p.CanaryChecker.Disabled {
+	if p.CanaryChecker == nil || p.CanaryChecker.Disabled {
 		if err := p.DeleteSpecs(Namespace, "canary-checker.yaml"); err != nil {
 			p.Errorf("failed to delete specs: %v", err)
 		}
 		return nil
+	}
+
+	if p.CanaryChecker.Version == "" {
+		p.CanaryChecker.Version = "v0.9.2"
 	}
 
 	if p.CanaryChecker.ConfigFile == "" {
