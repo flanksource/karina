@@ -152,11 +152,12 @@ metadata:
   namespace: platform-system
 spec:
   groups:
-    - alert: CanaryCheckPodFailed
-        annotations:
-          message: Failed to schedule and serve a pod for 15m
-        for: 15m
-        expr: canary_check{type="pod"} > 0
-        labels:
-          severity: page
-
+    - name: canary-alerts
+      rules:
+        - alert: CanaryPodFailed
+          annotations:
+            message: Failed to schedule and serve a pod for 15m
+          for: 15m
+          expr: canary_check{type="pod"} > 0
+          labels:
+            severity: page
