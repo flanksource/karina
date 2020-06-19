@@ -2,6 +2,7 @@ package configmapreloader
 
 import (
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,7 +19,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("configmap-reloader", "configmap-reloader not configured")
 		return
 	}
-	k8s.TestNamespace(client, Namespace, test)
+	k8s.TestNamespace(client, constants.PlatformSystem, test)
 	if !p.E2E {
 		return
 	}
@@ -32,14 +33,14 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	defer cleanup(client)
-	_, err := client.CoreV1().ConfigMaps(Namespace).Create(&v1.ConfigMap{
+	_, err := client.CoreV1().ConfigMaps(constants.PlatformSystem).Create(&v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "reloader-test",
-			Namespace: Namespace,
+			Namespace: constants.PlatformSystem,
 			Labels: map[string]string{
 				"k8s-app":  "configmap-reloader",
 				"e2e-test": "true",
@@ -54,14 +55,14 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	var replicas int32 = 1
-	_, err = client.AppsV1().Deployments(Namespace).Create(&appsv1.Deployment{
+	_, err = client.AppsV1().Deployments(constants.PlatformSystem).Create(&appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "configmap-reloader-test",
-			Namespace: Namespace,
+			Namespace: constants.PlatformSystem,
 			Labels: map[string]string{
 				"k8s-app": "configmap-reloader-test",
 			},
@@ -117,7 +118,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	watch, _ := client.AppsV1().Deployments(Namespace).Watch(metav1.ListOptions{
+	watch, _ := client.AppsV1().Deployments(constants.PlatformSystem).Watch(metav1.ListOptions{
 		LabelSelector:  "k8s-app=configmap-reloader-test",
 		TimeoutSeconds: &watchTimeout,
 	})
@@ -132,14 +133,14 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		}
 	}
 
-	_, err = client.CoreV1().ConfigMaps(Namespace).Update(&v1.ConfigMap{
+	_, err = client.CoreV1().ConfigMaps(constants.PlatformSystem).Update(&v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "reloader-test",
-			Namespace: Namespace,
+			Namespace: constants.PlatformSystem,
 			Labels: map[string]string{
 				"k8s-app":  "configmap-reloader",
 				"e2e-test": "true",
@@ -173,6 +174,6 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 
 //nolint
 func cleanup(client *kubernetes.Clientset) {
-	client.CoreV1().ConfigMaps(Namespace).Delete("reloader-test", &metav1.DeleteOptions{})
-	client.AppsV1().Deployments(Namespace).Delete("configmap-reloader-test", &metav1.DeleteOptions{})
+	client.CoreV1().ConfigMaps(constants.PlatformSystem).Delete("reloader-test", &metav1.DeleteOptions{})
+	client.AppsV1().Deployments(constants.PlatformSystem).Delete("configmap-reloader-test", &metav1.DeleteOptions{})
 }

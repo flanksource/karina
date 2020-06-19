@@ -112,10 +112,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - canaries.{{.Domain}}
+        - canaries.{{.domain}}
       secretName: canary-tls
   rules:
-    - host: canaries.{{.Domain}}
+    - host: canaries.{{.domain}}
       http:
         paths:
           - backend:
@@ -127,7 +127,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: canary-checker
-  namespace: monitoring
+  namespace: platform-system
   labels:
     name: canary-checker
 spec:
@@ -149,7 +149,8 @@ metadata:
     prometheus: k8s
     role: alert-rules
   name: canary-rules
-  namespace: platform-system
+  #TODO: work out why using the prometheusrule in the platform-system namespace doesn't work
+  namespace: monitoring
 spec:
   groups:
     - name: canary-alerts
