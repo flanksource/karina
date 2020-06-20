@@ -1458,6 +1458,10 @@ func (c *Client) GetHealth() Health {
 		if IsDeleted(&pod) {
 			continue
 		}
+		if pod.Spec.Priority != nil && *pod.Spec.Priority < 0 {
+			continue
+		}
+
 		if IsPodCrashLoopBackoff(pod) {
 			health.CrashLoopBackOff++
 		} else if IsPodHealthy(pod) {
