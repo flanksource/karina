@@ -3,14 +3,13 @@ name: vSphere
 on:
   push:
     branches:
-      - test-vsphere 
+      -  master
     paths-ignore:
       - "docs/**"
 
 jobs:
   minimal:
     runs-on: [self-hosted]
-    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
     steps:
       - uses: actions/checkout@master
       - run: make pack linux
