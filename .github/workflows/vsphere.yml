@@ -3,7 +3,7 @@ name: vSphere
 on:
   push:
     branches:
-      - master
+      - test-vsphere 
     paths-ignore:
       - "docs/**"
 
