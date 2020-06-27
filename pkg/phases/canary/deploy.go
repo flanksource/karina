@@ -19,7 +19,7 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if p.CanaryChecker.Version == "" {
-		p.CanaryChecker.Version = "v0.9.2"
+		p.CanaryChecker.Version = "v0.10.1"
 	}
 
 	if p.CanaryChecker.ConfigFile == "" {
