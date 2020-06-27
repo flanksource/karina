@@ -18,6 +18,14 @@ roleRef:
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: canary
+value: -1
+globalDefault: false
+description: "This priority class should be used for canary:w pods only."
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,7 +51,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: canary-checker
+            name: canary-config
         - name: dockersock
           hostPath:
             path: /var/run/docker.sock
@@ -71,11 +79,11 @@ spec:
           args:
             - serve
             - -c
-            - /conf/checks.yml
+            - /conf/canary-config.yaml
             - --httpPort
             - "8080"
             - --interval
-            - "86400"
+            - "{{ .canaryChecker.interval }}"
             - -vv
           resources:
             requests:
