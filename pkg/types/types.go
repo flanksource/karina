@@ -332,6 +332,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type CanaryChecker struct {
 	Enabled    `yaml:",inline"`
 	Version    string `yaml:"version"`
+	Interval   int    `yaml:"interval"`
 	ConfigFile string `yaml:"configFile,omitempty"`
 }
 

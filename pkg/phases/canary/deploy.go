@@ -22,6 +22,11 @@ func Deploy(p *platform.Platform) error {
 		p.CanaryChecker.Version = "v0.10.1"
 	}
 
+	if p.CanaryChecker.Interval == 0 {
+		p.Warnf("Canary Checker interval is missing, default is 1 minute")
+		p.CanaryChecker.Interval = 60
+	}
+
 	if p.CanaryChecker.ConfigFile == "" {
 		return fmt.Errorf("must specify canaryChecker.configFile")
 	}

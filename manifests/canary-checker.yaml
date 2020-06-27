@@ -51,7 +51,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: canary-checker
+            name: canary-config
         - name: dockersock
           hostPath:
             path: /var/run/docker.sock
@@ -79,11 +79,11 @@ spec:
           args:
             - serve
             - -c
-            - /conf/checks.yml
+            - /conf/canary-config.yaml
             - --httpPort
             - "8080"
             - --interval
-            - "86400"
+            - "{{ .canaryChecker.interval }}"
             - -vv
           resources:
             requests:
