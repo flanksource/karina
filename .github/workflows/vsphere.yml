@@ -56,4 +56,3 @@ jobs:
         with:
           name: vsphere-snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
-
