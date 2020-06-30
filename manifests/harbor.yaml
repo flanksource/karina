@@ -28,11 +28,16 @@ data:
   MAX_UPLOAD_SIZE: "20971520"
   CHART_POST_FORM_FIELD_NAME: "chart"
   PROV_POST_FORM_FIELD_NAME: "prov"
+  {{ if .harbor.chartPVC }}
+  STORAGE: "local"
+  STORAGE_LOCAL_ROOTDIR: "/chart_storage"
+  {{ else }}
   STORAGE: "amazon"
   STORAGE_AMAZON_BUCKET: "{{.harbor.bucket}}"
   STORAGE_AMAZON_REGION: "{{.s3.region}}"
   STORAGE_AMAZON_ENDPOINT: "{{.s3.endpoint}}"
   AWS_ACCESS_KEY_ID: "{{.s3.access_key}}"
+  {{ end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -96,7 +101,7 @@ data:
   HTTPS_PROXY: ""
   NO_PROXY: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
 ---
-# v2 onlu
+# v2 only
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -199,11 +204,17 @@ data:
       fields:
         service: registry
     storage:
+      {{ if .harbor.registryPVC }}
+      filesystem:
+        rootdirectory: /storage
+        maxthreads: 100
+      {{ else }}
       s3:
         region: {{.s3.region}}
         bucket: {{.harbor.bucket}}
         regionendpoint: {{.s3.endpoint}}
         skipverify: true
+      {{ end }}
       cache:
         layerinfo: redis
       maintenance:
@@ -460,7 +471,12 @@ spec:
               subPath:
       volumes:
         - name: chartmuseum-data
+          {{ if .harbor.chartPVC }}
+          persistentVolumeClaim:
+            claimName: {{.harbor.chartPVC}}
+          {{ else }}
           emptyDir: {}
+          {{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -912,8 +928,14 @@ spec:
         - name: registry-config
           configMap:
             name: "harbor-registry"
+        {{ if .harbor.registryPVC }}
+        - name: registry-data
+          persistentVolumeClaim:
+            claimName: {{.harbor.registryPVC}}
+        {{ else }}
         - name: registry-data
           emptyDir: {}
+        {{ end }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet

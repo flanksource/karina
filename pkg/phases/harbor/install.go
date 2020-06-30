@@ -94,10 +94,13 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if !p.ApplyDryRun {
-		if err := p.CreateOrUpdateSecret("harbor-chartmuseum", Namespace, map[string][]byte{
-			"CACHE_REDIS_PASSWORD":  []byte{},
-			"AWS_SECRET_ACCESS_KEY": []byte(p.S3.SecretKey),
-		}); err != nil {
+		chartSecret := map[string][]byte{
+			"CACHE_REDIS_PASSWORD": []byte{},
+		}
+		if p.Harbor.ChartPVC == "" {
+			chartSecret["AWS_SECRET_ACCESS_KEY"] = []byte(p.S3.SecretKey)
+		}
+		if err := p.CreateOrUpdateSecret("harbor-chartmuseum", Namespace, chartSecret); err != nil {
 			return err
 		}
 
@@ -121,13 +124,16 @@ func Deploy(p *platform.Platform) error {
 			return err
 		}
 
-		if err := p.CreateOrUpdateSecret("harbor-registry", Namespace, map[string][]byte{
-			"REGISTRY_HTPASSWD":             registryHtPassword,
-			"REGISTRY_HTTP_SECRET":          []byte(nonce),
-			"REGISTRY_REDIS_PASSWORD":       []byte(""),
-			"REGISTRY_STORAGE_S3_ACCESSKEY": []byte(p.S3.AccessKey),
-			"REGISTRY_STORAGE_S3_SECRETKEY": []byte(p.S3.SecretKey),
-		}); err != nil {
+		registrySecret := map[string][]byte{
+			"REGISTRY_HTPASSWD":       registryHtPassword,
+			"REGISTRY_HTTP_SECRET":    []byte(nonce),
+			"REGISTRY_REDIS_PASSWORD": []byte(""),
+		}
+		if p.Harbor.RegistryPVC == "" {
+			registrySecret["REGISTRY_STORAGE_S3_ACCESSKEY"] = []byte(p.S3.AccessKey)
+			registrySecret["REGISTRY_STORAGE_S3_SECRETKEY"] = []byte(p.S3.SecretKey)
+		}
+		if err := p.CreateOrUpdateSecret("harbor-registry", Namespace, registrySecret); err != nil {
 			return err
 		}
 
