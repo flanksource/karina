@@ -53,7 +53,7 @@ data:
   _REDIS_URL_REG: "redis://harbor-redis:6379/2"
   PORTAL_URL: "https://harbor-portal"
   REGISTRYCTL_URL: "https://harbor-registry:8443"
-  REGISTRY_CONTROLLER_URL: "https://harbor-registry"
+  REGISTRY_CONTROLLER_URL: "https://harbor-registry:8443"
   REGISTRY_CREDENTIAL_USERNAME: "harbor_registry_user"
   CLAIR_HEALTH_CHECK_SERVER_URL: "http://harbor-clair:6061"
   HTTP_PROXY: ""
