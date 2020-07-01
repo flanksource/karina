@@ -64,7 +64,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		client: client,
 		base:   base,
 		url:    p.Harbor.URL,
-		sling: sling.New().Client(client).Base("http://harbor-core"+base).
+		sling: sling.New().Client(client).Base("https://harbor-core"+base).
 			SetBasicAuth("admin", p.Harbor.AdminPassword).
 			Set("accept", "application/json").
 			Set("content-type", "application/json"),
@@ -72,7 +72,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 }
 
 func (harbor *Client) GetStatus() (*Status, error) {
-	resp, err := harbor.client.Get("http://harbor-core" + harbor.base + "/health")
+	resp, err := harbor.client.Get("https://harbor-core" + harbor.base + "/health")
 	if err != nil {
 		return nil, err
 	}

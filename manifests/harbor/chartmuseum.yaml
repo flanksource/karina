@@ -1,0 +1,164 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-chartmuseum"
+  namespace: harbor
+  labels:
+    app: "harbor"
+data:
+  PORT: "9443"
+  CACHE: "redis"
+  CACHE_REDIS_ADDR: "harbor-redis:6379"
+  CACHE_REDIS_DB: "3"
+  BASIC_AUTH_USER: "chart_controller"
+  DEPTH: "1"
+  DEBUG: "false"
+  LOG_JSON: "true"
+  DISABLE_METRICS: "false"
+  DISABLE_API: "false"
+  DISABLE_STATEFILES: "false"
+  ALLOW_OVERWRITE: "true"
+  AUTH_ANONYMOUS_GET: "false"
+  TLS_CERT: "/etc/harbor/ssl/chartmuseum.crt"
+  TLS_KEY: "/etc/harbor/ssl/chartmuseum.key"
+  CONTEXT_PATH: ""
+  INDEX_LIMIT: "0"
+  MAX_STORAGE_OBJECTS: "0"
+  MAX_UPLOAD_SIZE: "20971520"
+  CHART_POST_FORM_FIELD_NAME: "chart"
+  PROV_POST_FORM_FIELD_NAME: "prov"
+  {{ if .harbor.chartPVC }}
+  STORAGE: "local"
+  STORAGE_LOCAL_ROOTDIR: "/chart_storage"
+  {{ else }}
+  STORAGE: "amazon"
+  STORAGE_AMAZON_BUCKET: "{{.harbor.bucket}}"
+  STORAGE_AMAZON_REGION: "{{.s3.region}}"
+  STORAGE_AMAZON_ENDPOINT: "{{.s3.endpoint}}"
+  AWS_ACCESS_KEY_ID: "{{.s3.access_key}}"
+  {{ end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-chartmuseum"
+  namespace: harbor
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 443
+      targetPort: 9443
+  selector:
+    app: "harbor"
+    component: chartmuseum
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-chartmuseum"
+  namespace: harbor
+  labels:
+    app: "harbor"
+    component: chartmuseum
+  annotations:
+    reload/all: "true" # restart on cm/secret change
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: chartmuseum
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: chartmuseum
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: chartmuseum
+          {{- if .harbor.version | strings.HasPrefix "v1" }}
+          image: goharbor/chartmuseum-photon:v0.9.0-{{.harbor.version}}
+          {{ else }}
+          image: goharbor/chartmuseum-photon:{{.harbor.version}}
+          {{ end }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          envFrom:
+            - configMapRef:
+                name: "harbor-chartmuseum"
+            - secretRef:
+                name: "harbor-chartmuseum"
+          env:
+            - name: INTERNAL_TLS_ENABLED
+              value: "true"
+            - name: INTERNAL_TLS_KEY_PATH
+              value: /etc/harbor/ssl/chartmuseum.key
+            - name: INTERNAL_TLS_CERT_PATH
+              value: /etc/harbor/ssl/chartmuseum.crt
+            - name: INTERNAL_TLS_TRUST_CA_PATH
+              value: /harbor_cust_cert/harbor_internal_ca.crt
+            - name: BASIC_AUTH_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+          ports:
+            - containerPort: 9443
+          volumeMounts:
+            - name: chartmuseum-data
+              mountPath: /chart_storage
+              subPath:
+            - name: chart-internal-certs
+              mountPath: /harbor_cust_cert/harbor_internal_ca.crt
+              subPath: ca.crt
+            - name: chart-internal-certs
+              mountPath: /etc/harbor/ssl/chartmuseum.crt
+              subPath: tls.crt
+            - name: chart-internal-certs
+              mountPath: /etc/harbor/ssl/chartmuseum.key
+              subPath: tls.key
+
+      volumes:
+        - name: chart-internal-certs
+          secret:
+            secretName: chart-internal-certs
+        - name: chartmuseum-data
+          {{ if .harbor.chartPVC }}
+          persistentVolumeClaim:
+            claimName: {{.harbor.chartPVC}}
+          {{ else }}
+          emptyDir: {}
+          {{ end }}
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: "chart-internal-certs"
+  namespace: harbor
+spec:
+  secretName: chart-internal-certs
+  dnsNames:
+    - harbor-chartmuseum
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer

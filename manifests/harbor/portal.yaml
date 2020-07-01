@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-portal"
+  namespace: harbor
+  labels:
+    app: "harbor"
+data:
+  nginx.conf: |+
+    worker_processes auto;
+    pid /tmp/nginx.pid;
+    events {
+        worker_connections  1024;
+    }
+    http {
+        client_body_temp_path /tmp/client_body_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        server {
+            listen 8443 ssl;
+            # SSL
+            ssl_certificate /etc/harbor/tls/portal.crt;
+            ssl_certificate_key /etc/harbor/tls/portal.key;
+
+            # Recommendations from https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
+            ssl_protocols TLSv1.2;
+            ssl_ciphers '!aNULL:kECDH+AESGCM:ECDH+AESGCM:RSA+AESGCM:kECDH+AES:ECDH+AES:RSA+AES:';
+            ssl_prefer_server_ciphers on;
+            ssl_session_cache shared:SSL:10m;
+
+            server_name  localhost;
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            include /etc/nginx/mime.types;
+            gzip on;
+            gzip_min_length 1000;
+            gzip_proxied expired no-cache no-store private auth;
+            gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+            location = /index.html {
+                add_header Cache-Control "no-store, no-cache, must-revalidate";
+            }
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-portal"
+  namespace: harbor
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 443
+      targetPort: 8443
+  selector:
+    app: "harbor"
+    component: portal
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: portal-internal-certs
+  namespace: harbor
+spec:
+  secretName: portal-internal-certs
+  dnsNames:
+    - harbor-portal
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-portal"
+  namespace: harbor
+  labels:
+    app: "harbor"
+    component: portal
+  annotations:
+    reload/all: "true" # restart on cm/secret change
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: portal
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: portal
+    spec:
+      containers:
+        - name: portal
+          image: goharbor/harbor-portal:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: portal-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: portal-internal-certs
+              mountPath: /harbor_cust_cert/harbor_internal_ca.crt
+              subPath: ca.crt
+            - name: portal-internal-certs
+              mountPath: /etc/harbor/tls/portal.crt
+              subPath: tls.crt
+            - name: portal-internal-certs
+              mountPath: /etc/harbor/tls/portal.key
+              subPath: tls.key
+      volumes:
+        - name: portal-config
+          configMap:
+            name: "harbor-portal"
+        - name: portal-internal-certs
+          secret:
+            secretName: portal-internal-certs

@@ -15,11 +15,16 @@ const (
 	HaborRegistryUsername = "harbor_registry_user"
 )
 
+var manifests = []string{"core", "portal", "registry", "exporter", "redis", "jobservice", "chartmuseum", "clair"}
+
 func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
-		if err := p.DeleteSpecs("", "harbor.yaml", "harbor"); err != nil {
-			p.Warnf("failed to delete specs: %v", err)
+		for _, spec := range manifests {
+			if err := p.DeleteSpecs("", fmt.Sprintf("harbor/%s.yaml", spec)); err != nil {
+				p.Warnf("failed to delete specs: %v", err)
+			}
 		}
+
 		return nil
 	}
 	p.Infof("Deploying harbor %s", p.Harbor.Version)
@@ -142,20 +147,12 @@ func Deploy(p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-	} else {
-		p.Infof("Creating secret harbor-chartmuseum")
-		p.Infof("Creating secret harbor-clair")
-		p.Infof("Creating secret harbor-core")
-		p.Infof("Creating secret harbor-registry")
-		p.Infof("Creating secret harbor-jobservice")
 	}
 
-	if err := p.ApplySpecs(Namespace, "harbor.yaml"); err != nil {
-		return err
-	}
-
-	if err := p.ApplySpecs(Namespace, "harbor-exporter.yaml"); err != nil {
-		return err
+	for _, spec := range manifests {
+		if err := p.ApplySpecs("", fmt.Sprintf("harbor/%s.yaml", spec)); err != nil {
+			return err
+		}
 	}
 
 	// Skip connecting if in dry run mode
