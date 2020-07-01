@@ -45,7 +45,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		Namespace:    Namespace,
 		Kind:         "pods",
 		ResourceName: pods.Items[0].Name,
-		Port:         8080,
+		Port:         8443,
 	})
 	tr := &http.Transport{
 		DialContext:     dialer.DialContext,
