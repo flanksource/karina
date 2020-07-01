@@ -47,3 +47,16 @@ vsphere:
   hostname: !!env GOVC_FQDN
   resourcePool: !!env GOVC_RESOURCE_POOL
   network: !!env GOVC_NETWORK
+
+s3:
+  endpoint: http://minio.minio.svc:9000
+  externalEndpoint: minio.127.0.0.1.nip.io
+  bucket: harbor
+  access_key: minio
+  secret_key: minio123
+  region: us-east1
+  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
+  usePathStyle: true
+  skipTLSVerify: true
+  e2e:
+    minio: false

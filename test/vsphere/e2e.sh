@@ -6,7 +6,7 @@ mkdir -p .certs
 export TERM=xterm-256color
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 BIN=.bin/karina
-
+chmod +x $BIN
 
 generate_cluster_id() {
   echo e2e-$(date "+%d%H%M")
@@ -48,11 +48,9 @@ if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml
 fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
-wget -nv https://github.com/flanksource/build-tools/releases/download/v0.7.0/build-tools
+wget -nv https://github.com/flanksource/build-tools/releases/download/v0.9.9/build-tools
 chmod +x build-tools
-./build-tools gh report-junit $GITHUB_REPOSITORY $PR_NUM ./test-results/results.xml --auth-token $GIT_API_KEY \
-      --success-message="vSphere minimal tests - commit $COMMIT_SHA" \
-      --failure-message="vSphere minimal tests - :neutral_face: commit $COMMIT_SHA had some failures or skipped tests. **Is it OK?**"
+./build-tools gh actions report-junit test-results/results.xml --token $GIT_API_KEY --build "$BUILD"
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
