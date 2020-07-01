@@ -46,7 +46,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: HARBOR_URI
-              value: http://harbor-core
+              value: https://harbor-core/v2
             - name: HARBOR_USERNAME
               value: "admin"
             - name: HARBOR_PASSWORD
@@ -54,7 +54,6 @@ spec:
                 secretKeyRef:
                   name: harbor-core
                   key: HARBOR_ADMIN_PASSWORD
-
           securityContext:
             capabilities:
               drop:

@@ -107,6 +107,8 @@ type OPAE2E struct {
 type Harbor struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	Version         string `yaml:"version,omitempty"`
+	RegistryPVC     string `yaml:"registryPVC,omitempty"`
+	ChartPVC        string `yaml:"chartPVC,omitempty"`
 	ChartVersion    string `yaml:"chartVersion,omitempty"`
 	AdminPassword   string `yaml:"-"`
 	ClairVersion    string `yaml:"clairVersion"`
