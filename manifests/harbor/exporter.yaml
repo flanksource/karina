@@ -42,11 +42,14 @@ spec:
         runAsUser: 1000
       containers:
         - name: harbor-exporter
-          image: "c4po/harbor-exporter:v0.3.1"
+          image: "c4po/harbor-exporter:v0.4.0"
           imagePullPolicy: IfNotPresent
+          command: ["/bin/harbor_exporter"]
+          args:
+            - "--harbor.insecure"
           env:
             - name: HARBOR_URI
-              value: https://harbor-core/v2
+              value: https://harbor-core/
             - name: HARBOR_USERNAME
               value: "admin"
             - name: HARBOR_PASSWORD
