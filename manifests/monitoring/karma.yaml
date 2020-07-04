@@ -26,12 +26,12 @@ data:
       servers:
 
       {{ range $index, $alertmanager := .monitoring.karma.alertManagers }}
-        - name: {{$alertmanager}}
+        - name: alertmanager-{{ $index }}
           uri: {{$alertmanager}}
           tls:
             insecureSkipVerify: true
           timeout: 20s
-          proxy: false
+          proxy: true
       {{ end }}
 
 
