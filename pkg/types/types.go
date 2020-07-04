@@ -398,8 +398,8 @@ type Monitoring struct {
 
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
 type Karma struct {
-	Version       string   `yaml:"version,omitempty"`
-	AlertManagers []string `yaml:"alertManagers"`
+	Version       string            `yaml:"version,omitempty"`
+	AlertManagers map[string]string `yaml:"alertManagers"`
 }
 type MonitoringE2E struct {
 	// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
