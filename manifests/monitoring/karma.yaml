@@ -25,13 +25,13 @@ data:
       interval: 1m
       servers:
 
-      {{ range $index, $alertmanager := .monitoring.karma.alertManagers }}
-        - name: {{$alertmanager}}
+      {{ range $name, $alertmanager := .monitoring.karma.alertManagers }}
+        - name: {{ $name }}
           uri: {{$alertmanager}}
           tls:
             insecureSkipVerify: true
           timeout: 20s
-          proxy: false
+          proxy: true
       {{ end }}
 
 
