@@ -215,6 +215,7 @@ metadata:
   annotations:
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-body-size: 0
 spec:
   tls:
     - secretName: "harbor-ingress"

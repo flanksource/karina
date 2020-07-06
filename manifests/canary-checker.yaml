@@ -85,6 +85,8 @@ spec:
             - --interval
             - "{{ .canaryChecker.interval }}"
             - -vv
+            - --name
+            - "{{.name}}"
           resources:
             requests:
               cpu: 200m
