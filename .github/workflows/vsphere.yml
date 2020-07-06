@@ -5,6 +5,9 @@ on:
     # daily at 00h00 - https://crontab.guru/#0_0_*_*_*
     # * is a special character in YAML so you have to quote this string
     - cron:  '0 0 * * *'
+  #temporary just to test on PR
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   binary:
     runs-on: ubuntu-latest
