@@ -35,7 +35,6 @@ jobs:
         suite:
           - minimal
           - monitoring
-          - harbor
           - harbor2
           - postgres
           - elastic
