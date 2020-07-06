@@ -8,11 +8,7 @@ REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 BIN=.bin/karina
 chmod +x $BIN
 
-generate_cluster_id() {
-  echo e2e-$(date "+%d%H%M")
-}
-
-export PLATFORM_CLUSTER_ID=$(generate_cluster_id)
+export PLATFORM_CLUSTER_ID=vsphere-e2e
 export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFORM_CLUSTER_ID}.lab.flanksource.com -v"
 export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
@@ -58,6 +54,7 @@ zip -r artifacts/snapshot.zip snapshot/*
 
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
+which govc || echo "No govc installed."
 
 if [[ "$failed" = true ]]; then
   exit 1
