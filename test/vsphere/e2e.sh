@@ -15,10 +15,10 @@ unset KUBECONFIG
 
 # delete any dangling VMs before starting
 if ! which govc; then
-     curl -L --output govc.gz https://github.com/vmware/govmomi/releases/download/v0.23.0/govc_linux_amd64.gz
+     curl -s -L --output govc.gz https://github.com/vmware/govmomi/releases/download/v0.23.0/govc_linux_amd64.gz
      gunzip govc.gz
      chmod +x govc
-     ./govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
+     ./govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} ./govc vm.destroy {}
 else
   govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
 fi
