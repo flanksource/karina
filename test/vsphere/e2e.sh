@@ -13,6 +13,10 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
 
+which govc
+# delete any dangling VMs before starting
+govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
+
 
 printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
@@ -54,7 +58,6 @@ zip -r artifacts/snapshot.zip snapshot/*
 
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
-which govc || echo "No govc installed."
 
 if [[ "$failed" = true ]]; then
   exit 1
