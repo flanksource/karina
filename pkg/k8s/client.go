@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
+	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -46,7 +48,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
-	"sigs.k8s.io/yaml"
 )
 
 type Client struct {
@@ -298,25 +299,94 @@ func (c *Client) GetKustomize() (*kustomize.Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	no := 1
+	var (
+		patchData *[]byte
+		name      string
+	)
 	for _, patch := range patches {
 		if files.Exists(patch) {
-			if err := files.Copy(patch, dir+"/"+files.GetBaseName(patch)); err != nil {
+			name = filepath.Base(patch)
+			patchBytes, err := ioutil.ReadFile(patch)
+			if err != nil {
 				return nil, err
 			}
+			patchData = &patchBytes
 		} else {
-			name := fmt.Sprintf("patch-%d.yaml", no)
+			patchBytes := []byte(patch)
+			patchData = &patchBytes
+			name = fmt.Sprintf("patch-%d.yaml", no)
 			no++
-			if _, err := files.CopyFromReader(bytes.NewBufferString(patch), dir+"/"+name, 0644); err != nil {
-				return nil, err
-			}
+		}
+		patchData, err = templatizePatch(patchData)
+		c.Tracef("patch file %v after templating:\n%v\n\n", name, string(*patchData))
+		if _, err := files.CopyFromReader(bytes.NewBuffer(*patchData), dir+"/"+name, 0644); err != nil {
+			return nil, err
 		}
 	}
-
 	kustomizeManager, err := kustomize.GetManager(dir)
 	c.kustomizeManager = kustomizeManager
 	return c.kustomizeManager, err
+}
+
+// templatizePatch takes a patch stream (possibly containing multiple
+// YAML documents) and templatizes each.
+// blank documents are skipped.
+func templatizePatch(patch *[]byte) (*[]byte, error) {
+	var result []byte
+	remainingData := patch
+	for {
+		first, rest := getDocumentsFromYamlFile(*remainingData)
+		remainingData = &rest
+		if len(first) == 0 {
+			continue
+		}
+		templated, err := templatizeDocument(first)
+		if err != nil {
+			return nil, err
+		}
+		if len(result) > 0 {
+			result = append(result, []byte("---\n")...)
+		}
+		result = append(result, *templated...)
+		if len(rest) == 0 {
+			break
+		}
+	}
+	return &result, nil
+}
+
+// templatizeDocument applies templating to a supplied YAML
+// document via the templating functionality in
+// "gopkg.in/flanksource/yaml.v3"
+// NOTE: only the first YAML document in a stream will be processed.
+func templatizeDocument(patch []byte) (*[]byte, error) {
+	var body interface{}
+	if err := yaml.Unmarshal(patch, &body); err != nil {
+		return nil, err
+	}
+	if body == nil {
+		return &[]byte{}, nil
+	}
+	templated, err := yaml.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	return &templated, nil
+}
+
+// getDocumentsFromYamlFile returns the first YAML document
+// from a stream and a byte slice containing the remainder of the stream.
+// This is needed since yaml.v3 (and the flanksource derived yaml.v3) only
+// unmarshalls the **first** document in a stream.
+//
+// (see https://pkg.go.dev/gopkg.in/flanksource/yaml.v3@v3.1.1?tab=doc#Unmarshal)
+func getDocumentsFromYamlFile(yamlData []byte) (firstDoc []byte, rest []byte) {
+	endIndex := bytes.Index(yamlData, []byte("---"))
+	if endIndex == -1 {
+		return yamlData, []byte{}
+	}
+	return yamlData[:endIndex], yamlData[endIndex+3:]
 }
 
 // GetDynamicClient creates a new k8s client
