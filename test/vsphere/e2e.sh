@@ -13,16 +13,15 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
 
+# delete any dangling VMs before starting
 if ! which govc; then
      curl -L --output govc.gz https://github.com/vmware/govmomi/releases/download/v0.23.0/govc_linux_amd64.gz
      gunzip govc.gz
      chmod +x govc
+     ./govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
+else
+  govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
 fi
-
- which govc || curl -L -O https://github.com/vmware/govmomi/releases/download/v0.23.0/govc_linux_amd64.gz
-# delete any dangling VMs before starting
-govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
-
 
 printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
