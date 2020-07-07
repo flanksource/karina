@@ -13,7 +13,13 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
 
-which govc
+if ! which govc; then
+     curl -L --output govc.gz https://github.com/vmware/govmomi/releases/download/v0.23.0/govc_linux_amd64.gz
+     gunzip govc.gz
+     chmod +x govc
+fi
+
+ which govc || curl -L -O https://github.com/vmware/govmomi/releases/download/v0.23.0/govc_linux_amd64.gz
 # delete any dangling VMs before starting
 govc ls /dc1/vm | grep vsphere-e2e | xargs -I {} govc vm.destroy {}
 
@@ -59,6 +65,6 @@ zip -r artifacts/snapshot.zip snapshot/*
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
 
-if [[ "$failed" = true ]]; then
+if [[ "$failed" == true ]]; then
   exit 1
 fi
