@@ -322,7 +322,9 @@ func (c *Client) GetKustomize() (*kustomize.Manager, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.Tracef("patch file %v after templating:\n%v\n\n", name, string(*patchData))
+		if c.Trace {
+			c.Tracef("patch file %v after templating:\n%v\n\n", name, string(*patchData))
+		}
 		if _, err := files.CopyFromReader(bytes.NewBuffer(*patchData), dir+"/"+name, 0644); err != nil {
 			return nil, err
 		}
