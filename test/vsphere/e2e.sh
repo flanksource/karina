@@ -60,7 +60,7 @@ zip -r artifacts/snapshot.zip snapshot/*
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
 
-build-tools junit passfail test-results/results.xml
+build-tools junit passfail test-results/results.xml || exit 1
 
 if [[ "$failed" == true ]]; then
   exit 1
