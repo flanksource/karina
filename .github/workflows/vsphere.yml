@@ -12,7 +12,7 @@ jobs:
   binary:
     runs-on: ubuntu-latest
     container:
-      image: flanksource/build-tools:0.6
+      image: flanksource/build-tools:latest
     steps:
       - uses: actions/checkout@master
       - run: make pack linux

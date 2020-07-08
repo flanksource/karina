@@ -31,7 +31,6 @@ $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem
 printf "\n\n\n\n$(tput bold)Provision Cluster$(tput setaf 7)\n"
 $BIN provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 
-
 printf "\n\n\n\n$(tput bold)Basic Deployments$(tput setaf 7)\n"
 
 $BIN deploy phases --calico --base --stubs --dex $PLATFORM_OPTIONS_FLAGS
@@ -43,7 +42,6 @@ $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FL
 printf "\n\n\n\n$(tput bold)All Deployments$(tput setaf 7)\n"
 $BIN deploy all $PLATFORM_OPTIONS_FLAGS
 
-
 failed=false
 
 ## e2e do not use --wait at the run level, if needed each individual test implements
@@ -53,9 +51,7 @@ if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml
 fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
-wget -nv https://github.com/flanksource/build-tools/releases/download/v0.9.9/build-tools
-chmod +x build-tools
-./build-tools gh actions report-junit test-results/results.xml --token $GIT_API_KEY --build "$BUILD"
+build-tools gh actions report-junit test-results/results.xml --token $GIT_API_KEY --build "$BUILD"
 
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
@@ -63,6 +59,8 @@ zip -r artifacts/snapshot.zip snapshot/*
 
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
+
+build-tools junit passfail test-results/results.xml
 
 if [[ "$failed" == true ]]; then
   exit 1
