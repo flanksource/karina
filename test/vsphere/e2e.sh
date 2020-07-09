@@ -66,5 +66,7 @@ build-tools junit passfail test-results/results.xml || echo "TEST_FAILURE"
 
 if [[ "$failed" == true ]]; then
   echo "TEST_FAILURE"
+  exec 1>&-
   exit 1
 fi
+exec 1>&-
