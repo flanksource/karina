@@ -60,8 +60,11 @@ zip -r artifacts/snapshot.zip snapshot/*
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
 
-build-tools junit passfail test-results/results.xml || exit 1
+# serves as a workaround for `sops exec-env` not passing exit codes
+# in current release: https://github.com/mozilla/sops/issues/626
+build-tools junit passfail test-results/results.xml || echo "TEST_FAILURE"
 
 if [[ "$failed" == true ]]; then
+  echo "TEST_FAILURE"
   exit 1
 fi
