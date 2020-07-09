@@ -3,6 +3,9 @@ package vmware
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	ptypes "github.com/flanksource/karina/pkg/types"
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
@@ -64,8 +67,13 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting cdrom")
 	}
+	deviceSpecs = append(deviceSpecs, cdrom)
 
-	//TODO: define and attach serial device
+	serial, err := s.getSerial(datastore, vm, devices)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting cdrom")
+	}
+	deviceSpecs = append(deviceSpecs, serial)
 
 	deviceSpecs = append(deviceSpecs, cdrom)
 
@@ -150,6 +158,57 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    cdrom,
+	}, nil
+}
+
+// getSerial finds the first serial device (adding a new serial device if none are found), it then
+// creates a blank file as a file backing-store for it, and sets this file as its backing-store.
+func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
+	op := types.VirtualDeviceConfigSpecOperationEdit
+	serial, err := devices.FindSerialPort("")
+	if err != nil {
+		return nil, fmt.Errorf("getSerial: failed to find serial device: %v", err)
+	}
+
+	if serial == nil {
+		serial, err = devices.CreateSerialPort()
+		if err != nil {
+			return nil, fmt.Errorf("getSerial: failed to create a new serial device: %v", err)
+		}
+		op = types.VirtualDeviceConfigSpecOperationAdd
+	}
+	s.Debugf("Creating serial device backing file for %s", vm.Name)
+	dir, err := ioutil.TempDir("/tmp", "serial-backing")
+	if err != nil {
+		s.Errorf("Error creating local backing file for serial device %v",err)
+		return nil, err
+	}
+	defer os.RemoveAll(dir)
+	fileName := filepath.Join(dir,vm.Name+".serial")
+	emptyFile, err := os.Create(fileName)
+	if err != nil {
+		if err != nil {
+			s.Errorf("Error creating local backing file for serial device %v",err)
+			return nil, err
+		}
+	}
+	emptyFile.Close()
+	path := fmt.Sprintf("serial-devices/%s.serial", vm.Name)
+	if err = datastore.UploadFile(context.TODO(), fileName, path, &soap.DefaultUpload); err != nil {
+		return nil, err
+	}
+	s.Tracef("Uploaded to %s", path)
+
+	serial.Backing = &types.VirtualSerialPortFileBackingInfo{
+		VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
+			FileName: fmt.Sprintf("[%s] %s", datastore.Name(), path),
+		},
+	}
+
+	devices.Connect(serial) // nolint: errcheck
+	return &types.VirtualDeviceConfigSpec{
+		Operation: op,
+		Device:    serial,
 	}, nil
 }
 
