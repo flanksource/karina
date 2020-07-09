@@ -33,6 +33,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/platform"
+	tests "github.com/flanksource/karina/pkg/test"
 	"github.com/spf13/cobra"
 	mpb "github.com/vbauerster/mpb/v5"
 )
@@ -146,6 +147,7 @@ func init() {
 		"registry-creds":     registrycreds.Test,
 		"sealed-secrets":     sealedsecrets.Test,
 		"stubs":              stubs.Test,
+		"templates":          tests.TestTemplates,
 		"thanos":             monitoring.TestThanos,
 		"vault":              vault.Test,
 		"velero":             velero.Test,
