@@ -25,6 +25,11 @@ metadata:
   namespace: dex
 spec:
   replicas: 1
+  template:
+    spec:
+      resources:
+        requests:
+          cpu: 10m
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
@@ -36,5 +41,15 @@ spec:
   resources:
     requests:
       memory: 256Mi
-      cpu: 100m
+      cpu: 10m
   retention: 10h
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  name: main
+  namespace: monitoring
+spec:
+  resources:
+    requests:
+      cpu: 10m
