@@ -1,5 +1,4 @@
 #!/bin/bash
-export
 BIN=./.bin/karina
 chmod +x $BIN
 mkdir -p .bin
@@ -8,9 +7,13 @@ export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
 GITHUB_OWNER=${GITHUB_OWNER##*:}
-MASTER_HEAD=$(curl https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
+MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
 
+[ -z "$KUBERNETES_VERSION" ] && echo -e "KUBERNETES_VERSION not set! Try: \nexport KUBERNETES_VERSION='v1.16.9'" && exit 1
+[ -z "$SUITE" ] && echo -e "SUITE not set! Try: \n export SUITE='minimal'\n or one of these (minus extension):"&& ls  test/*.yaml && exit 1
+kind delete cluster --name kind-kind || echo "No cluster present when starting"
 
+export CONFIGURED_VALUE=`openssl rand -base64 12`
 export PLATFORM_CONFIG=test/$SUITE.yaml
 
 if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then

@@ -1,0 +1,19 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: template-test-file
+  namespace: default
+  labels:
+    template: test
+data:
+  configuredValue: "some value"
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: template-test-direct
+  namespace: default
+  labels:
+    template: test
+data:
+  configuredValue: "some value"
