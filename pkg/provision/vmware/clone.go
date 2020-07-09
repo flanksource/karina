@@ -65,6 +65,8 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 		return nil, errors.Wrapf(err, "error getting cdrom")
 	}
 
+	//TODO: define and attach serial device
+
 	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
