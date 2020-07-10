@@ -198,11 +198,19 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 	s.Tracef("Uploaded to %s", path)
 
 
-	serial.Backing = &types.VirtualSerialPortFileBackingInfo{
-		VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
-			FileName: fmt.Sprintf("[%s] %s", datastore.Name(), path),
+	//serial.Backing = &types.VirtualSerialPortFileBackingInfo{
+	//	VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
+	//		FileName: fmt.Sprintf("[%s] %s", datastore.Name(), path),
+	//	},
+	//}
+
+	serial.Backing = &types.VirtualSerialPortURIBackingInfo{
+		VirtualDeviceURIBackingInfo: types.VirtualDeviceURIBackingInfo{
+			Direction:  "client",
+			ServiceURI: "localhost:0",
 		},
 	}
+
 
 	devices.Connect(serial) // nolint: errcheck
 	
