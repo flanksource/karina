@@ -3,6 +3,9 @@ package vmware
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	ptypes "github.com/flanksource/karina/pkg/types"
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
@@ -10,8 +13,6 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-	"io/ioutil"
-	"os"
 )
 
 const (
@@ -80,7 +81,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 		Value: "Replace",
 	})
 
-
 	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
@@ -90,7 +90,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
-			ExtraConfig: dontAskExtraConfig,
+			ExtraConfig:  dontAskExtraConfig,
 		},
 		Location: types.VirtualMachineRelocateSpec{
 			Datastore:    types.NewReference(datastore.Reference()),
@@ -186,7 +186,7 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 	s.Debugf("Creating serial device backing file for %s", vm.Name)
 	file, err := ioutil.TempFile("/tmp", "serial-backing")
 	if err != nil {
-		s.Errorf("Error creating local backing file for serial device %v",err)
+		s.Errorf("Error creating local backing file for serial device %v", err)
 		return nil, err
 	}
 	defer os.Remove(file.Name())
@@ -197,7 +197,6 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 	}
 	s.Tracef("Uploaded to %s", path)
 
-
 	serial.Backing = &types.VirtualSerialPortFileBackingInfo{
 		VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
 			FileName: fmt.Sprintf("[%s] %s", datastore.Name(), path),
@@ -205,7 +204,7 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 	}
 
 	devices.Connect(serial) // nolint: errcheck
-	
+
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    serial,
