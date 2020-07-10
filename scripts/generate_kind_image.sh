@@ -4,6 +4,7 @@ set -e
 
 export IMAGES_FILE="/tmp/karina-images.txt"
 export CLEANUP=${CLEANUP:=false}
+export DOCKER_PUSH=${DOCKER_PUSH:=false}
 export KIND_NODE_IMAGE="kindest/node"
 export KIND_NODE_VERSION=${KIND_NODE_VERSION:-"v1.16.9"}
 export KIND_DOCKER_IMAGE="$KIND_NODE_IMAGE:$KIND_NODE_VERSION"
@@ -34,17 +35,14 @@ if [[ "$DEPLOY_KIND_CLUSTER" = true ]]; then
     $KARINA provision kind-cluster -c test/minimal.yaml
 fi
 
-$KARINA images list -c test/minimal.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/monitoring.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/harbor.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/harbor2.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/postgres.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/elastic.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/security.yaml -o text >> $IMAGES_FILE
-$KARINA images list -c test/platform.yaml -o text >> $IMAGES_FILE
-
-cat $IMAGES_FILE | sort | uniq > $IMAGES_FILE
-
+$KARINA images list -c test/minimal.yaml  >> $IMAGES_FILE
+$KARINA images list -c test/monitoring.yaml  >> $IMAGES_FILE
+$KARINA images list -c test/harbor2.yaml >> $IMAGES_FILE
+$KARINA images list -c test/postgres.yaml  >> $IMAGES_FILE
+$KARINA images list -c test/elastic.yaml  >> $IMAGES_FILE
+$KARINA images list -c test/security.yaml  >> $IMAGES_FILE
+$KARINA images list -c test/platform.yaml  >> $IMAGES_FILE
+cat $IMAGES_FILE | sort | uniq | sponge  $IMAGES_FILE
 echo "pulling kind node image: $KIND_DOCKER_IMAGE"
 docker pull $KIND_DOCKER_IMAGE
 
@@ -56,12 +54,14 @@ echo "RUN mkdir -p /kind/images" >> $KIND_DOCKERFILE
 
 cat $IMAGES_FILE | while read image || [[ -n $image ]];
 do
-    echo "pulling docker image: $image"
-    docker pull $image
-
     IMAGE_NAME=$(echo $image | $SED 's#/#__#g' | $SED 's#:#_#g')
-    echo "exporting image: $image to $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz"
-    docker save $image > $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz
+
+    if [[ ! -e  $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz ]]; then
+        echo "pulling docker image: $image"
+        docker pull $image
+        echo "exporting image: $image to $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz"
+        docker save $image > $DOCKER_IMAGE_DIRECTORY/$IMAGE_NAME.tgz
+    fi
     echo "ADD images/$IMAGE_NAME.tgz /kind/images" >> $KIND_DOCKERFILE
 
     if [[ "$CLEANUP" = true ]]; then
@@ -74,8 +74,13 @@ pushd $DOCKER_DIRECTORY
     docker build -t $DOCKER_BUILD_IMAGE .
 popd
 
-if [[ "$CLEANUP" = true ]]; then
+if [[ "$CLEANUP" == true ]]; then
     rm -rf $DOCKER_DIRECTORY
+fi
+
+if [[ "$DOCKER_PUSH" == true ]]; then
+    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+    docker push $DOCKER_BUILD_IMAGE
 fi
 
 echo "DONE !!"
