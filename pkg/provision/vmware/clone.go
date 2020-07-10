@@ -70,15 +70,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 		return nil, errors.Wrapf(err, "error getting serial device")
 	}
 	deviceSpecs = append(deviceSpecs, serial)
-	// this extra config prevents the asking of a blocking question during the clone
-	// see https://kb.vmware.com/s/article/1027096
-	dontAskExtraConfig := []types.BaseOptionValue{}
-	dontAskExtraConfig = append(dontAskExtraConfig, &types.OptionValue{
-		Key:   "answer.msg.serial.file.open",
-		Value: "Replace",
-	})
-
-	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
@@ -87,7 +78,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
-			ExtraConfig:  dontAskExtraConfig,
 		},
 		Location: types.VirtualMachineRelocateSpec{
 			Datastore:    types.NewReference(datastore.Reference()),
