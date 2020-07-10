@@ -84,12 +84,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
-		Location: types.VirtualMachineRelocateSpec{
-			Datastore:    types.NewReference(datastore.Reference()),
-			DiskMoveType: diskMoveType,
-			Folder:       types.NewReference(folder.Reference()),
-			Pool:         types.NewReference(pool.Reference()),
-		},
 		Config: &types.VirtualMachineConfigSpec{
 			Annotation:   "Created by karina from " + vm.Template,
 			Flags:        newVMFlagInfo(),
@@ -97,6 +91,12 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
 			ExtraConfig: dontAskExtraConfig,
+		},
+		Location: types.VirtualMachineRelocateSpec{
+			Datastore:    types.NewReference(datastore.Reference()),
+			DiskMoveType: diskMoveType,
+			Folder:       types.NewReference(folder.Reference()),
+			Pool:         types.NewReference(pool.Reference()),
 		},
 		PowerOn: true,
 	}
