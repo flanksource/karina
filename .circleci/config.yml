@@ -27,6 +27,7 @@ jobs:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
+      - run: make pack build
       - run: ./scripts/generate_kind_image.sh
       - store_test_results:
           path: test-results
