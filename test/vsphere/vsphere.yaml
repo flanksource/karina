@@ -5,6 +5,9 @@ hostPrefix: vsphere-k8s
 kubernetes:
   version: v1.16.4
 
+dns:
+  disabled: true
+
 ## Endpoint for externally hosted consul cluster
 ## NOTE: a working consul config required to verify
 ##       that primary master is available.
@@ -22,7 +25,7 @@ master:
     - !!env GOVC_NETWORK
   cluster: !!env GOVC_CLUSTER
   prefix: m
-  template: "k8s-1.16.4"
+  template: "k8s-1.16.4-noserial"
 workers:
   worker-group-a:
     prefix: w
