@@ -25,7 +25,7 @@ master:
     - !!env GOVC_NETWORK
   cluster: !!env GOVC_CLUSTER
   prefix: m
-  template: "k8s-1.16.4-noserial"
+  template: "k8s-1.16.4"
 workers:
   worker-group-a:
     prefix: w
