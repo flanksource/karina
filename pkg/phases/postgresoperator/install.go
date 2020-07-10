@@ -29,7 +29,7 @@ func Deploy(platform *platform.Platform) error {
 	}
 
 	if err := platform.GetOrCreateBucket(platform.PostgresOperator.BackupBucket); err != nil {
-		return err
+		platform.Warnf("Failed to get/create s3://%s %v", platform.PostgresOperator.BackupBucket, err)
 	}
 
 	if platform.PostgresOperator.BackupSchedule == "" {
