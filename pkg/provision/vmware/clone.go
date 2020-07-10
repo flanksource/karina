@@ -3,10 +3,6 @@ package vmware
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	ptypes "github.com/flanksource/karina/pkg/types"
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
@@ -14,6 +10,8 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
+	"io/ioutil"
+	"os"
 )
 
 const (
@@ -71,25 +69,34 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	serial, err := s.getSerial(datastore, vm, devices)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting cdrom")
+		return nil, errors.Wrapf(err, "error getting serial device")
 	}
 	deviceSpecs = append(deviceSpecs, serial)
+	// this extra config prevents the asking of a blocking question during the clone
+	// see https://kb.vmware.com/s/article/1027096
+	dontAskExtraConfig := []types.BaseOptionValue{}
+	dontAskExtraConfig = append(dontAskExtraConfig, &types.OptionValue{
+		Key:   "answer.msg.serial.file.open",
+		Value: "Replace",
+	})
+
 
 	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
+		Location: types.VirtualMachineRelocateSpec{
+			Datastore:    types.NewReference(datastore.Reference()),
+			DiskMoveType: diskMoveType,
+			Folder:       types.NewReference(folder.Reference()),
+			Pool:         types.NewReference(pool.Reference()),
+		},
 		Config: &types.VirtualMachineConfigSpec{
 			Annotation:   "Created by karina from " + vm.Template,
 			Flags:        newVMFlagInfo(),
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
-		},
-		Location: types.VirtualMachineRelocateSpec{
-			Datastore:    types.NewReference(datastore.Reference()),
-			DiskMoveType: diskMoveType,
-			Folder:       types.NewReference(folder.Reference()),
-			Pool:         types.NewReference(pool.Reference()),
+			ExtraConfig: dontAskExtraConfig,
 		},
 		PowerOn: true,
 	}
@@ -162,15 +169,14 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 }
 
 // getSerial finds the first serial device (adding a new serial device if none are found), it then
-// creates a blank file as a file backing-store for it, and sets this file as its backing-store.
+// creates a blank file in the datastore as a file backing-store for it, and sets this file as its backing-store.
+// The serial device is a requirement for Ubuntu image booting which can have a range of issues
+// with the default configuration if a working serial device is not present.
 func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
 	op := types.VirtualDeviceConfigSpecOperationEdit
 	serial, err := devices.FindSerialPort("")
-	if err != nil {
-		return nil, fmt.Errorf("getSerial: failed to find serial device: %v", err)
-	}
-
-	if serial == nil {
+	if err != nil || serial == nil {
+		s.Debugf("No serial device found for %s, creating a new one", vm.Name)
 		serial, err = devices.CreateSerialPort()
 		if err != nil {
 			return nil, fmt.Errorf("getSerial: failed to create a new serial device: %v", err)
@@ -178,26 +184,19 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 		op = types.VirtualDeviceConfigSpecOperationAdd
 	}
 	s.Debugf("Creating serial device backing file for %s", vm.Name)
-	dir, err := ioutil.TempDir("/tmp", "serial-backing")
+	file, err := ioutil.TempFile("/tmp", "serial-backing")
 	if err != nil {
 		s.Errorf("Error creating local backing file for serial device %v",err)
 		return nil, err
 	}
-	defer os.RemoveAll(dir)
-	fileName := filepath.Join(dir,vm.Name+".serial")
-	emptyFile, err := os.Create(fileName)
-	if err != nil {
-		if err != nil {
-			s.Errorf("Error creating local backing file for serial device %v",err)
-			return nil, err
-		}
-	}
-	emptyFile.Close()
+	defer os.Remove(file.Name())
+
 	path := fmt.Sprintf("serial-devices/%s.serial", vm.Name)
-	if err = datastore.UploadFile(context.TODO(), fileName, path, &soap.DefaultUpload); err != nil {
+	if err = datastore.UploadFile(context.TODO(), file.Name(), path, &soap.DefaultUpload); err != nil {
 		return nil, err
 	}
 	s.Tracef("Uploaded to %s", path)
+
 
 	serial.Backing = &types.VirtualSerialPortFileBackingInfo{
 		VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
@@ -206,6 +205,7 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 	}
 
 	devices.Connect(serial) // nolint: errcheck
+	
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    serial,
