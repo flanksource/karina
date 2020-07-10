@@ -10,8 +10,6 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-	"io/ioutil"
-	"os"
 )
 
 const (
@@ -80,7 +78,6 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 		Value: "Replace",
 	})
 
-
 	deviceSpecs = append(deviceSpecs, cdrom)
 
 	spec := types.VirtualMachineCloneSpec{
@@ -90,7 +87,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
 			MemoryMB:     vm.MemoryGB * 1024,
-			ExtraConfig: dontAskExtraConfig,
+			ExtraConfig:  dontAskExtraConfig,
 		},
 		Location: types.VirtualMachineRelocateSpec{
 			Datastore:    types.NewReference(datastore.Reference()),
@@ -168,8 +165,8 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 	}, nil
 }
 
-// getSerial finds the first serial device (adding a new serial device if none are found), it then
-// creates a blank file in the datastore as a file backing-store for it, and sets this file as its backing-store.
+// getSerial finds the first serial device (adding a new serial device if none are found).
+//
 // The serial device is a requirement for Ubuntu image booting which can have a range of issues
 // with the default configuration if a working serial device is not present.
 func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
@@ -183,26 +180,6 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 		}
 		op = types.VirtualDeviceConfigSpecOperationAdd
 	}
-	s.Debugf("Creating serial device backing file for %s", vm.Name)
-	file, err := ioutil.TempFile("/tmp", "serial-backing")
-	if err != nil {
-		s.Errorf("Error creating local backing file for serial device %v",err)
-		return nil, err
-	}
-	defer os.Remove(file.Name())
-
-	path := fmt.Sprintf("serial-devices/%s.serial", vm.Name)
-	if err = datastore.UploadFile(context.TODO(), file.Name(), path, &soap.DefaultUpload); err != nil {
-		return nil, err
-	}
-	s.Tracef("Uploaded to %s", path)
-
-
-	//serial.Backing = &types.VirtualSerialPortFileBackingInfo{
-	//	VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
-	//		FileName: fmt.Sprintf("[%s] %s", datastore.Name(), path),
-	//	},
-	//}
 
 	serial.Backing = &types.VirtualSerialPortURIBackingInfo{
 		VirtualDeviceURIBackingInfo: types.VirtualDeviceURIBackingInfo{
@@ -210,7 +187,6 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 			ServiceURI: "localhost:0",
 		},
 	}
-
 
 	devices.Connect(serial) // nolint: errcheck
 	

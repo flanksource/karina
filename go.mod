@@ -36,9 +36,8 @@ require (
 	github.com/vmware/govmomi v0.21.0
 	github.com/voxelbrain/goptions v0.0.0-20180630082107-58cddc247ea2 // indirect
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6
-	golang.org/x/mod v0.3.0 // indirect
-	golang.org/x/tools v0.0.0-20200519205726-57a9e4404bf7 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/tools v0.0.0-20200710042808-f1c4188a97a1 // indirect
 	google.golang.org/grpc v1.26.0
 	gopkg.in/flanksource/yaml.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.2.8
