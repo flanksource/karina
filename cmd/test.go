@@ -138,6 +138,7 @@ func init() {
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,
+		"kube-web-view":      monitoring.TestKubeWebView,
 		"monitoring":         monitoring.Test,
 		"nsx":                nsx.Test,
 		"opa":                opa.Test,

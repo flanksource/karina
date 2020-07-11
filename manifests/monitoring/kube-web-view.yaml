@@ -53,15 +53,15 @@ spec:
       containers:
         - name: kube-web-view
           # see https://codeberg.org/hjacobs/kube-web-view/releases
-          image: hjacobs/kube-web-view:20.6.0
+          image: hjacobs/kube-web-view:{{.monitoring.kubeWebView.version | default "20.6.0"}}
           args:
             - --port=8080
-          # uncomment the following line to enable pod logs
-          # (disabled by default as they might consider sensitive information)
-          # - "--show-container-logs"
-          # uncomment the following line to unhide secret data
-          # see also https://kube-web-view.readthedocs.io/en/latest/security.html
-          # - "--show-secrets"
+            {{ if .monitoring.kubeWebView.viewLogs }}
+            - "--show-container-logs"
+            {{ end }}
+            {{ if .monitoring.kubeWebView.viewSecrets }}
+            - "--show-secrets"
+            {{ end }}
           ports:
             - containerPort: 8080
           readinessProbe:

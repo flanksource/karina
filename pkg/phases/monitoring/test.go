@@ -34,6 +34,17 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "monitoring", test)
 }
 
+
+func TestKubeWebView(p *platform.Platform, test *console.TestResults) {
+	client, _ := p.GetClientset()
+	if p.Monitoring == nil {
+		test.Skipf("monitoring", "monitoring is not configured")
+		return
+	}
+	k8s.TestNamespace(client, "monitoring", test)
+	k8s.TestDeploy(client, "monitoring", "kube-web-view", test)
+}
+
 func TestThanos(p *platform.Platform, test *console.TestResults) {
 	if p.Thanos == nil || p.Thanos.Disabled {
 		test.Skipf("thanos", "thanos is disabled")
