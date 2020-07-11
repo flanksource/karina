@@ -37,6 +37,44 @@ spec:
       type: string
       description: The namespace of the k8s object if it is namespaced. None by default
       JSONPath: .spec.error-object-ns
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: loadbalancers.vmware.com
+spec:
+  group: vmware.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+  scope: Namespaced
+  names:
+    plural: loadbalancers
+    singular: loadbalancer
+    kind: LoadBalancer
+    shortNames:
+      - lb
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: nsxlbmonitors.vmware.com
+spec:
+  group: vmware.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+  scope: Namespaced
+  names:
+    plural: nsxlbmonitors
+    singular: nsxlbmonitor
+    kind: NSXLoadBalancerMonitor
+    shortNames:
+      - lbm
+
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -56,7 +94,81 @@ spec:
     kind: NSXLock
     shortNames:
       - nsxlo
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: ncpconfigs.nsx.vmware.com
+spec:
+  group: nsx.vmware.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Cluster
+  names:
+    plural: ncpconfigs
+    singular: ncpconfig
+    kind: NCPConfig
+    shortNames:
+      - ncpcfg
 
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: virtualnetworks.vmware.com
+spec:
+  group: vmware.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+  scope: Namespaced
+  names:
+    plural: virtualnetworks
+    singular: virtualnetwork
+    kind: VirtualNetwork
+    shortNames:
+      - vnet
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: virtualnetworkinterfaces.vmware.com
+spec:
+  group: vmware.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+  scope: Namespaced
+  names:
+    plural: virtualnetworkinterfaces
+    singular: virtualnetworkinterface
+    kind: VirtualNetworkInterface
+    shortNames:
+      - vnetif
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: network-attachment-definitions.k8s.cni.cncf.io
+spec:
+  group: k8s.cni.cncf.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Namespaced
+  names:
+    plural: network-attachment-definitions
+    singular: network-attachment-definition
+    kind: NetworkAttachmentDefinition
+    shortNames:
+      - net-attach-def
 ---
 # Create a ServiceAccount for NCP namespace
 apiVersion: v1
@@ -65,7 +177,50 @@ metadata:
   name: ncp-svc-account
   namespace: nsx-system
 ---
-# Create ClusterRole for NCP
+# Create ClusterRole for nsx-node-agent
+kind: ClusterRole
+# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nsx-node-agent-cluster-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+      - services
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - update
+      - patch
+
+---
+# Bind ServiceAccount created for nsx-node-agent to its ClusterRole
+kind: ClusterRoleBinding
+# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nsx-node-agent-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+
+  kind: ClusterRole
+  name: nsx-node-agent-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: nsx-node-agent-svc-account
+    namespace: nsx-system
+
+---
 kind: ClusterRole
 # Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
@@ -79,9 +234,7 @@ rules:
     resources:
       - deployments
       - endpoints
-      - pods
       - pods/log
-      - networkpolicies
       - nodes
       - replicationcontrollers
       # Remove 'secrets' if not using Native Load Balancer.
@@ -91,7 +244,6 @@ rules:
       - get
       - watch
       - list
-
 ---
 # Create ClusterRole for NCP to edit resources
 kind: ClusterRole
@@ -103,11 +255,16 @@ rules:
   - apiGroups:
       - ""
       - extensions
+      - networking.k8s.io
     resources:
       # NCP needs to annotate the SNAT errors on namespaces
       - namespaces
       - ingresses
       - services
+      # NCP needs to annotate Pods for multus
+      - pods
+      # NCP needs to annotate Networkpolicies for validation and update errors
+      - networkpolicies
 
     verbs:
       - get
@@ -123,6 +280,7 @@ rules:
       - nsxerrors
 
       - nsxlocks
+      - ncpconfigs
     verbs:
       - create
       - get
@@ -143,13 +301,47 @@ rules:
       - replace
       - update
       - patch
+
+  - apiGroups:
+      - vmware.com
+    resources:
+      - loadbalancers
+      - loadbalancers/status
+      - nsxlbmonitors
+      - nsxlbmonitors/status
+      - virtualnetworks
+      - virtualnetworks/status
+      - virtualnetworkinterfaces
+      - virtualnetworkinterfaces/status
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - delete
+      - watch
+      - update
+
+  - apiGroups:
+      - k8s.cni.cncf.io
+    resources:
+      - network-attachment-definitions
+    verbs:
+      - get
+      - list
+      - watch
+
 ---
+# Bind ServiceAccount created for NCP to its ClusterRole
 kind: ClusterRoleBinding
+# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ncp-cluster-role-binding
 roleRef:
+  # Comment out the apiGroup while using OpenShift
   apiGroup: rbac.authorization.k8s.io
+
   kind: ClusterRole
   name: ncp-cluster-role
 subjects:
@@ -158,7 +350,9 @@ subjects:
     namespace: nsx-system
 
 ---
+# Bind ServiceAccount created for NCP to the patch ClusterRole
 kind: ClusterRoleBinding
+# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ncp-patch-role-binding
@@ -173,43 +367,16 @@ subjects:
     namespace: nsx-system
 
 ---
-# Create a ServiceAccount for nsx-node-agent
+# ConfigMap for VERSION
 apiVersion: v1
-kind: ServiceAccount
+kind: ConfigMap
 metadata:
-  name: nsx-node-agent-svc-account
+  name: nsx-ncp-version-config
   namespace: nsx-system
----
-# Create ClusterRole for nsx-node-agent
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: nsx-node-agent-cluster-role
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - endpoints
-      - services
-    verbs:
-      - get
-      - watch
-      - list
-
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: nsx-node-agent-cluster-role-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-
-  kind: ClusterRole
-  name: nsx-node-agent-cluster-role
-subjects:
-  - kind: ServiceAccount
-    name: nsx-node-agent-svc-account
-    namespace: nsx-system
+  labels:
+    version: v1
+data:
+  version: 3.0.1.1
 
 ---
 apiVersion: apps/v1
@@ -221,11 +388,12 @@ metadata:
     tier: nsx-networking
     component: nsx-ncp
     version: v1
+  annotations:
+    reload/all: "true"
 spec:
   # Active-Standby is supported from NCP 2.4.0 release,
   # so replica can be more than 1 if NCP HA is enabled.
   # replica *must be* 1 if NCP HA is disabled.
-  replicas: 1
   selector:
     matchLabels:
       component: nsx-ncp
@@ -279,8 +447,39 @@ spec:
                   items:
                     - key: ncp.ini
                       path: ncp.ini
+              # ConfigMap nsx-ncp-version-config is expected to supply VERSION
+              - configMap:
+                  name: nsx-ncp-version-config
+                  items:
+                    - key: version
+                      path: VERSION
+              # To use cert based auth, uncomment and update the secretName,
+              # then update ncp.ini with the mounted cert and key file paths
+              #- secret:
+              #    name: nsx-secret
+              #    items:
+              #      - key: tls.crt
+              #        path: nsx-cert/tls.crt
+              #      - key: tls.key
+              #        path: nsx-cert/tls.key
+              #- secret:
+              #    name: lb-secret
+              #    items:
+              #      - key: tls.crt
+              #        path: lb-cert/tls.crt
+              #      - key: tls.key
+              #        path: lb-cert/tls.key
+              # To use JWT based auth, uncomment and update the secretName.
+              #- secret:
+              #    name: wcp-cluster-credentials
+              #    items:
+              #      - key: username
+              #        path: vc/username
+              #      - key: password
+              #        path: vc/password
 
 ---
+# nsx-ncp-bootstrap DaemonSet
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -290,9 +489,9 @@ metadata:
     tier: nsx-networking
     component: nsx-ncp-bootstrap
     version: v1
+  annotations:
+    reload/all: "true"
 spec:
-  updateStrategy:
-    type: RollingUpdate
   selector:
     matchLabels:
       component: nsx-ncp-bootstrap
@@ -330,9 +529,8 @@ spec:
 
           volumeMounts:
             # required to read the ovs_uplink_port
-            - name: config-volume
-              mountPath: /etc/nsx-ujo/ncp.ini
-              subPath: ncp.ini
+            - name: projected-volume
+              mountPath: /etc/nsx-ujo
             # mounts to which NSX-CNI are copied BEGIN
             - name: host-etc
               mountPath: /host/etc
@@ -344,28 +542,30 @@ spec:
             # mount host's OS info to identify host OS
             - name: host-os-release
               mountPath: /host/etc/os-release
-            # mount host lib modules to install OVS kernel module if needed
-            - name: host-modules
-              mountPath: /lib/modules
-            # mount openvswitch database
-            - name: host-config-openvswitch
-              mountPath: /etc/openvswitch
-            # mount ovs runtime files
+            # mount ovs runtime files to stop running OVS kmod
             - name: openvswitch
               mountPath: /var/run/openvswitch
-            - name: dir-tmp-usr-ovs-kmod-backup
-              # we move the usr kmod files to this dir temporarily before installing
-              # new OVS kmod and/or backing up existing OVS kmod backup
-              mountPath: /tmp/nsx_usr_ovs_kmod_backup
+            # Uncomment these mounts if installing NSX-OVS kernel module
+            #   # mount host lib modules to install OVS kernel module if needed
+            #   - name: host-modules
+            #     mountPath: /lib/modules
+            #   # mount openvswitch database
+            #   - name: host-config-openvswitch
+            #     mountPath: /etc/openvswitch
+            #   - name: dir-tmp-usr-ovs-kmod-backup
+            #   # we move the usr kmod files to this dir temporarily before
+            #   # installing new OVS kmod and/or backing up existing OVS kmod backup
+            #     mountPath: /tmp/nsx_usr_ovs_kmod_backup
+
+            #   # mount linux headers for compiling OVS kmod
+            #   - name: host-usr-src
+            #     mountPath: /usr/src
             # mount apparmor files to load the node-agent-apparmor
             - name: app-armor-cache
               mountPath: /var/cache/apparmor
               subPath: apparmor
             - name: apparmor-d
               mountPath: /etc/apparmor.d
-            # mount linux headers for compiling OVS kmod
-            - name: host-usr-src
-              mountPath: /usr/src
             # mount host's deb package database to remove nsx-cni if installed
             - name: dpkg-lib
               mountPath: /host/var/lib/dpkg
@@ -384,9 +584,14 @@ spec:
           # override NCP image entrypoint
           command: ["/bin/bash", "-c", "while true; do sleep 5; done"]
       volumes:
-        - name: config-volume
-          configMap:
-            name: nsx-node-agent-config
+        - name: projected-volume
+          projected:
+            sources:
+              - configMap:
+                  name: nsx-node-agent-config
+                  items:
+                    - key: ncp.ini
+                      path: ncp.ini
         - name: host-etc
           hostPath:
             path: /etc
@@ -399,27 +604,29 @@ spec:
         - name: host-os-release
           hostPath:
             path: /etc/os-release
-        - name: host-modules
-          hostPath:
-            path: /lib/modules
-        - name: host-config-openvswitch
-          hostPath:
-            path: /etc/openvswitch
         - name: openvswitch
           hostPath:
             path: /var/run/openvswitch
-        - name: dir-tmp-usr-ovs-kmod-backup
-          hostPath:
-            path: /tmp/nsx_usr_ovs_kmod_backup
+        # Uncomment these volumes if installing NSX-OVS kernel module
+        # - name: host-modules
+        #   hostPath:
+        #     path: /lib/modules
+        # - name: host-config-openvswitch
+        #   hostPath:
+        #     path: /etc/openvswitch
+        # - name: dir-tmp-usr-ovs-kmod-backup
+        #   hostPath:
+        #     path: /tmp/nsx_usr_ovs_kmod_backup
+
+        # - name: host-usr-src
+        #   hostPath:
+        #     path: /usr/src
         - name: app-armor-cache
           hostPath:
             path: /var/cache/apparmor
         - name: apparmor-d
           hostPath:
             path: /etc/apparmor.d
-        - name: host-usr-src
-          hostPath:
-            path: /usr/src
         - name: dpkg-lib
           hostPath:
             path: /var/lib/dpkg
@@ -441,9 +648,9 @@ metadata:
     tier: nsx-networking
     component: nsx-node-agent
     version: v1
+  annotations:
+    reload/all: "true"
 spec:
-  updateStrategy:
-    type: RollingUpdate
   selector:
     matchLabels:
       component: nsx-node-agent
@@ -457,6 +664,8 @@ spec:
         version: v1
     spec:
       hostNetwork: true
+      # Give enough time to save flows and perform stop_ovs
+      terminationGracePeriodSeconds: 60
       tolerations:
         - key: node-role.kubernetes.io/master
           effect: NoSchedule
@@ -474,6 +683,13 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_node_agent"]
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: CONTAINER_NAME
+              value: nsx-node-agent
           livenessProbe:
             exec:
               command:
@@ -504,7 +720,9 @@ spec:
               mountPath: /var/run/nsx-ujo
             # mount container namespace
             - name: netns
-              mountPath: /var/run/netns
+              mountPath: /host/var/run/netns
+              # for containerd support
+              mountPropagation: HostToContainer
             # mount host proc
             - name: proc
               mountPath: /host/proc
@@ -515,6 +733,13 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_kube_proxy"]
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: CONTAINER_NAME
+              value: nsx-kube-proxy
           livenessProbe:
             exec:
               command:
@@ -558,11 +783,12 @@ spec:
                 - /bin/sh
                 - -c
                 # You must pass --allowOVSOnHost if you are running OVS on the
-                # host before the installation. This allows livelinessProbe to
+                # host before the installation. This allows livenessProbe to
                 # succeed and container won't restart frequently.
-                - timeout 5 check_pod_liveness nsx-ovs
-            initialDelaySeconds: 5
-            periodSeconds: 5
+                - timeout 10 check_pod_liveness nsx-ovs
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 10
           volumeMounts:
             # ncp.ini
             - name: projected-volume
@@ -603,6 +829,11 @@ spec:
                   items:
                     - key: ncp.ini
                       path: ncp.ini
+              - configMap:
+                  name: nsx-ncp-version-config
+                  items:
+                    - key: version
+                      path: VERSION
 
         - name: openvswitch
           hostPath:

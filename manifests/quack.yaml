@@ -203,6 +203,7 @@ webhooks:
           - statefulsets
           - ingresses
           - services
+          - canaries
     failurePolicy: Fail
     timeoutSeconds: 10
     namespaceSelector:

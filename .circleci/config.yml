@@ -17,29 +17,18 @@ jobs:
       - run: ./scripts/golint.sh
       - store_test_results:
           path: test-results
-  test:
+
+  kind-image:
     resource_class: xlarge
     environment:
       VERSION: v1.16.9
+      DOCKER_PUSH: "true"
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
-      - run: ./test/e2e.sh
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: artifacts
-
-  test-next:
-    resource_class: xlarge
-    environment:
-      VERSION: v1.17.5
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - run: ./test/e2e.sh
+      - run: make pack build
+      - run: ./scripts/generate_kind_image.sh
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -47,6 +36,17 @@ jobs:
 
 workflows:
   version: 2
-  build:
+  ling:
     jobs:
       - lint
+  kind-image:
+    triggers:
+      - schedule:
+          cron: "0 12 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - kind-image:
+          context: DOCKERHUB
