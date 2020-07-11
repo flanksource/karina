@@ -397,9 +397,9 @@ type Monitoring struct {
 
 // Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
 type KubeWebView struct {
-	Version          string            `yaml:"version,omitempty"`
-	LogsEnabled      bool			   `yaml:"viewLogs,omitempty"`
-	SecretsEnabled   bool			   `yaml:"viewSecrets,omitempty"`
+	Version        string `yaml:"version,omitempty"`
+	LogsEnabled    bool   `yaml:"viewLogs,omitempty"`
+	SecretsEnabled bool   `yaml:"viewSecrets,omitempty"`
 }
 
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard

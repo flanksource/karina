@@ -34,7 +34,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "monitoring", test)
 }
 
-
 func TestKubeWebView(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.Monitoring == nil {
