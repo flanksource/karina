@@ -25,7 +25,7 @@ type PlatformConfig struct {
 	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA               `yaml:"ingressCA"`
 	GitOps                []GitOps          `yaml:"gitops,omitempty"`
-	KubeWebView        	  *KubeWebView       `yaml:"kubeWebView,omitempty"`
+	KubeWebView           *KubeWebView      `yaml:"kubeWebView,omitempty"`
 	Kubernetes            Kubernetes        `yaml:"kubernetes"`
 	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
 	LocalPath             *Enabled          `yaml:"localPath,omitempty"`
