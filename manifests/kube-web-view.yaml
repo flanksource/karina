@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kube-web-view
-  namespace: monitoring
+  namespace: platform-system
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -30,7 +30,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kube-web-view
-    namespace: monitoring
+    namespace: platform-system
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -38,7 +38,7 @@ metadata:
   labels:
     application: kube-web-view
   name: kube-web-view
-  namespace: monitoring
+  namespace: platform-system
 spec:
   replicas: 1
   selector:
@@ -53,13 +53,13 @@ spec:
       containers:
         - name: kube-web-view
           # see https://codeberg.org/hjacobs/kube-web-view/releases
-          image: hjacobs/kube-web-view:{{.monitoring.kubeWebView.version | default "20.6.0"}}
+          image: hjacobs/kube-web-view:{{.kubeWebView.version | default "20.6.0"}}
           args:
             - --port=8080
-            {{ if .monitoring.kubeWebView.viewLogs }}
+            {{ if .kubeWebView.viewLogs }}
             - "--show-container-logs"
             {{ end }}
-            {{ if .monitoring.kubeWebView.viewSecrets }}
+            {{ if .kubeWebView.viewSecrets }}
             - "--show-secrets"
             {{ end }}
           ports:
@@ -85,7 +85,7 @@ metadata:
   labels:
     application: kube-web-view
   name: kube-web-view
-  namespace: monitoring
+  namespace: platform-system
 spec:
   selector:
     application: kube-web-view
@@ -101,7 +101,7 @@ metadata:
   labels:
     k8s-app: kube-web-view
   name: kube-web-view
-  namespace: monitoring
+  namespace: platform-system
   annotations:
     kubernetes.io/tls-acme: "true"
 spec:

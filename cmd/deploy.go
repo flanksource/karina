@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"os"
 
 	"github.com/flanksource/karina/pkg/phases/canary"
@@ -56,6 +57,7 @@ var Phases = map[string]DeployFn{
 	"gitops":             flux.Install,
 	"harbor":             harbor.Deploy,
 	"journalbeat":        journalbeat.Deploy,
+	"kube-web-view":	  kubewebview.Install,
 	"monitoring":         monitoring.Install,
 	"opa":                opa.Install,
 	"nsx":                nsx.Install,

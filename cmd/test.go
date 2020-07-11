@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"io/ioutil"
 	"os"
 	"path"
@@ -138,7 +139,7 @@ func init() {
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,
-		"kube-web-view":      monitoring.TestKubeWebView,
+		"kube-web-view":      kubewebview.TestKubeWebView,
 		"monitoring":         monitoring.Test,
 		"nsx":                nsx.Test,
 		"opa":                opa.Test,

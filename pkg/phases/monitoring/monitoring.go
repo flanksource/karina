@@ -14,7 +14,6 @@ const (
 )
 
 var specs = []string{
-	"kube-web-view.yaml",
 	"karma.yaml",
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",

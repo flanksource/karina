@@ -8,7 +8,3 @@ monitoring:
   prometheus:
     persistence:
       capacity: 10Gi
-  kubeWebView:
-    version: 20.6.0
-    viewLogs: true
-    viewSecrets: true
