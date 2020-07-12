@@ -120,12 +120,11 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 		masterDNS = masterIP
 	}
 
-	if !existing {
-		if err := platform.GetDNSClient().Append(masterDNS, masterIP); err != nil {
-			platform.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", masterDNS, masterIP, err)
-			masterDNS = masterIP
-		}
+	if err := platform.GetDNSClient().Update(masterDNS, masterIP); err != nil {
+		platform.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", masterDNS, masterIP, err)
+		masterDNS = masterIP
 	}
+
 	workerDNS := fmt.Sprintf("*.%s", platform.Domain)
 	workerIP, existing, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-workers",
@@ -140,10 +139,9 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	if err != nil {
 		return "", err
 	}
-	if !existing {
-		if err := platform.GetDNSClient().Append(workerDNS, workerIP); err != nil {
-			platform.Warnf("Failed to create DNS entry for %s: %v", workerDNS, err)
-		}
+
+	if err := platform.GetDNSClient().Update(workerDNS, workerIP); err != nil {
+		platform.Warnf("Failed to create DNS entry for %s: %v", workerDNS, err)
 	}
 	return masterDNS + ":6443", nil
 }
