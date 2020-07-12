@@ -394,11 +394,20 @@ type Monitoring struct {
 	E2E                MonitoringE2E `yaml:"e2e,omitempty"`
 }
 
+// Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
+type KubeWebView struct {
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Version        string `yaml:"version,omitempty"`
+	LogsEnabled    bool   `yaml:"viewLogs,omitempty"`
+	SecretsEnabled bool   `yaml:"viewSecrets,omitempty"`
+}
+
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
 type Karma struct {
 	Version       string            `yaml:"version,omitempty"`
 	AlertManagers map[string]string `yaml:"alertManagers"`
 }
+
 type MonitoringE2E struct {
 	// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
 	// can be one of critical, warning, info
