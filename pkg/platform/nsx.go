@@ -56,9 +56,11 @@ func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) err
 
 	ports, err := nsx.GetLogicalPorts(ctx, vm.Name())
 	if err != nil {
+		go vm.Terminate()
 		return fmt.Errorf("failed to find ports for %s: %v", vm.Name(), err)
 	}
 	if len(ports) != 2 {
+		go vm.Terminate()
 		return fmt.Errorf("expected to find 2 ports, found %d \n%+v", len(ports), ports)
 	}
 	managementNic := make(map[string]string)
@@ -72,9 +74,11 @@ func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) err
 	transportNic["ncp/cluster"] = platform.Name
 
 	if err := nsx.TagLogicalPort(ctx, ports[0].Id, managementNic); err != nil {
+		go vm.Terminate()
 		return fmt.Errorf("failed to tag management nic %s: %v", ports[0].Id, err)
 	}
 	if err := nsx.TagLogicalPort(ctx, ports[1].Id, transportNic); err != nil {
+		go vm.Terminate()
 		return fmt.Errorf("failed to tag transport nic %s: %v", ports[1].Id, err)
 	}
 	platform.Tracef("Tagged %s", vm)
@@ -126,7 +130,7 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	}
 
 	workerDNS := fmt.Sprintf("*.%s", platform.Domain)
-	workerIP, existing, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
+	workerIP, _, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-workers",
 		IPPool:   platform.NSX.LoadBalancerIPPool,
 		Protocol: nsxapi.TCPProtocol,
