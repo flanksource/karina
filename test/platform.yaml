@@ -50,6 +50,8 @@ kubeWebView:
   version: 20.6.0
   viewLogs: true
   viewSecrets: true
+canaryChecker:
+  version: v0.11.2
 test:
   exclude:
     - dex

@@ -50,6 +50,7 @@ metadata:
   name: main
   namespace: monitoring
 spec:
+  replicas: 1
   resources:
     requests:
       cpu: 10m
@@ -63,3 +64,32 @@ spec:
   resources:
     requests:
       cpu: 10m
+
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: calico-node
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: calico-node
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+spec:
+  template:
+    spec:
+      containers:
+        - name: kube-state-metrics
+          resources:
+            requests:
+              cpu: 10m
