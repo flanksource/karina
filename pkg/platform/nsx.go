@@ -107,7 +107,7 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	}
 
 	masterDNS := fmt.Sprintf("k8s-api.%s", platform.Domain)
-	masterIP, existing, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
+	masterIP, _, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-masters",
 		IPPool:   platform.NSX.LoadBalancerIPPool,
 		Protocol: nsxapi.TCPProtocol,
