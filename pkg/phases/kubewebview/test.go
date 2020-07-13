@@ -9,7 +9,7 @@ import (
 func TestKubeWebView(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.KubeWebView == nil || p.KubeWebView.Disabled {
-		test.Skipf("monitoring", "kube-web-view is not configured")
+		test.Skipf("kube-web-view", "kube-web-view is not configured")
 		return
 	}
 	k8s.TestNamespace(client, Namespace, test)
