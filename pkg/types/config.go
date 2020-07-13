@@ -21,31 +21,28 @@ type PlatformConfig struct {
 	EventRouter EventRouter `yaml:"eventrouter,omitempty"`
 	Harbor      *Harbor     `yaml:"harbor,omitempty"`
 	// A prefix to be added to VM hostnames.
-	HostPrefix            string            `yaml:"hostPrefix"`
-	ImportConfigs         []string          `yaml:"importConfigs,omitempty"`
-	IngressCA             *CA               `yaml:"ingressCA"`
-	GitOps                []GitOps          `yaml:"gitops,omitempty"`
-	KubeWebView           *KubeWebView      `yaml:"kubeWebView,omitempty"`
-<<<<<<< HEAD
+	HostPrefix            string              `yaml:"hostPrefix"`
+	ImportConfigs         []string            `yaml:"importConfigs,omitempty"`
+	IngressCA             *CA                 `yaml:"ingressCA"`
+	GitOps                []GitOps            `yaml:"gitops,omitempty"`
+	KubeWebView           *KubeWebView        `yaml:"kubeWebView,omitempty"`
 	KubeResourceReport    *KubeResourceReport `yaml:"kubeResourceReport,omitempty"`
-=======
->>>>>>> 460be30ef8b7700a2e26b7de977a7ab4d436a479
-	Kubernetes            Kubernetes        `yaml:"kubernetes"`
-	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
-	LocalPath             *Enabled          `yaml:"localPath,omitempty"`
-	Master                VM                `yaml:"master,omitempty"`
-	Monitoring            *Monitoring       `yaml:"monitoring,omitempty"`
-	Name                  string            `yaml:"name"`
-	NamespaceConfigurator *Enabled          `yaml:"namespaceConfigurator,omitempty"`
-	NFS                   *NFS              `yaml:"nfs,omitempty"`
-	Nodes                 map[string]VM     `yaml:"workers,omitempty"`
-	NodeLocalDNS          NodeLocalDNS      `yaml:"nodeLocalDNS,omitempty"`
-	NSX                   *NSX              `yaml:"nsx,omitempty"`
-	OAuth2Proxy           *OAuth2Proxy      `yaml:"oauth2Proxy,omitempty"`
-	OPA                   *OPA              `yaml:"opa,omitempty"`
-	PostgresOperator      *PostgresOperator `yaml:"postgresOperator,omitempty"`
-	PodSubnet             string            `yaml:"podSubnet"`
-	Policies              []string          `yaml:"policies,omitempty"`
+	Kubernetes            Kubernetes          `yaml:"kubernetes"`
+	Ldap                  *Ldap               `yaml:"ldap,omitempty"`
+	LocalPath             *Enabled            `yaml:"localPath,omitempty"`
+	Master                VM                  `yaml:"master,omitempty"`
+	Monitoring            *Monitoring         `yaml:"monitoring,omitempty"`
+	Name                  string              `yaml:"name"`
+	NamespaceConfigurator *Enabled            `yaml:"namespaceConfigurator,omitempty"`
+	NFS                   *NFS                `yaml:"nfs,omitempty"`
+	Nodes                 map[string]VM       `yaml:"workers,omitempty"`
+	NodeLocalDNS          NodeLocalDNS        `yaml:"nodeLocalDNS,omitempty"`
+	NSX                   *NSX                `yaml:"nsx,omitempty"`
+	OAuth2Proxy           *OAuth2Proxy        `yaml:"oauth2Proxy,omitempty"`
+	OPA                   *OPA                `yaml:"opa,omitempty"`
+	PostgresOperator      *PostgresOperator   `yaml:"postgresOperator,omitempty"`
+	PodSubnet             string              `yaml:"podSubnet"`
+	Policies              []string            `yaml:"policies,omitempty"`
 	// A list of strategic merge patches that will be applied to all resources created
 	Patches             []string             `yaml:"patches,omitempty"`
 	Quack               *Enabled             `yaml:"quack,omitempty"`

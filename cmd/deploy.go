@@ -5,7 +5,7 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/canary"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
-
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
@@ -44,34 +44,34 @@ import (
 type DeployFn func(p *platform.Platform) error
 
 var Phases = map[string]DeployFn{
-	"auditbeat":          auditbeat.Deploy,
-	"base":               base.Install,
-	"calico":             calico.Install,
-	"canary":             canary.Deploy,
-	"configmap-reloader": configmapreloader.Deploy,
-	"dex":                dex.Install,
-	"eck":                eck.Deploy,
-	"elasticsearch":      elasticsearch.Deploy,
-	"eventrouter":        eventrouter.Deploy,
-	"fluentd":            fluentdoperator.Deploy,
-	"filebeat":           filebeat.Deploy,
-	"gitops":             flux.Install,
-	"harbor":             harbor.Deploy,
-	"journalbeat":        journalbeat.Deploy,
-	"kube-web-view":      kubewebview.Install,
+	"auditbeat":            auditbeat.Deploy,
+	"base":                 base.Install,
+	"calico":               calico.Install,
+	"canary":               canary.Deploy,
+	"configmap-reloader":   configmapreloader.Deploy,
+	"dex":                  dex.Install,
+	"eck":                  eck.Deploy,
+	"elasticsearch":        elasticsearch.Deploy,
+	"eventrouter":          eventrouter.Deploy,
+	"fluentd":              fluentdoperator.Deploy,
+	"filebeat":             filebeat.Deploy,
+	"gitops":               flux.Install,
+	"harbor":               harbor.Deploy,
+	"journalbeat":          journalbeat.Deploy,
+	"kube-web-view":        kubewebview.Install,
 	"kube-resource-report": kuberesourcereport.Install,
-	"monitoring":         monitoring.Install,
-	"opa":                opa.Install,
-	"nsx":                nsx.Install,
-	"packetbeat":         packetbeat.Deploy,
-	"postgres-operator":  postgresoperator.Deploy,
-	"registry-creds":     registrycreds.Install,
-	"s3-upload-cleaner":  s3uploadcleaner.Deploy,
-	"sealed-secrets":     sealedsecrets.Install,
-	"stubs":              stubs.Install,
-	"tekton":             tekton.Install,
-	"vault":              vault.Deploy,
-	"velero":             velero.Install,
+	"monitoring":           monitoring.Install,
+	"opa":                  opa.Install,
+	"nsx":                  nsx.Install,
+	"packetbeat":           packetbeat.Deploy,
+	"postgres-operator":    postgresoperator.Deploy,
+	"registry-creds":       registrycreds.Install,
+	"s3-upload-cleaner":    s3uploadcleaner.Deploy,
+	"sealed-secrets":       sealedsecrets.Install,
+	"stubs":                stubs.Install,
+	"tekton":               tekton.Install,
+	"vault":                vault.Deploy,
+	"velero":               velero.Install,
 }
 
 var PhasesExtra = map[string]DeployFn{
