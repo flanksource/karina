@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: canary-rules
+  namespace: platform-system
+spec:
+  groups:
+    - name: canary-alerting-rules
+      rules:
+        - alert: CanaryPodFailed
+          expr: canary_check{type="pod"} > 0
+          for: 15m
+          labels:
+            severity: page
+          annotations:
+            message: Failed to schedule and serve a pod for 15m
