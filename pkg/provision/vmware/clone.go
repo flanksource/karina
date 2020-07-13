@@ -3,6 +3,7 @@ package vmware
 import (
 	"context"
 	"fmt"
+
 	ptypes "github.com/flanksource/karina/pkg/types"
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
@@ -65,7 +66,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	}
 	deviceSpecs = append(deviceSpecs, cdrom)
 
-	serial, err := s.getSerial(datastore, vm, devices)
+	serial, err := s.getSerial(vm, devices)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting serial device")
 	}
@@ -159,7 +160,7 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 //
 // The serial device is a requirement for Ubuntu image booting which can have a range of issues
 // with the default configuration if a working serial device is not present.
-func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
+func (s *Session) getSerial(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
 	op := types.VirtualDeviceConfigSpecOperationEdit
 	serial, err := devices.FindSerialPort("")
 	if err != nil || serial == nil {
@@ -179,7 +180,7 @@ func (s *Session) getSerial(datastore *object.Datastore, vm ptypes.VM, devices o
 	}
 
 	devices.Connect(serial) // nolint: errcheck
-	
+
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    serial,
