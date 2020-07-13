@@ -157,7 +157,6 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 }
 
 // getSerial finds the first serial device (adding a new serial device if none are found).
-//
 // The serial device is a requirement for Ubuntu image booting which can have a range of issues
 // with the default configuration if a working serial device is not present.
 func (s *Session) getSerial(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
