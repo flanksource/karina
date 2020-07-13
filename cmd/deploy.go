@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"os"
 
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
@@ -57,7 +58,8 @@ var Phases = map[string]DeployFn{
 	"gitops":             flux.Install,
 	"harbor":             harbor.Deploy,
 	"journalbeat":        journalbeat.Deploy,
-	"kube-web-view":	  kubewebview.Install,
+	"kube-web-view":      kubewebview.Install,
+	"kube-resource-report": kuberesourcereport.Install,
 	"monitoring":         monitoring.Install,
 	"opa":                opa.Install,
 	"nsx":                nsx.Install,

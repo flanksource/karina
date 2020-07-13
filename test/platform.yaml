@@ -50,6 +50,9 @@ kubeWebView:
   version: 20.6.0
   viewLogs: true
   viewSecrets: true
+kubeResourceReport:
+  updateInterval: 1
+  additionalClusterCost: 10.0
 test:
   exclude:
     - dex

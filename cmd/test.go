@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,6 +10,8 @@ import (
 	"time"
 
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/base"
@@ -139,8 +140,9 @@ func init() {
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,
+		"monitoring":           monitoring.Test,
 		"kube-web-view":      kubewebview.TestKubeWebView,
-		"monitoring":         monitoring.Test,
+		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
 		"nsx":                nsx.Test,
 		"opa":                opa.Test,
 		"postgres-operator":  postgresoperator.Test,
