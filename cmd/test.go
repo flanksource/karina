@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
+
 	"github.com/flanksource/karina/pkg/phases/canary"
 
 	"github.com/flanksource/commons/console"
@@ -138,6 +140,7 @@ func init() {
 		"fluentd":            fluentdoperator.Test,
 		"gitops":             flux.Test,
 		"harbor":             harbor.Test,
+		"kube-web-view":      kubewebview.TestKubeWebView,
 		"monitoring":         monitoring.Test,
 		"nsx":                nsx.Test,
 		"opa":                opa.Test,
