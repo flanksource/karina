@@ -50,9 +50,14 @@ kubeWebView:
   version: 20.6.0
   viewLogs: true
   viewSecrets: true
+<<<<<<< HEAD
 kubeResourceReport:
   updateInterval: 1
   additionalClusterCost: 10.0
+=======
+canaryChecker:
+  version: v0.11.2
+>>>>>>> 460be30ef8b7700a2e26b7de977a7ab4d436a479
 test:
   exclude:
     - dex

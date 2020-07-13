@@ -26,7 +26,10 @@ type PlatformConfig struct {
 	IngressCA             *CA               `yaml:"ingressCA"`
 	GitOps                []GitOps          `yaml:"gitops,omitempty"`
 	KubeWebView           *KubeWebView      `yaml:"kubeWebView,omitempty"`
+<<<<<<< HEAD
 	KubeResourceReport    *KubeResourceReport `yaml:"kubeResourceReport,omitempty"`
+=======
+>>>>>>> 460be30ef8b7700a2e26b7de977a7ab4d436a479
 	Kubernetes            Kubernetes        `yaml:"kubernetes"`
 	Ldap                  *Ldap             `yaml:"ldap,omitempty"`
 	LocalPath             *Enabled          `yaml:"localPath,omitempty"`

@@ -60,7 +60,7 @@ func Install(p *platform.Platform) error {
 		p.Monitoring.Karma.AlertManagers["alertmanager-main"] = "http://alertmanager-main:9093"
 	}
 	if p.Monitoring.Prometheus.Version == "" {
-		p.Monitoring.Prometheus.Version = "v2.16.0"
+		p.Monitoring.Prometheus.Version = "v2.19.0"
 	}
 
 	if p.Monitoring.AlertManager.Version == "" {

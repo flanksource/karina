@@ -671,6 +671,10 @@ spec:
             - -v
             - --httpPort
             - "8080"
+            {{ range $server := .canaryChecker.aggregateServers }}
+            - --aggregateServers
+            - {{$server}}
+            {{ end }}
           command:
             - /app/canary-checker
           env:

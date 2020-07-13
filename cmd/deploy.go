@@ -5,7 +5,7 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/canary"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
-	"github.com/flanksource/karina/pkg/phases/kubewebview"
+
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
