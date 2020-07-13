@@ -1,0 +1,159 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-resource-report
+  namespace: platform-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kube-resource-report
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "namespaces", "services"]
+    verbs:
+      - get
+      - list
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs:
+      - list
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["nodes", "pods"]
+    verbs:
+      - get
+      - list
+  - apiGroups: [""]
+    resources: ["services/proxy"]
+    resourceNames: ["heapster"]
+    verbs:
+      - get
+  # allow reading VPAs to get resource recommendations
+  - apiGroups: ["autoscaling.k8s.io"]
+    resources: ["verticalpodautoscalers"]
+    verbs:
+      - get
+      - list
+  # allow reading Deployments and StatefulSets to get matching Pods for VPAs
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+    verbs:
+      - get
+      - list
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kube-resource-report
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-resource-report
+subjects:
+  - kind: ServiceAccount
+    name: kube-resource-report
+    namespace: platform-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-resource-report
+  namespace: platform-system
+  labels:
+    application: kube-resource-report
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: kube-resource-report
+  template:
+    metadata:
+      labels:
+        application: kube-resource-report
+    spec:
+      serviceAccountName: kube-resource-report
+      containers:
+        - name: kube-resource-report
+          # see https://github.com/hjacobs/kube-resource-report/releases
+          image: hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
+          args:
+            - --update-interval-minutes={{.kubeResourceReport.updateInterval | default "1"}}
+            {{ if .kubeResourceReport.additionalClusterCost  }}
+            - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
+            {{ end }}
+            - /output
+          volumeMounts:
+            - mountPath: /output
+              name: report-data
+          resources:
+            limits:
+              memory: 100Mi
+            requests:
+              cpu: 5m
+              memory: 50Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+        - name: nginx
+          image: nginx:alpine
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: report-data
+              readOnly: true
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            limits:
+              memory: 50Mi
+            requests:
+              cpu: 5m
+              memory: 20Mi
+      volumes:
+        - name: report-data
+          emptyDir:
+            sizeLimit: 500Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: kube-resource-report
+  name: kube-resource-report
+  namespace: platform-system
+spec:
+  selector:
+    application: kube-resource-report
+  type: ClusterIP
+  ports:
+    - name: "kube-resource-report-frontend"
+      port: 80
+      protocol: TCP
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    k8s-app: kube-resource-report
+  name: kube-resource-report
+  namespace: platform-system
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+    - host: kube-resource-report.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: kube-resource-report
+              servicePort: 80
+  tls:
+    - secretName: kube-resource-report-tls
+      hosts:
+        - kube-resource-report.{{.domain}}
