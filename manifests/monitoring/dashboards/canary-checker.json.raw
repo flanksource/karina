@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 35,
-  "iteration": 1589790299091,
+  "iteration": 1594647007037,
   "links": [],
   "panels": [
     {
@@ -63,8 +63,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": " sum without(pod,instance)(rate(canary_check_duration_sum{type!~\"docker-pull|pod\"}[3m]) / rate(canary_check_duration_count{type!~\"docker-pull|pod\"}[3m]))  ",
-          "legendFormat": "{{exported_endpoint}} ({{type}}/{{cluster}})",
+          "expr": " sum without(pod,instance)(rate(canary_check_duration_sum{type!~\"dockerPull|pod\"}[3m]) / rate(canary_check_duration_count{type!~\"dockerPull|pod\"}[3m]))  ",
+          "legendFormat": "{{name}} ({{type}}/{{cluster}})",
           "refId": "A"
         }
       ],
@@ -331,8 +331,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": " sum without(pod,instance)(rate(canary_check_duration_sum{type=\"docker-pull\"}[3m]) / rate(canary_check_duration_count{type=\"docker-pull\"}[3m]))  ",
-          "legendFormat": "{{exported_endpoint}}/{{cluster}}",
+          "expr": " sum without(pod,instance)(rate(canary_check_duration_sum{type=\"dockerPull\"}[3m]) / rate(canary_check_duration_count{type=\"dockerPull\"}[3m]))  ",
+          "legendFormat": "{{name}}/{{cluster}}",
           "refId": "A"
         }
       ],
@@ -420,7 +420,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "canary_check_s3_total_size",
+          "expr": "sum(canary_check_s3_total_size)",
           "legendFormat": "{{bucket}}",
           "refId": "A"
         }
@@ -429,7 +429,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "S3 Bucket Size",
+      "title": "S3 Bucket (Total Size)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -644,7 +644,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "S3 Bucket Size",
+      "title": "S3 Bucket (Object Count)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -681,6 +681,107 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 7,
+        "y": 22
+      },
+      "id": 13,
+      "options": {},
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Last Updated (Hours Ago)",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "Value",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "cluster",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "align": "right",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "bucket",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "hidden",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "expr": "(time()- canary_check_s3_last_write)/3600  ",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "S3 Bucket( Last Updated)",
+      "transform": "table",
+      "transparent": true,
+      "type": "table"
     }
   ],
   "refresh": false,
@@ -729,5 +830,5 @@
   "timezone": "",
   "title": "Canary Checker",
   "uid": "Y7U5PRlWk",
-  "version": 1
+  "version": 16
 }

@@ -682,6 +682,9 @@ spec:
               value: "1.39"
           image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.11.2"}}
           name: canary-checker
+          ports:
+            - name: metrics
+              containerPort: 8080
           resources:
             limits:
               memory: 512Mi
@@ -715,11 +718,11 @@ metadata:
 spec:
   endpoints:
     - interval: 30s
-      port: metrics
+      targetPort: 8080
   jobLabel: canary-checker
   namespaceSelector:
     matchNames:
-      - system
+      - platform-system
   selector:
     matchLabels:
       control-plane: canary-checker
