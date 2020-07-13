@@ -1,0 +1,118 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-web-view
+  namespace: platform-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: kube-web-view
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs: [list, get]
+  - nonResourceURLs:
+      - '*'
+    verbs: [list, get]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: kube-web-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-web-view
+subjects:
+  - kind: ServiceAccount
+    name: kube-web-view
+    namespace: platform-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: kube-web-view
+  name: kube-web-view
+  namespace: platform-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: kube-web-view
+  template:
+    metadata:
+      labels:
+        application: kube-web-view
+    spec:
+      serviceAccountName: kube-web-view
+      containers:
+        - name: kube-web-view
+          # see https://codeberg.org/hjacobs/kube-web-view/releases
+          image: hjacobs/kube-web-view:{{.kubeWebView.version | default "20.6.0"}}
+          args:
+            - --port=8080
+            {{ if .kubeWebView.viewLogs }}
+            - "--show-container-logs"
+            {{ end }}
+            {{ if .kubeWebView.viewSecrets }}
+            - "--show-secrets"
+            {{ end }}
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          resources:
+            limits:
+              memory: 100Mi
+            requests:
+              cpu: 5m
+              memory: 100Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: kube-web-view
+  name: kube-web-view
+  namespace: platform-system
+spec:
+  selector:
+    application: kube-web-view
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    k8s-app: kube-web-view
+  name: kube-web-view
+  namespace: platform-system
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+    - host: kube-web-view.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: kube-web-view
+              servicePort: 80
+  tls:
+    - secretName: kube-web-view-tls
+      hosts:
+        - kube-web-view.{{.domain}}

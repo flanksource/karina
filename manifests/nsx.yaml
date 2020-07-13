@@ -177,6 +177,12 @@ metadata:
   name: ncp-svc-account
   namespace: nsx-system
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nsx-node-agent-svc-account
+  namespace: nsx-system
+---
 # Create ClusterRole for nsx-node-agent
 kind: ClusterRole
 # Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8

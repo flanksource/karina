@@ -46,6 +46,12 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
+kubeWebView:
+  version: 20.6.0
+  viewLogs: true
+  viewSecrets: true
+canaryChecker:
+  version: v0.11.2
 test:
   exclude:
     - dex
