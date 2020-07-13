@@ -64,8 +64,13 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting cdrom")
 	}
-
 	deviceSpecs = append(deviceSpecs, cdrom)
+
+	serial, err := s.getSerial(vm, devices)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting serial device")
+	}
+	deviceSpecs = append(deviceSpecs, serial)
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
@@ -148,6 +153,36 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    cdrom,
+	}, nil
+}
+
+// getSerial finds the first serial device (adding a new serial device if none are found).
+// The serial device is a requirement for Ubuntu image booting which can have a range of issues
+// with the default configuration if a working serial device is not present.
+func (s *Session) getSerial(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
+	op := types.VirtualDeviceConfigSpecOperationEdit
+	serial, err := devices.FindSerialPort("")
+	if err != nil || serial == nil {
+		s.Debugf("No serial device found for %s, creating a new one", vm.Name)
+		serial, err = devices.CreateSerialPort()
+		if err != nil {
+			return nil, fmt.Errorf("getSerial: failed to create a new serial device: %v", err)
+		}
+		op = types.VirtualDeviceConfigSpecOperationAdd
+	}
+
+	serial.Backing = &types.VirtualSerialPortURIBackingInfo{
+		VirtualDeviceURIBackingInfo: types.VirtualDeviceURIBackingInfo{
+			Direction:  "client",
+			ServiceURI: "localhost:0",
+		},
+	}
+
+	devices.Connect(serial) // nolint: errcheck
+
+	return &types.VirtualDeviceConfigSpec{
+		Operation: op,
+		Device:    serial,
 	}, nil
 }
 
