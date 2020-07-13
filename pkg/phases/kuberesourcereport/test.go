@@ -8,10 +8,10 @@ import (
 
 func TestKubeResourceReport(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.Monitoring == nil {
-		test.Skipf("monitoring", "monitoring is not configured")
+	if p.KubeResourceReport == nil || p.KubeResourceReport.Disabled  {
+		test.Skipf("kube-resource-report", "kube-resource-report is not configured")
 		return
 	}
-	k8s.TestNamespace(client, "monitoring", test)
-	k8s.TestDeploy(client, "monitoring", "kube-resource-report", test)
+	k8s.TestNamespace(client, Namespace, test)
+	k8s.TestDeploy(client, Namespace, "kube-resource-report", test)
 }
