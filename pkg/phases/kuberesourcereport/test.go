@@ -8,7 +8,7 @@ import (
 
 func TestKubeResourceReport(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.KubeResourceReport == nil || p.KubeResourceReport.Disabled  {
+	if p.KubeResourceReport == nil || p.KubeResourceReport.Disabled {
 		test.Skipf("kube-resource-report", "kube-resource-report is not configured")
 		return
 	}
