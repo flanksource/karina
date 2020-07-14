@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kiosk
+  namespace: platform-system
+  labels:
+    app: kiosk
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiosk-edit
+rules:
+- apiGroups: ["tenancy.kiosk.sh"]
+  resources: ["spaces"]
+  verbs: ["create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiosk-namespace-delete
+  labels:
+    rbac.kiosk.sh/aggregate-to-space-admin: "true"
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiosk-space-admin
+aggregationRule:
+  clusterRoleSelectors:
+  - matchLabels:
+      rbac.authorization.k8s.io/aggregate-to-admin: "true"
+  - matchLabels:
+      rbac.kiosk.sh/aggregate-to-space-admin: "true"
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiosk
+  labels:
+    app: kiosk
+subjects:
+- kind: ServiceAccount
+  name: kiosk
+  namespace: platform-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kiosk-apiservice
+  namespace: platform-system
+  labels:
+    app: kiosk
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 8443
+  selector:
+    app: kiosk
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kiosk
+  namespace: platform-system
+  labels:
+    app: kiosk
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: 9443
+      protocol: TCP
+      name: http
+  selector:
+    app: kiosk
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiosk
+  namespace: platform-system
+  labels:
+    app: kiosk
+spec:
+  selector:
+    matchLabels:
+      app: kiosk
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kiosk
+    spec:
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: kiosk
+      containers:
+      - command:
+        - "/kiosk"
+        args:
+        image: "kiosksh/kiosk:{{ .kiosk.version }}"
+        name: kiosk
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.tenancy.kiosk.sh
+spec:
+  version: v1alpha1
+  versionPriority: 1000
+  group: tenancy.kiosk.sh
+  groupPriorityMinimum: 10000
+  service:
+    name: kiosk-apiservice
+    namespace: platform-system
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: kiosk

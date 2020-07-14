@@ -22,6 +22,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/journalbeat"
+	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
@@ -58,6 +59,7 @@ var Phases = map[string]DeployFn{
 	"gitops":               flux.Install,
 	"harbor":               harbor.Deploy,
 	"journalbeat":          journalbeat.Deploy,
+	"kiosk":                kiosk.Deploy,
 	"kube-web-view":        kubewebview.Install,
 	"kube-resource-report": kuberesourcereport.Install,
 	"monitoring":           monitoring.Install,

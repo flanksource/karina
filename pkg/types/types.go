@@ -463,6 +463,10 @@ type Brand struct {
 	Logo string `yaml:"logo,omitempty"`
 }
 
+type Kiosk struct {
+	Disabled `yaml:",inline"`
+}
+
 type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
