@@ -17,14 +17,17 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/transport"
 	"k8s.io/utils/pointer"
 )
+
+type deferFunction func()
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Kiosk.IsDisabled() {
@@ -40,6 +43,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 	TestUserDirectNamespaceAccess(p, test)
 	TestUserCreateSpace(p, test)
+	TestAccountQuota(p, test)
 }
 
 func TestUserDirectNamespaceAccess(p *platform.Platform, test *console.TestResults) {
@@ -110,101 +114,48 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 	accountName := fmt.Sprintf("account-%s", key)
 
 	// Create Account for user1
-	account := &kioskapi.Account{
-		TypeMeta:   metav1.TypeMeta{Kind: "Account", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
-		ObjectMeta: metav1.ObjectMeta{Name: accountName},
-		Spec: kioskapi.AccountSpec{
-			AccountSpec: kioskconfigapi.AccountSpec{
-				Subjects: []rbacv1.Subject{
-					rbacv1.Subject{
-						Kind:     "User",
-						Name:     user,
-						APIGroup: "rbac.authorization.k8s.io",
-					},
-				},
-				Space: kioskconfigapi.AccountSpace{
-					ClusterRole: pointer.StringPtr("kiosk-space-admin"),
-				},
-			},
-		},
-	}
-
-	accountClient, _, accountObj, err := p.GetDynamicClientFor("", account)
+	_, deferFn, err := createAccount(p, test, user, accountName)
 	if err != nil {
-		test.Failf("kiosk", "failed to get dynamic client for accounts: %v", err)
 		return
 	}
-	if _, err := accountClient.Create(accountObj, metav1.CreateOptions{}); err != nil {
-		test.Failf("kiosk", "failed to create %s Account: %v", user, err)
-		return
-	}
-	defer func() {
-		if err := accountClient.Delete(account.Name, nil); err != nil {
-			p.Errorf("failed to delete account %s", account.Name)
-		}
-	}()
+	defer deferFn()
 
-	space := &kioskapi.Space{
-		TypeMeta:   metav1.TypeMeta{Kind: "Space", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
-		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("user1-space-%s", utils.RandomString(6))},
-		Spec:       kioskapi.SpaceSpec{Account: account.Name},
+	if err := waitSpacesList(p, user); err != nil {
+		test.Failf("kiosk", "failed to wait for user permission to list spaces: %v", err)
+		return
 	}
-	spaceClient, _, spaceObj, err := p.GetDynamicClientForUser("", space, user)
+
+	spaceClient, err := spaceReadClient(p, user)
 	if err != nil {
-		test.Failf("kiosk", "failed to get dynamic client for spaces: %v", err)
+		test.Failf("kiosk", "failed to get space client: %v", err)
 		return
 	}
-
-	forbiddenStr := "spaces.tenancy.kiosk.sh is forbidden"
-	err = nil
-	var spaces *unstructured.UnstructuredList
-	// Wait until Account has permissions to list spaces
-	doUntil(func() bool {
-		spaces, err = spaceClient.List(metav1.ListOptions{})
-		if err != nil && !strings.HasPrefix(err.Error(), forbiddenStr) {
-			test.Failf("kiosk", "failed to list spaces: %v", err)
-			return true
-		}
-		err = nil
-
-		return err != nil
-	})
-
+	spaceList, err := spaceClient.List(metav1.ListOptions{})
 	if err != nil {
-		test.Failf("kiosk", "received unexpected error: %v", err)
+		test.Failf("kiosk", "failed to list spaces %v", err)
 		return
 	}
 
-	if len(spaces.Items) != 0 {
+	if len(spaceList.Items) != 0 {
 		test.Failf("kiosk", "expected user %s to see no spaces after Account is created: %v", user, err)
 		return
 	}
-
 	test.Passf("kiosk", "user %s can see 0 spaces after Account is created", user)
 
-	if _, err := spaceClient.Create(spaceObj, metav1.CreateOptions{}); err != nil {
-		test.Failf("kiosk", "failed to create space %s by user %s: %v", space.Name, user, err)
+	space, deferFn1, err := createSpace(p, user, accountName)
+	if err != nil {
+		test.Failf("kiosk", "failed to create space: %v", err)
 		return
 	}
+	defer deferFn1()
 
 	test.Passf("kiosk", "user %s created space %s", user, space.Name)
 
-	spaces, err = spaceClient.List(metav1.ListOptions{})
+	spaces, err := spaceClient.List(metav1.ListOptions{})
 	if err != nil {
 		test.Failf("kiosk", "failed to list spaces: %v", err)
 		return
 	}
-
-	defer func() {
-		adminSpaceClient, _, _, err := p.GetDynamicClientFor("", space)
-		if err != nil {
-			p.Errorf("failed to get admin space client: %v", err)
-			return
-		}
-		if err := adminSpaceClient.Delete(space.Name, nil); err != nil {
-			p.Errorf("failed to delete space %s: %v", space.Name, err)
-		}
-	}()
 
 	if len(spaces.Items) != 1 {
 		test.Failf("kiosk", "expected user %s to see 1 space, got %d", user, len(spaces.Items))
@@ -237,6 +188,222 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 	}
 
 	test.Passf("kiosk", "user %s deleted space %s", user, space.Name)
+}
+
+func TestAccountQuota(p *platform.Platform, test *console.TestResults) {
+	key := utils.RandomString(6)
+	user := fmt.Sprintf("user-%s", key)
+	accountName := fmt.Sprintf("account-%s", key)
+
+	// Create Account for user1
+	_, deferFn, err := createAccount(p, test, user, accountName)
+	if err != nil {
+		return
+	}
+	defer deferFn()
+
+	if err := waitSpacesList(p, user); err != nil {
+		test.Failf("kiosk", "failed to wait for user permission to list spaces: %v", err)
+		return
+	}
+
+	space1, deferFn, err := createSpace(p, user, accountName)
+	if err != nil {
+		test.Failf("kiosk", "failed to create space: %v", err)
+		return
+	}
+	defer deferFn()
+	test.Passf("kiosk", "user %s created space %s", user, space1.Name)
+
+	space2, deferFn2, err := createSpace(p, user, accountName)
+	if err != nil {
+		test.Failf("kiosk", "failed to create space: %v", err)
+		return
+	}
+	defer deferFn2()
+	test.Passf("kiosk", "user %s created space %s", user, space2.Name)
+
+	_, deferFn3, err := createSpace(p, user, accountName)
+	if err == nil || !strings.Contains(err.Error(), "space limit of 2 reached for account") {
+		defer deferFn3()
+		test.Failf("kiosk", "expected user %s to not be able to create 3 spaces", user)
+		return
+	}
+	test.Passf("kiosk", "user %s failed to create third space due to space limit 2", user)
+
+	accountQuota, deferFn, err := createAccountQuota(p, user, accountName)
+	if err != nil {
+		test.Failf("kiosk", "failed to create AccountQuota: %v", err)
+		return
+	}
+	defer deferFn()
+
+	pod := &v1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("pod-%s", utils.RandomString(6)), Namespace: space1.Name},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx:1.14.2",
+					Resources: v1.ResourceRequirements{
+						Limits: v1.ResourceList{
+							"cpu": resource.MustParse("4"),
+						},
+					},
+				},
+			},
+		},
+	}
+	client, err := getImpersonateClient(p, user)
+	if err != nil {
+		test.Failf("kiosk", "failed to impersonate user: %s", user)
+		return
+	}
+	_, err = client.CoreV1().Pods(space1.Name).Create(pod)
+	expectedError := fmt.Sprintf("admission webhook \"accountquota.kiosk.sh\" denied the request: pods \"%s\" is forbidden: exceeded quota: %s, requested: cpu=4, used: cpu=0, limited: cpu=2", pod.Name, accountQuota.Name)
+	if err == nil {
+		test.Failf("kiosk", "expected pod %s to not be created, exceeds limits", pod.Name)
+		if err = client.CoreV1().Pods(space1.Name).Delete(pod.Name, nil); err != nil {
+			p.Errorf("failed to delete pod %s", pod.Name)
+		}
+	} else if err.Error() != expectedError {
+		test.Failf("kiosk", "unexpected error: %v", err)
+	} else {
+		test.Passf("kiosk", "user %s was not able to create pod with resources over limits", user)
+	}
+}
+
+func createAccountQuota(p *platform.Platform, user, accountName string) (*kioskconfigapi.AccountQuota, deferFunction, error) {
+	accountQuota := &kioskconfigapi.AccountQuota{
+		TypeMeta:   metav1.TypeMeta{Kind: "AccountQuota", APIVersion: "config.kiosk.sh/v1alpha1"},
+		ObjectMeta: metav1.ObjectMeta{Name: accountName},
+		Spec: kioskconfigapi.AccountQuotaSpec{
+			Account: accountName,
+			Quota: v1.ResourceQuotaSpec{
+				Hard: v1.ResourceList{
+					"cpu": resource.MustParse("2"),
+				},
+			},
+		},
+	}
+	accountClient, _, accountObj, err := p.GetDynamicClientFor("", accountQuota)
+	if err != nil {
+		return nil, noopFn, errors.Wrap(err, "failed to get account quota client")
+	}
+	if _, err = accountClient.Create(accountObj, metav1.CreateOptions{}); err != nil {
+		return nil, noopFn, err
+	}
+	fn := func() {
+		if err := accountClient.Delete(accountQuota.Name, nil); err != nil {
+			p.Errorf("failed to delete account quota %s", accountQuota.Name)
+		}
+	}
+	return accountQuota, fn, nil
+}
+
+func waitSpacesList(p *platform.Platform, user string) error {
+	spaceClient, err := spaceReadClient(p, user)
+	if err != nil {
+		return err
+	}
+
+	forbiddenStr := "spaces.tenancy.kiosk.sh is forbidden"
+	err = nil
+	// Wait until Account has permissions to list spaces
+	doUntil(func() bool {
+		_, err = spaceClient.List(metav1.ListOptions{})
+		if err != nil && !strings.HasPrefix(err.Error(), forbiddenStr) {
+			return true
+		}
+		err = nil
+
+		return err != nil
+	})
+
+	return err
+}
+
+func createSpace(p *platform.Platform, user, accountName string) (*kioskapi.Space, deferFunction, error) {
+	space := &kioskapi.Space{
+		TypeMeta:   metav1.TypeMeta{Kind: "Space", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
+		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("user-space-%s", utils.RandomString(6))},
+		Spec:       kioskapi.SpaceSpec{Account: accountName},
+	}
+	adminSpaceClient, _, _, err := p.GetDynamicClientFor("", space)
+	if err != nil {
+		return nil, noopFn, errors.Wrap(err, "failed to get admin space client")
+	}
+
+	spaceClient, _, spaceObj, err := p.GetDynamicClientForUser("", space, user)
+	if err != nil {
+		return nil, noopFn, errors.Wrap(err, "failed to get dynamic client for spaces")
+	}
+
+	if _, err := spaceClient.Create(spaceObj, metav1.CreateOptions{}); err != nil {
+		return nil, noopFn, errors.Wrap(err, "failed to create space")
+	}
+
+	deferFn := func() {
+		if err := adminSpaceClient.Delete(space.Name, nil); err != nil {
+			p.Errorf("failed to delete space %s: %v", space.Name, err)
+		}
+	}
+
+	return space, deferFn, nil
+}
+
+func createAccount(p *platform.Platform, test *console.TestResults, user, accountName string) (*kioskapi.Account, deferFunction, error) {
+	account := &kioskapi.Account{
+		TypeMeta:   metav1.TypeMeta{Kind: "Account", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
+		ObjectMeta: metav1.ObjectMeta{Name: accountName},
+		Spec: kioskapi.AccountSpec{
+			AccountSpec: kioskconfigapi.AccountSpec{
+				Subjects: []rbacv1.Subject{
+					rbacv1.Subject{
+						Kind:     "User",
+						Name:     user,
+						APIGroup: "rbac.authorization.k8s.io",
+					},
+				},
+				Space: kioskconfigapi.AccountSpace{
+					ClusterRole: pointer.StringPtr("kiosk-space-admin"),
+					Limit:       intPtr(2),
+				},
+			},
+		},
+	}
+
+	accountClient, _, accountObj, err := p.GetDynamicClientFor("", account)
+	if err != nil {
+		test.Failf("kiosk", "failed to get dynamic client for accounts: %v", err)
+		return nil, noopFn, err
+	}
+	if _, err := accountClient.Create(accountObj, metav1.CreateOptions{}); err != nil {
+		test.Failf("kiosk", "failed to create %s Account: %v", user, err)
+		return nil, noopFn, err
+	}
+
+	fn := func() {
+		if err := accountClient.Delete(account.Name, nil); err != nil {
+			p.Errorf("failed to delete account %s", account.Name)
+		}
+	}
+
+	return account, fn, nil
+}
+
+func spaceReadClient(p *platform.Platform, user string) (dynamic.ResourceInterface, error) {
+	space := &kioskapi.Space{
+		TypeMeta: metav1.TypeMeta{Kind: "Space", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
+	}
+	if user != "" {
+		spaceClient, _, _, err := p.GetDynamicClientForUser("", space, user)
+		return spaceClient, err
+	}
+
+	spaceClient, _, _, err := p.GetDynamicClientFor("", space)
+	return spaceClient, err
 }
 
 func getImpersonateClient(p *platform.Platform, username string) (*kubernetes.Clientset, error) {
@@ -300,6 +467,12 @@ func doUntil(fn func() bool) bool {
 		if time.Now().After(start.Add(15 * time.Second)) {
 			return false
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }
+
+func intPtr(x int) *int {
+	return &x
+}
+
+func noopFn() {}
