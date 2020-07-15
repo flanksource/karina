@@ -1,10 +1,11 @@
 name: E2E vSphere
 
 on:
+  workflow_dispatch:
   schedule:
     # daily at 00h00 - https://crontab.guru/#0_0_*_*_*
     # * is a special character in YAML so you have to quote this string
-    - cron:  '0 0 * * *'
+    - cron: "0 0 * * *"
 jobs:
   binary:
     runs-on: ubuntu-latest
