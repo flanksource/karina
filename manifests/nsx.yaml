@@ -527,7 +527,9 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["init_k8s_node"]
-
+          requests:
+            cpu: 100m
+            memory: 5Mi
           securityContext:
             # privilege mode required to load apparmor on ubuntu
             privileged: true
@@ -685,6 +687,9 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_node_agent"]
+          requests:
+            cpu: 200m
+            memory: 512Mi
           env:
             - name: POD_NAME
               valueFrom:

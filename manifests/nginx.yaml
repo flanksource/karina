@@ -174,7 +174,9 @@ spec:
       containers:
         - name: nginx-ingress-controller
           image: flanksource/nginx-ingress-controller:0.25.1.flanksource.1
-          imagePullPolicy: Always
+          requests:
+            cpu: 100m
+            memory: 512Mi
           args:
             - /nginx-ingress-controller
             - --configmap=$(POD_NAMESPACE)/nginx-configuration

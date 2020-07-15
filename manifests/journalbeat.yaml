@@ -125,6 +125,10 @@ spec:
             - name: systemd
               mountPath: /run/systemd
               readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
       volumes:
         - name: config
           configMap:

@@ -723,7 +723,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: cert-manager
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: webhook
@@ -735,7 +735,6 @@ spec:
         app: webhook
         app.kubernetes.io/name: webhook
         app.kubernetes.io/instance: cert-manager
-      annotations:
     spec:
       serviceAccountName: cert-manager-webhook
       containers:
@@ -765,6 +764,10 @@ spec:
           volumeMounts:
             - name: certs
               mountPath: /certs
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
       volumes:
         - name: certs
           secret:
