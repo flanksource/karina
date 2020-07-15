@@ -9,6 +9,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,6 +50,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/transport"
 )
 
 type Client struct {
@@ -549,6 +552,57 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 		return nil, nil, nil, fmt.Errorf("getDynamicClientFor: failed to get dynamic client: %v", err)
 	}
 
+	return c.getDynamicClientFor(dynamicClient, namespace, obj)
+}
+
+func (c *Client) GetDynamicClientForUser(namespace string, obj runtime.Object, user string) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
+	data, err := c.GetKubeConfigBytes()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
+	}
+	if len(data) == 0 {
+		return nil, nil, nil, fmt.Errorf("kubeConfig is empty")
+	}
+
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
+	}
+
+	impersonate := transport.ImpersonationConfig{UserName: user}
+
+	transportConfig, err := cfg.TransportConfig()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get transport config: %v", err)
+	}
+	tlsConfig, err := transport.TLSConfigFor(transportConfig)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get tls config: %v", err)
+	}
+	timeout := 5 * time.Second
+
+	tr := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   timeout,
+			KeepAlive: 30 * time.Second,
+			DualStack: false, // K8s do not work well with IPv6
+		}).DialContext,
+		TLSHandshakeTimeout:   timeout,
+		ResponseHeaderTimeout: 10 * time.Second,
+		MaxIdleConns:          10,
+		MaxIdleConnsPerHost:   2,
+		IdleConnTimeout:       20 * time.Second,
+		TLSClientConfig:       tlsConfig,
+	}
+
+	cfg.Transport = transport.NewImpersonatingRoundTripper(impersonate, tr)
+	cfg.TLSClientConfig = rest.TLSClientConfig{}
+	dynamicClient, err := dynamic.NewForConfig(cfg)
+
+	return c.getDynamicClientFor(dynamicClient, namespace, obj)
+}
+
+func (c *Client) getDynamicClientFor(dynamicClient dynamic.Interface, namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 	rm, _ := c.GetRestMapper()
