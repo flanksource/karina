@@ -107,6 +107,7 @@ metadata:
   labels:
     app: quack
 spec:
+  replicas: 3
   selector:
     matchLabels:
       app: quack
@@ -130,7 +131,7 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 20Mi
+              memory: 32Mi
             limits:
               cpu: 500m
               memory: 100Mi
