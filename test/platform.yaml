@@ -60,3 +60,5 @@ test:
     - dex
     - audit
     - encryption
+kiosk:
+  version: 0.1.17
