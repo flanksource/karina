@@ -77,7 +77,7 @@ metadata:
   namespace: opa
   name: opa
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: opa
@@ -106,8 +106,8 @@ spec:
             - "--addr=http://127.0.0.1:8181"
           resources:
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: 200m
+              memory: 100Mi
             limits:
               cpu: 500m
               memory: 512Mi
