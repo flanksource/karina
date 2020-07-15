@@ -93,3 +93,45 @@ spec:
           resources:
             requests:
               cpu: 10m
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  namespace: opa
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: opa
+          resources:
+            requests:
+              cpu: 10m
+              memory: 10Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quack
+  namespace: quack
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: quack
+          resources:
+            requests:
+              cpu: 10m
+              memory: 10Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook
+  namespace: cert-manager
+spec:
+  replicas: 1
