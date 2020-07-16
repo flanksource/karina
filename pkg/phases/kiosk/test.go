@@ -169,7 +169,7 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 
 	k8s, err := getImpersonateClient(p, user)
 	if err != nil {
-		test.Failf("kiosk", "failed to get impersonate client for user user1: %v", err)
+		test.Failf("kiosk", "failed to get impersonate client for user user %s: %v", user, err)
 		return
 	}
 
@@ -195,7 +195,7 @@ func TestAccountQuota(p *platform.Platform, test *console.TestResults) {
 	user := fmt.Sprintf("user-%s", key)
 	accountName := fmt.Sprintf("account-%s", key)
 
-	// Create Account for user1
+	// Create Account for user
 	_, deferFn, err := createAccount(p, test, user, accountName)
 	if err != nil {
 		return
