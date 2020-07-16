@@ -403,7 +403,7 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/tls-acme: "true"
-  {{ if .oauth2Proxy.enabled }}
+  {{ if not .oauth2Proxy.disabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
   {{ end }}
@@ -428,7 +428,7 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/tls-acme: "true"
-  {{ if .oauth2Proxy.enabled }}
+  {{ if not .oauth2Proxy.disabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
   {{ end }}
@@ -457,7 +457,7 @@ metadata:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     nginx.ingress.kubernetes.io/configuration-snippet: 'more_set_headers "Access-Control-Allow-Origin: $http_origin";'
-  {{ if .oauth2Proxy.enabled }}
+  {{ if not .oauth2Proxy.disabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
   {{ end }}

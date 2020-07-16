@@ -45,7 +45,9 @@ spec:
           env:
             - name: OAUTH2_PROXY_COOKIE_SECRET
               value: "{{.oauth2Proxy.cookieSecret}}"
-          image: docker.io/flanksource/oauth2_proxy:{{.oauth2Proxy.version}}
+            - name: OAUTH2_PROXY_SCOPE
+              value: "offline_access openid profile email groups"
+          image: flanksource/oauth2_proxy:{{.oauth2Proxy.version}}
           resources:
             requests:
               cpu: 25m
