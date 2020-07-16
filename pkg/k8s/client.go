@@ -598,6 +598,9 @@ func (c *Client) GetDynamicClientForUser(namespace string, obj runtime.Object, u
 	cfg.Transport = transport.NewImpersonatingRoundTripper(impersonate, tr)
 	cfg.TLSClientConfig = rest.TLSClientConfig{}
 	dynamicClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get dynamic from config: %v", err)
+	}
 
 	return c.getDynamicClientFor(dynamicClient, namespace, obj)
 }

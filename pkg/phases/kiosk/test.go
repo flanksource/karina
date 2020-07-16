@@ -114,7 +114,7 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 	accountName := fmt.Sprintf("account-%s", key)
 
 	// Create Account for user1
-	_, deferFn, err := createAccount(p, test, user, accountName)
+	deferFn, err := createAccount(p, test, user, accountName)
 	if err != nil {
 		return
 	}
@@ -196,7 +196,7 @@ func TestAccountQuota(p *platform.Platform, test *console.TestResults) {
 	accountName := fmt.Sprintf("account-%s", key)
 
 	// Create Account for user
-	_, deferFn, err := createAccount(p, test, user, accountName)
+	deferFn, err := createAccount(p, test, user, accountName)
 	if err != nil {
 		return
 	}
@@ -231,7 +231,7 @@ func TestAccountQuota(p *platform.Platform, test *console.TestResults) {
 	}
 	test.Passf("kiosk", "user %s failed to create third space due to space limit 2", user)
 
-	accountQuota, deferFn, err := createAccountQuota(p, user, accountName)
+	accountQuota, deferFn, err := createAccountQuota(p, accountName)
 	if err != nil {
 		test.Failf("kiosk", "failed to create AccountQuota: %v", err)
 		return
@@ -274,7 +274,7 @@ func TestAccountQuota(p *platform.Platform, test *console.TestResults) {
 	}
 }
 
-func createAccountQuota(p *platform.Platform, user, accountName string) (*kioskconfigapi.AccountQuota, deferFunction, error) {
+func createAccountQuota(p *platform.Platform, accountName string) (*kioskconfigapi.AccountQuota, deferFunction, error) {
 	accountQuota := &kioskconfigapi.AccountQuota{
 		TypeMeta:   metav1.TypeMeta{Kind: "AccountQuota", APIVersion: "config.kiosk.sh/v1alpha1"},
 		ObjectMeta: metav1.ObjectMeta{Name: accountName},
@@ -353,7 +353,7 @@ func createSpace(p *platform.Platform, user, accountName string) (*kioskapi.Spac
 	return space, deferFn, nil
 }
 
-func createAccount(p *platform.Platform, test *console.TestResults, user, accountName string) (*kioskapi.Account, deferFunction, error) {
+func createAccount(p *platform.Platform, test *console.TestResults, user, accountName string) (deferFunction, error) {
 	account := &kioskapi.Account{
 		TypeMeta:   metav1.TypeMeta{Kind: "Account", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
 		ObjectMeta: metav1.ObjectMeta{Name: accountName},
@@ -377,11 +377,11 @@ func createAccount(p *platform.Platform, test *console.TestResults, user, accoun
 	accountClient, _, accountObj, err := p.GetDynamicClientFor("", account)
 	if err != nil {
 		test.Failf("kiosk", "failed to get dynamic client for accounts: %v", err)
-		return nil, noopFn, err
+		return noopFn, err
 	}
 	if _, err := accountClient.Create(accountObj, metav1.CreateOptions{}); err != nil {
 		test.Failf("kiosk", "failed to create %s Account: %v", user, err)
-		return nil, noopFn, err
+		return noopFn, err
 	}
 
 	fn := func() {
@@ -390,7 +390,7 @@ func createAccount(p *platform.Platform, test *console.TestResults, user, accoun
 		}
 	}
 
-	return account, fn, nil
+	return fn, nil
 }
 
 func spaceReadClient(p *platform.Platform, user string) (dynamic.ResourceInterface, error) {
