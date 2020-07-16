@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 
@@ -140,6 +141,7 @@ func init() {
 		"fluentd":              fluentdoperator.Test,
 		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
+		"kiosk":                kiosk.Test,
 		"monitoring":           monitoring.Test,
 		"kube-web-view":        kubewebview.TestKubeWebView,
 		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
