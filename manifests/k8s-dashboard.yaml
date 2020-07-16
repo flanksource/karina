@@ -171,7 +171,7 @@ metadata:
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    {{ if .oauth2Proxy.enabled }}
+    {{ if not .oauth2Proxy.disabled }}
     nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https://$host$request_uri$is_args$args"
     nginx.ingress.kubernetes.io/configuration-snippet: "{{ .dashboard.accessRestricted.snippet}}"
