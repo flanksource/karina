@@ -409,6 +409,18 @@ type Karma struct {
 	AlertManagers map[string]string `yaml:"alertManagers"`
 }
 
+// Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
+type KubeResourceReport struct {
+	// Disable kube-resource-report
+	Disabled bool `yaml:"disabled,omitempty"`
+	// Specify version to use (see [releases](https://github.com/hjacobs/kube-resource-report/releases))
+	Version string `yaml:"version,omitempty"`
+	// update interval in minutes
+	UpdateInterval int `yaml:"updateInterval,omitempty"`
+	// add a fixed extra cost per cluster
+	AdditionalClusterCost float32 `yaml:"additionalClusterCost,omitempty"`
+}
+
 type MonitoringE2E struct {
 	// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
 	// can be one of critical, warning, info
@@ -449,6 +461,10 @@ type Brand struct {
 	Name string `yaml:"name,omitempty"`
 	URL  string `yaml:"url,omitempty"`
 	Logo string `yaml:"logo,omitempty"`
+}
+
+type Kiosk struct {
+	Disabled `yaml:",inline"`
 }
 
 type GitOps struct {

@@ -527,7 +527,9 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["init_k8s_node"]
-
+          requests:
+            cpu: 100m
+            memory: 5Mi
           securityContext:
             # privilege mode required to load apparmor on ubuntu
             privileged: true
@@ -553,19 +555,15 @@ spec:
               mountPath: /var/run/openvswitch
             # Uncomment these mounts if installing NSX-OVS kernel module
             #   # mount host lib modules to install OVS kernel module if needed
-            #   - name: host-modules
-            #     mountPath: /lib/modules
+            - name: host-modules
+              mountPath: /lib/modules
             #   # mount openvswitch database
-            #   - name: host-config-openvswitch
-            #     mountPath: /etc/openvswitch
-            #   - name: dir-tmp-usr-ovs-kmod-backup
-            #   # we move the usr kmod files to this dir temporarily before
-            #   # installing new OVS kmod and/or backing up existing OVS kmod backup
-            #     mountPath: /tmp/nsx_usr_ovs_kmod_backup
+            - name: host-config-openvswitch
+              mountPath: /etc/openvswitch
 
             #   # mount linux headers for compiling OVS kmod
-            #   - name: host-usr-src
-            #     mountPath: /usr/src
+            - name: host-usr-src
+              mountPath: /usr/src
             # mount apparmor files to load the node-agent-apparmor
             - name: app-armor-cache
               mountPath: /var/cache/apparmor
@@ -614,19 +612,19 @@ spec:
           hostPath:
             path: /var/run/openvswitch
         # Uncomment these volumes if installing NSX-OVS kernel module
-        # - name: host-modules
-        #   hostPath:
-        #     path: /lib/modules
-        # - name: host-config-openvswitch
-        #   hostPath:
-        #     path: /etc/openvswitch
+        - name: host-modules
+          hostPath:
+            path: /lib/modules
+        - name: host-config-openvswitch
+          hostPath:
+            path: /etc/openvswitch
         # - name: dir-tmp-usr-ovs-kmod-backup
         #   hostPath:
         #     path: /tmp/nsx_usr_ovs_kmod_backup
 
-        # - name: host-usr-src
-        #   hostPath:
-        #     path: /usr/src
+        - name: host-usr-src
+          hostPath:
+            path: /usr/src
         - name: app-armor-cache
           hostPath:
             path: /var/cache/apparmor
@@ -689,6 +687,9 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_node_agent"]
+          requests:
+            cpu: 200m
+            memory: 512Mi
           env:
             - name: POD_NAME
               valueFrom:

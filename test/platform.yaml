@@ -50,6 +50,9 @@ kubeWebView:
   version: 20.6.0
   viewLogs: true
   viewSecrets: true
+kubeResourceReport:
+  updateInterval: 1
+  additionalClusterCost: 10.0
 canaryChecker:
   version: v0.11.2
 test:
@@ -57,3 +60,5 @@ test:
     - dex
     - audit
     - encryption
+kiosk:
+  version: 0.1.17
