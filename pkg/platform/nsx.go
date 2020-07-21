@@ -3,6 +3,7 @@ package platform
 import (
 	"context"
 	"fmt"
+	"net"
 
 	nsxapi "github.com/flanksource/karina/pkg/nsx"
 	"github.com/flanksource/karina/pkg/types"
@@ -125,14 +126,8 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	if err != nil {
 		return "", err
 	}
-	if !platform.DNS.IsEnabled() {
-		masterDNS = masterIP
-	}
 
-	if err := platform.GetDNSClient().Update(masterDNS, masterIP); err != nil {
-		platform.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", masterDNS, masterIP, err)
-		masterDNS = masterIP
-	}
+	masterDNS = updateDNS(platform, masterDNS, masterIP)
 
 	workerDNS := fmt.Sprintf("*.%s", platform.Domain)
 	workerIP, _, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
@@ -149,10 +144,39 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 		return "", err
 	}
 
-	if err := platform.GetDNSClient().Update(workerDNS, workerIP); err != nil {
-		platform.Warnf("Failed to create DNS entry for %s: %v", workerDNS, err)
-	}
+	updateDNS(platform, workerDNS, workerIP)
 	return masterDNS + ":6443", nil
+}
+
+func updateDNS(platform *Platform, dns string, ip string) string {
+	if !platform.DNS.IsEnabled() {
+		return ip
+	}
+	ips, err := platform.GetDNSClient().Get(dns)
+	if err != nil {
+		// try using the system resolver
+		_ips, err := net.LookupIP(dns)
+		if err == nil {
+			for _, ip := range _ips {
+				ips = append(ips, ip.To4().String())
+			}
+		} else {
+			platform.Warnf("Failed lookup DNS entry for %s, failing back to IP: %s: %v", dns, ip, err)
+			return ip
+		}
+	}
+	if len(ips) == 0 {
+		platform.Infof("Updating DNS %s: -> %s", dns, ip)
+	} else if ips[0] != ip {
+		platform.Infof("Updating DNS %s: from %s to %s", dns, ips[0], ip)
+	}
+	if len(ips) == 0 || ips[0] != ip {
+		if err := platform.GetDNSClient().Update(dns, ip); err != nil {
+			platform.Warnf("Failed to create DNS entry for %s, failing back to IP: %s: %v", dns, ip, err)
+			return ip
+		}
+	}
+	return dns
 }
 
 func (nsx *NSXProvider) BeforeTerminate(platform *Platform, machine types.Machine) error {
