@@ -222,11 +222,16 @@ type Health struct {
 	Error                                                 error
 }
 
-func (h Health) IsDegradedComparedTo(h2 Health) bool {
-	if h2.RunningPods > h.RunningPods ||
-		h.PendingPods-1 > h2.PendingPods || h.ErrorPods > h2.ErrorPods || h.CrashLoopBackOff > h2.CrashLoopBackOff {
+func (h Health) IsDegradedComparedTo(h2 Health, tolerance int) bool {
+	nonRunning := h.PendingPods + h.ErrorPods + h.CrashLoopBackOff
+	nonRunning2 := h2.PendingPods + h2.ErrorPods + h2.CrashLoopBackOff
+	if nonRunning2-nonRunning > tolerance {
 		return true
 	}
+	if h2.RunningPods-h.RunningPods > tolerance {
+		return true
+	}
+
 	return h.UnreadyNodes > h2.UnreadyNodes
 }
 

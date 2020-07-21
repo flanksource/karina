@@ -20,6 +20,10 @@ type NodeMachine struct {
 	Machine types.Machine
 }
 
+func (node NodeMachine) String() string {
+	return fmt.Sprintf("%s (%s)", node.Node.Name, node.Machine.IP())
+}
+
 type NodeMachines []NodeMachine
 
 type Cluster struct {
