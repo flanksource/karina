@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/timer"
+	"github.com/flanksource/karina/pkg/controller/burnin"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
@@ -21,6 +22,7 @@ type RollingOptions struct {
 	Max                    int
 	MaxSurge               int
 	HealthTolerance        int
+	BurninPeriod           time.Duration
 	Force                  bool
 	ScaleSingleDeployments bool
 	MigrateLocalVolumes    bool
@@ -52,11 +54,20 @@ func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster,
 	if status, err := platform.WaitForNode(replacement.Name(), opts.Timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
 		return fmt.Errorf("[%s] replacement did not come up healthy: %v", replacement, status)
 	}
+
+	if !k8s.HasTaint(node, burnin.Taint) {
+		return nil
+	}
+
+	platform.Infof("[%s] Node has become healthy, waiting for burnin-taint removal", replacement)
+	if err := platform.WaitForTaintRemoval(replacement.Name(), opts.Timeout, burnin.Taint); err != nil {
+		return fmt.Errorf("[%s] replacement burn-in taint was not removed: %v", replacement, err)
+	}
 	return nil
 }
 
-func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, cluster *Cluster) *NodeMachineBatch {
-	toReplace := NodeMachineBatch{}
+func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, cluster *Cluster) *NodeMachines {
+	toReplace := NodeMachines{}
 	// first we select all the nodes for replacement upfront
 	for _, nodeMachine := range cluster.Nodes {
 		machine := nodeMachine.Machine
@@ -71,7 +82,7 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 			continue
 		}
 		if age > opts.MinAge {
-			platform.Infof("Replacing %s,  age=%s, template=%s ", machine.Name(), age, template)
+			platform.Infof("Queuing for replacement %s, age=%s, template=%s ", machine.Name(), age, template)
 		} else {
 			continue
 		}
@@ -80,42 +91,16 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 	return &toReplace
 }
 
-type NodeMachineBatch []NodeMachine
-
-func (h NodeMachineBatch) Len() int { return len(h) }
-func (h NodeMachineBatch) Less(i, j int) bool {
-	return h[i].Machine.GetAge() > h[j].Machine.GetAge()
-}
-func (h NodeMachineBatch) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
-
-func (h *NodeMachineBatch) Push(x NodeMachine) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*h = append(*h, x)
-}
-
-func (h *NodeMachineBatch) Pop() NodeMachine {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
-}
-
-func (h *NodeMachineBatch) PopN(count int) *[]NodeMachine {
-	items := []NodeMachine{}
-
-	for i := 0; i < count; {
-		if h.Len() == 0 || len(items) == count {
-			return &items
-		}
-		items = append(items, h.Pop())
-	}
-	return &items
-}
-
 // Perform a rolling update of nodes
 func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
+	// first we start a burnin controller in the background that checks
+	// new nodes with the burnin taint for health, removing the taint
+	// once they become healthy
+	burninCancel := make(chan bool)
+	go burnin.Run(platform, opts.BurninPeriod, burninCancel)
+	defer func() {
+		burninCancel <- false
+	}()
 	// collect all info about cluster and vm's
 	cluster, err := GetCluster(platform)
 	if err != nil {
@@ -130,7 +115,6 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		timer := timer.NewTimer()
 		health := platform.GetHealth()
 		platform.Infof("Health Before: %s", health)
-		batch = toReplace.PopN(opts.MaxSurge)
 		wg := sync.WaitGroup{}
 		var replacementError atomic.Value
 		for _, nodeMachine := range *batch {
@@ -175,6 +159,8 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		if rolled >= opts.Max {
 			break
 		}
+		// select the next batch of nodes to update
+		batch = toReplace.PopN(opts.MaxSurge)
 	}
 	platform.Infof("Rollout finished, rolled %d of %d ", rolled, cluster.Nodes.Len())
 	return nil
