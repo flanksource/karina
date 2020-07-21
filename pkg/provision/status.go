@@ -10,7 +10,54 @@ import (
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func PodStatus(p *platform.Platform, period time.Duration) error {
+	client, err := p.GetClientset()
+	if err != nil {
+		return err
+	}
+
+	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', tabwriter.DiscardEmptyColumns)
+	fmt.Fprintf(w, "NAMESPACE\tNODE\tNAME\tPHASE\tREADY\tIP\tAGE\tRESTARTED\n")
+	for _, pod := range pods.Items {
+		lastRestarted := k8s.GetLastRestartTime(pod)
+		if k8s.IsPodHealthy(pod) && (lastRestarted == nil || time.Since(*lastRestarted) > period) {
+			continue
+		}
+		fmt.Fprintf(w, "%s\t", pod.Namespace)
+		fmt.Fprintf(w, "%s\t", pod.Spec.NodeName)
+		fmt.Fprintf(w, "%s\t", pod.Name)
+		fmt.Fprintf(w, "%s\t", k8s.GetPodStatus(pod))
+		if k8s.IsPodReady(pod) {
+			fmt.Fprintf(w, "TRUE\t")
+		} else {
+			fmt.Fprintf(w, "FALSE\t")
+		}
+		fmt.Fprintf(w, "%s\t", pod.Status.PodIP)
+
+		if pod.Status.StartTime != nil {
+			fmt.Fprintf(w, "%s\t", age(time.Since(pod.Status.StartTime.Time)))
+		} else {
+			fmt.Fprintf(w, "\t")
+		}
+
+		if lastRestarted == nil {
+			fmt.Fprintf(w, "\t")
+		} else {
+			fmt.Fprintf(w, "%s\t", age(time.Since(*lastRestarted)))
+		}
+		fmt.Fprintf(w, "\n")
+	}
+
+	_ = w.Flush()
+	return nil
+}
 
 func Status(p *platform.Platform) error {
 	cluster, err := GetCluster(p)
