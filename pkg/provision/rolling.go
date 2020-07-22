@@ -50,20 +50,7 @@ func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster,
 		}
 	}
 
-	platform.Infof("[%s] waiting for replacement to become ready", replacement)
-	if status, err := platform.WaitForNode(replacement.Name(), opts.Timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
-		return fmt.Errorf("[%s] replacement did not come up healthy: %v", replacement, status)
-	}
-
-	if !k8s.HasTaint(node, burnin.Taint) {
-		return nil
-	}
-
-	platform.Infof("[%s] Node has become healthy, waiting for burnin-taint removal", replacement)
-	if err := platform.WaitForTaintRemoval(replacement.Name(), opts.Timeout, burnin.Taint); err != nil {
-		return fmt.Errorf("[%s] replacement burn-in taint was not removed: %v", replacement, err)
-	}
-	return nil
+	return waitForNode(platform, replacement.Name(), opts.Timeout)
 }
 
 func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, cluster *Cluster) *NodeMachines {
