@@ -1164,6 +1164,53 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 	return clientcmd.Write(cfg)
 }
 
+func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]string, group string, user string, expiry time.Duration) ([]byte, error) {
+	if len(clusters)<1 {
+		return []byte{}, fmt.Errorf("CreateMultiKubeConfig failed since it was given an empty cluster map")
+	}
+
+	cfg := api.Config{
+		Clusters: map[string]*api.Cluster{},
+		Contexts: map[string]*api.Context{},
+		AuthInfos: map[string]*api.AuthInfo{},
+		CurrentContext: "",
+	}
+
+	for clusterName, endpoint:= range clusters {
+
+		cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
+		if cert.X509.PublicKey == nil && cert.PrivateKey != nil {
+			cert.X509.PublicKey = cert.PrivateKey.Public()
+		}
+		signed, err := ca.Sign(cert.X509, expiry)
+		if err != nil {
+			return nil, fmt.Errorf("createKubeConfig: failed to sign certificate: %v", err)
+		}
+		cert = &certs.Certificate{
+			X509:       signed,
+			PrivateKey: cert.PrivateKey,
+		}
+
+		cfg.Clusters[clusterName] = &api.Cluster{
+				Server:                endpoint ,
+				InsecureSkipTLSVerify: true,
+		}
+		contextName := fmt.Sprintf("%s@%s", user, clusterName)
+		cfg.Contexts[contextName] = &api.Context{
+			Cluster:   clusterName,
+			AuthInfo:  contextName,
+			Namespace: "kube-system",//TODO: verify
+		}
+		cfg.AuthInfos[contextName] = &api.AuthInfo{
+			ClientKeyData:         cert.EncodedPrivateKey(),
+			ClientCertificateData: cert.EncodedCertificate(),
+		}
+
+	}
+
+	return clientcmd.Write(cfg)
+}
+
 // PingMaster attempts to connect to the API server and list nodes and services
 // to ensure the API server is ready to accept any traffic
 func (c *Client) PingMaster() bool {
@@ -1548,4 +1595,16 @@ func (c *Client) GetHealth() Health {
 		}
 	}
 	return health
+}
+
+func GetExternalClient(clusterName string, clusterHost string, ca *certs.Certificate ) *Client{
+	return &Client{
+		GetKubeConfigBytes: func () ([]byte, error) {
+			kubeConfig, err := CreateKubeConfig(clusterName, ca, clusterHost, "system:masters", "admin", 24*7*time.Hour)
+			if err != nil {
+				return nil, err
+			}
+			return kubeConfig, nil
+		},
+	}
 }

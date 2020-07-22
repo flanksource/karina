@@ -53,6 +53,8 @@ kubeWebView:
 kubeResourceReport:
   updateInterval: 1
   additionalClusterCost: 10.0
+  extraClusters:
+    k8s-reports: "https://10.100.2.67:6443"
 canaryChecker:
   version: v0.11.2
 test:

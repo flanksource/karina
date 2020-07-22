@@ -2,6 +2,7 @@ package sealedsecrets
 
 import (
 	"fmt"
+	"github.com/flanksource/karina/pkg/ca"
 	"sort"
 
 	"github.com/flanksource/karina/pkg/platform"
@@ -36,7 +37,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.SealedSecrets.Certificate != nil && !platform.ApplyDryRun {
-		ca, err := platform.ReadCA(platform.SealedSecrets.Certificate)
+		ca, err := ca.ReadCA(platform.SealedSecrets.Certificate)
 		if err != nil {
 			return errors.Wrap(err, "failed to read platform ca")
 		}

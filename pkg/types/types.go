@@ -419,6 +419,10 @@ type KubeResourceReport struct {
 	UpdateInterval int `yaml:"updateInterval,omitempty"`
 	// add a fixed extra cost per cluster
 	AdditionalClusterCost float32 `yaml:"additionalClusterCost,omitempty"`
+	// Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
+
+	ExternalClusters map[string]string `yaml:"extraClusters,omitempty"`
+
 }
 
 type MonitoringE2E struct {
