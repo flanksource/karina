@@ -33,13 +33,9 @@ func Install(p *platform.Platform) error {
 		if err != nil {
 			fmt.Errorf("Unable to get root CA %v", err)
 		}
-		ep, err := p.GetAPIEndpoint()
-		if err != nil {
-			fmt.Errorf("Unable to get cluster endpoint %v", err)
-		}
-		clusters := map[string]string{
-			p.Name: "https://"+ep+":6443",
-		}
+		clusters := map[string]string{}
+		//	p.Name: "https://kubernetes.default.svc",
+		//}
 		for name, apiEndpoint := range p.KubeResourceReport.ExternalClusters {
 			p.Logger.Infof("Adding external cluster %v with endpoint: %v to kube-resource-report.", name, apiEndpoint)
 
@@ -61,6 +57,8 @@ func Install(p *platform.Platform) error {
 				fmt.Errorf("failed getting clientset %v", err)
 			}
 			p.Logger.Infof("master is %v",mast)
+
+			//TODO: restrict access
 			clusters[name] = apiEndpoint
 
 			//kubeConfig, err := k8s.CreateKubeConfig(name, ca, u.Hostname(), "system:masters", "admin", 24*7*time.Hour)

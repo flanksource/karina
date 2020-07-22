@@ -82,10 +82,15 @@ spec:
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
             {{ end }}
+            - --kubeconfig-path=/external/config
             - /output
           volumeMounts:
             - mountPath: /output
               name: report-data
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /external
+              name: kubeconfig
           resources:
             limits:
               memory: 100Mi
@@ -93,7 +98,7 @@ spec:
               cpu: 5m
               memory: 50Mi
           securityContext:
-            readOnlyRootFilesystem: true
+            #readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
         - name: nginx
@@ -118,6 +123,12 @@ spec:
         - name: report-data
           emptyDir:
             sizeLimit: 500Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: kubeconfig
+          secret:
+            secretName: kube-resource-report-clusters
 ---
 apiVersion: v1
 kind: Service
