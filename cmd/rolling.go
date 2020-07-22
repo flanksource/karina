@@ -39,6 +39,7 @@ func init() {
 	rollingOpts = provision.RollingOptions{}
 	RollingUpdate.Flags().DurationVar(&rollingOpts.MinAge, "min-age", time.Hour*24*7, "Minimum age of nodes to roll")
 	Rolling.PersistentFlags().DurationVar(&rollingOpts.Timeout, "timeout", time.Minute*5, "timeout between actions")
+	Rolling.PersistentFlags().DurationVar(&rollingOpts.BurninPeriod, "burnin-period", time.Minute*3, "Period to burn-in new nodes before scheduling workloads on")
 	Rolling.PersistentFlags().IntVar(&rollingOpts.Max, "max", 100, "Max number of nodes to roll")
 	RollingUpdate.PersistentFlags().IntVar(&rollingOpts.MaxSurge, "max-surge", 3, "Max number of nodes surge to, the higher the number the faster the rollout, but the more capacity that will be used ")
 	RollingUpdate.PersistentFlags().IntVar(&rollingOpts.HealthTolerance, "health-tolerance", 1, "Max number of failing pods to tolerate")

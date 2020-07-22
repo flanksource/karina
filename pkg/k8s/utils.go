@@ -3,7 +3,6 @@ package k8s
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -119,48 +118,6 @@ func LowResourceRequirements() v1.ResourceRequirements {
 	}
 }
 
-func decodeStringToTimeDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if f.Kind() != reflect.String {
-		return data, nil
-	}
-	if t != reflect.TypeOf(time.Duration(5)) {
-		return data, nil
-	}
-	d, err := time.ParseDuration(data.(string))
-	if err != nil {
-		return data, fmt.Errorf("decodeStringToTimeDuration: Failed to parse duration: %v", err)
-	}
-	return d, nil
-}
-
-func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if f.Kind() != reflect.String {
-		return data, nil
-	}
-	if t != reflect.TypeOf(metav1.Duration{Duration: time.Duration(5)}) {
-		return data, nil
-	}
-	d, err := time.ParseDuration(data.(string))
-	if err != nil {
-		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
-	}
-	return metav1.Duration{Duration: d}, nil
-}
-
-func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if f.Kind() != reflect.String {
-		return data, nil
-	}
-	if t != reflect.TypeOf(metav1.Time{Time: time.Now()}) {
-		return data, nil
-	}
-	d, err := time.Parse(time.RFC3339, data.(string))
-	if err != nil {
-		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
-	}
-	return metav1.Time{Time: d}, nil
-}
-
 func IsPodCrashLoopBackoff(pod v1.Pod) bool {
 	for _, status := range pod.Status.ContainerStatuses {
 		if status.State.Waiting != nil && status.State.Waiting.Reason == "CrashLoopBackOff" {
@@ -170,14 +127,50 @@ func IsPodCrashLoopBackoff(pod v1.Pod) bool {
 	return false
 }
 
-func IsPodHealthy(pod v1.Pod) bool {
-	conditions := true
-	for _, condition := range pod.Status.Conditions {
-		if condition.Status == v1.ConditionFalse {
-			conditions = false
+func maxTime(t1 *time.Time, t2 time.Time) *time.Time {
+	if t1 == nil {
+		return &t2
+	}
+	if t1.Before(t2) {
+		return &t2
+	}
+	return t1
+}
+
+func GetPodStatus(pod v1.Pod) string {
+	if IsPodCrashLoopBackoff(pod) {
+		return "CrashLoopBackOff"
+	}
+	if pod.Status.Phase == v1.PodFailed {
+		return "Failed"
+	}
+	if pod.DeletionTimestamp != nil && !pod.DeletionTimestamp.IsZero() {
+		return "Terminating"
+	}
+	return string(pod.Status.Phase)
+}
+
+func GetLastRestartTime(pod v1.Pod) *time.Time {
+	var max *time.Time
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.LastTerminationState.Terminated != nil {
+			max = maxTime(max, status.LastTerminationState.Terminated.FinishedAt.Time)
 		}
 	}
-	return conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded)
+	return max
+}
+
+func IsPodHealthy(pod v1.Pod) bool {
+	if pod.Status.Phase == v1.PodFailed || IsPodCrashLoopBackoff(pod) {
+		return false
+	}
+
+	for _, condition := range pod.Status.Conditions {
+		if condition.Status == v1.ConditionFalse {
+			return false
+		}
+	}
+	return pod.Status.Phase == v1.PodRunning
 }
 
 func IsPodFinished(pod v1.Pod) bool {
@@ -186,6 +179,15 @@ func IsPodFinished(pod v1.Pod) bool {
 
 func IsPodPending(pod v1.Pod) bool {
 	return pod.Status.Phase == v1.PodPending
+}
+
+func IsPodReady(pod v1.Pod) bool {
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == v1.PodReady && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
 
 func IsMasterNode(node v1.Node) bool {
@@ -271,4 +273,23 @@ func GetCurrentClusterNameFrom(kubeConfigPath string) string {
 	}
 	// we strip the prefix that kind automatically adds to cluster names
 	return strings.Replace(ctx.Cluster, "kind-", "", 1)
+}
+
+func RemoveTaint(taints []v1.Taint, name string) []v1.Taint {
+	list := []v1.Taint{}
+	for _, taint := range taints {
+		if taint.Key != name {
+			list = append(list, taint)
+		}
+	}
+	return list
+}
+
+func HasTaint(node v1.Node, name string) bool {
+	for _, taint := range node.Spec.Taints {
+		if taint.Key == name {
+			return true
+		}
+	}
+	return false
 }

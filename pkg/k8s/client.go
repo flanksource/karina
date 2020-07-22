@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -503,6 +504,48 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 		return fmt.Errorf("get: failed to decode config: %v", err)
 	}
 	return decoder.Decode(unstructuredObj.Object)
+}
+
+func decodeStringToTimeDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(time.Duration(5)) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTimeDuration: Failed to parse duration: %v", err)
+	}
+	return d, nil
+}
+
+func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Duration{Duration: time.Duration(5)}) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
+	}
+	return metav1.Duration{Duration: d}, nil
+}
+
+func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Time{Time: time.Now()}) {
+		return data, nil
+	}
+	d, err := time.Parse(time.RFC3339, data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
+	}
+	return metav1.Time{Time: d}, nil
 }
 
 func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
@@ -1350,6 +1393,36 @@ func (c *Client) WaitForNode(name string, timeout time.Duration, condition v1.No
 			}
 		}
 		time.Sleep(2 * time.Second)
+	}
+}
+
+// WaitForNode waits for a pod to be in the specified phase, or returns an
+// error if the timeout is exceeded
+func (c *Client) WaitForTaintRemoval(name string, timeout time.Duration, taintKey string) error {
+	start := time.Now()
+outerLoop:
+	for {
+		if time.Since(start) > timeout {
+			return fmt.Errorf("timeout exceeded waiting for %s to not have %s", name, taintKey)
+		}
+
+		client, err := c.GetClientset()
+		if err != nil {
+			return err
+		}
+		node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, taint := range node.Spec.Taints {
+			if taint.Key == taintKey {
+				time.Sleep(2 * time.Second)
+				continue outerLoop
+			}
+		}
+		// taint not found
+		return nil
 	}
 }
 
