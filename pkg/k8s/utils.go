@@ -230,7 +230,7 @@ func (h Health) IsDegradedComparedTo(h2 Health, tolerance int) bool {
 	if nonRunning2-nonRunning > tolerance {
 		return true
 	}
-	if h2.RunningPods-h.RunningPods > tolerance {
+	if h.RunningPods-h2.RunningPods < tolerance {
 		return true
 	}
 
