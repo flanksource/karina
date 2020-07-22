@@ -1402,7 +1402,6 @@ func (c *Client) WaitForTaintRemoval(name string, timeout time.Duration, taintKe
 	start := time.Now()
 outerLoop:
 	for {
-
 		if time.Since(start) > timeout {
 			return fmt.Errorf("timeout exceeded waiting for %s to not have %s", name, taintKey)
 		}

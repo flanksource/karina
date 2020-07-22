@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/utils"
+	"github.com/flanksource/karina/pkg/controller/burnin"
 	"github.com/flanksource/karina/pkg/phases"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
@@ -52,6 +53,15 @@ func VsphereCluster(platform *platform.Platform) error {
 		return fmt.Errorf("must specify a master discovery service e.g. consul, NSX or DNS")
 	}
 
+	// first we start a burnin controller in the background that checks
+	// new nodes with the burnin taint for health, removing the taint
+	// once they become healthy
+	burninCancel := make(chan bool)
+	go burnin.Run(platform, opts.BurninPeriod, burninCancel)
+	defer func() {
+		burninCancel <- false
+	}()
+
 	api, err := platform.GetAPIEndpoint()
 	if api == "" || err != nil || !platform.PingMaster() {
 		platform.Tracef("No healthy master nodes, creating new master: %v", err)
@@ -69,6 +79,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 	platform.Infof("Detected %d existing masters: %s", len(masters), masters)
 
+	// master nodes are created sequentially due to race conditions when joining etcd
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)
 		if err != nil {

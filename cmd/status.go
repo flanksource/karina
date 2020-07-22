@@ -35,5 +35,4 @@ func init() {
 	pods.Flags().DurationVar(&restartLimit, "restart-limit", 3*time.Minute, "The previous time window in which if a pod restart it is considered unhealthy")
 
 	Status.AddCommand(pods)
-
 }
