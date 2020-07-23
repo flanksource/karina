@@ -505,7 +505,7 @@ type GitOps struct {
 	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
 	SSHConfig string `yaml:"sshConfig,omitempty"`
 
-	// The version to use for flux (default: 1.9.0 )
+	// The version to use for flux (default: 1.20.0 )
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
 	// a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list
