@@ -42,7 +42,7 @@ spec:
         runAsUser: 1000
       containers:
         - name: harbor-exporter
-          image: "c4po/harbor-exporter:v0.4.0"
+          image: "docker.io/c4po/harbor-exporter:v0.4.0"
           imagePullPolicy: IfNotPresent
           command: ["/bin/harbor_exporter"]
           args:

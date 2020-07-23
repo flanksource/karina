@@ -42,9 +42,9 @@ spec:
       containers:
         - name: clair
           {{- if .harbor.version | strings.HasPrefix "v1" }}
-          image: goharbor/clair-photon:v{{.harbor.clairVersion}}-{{.harbor.version}}
+          image: docker.io/goharbor/clair-photon:v{{.harbor.clairVersion}}-{{.harbor.version}}
           {{- else }}
-          image: goharbor/clair-photon:{{.harbor.version}}
+          image: docker.io/goharbor/clair-photon:{{.harbor.version}}
           {{- end }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
@@ -75,9 +75,9 @@ spec:
               subPath: config.yaml
         - name: adapter
           {{- if .harbor.version | strings.HasPrefix "v1" }}
-          image: goharbor/clair-adapter-photon:v1.0.1-{{.harbor.version}}
+          image: docker.io/goharbor/clair-adapter-photon:v1.0.1-{{.harbor.version}}
           {{- else }}
-          image: goharbor/clair-adapter-photon:{{.harbor.version}}
+          image: docker.io/goharbor/clair-adapter-photon:{{.harbor.version}}
           {{- end }}
           imagePullPolicy: IfNotPresent
           livenessProbe:

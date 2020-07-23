@@ -99,7 +99,7 @@ spec:
     spec:
       containers:
         - name: portal
-          image: goharbor/harbor-portal:{{.harbor.version}}
+          image: docker.io/goharbor/harbor-portal:{{.harbor.version}}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:

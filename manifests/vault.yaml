@@ -174,7 +174,7 @@ spec:
             name: consul-server-config
       containers:
         - name: consul
-          image: "consul:1.7.1"
+          image: "docker.io/consul:1.7.1"
           env:
             - name: POD_IP
               valueFrom:
@@ -428,7 +428,7 @@ spec:
           securityContext:
             capabilities:
               add: ["IPC_LOCK"]
-          image: vault:{{.vault.version}}
+          image: docker.io/vault:{{.vault.version}}
           imagePullPolicy: IfNotPresent
           command:
             - "/bin/sh"

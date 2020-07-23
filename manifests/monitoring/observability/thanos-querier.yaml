@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: thanos-query
-          image: thanosio/thanos:{{.thanos.version}}
+          image: docker.io/thanosio/thanos:{{.thanos.version}}
           args:
             - "query"
             - "--log.level=debug"

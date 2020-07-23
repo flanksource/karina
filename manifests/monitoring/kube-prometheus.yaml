@@ -191,7 +191,7 @@ spec:
           secretKeyRef:
             key: thanos.yaml
             name: thanos-objstore-config
-      image: thanosio/thanos:{{.thanos.version}}
+      image: docker.io/thanosio/thanos:{{.thanos.version}}
       imagePullPolicy: IfNotPresent
       name: thanos-sidecar
       ports:

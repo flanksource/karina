@@ -100,7 +100,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-          image: jvassev/kube-fluentd-operator:v{{.fluentd.version}}
+          image: docker.io/jvassev/kube-fluentd-operator:v{{.fluentd.version}}
           imagePullPolicy: IfNotPresent
           name: fluentd
           resources: {}
@@ -134,7 +134,7 @@ spec:
             - /usr/local/bundle/bin/fluentd -p /fluentd/plugins
             - --kubelet-root
             - /var/lib/kubelet
-          image: jvassev/kube-fluentd-operator:v{{.fluentd.version}}
+          image: docker.io/jvassev/kube-fluentd-operator:v{{.fluentd.version}}
           imagePullPolicy: IfNotPresent
           name: reloader
           resources: {}

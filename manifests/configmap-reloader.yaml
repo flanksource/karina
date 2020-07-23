@@ -81,7 +81,7 @@ spec:
         app: reloader
     spec:
       containers:
-        - image: "stakater/reloader:{{.configmapReloader.version}}"
+        - image: "docker.io/stakater/reloader:{{.configmapReloader.version}}"
           imagePullPolicy: IfNotPresent
           name: reloader
           args:

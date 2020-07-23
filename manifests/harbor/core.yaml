@@ -115,7 +115,7 @@ spec:
         fsGroup: 10000
       containers:
         - name: core
-          image: goharbor/harbor-core:{{.harbor.version}}
+          image: docker.io/goharbor/harbor-core:{{.harbor.version}}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
