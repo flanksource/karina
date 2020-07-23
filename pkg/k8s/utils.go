@@ -224,17 +224,22 @@ type Health struct {
 	Error                                                 error
 }
 
+func (h Health) GetNonReadyPods() int {
+	return h.PendingPods + h.ErrorPods + h.CrashLoopBackOff
+}
+
 func (h Health) IsDegradedComparedTo(h2 Health, tolerance int) bool {
-	nonRunning := h.PendingPods + h.ErrorPods + h.CrashLoopBackOff
-	nonRunning2 := h2.PendingPods + h2.ErrorPods + h2.CrashLoopBackOff
-	if nonRunning2-nonRunning > tolerance {
+	if h.GetNonReadyPods()-h2.GetNonReadyPods() > tolerance {
 		return true
 	}
-	if h.RunningPods-h2.RunningPods < tolerance {
+	if h2.RunningPods-h.RunningPods > tolerance {
+		return true
+	}
+	if h.UnreadyNodes-h2.UnreadyNodes > 0 {
 		return true
 	}
 
-	return h.UnreadyNodes > h2.UnreadyNodes
+	return false
 }
 
 func (h Health) String() string {
