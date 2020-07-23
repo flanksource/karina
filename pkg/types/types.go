@@ -815,6 +815,10 @@ type Tekton struct {
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
 }
 
+type VPA struct {
+	Disabled `yaml:",inline"`
+}
+
 type Test struct {
 	// A list of tests to exclude from testings
 	Exclude []string `yaml:"exclude,omitempty"`
