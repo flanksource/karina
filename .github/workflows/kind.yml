@@ -42,13 +42,13 @@ jobs:
           - platform
         include:
           - k8s: v1.17.9
-            suite:
-              - minimal
-              - monitoring
+            suite: minimal
+          - k8s: v1.17.9
+            suite: monitoring
           - k8s: v1.16.12
-            suite:
-              - minimal
-              - monitoring
+            suite: minimal
+          - k8s: v1.16.12
+            suite: monitoring
     steps:
       - uses: actions/checkout@main
       - uses: actions/download-artifact@v2
