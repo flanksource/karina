@@ -10,9 +10,16 @@ import (
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	//"k8s.io/client-go/pkg/a"
+	//_ "k8s.io/client-go/pkg/api/install"
+	//_ "k8s.io/client-go/pkg/apis/extensions/install"
 )
 
-const Namespace = constants.PlatformSystem
+const (
+	Namespace = constants.PlatformSystem
+	Group     = "system:reporting"
+	User      = "kube-resource-report"
+)
 
 func Install(p *platform.Platform) error {
 	if p.KubeResourceReport == nil || p.KubeResourceReport.Disabled {
@@ -49,34 +56,37 @@ func Install(p *platform.Platform) error {
 
 			p.Logger.Debugf("External endpoint host: %v", u.Hostname())
 
-
-			client := k8s.GetExternalClient(name,u.Hostname(), ca)
+			client := k8s.GetExternalClient(p.Logger, name, u.Hostname(), ca)
 
 			mast, err := client.GetMasterNode()
 			if err != nil {
 				fmt.Errorf("failed getting clientset %v", err)
 			}
-			p.Logger.Infof("master is %v",mast)
+			p.Logger.Infof("master is %v", mast)
 
-			//TODO: restrict access
+			// create rbac settings for remote user
+			template, err := p.Template("kube-resource-report-rbac.yaml", "manifests")
+			if err != nil {
+				return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
+			}
+			p.Logger.Infof("template is \n%v", template)
+
+			client.ApplyText(Namespace, template)
+			if err != nil {
+				fmt.Errorf("error applying external cluster security manifest %v", err)
+			}
 			clusters[name] = apiEndpoint
 
-			//kubeConfig, err := k8s.CreateKubeConfig(name, ca, u.Hostname(), "system:masters", "admin", 24*7*time.Hour)
-			//if err != nil {
-			//	p.Logger.Infof("error getting kubeconfig:\n%v", err)
-			//}
-			//p.Logger.Infof("kubeconfig file is:\n%v",string(kubeConfig))
 		}
 
-		kubeConfig, err := k8s.CreateMultiKubeConfig(ca, clusters, "system:masters", "kubernetes-admin", 24*7*time.Hour)
-		p.Logger.Infof("kubeconfig file is:\n%v",string(kubeConfig))
+		kubeConfig, err := k8s.CreateMultiKubeConfig(ca, clusters, Group, User, 24*7*time.Hour)
+		p.Logger.Infof("kubeconfig file is:\n%v", string(kubeConfig))
 
-		p.CreateOrUpdateSecret("kube-resource-report-clusters",Namespace, map[string][]byte {
-			"config" : []byte(kubeConfig),
-			})
+		p.CreateOrUpdateSecret("kube-resource-report-clusters", Namespace, map[string][]byte{
+			"config": []byte(kubeConfig),
+		})
 
 	}
-
 
 	return p.ApplySpecs(Namespace, "kube-resource-report.yaml")
 }

@@ -8,13 +8,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
-	"time"
-
 	certs "github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/logger"
@@ -26,6 +19,7 @@ import (
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/flanksource/yaml.v3"
+	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -48,6 +42,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
 )
 
 type Client struct {
@@ -390,6 +389,20 @@ func getDocumentsFromYamlFile(yamlData []byte) (firstDoc []byte, rest []byte) {
 	endIndex := bytes.Index(yamlData, []byte("---"))
 	if endIndex == -1 {
 		return yamlData, []byte{}
+	}
+	return yamlData[:endIndex], yamlData[endIndex+3:]
+}
+
+// getDocumentsFromYamlString returns the first YAML document
+// from a string and a stringe containing the remainder of the stream.
+// This is needed since yaml.v3 (and the flanksource derived yaml.v3) only
+// unmarshalls the **first** document in a stream.
+//
+// (see https://pkg.go.dev/gopkg.in/flanksource/yaml.v3@v3.1.1?tab=doc#Unmarshal)
+func getDocumentsFromYamlString(yamlData string) (firstDoc string, rest string) {
+	endIndex := strings.Index(yamlData, "---")
+	if endIndex == -1 {
+		return yamlData, ""
 	}
 	return yamlData[:endIndex], yamlData[endIndex+3:]
 }
@@ -764,6 +777,41 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 		}
 	}
 	return nil
+}
+
+func (c *Client) ApplyText(namespace string, specs ...string) error {
+	items := []runtime.Object{}
+	for _, spec := range specs {
+		remainingData := spec
+		for {
+			current, rest := getDocumentsFromYamlString(remainingData)
+			remainingData = rest
+			if len(current) == 0 {
+				continue
+			}
+			obj, err := decodeK8sYaml(current)
+			if err != nil {
+				return err
+			}
+			items = append(items, obj)
+			if len(rest) == 0 {
+				break
+			}
+		}
+	}
+	if err := c.Apply(namespace, items...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func decodeK8sYaml(spec string) (runtime.Object, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	obj, _, err := decode([]byte(spec), nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode yaml: %v", err)
+	}
+	return obj, nil
 }
 
 func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
@@ -1165,18 +1213,18 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 }
 
 func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]string, group string, user string, expiry time.Duration) ([]byte, error) {
-	if len(clusters)<1 {
+	if len(clusters) < 1 {
 		return []byte{}, fmt.Errorf("CreateMultiKubeConfig failed since it was given an empty cluster map")
 	}
 
 	cfg := api.Config{
-		Clusters: map[string]*api.Cluster{},
-		Contexts: map[string]*api.Context{},
-		AuthInfos: map[string]*api.AuthInfo{},
+		Clusters:       map[string]*api.Cluster{},
+		Contexts:       map[string]*api.Context{},
+		AuthInfos:      map[string]*api.AuthInfo{},
 		CurrentContext: "",
 	}
 
-	for clusterName, endpoint:= range clusters {
+	for clusterName, endpoint := range clusters {
 
 		cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
 		if cert.X509.PublicKey == nil && cert.PrivateKey != nil {
@@ -1192,14 +1240,14 @@ func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]st
 		}
 
 		cfg.Clusters[clusterName] = &api.Cluster{
-				Server:                endpoint ,
-				InsecureSkipTLSVerify: true,
+			Server:                endpoint,
+			InsecureSkipTLSVerify: true,
 		}
 		contextName := fmt.Sprintf("%s@%s", user, clusterName)
 		cfg.Contexts[contextName] = &api.Context{
 			Cluster:   clusterName,
 			AuthInfo:  contextName,
-			Namespace: "kube-system",//TODO: verify
+			Namespace: "kube-system", //TODO: verify
 		}
 		cfg.AuthInfos[contextName] = &api.AuthInfo{
 			ClientKeyData:         cert.EncodedPrivateKey(),
@@ -1597,9 +1645,10 @@ func (c *Client) GetHealth() Health {
 	return health
 }
 
-func GetExternalClient(clusterName string, clusterHost string, ca *certs.Certificate ) *Client{
+func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, ca *certs.Certificate) *Client {
 	return &Client{
-		GetKubeConfigBytes: func () ([]byte, error) {
+		Logger: logger,
+		GetKubeConfigBytes: func() ([]byte, error) {
 			kubeConfig, err := CreateKubeConfig(clusterName, ca, clusterHost, "system:masters", "admin", 24*7*time.Hour)
 			if err != nil {
 				return nil, err

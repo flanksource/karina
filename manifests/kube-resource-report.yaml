@@ -54,6 +54,7 @@ subjects:
   - kind: ServiceAccount
     name: kube-resource-report
     namespace: platform-system
+
 ---
 apiVersion: apps/v1
 kind: Deployment
