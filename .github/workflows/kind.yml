@@ -41,13 +41,13 @@ jobs:
           - security
           - platform
         include:
-          - k8s: v1.17.9
+          - k8s: v1.17.5
             suite: minimal
-          - k8s: v1.17.9
+          - k8s: v1.17.5
             suite: monitoring
-          - k8s: v1.16.12
+          - k8s: v1.16.9
             suite: minimal
-          - k8s: v1.16.12
+          - k8s: v1.16.9
             suite: monitoring
     steps:
       - uses: actions/checkout@main
