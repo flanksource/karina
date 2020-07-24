@@ -17,7 +17,7 @@ jobs:
     container:
       image: flanksource/build-tools:0.6
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@main
       - run: make pack linux
       - uses: actions/upload-artifact@v2
         with:
@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.16.9
+          - v1.18.6
         suite:
           - minimal
           - monitoring
@@ -40,8 +40,17 @@ jobs:
           - elastic
           - security
           - platform
+        include:
+          - k8s: v1.17.9
+            suite:
+              - minimal
+              - monitoring
+          - k8s: v1.16.12
+            suite:
+              - minimal
+              - monitoring
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@main
       - uses: actions/download-artifact@v2
         with:
           name: karina
