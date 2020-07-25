@@ -8,6 +8,10 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"net"
+	"net/http"
+	"reflect"
+
 	certs "github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/logger"
@@ -42,6 +46,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/transport"
 	"os"
 	"path/filepath"
 	"strings"
@@ -515,6 +520,48 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	return decoder.Decode(unstructuredObj.Object)
 }
 
+func decodeStringToTimeDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(time.Duration(5)) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTimeDuration: Failed to parse duration: %v", err)
+	}
+	return d, nil
+}
+
+func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Duration{Duration: time.Duration(5)}) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
+	}
+	return metav1.Duration{Duration: d}, nil
+}
+
+func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Time{Time: time.Now()}) {
+		return data, nil
+	}
+	d, err := time.Parse(time.RFC3339, data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
+	}
+	return metav1.Time{Time: d}, nil
+}
+
 func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
 	if c.restMapper != nil {
 		return c.restMapper, nil
@@ -562,6 +609,60 @@ func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dyna
 		return nil, nil, nil, fmt.Errorf("getDynamicClientFor: failed to get dynamic client: %v", err)
 	}
 
+	return c.getDynamicClientFor(dynamicClient, namespace, obj)
+}
+
+func (c *Client) GetDynamicClientForUser(namespace string, obj runtime.Object, user string) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
+	data, err := c.GetKubeConfigBytes()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
+	}
+	if len(data) == 0 {
+		return nil, nil, nil, fmt.Errorf("kubeConfig is empty")
+	}
+
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
+	}
+
+	impersonate := transport.ImpersonationConfig{UserName: user}
+
+	transportConfig, err := cfg.TransportConfig()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get transport config: %v", err)
+	}
+	tlsConfig, err := transport.TLSConfigFor(transportConfig)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get tls config: %v", err)
+	}
+	timeout := 5 * time.Second
+
+	tr := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   timeout,
+			KeepAlive: 30 * time.Second,
+			DualStack: false, // K8s do not work well with IPv6
+		}).DialContext,
+		TLSHandshakeTimeout:   timeout,
+		ResponseHeaderTimeout: 10 * time.Second,
+		MaxIdleConns:          10,
+		MaxIdleConnsPerHost:   2,
+		IdleConnTimeout:       20 * time.Second,
+		TLSClientConfig:       tlsConfig,
+	}
+
+	cfg.Transport = transport.NewImpersonatingRoundTripper(impersonate, tr)
+	cfg.TLSClientConfig = rest.TLSClientConfig{}
+	dynamicClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get dynamic from config: %v", err)
+	}
+
+	return c.getDynamicClientFor(dynamicClient, namespace, obj)
+}
+
+func (c *Client) getDynamicClientFor(dynamicClient dynamic.Interface, namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 	rm, _ := c.GetRestMapper()
@@ -1391,6 +1492,36 @@ func (c *Client) WaitForNode(name string, timeout time.Duration, condition v1.No
 	}
 }
 
+// WaitForNode waits for a pod to be in the specified phase, or returns an
+// error if the timeout is exceeded
+func (c *Client) WaitForTaintRemoval(name string, timeout time.Duration, taintKey string) error {
+	start := time.Now()
+outerLoop:
+	for {
+		if time.Since(start) > timeout {
+			return fmt.Errorf("timeout exceeded waiting for %s to not have %s", name, taintKey)
+		}
+
+		client, err := c.GetClientset()
+		if err != nil {
+			return err
+		}
+		node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, taint := range node.Spec.Taints {
+			if taint.Key == taintKey {
+				time.Sleep(2 * time.Second)
+				continue outerLoop
+			}
+		}
+		// taint not found
+		return nil
+	}
+}
+
 // WaitForPodCommand waits for a command executed in pod to succeed with an exit code of 9
 // error if the timeout is exceeded
 func (c *Client) WaitForPodCommand(ns, name string, container string, timeout time.Duration, command ...string) error {
@@ -1645,6 +1776,9 @@ func (c *Client) GetHealth() Health {
 	return health
 }
 
+// GetExternalClient constructs a Client for accessing an external cluster.
+// It uses the given CA, clustername and cluster host of the cluster API endpoint
+// to configure connectivity.
 func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, ca *certs.Certificate) *Client {
 	return &Client{
 		Logger: logger,

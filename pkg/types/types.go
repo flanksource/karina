@@ -310,6 +310,10 @@ type Kubernetes struct {
 	ContainerRuntime string `yaml:"containerRuntime"`
 }
 
+type Kind struct {
+	PortMappings map[int32]int32 `yaml:"portMappings,omitempty"`
+}
+
 // UnmarshalYAML is used to customize the YAML unmarshalling of
 // Kubernetes objects. It makes sure that if a audit policy is specified
 // that a default audit-log-path will be supplied.
@@ -465,6 +469,10 @@ type Brand struct {
 	Name string `yaml:"name,omitempty"`
 	URL  string `yaml:"url,omitempty"`
 	Logo string `yaml:"logo,omitempty"`
+}
+
+type Kiosk struct {
+	Disabled `yaml:",inline"`
 }
 
 type GitOps struct {

@@ -134,7 +134,6 @@ spec:
           resources:
             limits:
               memory: 40Mi
-              cpu: 200m
             requests:
               cpu: 10m
               memory: 20Mi
@@ -150,7 +149,6 @@ spec:
               name: https-self
           resources:
             limits:
-              cpu: 200m
               memory: 40Mi
             requests:
               cpu: 10m
@@ -164,11 +162,11 @@ spec:
           name: kube-state-metrics
           resources:
             limits:
-              cpu: 100m
+              cpu: 500m
               memory: 150Mi
             requests:
               cpu: 100m
-              memory: 150Mi
+              memory: 64Mi
       nodeSelector:
         kubernetes.io/os: linux
       securityContext:

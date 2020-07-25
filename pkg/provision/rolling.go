@@ -3,9 +3,12 @@ package provision
 import (
 	"fmt"
 	"sort"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/flanksource/commons/timer"
+	"github.com/flanksource/karina/pkg/controller/burnin"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
@@ -17,20 +20,42 @@ type RollingOptions struct {
 	Timeout                time.Duration
 	MinAge                 time.Duration
 	Max                    int
+	MaxSurge               int
+	HealthTolerance        int
+	BurninPeriod           time.Duration
 	Force                  bool
 	ScaleSingleDeployments bool
 	MigrateLocalVolumes    bool
 	Masters, Workers       bool
 }
 
-// Perform a rolling update of nodes
-func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
-	// collect all info about cluster and vm's
-	cluster, err := GetCluster(platform)
-	if err != nil {
+func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster, machine NodeMachine) error {
+	node := machine.Node
+	// first we cordon
+	if err := cluster.Cordon(node); err != nil {
 		return err
 	}
-	rolled := 0
+	// then we surge up
+	var replacement types.Machine
+	var err error
+	if k8s.IsMasterNode(node) {
+		replacement, err = createSecondaryMaster(platform)
+		if err != nil {
+			return fmt.Errorf("failed to create new secondary master: %v", err)
+		}
+	} else {
+		replacement, err = createWorker(platform, "")
+		if err != nil {
+			return fmt.Errorf("failed to create new worker: %v", err)
+		}
+	}
+
+	return waitForNode(platform, replacement.Name(), opts.Timeout)
+}
+
+func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, cluster *Cluster) *NodeMachines {
+	toReplace := NodeMachines{}
+	// first we select all the nodes for replacement upfront
 	for _, nodeMachine := range cluster.Nodes {
 		machine := nodeMachine.Machine
 		node := nodeMachine.Node
@@ -44,49 +69,70 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			continue
 		}
 		if age > opts.MinAge {
-			platform.Infof("Replacing %s,  age=%s, template=%s ", machine.Name(), age, template)
+			platform.Infof("Queuing for replacement %s, age=%s, template=%s ", machine.Name(), age, template)
 		} else {
 			continue
 		}
+		toReplace.Push(nodeMachine)
+	}
+	return &toReplace
+}
 
-		if err := cluster.Cordon(node); err != nil {
-			return err
-		}
-
-		health := platform.GetHealth()
-
-		platform.Infof("Health Before: %s", health)
-
+// Perform a rolling update of nodes
+func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
+	// first we start a burnin controller in the background that checks
+	// new nodes with the burnin taint for health, removing the taint
+	// once they become healthy
+	burninCancel := make(chan bool)
+	go burnin.Run(platform, opts.BurninPeriod, burninCancel)
+	defer func() {
+		burninCancel <- false
+	}()
+	// collect all info about cluster and vm's
+	cluster, err := GetCluster(platform)
+	if err != nil {
+		return err
+	}
+	rolled := 0
+	toReplace := selectMachinesToReplace(platform, opts, cluster)
+	batch := toReplace.PopN(opts.MaxSurge)
+	for len(*batch) > 0 {
+		platform.Infof("Replacing %s, %d remaining", *batch, toReplace.Len())
+		time.Sleep(10 * time.Second)
 		timer := timer.NewTimer()
-
-		var replacement types.Machine
-		if k8s.IsMasterNode(node) {
-			replacement, err = createSecondaryMaster(platform)
-			if err != nil {
-				return fmt.Errorf("failed to create new secondary master: %v", err)
-			}
-		} else {
-			replacement, err = createWorker(platform, "")
-			if err != nil {
-				return fmt.Errorf("failed to create new worker: %v", err)
-			}
+		health := platform.GetHealth()
+		platform.Infof("Health Before: %s", health)
+		wg := sync.WaitGroup{}
+		var replacementError atomic.Value
+		for _, nodeMachine := range *batch {
+			_nodeMachine := nodeMachine
+			wg.Add(1)
+			go func() {
+				if err := replace(platform, opts, cluster, _nodeMachine); err != nil {
+					platform.Errorf(err.Error())
+					replacementError.Store(err)
+				}
+				wg.Done()
+			}()
+			// force each replacement to have a different timestamp
+			time.Sleep(2 * time.Second)
+		}
+		wg.Wait()
+		if replacementError.Load() != nil {
+			return replacementError.Load().(error)
 		}
 
-		platform.Infof("[%s] waiting for replacement to become ready", replacement.Name())
-		if status, err := platform.WaitForNode(replacement.Name(), opts.Timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
-			return fmt.Errorf("[%s] replacement did not come up healthy: %v", replacement.Name(), status)
+		// then we terminate the machines waiting to be replaced
+		for _, nodeMachine := range *batch {
+			terminate(platform, nodeMachine.Machine)
+			rolled++
 		}
 
-		terminate(platform, machine)
-
-		platform.Infof("Replaced %s in %s", node.Name, timer)
-		rolled++
-
-		//wait until we are the same health level as we were before
+		// finally we wait until we are the same health level as we were before
 		if succeededWithinTimeout := doUntil(opts.Timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			platform.Infof(currentHealth.String())
-			if currentHealth.IsDegradedComparedTo(health) {
+			if currentHealth.IsDegradedComparedTo(health, opts.HealthTolerance) {
 				time.Sleep(5 * time.Second)
 				return false
 			}
@@ -94,12 +140,14 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		}); !succeededWithinTimeout {
 			platform.Errorf("Health degraded after waiting %v", timer)
 		}
-		if platform.GetHealth().IsDegradedComparedTo(health) {
+		if platform.GetHealth().IsDegradedComparedTo(health, opts.HealthTolerance) {
 			return fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, cluster.Nodes.Len())
 		}
 		if rolled >= opts.Max {
 			break
 		}
+		// select the next batch of nodes to update
+		batch = toReplace.PopN(opts.MaxSurge)
 	}
 	platform.Infof("Rollout finished, rolled %d of %d ", rolled, cluster.Nodes.Len())
 	return nil
@@ -125,7 +173,7 @@ func RollingRestart(platform *platform.Platform, opts RollingOptions) error {
 	sort.Sort(sort.Reverse(names))
 	for _, name := range names {
 		node := nodes[name]
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+		if k8s.IsMasterNode(node) {
 			platform.Infof("Skipping master %s", node.Name)
 			continue
 		}
@@ -169,7 +217,7 @@ func RollingRestart(platform *platform.Platform, opts RollingOptions) error {
 		if succeededWithinTimeout := doUntil(opts.Timeout, func() bool {
 			currentHealth := platform.GetHealth()
 			platform.Infof(currentHealth.String())
-			if currentHealth.IsDegradedComparedTo(health) {
+			if currentHealth.IsDegradedComparedTo(health, opts.HealthTolerance) {
 				time.Sleep(5 * time.Second)
 				return false
 			}

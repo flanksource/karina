@@ -20,7 +20,52 @@ type NodeMachine struct {
 	Machine types.Machine
 }
 
+func (node NodeMachine) String() string {
+	return fmt.Sprintf("%s (%s)", node.Node.Name, node.Machine.IP())
+}
+
 type NodeMachines []NodeMachine
+
+func (n NodeMachines) Less(i, j int) bool {
+	if n[j].Machine == nil || n[i].Machine == nil {
+		return true
+	}
+	return n[j].Machine.GetAge() < n[i].Machine.GetAge()
+}
+
+func (n NodeMachines) Len() int {
+	return len(n)
+}
+
+func (n NodeMachines) Swap(i, j int) {
+	n[i], n[j] = n[j], n[i]
+}
+
+func (n *NodeMachines) Push(x NodeMachine) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*n = append(*n, x)
+}
+
+func (n *NodeMachines) Pop() NodeMachine {
+	old := *n
+	l := len(old)
+	x := old[l-1]
+	*n = old[0 : l-1]
+	return x
+}
+
+func (n *NodeMachines) PopN(count int) *[]NodeMachine {
+	items := []NodeMachine{}
+
+	for i := 0; i < count; {
+		if n.Len() == 0 || len(items) == count {
+			return &items
+		}
+		items = append(items, n.Pop())
+	}
+	return &items
+}
 
 type Cluster struct {
 	*platform.Platform
@@ -65,21 +110,6 @@ func (cluster *Cluster) GetEtcdLeader() (*etcd.Client, error) {
 	}
 
 	return cluster.Etcd.ForLeader(context.TODO(), list)
-}
-
-func (n NodeMachines) Less(i, j int) bool {
-	if n[j].Machine == nil || n[i].Machine == nil {
-		return true
-	}
-	return n[j].Machine.GetAge() < n[i].Machine.GetAge()
-}
-
-func (n NodeMachines) Len() int {
-	return len(n)
-}
-
-func (n NodeMachines) Swap(i, j int) {
-	n[i], n[j] = n[j], n[i]
 }
 
 func GetCluster(platform *platform.Platform) (*Cluster, error) {

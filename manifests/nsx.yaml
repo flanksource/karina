@@ -516,6 +516,8 @@ spec:
           effect: NoSchedule
         - key: node.kubernetes.io/unreachable
           effect: NoSchedule
+        - key: node.kubernetes.io/burnin
+          effect: NoSchedule
       hostPID: true
       # If configured with ServiceAccount, update the ServiceAccount
       # name below.
@@ -527,7 +529,9 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["init_k8s_node"]
-
+          requests:
+            cpu: 100m
+            memory: 5Mi
           securityContext:
             # privilege mode required to load apparmor on ubuntu
             privileged: true
@@ -675,6 +679,8 @@ spec:
           effect: NoSchedule
         - key: node.kubernetes.io/unreachable
           effect: NoSchedule
+        - key: node.kubernetes.io/burnin
+          effect: NoSchedule
       # If configured with ServiceAccount, update the ServiceAccount
       # name below.
       serviceAccountName: nsx-node-agent-svc-account
@@ -685,6 +691,9 @@ spec:
           imagePullPolicy: IfNotPresent
           # override NCP image entrypoint
           command: ["start_node_agent"]
+          requests:
+            cpu: 200m
+            memory: 512Mi
           env:
             - name: POD_NAME
               valueFrom:

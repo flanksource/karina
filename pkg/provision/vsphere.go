@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/utils"
+	"github.com/flanksource/karina/pkg/controller/burnin"
 	"github.com/flanksource/karina/pkg/phases"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/provision/vmware"
 	"github.com/flanksource/karina/pkg/types"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,7 +37,7 @@ func WithVmwareCluster(p *platform.Platform) error {
 }
 
 // VsphereCluster provisions or creates a kubernetes cluster
-func VsphereCluster(platform *platform.Platform) error {
+func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) error {
 	if err := WithVmwareCluster(platform); err != nil {
 		return err
 	}
@@ -51,6 +53,15 @@ func VsphereCluster(platform *platform.Platform) error {
 	if platform.Consul == "" && (platform.NSX == nil || platform.NSX.Disabled) && (platform.DNS.Disabled) {
 		return fmt.Errorf("must specify a master discovery service e.g. consul, NSX or DNS")
 	}
+
+	// first we start a burnin controller in the background that checks
+	// new nodes with the burnin taint for health, removing the taint
+	// once they become healthy
+	burninCancel := make(chan bool)
+	go burnin.Run(platform, burninPeriod, burninCancel)
+	defer func() {
+		burninCancel <- false
+	}()
 
 	api, err := platform.GetAPIEndpoint()
 	if api == "" || err != nil || !platform.PingMaster() {
@@ -69,6 +80,7 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 	platform.Infof("Detected %d existing masters: %s", len(masters), masters)
 
+	// master nodes are created sequentially due to race conditions when joining etcd
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)
 		if err != nil {
@@ -101,8 +113,12 @@ func VsphereCluster(platform *platform.Platform) error {
 			_nodeGroup := nodeGroup
 			go func() {
 				defer wg.Done()
-				if _, err := createWorker(platform, _nodeGroup); err != nil {
+				if w, err := createWorker(platform, _nodeGroup); err != nil {
 					platform.Errorf("Failed to provision worker %v", err)
+				} else {
+					if err := waitForNode(platform, w.Name(), burninPeriod); err != nil {
+						platform.Errorf("%s did not come up healthy, it may need to be re-provisioned %v", w.Name(), err)
+					}
 				}
 			}()
 		}
@@ -246,4 +262,18 @@ func terminate(platform *platform.Platform, vm types.Machine) {
 	if err := vm.Terminate(); err != nil {
 		platform.Warnf("Failed to terminate %s: %v", vm.Name(), err)
 	}
+}
+
+// waitForNode waits for the node to become ready and have its burnin taint removed
+func waitForNode(platform *platform.Platform, name string, timeout time.Duration) error {
+	platform.Infof("[%s] waiting to become ready", name)
+	if status, err := platform.WaitForNode(name, timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
+		return fmt.Errorf("[%s] did not come up healthy: %v", name, status)
+	}
+
+	platform.Infof("[%s] Node has become healthy, waiting for burnin-taint removal", name)
+	if err := platform.WaitForTaintRemoval(name, timeout, burnin.Taint); err != nil {
+		return fmt.Errorf("[%s] replacement burn-in taint was not removed: %v", name, err)
+	}
+	return nil
 }

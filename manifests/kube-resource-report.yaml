@@ -94,7 +94,7 @@ spec:
               name: kubeconfig
           resources:
             limits:
-              memory: 100Mi
+              memory: 1Gi
             requests:
               cpu: 5m
               memory: 50Mi

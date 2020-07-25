@@ -55,7 +55,7 @@ spec:
       serviceAccountName: local-path-provisioner-service-account
       containers:
         - name: local-path-provisioner
-          image: rancher/local-path-provisioner:v0.0.11
+          image: rancher/local-path-provisioner:v0.0.14
           imagePullPolicy: IfNotPresent
           command:
             - local-path-provisioner
@@ -65,10 +65,10 @@ spec:
             - /etc/config/config.json
           resources:
             requests:
-              cpu: 10m
+              cpu: 100m
               memory: 20Mi
             limits:
-              cpu: 200m
+              cpu: 500m
               memory: 256Mi
           volumeMounts:
             - name: config-volume

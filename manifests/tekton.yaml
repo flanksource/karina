@@ -1267,6 +1267,9 @@ spec:
       containers:
         - name: tekton-pipelines-controller
           image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/controller:{{.tekton.version}}
+          requests:
+            cpu: 100m
+            memory: 128Mi
           args: [
               # These images are built on-demand by `ko resolve` and are replaced
               # by image references by digest.
@@ -1369,7 +1372,7 @@ metadata:
     pipeline.tekton.dev/release: "{{.tekton.version}}"
     version: "{{.tekton.version}}"
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: tekton-pipelines-webhook
@@ -1392,6 +1395,9 @@ spec:
           # This is the Go import path for the binary that is containerized
           # and substituted here.
           image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/webhook:{{.tekton.version}}
+          requests:
+            cpu: 20m
+            memory: 32Mi
           env:
             - name: SYSTEM_NAMESPACE
               valueFrom:
@@ -1783,6 +1789,9 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
           image: gcr.io/tekton-releases/github.com/tektoncd/dashboard/cmd/dashboard:{{.tekton.dashboardVersion}}
+          requests:
+            cpu: 20m
+            memory: 32Mi
           livenessProbe:
             httpGet:
               path: /health

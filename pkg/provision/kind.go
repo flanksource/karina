@@ -51,6 +51,27 @@ func KindCluster(p *platform.Platform) error {
 			}}
 	}
 
+	portMappings := []kindapi.PortMapping{
+		{
+			ContainerPort: 80,
+			HostPort:      80,
+			Protocol:      kindapi.PortMappingProtocolTCP,
+		},
+		{
+			ContainerPort: 443,
+			HostPort:      443,
+			Protocol:      kindapi.PortMappingProtocolTCP,
+		},
+	}
+
+	for from, to := range p.Kind.PortMappings {
+		portMappings = append(portMappings, kindapi.PortMapping{
+			ContainerPort: to,
+			HostPort:      from,
+			Protocol:      kindapi.PortMappingProtocolTCP,
+		})
+	}
+
 	kindConfig := kindapi.Cluster{
 		TypeMeta: kindapi.TypeMeta{
 			Kind:       "Cluster",
@@ -61,25 +82,9 @@ func KindCluster(p *platform.Platform) error {
 		},
 		Nodes: []kindapi.Node{
 			{
-				Role:  "control-plane",
-				Image: fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
-				ExtraPortMappings: []kindapi.PortMapping{
-					{
-						ContainerPort: 80,
-						HostPort:      80,
-						Protocol:      kindapi.PortMappingProtocolTCP,
-					},
-					{
-						ContainerPort: 443,
-						HostPort:      443,
-						Protocol:      kindapi.PortMappingProtocolTCP,
-					},
-					{
-						ContainerPort: 6443,
-						HostPort:      6443,
-						Protocol:      kindapi.PortMappingProtocolTCP,
-					},
-				},
+				Role:                 "control-plane",
+				Image:                fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
+				ExtraPortMappings:    portMappings,
 				KubeadmConfigPatches: kubeadmPatches,
 				ExtraMounts:          extraMounts,
 			},
