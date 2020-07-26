@@ -3,6 +3,7 @@ module github.com/flanksource/karina
 go 1.12
 
 require (
+	github.com/AlekSi/pointer v1.1.0
 	github.com/aktau/github-release v0.8.1 // indirect
 	github.com/aws/aws-sdk-go v1.29.25
 	github.com/dghubble/sling v1.3.0
