@@ -110,7 +110,8 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			go func() {
 				if err := replace(platform, opts, cluster, _nodeMachine); err != nil {
 					platform.Errorf(err.Error())
-					replacementError.Store(err)
+					t := true
+					replacementError.Store(t)
 				}
 				wg.Done()
 			}()
@@ -119,7 +120,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		}
 		wg.Wait()
 		if replacementError.Load() != nil {
-			return replacementError.Load().(error)
+			return fmt.Errorf("Error replacing node: %v", replacementError.Load())
 		}
 
 		// then we terminate the machines waiting to be replaced
