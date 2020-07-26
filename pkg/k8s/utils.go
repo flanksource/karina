@@ -160,6 +160,23 @@ func GetLastRestartTime(pod v1.Pod) *time.Time {
 	return max
 }
 
+func GetContainerStatus(pod v1.Pod) string {
+	if IsPodHealthy(pod) {
+		return ""
+	}
+	msg := ""
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.State.Terminated != nil {
+			terminated := status.State.Terminated
+			msg += fmt.Sprintf("%s exit(%s):, %s %s", console.Bluef(status.Name), console.Redf("%d", terminated.ExitCode), terminated.Reason, console.DarkF(terminated.Message))
+		} else if status.LastTerminationState.Terminated != nil {
+			terminated := status.LastTerminationState.Terminated
+			msg += fmt.Sprintf("%s exit(%s): %s %s", console.Bluef(status.Name), console.Redf("%d", terminated.ExitCode), terminated.Reason, console.DarkF(terminated.Message))
+		}
+	}
+	return msg
+}
+
 func IsPodHealthy(pod v1.Pod) bool {
 	if pod.Status.Phase == v1.PodFailed || IsPodCrashLoopBackoff(pod) {
 		return false
