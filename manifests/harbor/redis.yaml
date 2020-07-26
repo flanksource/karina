@@ -37,7 +37,7 @@ spec:
         fsGroup: 999
       containers:
         - name: redis
-          image: goharbor/redis-photon:{{.harbor.version}}
+          image: docker.io/goharbor/redis-photon:{{.harbor.version}}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             tcpSocket:

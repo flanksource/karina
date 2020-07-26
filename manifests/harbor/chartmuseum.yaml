@@ -83,9 +83,9 @@ spec:
       containers:
         - name: chartmuseum
           {{- if .harbor.version | strings.HasPrefix "v1" }}
-          image: goharbor/chartmuseum-photon:v0.9.0-{{.harbor.version}}
+          image: docker.io/goharbor/chartmuseum-photon:v0.9.0-{{.harbor.version}}
           {{ else }}
-          image: goharbor/chartmuseum-photon:{{.harbor.version}}
+          image: docker.io/goharbor/chartmuseum-photon:{{.harbor.version}}
           {{ end }}
           imagePullPolicy: IfNotPresent
           livenessProbe:

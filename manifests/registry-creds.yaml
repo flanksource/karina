@@ -23,7 +23,7 @@ spec:
     spec:
       serviceAccount: registry-creds
       containers:
-        - image: flanksource/registry-creds:{{ .registryCredentials.version }}
+        - image: docker.io/flanksource/registry-creds:{{ .registryCredentials.version }}
           name: registry-creds
           imagePullPolicy: Always
           env:

@@ -150,7 +150,7 @@ spec:
         fsGroup: 10000
       containers:
         - name: registry
-          image: goharbor/registry-photon:{{.harbor.registryVersion}}
+          image: docker.io/goharbor/registry-photon:{{.harbor.registryVersion}}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -206,7 +206,7 @@ spec:
               mountPath: /etc/harbor/tls/registry.key
               subPath: tls.key
         - name: registryctl
-          image: goharbor/harbor-registryctl:{{.harbor.version}}
+          image: docker.io/goharbor/harbor-registryctl:{{.harbor.version}}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
