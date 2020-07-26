@@ -7,7 +7,6 @@ import (
 	"github.com/flanksource/commons/logger"
 	"gopkg.in/flanksource/yaml.v3"
 
-	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
 	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
@@ -26,16 +25,6 @@ var envVars = map[string]string{
 const updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
 const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
 const kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
-
-const noCAErrorText = `Must specify a 'ca'' section in the platform config.
-e.g.:
-ca:
-   cert: .certs/root-ca-crt.pem
-   privateKey: .certs/root-ca-key.pem
-   password: foobar
-
-CA certs are generated using karina ca generate
-`
 
 // CreatePrimaryMaster creates a konfigadm config for the primary master.
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
@@ -166,27 +155,15 @@ func addEncryptionConfig(platform *platform.Platform, cfg *konfigadm.Config) err
 // addCerts derives certs and key files for a cluster from its platform
 // config and adds the cert and key files to its konfigadm files
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if platform.CA == nil {
-		return errors.New(noCAErrorText)
-	}
 
-	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
-	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
+	files, err := kubeadm.GetFilesToMount(platform)
 	if err != nil {
-		return fmt.Errorf("addCerts: failed to sign certificate: %v", err)
+		return err
 	}
 
-	// plus any cert signed by this cluster specific CA
-	crt := string(clusterCA.EncodedCertificate()) + "\n"
-	// any cert signed by the global CA should be allowed
-	crt = crt + string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
-	// csrsigning controller doesn't like having more than 1 CA cert passed to it
-	cfg.Files["/etc/kubernetes/pki/csr-ca.crt"] = string(clusterCA.EncodedCertificate())
-	cfg.Files["/etc/kubernetes/pki/csr-ca.key"] = string(clusterCA.EncodedPrivateKey())
-
-	cfg.Files["/etc/kubernetes/pki/ca.crt"] = crt
-	cfg.Files["/etc/kubernetes/pki/ca.key"] = string(clusterCA.EncodedPrivateKey())
-	cfg.Files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
+	for file, content := range files {
+		cfg.Files[file] = content
+	}
 	return nil
 }
 
