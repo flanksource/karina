@@ -8,6 +8,8 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+
+
 	"net"
 	"net/http"
 	"reflect"
@@ -399,7 +401,7 @@ func getDocumentsFromYamlFile(yamlData []byte) (firstDoc []byte, rest []byte) {
 }
 
 // getDocumentsFromYamlString returns the first YAML document
-// from a string and a stringe containing the remainder of the stream.
+// from a string and a string containing the remainder of the stream.
 // This is needed since yaml.v3 (and the flanksource derived yaml.v3) only
 // unmarshalls the **first** document in a stream.
 //
@@ -906,6 +908,28 @@ func (c *Client) ApplyText(namespace string, specs ...string) error {
 	return nil
 }
 
+func (c *Client) DeleteText(namespace string, specs ...string) error {
+	items := []unstructured.Unstructured{}
+	for _, spec := range specs {
+
+		u, err := GetUnstructuredObjects([]byte(spec))
+		if err != nil {
+			return err
+		}
+		items = append(items, u...)
+	}
+	il := []*unstructured.Unstructured{}
+	for _, i := range items {
+		il = append(il, &i)
+	}
+
+	return c.DeleteUnstructured(namespace, il...)
+}
+
+
+// decodeK8sYaml reads a spec from a string and returns the deserialized API object
+// it represents.
+// It only processes the **first** document in a stream if it contains more than one.
 func decodeK8sYaml(spec string) (runtime.Object, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode([]byte(spec), nil, nil)

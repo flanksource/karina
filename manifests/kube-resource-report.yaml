@@ -54,6 +54,13 @@ subjects:
   - kind: ServiceAccount
     name: kube-resource-report
     namespace: platform-system
+  {{/* If external clusters are specified local cluster API access will happen through */}}
+  {{/* the generated user/cert not the service account                                 */}}
+  {{ if .kubeResourceReport.extraClusters  }}
+  - kind: User
+    name: "kube-resource-report"
+    apiGroup: rbac.authorization.k8s.io
+  {{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,9 +83,11 @@ spec:
       containers:
         - name: kubectl
           image: bitnami/kubectl:latest
+          {{ if .kubeResourceReport.extraClusters  }}
           volumeMounts:
             - mountPath: /external
               name: kubeconfig
+          {{ end }}
           command: ["/bin/bash"]
           args: ["-c", "sleep 6000"]
         - name: kube-resource-report
@@ -89,15 +98,19 @@ spec:
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
             {{ end }}
+            {{ if .kubeResourceReport.extraClusters }}
             - --kubeconfig-path=/external/config
+            {{ end }}
             - /output
           volumeMounts:
             - mountPath: /output
               name: report-data
             - mountPath: /tmp
               name: tmp
+            {{ if .kubeResourceReport.extraClusters }}
             - mountPath: /external
               name: kubeconfig
+            {{ end }}
           resources:
             limits:
               memory: 1Gi
@@ -133,9 +146,11 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 500Mi
+        {{ if .kubeResourceReport.extraClusters }}
         - name: kubeconfig
           secret:
             secretName: kube-resource-report-clusters
+        {{ end }}
 ---
 apiVersion: v1
 kind: Service
