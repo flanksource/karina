@@ -9,7 +9,6 @@ type healthFixture struct {
 }
 
 func TestHealthComparisons(t *testing.T) {
-
 	fixtures := []healthFixture{
 		{
 			Name:   "all healthy",

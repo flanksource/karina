@@ -155,7 +155,6 @@ func addEncryptionConfig(platform *platform.Platform, cfg *konfigadm.Config) err
 // addCerts derives certs and key files for a cluster from its platform
 // config and adds the cert and key files to its konfigadm files
 func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
-
 	files, err := kubeadm.GetFilesToMount(platform)
 	if err != nil {
 		return err

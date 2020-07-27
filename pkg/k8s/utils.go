@@ -178,6 +178,15 @@ func GetContainerStatus(pod v1.Pod) string {
 }
 
 func IsPodHealthy(pod v1.Pod) bool {
+	if pod.Status.Phase == v1.PodSucceeded {
+		for _, status := range pod.Status.ContainerStatuses {
+			if status.State.Terminated != nil && status.State.Terminated.ExitCode != 0 {
+				return false
+			}
+		}
+		return true
+	}
+
 	if pod.Status.Phase == v1.PodFailed || IsPodCrashLoopBackoff(pod) {
 		return false
 	}
@@ -187,6 +196,7 @@ func IsPodHealthy(pod v1.Pod) bool {
 			return false
 		}
 	}
+
 	return pod.Status.Phase == v1.PodRunning
 }
 

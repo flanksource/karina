@@ -17,10 +17,6 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 )
 
-var (
-	kindCADir = "/etc/flanksource/ingress-ca"
-)
-
 // KindCluster provisions a new Kind cluster
 func KindCluster(p *platform.Platform) error {
 	p.MasterDiscovery = platform.KindProvider{}

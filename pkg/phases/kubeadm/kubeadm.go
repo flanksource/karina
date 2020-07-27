@@ -25,15 +25,7 @@ const (
 	EncryptionProviderConfigPath = "/etc/kubernetes/policies/encryption-provider-config.yaml"
 	CSRCAPath                    = "/etc/kubernetes/pki/csr-ca.crt"
 	CAKeyPath                    = "/etc/kubernetes/pki/ca.key"
-	noCAErrorText                = `Must specify a 'ca'' section in the platform config.
-e.g.:
-ca:
-   cert: .certs/root-ca-crt.pem
-   privateKey: .certs/root-ca-key.pem
-   password: foobar
-
-CA certs are generated using karina ca generate
-`
+	noCAErrorText                = "must specify a ca"
 )
 
 // NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config

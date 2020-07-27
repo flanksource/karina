@@ -65,7 +65,7 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		if lastEvent != nil && lastEvent.Reason != "Started" && lastEvent.Reason != "BackOff" {
 			fmt.Fprintf(w, "%s: %s", lastEvent.Reason, lastEvent.Message)
 		}
-		fmt.Fprintf(w, k8s.GetContainerStatus(pod))
+		fmt.Fprint(w, k8s.GetContainerStatus(pod))
 		fmt.Fprintf(w, "\t\n")
 	}
 
