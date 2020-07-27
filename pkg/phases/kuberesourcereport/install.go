@@ -40,9 +40,9 @@ func Install(p *platform.Platform) error {
 		if err != nil {
 			fmt.Errorf("Unable to get root CA %v", err)
 		}
-		clusters := map[string]string{}
-		//	p.Name: "https://kubernetes.default.svc",
-		//}
+		clusters := map[string]string{
+			p.Name: "https://kubernetes.default",
+		}
 		for name, apiEndpoint := range p.KubeResourceReport.ExternalClusters {
 			p.Logger.Infof("Adding external cluster %v with endpoint: %v to kube-resource-report.", name, apiEndpoint)
 

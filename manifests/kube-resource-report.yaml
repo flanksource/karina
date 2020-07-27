@@ -54,7 +54,6 @@ subjects:
   - kind: ServiceAccount
     name: kube-resource-report
     namespace: platform-system
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,6 +74,13 @@ spec:
     spec:
       serviceAccountName: kube-resource-report
       containers:
+        - name: kubectl
+          image: bitnami/kubectl:latest
+          volumeMounts:
+            - mountPath: /external
+              name: kubeconfig
+          command: ["/bin/bash"]
+          args: ["-c", "sleep 6000"]
         - name: kube-resource-report
           # see https://github.com/hjacobs/kube-resource-report/releases
           image: hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
@@ -169,3 +175,6 @@ spec:
     - secretName: kube-resource-report-tls
       hosts:
         - kube-resource-report.{{.domain}}
+
+
+
