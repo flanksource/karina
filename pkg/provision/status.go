@@ -10,6 +10,7 @@ import (
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,16 +25,23 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		return err
 	}
 	w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', tabwriter.DiscardEmptyColumns)
-	fmt.Fprintf(w, "NAMESPACE\tNODE\tNAME\tPHASE\tREADY\tIP\tAGE\tRESTARTED\n")
+	fmt.Fprintf(w, "NAMESPACE\tNODE\tNAME\tPHASE\tREADY\tIP\tAGE\tRESTARTED\t \n")
 	for _, pod := range pods.Items {
 		lastRestarted := k8s.GetLastRestartTime(pod)
 		if k8s.IsPodHealthy(pod) && (lastRestarted == nil || time.Since(*lastRestarted) > period) {
 			continue
 		}
+		events, _ := p.GetEventsFor("Pod", &pod)
+		var lastEvent *v1.Event
+		if len(events) > 0 {
+			lastEvent = &events[len(events)-1]
+		}
 		fmt.Fprintf(w, "%s\t", pod.Namespace)
 		fmt.Fprintf(w, "%s\t", pod.Spec.NodeName)
 		fmt.Fprintf(w, "%s\t", pod.Name)
-		fmt.Fprintf(w, "%s\t", k8s.GetPodStatus(pod))
+		podStatus := k8s.GetPodStatus(pod)
+
+		fmt.Fprintf(w, "%s\t", podStatus)
 		if k8s.IsPodReady(pod) {
 			fmt.Fprintf(w, "TRUE\t")
 		} else {
@@ -52,7 +60,13 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		} else {
 			fmt.Fprintf(w, "%s\t", age(time.Since(*lastRestarted)))
 		}
-		fmt.Fprintf(w, "\n")
+
+		// ignore Started and Backoff events as they do not provide any diagnostic value
+		if lastEvent != nil && lastEvent.Reason != "Started" && lastEvent.Reason != "BackOff" {
+			fmt.Fprintf(w, "%s: %s", lastEvent.Reason, lastEvent.Message)
+		}
+		fmt.Fprint(w, k8s.GetContainerStatus(pod))
+		fmt.Fprintf(w, "\t\n")
 	}
 
 	_ = w.Flush()

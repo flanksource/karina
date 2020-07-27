@@ -233,12 +233,14 @@ func (cluster *Cluster) Cordon(node v1.Node) error {
 			}
 		}
 
-		// proactively remove server from consul so that we can get a new connection to k8s
-		if err := cluster.GetConsulClient().RemoveMember(node.Name); err != nil {
-			return err
+		if cluster.Consul != "" {
+			// proactively remove server from consul so that we can get a new connection to k8s
+			if err := cluster.GetConsulClient().RemoveMember(node.Name); err != nil {
+				return err
+			}
+			// reset the connection to the existing master (which may be the one we just removed)
+			cluster.Platform.ResetMasterConnection()
 		}
-		// reset the connection to the existing master (which may be the one we just removed)
-		cluster.Platform.ResetMasterConnection()
 		// wait for a new connection to be healthy before continuing
 		if err := cluster.Platform.WaitFor(); err != nil {
 			return err

@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	certs "github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/logger"
@@ -1646,6 +1647,25 @@ func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector stri
 	}
 
 	return &pods.Items[0], nil
+}
+
+func (c *Client) GetEventsFor(kind string, object metav1.Object) ([]v1.Event, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	selector := client.CoreV1().Events(object.GetNamespace()).GetFieldSelector(
+		pointer.ToString(object.GetName()),
+		pointer.ToString(object.GetNamespace()),
+		&kind,
+		pointer.ToString(string(object.GetUID())))
+	events, err := client.CoreV1().Events(object.GetNamespace()).List(metav1.ListOptions{
+		FieldSelector: selector.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return events.Items, nil
 }
 
 func (c *Client) GetHealth() Health {

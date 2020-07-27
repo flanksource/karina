@@ -185,7 +185,6 @@ metadata:
 ---
 # Create ClusterRole for nsx-node-agent
 kind: ClusterRole
-# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: nsx-node-agent-cluster-role
@@ -212,7 +211,6 @@ rules:
 ---
 # Bind ServiceAccount created for nsx-node-agent to its ClusterRole
 kind: ClusterRoleBinding
-# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: nsx-node-agent-cluster-role-binding
@@ -228,7 +226,6 @@ subjects:
 
 ---
 kind: ClusterRole
-# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ncp-cluster-role
@@ -253,7 +250,6 @@ rules:
 ---
 # Create ClusterRole for NCP to edit resources
 kind: ClusterRole
-# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ncp-patch-role
@@ -340,7 +336,6 @@ rules:
 ---
 # Bind ServiceAccount created for NCP to its ClusterRole
 kind: ClusterRoleBinding
-# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ncp-cluster-role-binding
@@ -358,7 +353,6 @@ subjects:
 ---
 # Bind ServiceAccount created for NCP to the patch ClusterRole
 kind: ClusterRoleBinding
-# Set the apiVersion to rbac.authorization.k8s.io/v1beta1 when k8s < v1.8
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ncp-patch-role-binding
@@ -498,6 +492,8 @@ metadata:
   annotations:
     reload/all: "true"
 spec:
+  updateStrategy:
+    type: OnDelete
   selector:
     matchLabels:
       component: nsx-ncp-bootstrap
@@ -657,6 +653,8 @@ metadata:
   annotations:
     reload/all: "true"
 spec:
+  updateStrategy:
+    type: OnDelete
   selector:
     matchLabels:
       component: nsx-node-agent
