@@ -11,9 +11,9 @@ kind: ClusterRole
 metadata:
   name: kiosk-edit
 rules:
-- apiGroups: ["tenancy.kiosk.sh"]
-  resources: ["spaces"]
-  verbs: ["create", "update", "delete"]
+  - apiGroups: ["tenancy.kiosk.sh"]
+    resources: ["spaces"]
+    verbs: ["create", "update", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -22,9 +22,9 @@ metadata:
   labels:
     rbac.kiosk.sh/aggregate-to-space-admin: "true"
 rules:
-- apiGroups: [""]
-  resources: ["namespaces"]
-  verbs: ["delete"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -32,10 +32,10 @@ metadata:
   name: kiosk-space-admin
 aggregationRule:
   clusterRoleSelectors:
-  - matchLabels:
-      rbac.authorization.k8s.io/aggregate-to-admin: "true"
-  - matchLabels:
-      rbac.kiosk.sh/aggregate-to-space-admin: "true"
+    - matchLabels:
+        rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    - matchLabels:
+        rbac.kiosk.sh/aggregate-to-space-admin: "true"
 rules: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -45,9 +45,9 @@ metadata:
   labels:
     app: kiosk
 subjects:
-- kind: ServiceAccount
-  name: kiosk
-  namespace: platform-system
+  - kind: ServiceAccount
+    name: kiosk
+    namespace: platform-system
 roleRef:
   kind: ClusterRole
   name: cluster-admin
@@ -105,15 +105,15 @@ spec:
       terminationGracePeriodSeconds: 10
       serviceAccountName: kiosk
       containers:
-      - command:
-        - "/kiosk"
-        args:
-        image: "kiosksh/kiosk:{{ .kiosk.version }}"
-        name: kiosk
-        resources:
-          requests:
-            cpu: 10m
-            memory: 128Mi
+        - command:
+            - "/kiosk"
+          args:
+          image: "docker.io/kiosksh/kiosk:{{ .kiosk.version }}"
+          name: kiosk
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
 ---
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
@@ -138,9 +138,9 @@ kind: ClusterRoleBinding
 metadata:
   name: kiosk-creator
 subjects:
-- kind: Group
-  name: system:authenticated
-  apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:authenticated
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: kiosk-edit

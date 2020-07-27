@@ -532,7 +532,7 @@ spec:
             kube_resourcequota{job="kube-state-metrics", type="used"}
               / ignoring(instance, job, type)
             (kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)
-              > 0.90
+              > 0.95
           for: 15m
           labels:
             severity: info

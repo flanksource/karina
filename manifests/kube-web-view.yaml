@@ -53,7 +53,7 @@ spec:
       containers:
         - name: kube-web-view
           # see https://codeberg.org/hjacobs/kube-web-view/releases
-          image: hjacobs/kube-web-view:{{.kubeWebView.version | default "20.6.0"}}
+          image: docker.io/hjacobs/kube-web-view:{{.kubeWebView.version | default "20.6.0"}}
           args:
             - --port=8080
             {{ if .kubeWebView.viewLogs }}

@@ -91,9 +91,11 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 		cluster.APIServer.ExtraArgs["runtime-config"] = strings.Join(runtimeConfigs, ",")
 	}
 	cluster.ControllerManager.ExtraArgs = cfg.Kubernetes.ControllerExtraArgs
+	cluster.ControllerManager.ExtraArgs["bind-address"] = "0.0.0.0"
 	cluster.ControllerManager.ExtraArgs["cluster-signing-cert-file"] = "/etc/kubernetes/pki/csr-ca.crt"
 	cluster.ControllerManager.ExtraArgs["cluster-signing-key-file"] = "/etc/kubernetes/pki/ca.key"
 	cluster.Scheduler.ExtraArgs = cfg.Kubernetes.SchedulerExtraArgs
+	cluster.Scheduler.ExtraArgs["bind-address"] = "0.0.0.0"
 	return cluster
 }
 

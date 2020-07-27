@@ -83,7 +83,7 @@ spec:
           args: ["-c", "sleep 6000"]
         - name: kube-resource-report
           # see https://github.com/hjacobs/kube-resource-report/releases
-          image: hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
+          image: docker.io/hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
           args:
             - --update-interval-minutes={{.kubeResourceReport.updateInterval | default "1"}}
             {{ if .kubeResourceReport.additionalClusterCost  }}
@@ -109,7 +109,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 1000
         - name: nginx
-          image: nginx:alpine
+          image: docker.io/nginx:alpine
           volumeMounts:
             - mountPath: /usr/share/nginx/html
               name: report-data

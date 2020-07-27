@@ -105,7 +105,7 @@ spec:
         fsGroup: 10000
       containers:
         - name: jobservice
-          image: goharbor/harbor-jobservice:{{.harbor.version}}
+          image: docker.io/goharbor/harbor-jobservice:{{.harbor.version}}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:

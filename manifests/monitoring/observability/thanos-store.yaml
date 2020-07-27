@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: thanos-store
-          image: thanosio/thanos:{{.thanos.version}}
+          image: docker.io/thanosio/thanos:{{.thanos.version}}
           args:
             - "store"
             - "--log.level=debug"

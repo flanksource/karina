@@ -73,6 +73,7 @@ type PlatformConfig struct {
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`
 	Tekton              Tekton               `yaml:"tekton,omitempty"`
 	Vsphere             *Vsphere             `yaml:"vsphere,omitempty"`
+	VPA                 *VPA                 `yaml:"vpa,omitempty"`
 	Test                Test                 `yaml:"test,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters

@@ -57,7 +57,7 @@ func defaults(cr *types.GitOps) {
 	}
 
 	if cr.FluxVersion == "" {
-		cr.FluxVersion = "1.19.0"
+		cr.FluxVersion = "1.20.0"
 	}
 	if cr.DisableScanning == nil {
 		t := true
