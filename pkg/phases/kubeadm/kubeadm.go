@@ -9,6 +9,7 @@ import (
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
@@ -176,7 +177,7 @@ func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload control plane certs: %v", err)
 	}
-	return yaml.Marshal(api.JoinConfiguration{
+	configuration := api.JoinConfiguration{
 		APIVersion: "kubeadm.k8s.io/v1beta2",
 		Kind:       "JoinConfiguration",
 		ControlPlane: &api.JoinControlPlane{
@@ -196,7 +197,11 @@ func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
 		NodeRegistration: api.NodeRegistration{
 			KubeletExtraArgs: getKubeletArgs(cfg),
 		},
-	})
+	}
+	if cfg.Kubernetes.ContainerRuntime == constants.ContainerdRuntime {
+		configuration.NodeRegistration.CRISocket = "unix:///run/containerd/containerd.sock"
+	}
+	return yaml.Marshal(configuration)
 }
 
 func NewJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
@@ -205,7 +210,7 @@ func NewJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
 		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
 	}
 
-	return yaml.Marshal(api.JoinConfiguration{
+	configuration := api.JoinConfiguration{
 		APIVersion: "kubeadm.k8s.io/v1beta2",
 		Kind:       "JoinConfiguration",
 		NodeRegistration: api.NodeRegistration{
@@ -218,7 +223,11 @@ func NewJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
 				UnsafeSkipCAVerification: true,
 			},
 		},
-	})
+	}
+	if cfg.Kubernetes.ContainerRuntime == constants.ContainerdRuntime {
+		configuration.NodeRegistration.CRISocket = "unix://run/containerd/containerd.sock"
+	}
+	return yaml.Marshal(configuration)
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go

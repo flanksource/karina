@@ -140,6 +140,7 @@ type BootstrapToken struct {
 }
 
 type NodeRegistration struct {
+	CRISocket        string            `yaml:"criSocket,omitempty"`
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
 }
 
