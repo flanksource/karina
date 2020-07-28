@@ -1819,7 +1819,7 @@ func (c *Client) GetHealth() Health {
 // GetExternalClient constructs a Client for accessing an external cluster.
 // It uses the given CA, clustername and cluster host of the cluster API endpoint
 // to configure connectivity.
-func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, cacert *certs.Certificate) *Client {
+func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, cacert *certs.CertificateAuthority) *Client {
 	return &Client{
 		Logger: logger,
 		GetKubeConfigBytes: func() ([]byte, error) {
