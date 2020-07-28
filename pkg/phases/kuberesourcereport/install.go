@@ -35,11 +35,11 @@ func Install(p *platform.Platform) error {
 			// remove the secret containing access information to external clusters
 			cs, err := p.GetClientset()
 			if err != nil || cs == nil {
-				p.Warnf("failed to get clientset fpr cluster: %v", err)
+				p.Warnf("failed to get clientset for cluster: %v", err)
 			} else {
 				err = cs.CoreV1().Secrets(Namespace).Delete("kube-resource-report-clusters", &metav1.DeleteOptions{})
 				if err != nil {
-					p.Warnf("failed to get clientset fpr cluster: %v", err)
+					p.Warnf("failed to get clientset for cluster: %v", err)
 				}
 			}
 		}
