@@ -2,7 +2,7 @@ package kuberesourcereport
 
 import (
 	"fmt"
-	"net/url"
+
 	"time"
 
 	"github.com/flanksource/karina/pkg/types"
@@ -34,7 +34,16 @@ func Install(p *platform.Platform) error {
 	if p.KubeResourceReport.Disabled {
 		// if external clusters were configured we attempt to remove the configuration first
 		if len(p.KubeResourceReport.ExternalClusters) > 0 {
-			err := removeExternalClusterRBAC(p)
+			// we use our own root CA for ALL cluster accesses
+			ca, err := ca.ReadCA(p.CA)
+			if err != nil {
+				return fmt.Errorf("Unable to get root CA %v", err)
+			}
+			template, err := templateExternalRBAC(p)
+			if err != nil {
+				return err
+			}
+			_, err = p.KubeResourceReport.ExternalClusters.DeleteSpecs(ca,p.Logger, template)
 			if err != nil {
 				p.Warnf("failed to remove external cluster RBAC configs: %v", err)
 				// keep going - failure to remove access doesn't stop the uninstall
@@ -46,7 +55,7 @@ func Install(p *platform.Platform) error {
 			} else {
 				err = cs.CoreV1().Secrets(Namespace).Delete("kube-resource-report-clusters", &metav1.DeleteOptions{})
 				if err != nil {
-					p.Warnf("failed to get clientset for cluster: %v", err)
+					p.Warnf("failed to remove external cluster access secret: %v", err)
 				}
 			}
 		}
@@ -63,20 +72,25 @@ func Install(p *platform.Platform) error {
 		// we use our own root CA for ALL cluster accesses
 		ca, err := ca.ReadCA(p.CA)
 		if err != nil {
-			p.Errorf("Unable to get root CA %v", err)
-			// keep going - failure to configure access doesn't stop the install
+			return fmt.Errorf("Unable to get root CA %v", err)
 		}
-		clusters, err := addExternalClusterRBAC(p)
+		template, err := templateExternalRBAC(p)
+		if err != nil {
+			return err
+		}
+		clusters, err := p.KubeResourceReport.ExternalClusters.ApplySpecs(ca, p.Logger, template )
 		if err != nil {
 			p.Warnf("failed to add external cluster RBAC configs: %v", err)
 			// keep going - failure to configure access doesn't stop the install
 		}
+		// kube-resource-view can't use the service account to access it's own cluster
+		// so we add user/cert access via the default internal API endpoint
+		clusters.AddSelf(p.Name)
 		// create a secret containing a kubeconfig file that allows access to
 		// this cluster via user/cert as well as the given external clusters
 		kubeConfig, err := k8s.CreateMultiKubeConfig(ca, *clusters, Group, User, 24*7*time.Hour)
 		if err != nil {
-			p.Warnf("failed to generate kubeconfig for multi-cluster access: %v", err)
-			// keep going - failure to configure access doesn't stop the install
+			return fmt.Errorf("failed to generate kubeconfig for multi-cluster access: %v", err)
 		}
 		if p.PlatformConfig.Trace {
 			p.Infof("kubeconfig file is:\n%v", string(kubeConfig))
@@ -85,115 +99,21 @@ func Install(p *platform.Platform) error {
 			"config": kubeConfig,
 		})
 		if err != nil {
-			p.Warnf("failed to generate kubeconfig secret for multi-cluster access: %v", err)
-			// keep going - failure to configure access doesn't stop the install
+			return fmt.Errorf("failed to generate kubeconfig secret for multi-cluster access: %v", err)
 		}
 	}
 	return p.ApplySpecs(Namespace, "kube-resource-report.yaml")
 }
 
-// addExternalClusterRBAC configures a ClusterRole and ClusterRoleBinding for
-// each specified external cluster using the template kube-resource-report-external-rbac.yaml
-// it returns a map of configured cluster, cluster API endpoints
-func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
-	if len(p.KubeResourceReport.ExternalClusters) < 1 {
-		return nil, fmt.Errorf("no external clusters configured")
-	}
-	// we use our own root CA for ALL cluster accesses
-	ca, err := ca.ReadCA(p.CA)
+// templateExternalRBAC creates rbac settings specs for remote user access
+func templateExternalRBAC(p *platform.Platform) (string, error) {
+	template, err := p.Template("kube-resource-report-external-rbac.yaml", "manifests")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get root CA %v", err)
+		return "", fmt.Errorf("applySpecs: failed to template manifests: %v", err)
 	}
-	clusters := map[string]string{
-		// kube-resource-view can't use the service account to access it's own cluster
-		// so we add user/cert access via the default internal API endpoint
-		p.Name: "https://kubernetes.default",
+	if p.PlatformConfig.Trace {
+		p.Infof("template is: \n%v", template)
 	}
-	for name, apiEndpoint := range p.KubeResourceReport.ExternalClusters {
-		p.Logger.Infof("Adding external cluster %v with endpoint: %v to kube-resource-report.", name, apiEndpoint)
-		u, err := url.Parse(apiEndpoint)
-		if err != nil {
-			p.Errorf("Unable to parse external cluster endpoint URL: %v", apiEndpoint)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-		if u.Port() != "6443" {
-			p.Errorf("Only port 6443 supported for external cluster endpoint URLs: %v", apiEndpoint)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-		p.Debugf("External endpoint host: %v", u.Hostname())
-
-		client := k8s.GetExternalClient(p.Logger, name, u.Hostname(), ca)
-
-		// create rbac settings for remote user
-		template, err := p.Template("kube-resource-report-external-rbac.yaml", "manifests")
-		if err != nil {
-			p.Errorf("applySpecs: failed to template manifests: %v", err)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-		if p.PlatformConfig.Trace {
-			p.Infof("template is: \n%v", template)
-		}
-		err = client.ApplyText(Namespace, template)
-		if err != nil {
-			p.Errorf("error applying external cluster security manifest %v", err)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-		// if the cluster was configured we return it in the result map
-		clusters[name] = apiEndpoint
-	}
-	return &clusters, nil
+	return template, nil
 }
 
-// removeExternalClusterRBAC removes a ClusterRole and ClusterRoleBinding for
-// each specified external cluster using the template kube-resource-report-external-rbac.yaml
-func removeExternalClusterRBAC(p *platform.Platform) error {
-	if len(p.KubeResourceReport.ExternalClusters) < 1 {
-		return fmt.Errorf("no external clusters configured")
-	}
-	// we use our own root CA for ALL cluster accesses
-	ca, err := ca.ReadCA(p.CA)
-	if err != nil {
-		return fmt.Errorf("unable to get root CA %v", err)
-	}
-
-	for name, apiEndpoint := range p.KubeResourceReport.ExternalClusters {
-		p.Infof("Removing RBAC from external cluster %v with endpoint: %v from kube-resource-report.", name, apiEndpoint)
-
-		u, err := url.Parse(apiEndpoint)
-		if err != nil {
-			p.Errorf("Unable to parse external cluster endpoint URL: %v", apiEndpoint)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-		if u.Port() != "6443" {
-			p.Errorf("Only port 6443 supported for external cluster endpoint URLs: %v", apiEndpoint)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-
-		p.Debugf("External endpoint host: %v", u.Hostname())
-
-		client := k8s.GetExternalClient(p.Logger, name, u.Hostname(), ca)
-
-		// create rbac settings for remote user
-		template, err := p.Template("kube-resource-report-external-rbac.yaml", "manifests")
-		if err != nil {
-			p.Errorf("applySpecs: failed to template manifests: %v", err)
-			continue
-			// failing to add this external cluster - try the next one
-		}
-		if p.PlatformConfig.Trace {
-			p.Infof("template is: \n%v", template)
-		}
-
-		err = client.DeleteText(Namespace, template)
-		if err != nil {
-			p.Errorf("error deleting external cluster security manifest %v", err)
-		}
-	}
-	return nil
-}

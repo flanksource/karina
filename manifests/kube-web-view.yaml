@@ -31,6 +31,13 @@ subjects:
   - kind: ServiceAccount
     name: kube-web-view
     namespace: platform-system
+{{/* If external clusters are specified local cluster API access will happen through */}}
+{{/* the generated user/cert not the service account                                 */}}
+{{ if .kubeWebView.extraClusters  }}
+  - kind: User
+    name: "kube-web-view"
+    apiGroup: rbac.authorization.k8s.io
+{{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -62,6 +69,16 @@ spec:
             {{ if .kubeWebView.viewSecrets }}
             - "--show-secrets"
             {{ end }}
+            {{ if .kubeWebView.extraClusters }}
+            - --kubeconfig-path=/external/config
+            {{ end }}
+          {{ if .kubeWebView.extraClusters }}
+          volumeMounts:
+            - mountPath: /external
+              name: kubeconfig
+            - mountPath: /tmp
+              name: tmp
+          {{ end }}
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -78,6 +95,15 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
+      {{ if .kubeWebView.extraClusters }}
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: kube-web-view-clusters
+        - name: tmp
+          emptyDir:
+            sizeLimit: 500Mi
+      {{ end }}
 ---
 apiVersion: v1
 kind: Service

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/flanksource/karina/pkg/externalclusters"
 	"net/url"
 	"strings"
 
@@ -405,6 +406,15 @@ type KubeWebView struct {
 	Version        string `yaml:"version,omitempty"`
 	LogsEnabled    bool   `yaml:"viewLogs,omitempty"`
 	SecretsEnabled bool   `yaml:"viewSecrets,omitempty"`
+	// a map of extra clusters that kube-resource report will report on.
+	// in the form:
+	// clusterName: cluster API endpoint
+	// e.g.:
+	//  extraClusters:
+	//    k8s-reports2: "https://10.100.2.69:6443"
+	// the CA for the current cluster needs to be trusted by
+	// the given external cluster.
+	ExternalClusters externalclusters.ExternalClusters `yaml:"extraClusters,omitempty"`
 }
 
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
@@ -412,6 +422,8 @@ type Karma struct {
 	Version       string            `yaml:"version,omitempty"`
 	AlertManagers map[string]string `yaml:"alertManagers"`
 }
+
+
 
 // Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
 type KubeResourceReport struct {
@@ -431,7 +443,7 @@ type KubeResourceReport struct {
 	//    k8s-reports2: "https://10.100.2.69:6443"
 	// the CA for the current cluster needs to be trusted by
 	// the given external cluster.
-	ExternalClusters map[string]string `yaml:"extraClusters,omitempty"`
+	ExternalClusters externalclusters.ExternalClusters `yaml:"extraClusters,omitempty"`
 }
 
 type MonitoringE2E struct {
