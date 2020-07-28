@@ -65,7 +65,11 @@ spec:
           regex: etcd_(debugging|disk|request|server).*
           sourceLabels:
             - __name__
-      port: http-metrics
+      port: https-metrics
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
   jobLabel: k8s-app
   namespaceSelector:
     matchNames:
@@ -84,7 +88,11 @@ metadata:
 spec:
   endpoints:
     - interval: 30s
-      port: http-metrics
+      port: https-metrics
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
   jobLabel: k8s-app
   namespaceSelector:
     matchNames:
@@ -368,7 +376,7 @@ spec:
   selector:
     component: kube-scheduler
   ports:
-    - name: http-metrics
+    - name: https-metrics
   {{ if .kubernetes.version | strings.HasPrefix "v1.16" }}
       port: 10251
       targetPort: 10251
@@ -377,6 +385,7 @@ spec:
       targetPort: 10259
   {{ end }}
       protocol: TCP
+
 ---
 apiVersion: v1
 kind: Service
@@ -389,7 +398,7 @@ spec:
   selector:
     component: kube-controller-manager
   ports:
-    - name: http-metrics
+    - name: https-metrics
       {{ if .kubernetes.version | strings.HasPrefix "v1.16" }}
       port: 10252
       targetPort: 10252

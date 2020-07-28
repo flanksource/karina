@@ -2,6 +2,7 @@ package kubeadm
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -22,6 +23,9 @@ const (
 	// AuditPolicyPath is the fixed location where kubernetes cluster audit policy files are placed.
 	AuditPolicyPath              = "/etc/kubernetes/policies/audit-policy.yaml"
 	EncryptionProviderConfigPath = "/etc/kubernetes/policies/encryption-provider-config.yaml"
+	CSRCAPath                    = "/etc/kubernetes/pki/csr-ca.crt"
+	CAKeyPath                    = "/etc/kubernetes/pki/ca.key"
+	noCAErrorText                = "must specify a ca"
 )
 
 // NewClusterConfig constructs a default new ClusterConfiguration from a given Platform config
@@ -92,11 +96,54 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	}
 	cluster.ControllerManager.ExtraArgs = cfg.Kubernetes.ControllerExtraArgs
 	cluster.ControllerManager.ExtraArgs["bind-address"] = "0.0.0.0"
-	cluster.ControllerManager.ExtraArgs["cluster-signing-cert-file"] = "/etc/kubernetes/pki/csr-ca.crt"
-	cluster.ControllerManager.ExtraArgs["cluster-signing-key-file"] = "/etc/kubernetes/pki/ca.key"
+	cluster.ControllerManager.ExtraArgs["cluster-signing-cert-file"] = CSRCAPath
+	cluster.ControllerManager.ExtraArgs["cluster-signing-key-file"] = CAKeyPath
 	cluster.Scheduler.ExtraArgs = cfg.Kubernetes.SchedulerExtraArgs
 	cluster.Scheduler.ExtraArgs["bind-address"] = "0.0.0.0"
 	return cluster
+}
+
+func GetFilesToMount(platform *platform.Platform) (map[string]string, error) {
+	if platform.CA == nil {
+		return nil, fmt.Errorf(noCAErrorText)
+	}
+
+	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
+	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
+	if err != nil {
+		return nil, fmt.Errorf("addCerts: failed to sign certificate: %v", err)
+	}
+
+	files := make(map[string]string)
+
+	// plus any cert signed by this cluster specific CA
+	crt := string(clusterCA.EncodedCertificate()) + "\n"
+	// any cert signed by the global CA should be allowed
+	crt = crt + string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
+	// csrsigning controller doesn't like having more than 1 CA cert passed to it
+	files[CSRCAPath] = string(clusterCA.EncodedCertificate())
+	files["/etc/kubernetes/pki/csr-ca.key"] = string(clusterCA.EncodedPrivateKey())
+	files["/etc/kubernetes/pki/ca.crt"] = crt
+	files[CAKeyPath] = string(clusterCA.EncodedPrivateKey())
+	files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
+
+	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
+		contents, err := ioutil.ReadFile(platform.Kubernetes.AuditConfig.PolicyFile)
+		if err != nil {
+			return nil, err
+		}
+		files[AuditPolicyPath] = string(contents)
+	}
+
+	if platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile != "" {
+		contents, err := ioutil.ReadFile(platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile)
+		if err != nil {
+			return nil, err
+		}
+		files[EncryptionProviderConfigPath] = string(contents)
+	}
+
+	return files, nil
 }
 
 func getKubeletArgs(cfg *platform.Platform) map[string]string {
