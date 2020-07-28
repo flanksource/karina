@@ -423,8 +423,14 @@ type KubeResourceReport struct {
 	UpdateInterval int `yaml:"updateInterval,omitempty"`
 	// add a fixed extra cost per cluster
 	AdditionalClusterCost float32 `yaml:"additionalClusterCost,omitempty"`
-	// Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
-
+	// a map of extra clusters that kube-resource report will report on.
+	// in the form:
+	// clusterName: cluster API endpoint
+	// e.g.:
+	//  extraClusters:
+	//    k8s-reports2: "https://10.100.2.69:6443"
+	// the CA for the current cluster needs to be trusted by
+	// the given external cluster.
 	ExternalClusters map[string]string `yaml:"extraClusters,omitempty"`
 }
 
