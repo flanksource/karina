@@ -72,7 +72,7 @@ func Install(p *platform.Platform) error {
 			// keep going - failure to configure access doesn't stop the install
 		}
 		if p.PlatformConfig.Trace {
-			p.Logger.Infof("kubeconfig file is:\n%v", string(kubeConfig))
+			p.Infof("kubeconfig file is:\n%v", string(kubeConfig))
 		}
 		err = p.CreateOrUpdateSecret("kube-resource-report-clusters", Namespace, map[string][]byte{
 			"config": kubeConfig,
@@ -127,7 +127,7 @@ func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
 			// failing to add this external cluster - try the next one
 		}
 		if p.PlatformConfig.Trace {
-			p.Errorf("template is: \n%v", template)
+			p.Infof("template is: \n%v", template)
 		}
 
 		err = client.ApplyText(Namespace, template)
@@ -181,7 +181,7 @@ func removeExternalClusterRBAC(p *platform.Platform) error {
 			// failing to add this external cluster - try the next one
 		}
 		if p.PlatformConfig.Trace {
-			p.Errorf("template is: \n%v", template)
+			p.Infof("template is: \n%v", template)
 		}
 
 		err = client.DeleteText(Namespace, template)
