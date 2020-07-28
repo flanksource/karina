@@ -181,6 +181,3 @@ spec:
     - secretName: kube-resource-report-tls
       hosts:
         - kube-resource-report.{{.domain}}
-
-
-
