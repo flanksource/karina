@@ -2,8 +2,9 @@ package sealedsecrets
 
 import (
 	"fmt"
-	"github.com/flanksource/karina/pkg/ca"
 	"sort"
+
+	"github.com/flanksource/karina/pkg/ca"
 
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"

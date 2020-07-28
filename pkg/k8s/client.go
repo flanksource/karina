@@ -9,10 +9,16 @@ import (
 	"encoding/base64"
 	"fmt"
 
-
 	"net"
 	"net/http"
 	"reflect"
+
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/AlekSi/pointer"
 	certs "github.com/flanksource/commons/certs"
@@ -26,7 +32,6 @@ import (
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/flanksource/yaml.v3"
-	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -50,11 +55,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
-	"time"
 )
 
 type Client struct {
@@ -912,7 +912,6 @@ func (c *Client) ApplyText(namespace string, specs ...string) error {
 func (c *Client) DeleteText(namespace string, specs ...string) error {
 	items := []unstructured.Unstructured{}
 	for _, spec := range specs {
-
 		u, err := GetUnstructuredObjects([]byte(spec))
 		if err != nil {
 			return err
@@ -924,10 +923,8 @@ func (c *Client) DeleteText(namespace string, specs ...string) error {
 		j := i
 		il = append(il, &j)
 	}
-
 	return c.DeleteUnstructured(namespace, il...)
 }
-
 
 // decodeK8sYaml reads a spec from a string and returns the deserialized API object
 // it represents.
@@ -1339,20 +1336,21 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 	return clientcmd.Write(cfg)
 }
 
+// CreateMultiKubeConfig creates a kubeconfig file contents for a map of
+// cluster name -> cluster API endpoint hosts, all with a shared
+// user name, group and cert expiry.
+// NOTE: these clusters all need to share the same plaform CA
 func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]string, group string, user string, expiry time.Duration) ([]byte, error) {
 	if len(clusters) < 1 {
 		return []byte{}, fmt.Errorf("CreateMultiKubeConfig failed since it was given an empty cluster map")
 	}
-
 	cfg := api.Config{
 		Clusters:       map[string]*api.Cluster{},
 		Contexts:       map[string]*api.Context{},
 		AuthInfos:      map[string]*api.AuthInfo{},
 		CurrentContext: "",
 	}
-
 	for clusterName, endpoint := range clusters {
-
 		cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
 		if cert.X509.PublicKey == nil && cert.PrivateKey != nil {
 			cert.X509.PublicKey = cert.PrivateKey.Public()
@@ -1365,7 +1363,6 @@ func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]st
 			X509:       signed,
 			PrivateKey: cert.PrivateKey,
 		}
-
 		cfg.Clusters[clusterName] = &api.Cluster{
 			Server:                endpoint,
 			InsecureSkipTLSVerify: true,
@@ -1380,9 +1377,7 @@ func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]st
 			ClientKeyData:         cert.EncodedPrivateKey(),
 			ClientCertificateData: cert.EncodedCertificate(),
 		}
-
 	}
-
 	return clientcmd.Write(cfg)
 }
 
@@ -1824,11 +1819,11 @@ func (c *Client) GetHealth() Health {
 // GetExternalClient constructs a Client for accessing an external cluster.
 // It uses the given CA, clustername and cluster host of the cluster API endpoint
 // to configure connectivity.
-func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, ca *certs.Certificate) *Client {
+func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, cacert *certs.Certificate) *Client {
 	return &Client{
 		Logger: logger,
 		GetKubeConfigBytes: func() ([]byte, error) {
-			kubeConfig, err := CreateKubeConfig(clusterName, ca, clusterHost, "system:masters", "admin", 24*7*time.Hour)
+			kubeConfig, err := CreateKubeConfig(clusterName, cacert, clusterHost, "system:masters", "admin", 24*7*time.Hour)
 			if err != nil {
 				return nil, err
 			}
