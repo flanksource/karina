@@ -136,7 +136,6 @@ func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
 		if p.PlatformConfig.Trace {
 			p.Infof("template is: \n%v", template)
 		}
-
 		err = client.ApplyText(Namespace, template)
 		if err != nil {
 			p.Errorf("error applying external cluster security manifest %v", err)
