@@ -81,15 +81,6 @@ spec:
     spec:
       serviceAccountName: kube-resource-report
       containers:
-        - name: kubectl
-          image: bitnami/kubectl:latest
-          {{ if .kubeResourceReport.extraClusters  }}
-          volumeMounts:
-            - mountPath: /external
-              name: kubeconfig
-          {{ end }}
-          command: ["/bin/bash"]
-          args: ["-c", "sleep 6000"]
         - name: kube-resource-report
           # see https://github.com/hjacobs/kube-resource-report/releases
           image: docker.io/hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
