@@ -2,11 +2,12 @@ package kuberesourcereport
 
 import (
 	"fmt"
+	"net/url"
+	"time"
+
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/url"
-	"time"
 
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
@@ -89,7 +90,7 @@ func Install(p *platform.Platform) error {
 // each specified external cluster using the template kube-resource-report-external-rbac.yaml
 // it returns a map of configured cluster, cluster API endpoints
 func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
-	if len(p.KubeResourceReport.ExternalClusters)<1 {
+	if len(p.KubeResourceReport.ExternalClusters) < 1 {
 		return nil, fmt.Errorf("no external clusters configured")
 	}
 	// we use our own root CA for ALL cluster accesses
@@ -107,12 +108,12 @@ func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
 		u, err := url.Parse(apiEndpoint)
 		if err != nil {
 			p.Errorf("Unable to parse external cluster endpoint URL: %v", apiEndpoint)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 		if u.Port() != "6443" {
 			p.Errorf("Only port 6443 supported for external cluster endpoint URLs: %v", apiEndpoint)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 		p.Debugf("External endpoint host: %v", u.Hostname())
@@ -123,7 +124,7 @@ func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
 		template, err := p.Template("kube-resource-report-external-rbac.yaml", "manifests")
 		if err != nil {
 			p.Errorf("applySpecs: failed to template manifests: %v", err)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 		if p.PlatformConfig.Trace {
@@ -133,7 +134,7 @@ func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
 		err = client.ApplyText(Namespace, template)
 		if err != nil {
 			p.Errorf("error applying external cluster security manifest %v", err)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 		// if the cluster was configured we return it in the result map
@@ -145,7 +146,7 @@ func addExternalClusterRBAC(p *platform.Platform) (*map[string]string, error) {
 // removeExternalClusterRBAC removes a ClusterRole and ClusterRoleBinding for
 // each specified external cluster using the template kube-resource-report-external-rbac.yaml
 func removeExternalClusterRBAC(p *platform.Platform) error {
-	if len(p.KubeResourceReport.ExternalClusters)<1 {
+	if len(p.KubeResourceReport.ExternalClusters) < 1 {
 		return fmt.Errorf("no external clusters configured")
 	}
 	// we use our own root CA for ALL cluster accesses
@@ -160,12 +161,12 @@ func removeExternalClusterRBAC(p *platform.Platform) error {
 		u, err := url.Parse(apiEndpoint)
 		if err != nil {
 			p.Errorf("Unable to parse external cluster endpoint URL: %v", apiEndpoint)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 		if u.Port() != "6443" {
 			p.Errorf("Only port 6443 supported for external cluster endpoint URLs: %v", apiEndpoint)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 
@@ -177,7 +178,7 @@ func removeExternalClusterRBAC(p *platform.Platform) error {
 		template, err := p.Template("kube-resource-report-external-rbac.yaml", "manifests")
 		if err != nil {
 			p.Errorf("applySpecs: failed to template manifests: %v", err)
-			continue;
+			continue
 			// failing to add this external cluster - try the next one
 		}
 		if p.PlatformConfig.Trace {
