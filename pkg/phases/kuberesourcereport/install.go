@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/flanksource/karina/pkg/types"
+
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +27,11 @@ const (
 // If the configuration indicates that kube-resource-report is disabled
 // then it will be uninstalled and external configurations undone.
 func Install(p *platform.Platform) error {
-	if p.KubeResourceReport == nil || p.KubeResourceReport.Disabled {
+	if p.KubeResourceReport == nil {
+		p.KubeResourceReport = &types.KubeResourceReport{}
+		return p.DeleteSpecs(Namespace, "kube-resource-report.yaml")
+	}
+	if p.KubeResourceReport.Disabled {
 		// if external clusters were configured we attempt to remove the configuration first
 		if len(p.KubeResourceReport.ExternalClusters) > 0 {
 			err := removeExternalClusterRBAC(p)
