@@ -921,7 +921,8 @@ func (c *Client) DeleteText(namespace string, specs ...string) error {
 	}
 	il := []*unstructured.Unstructured{}
 	for _, i := range items {
-		il = append(il, &i)
+		j := i
+		il = append(il, &j)
 	}
 
 	return c.DeleteUnstructured(namespace, il...)
