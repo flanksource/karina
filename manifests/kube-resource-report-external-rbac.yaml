@@ -1,7 +1,7 @@
 ---
 {{/* If external clusters are specified for kube-resource-report     */}}
 {{/* this template will be applied to them to configure the RBAC for */}}
-{{/* the reporting user                                              */}}
+{{/* the reporting user.                                             */}}
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
