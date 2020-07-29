@@ -79,4 +79,3 @@ func Install(p *platform.Platform) error {
 	}
 	return p.ApplySpecs(Namespace, "kube-resource-report.yaml")
 }
-
