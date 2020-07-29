@@ -54,13 +54,9 @@ subjects:
   - kind: ServiceAccount
     name: kube-resource-report
     namespace: platform-system
-  {{/* If external clusters are specified local cluster API access will happen through */}}
-  {{/* the generated user/cert not the service account                                 */}}
-  {{ if .kubeResourceReport.extraClusters  }}
   - kind: User
     name: "kube-resource-report"
     apiGroup: rbac.authorization.k8s.io
-  {{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
