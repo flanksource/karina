@@ -37,7 +37,7 @@ func Install(p *platform.Platform) error {
 			// we use our own root CA for ALL cluster accesses
 			ca, err := ca.ReadCA(p.CA)
 			if err != nil {
-				return fmt.Errorf("Unable to get root CA %v", err)
+				return fmt.Errorf("unable to get root CA %v", err)
 			}
 			template, err := templateExternalRBAC(p)
 			if err != nil {
@@ -72,7 +72,7 @@ func Install(p *platform.Platform) error {
 		// we use our own root CA for ALL cluster accesses
 		ca, err := ca.ReadCA(p.CA)
 		if err != nil {
-			return fmt.Errorf("Unable to get root CA %v", err)
+			return fmt.Errorf("unable to get root CA %v", err)
 		}
 		template, err := templateExternalRBAC(p)
 		if err != nil {

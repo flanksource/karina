@@ -2,10 +2,11 @@ package externalclusters
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/k8s"
-	"net/url"
 )
 
 // ExternalClusters is a map of clusterName: clusterApiEndpoints
@@ -14,13 +15,12 @@ type ExternalClusters map[string]string
 
 // AddSelf adds the default internal k8s API endpoint under the given cluster name
 // to describe "internal" access.
-func (ec *ExternalClusters) AddSelf(name string)  {
+func (ec *ExternalClusters) AddSelf(name string) {
 	(*ec)[name] = "https://kubernetes.default"
 }
 
 // clientFunc is an internal convenience type used for k8s.Client function references
-type  clientFunc func(c *k8s.Client) error
-
+type clientFunc func(c *k8s.Client) error
 
 // ApplySpecs applies the given specs to each external cluster.
 // Errors result in log output to the given logger.

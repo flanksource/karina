@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
-	"github.com/flanksource/karina/pkg/externalclusters"
 	"net/url"
 	"strings"
+
+	"github.com/flanksource/karina/pkg/externalclusters"
 
 	"github.com/flanksource/karina/pkg/api/calico"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
@@ -422,8 +423,6 @@ type Karma struct {
 	Version       string            `yaml:"version,omitempty"`
 	AlertManagers map[string]string `yaml:"alertManagers"`
 }
-
-
 
 // Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
 type KubeResourceReport struct {

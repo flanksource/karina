@@ -2,10 +2,11 @@ package kubewebview
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
@@ -29,13 +30,13 @@ func Install(p *platform.Platform) error {
 			// we use our own root CA for ALL cluster accesses
 			ca, err := ca.ReadCA(p.CA)
 			if err != nil {
-				return fmt.Errorf("Unable to get root CA %v", err)
+				return fmt.Errorf("unable to get root CA %v", err)
 			}
 			template, err := templateExternalRBAC(p)
 			if err != nil {
 				return err
 			}
-			_, err = p.KubeWebView.ExternalClusters.DeleteSpecs(ca,p.Logger, template)
+			_, err = p.KubeWebView.ExternalClusters.DeleteSpecs(ca, p.Logger, template)
 			if err != nil {
 				p.Warnf("failed to remove external cluster RBAC configs: %v", err)
 				// keep going - failure to remove access doesn't stop the uninstall
@@ -64,13 +65,13 @@ func Install(p *platform.Platform) error {
 		// we use our own root CA for ALL cluster accesses
 		ca, err := ca.ReadCA(p.CA)
 		if err != nil {
-			return fmt.Errorf("Unable to get root CA %v", err)
+			return fmt.Errorf("unable to get root CA %v", err)
 		}
 		template, err := templateExternalRBAC(p)
 		if err != nil {
 			return err
 		}
-		clusters, err := p.KubeWebView.ExternalClusters.ApplySpecs(ca, p.Logger, template )
+		clusters, err := p.KubeWebView.ExternalClusters.ApplySpecs(ca, p.Logger, template)
 		if err != nil {
 			p.Warnf("failed to add external cluster RBAC configs: %v", err)
 			// keep going - failure to configure access doesn't stop the install
