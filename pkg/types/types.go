@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/flanksource/karina/pkg/externalclusters"
-
 	"github.com/flanksource/karina/pkg/api/calico"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	yaml "gopkg.in/flanksource/yaml.v3"
@@ -401,6 +399,16 @@ type Monitoring struct {
 	E2E                MonitoringE2E `yaml:"e2e,omitempty"`
 }
 
+// ExternalClusters is a map of clusterName: clusterApiEndpoints
+// with convenience methods.
+type ExternalClusters map[string]string
+
+// AddSelf adds the default internal k8s API endpoint under the given cluster name
+// to describe "internal" access.
+func (ec *ExternalClusters) AddSelf(name string) {
+	(*ec)[name] = "https://kubernetes.default"
+}
+
 // Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
 type KubeWebView struct {
 	Disabled       bool   `yaml:"disabled,omitempty"`
@@ -415,7 +423,7 @@ type KubeWebView struct {
 	//    k8s-reports2: "https://10.100.2.69:6443"
 	// the CA for the current cluster needs to be trusted by
 	// the given external cluster.
-	ExternalClusters externalclusters.ExternalClusters `yaml:"extraClusters,omitempty"`
+	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
 }
 
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
@@ -442,7 +450,7 @@ type KubeResourceReport struct {
 	//    k8s-reports2: "https://10.100.2.69:6443"
 	// the CA for the current cluster needs to be trusted by
 	// the given external cluster.
-	ExternalClusters externalclusters.ExternalClusters `yaml:"extraClusters,omitempty"`
+	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
 }
 
 type MonitoringE2E struct {

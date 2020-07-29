@@ -401,20 +401,6 @@ func getDocumentsFromYamlFile(yamlData []byte) (firstDoc []byte, rest []byte) {
 	return yamlData[:endIndex], yamlData[endIndex+3:]
 }
 
-// getDocumentsFromYamlString returns the first YAML document
-// from a string and a string containing the remainder of the stream.
-// This is needed since yaml.v3 (and the flanksource derived yaml.v3) only
-// unmarshalls the **first** document in a stream.
-//
-// (see https://pkg.go.dev/gopkg.in/flanksource/yaml.v3@v3.1.1?tab=doc#Unmarshal)
-func getDocumentsFromYamlString(yamlData string) (firstDoc string, rest string) {
-	endIndex := strings.Index(yamlData, "---")
-	if endIndex == -1 {
-		return yamlData, ""
-	}
-	return yamlData[:endIndex], yamlData[endIndex+3:]
-}
-
 // GetDynamicClient creates a new k8s client
 func (c *Client) GetDynamicClient() (dynamic.Interface, error) {
 	if c.dynamicClient != nil {
@@ -881,61 +867,6 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 		}
 	}
 	return nil
-}
-
-func (c *Client) ApplyText(namespace string, specs ...string) error {
-	items := []runtime.Object{}
-	for _, spec := range specs {
-		remainingData := spec
-		for {
-			current, rest := getDocumentsFromYamlString(remainingData)
-			remainingData = rest
-			if len(current) == 0 {
-				continue
-			}
-			obj, err := decodeK8sYaml(current)
-			if err != nil {
-				return err
-			}
-			items = append(items, obj)
-			if len(rest) == 0 {
-				break
-			}
-		}
-	}
-	if err := c.Apply(namespace, items...); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Client) DeleteText(namespace string, specs ...string) error {
-	items := []unstructured.Unstructured{}
-	for _, spec := range specs {
-		u, err := GetUnstructuredObjects([]byte(spec))
-		if err != nil {
-			return err
-		}
-		items = append(items, u...)
-	}
-	il := []*unstructured.Unstructured{}
-	for _, i := range items {
-		j := i
-		il = append(il, &j)
-	}
-	return c.DeleteUnstructured(namespace, il...)
-}
-
-// decodeK8sYaml reads a spec from a string and returns the deserialized API object
-// it represents.
-// It only processes the **first** document in a stream if it contains more than one.
-func decodeK8sYaml(spec string) (runtime.Object, error) {
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode([]byte(spec), nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode yaml: %v", err)
-	}
-	return obj, nil
 }
 
 func (c *Client) Annotate(obj runtime.Object, annotations map[string]string) error {
