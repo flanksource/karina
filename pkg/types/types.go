@@ -406,6 +406,10 @@ type ExternalClusters map[string]string
 // AddSelf adds the default internal k8s API endpoint under the given cluster name
 // to describe "internal" access.
 func (ec *ExternalClusters) AddSelf(name string) {
+	if *ec == nil {
+		newmap := make(ExternalClusters)
+		*ec = newmap
+	}
 	(*ec)[name] = "https://kubernetes.default"
 }
 

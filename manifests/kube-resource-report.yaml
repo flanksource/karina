@@ -85,19 +85,15 @@ spec:
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
             {{ end }}
-            {{ if .kubeResourceReport.extraClusters }}
             - --kubeconfig-path=/external/config
-            {{ end }}
             - /output
           volumeMounts:
             - mountPath: /output
               name: report-data
             - mountPath: /tmp
               name: tmp
-            {{ if .kubeResourceReport.extraClusters }}
             - mountPath: /external
               name: kubeconfig
-            {{ end }}
           resources:
             limits:
               memory: 1Gi
@@ -133,11 +129,9 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 500Mi
-        {{ if .kubeResourceReport.extraClusters }}
         - name: kubeconfig
           secret:
             secretName: kube-resource-report-clusters
-        {{ end }}
 ---
 apiVersion: v1
 kind: Service

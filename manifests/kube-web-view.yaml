@@ -65,16 +65,12 @@ spec:
             {{ if .kubeWebView.viewSecrets }}
             - "--show-secrets"
             {{ end }}
-            {{ if .kubeWebView.extraClusters }}
             - --kubeconfig-path=/external/config
-            {{ end }}
-          {{ if .kubeWebView.extraClusters }}
           volumeMounts:
             - mountPath: /external
               name: kubeconfig
             - mountPath: /tmp
               name: tmp
-          {{ end }}
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -91,7 +87,6 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
-      {{ if .kubeWebView.extraClusters }}
       volumes:
         - name: kubeconfig
           secret:
@@ -99,7 +94,6 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 500Mi
-      {{ end }}
 ---
 apiVersion: v1
 kind: Service

@@ -1298,13 +1298,13 @@ func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]st
 			Server:                endpoint,
 			InsecureSkipTLSVerify: true,
 		}
-		contextName := fmt.Sprintf("%s@%s", user, clusterName)
-		cfg.Contexts[contextName] = &api.Context{
+		context := fmt.Sprintf("%s@%s", user, clusterName)
+		cfg.Contexts[clusterName] = &api.Context{
 			Cluster:   clusterName,
-			AuthInfo:  contextName,
+			AuthInfo:  context,
 			Namespace: "kube-system", //TODO: verify
 		}
-		cfg.AuthInfos[contextName] = &api.AuthInfo{
+		cfg.AuthInfos[context] = &api.AuthInfo{
 			ClientKeyData:         cert.EncodedPrivateKey(),
 			ClientCertificateData: cert.EncodedCertificate(),
 		}
