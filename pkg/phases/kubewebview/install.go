@@ -2,25 +2,68 @@ package kubewebview
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/flanksource/karina/pkg/ca"
+	"github.com/flanksource/karina/pkg/k8s"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 )
 
-const Namespace = constants.PlatformSystem
+const (
+	Namespace = constants.PlatformSystem
+	Group     = "system:reporting"
+	User      = "kube-web-view"
+)
 
 func Install(p *platform.Platform) error {
-	if p.KubeWebView == nil || p.KubeWebView.Disabled {
-		p.KubeWebView = &types.KubeWebView{}
-		if err := p.DeleteSpecs(Namespace, "kube-web-view.yaml"); err != nil {
-			p.Warnf("failed to delete specs: %v", err)
+	if p.KubeWebView == nil {
+		p.KubeWebView = &types.KubeWebView{} // this sets p.KubeWebView.Disabled to false
+		p.KubeWebView.Disabled = true
+	}
+	if p.KubeWebView.Disabled {
+		// remove the secret containing access information to external clusters
+		cs, err := p.GetClientset()
+		if err != nil {
+			return fmt.Errorf("failed to get clientset for cluster: %v", err)
 		}
-		return nil
+		err = cs.CoreV1().Secrets(Namespace).Delete("kube-web-view-clusters", &metav1.DeleteOptions{})
+		if err != nil {
+			p.Warnf("failed to remove external cluster access secret: %v", err)
+		}
+		return p.DeleteSpecs(Namespace, "kube-web-view.yaml")
 	}
 
+	// make sure the namespace exists
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
+	}
+
+	// we use our own root CA for ALL cluster accesses
+	ca, err := ca.ReadCA(p.CA)
+	if err != nil {
+		return fmt.Errorf("unable to get root CA %v", err)
+	}
+	// kube-web-view can't use the service account to access it's own cluster
+	// so we add user/cert access via the default internal API endpoint
+	p.KubeWebView.ExternalClusters.AddSelf(p.Name)
+	// create a secret containing a kubeconfig file that allows access to
+	// this cluster via user/cert as well as the given external clusters
+	kubeConfig, err := k8s.CreateMultiKubeConfig(ca, p.KubeWebView.ExternalClusters, Group, User, 24*7*time.Hour)
+	if err != nil {
+		return fmt.Errorf("failed to generate kubeconfig for multi-cluster access: %v", err)
+	}
+	if p.PlatformConfig.Trace {
+		p.Infof("kubeconfig file is:\n%v", string(kubeConfig))
+	}
+	err = p.CreateOrUpdateSecret("kube-web-view-clusters", Namespace, map[string][]byte{
+		"config": kubeConfig,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to generate kubeconfig secret for multi-cluster access: %v", err)
 	}
 
 	return p.ApplySpecs(Namespace, "kube-web-view.yaml")

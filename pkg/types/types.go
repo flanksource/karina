@@ -399,12 +399,35 @@ type Monitoring struct {
 	E2E                MonitoringE2E `yaml:"e2e,omitempty"`
 }
 
+// ExternalClusters is a map of clusterName: clusterApiEndpoints
+// with convenience methods.
+type ExternalClusters map[string]string
+
+// AddSelf adds the default internal k8s API endpoint under the given cluster name
+// to describe "internal" access.
+func (ec *ExternalClusters) AddSelf(name string) {
+	if *ec == nil {
+		newmap := make(ExternalClusters)
+		*ec = newmap
+	}
+	(*ec)[name] = "https://kubernetes.default"
+}
+
 // Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
 type KubeWebView struct {
 	Disabled       bool   `yaml:"disabled,omitempty"`
 	Version        string `yaml:"version,omitempty"`
 	LogsEnabled    bool   `yaml:"viewLogs,omitempty"`
 	SecretsEnabled bool   `yaml:"viewSecrets,omitempty"`
+	// a map of extra clusters that kube-resource report will report on.
+	// in the form:
+	// clusterName: cluster API endpoint
+	// e.g.:
+	//  extraClusters:
+	//    k8s-reports2: "https://10.100.2.69:6443"
+	// the CA for the current cluster needs to be trusted by
+	// the given external cluster.
+	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
 }
 
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
@@ -429,6 +452,16 @@ type KubeResourceReport struct {
 	// region is defined via the node label "failure-domain.beta.kubernetes.io/region"
 	// instance-type is defined via the node label "beta.kubernetes.io/instance-type"
 	CustomCostFile string `yaml:"customCostFile,omitempty"`
+	// a map of extra clusters that kube-resource report will report on.
+	// in the form:
+	// clusterName: cluster API endpoint
+	// e.g.:
+	//  extraClusters:
+	//    k8s-reports2: "https://10.100.2.69:6443"
+	// the CA for the current cluster needs to be trusted by
+	// the given external cluster.
+	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
+
 }
 
 type MonitoringE2E struct {

@@ -8,12 +8,14 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+
 	"net"
 	"net/http"
+	"reflect"
+
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -1265,6 +1267,51 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 	return clientcmd.Write(cfg)
 }
 
+// CreateMultiKubeConfig creates a kubeconfig file contents for a map of
+// cluster name -> cluster API endpoint hosts, all with a shared
+// user name, group and cert expiry.
+// NOTE: these clusters all need to share the same plaform CA
+func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]string, group string, user string, expiry time.Duration) ([]byte, error) {
+	if len(clusters) < 1 {
+		return []byte{}, fmt.Errorf("CreateMultiKubeConfig failed since it was given an empty cluster map")
+	}
+	cfg := api.Config{
+		Clusters:       map[string]*api.Cluster{},
+		Contexts:       map[string]*api.Context{},
+		AuthInfos:      map[string]*api.AuthInfo{},
+		CurrentContext: "",
+	}
+	for clusterName, endpoint := range clusters {
+		cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
+		if cert.X509.PublicKey == nil && cert.PrivateKey != nil {
+			cert.X509.PublicKey = cert.PrivateKey.Public()
+		}
+		signed, err := ca.Sign(cert.X509, expiry)
+		if err != nil {
+			return nil, fmt.Errorf("createKubeConfig: failed to sign certificate: %v", err)
+		}
+		cert = &certs.Certificate{
+			X509:       signed,
+			PrivateKey: cert.PrivateKey,
+		}
+		cfg.Clusters[clusterName] = &api.Cluster{
+			Server:                endpoint,
+			InsecureSkipTLSVerify: true,
+		}
+		context := fmt.Sprintf("%s@%s", user, clusterName)
+		cfg.Contexts[clusterName] = &api.Context{
+			Cluster:   clusterName,
+			AuthInfo:  context,
+			Namespace: "kube-system", //TODO: verify
+		}
+		cfg.AuthInfos[context] = &api.AuthInfo{
+			ClientKeyData:         cert.EncodedPrivateKey(),
+			ClientCertificateData: cert.EncodedCertificate(),
+		}
+	}
+	return clientcmd.Write(cfg)
+}
+
 // PingMaster attempts to connect to the API server and list nodes and services
 // to ensure the API server is ready to accept any traffic
 func (c *Client) PingMaster() bool {
@@ -1698,4 +1745,20 @@ func (c *Client) GetHealth() Health {
 		}
 	}
 	return health
+}
+
+// GetExternalClient constructs a Client for accessing an external cluster.
+// It uses the given CA, clustername and cluster host of the cluster API endpoint
+// to configure connectivity.
+func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, cacert *certs.Certificate) *Client { //nolint interfacer
+	return &Client{
+		Logger: logger,
+		GetKubeConfigBytes: func() ([]byte, error) {
+			kubeConfig, err := CreateKubeConfig(clusterName, cacert, clusterHost, "system:masters", "admin", 24*7*time.Hour)
+			if err != nil {
+				return nil, err
+			}
+			return kubeConfig, nil
+		},
+	}
 }
