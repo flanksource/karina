@@ -423,6 +423,12 @@ type KubeResourceReport struct {
 	UpdateInterval int `yaml:"updateInterval,omitempty"`
 	// add a fixed extra cost per cluster
 	AdditionalClusterCost float32 `yaml:"additionalClusterCost,omitempty"`
+	// specify a CSV file with custom costs for nodes with rows in the form:
+	// columns: region,instance-type,monthly-price-usd
+	// to apply this add labels to cluster nodes:
+	// region is defined via the node label "failure-domain.beta.kubernetes.io/region"
+	// instance-type is defined via the node label "beta.kubernetes.io/instance-type"
+	CustomCostFile string `yaml:"customCostFile,omitempty"`
 }
 
 type MonitoringE2E struct {

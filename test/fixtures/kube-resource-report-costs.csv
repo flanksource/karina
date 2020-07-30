@@ -1,0 +1,5 @@
+# CSV with columns region,instance-type,monthly-price-usd
+# region is defined via the node label "failure-domain.beta.kubernetes.io/region"
+# instance-type is defined via the node label "beta.kubernetes.io/instance-type"
+dc-1,master,30.000
+dc-1,worker,500.000

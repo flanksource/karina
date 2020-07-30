@@ -82,10 +82,17 @@ spec:
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
             {{ end }}
+            {{ if .kubeResourceReport.customCostFile }}
+            - --pricing-file=/config/pricing.csv
+            {{ end }}
             - /output
           volumeMounts:
             - mountPath: /output
               name: report-data
+            {{ if .kubeResourceReport.customCostFile }}
+            - mountPath: /config
+              name: config
+            {{ end }}
           resources:
             limits:
               memory: 1Gi
@@ -118,6 +125,12 @@ spec:
         - name: report-data
           emptyDir:
             sizeLimit: 500Mi
+        {{ if .kubeResourceReport.customCostFile }}
+        {{/* use a custom CSV with node/server prices */}}
+        - name: config
+          configMap:
+            name: kube-resource-report
+        {{ end }}
 ---
 apiVersion: v1
 kind: Service
