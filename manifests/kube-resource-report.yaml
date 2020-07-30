@@ -86,6 +86,9 @@ spec:
             - --pricing-file=/config/pricing.csv
             {{ end }}
             - /output
+          env:
+            - name: DEFAULT_CLUSTER_NAME
+              value: {{.name}}
           volumeMounts:
             - mountPath: /output
               name: report-data
