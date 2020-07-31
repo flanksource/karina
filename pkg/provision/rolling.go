@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/flanksource/commons/timer"
@@ -50,7 +49,12 @@ func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster,
 		}
 	}
 
-	return waitForNode(platform, replacement.Name(), opts.Timeout)
+	if err := waitForNode(platform, replacement.Name(), opts.Timeout); err != nil {
+		platform.Errorf("[%s] terminating node that did not come up healthy", replacement)
+		go cluster.Terminate(replacement)
+		return err
+	}
+	return nil
 }
 
 func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, cluster *Cluster) *NodeMachines {
@@ -75,6 +79,7 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 		}
 		toReplace.Push(nodeMachine)
 	}
+	sort.Sort(toReplace)
 	return &toReplace
 }
 
@@ -88,13 +93,17 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 	defer func() {
 		burninCancel <- false
 	}()
+
 	// collect all info about cluster and vm's
 	cluster, err := GetCluster(platform)
 	if err != nil {
 		return err
 	}
+
 	rolled := 0
 	toReplace := selectMachinesToReplace(platform, opts, cluster)
+	var replaced = make(chan NodeMachine, opts.MaxSurge)
+	var replacementError = make(chan NodeMachine, opts.MaxSurge)
 	batch := toReplace.PopN(opts.MaxSurge)
 	for len(*batch) > 0 {
 		platform.Infof("Replacing %s, %d remaining", *batch, toReplace.Len())
@@ -103,30 +112,41 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		health := platform.GetHealth()
 		platform.Infof("Health Before: %s", health)
 		wg := sync.WaitGroup{}
-		var replacementError atomic.Value
 		for _, nodeMachine := range *batch {
 			_nodeMachine := nodeMachine
 			wg.Add(1)
 			go func() {
 				if err := replace(platform, opts, cluster, _nodeMachine); err != nil {
+					wg.Done()
 					platform.Errorf(err.Error())
-					t := true
-					replacementError.Store(t)
+					replacementError <- _nodeMachine
+				} else {
+					wg.Done()
+					replaced <- _nodeMachine
 				}
-				wg.Done()
+
 			}()
 			// force each replacement to have a different timestamp
 			time.Sleep(2 * time.Second)
 		}
+		platform.Debugf("Waiting for batch to complete burn-in process")
 		wg.Wait()
-		if replacementError.Load() != nil {
-			return fmt.Errorf("error replacing node: %v", replacementError.Load())
-		}
 
-		// then we terminate the machines waiting to be replaced
-		for _, nodeMachine := range *batch {
-			terminate(platform, nodeMachine.Machine)
-			rolled++
+	outer:
+		for {
+			select {
+			case nodeMachine := <-replacementError:
+				// then we retry any errors, by putting the machine back on the queue
+				toReplace.Push(nodeMachine)
+			case nodeMachine := <-replaced:
+				// terminate successful replacements
+				go cluster.Terminate(nodeMachine.Machine)
+				rolled++
+			default:
+				platform.Debugf("Batch completed burn-in process ")
+				// batch is done
+				break outer
+			}
 		}
 
 		// finally we wait until we are the same health level as we were before
@@ -139,7 +159,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			}
 			return true
 		}); !succeededWithinTimeout {
-			platform.Errorf("Health degraded after waiting %v", timer)
+			return fmt.Errorf("Health degraded after waiting %v", timer)
 		}
 		if platform.GetHealth().IsDegradedComparedTo(health, opts.HealthTolerance) {
 			return fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, cluster.Nodes.Len())
