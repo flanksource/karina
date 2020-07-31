@@ -62,17 +62,17 @@ type MemberAlarm struct {
 	Type AlarmType
 }
 
-type AlarmType int32
+type AlarmType string
 
 const (
 	// AlarmOK denotes that the cluster member is OK.
-	AlarmOk AlarmType = iota
+	AlarmOk AlarmType = "OK"
 
 	// AlarmNoSpace denotes that the cluster member has run out of disk space.
-	AlarmNoSpace
+	AlarmNoSpace = "NOSPACE"
 
 	// AlarmCorrupt denotes that the cluster member has corrupted data.
-	AlarmCorrupt
+	AlarmCorrupt = "CORRUPT"
 )
 
 // Adapted from kubeadm
@@ -235,9 +235,15 @@ func (c *Client) Alarms(ctx context.Context) ([]MemberAlarm, error) {
 
 	memberAlarms := make([]MemberAlarm, 0, len(alarmResponse.Alarms))
 	for _, a := range alarmResponse.Alarms {
+		alarm := AlarmOk
+		if a.GetAlarm() == etcdserverpb.AlarmType_NOSPACE {
+			alarm = AlarmNoSpace
+		} else if a.GetAlarm() == etcdserverpb.AlarmType_CORRUPT {
+			alarm = AlarmCorrupt
+		}
 		memberAlarms = append(memberAlarms, MemberAlarm{
 			MemberID: a.GetMemberID(),
-			Type:     AlarmType(a.GetAlarm()),
+			Type:     alarm,
 		})
 	}
 
