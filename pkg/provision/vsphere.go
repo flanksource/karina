@@ -288,10 +288,14 @@ func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) 
 		node, err := client.CoreV1().Nodes().Get(vm.Name(), metav1.GetOptions{})
 		if err != nil {
 			// we always attempt to terminate a node as a master if we don't know
-			// to ensure it is removed from etcd
-			terminateMaster(platform, etcd, vm.Name())
+			// to ensure it is always removed from etcd
+			if err := terminateMaster(platform, etcd, vm.Name()); err != nil {
+				platform.Warnf("Failed to terminate master %v", err)
+			}
 		} else if k8s.IsMasterNode(*node) {
-			terminateMaster(platform, etcd, node.Name)
+			if err := terminateMaster(platform, etcd, node.Name); err != nil {
+				platform.Warnf("Failed to terminate master %v", err)
+			}
 		}
 		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
 			platform.Warnf("[%s] failed to delete node: %v", vm, err)

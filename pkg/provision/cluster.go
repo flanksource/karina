@@ -116,7 +116,7 @@ func GetCluster(platform *platform.Platform) (*Cluster, error) {
 		Nodes:      nodes,
 		Orphans:    orphans,
 		Kubernetes: client,
-		Etcd:       GetEtcdClient(platform, client),
+		Etcd:       GetEtcdClient(platform, client, ""),
 	}
 	cluster.Platform = platform
 	return cluster, nil

@@ -29,7 +29,7 @@ import (
 var Log = klogr.New()
 
 // etcdTimeout is the maximum time any individual call to the etcd client through the backoff adapter will take.
-const etcdTimeout = 2 * time.Second
+const etcdTimeout = 10 * time.Second
 
 // etcdBackoff are default exponential backoff values for etcd operations.
 // Values have been lifted from kubeadm.
@@ -83,6 +83,16 @@ func NewEtcdBackoffAdapter(c *clientv3.Client, options ...EtcdBackoffAdapterOpti
 // Close calls close on the etcd client
 func (e *EtcdBackoffAdapter) Close() error {
 	return e.EtcdClient.Close()
+}
+
+// Close calls close on the etcd client
+func (e *EtcdBackoffAdapter) Endpoints() []string {
+	return e.EtcdClient.Endpoints()
+}
+
+// Close calls close on the etcd client
+func (e *EtcdBackoffAdapter) Status(ctx context.Context, endpoint string) (*clientv3.StatusResponse, error) {
+	return e.EtcdClient.Status(ctx, endpoint)
 }
 
 // AlarmList calls AlarmList on the etcd client with a backoff retry.

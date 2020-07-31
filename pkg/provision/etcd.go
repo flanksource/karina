@@ -19,12 +19,13 @@ import (
 
 type EtcdClient struct {
 	*platform.Platform
-	Kubernetes kubernetes.Interface
-	Etcd       *etcd.EtcdClientGenerator
+	Kubernetes        kubernetes.Interface
+	PreferredHostname string
+	Etcd              *etcd.EtcdClientGenerator
 }
 
-func GetEtcdClient(platform *platform.Platform, client kubernetes.Interface) *EtcdClient {
-	return &EtcdClient{Platform: platform, Kubernetes: client}
+func GetEtcdClient(platform *platform.Platform, client kubernetes.Interface, PreferredHostname string) *EtcdClient {
+	return &EtcdClient{Platform: platform, Kubernetes: client, PreferredHostname: PreferredHostname}
 }
 
 func (cluster *EtcdClient) connectToEtcd() error {
@@ -63,18 +64,6 @@ func (cluster *EtcdClient) GetHealth(node v1.Node) string {
 		return err.Error()
 	}
 	s := fmt.Sprintf("v%s (%s) ", status.Version, size(status.DbSize))
-
-	// alarms, err := etcdClient.Alarms(context.Background())
-	// if err != nil {
-	// 	return fmt.Sprintf("Failed to get alarms for %s: %v", node.Name, err)
-	// }
-	// for _, alarm := range alarms {
-	// 	s += fmt.Sprintf("%v ", alarm.Type)
-	// }
-
-	// if etcdClient.LeaderID == etcdClient.MemberID {
-	// 	s += "**"
-	// }
 	return s
 }
 
@@ -100,9 +89,15 @@ func (cluster *EtcdClient) MoveLeader(name string) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.Members(context.TODO())
+	members, err := client.Members(context.TODO())
 	if err != nil {
 		return err
+	}
+
+	for _, member := range members {
+		if member.Name == name {
+			return client.MoveLeader(context.TODO(), member.ID)
+		}
 	}
 
 	return fmt.Errorf("member not found: %s", name)
@@ -123,6 +118,10 @@ func (cluster *EtcdClient) GetOrphans() ([]string, error) {
 func (cluster *EtcdClient) GetEtcdLeader() (*etcd.Client, error) {
 	if err := cluster.connectToEtcd(); err != nil {
 		return nil, err
+	}
+
+	if cluster.PreferredHostname != "" {
+		return cluster.Etcd.ForNode(context.TODO(), cluster.PreferredHostname)
 	}
 	list, err := cluster.Kubernetes.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {

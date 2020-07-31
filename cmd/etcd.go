@@ -9,7 +9,10 @@ var Etcd = &cobra.Command{
 	Use: "etcd",
 }
 
+var etcdHost string
+
 func init() {
+	Etcd.PersistentFlags().StringVar(&etcdHost, "etcd-host", "", "Etcd hostname to connect through")
 	Etcd.AddCommand(&cobra.Command{
 		Use: "status",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -18,7 +21,7 @@ func init() {
 			if err != nil {
 				platform.Fatalf("could not get client: %v", err)
 			}
-			if err := provision.GetEtcdClient(platform, client).PrintStatus(); err != nil {
+			if err := provision.GetEtcdClient(platform, client, etcdHost).PrintStatus(); err != nil {
 				platform.Fatalf("Failed to get etcd status: %v", err)
 			}
 		},
@@ -33,7 +36,9 @@ func init() {
 			if err != nil {
 				platform.Fatalf("could not get client: %v", err)
 			}
-			provision.GetEtcdClient(platform, client).RemoveMember(args[0])
+			if err := provision.GetEtcdClient(platform, client, etcdHost).RemoveMember(args[0]); err != nil {
+				platform.Fatalf(err.Error())
+			}
 		},
 	})
 
@@ -46,7 +51,9 @@ func init() {
 			if err != nil {
 				platform.Fatalf("could not get client: %v", err)
 			}
-			provision.GetEtcdClient(platform, client).MoveLeader(args[0])
+			if err := provision.GetEtcdClient(platform, client, etcdHost).MoveLeader(args[0]); err != nil {
+				platform.Fatalf(err.Error())
+			}
 		},
 	})
 
