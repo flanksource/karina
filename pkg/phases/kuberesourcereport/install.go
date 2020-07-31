@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/flanksource/commons/files"
 	"os"
+	"strings"
 
 	"time"
 
@@ -18,9 +19,17 @@ import (
 )
 
 const (
-	Namespace = constants.PlatformSystem
-	Group     = "system:reporting"
-	User      = "kube-resource-report"
+	Namespace     = constants.PlatformSystem
+	Group         = "system:reporting"
+	User          = "kube-resource-report"
+	// if a region is specified (it's labels is not set) then
+	// kube-resource-report uses this region.
+	// from https://github.com/hjacobs/kube-resource-report/blob/cd43749cd191e17f62a63f9f74757fcad487c181/kube_resource_report/query.py#L232
+	// We use this to avoid forcing the user to specify a
+	// usually unused region in the
+	// region,instancetype,cost in the
+	// platform YAML file.
+	DefaultRegion = "unknown"
 )
 
 func Install(p *platform.Platform) error {
@@ -38,6 +47,7 @@ func Install(p *platform.Platform) error {
 		if err != nil {
 			return fmt.Errorf("failed to remove external cluster access secret: %v", err)
 		}
+		p.Infof("Removed external cluster access secret")
 		return p.DeleteSpecs(Namespace, "kube-resource-report.yaml")
 	}
 
@@ -68,19 +78,41 @@ func Install(p *platform.Platform) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate kubeconfig secret for multi-cluster access: %v", err)
 	}
+	p.Infof("Created external cluster access secret")
 
-	if p.KubeResourceReport.CustomCostFile != ""{
+	customCostGeneratedData := ""
+	for label, value := range p.KubeResourceReport.CustomCostsInline {
+		p.Infof("Reading custom cost label: %v, %v", label, value)
+		if !strings.Contains(label,",") {
+			newRow := fmt.Sprintf("%v, %v, %v\n", DefaultRegion, label, value)
+			customCostGeneratedData = customCostGeneratedData + newRow
+			p.Debugf("Adding custom cost label: %v", newRow)
+		} else {
+			split := strings.SplitAfterN(label, ",",2)
+			region := split[0]
+			label := split[1]
+			newRow := fmt.Sprintf("%v, %v, %v\n", region, label, value)
+			customCostGeneratedData = customCostGeneratedData + newRow
+			p.Debugf("Adding custom cost label: %v", newRow)
+		}
+
+	}
+
+	customCostReadData := ""
+	if p.KubeResourceReport.CustomCostFile != "" {
 		_, err := os.Stat(p.KubeResourceReport.CustomCostFile)
 		if err != nil {
-			return fmt.Errorf("custom cost file %v not found: %v", p.KubeResourceReport.CustomCostFile,err)
+			return fmt.Errorf("custom cost file %v not found: %v", p.KubeResourceReport.CustomCostFile, err)
 		}
-		data := files.SafeRead(p.KubeResourceReport.CustomCostFile)
-		if data == "" {
+		customCostReadData = files.SafeRead(p.KubeResourceReport.CustomCostFile)
+		if customCostReadData == "" {
 			return fmt.Errorf("custom cost file %v is empty", p.KubeResourceReport.CustomCostFile)
 		}
-		p.CreateOrUpdateConfigMap("kube-resource-report",Namespace,
+	}
+	if len(customCostReadData) > 0 || len(customCostGeneratedData) > 0 {
+		p.CreateOrUpdateConfigMap("kube-resource-report", Namespace,
 			map[string]string{
-				"pricing.csv": data,
+				"pricing.csv": customCostGeneratedData + customCostReadData,
 			})
 	}
 
