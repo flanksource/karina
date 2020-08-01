@@ -287,7 +287,9 @@ func GetUnstructuredObjects(data []byte) ([]unstructured.Unstructured, error) {
 		if err := decoder.Decode(&resource); err != nil {
 			return nil, fmt.Errorf("error decoding %s: %s", chunk, err)
 		}
-		items = append(items, *resource)
+		if resource != nil {
+			items = append(items, *resource)
+		}
 	}
 	return items, nil
 }
