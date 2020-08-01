@@ -70,7 +70,7 @@ spec:
       scheme: http
       {{- else }}
       scheme: https
-      {{- endif }}
+      {{- end }}
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
         insecureSkipVerify: true
@@ -97,7 +97,7 @@ spec:
       scheme: http
       {{- else }}
       scheme: https
-      {{- endif }}
+      {{- end }}
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
         insecureSkipVerify: true
