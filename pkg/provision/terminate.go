@@ -1,10 +1,12 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/k8s/etcd"
 	"github.com/flanksource/karina/pkg/platform"
 )
 
@@ -18,7 +20,7 @@ func TerminateOrphans(platform *platform.Platform) error {
 	for _, orphan := range cluster.Orphans {
 		time.Sleep(1 * time.Second) // sleep to allow for cancellation
 		platform.Infof("Deleting %s", orphan.Name())
-		terminate(platform, orphan)
+		cluster.Terminate(orphan)
 	}
 	return nil
 }
@@ -45,7 +47,64 @@ func TerminateNodes(platform *platform.Platform, nodes []string) error {
 		if err := cluster.Cordon(node); err != nil {
 			return err
 		}
-		terminate(platform, machine)
+		cluster.Terminate(machine)
+	}
+	return nil
+}
+
+func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
+	ctx := context.TODO()
+
+	// we always interact via the etcd leader, as a previous node may have become unavailable
+	leaderClient, err := etcdClient.GetEtcdLeader()
+	if err != nil {
+		return err
+	}
+	platform.Infof("etcd leader is: %s", leaderClient.Name)
+
+	members, err := leaderClient.Members(ctx)
+	if err != nil {
+		return err
+	}
+	var etcdMember *etcd.Member
+	var candidateLeader *etcd.Member
+	for _, member := range members {
+		if member.Name == name {
+			// find the etcd member for the node
+			etcdMember = member
+		}
+		if member.Name != leaderClient.Name {
+			// choose a potential candidate to move the etcd leader
+			candidateLeader = member
+		}
+	}
+	if etcdMember == nil {
+		platform.Warnf("%s has already been removed from etcd cluster", name)
+	} else {
+		if etcdMember.ID == leaderClient.MemberID {
+			platform.Infof("Moving etcd leader from %s to %s", name, candidateLeader.Name)
+			if err := leaderClient.MoveLeader(ctx, candidateLeader.ID); err != nil {
+				return fmt.Errorf("failed to move leader: %v", err)
+			}
+		}
+
+		platform.Infof("Removing etcd member %s", name)
+		if err := leaderClient.RemoveMember(ctx, etcdMember.ID); err != nil {
+			return err
+		}
+	}
+
+	if platform.Consul != "" {
+		// proactively remove server from consul so that we can get a new connection to k8s
+		if err := platform.GetConsulClient().RemoveMember(name); err != nil {
+			return err
+		}
+		// reset the connection to the existing master (which may be the one we just removed)
+		platform.ResetMasterConnection()
+	}
+	// wait for a new connection to be healthy before continuing
+	if err := platform.WaitFor(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -74,13 +133,18 @@ func Cleanup(platform *platform.Platform) error {
 	//pausing to give time for user to terminate
 	time.Sleep(10 * time.Second)
 
+	cluster, err := GetCluster(platform)
+	if err != nil {
+		return err
+	}
+
 	var wg sync.WaitGroup
 	for _, _vm := range vms {
 		vm := _vm
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			terminate(platform, vm)
+			cluster.Terminate(vm)
 		}()
 	}
 

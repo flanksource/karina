@@ -161,8 +161,7 @@ func updateDNS(platform *Platform, dns string, ip string) string {
 				ips = append(ips, ip.To4().String())
 			}
 		} else {
-			platform.Warnf("Failed lookup DNS entry for %s, failing back to IP: %s: %v", dns, ip, err)
-			return ip
+			platform.Warnf("Failed lookup DNS entry for %s: %v", dns, err)
 		}
 	}
 	if len(ips) == 0 {

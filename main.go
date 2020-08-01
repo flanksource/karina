@@ -39,6 +39,7 @@ func main() {
 		cmd.DNS,
 		cmd.Exec,
 		cmd.ExecNode,
+		cmd.Etcd,
 		cmd.Harbor,
 		cmd.Images,
 		cmd.Logs,
