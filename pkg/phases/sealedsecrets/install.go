@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/flanksource/karina/pkg/ca"
+
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -36,7 +38,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.SealedSecrets.Certificate != nil && !platform.ApplyDryRun {
-		ca, err := platform.ReadCA(platform.SealedSecrets.Certificate)
+		ca, err := ca.ReadCA(platform.SealedSecrets.Certificate)
 		if err != nil {
 			return errors.Wrap(err, "failed to read platform ca")
 		}

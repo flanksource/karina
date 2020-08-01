@@ -54,6 +54,9 @@ subjects:
   - kind: ServiceAccount
     name: kube-resource-report
     namespace: platform-system
+  - kind: User
+    name: "kube-resource-report"
+    apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -82,10 +85,15 @@ spec:
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
             {{ end }}
+            - --kubeconfig-path=/external/config
             - /output
           volumeMounts:
             - mountPath: /output
               name: report-data
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /external
+              name: kubeconfig
           resources:
             limits:
               memory: 1Gi
@@ -118,6 +126,12 @@ spec:
         - name: report-data
           emptyDir:
             sizeLimit: 500Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: kubeconfig
+          secret:
+            secretName: kube-resource-report-clusters
 ---
 apiVersion: v1
 kind: Service

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flanksource/karina/pkg/ca"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -220,26 +222,12 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
 	}
-	ca, err := platform.ReadCA(platform.CA)
+	ca, err := ca.ReadCA(platform.CA)
 	if err != nil {
 		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
 	platform.ca = ca
 	return ca
-}
-
-// ReadCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
-// with key password ca.Password.
-func (platform *Platform) ReadCA(ca *types.CA) (*certs.Certificate, error) {
-	cert := files.SafeRead(ca.Cert)
-	if cert == "" {
-		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
-	}
-	privateKey := files.SafeRead(ca.PrivateKey)
-	if privateKey == "" {
-		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
-	}
-	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
 func (platform *Platform) ReadIngressCACertString() string {
@@ -259,7 +247,7 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 		return platform.ingressCA
 	}
 	platform.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
-	ca, err := platform.ReadCA(platform.IngressCA)
+	ca, err := ca.ReadCA(platform.IngressCA)
 	if err != nil {
 		platform.Fatalf("Unable to open Ingress CA: %v", err)
 	}
