@@ -35,6 +35,7 @@ func main() {
 		cmd.Conformance,
 		cmd.Consul,
 		cmd.DB,
+    cmd.Delete,
 		cmd.Deploy,
 		cmd.DNS,
 		cmd.Exec,

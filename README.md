@@ -37,6 +37,7 @@
   * `karina db`
   * `karina consul`
   * `karina backup/restore`
+  * `karina delete` delete all pods
 
 
 ### Getting Started
