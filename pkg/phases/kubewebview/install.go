@@ -51,7 +51,7 @@ func Install(p *platform.Platform) error {
 	p.KubeWebView.ExternalClusters.AddSelf(p.Name)
 	// create a secret containing a kubeconfig file that allows access to
 	// this cluster via user/cert as well as the given external clusters
-	kubeConfig, err := k8s.CreateMultiKubeConfig(ca, p.KubeWebView.ExternalClusters, Group, User, 24*7*time.Hour)
+	kubeConfig, err := k8s.CreateMultiKubeConfig(ca, p.KubeWebView.ExternalClusters, Group, User, 2*356*24*time.Hour)
 	if err != nil {
 		return fmt.Errorf("failed to generate kubeconfig for multi-cluster access: %v", err)
 	}
