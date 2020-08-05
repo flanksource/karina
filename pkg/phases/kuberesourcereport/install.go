@@ -16,13 +16,12 @@ import (
 
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
-
 )
 
 const (
-	Namespace     = constants.PlatformSystem
-	Group         = "system:reporting"
-	User          = "kube-resource-report"
+	Namespace = constants.PlatformSystem
+	Group     = "system:reporting"
+	User      = "kube-resource-report"
 	// if a region is specified (it's labels is not set) then
 	// kube-resource-report uses this region.
 	// from https://github.com/hjacobs/kube-resource-report/blob/cd43749cd191e17f62a63f9f74757fcad487c181/kube_resource_report/query.py#L232
@@ -84,13 +83,13 @@ func Install(p *platform.Platform) error {
 	customCostGeneratedData := ""
 	for label, value := range p.KubeResourceReport.CustomCostsInline {
 		p.Infof("Reading custom cost label: %v, %.3f", label, value)
-		if !strings.Contains(label,",") {
+		if !strings.Contains(label, ",") {
 			//kube-resource-report does not like spaces
 			newRow := fmt.Sprintf("%v,%v,%.3f\n", DefaultRegion, label, value)
 			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		} else {
-			split := strings.SplitAfterN(label, ",",2)
+			split := strings.SplitAfterN(label, ",", 2)
 			region := split[0]
 			label := split[1]
 			//split string contains the , so not added again

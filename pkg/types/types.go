@@ -463,7 +463,6 @@ type KubeResourceReport struct {
 	// the CA for the current cluster needs to be trusted by
 	// the given external cluster.
 	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
-
 }
 
 type MonitoringE2E struct {
