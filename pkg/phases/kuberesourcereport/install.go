@@ -83,16 +83,19 @@ func Install(p *platform.Platform) error {
 
 	customCostGeneratedData := ""
 	for label, value := range p.KubeResourceReport.CustomCostsInline {
-		p.Infof("Reading custom cost label: %v, %v", label, value)
+		p.Infof("Reading custom cost label: %v, %.3f", label, value)
 		if !strings.Contains(label,",") {
-			newRow := fmt.Sprintf("%v, %v, %v\n", DefaultRegion, label, value)
+			//kube-resource-report does not like spaces
+			newRow := fmt.Sprintf("%v,%v,%.3f\n", DefaultRegion, label, value)
 			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		} else {
 			split := strings.SplitAfterN(label, ",",2)
 			region := split[0]
 			label := split[1]
-			newRow := fmt.Sprintf("%v, %v, %v\n", region, label, value)
+			//split string contains the , so not added again
+			//kube-resource-report does not like spaces
+			newRow := fmt.Sprintf("%v%v,%.3f\n", region, label, value)
 			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		}
