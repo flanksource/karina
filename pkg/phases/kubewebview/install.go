@@ -2,11 +2,10 @@ package kubewebview
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"

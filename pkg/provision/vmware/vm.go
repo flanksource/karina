@@ -58,7 +58,7 @@ func (vm *vm) Name() string {
 
 func (vm *vm) GetAge() time.Duration {
 	attributes, _ := vm.GetAttributes()
-	created, _ := time.Parse("02Jan06-15:04:05", attributes["CreatedDate"])
+	created, _ := time.ParseInLocation("02Jan06-15:04:05", attributes["CreatedDate"], time.Local)
 	return time.Since(created)
 }
 

@@ -62,17 +62,17 @@ type MemberAlarm struct {
 	Type AlarmType
 }
 
-type AlarmType int32
+type AlarmType string
 
 const (
 	// AlarmOK denotes that the cluster member is OK.
-	AlarmOk AlarmType = iota
+	AlarmOk AlarmType = "OK"
 
 	// AlarmNoSpace denotes that the cluster member has run out of disk space.
-	AlarmNoSpace
+	AlarmNoSpace = "NOSPACE"
 
 	// AlarmCorrupt denotes that the cluster member has corrupted data.
-	AlarmCorrupt
+	AlarmCorrupt = "CORRUPT"
 )
 
 // Adapted from kubeadm
@@ -115,7 +115,7 @@ func pbMemberToMember(m *etcdserverpb.Member) *Member {
 }
 
 // NewEtcdClient creates a new etcd client with a custom dialer and is configuration with optional functions.
-func NewEtcdClient(endpoint string, dialer GRPCDial, tlsConfig *tls.Config) (*clientv3.Client, error) {
+func NewEtcdClient(endpoint string, dialer GRPCDial, tlsConfig *tls.Config) (Etcd, error) {
 	etcdClient, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{endpoint},
 		DialTimeout: etcdTimeout,
@@ -128,8 +128,9 @@ func NewEtcdClient(endpoint string, dialer GRPCDial, tlsConfig *tls.Config) (*cl
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create etcd client")
 	}
+
 	etcdClient.Endpoints()
-	return etcdClient, nil
+	return NewEtcdBackoffAdapter(etcdClient), nil
 }
 
 // NewClientWithEtcd configures our response formatter (Client) with an etcd client and endpoint.
@@ -235,9 +236,15 @@ func (c *Client) Alarms(ctx context.Context) ([]MemberAlarm, error) {
 
 	memberAlarms := make([]MemberAlarm, 0, len(alarmResponse.Alarms))
 	for _, a := range alarmResponse.Alarms {
+		alarm := AlarmOk
+		if a.GetAlarm() == etcdserverpb.AlarmType_NOSPACE {
+			alarm = AlarmNoSpace
+		} else if a.GetAlarm() == etcdserverpb.AlarmType_CORRUPT {
+			alarm = AlarmCorrupt
+		}
 		memberAlarms = append(memberAlarms, MemberAlarm{
 			MemberID: a.GetMemberID(),
-			Type:     AlarmType(a.GetAlarm()),
+			Type:     alarm,
 		})
 	}
 
