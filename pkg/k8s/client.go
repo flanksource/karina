@@ -1746,19 +1746,3 @@ func (c *Client) GetHealth() Health {
 	}
 	return health
 }
-
-// GetExternalClient constructs a Client for accessing an external cluster.
-// It uses the given CA, clustername and cluster host of the cluster API endpoint
-// to configure connectivity.
-func GetExternalClient(logger logger.Logger, clusterName string, clusterHost string, cacert *certs.Certificate) *Client { //nolint interfacer
-	return &Client{
-		Logger: logger,
-		GetKubeConfigBytes: func() ([]byte, error) {
-			kubeConfig, err := CreateKubeConfig(clusterName, cacert, clusterHost, "system:masters", "admin", 24*7*time.Hour)
-			if err != nil {
-				return nil, err
-			}
-			return kubeConfig, nil
-		},
-	}
-}
