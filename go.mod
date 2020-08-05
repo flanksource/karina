@@ -7,6 +7,7 @@ require (
 	github.com/aktau/github-release v0.8.1 // indirect
 	github.com/aws/aws-sdk-go v1.29.25
 	github.com/dghubble/sling v1.3.0
+	github.com/ericchiang/k8s v1.2.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.2.0
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
