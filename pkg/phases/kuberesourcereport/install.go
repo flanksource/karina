@@ -2,9 +2,10 @@ package kuberesourcereport
 
 import (
 	"fmt"
-	"github.com/flanksource/commons/files"
 	"os"
 	"strings"
+
+	"github.com/flanksource/commons/files"
 
 	"time"
 
@@ -98,7 +99,6 @@ func Install(p *platform.Platform) error {
 			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		}
-
 	}
 
 	customCostReadData := ""
@@ -113,10 +113,13 @@ func Install(p *platform.Platform) error {
 		}
 	}
 	if len(customCostReadData) > 0 || len(customCostGeneratedData) > 0 {
-		p.CreateOrUpdateConfigMap("kube-resource-report", Namespace,
+		err = p.CreateOrUpdateConfigMap("kube-resource-report", Namespace,
 			map[string]string{
 				"pricing.csv": customCostGeneratedData + customCostReadData,
 			})
+		if err != nil {
+			return fmt.Errorf("custom cost configmap creation failed: %v", err)
+		}
 	}
 
 	return p.ApplySpecs(Namespace, "kube-resource-report.yaml")
