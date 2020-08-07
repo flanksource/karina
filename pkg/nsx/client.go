@@ -1,6 +1,7 @@
 package nsx
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/base64"
@@ -8,16 +9,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/flanksource/commons/logger"
 	nsxt "github.com/vmware/go-vmware-nsxt"
 	"github.com/vmware/go-vmware-nsxt/common"
 	"github.com/vmware/go-vmware-nsxt/loadbalancer"
 	"github.com/vmware/go-vmware-nsxt/manager"
-)
-
-const (
-	TCPProtocol = "TCP"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // nolint: golint
@@ -65,30 +65,96 @@ func (c *NSXClient) Init() error {
 	return nil
 }
 
-func (c *NSXClient) GET(path string) ([]byte, error) {
+type NSXError struct {
+	HTTPStatus   string     `json:"httpStatus"`
+	ErrorCode    int        `json:"error_code"`
+	ModuleName   string     `json:"module_name"`
+	ErrorMessage string     `json:"error_message"`
+	Related      []NSXError `json:"related_errors"`
+}
+
+func getError(body []byte, code int) error {
+	if code >= 200 && code <= 299 {
+		return nil
+	}
+
+	err := NSXError{}
+	if unmarshallErr := json.Unmarshal(body, &err); unmarshallErr == nil {
+		if len(err.Related) > 0 {
+			err = err.Related[0]
+		}
+		if err.ErrorCode == code {
+			return fmt.Errorf("%d: %s", code, err.ErrorMessage)
+
+		} else {
+			return fmt.Errorf("%d: %d: %s", code, err.ErrorCode, err.ErrorMessage)
+
+		}
+	}
+	return fmt.Errorf("%d: %s", code, string(body))
+}
+
+func (c *NSXClient) GET(path string) ([]byte, int, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
 	url := fmt.Sprintf("%s://%s%s%s", c.cfg.Scheme, c.cfg.Host, c.cfg.BasePath, path)
+	if strings.HasPrefix(path, "/policy/api") {
+		url = fmt.Sprintf("%s://%s%s", c.cfg.Scheme, c.cfg.Host, path)
+	}
 	req, _ := http.NewRequest("GET", url, nil)
 	for k, v := range c.cfg.DefaultHeader {
 		req.Header.Add(k, v)
 	}
 	resp, err := client.Do(req)
+	c.Logger.Tracef("GET: %s -> %d", url, resp.StatusCode)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to list virtual servers: %s", errorString(resp, err))
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("GET: Failed to read response: %v", err)
+		return nil, 0, fmt.Errorf("GET: Failed to read response: %v", err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return body, fmt.Errorf(resp.Status)
+
+	return body, resp.StatusCode, getError(body, resp.StatusCode)
+}
+
+func (c *NSXClient) POST(path string, body interface{}) ([]byte, int, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	return body, nil
+	client := &http.Client{Transport: tr}
+	url := fmt.Sprintf("%s://%s%s%s", c.cfg.Scheme, c.cfg.Host, c.cfg.BasePath, path)
+	if strings.HasPrefix(path, "/policy/api") {
+		url = fmt.Sprintf("%s://%s%s", c.cfg.Scheme, c.cfg.Host, path)
+	}
+
+	req, _ := http.NewRequest("POST", url, nil)
+	reqBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, 0, err
+	}
+	req.Body = ioutil.NopCloser(bytes.NewReader(reqBody))
+	req.Header.Add("Content-Type", "application/json")
+	for k, v := range c.cfg.DefaultHeader {
+		req.Header.Add(k, v)
+	}
+	resp, err := client.Do(req)
+	c.Logger.Debugf("POST: %s -> %d", url, resp.StatusCode)
+
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, fmt.Errorf("POST: Failed to read response: %v", err)
+	}
+	c.Logger.Tracef("POST: %s -> %d, body=%s resp=%s", url, resp.StatusCode, string(reqBody), string(respBody))
+	return respBody, resp.StatusCode, getError(respBody, resp.StatusCode)
 }
 
 func (c *NSXClient) Ping() (string, error) {
@@ -244,22 +310,30 @@ func (c *NSXClient) AllocateIP(pool string) (string, error) {
 	return addr.AllocationId, nil
 }
 
-type LoadBalancerOptions struct {
-	Name       string
-	IPPool     string
-	Protocol   string
-	Ports      []string
-	Tier0      string
-	MemberTags map[string]string
-}
+func (c *NSXClient) GetLoadBalancerPool(name string) (*loadbalancer.LbPool, error) {
+	// ServicesApi.GetLoadBalancerPools() is not implemented
+	body, _, err := c.GET("/loadbalancer/pools")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list existing virtual servers: %v", err)
+	}
 
-type virtualServersList struct {
-	Results []loadbalancer.LbVirtualServer `json:"results,omitempty"`
+	var pools virtualPoolList
+
+	if err := json.Unmarshal(body, &pools); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall existing virtual pool list: %v", err)
+	}
+
+	for _, server := range pools.Results {
+		if server.DisplayName == name {
+			return &server, nil
+		}
+	}
+	return nil, nil
 }
 
 func (c *NSXClient) GetLoadBalancer(name string) (*loadbalancer.LbVirtualServer, error) {
 	// ServicesApi.GetVirtualServers() is not implemented
-	body, err := c.GET("/loadbalancer/virtual-servers")
+	body, _, err := c.GET("/loadbalancer/virtual-servers")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list existing virtual servers: %v", err)
 	}
@@ -276,6 +350,40 @@ func (c *NSXClient) GetLoadBalancer(name string) (*loadbalancer.LbVirtualServer,
 		}
 	}
 	return nil, nil
+}
+
+var backoffOptions = wait.Backoff{
+	Duration: 500 * time.Millisecond,
+	Factor:   2.0,
+	Steps:    8,
+}
+
+func (c *NSXClient) DrainLoadBalancerMember(name, ip string) error {
+	pool, err := c.GetLoadBalancerPool(name)
+	if err != nil {
+		return err
+	}
+	return wait.ExponentialBackoff(backoffOptions, func() (bool, error) {
+		body, code, err := c.POST(fmt.Sprintf("/loadbalancer/pools/%s?action=UPDATE_MEMBERS", pool.Id), LoadBalancerPool{Members: []LoadBalancerPoolMember{
+			{
+				IPAddress:  ip,
+				AdminState: "GRACEFUL_DISABLED",
+			},
+		}})
+
+		if err != nil {
+			c.Logger.Warnf("error while draining lb, retrying %s", err)
+			return false, nil
+		}
+
+		if code != 200 {
+			c.Logger.Warnf("non-ok status code while draining lb, retrying %d: %v", code, string(body))
+			return false, nil
+		}
+
+		c.Logger.Infof("Removed %s from %s", ip, name)
+		return true, nil
+	})
 }
 
 // CreateLoadBalancer creates a new loadbalancer or returns the existing loadbalancer's IP
@@ -413,7 +521,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 func (c *NSXClient) GetOrCreateHTTPHealthCheck(port string) (string, error) {
 	id := fmt.Sprintf("http-%s", port)
 	// ServicesApi.GetMonitors() is not implemented
-	_, err := c.GET("/loadbalancer/monitors/" + id)
+	_, _, err := c.GET("/loadbalancer/monitors/" + id)
 
 	if err == nil {
 		// Get returned OK, so the monitor has been created already
@@ -446,7 +554,7 @@ func (c *NSXClient) GetOrCreateHTTPHealthCheck(port string) (string, error) {
 func (c *NSXClient) GetOrCreateTCPHealthCheck(port string) (string, error) {
 	id := fmt.Sprintf("tcp-%s", port)
 	// ServicesApi.GetMonitors() is not implemented
-	_, err := c.GET("/loadbalancer/monitors/" + id)
+	_, _, err := c.GET("/loadbalancer/monitors/" + id)
 
 	if err == nil {
 		// Get returned OK, so the monitor has been created already
