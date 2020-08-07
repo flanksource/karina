@@ -104,28 +104,39 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 	return cluster
 }
 
-func GetFilesToMount(platform *platform.Platform) (map[string]string, error) {
+func GetFilesToMountForPrimary(platform *platform.Platform) (map[string]string, error) {
+	// the primary or first control plane node gets everything subsequent nodes do
+
+	files, err := GetFilesToMountForSecondary(platform)
+	if err != nil {
+		return nil, err
+	}
+
+	// plus the initial certificates for bootstrapping, subsequent control plane nodes download them from a secret
+
 	if platform.CA == nil {
 		return nil, fmt.Errorf(noCAErrorText)
 	}
-
 	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
-	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
+	clusterCA, err = platform.GetCA().SignCertificate(clusterCA, 10)
 	if err != nil {
 		return nil, fmt.Errorf("addCerts: failed to sign certificate: %v", err)
 	}
 
-	files := make(map[string]string)
-
-	// plus any cert signed by this cluster specific CA
+	// Because the certificate-signing-cert can only contain a single certificate and  ca.crt contains 2 (the root/global ca for admin auth, and the cluster ca for node auth)
+	// ca.{key,crt} are copied removing the 2nd cert and specified as extra arguments to the api server, because of this kubeadm upload/download certs
+	// is not aware of these files and they get recreated for each new master, causing node join issues down the line, we therefore split the certs
 	crt := string(clusterCA.EncodedCertificate()) + "\n"
-	// any cert signed by the global CA should be allowed
 	crt = crt + string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
-	// csrsigning controller doesn't like having more than 1 CA cert passed to it
 	files[CSRCAPath] = string(clusterCA.EncodedCertificate())
 	files[CSRKeyPath] = string(clusterCA.EncodedPrivateKey())
 	files["/etc/kubernetes/pki/ca.crt"] = crt
 	files["/etc/kubernetes/pki/ca.key"] = string(clusterCA.EncodedPrivateKey())
+	return files, nil
+}
+
+func GetFilesToMountForSecondary(platform *platform.Platform) (map[string]string, error) {
+	var files = make(map[string]string)
 	files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
 
 	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
@@ -255,7 +266,7 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 		Data: map[string][]byte{
 			bootstrapapi.BootstrapTokenIDKey:               []byte(tokenID),
 			bootstrapapi.BootstrapTokenSecretKey:           []byte(tokenSecret),
-			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().UTC().Add(4 * time.Hour).Format(time.RFC3339)),
+			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().Add(24 * time.Hour).Format(time.RFC3339)),
 			bootstrapapi.BootstrapTokenUsageSigningKey:     []byte("true"),
 			bootstrapapi.BootstrapTokenUsageAuthentication: []byte("true"),
 			bootstrapapi.BootstrapTokenExtraGroupsKey:      []byte("system:bootstrappers:kubeadm:default-node-token"),

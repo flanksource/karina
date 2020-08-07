@@ -22,9 +22,21 @@ var envVars = map[string]string{
 	"KUBECONFIG":        "/etc/kubernetes/admin.conf",
 }
 
-const updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
-const kubeadmInitCmd = "kubeadm init --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
-const kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf -v 5 | tee /var/log/kubeadm.log"
+const (
+	updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
+	kubeadmInitCmd     = "kubeadm init --config /etc/kubernetes/kubeadm.conf -v 5 2>&1 | tee -a /var/log/kubeadm.log"
+	kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf -v 5 2>&1 | tee -a /var/log/kubeadm.log"
+)
+
+var downloadCustomClusterSigningFiles = []string{
+	// Because the certificate-signing-cert can only contain a single certificate and the ca.crt contains 2 (the root ca, and cluster ca)
+	// ca.{key,crt} are copied removing the 2nd cert and specified as extra arguments to the api server, because of this kubeadm upload/download certs
+	// is not aware of these and they get recreated for each new master, causing node join issues down the line, the fix below is to recreate these certs
+	// from the ca cert|key downloaded by kubeadm
+	"kubeadm join phase control-plane-prepare download-certs --config /etc/kubernetes/kubeadm.conf -v 5 2>&1 | tee -a /var/log/kubeadm.log",
+	"cp /etc/kubernetes/pki/ca.key /etc/kubernetes/pki/csr-ca.key",
+	"cat /etc/kubernetes/pki/ca.crt | awk '1;/-----END CERTIFICATE-----/{exit}' > /etc/kubernetes/pki/csr-ca.crt",
+}
 
 // CreatePrimaryMaster creates a konfigadm config for the primary master.
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
@@ -38,14 +50,12 @@ func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error)
 	if err := addInitKubeadmConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add kubeadm config: %v", err)
 	}
-	if err := addAuditConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
+	files, err := kubeadm.GetFilesToMountForPrimary(platform)
+	if err != nil {
+		return nil, err
 	}
-	if err := addEncryptionConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
-	}
-	if err := addCerts(platform, cfg); err != nil {
-		return nil, errors.Wrap(err, "failed to add certs")
+	for file, content := range files {
+		cfg.Files[file] = content
 	}
 	cfg.AddCommand(kubeadmInitCmd)
 	return cfg, nil
@@ -60,17 +70,17 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 	if err := addControlPlaneJoinConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
 	}
-	if err := addAuditConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("failed to add audit config: %v", err)
+
+	files, err := kubeadm.GetFilesToMountForSecondary(platform)
+	if err != nil {
+		return nil, err
 	}
-	if err := addAuditConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add audit config: %v", err)
+	for file, content := range files {
+		cfg.Files[file] = content
 	}
-	if err := addEncryptionConfig(platform, cfg); err != nil {
-		return nil, fmt.Errorf("createPrimaryMaster: failed to add encryption config: %v", err)
-	}
-	if err = addCerts(platform, cfg); err != nil {
-		return nil, errors.Wrap(err, "Failed to add certs")
+
+	for _, cmd := range downloadCustomClusterSigningFiles {
+		cfg.AddCommand(cmd)
 	}
 	cfg.AddCommand(kubeadmNodeJoinCmd)
 	return cfg, nil
@@ -122,48 +132,6 @@ func baseKonfig(initialKonfigadmFile string, platform *platform.Platform) (*konf
 	// update hosts file with hostname
 	cfg.AddCommand(updateHostsFileCmd)
 	return cfg, nil
-}
-
-// addAuditConfig derives the initial audit config for a cluster from its platform
-// config and adds it to its konfigadm files
-func addAuditConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if pf := platform.Kubernetes.AuditConfig.PolicyFile; pf != "" {
-		// clusters audit policy files are injected into the machine via konfigadm
-		ap := files.SafeRead(pf)
-		if ap == "" {
-			return fmt.Errorf("unable to read audit policy file %v", pf)
-		}
-		cfg.Files[kubeadm.AuditPolicyPath] = ap
-	}
-	return nil
-}
-
-// addEncryptionConfig derives the initial encryption config for a cluster from its platform
-// config and adds it to its konfigadm files
-func addEncryptionConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if ef := platform.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile; ef != "" {
-		// clusters encryption provider files are injected into the machine via konfigadm
-		ep := files.SafeRead(ef)
-		if ep == "" {
-			return fmt.Errorf("unable to encryption provider file %v", ef)
-		}
-		cfg.Files[kubeadm.EncryptionProviderConfigPath] = ep
-	}
-	return nil
-}
-
-// addCerts derives certs and key files for a cluster from its platform
-// config and adds the cert and key files to its konfigadm files
-func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
-	files, err := kubeadm.GetFilesToMount(platform)
-	if err != nil {
-		return err
-	}
-
-	for file, content := range files {
-		cfg.Files[file] = content
-	}
-	return nil
 }
 
 // addInitKubeadmConfig derives the initial kubeadm config for a cluster from its platform
