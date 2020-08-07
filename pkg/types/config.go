@@ -6,7 +6,7 @@ type PlatformConfig struct {
 	Velero        *Velero        `yaml:"velero,omitempty"`
 	CA            *CA            `yaml:"ca"`
 	CanaryChecker *CanaryChecker `yaml:"canaryChecker,omitempty"`
-	Calico        Calico         `yaml:"calico,omitempty"`
+	Calico        *Calico        `yaml:"calico,omitempty"`
 	CertManager   CertManager    `yaml:"certmanager,omitempty"`
 	// The endpoint for an externally hosted consul cluster
 	// that is used for master discovery
