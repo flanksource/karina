@@ -6,16 +6,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/controller/burnin"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/phases"
+	"github.com/flanksource/karina/pkg/phases/calico"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/phases/nsx"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/provision/vmware"
 	"github.com/flanksource/karina/pkg/types"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func WithVmwareCluster(p *platform.Platform) error {
@@ -70,6 +73,20 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 		// no healthy master endpoint is detected, so we need to create the first control plane node
 		// FIXME: Detect situations where all control pane nodes have failed
 		_, err := createMaster(platform)
+		// after creating the first master we need to deploy the CNI and Cloud Providers to ensure subsequent
+		// nodes are tested correctly with the burnin controller
+		if err := vsphere.Install(platform); err != nil {
+			return err
+		}
+
+		if err := calico.Install(platform); err != nil {
+			return err
+		}
+
+		if err := nsx.Install(platform); err != nil {
+			return err
+		}
+
 		if err != nil {
 			platform.Fatalf("Failed to create master: %v", err)
 		}
@@ -269,50 +286,6 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	return cloned, nil
 }
 
-func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) {
-	if err := platform.ProvisionHook.BeforeTerminate(platform, vm); err != nil {
-		platform.Warnf("[%s] failed to call before terminate: %v", vm, err)
-		return
-	}
-
-	if !platform.Terminating {
-		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
-			platform.Warnf("[%s] failed to drain: %v", vm.Name(), err)
-		}
-	}
-
-	client, err := platform.GetClientset()
-	if err != nil {
-		platform.Warnf("[%s] failed to get client to delete node: %v", vm, err)
-	} else {
-		node, err := client.CoreV1().Nodes().Get(vm.Name(), metav1.GetOptions{})
-		if err != nil {
-			// we always attempt to terminate a node as a master if we don't know
-			// to ensure it is always removed from etcd
-			if err := terminateMaster(platform, etcd, vm.Name()); err != nil {
-				platform.Warnf("Failed to terminate master %v", err)
-			}
-		} else if k8s.IsMasterNode(*node) {
-			if err := terminateMaster(platform, etcd, node.Name); err != nil {
-				platform.Warnf("Failed to terminate master %v", err)
-			}
-		}
-		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
-			platform.Warnf("[%s] failed to delete node: %v", vm, err)
-		} else {
-			platform.Infof("[%s] deleted node", vm.Name())
-		}
-	}
-
-	if err := platform.ProvisionHook.AfterTerminate(platform, vm); err != nil {
-		platform.Warnf("[%s] failed calling AfterTerminate hook: %v", vm, err)
-	}
-
-	if err := vm.Terminate(); err != nil {
-		platform.Warnf("[%s] failed to terminate %s: %v", vm.Name(), err)
-	}
-}
-
 // waitForNode waits for the node to become ready and have its burnin taint removed
 func waitForNode(platform *platform.Platform, name string, timeout time.Duration) error {
 	platform.Infof("[%s] waiting to become ready", name)
@@ -323,6 +296,31 @@ func waitForNode(platform *platform.Platform, name string, timeout time.Duration
 	platform.Infof("[%s] Node has become healthy, waiting for burnin-taint removal", name)
 	if err := platform.WaitForTaintRemoval(name, timeout, burnin.Taint); err != nil {
 		return fmt.Errorf("[%s] replacement burn-in taint was not removed: %v", name, err)
+	}
+	return nil
+}
+
+func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) error {
+	var returnErr *error
+	if backoffOpts == nil {
+		backoffOpts = &wait.Backoff{
+			Duration: 500 * time.Millisecond,
+			Factor:   2.0,
+			Steps:    7,
+		}
+	}
+
+	wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
+		err := fn()
+		if err == nil {
+			return true, nil
+		}
+		log.Warnf("retrying after error: %v", err)
+		*returnErr = err
+		return false, nil
+	})
+	if returnErr != nil {
+		return *returnErr
 	}
 	return nil
 }

@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
+	"github.com/flanksource/commons/logger"
 	nsxapi "github.com/flanksource/karina/pkg/nsx"
 	"github.com/flanksource/karina/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type NSXProvider struct {
@@ -15,6 +18,7 @@ type NSXProvider struct {
 
 func terminate(platform *Platform, vm types.Machine) {
 	platform.Errorf("terminating vm after failed NIC tagging %s", vm)
+	_ = platform.DeleteNode(vm.Name())
 	_ = vm.Terminate()
 }
 
@@ -54,19 +58,15 @@ func (nsx *NSXProvider) BeforeProvision(platform *Platform, machine *types.VM) e
 	return nil
 }
 
-func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) error {
-	if platform.NSX == nil || platform.NSX.Disabled {
-		return nil
-	}
+func (nsx *NSXProvider) tag(platform *Platform, vm types.Machine) error {
 	ctx := context.TODO()
 
 	ports, err := nsx.GetLogicalPorts(ctx, vm.Name())
+
 	if err != nil {
-		go terminate(platform, vm)
 		return fmt.Errorf("failed to find ports for %s: %v", vm.Name(), err)
 	}
 	if len(ports) != 2 {
-		go terminate(platform, vm)
 		return fmt.Errorf("expected to find 2 ports, found %d \n%+v", len(ports), ports)
 	}
 	managementNic := make(map[string]string)
@@ -80,14 +80,35 @@ func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) err
 	transportNic["ncp/cluster"] = platform.Name
 
 	if err := nsx.TagLogicalPort(ctx, ports[0].Id, managementNic); err != nil {
-		go terminate(platform, vm)
 		return fmt.Errorf("failed to tag management nic %s: %v", ports[0].Id, err)
 	}
 	if err := nsx.TagLogicalPort(ctx, ports[1].Id, transportNic); err != nil {
-		go terminate(platform, vm)
 		return fmt.Errorf("failed to tag transport nic %s: %v", ports[1].Id, err)
 	}
 	platform.Tracef("Tagged %s", vm)
+	return nil
+}
+
+func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) error {
+	if platform.NSX == nil || platform.NSX.Disabled {
+		return nil
+	}
+
+	var returnErr *error
+	backoff(func() error {
+		err := nsx.tag(platform, vm)
+		if err != nil {
+			*returnErr = err
+		} else {
+			returnErr = nil
+		}
+		return err
+	}, platform.Logger, nil)
+
+	if returnErr != nil {
+		go terminate(platform, vm)
+		return *returnErr
+	}
 	return nil
 }
 
@@ -183,5 +204,30 @@ func (nsx *NSXProvider) BeforeTerminate(platform *Platform, machine types.Machin
 }
 
 func (nsx NSXProvider) AfterTerminate(platform *Platform, machine types.Machine) error {
+	return nil
+}
+
+func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) error {
+	var returnErr *error
+	if backoffOpts == nil {
+		backoffOpts = &wait.Backoff{
+			Duration: 500 * time.Millisecond,
+			Factor:   2.0,
+			Steps:    7,
+		}
+	}
+
+	wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
+		err := fn()
+		if err == nil {
+			return true, nil
+		}
+		log.Warnf("retrying after error: %v", err)
+		*returnErr = err
+		return false, nil
+	})
+	if returnErr != nil {
+		return *returnErr
+	}
 	return nil
 }

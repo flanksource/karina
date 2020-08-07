@@ -150,14 +150,12 @@ func (c *Client) GetPodReplicas(pod v1.Pod) (int, error) {
 	for _, owner := range pod.GetOwnerReferences() {
 		if owner.Kind == "ReplicaSet" {
 			replicasets := client.AppsV1().ReplicaSets(pod.Namespace)
-
 			rs, err := replicasets.Get(owner.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, err
 			}
 			return int(*rs.Spec.Replicas), nil
 		}
-		c.Infof("Ignore pod controller: %s", owner.Kind)
 	}
 	return 1, nil
 }
@@ -171,7 +169,7 @@ func (c *Client) Drain(nodeName string, timeout time.Duration) error {
 }
 
 func (c *Client) EvictPod(pod v1.Pod) error {
-	if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
+	if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) || IsStaticPod(pod) {
 		return nil
 	}
 	client, err := c.GetClientset()

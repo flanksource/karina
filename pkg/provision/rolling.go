@@ -11,6 +11,7 @@ import (
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/jinzhu/copier"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -81,6 +82,7 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 	}
 	sort.Sort(toReplace)
 	return &toReplace
+
 }
 
 // Perform a rolling update of nodes
@@ -100,6 +102,35 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		return err
 	}
 
+	total := 0
+
+	workerOpts := RollingOptions{}
+	copier.Copy(&workerOpts, &opts)
+	if opts.Masters {
+		opts.Workers = false
+		// first we roll all masters sequentially
+		opts.MaxSurge = 1
+		rolled, err := roll(platform, cluster, opts)
+		total += rolled
+		if err != nil {
+			platform.Errorf(err.Error())
+		}
+	}
+	if workerOpts.Workers {
+		// then we roll all the workers in batches
+		workerOpts.Masters = false
+		rolled, err := roll(platform, cluster, workerOpts)
+		total += rolled
+		if err != nil {
+			platform.Errorf(err.Error())
+		}
+	}
+
+	platform.Infof("Rollout finished, rolled %d of %d ", total, cluster.Nodes.Len())
+	return nil
+}
+
+func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (int, error) {
 	rolled := 0
 	toReplace := selectMachinesToReplace(platform, opts, cluster)
 	var replaced = make(chan NodeMachine, opts.MaxSurge)
@@ -159,10 +190,10 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 			}
 			return true
 		}); !succeededWithinTimeout {
-			return fmt.Errorf("Health degraded after waiting %v", timer)
+			return rolled, fmt.Errorf("Health degraded after waiting %v", timer)
 		}
 		if platform.GetHealth().IsDegradedComparedTo(health, opts.HealthTolerance) {
-			return fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, cluster.Nodes.Len())
+			return rolled, fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, cluster.Nodes.Len())
 		}
 		if rolled >= opts.Max {
 			break
@@ -170,8 +201,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		// select the next batch of nodes to update
 		batch = toReplace.PopN(opts.MaxSurge)
 	}
-	platform.Infof("Rollout finished, rolled %d of %d ", rolled, cluster.Nodes.Len())
-	return nil
+	return rolled, nil
 }
 
 // Perform a rolling restart of nodes
