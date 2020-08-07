@@ -22,7 +22,7 @@ func Run(platform *platform.Platform, period time.Duration, quit chan bool) {
 		case <-quit:
 			return
 		default:
-			time.Sleep(60 * time.Second)
+			time.Sleep(20 * time.Second)
 		}
 	}
 }

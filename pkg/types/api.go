@@ -66,10 +66,10 @@ func (n NullMachine) GetAge() time.Duration {
 	return 0
 }
 func (n NullMachine) GetTemplate() string {
-	return "unknown"
+	return ""
 }
 func (n NullMachine) IP() string {
-	return "unknown"
+	return ""
 }
 func (n NullMachine) GetTags() map[string]string {
 	return make(map[string]string)
