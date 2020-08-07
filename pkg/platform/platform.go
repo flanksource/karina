@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flanksource/karina/pkg/ca"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,6 +25,7 @@ import (
 	"github.com/flanksource/commons/text"
 	"github.com/flanksource/karina/manifests"
 	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/k8s/proxy"
@@ -38,6 +37,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/flanksource/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -338,6 +338,25 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 	}
 
 	return VM, nil
+}
+
+func (platform *Platform) DeleteNode(name string) error {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return err
+	}
+	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if err := client.CoreV1().Nodes().Delete(node.Name, &metav1.DeleteOptions{}); err == nil {
+		platform.Infof("[%s] deleted node", node.Name)
+		return nil
+	} else {
+		return err
+	}
 }
 
 func (platform *Platform) GetConsulClient() api.Consul {

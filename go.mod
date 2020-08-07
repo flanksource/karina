@@ -16,6 +16,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.8
+	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mitchellh/mapstructure v1.1.2
