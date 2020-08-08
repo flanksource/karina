@@ -80,6 +80,9 @@ spec:
         - name: kube-resource-report
           # see https://github.com/hjacobs/kube-resource-report/releases
           image: docker.io/hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
+          env:
+            - name: OBJECT_LABEL_TEAM
+              value: "{{.kubeResourceReport.teamlabels | default "team,owner"}}"
           args:
             - --update-interval-minutes={{.kubeResourceReport.updateInterval | default "1"}}
             {{ if .kubeResourceReport.additionalClusterCost  }}
