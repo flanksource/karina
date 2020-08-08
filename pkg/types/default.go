@@ -2,6 +2,11 @@ package types
 
 func DefaultPlatformConfig() PlatformConfig {
 	config := PlatformConfig{
+		Calico: &Calico{
+			Disabled: false,
+			IPIP:     "Never",
+			VxLAN:    "Never",
+		},
 		CertManager: CertManager{
 			Version: "v0.12.0",
 		},

@@ -77,7 +77,7 @@ type Calico struct {
 	Disabled  bool                    `yaml:"disabled,omitempty"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
-	Version   string                  `yaml:"version,omitempty"`
+	Version   string                  `yaml:"version"`
 	Log       string                  `yaml:"log,omitempty"`
 	BGPPeers  []calico.BGPPeer        `yaml:"bgpPeers,omitempty"`
 	BGPConfig calico.BGPConfiguration `yaml:"bgpConfig,omitempty"`
@@ -325,6 +325,9 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	if raw.AuditConfig.PolicyFile != "" {
+		if raw.APIServerExtraArgs == nil {
+			raw.APIServerExtraArgs = make(map[string]string)
+		}
 		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
 			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
 		}

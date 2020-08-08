@@ -4,6 +4,7 @@ type NSX struct {
 	LoadBalancerIPPool string `yaml:"loadbalancer_ip_pool,omitempty"`
 	Tier0              string `yaml:"tier0,omitempty"`
 	Disabled           bool   `structs:"-" yaml:"disabled"`
+	CNIDisabled        bool   `structs:"-" yaml:"cniDisabled"`
 	Image              string `structs:"-" yaml:""`
 	Version            string `structs:"-" yaml:"version"`
 	// If set to true, the logging level will be set to DEBUG instead of the

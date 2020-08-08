@@ -6,8 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/k8s/etcd"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TerminateOrphans deletes all vm's that have not yet joined the cluster
@@ -52,9 +55,52 @@ func TerminateNodes(platform *platform.Platform, nodes []string) error {
 	return nil
 }
 
-func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
-	ctx := context.TODO()
+func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) {
+	if err := platform.ProvisionHook.BeforeTerminate(platform, vm); err != nil {
+		platform.Warnf("[%s] failed to call before terminate: %v", vm, err)
+		return
+	}
 
+	if !platform.Terminating {
+		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
+			platform.Warnf("[%s] failed to drain: %v", vm.Name(), err)
+		}
+	}
+
+	client, err := platform.GetClientset()
+	if err != nil {
+		platform.Warnf("[%s] failed to get client to delete node: %v", vm, err)
+	} else {
+		node, err := client.CoreV1().Nodes().Get(vm.Name(), metav1.GetOptions{})
+		if err != nil {
+			// we always attempt to terminate a node as a master if we don't know
+			// to ensure it is always removed from etcd
+			if err := terminateMaster(platform, etcd, vm.Name()); err != nil {
+				platform.Warnf("Failed to terminate master %v", err)
+			}
+		} else if k8s.IsMasterNode(*node) {
+			if err := terminateMaster(platform, etcd, node.Name); err != nil {
+				platform.Warnf("Failed to terminate master %v", err)
+			}
+		}
+		if err := backoff(func() error {
+			return platform.DeleteNode(vm.Name())
+		}, platform.Logger, nil); err != nil {
+			platform.Warnf("[%s] failed to delete node: %v", vm, err)
+		}
+	}
+
+	if err := platform.ProvisionHook.AfterTerminate(platform, vm); err != nil {
+		platform.Warnf("[%s] failed calling AfterTerminate hook: %v", vm, err)
+	}
+
+	if err := vm.Terminate(); err != nil {
+		platform.Warnf("[%s] failed to terminate %s: %v", vm.Name(), err)
+	}
+}
+
+func terminateEtcd(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
+	ctx := context.TODO()
 	// we always interact via the etcd leader, as a previous node may have become unavailable
 	leaderClient, err := etcdClient.GetEtcdLeader()
 	if err != nil {
@@ -80,6 +126,8 @@ func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name s
 	}
 	if etcdMember == nil {
 		platform.Warnf("%s has already been removed from etcd cluster", name)
+	} else if candidateLeader == nil {
+		platform.Warnf("%s is the only member left of the etcd cluster", name)
 	} else {
 		if etcdMember.ID == leaderClient.MemberID {
 			platform.Infof("Moving etcd leader from %s to %s", name, candidateLeader.Name)
@@ -90,18 +138,40 @@ func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name s
 
 		platform.Infof("Removing etcd member %s", name)
 		if err := leaderClient.RemoveMember(ctx, etcdMember.ID); err != nil {
-			return err
+			return fmt.Errorf("failed to remove member: %v", err)
 		}
 	}
 
+	return nil
+}
+
+func terminateConsul(platform *platform.Platform, name string) error {
 	if platform.Consul != "" {
 		// proactively remove server from consul so that we can get a new connection to k8s
 		if err := platform.GetConsulClient().RemoveMember(name); err != nil {
 			return err
 		}
-		// reset the connection to the existing master (which may be the one we just removed)
-		platform.ResetMasterConnection()
 	}
+	return nil
+}
+
+func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
+
+	if err := backoff(func() error {
+		return terminateEtcd(platform, etcdClient, name)
+	}, platform.Logger, nil); err != nil {
+		return err
+	}
+
+	if err := backoff(func() error {
+		return terminateConsul(platform, name)
+	}, platform.Logger, nil); err != nil {
+		return err
+	}
+
+	// reset the connection to the existing master (which may be the one we just removed)
+	platform.ResetMasterConnection()
+
 	// wait for a new connection to be healthy before continuing
 	if err := platform.WaitFor(); err != nil {
 		return err

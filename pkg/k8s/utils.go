@@ -231,6 +231,16 @@ func IsPodDaemonSet(pod v1.Pod) bool {
 	return controllerRef != nil && controllerRef.Kind == apps.SchemeGroupVersion.WithKind("DaemonSet").Kind
 }
 
+// IsStaticPod returns true if the pod is static i.e. declared in /etc/kubernetes/manifests and read directly by the kubelet
+func IsStaticPod(pod v1.Pod) bool {
+	for _, owner := range pod.GetOwnerReferences() {
+		if owner.Kind == "Node" {
+			return true
+		}
+	}
+	return false
+}
+
 func GetNodeStatus(node v1.Node) string {
 	s := ""
 	for _, condition := range node.Status.Conditions {

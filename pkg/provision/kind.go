@@ -31,7 +31,7 @@ func KindCluster(p *platform.Platform) error {
 
 	var extraMounts []kindapi.Mount
 
-	files, err := kubeadm.GetFilesToMount(p)
+	files, err := kubeadm.GetFilesToMountForPrimary(p)
 	if err != nil {
 		return err
 	}
