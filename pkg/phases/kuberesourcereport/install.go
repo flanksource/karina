@@ -82,7 +82,7 @@ func Install(p *platform.Platform) error {
 	p.Infof("Created external cluster access secret")
 
 	customCostGeneratedData := ""
-	for label, value := range p.KubeResourceReport.CustomCostsInline {
+	for label, value := range p.KubeResourceReport.Costs {
 		p.Infof("Reading custom cost label: %v, %.3f", label, value)
 		if !strings.Contains(label, ",") {
 			//kube-resource-report does not like spaces
@@ -102,14 +102,14 @@ func Install(p *platform.Platform) error {
 	}
 
 	customCostReadData := ""
-	if p.KubeResourceReport.CustomCostFile != "" {
-		_, err := os.Stat(p.KubeResourceReport.CustomCostFile)
+	if p.KubeResourceReport.CostsFile != "" {
+		_, err := os.Stat(p.KubeResourceReport.CostsFile)
 		if err != nil {
-			return fmt.Errorf("custom cost file %v not found: %v", p.KubeResourceReport.CustomCostFile, err)
+			return fmt.Errorf("custom cost file %v not found: %v", p.KubeResourceReport.CostsFile, err)
 		}
-		customCostReadData = files.SafeRead(p.KubeResourceReport.CustomCostFile)
+		customCostReadData = files.SafeRead(p.KubeResourceReport.CostsFile)
 		if customCostReadData == "" {
-			return fmt.Errorf("custom cost file %v is empty", p.KubeResourceReport.CustomCostFile)
+			return fmt.Errorf("custom cost file %v is empty", p.KubeResourceReport.CostsFile)
 		}
 	}
 	if len(customCostReadData) > 0 || len(customCostGeneratedData) > 0 {

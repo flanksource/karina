@@ -90,7 +90,7 @@ spec:
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
             {{ end }}
-            {{ if or .kubeResourceReport.costs .kubeResourceReport.customCostFile }}
+            {{ if or .kubeResourceReport.costs .kubeResourceReport.costsfile }}
             - --pricing-file=/config/pricing.csv
             {{ end }}
             - --kubeconfig-path=/external/config
@@ -102,7 +102,7 @@ spec:
               name: tmp
             - mountPath: /external
               name: kubeconfig
-            {{ if or .kubeResourceReport.costs .kubeResourceReport.customCostFile }}
+            {{ if or .kubeResourceReport.costs .kubeResourceReport.costsfile }}
             - mountPath: /config
               name: config
             {{ end }}
@@ -144,7 +144,7 @@ spec:
         - name: kubeconfig
           secret:
             secretName: kube-resource-report-clusters
-        {{ if or .kubeResourceReport.costs .kubeResourceReport.customCostFile }}
+        {{ if or .kubeResourceReport.costs .kubeResourceReport.costsfile }}
         {{/* use a custom CSV with node/server prices */}}
         - name: config
           configMap:
