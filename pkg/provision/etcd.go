@@ -147,7 +147,6 @@ func (cluster *EtcdClient) PrintStatus() error {
 		return fmt.Errorf("failed to get members: %v", err)
 	}
 	for _, member := range members {
-
 		fmt.Fprintf(w, "%d\t", member.ID)
 		fmt.Fprintf(w, "%s\t", member.Name)
 		node, err := cluster.Kubernetes.CoreV1().Nodes().Get(member.Name, metav1.GetOptions{})
@@ -159,10 +158,8 @@ func (cluster *EtcdClient) PrintStatus() error {
 		s := ""
 		if member.ID == client.LeaderID {
 			s = "LEADER"
-
 		} else if member.IsLearner {
 			s = "LEARNER"
-
 		}
 		status, err := cluster.getMemberStatus(member.Name)
 		if err != nil {
@@ -174,7 +171,6 @@ func (cluster *EtcdClient) PrintStatus() error {
 
 		fmt.Fprintf(w, "%s\t", collections.ToString(member.Alarms))
 		fmt.Fprintf(w, "\n")
-
 	}
 	_ = w.Flush()
 	return nil
