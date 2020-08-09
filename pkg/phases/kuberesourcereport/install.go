@@ -2,6 +2,10 @@ package kuberesourcereport
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
+	"github.com/flanksource/commons/files"
 
 	"time"
 
@@ -19,6 +23,14 @@ const (
 	Namespace = constants.PlatformSystem
 	Group     = "system:reporting"
 	User      = "kube-resource-report"
+	// if a region is specified (it's labels is not set) then
+	// kube-resource-report uses this region.
+	// from https://github.com/hjacobs/kube-resource-report/blob/cd43749cd191e17f62a63f9f74757fcad487c181/kube_resource_report/query.py#L232
+	// We use this to avoid forcing the user to specify a
+	// usually unused region in the
+	// region,instancetype,cost in the
+	// platform YAML file.
+	DefaultRegion = "unknown"
 )
 
 func Install(p *platform.Platform) error {
@@ -36,6 +48,7 @@ func Install(p *platform.Platform) error {
 		if err != nil {
 			return fmt.Errorf("failed to remove external cluster access secret: %v", err)
 		}
+		p.Infof("Removed external cluster access secret")
 		return p.DeleteSpecs(Namespace, "kube-resource-report.yaml")
 	}
 
@@ -65,6 +78,48 @@ func Install(p *platform.Platform) error {
 	})
 	if err != nil {
 		return fmt.Errorf("failed to generate kubeconfig secret for multi-cluster access: %v", err)
+	}
+	p.Infof("Created external cluster access secret")
+
+	customCostGeneratedData := ""
+	for label, value := range p.KubeResourceReport.Costs {
+		p.Infof("Reading custom cost label: %v, %.3f", label, value)
+		if !strings.Contains(label, ",") {
+			//kube-resource-report does not like spaces
+			newRow := fmt.Sprintf("%v,%v,%.3f\n", DefaultRegion, label, value)
+			customCostGeneratedData = customCostGeneratedData + newRow
+			p.Debugf("Adding custom cost label: %v", newRow)
+		} else {
+			split := strings.SplitAfterN(label, ",", 2)
+			region := split[0]
+			label := split[1]
+			//split string contains the , so not added again
+			//kube-resource-report does not like spaces
+			newRow := fmt.Sprintf("%v%v,%.3f\n", region, label, value)
+			customCostGeneratedData = customCostGeneratedData + newRow
+			p.Debugf("Adding custom cost label: %v", newRow)
+		}
+	}
+
+	customCostReadData := ""
+	if p.KubeResourceReport.CostsFile != "" {
+		_, err := os.Stat(p.KubeResourceReport.CostsFile)
+		if err != nil {
+			return fmt.Errorf("custom cost file %v not found: %v", p.KubeResourceReport.CostsFile, err)
+		}
+		customCostReadData = files.SafeRead(p.KubeResourceReport.CostsFile)
+		if customCostReadData == "" {
+			return fmt.Errorf("custom cost file %v is empty", p.KubeResourceReport.CostsFile)
+		}
+	}
+	if len(customCostReadData) > 0 || len(customCostGeneratedData) > 0 {
+		err = p.CreateOrUpdateConfigMap("kube-resource-report", Namespace,
+			map[string]string{
+				"pricing.csv": customCostGeneratedData + customCostReadData,
+			})
+		if err != nil {
+			return fmt.Errorf("custom cost configmap creation failed: %v", err)
+		}
 	}
 
 	return p.ApplySpecs(Namespace, "kube-resource-report.yaml")

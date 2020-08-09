@@ -81,12 +81,19 @@ spec:
           # see https://github.com/hjacobs/kube-resource-report/releases
           image: docker.io/hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
           env:
-            - name: OBJECT_LABEL_TEAM
-              value: "{{.kubeResourceReport.teamlabels | default "team,owner"}}"
+          - name: OBJECT_LABEL_TEAM
+            value: "{{.kubeResourceReport.teamlabels | default "team,owner"}}"
+          - name: NODE_LABEL_REGION
+            value: "failure-domain.beta.kubernetes.io/region"
+          - name: NODE_LABEL_INSTANCE_TYPE
+            value: "beta.kubernetes.io/instance-type"
           args:
             - --update-interval-minutes={{.kubeResourceReport.updateInterval | default "1"}}
             {{ if .kubeResourceReport.additionalClusterCost  }}
             - --additional-cost-per-cluster={{.kubeResourceReport.additionalClusterCost }}
+            {{ end }}
+            {{ if or .kubeResourceReport.costs .kubeResourceReport.costsfile }}
+            - --pricing-file=/config/pricing.csv
             {{ end }}
             - --kubeconfig-path=/external/config
             - /output
@@ -97,6 +104,10 @@ spec:
               name: tmp
             - mountPath: /external
               name: kubeconfig
+            {{ if or .kubeResourceReport.costs .kubeResourceReport.costsfile }}
+            - mountPath: /config
+              name: config
+            {{ end }}
           resources:
             limits:
               memory: 1Gi
@@ -135,6 +146,12 @@ spec:
         - name: kubeconfig
           secret:
             secretName: kube-resource-report-clusters
+        {{ if or .kubeResourceReport.costs .kubeResourceReport.costsfile }}
+        {{/* use a custom CSV with node/server prices */}}
+        - name: config
+          configMap:
+            name: kube-resource-report
+        {{ end }}
 ---
 apiVersion: v1
 kind: Service
