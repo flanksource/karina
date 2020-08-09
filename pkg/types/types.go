@@ -466,6 +466,11 @@ type KubeResourceReport struct {
 	// the CA for the current cluster needs to be trusted by
 	// the given external cluster.
 	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
+	// A comma separated list of labels applied to k8s objects
+	// to identify team ownership. These are reported on in the *Teams* tab of the report.
+	// Multiple labels may be specified.
+	// Default value is "team,owner".
+	TeamLabels string `yaml:"teamlabels,omitempty"`
 }
 
 type MonitoringE2E struct {

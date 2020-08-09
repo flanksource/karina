@@ -81,6 +81,8 @@ spec:
           # see https://github.com/hjacobs/kube-resource-report/releases
           image: docker.io/hjacobs/kube-resource-report:{{.kubeResourceReport.version | default "20.7.3"}}
           env:
+          - name: OBJECT_LABEL_TEAM
+            value: "{{.kubeResourceReport.teamlabels | default "team,owner"}}"
           - name: NODE_LABEL_REGION
             value: "failure-domain.beta.kubernetes.io/region"
           - name: NODE_LABEL_INSTANCE_TYPE
