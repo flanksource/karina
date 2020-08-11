@@ -778,9 +778,10 @@ type RegistryCredentialsACR struct {
 }
 
 type PlatformOperator struct {
-	Disabled                  bool     `yaml:"disabled,omitempty"`
-	Version                   string   `yaml:"version"`
-	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
+	Disabled                   bool     `yaml:"disabled,omitempty"`
+	Version                    string   `yaml:"version"`
+	EnableClusterResourceQuota bool     `yaml:"enableClusterResourceQuota,omitempty"`
+	WhitelistedPodAnnotations  []string `yaml:"whitelistedPodAnnotations,omitempty"`
 }
 
 type Vsphere struct {

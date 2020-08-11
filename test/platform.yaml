@@ -38,7 +38,8 @@ registryCredentials:
     account: 745897381572
     region: us-east-1
 platformOperator:
-  version: 2020050908180831
+  version: v0.4.2
+  enableClusterResourceQuota: true
   whitelistedPodAnnotations:
     # used by filebeat
     - com.flanksource.infra.logs/enabled
@@ -54,7 +55,7 @@ kubeResourceReport:
   updateInterval: 1
   additionalClusterCost: 10.0
 canaryChecker:
-  version: v0.11.2
+  version: v0.11.4
 test:
   exclude:
     - dex
