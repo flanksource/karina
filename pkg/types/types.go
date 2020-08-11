@@ -74,10 +74,9 @@ func (vm VM) GetTags() map[string]string {
 }
 
 type Calico struct {
-	Disabled  bool                    `yaml:"disabled,omitempty"`
+	Disabled  `yaml:",inline"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
-	Version   string                  `yaml:"version"`
 	Log       string                  `yaml:"log,omitempty"`
 	BGPPeers  []calico.BGPPeer        `yaml:"bgpPeers,omitempty"`
 	BGPConfig calico.BGPConfiguration `yaml:"bgpConfig,omitempty"`
