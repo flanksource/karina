@@ -316,7 +316,7 @@ func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) erro
 			return true, nil
 		}
 		log.Warnf("retrying after error: %v", err)
-		*returnErr = err
+		returnErr = &err
 		return false, nil
 	})
 	if returnErr != nil {
