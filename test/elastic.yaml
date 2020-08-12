@@ -47,7 +47,7 @@ eventrouter:
 eck:
   version: 1.0.0
 platformOperator:
-  version: 2020050908180831
+  version: v0.4.3
   whitelistedPodAnnotations:
     # used by filebeat
     - com.flanksource.infra.logs/enabled
