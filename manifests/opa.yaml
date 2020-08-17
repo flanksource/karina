@@ -162,6 +162,10 @@ metadata:
   namespace: opa
 data:
   config.yaml: |
+  {{ if .opa.setDecisionLogs }}
+    decision_logs:
+      console: true
+  {{ end }}
     labels:
       domain: {{ .domain }}
   {{ if .opa.bundleUrl }}
