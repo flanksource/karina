@@ -96,7 +96,7 @@ spec:
   selector:
     matchLabels:
       app: kiosk
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -114,6 +114,22 @@ spec:
             requests:
               cpu: 10m
               memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8443
+              scheme: HTTPS
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8443
+              scheme: HTTPS
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
 ---
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
