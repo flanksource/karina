@@ -67,6 +67,7 @@ spec:
       targetPort: 8443
   selector:
     app: kiosk
+
 ---
 apiVersion: v1
 kind: Service
@@ -84,6 +85,22 @@ spec:
       name: http
   selector:
     app: kiosk
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: kiosk
+  namespace: platform-system
+spec:
+  secretName: kiosk-tls
+  dnsNames:
+    - kiosk
+    - kiosk.platform-system.svc
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -104,6 +121,10 @@ spec:
     spec:
       terminationGracePeriodSeconds: 10
       serviceAccountName: kiosk
+      volumes:
+        - name: certs
+          secret:
+            secretName: kiosk-tls
       containers:
         - command:
             - "/kiosk"
@@ -130,6 +151,9 @@ spec:
             failureThreshold: 6
             initialDelaySeconds: 5
             periodSeconds: 10
+          volumeMounts:
+            - name: certs
+              mountPath: /tmp/k8s-webhook-server/serving-certs
 ---
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
@@ -144,10 +168,68 @@ spec:
     name: kiosk-apiservice
     namespace: platform-system
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: kiosk
+  annotations:
+    cert-manager.io/inject-apiserver-ca: "true"
+    cert-manager.io/inject-ca-from-secret: platform-system/kiosk-tls
+webhooks:
+  - admissionReviewVersions:
+      - v1beta1
+    clientConfig:
+      service:
+        name: kiosk
+        namespace: platform-system
+        path: /quota
+        port: 443
+    failurePolicy: Fail
+    matchPolicy: Exact
+    name: accountquota.kiosk.sh
+    namespaceSelector:
+      matchExpressions:
+        - key: kiosk.sh/account
+          operator: Exists
+    objectSelector: {}
+    rules:
+      - apiGroups:
+          - "*"
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - "*"
+        scope: Namespaced
+    timeoutSeconds: 30
+    sideEffects: Unknown
+  - admissionReviewVersions:
+      - v1beta1
+    clientConfig:
+      service:
+        name: kiosk
+        namespace: platform-system
+        path: /validate
+        port: 443
+    failurePolicy: Fail
+    matchPolicy: Exact
+    name: config.kiosk.sh
+    namespaceSelector: {}
+    objectSelector: {}
+    sideEffects: Unknown
+    rules:
+      - apiGroups:
+          - config.kiosk.sh
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - "*"
+        scope: "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
