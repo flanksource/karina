@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type OpaError struct {
+type Error struct {
 	Status string `json:"status"`
 	Error  struct {
 		Code    string `json:"code"`
@@ -28,7 +28,7 @@ type OpaError struct {
 	} `json:"error"`
 }
 
-func (e OpaError) String() string {
+func (e Error) String() string {
 	msg := fmt.Sprintf("%s: %s", e.Error.Code, e.Error.Message)
 	for _, item := range e.Error.Errors {
 		msg += fmt.Sprintf(" (%s:%d:%d) %s:%s", item.Location.File, item.Location.Row, item.Location.Col, item.Code, item.Message)
@@ -54,8 +54,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 				// not an OPA policy
 				continue
 			}
-			opaError := OpaError{}
-			json.Unmarshal([]byte(status), &opaError)
+			opaError := Error{}
+			_ = json.Unmarshal([]byte(status), &opaError)
 			if opaError.Status == "ok" {
 				test.Passf(Namespace, "OPA policy %s loaded successfully", cm.Name)
 			} else {

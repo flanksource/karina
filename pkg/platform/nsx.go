@@ -95,7 +95,7 @@ func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) err
 	}
 
 	var returnErr *error
-	backoff(func() error {
+	_ = backoff(func() error {
 		err := nsx.tag(platform, vm)
 		if err != nil {
 			*returnErr = err
@@ -217,7 +217,7 @@ func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) erro
 		}
 	}
 
-	wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
+	_ = wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
 		err := fn()
 		if err == nil {
 			return true, nil

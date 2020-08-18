@@ -32,7 +32,6 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	TestPlatformOperatorPodAnnotations(platform, test)
 	TestPlatformOperatorClusterResourceQuota1(platform, test)
 	TestPlatformOperatorClusterResourceQuota2(platform, test)
-
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {

@@ -65,12 +65,12 @@ func (c *NSXClient) Init() error {
 	return nil
 }
 
-type NSXError struct {
-	HTTPStatus   string     `json:"httpStatus"`
-	ErrorCode    int        `json:"error_code"`
-	ModuleName   string     `json:"module_name"`
-	ErrorMessage string     `json:"error_message"`
-	Related      []NSXError `json:"related_errors"`
+type Error struct {
+	HTTPStatus   string  `json:"httpStatus"`
+	ErrorCode    int     `json:"error_code"`
+	ModuleName   string  `json:"module_name"`
+	ErrorMessage string  `json:"error_message"`
+	Related      []Error `json:"related_errors"`
 }
 
 func getError(body []byte, code int) error {
@@ -78,18 +78,15 @@ func getError(body []byte, code int) error {
 		return nil
 	}
 
-	err := NSXError{}
+	err := Error{}
 	if unmarshallErr := json.Unmarshal(body, &err); unmarshallErr == nil {
 		if len(err.Related) > 0 {
 			err = err.Related[0]
 		}
 		if err.ErrorCode == code {
 			return fmt.Errorf("%d: %s", code, err.ErrorMessage)
-
-		} else {
-			return fmt.Errorf("%d: %d: %s", code, err.ErrorCode, err.ErrorMessage)
-
 		}
+		return fmt.Errorf("%d: %d: %s", code, err.ErrorCode, err.ErrorMessage)
 	}
 	return fmt.Errorf("%d: %s", code, string(body))
 }
