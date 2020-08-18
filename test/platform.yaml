@@ -1,15 +1,16 @@
 importConfigs:
   - minimal.yaml
 opa:
-  version: 0.17.3
+  version: 0.22.0
   e2e:
     fixtures: test/opa/opa-fixtures
   policies: test/opa/policies
-  kubeMgmtVersion: 0.10
+  kubeMgmtVersion: 0.11
   bundleUrl: http://minio.minio.svc:9000
   bundlePrefix: bundles
   bundleServiceName: automobile
   logFormat: json-pretty
+  logLevel: debug
   setDecisionLogs: true
 velero:
   bucket: velero
@@ -38,7 +39,8 @@ registryCredentials:
     account: 745897381572
     region: us-east-1
 platformOperator:
-  version: 2020050908180831
+  version: v0.4.3-alpha1
+  enableClusterResourceQuota: true
   whitelistedPodAnnotations:
     # used by filebeat
     - com.flanksource.infra.logs/enabled
@@ -54,11 +56,11 @@ kubeResourceReport:
   updateInterval: 1
   additionalClusterCost: 10.0
 canaryChecker:
-  version: v0.11.2
+  version: v0.11.4
 test:
   exclude:
     - dex
     - audit
     - encryption
 kiosk:
-  version: 0.1.17
+  version: 0.1.18

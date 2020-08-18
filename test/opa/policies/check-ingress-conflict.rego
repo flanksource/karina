@@ -10,5 +10,5 @@ deny[msg] {
     ingress := ingresses[other_ns][other_ingress]
     other_ns != input.request.namespace
     ingress.spec.rules[_].host == host
-    msg := sprintf("invalid ingress host %q (conflicts with %v/%v)", [host, other_ns, other_ingress])
+    msg =  sprintf("invalid ingress host %q (conflicts with %v/%v)", [host, other_ns, other_ingress])
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/base"
@@ -148,6 +149,7 @@ func init() {
 		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
 		"postgres-operator":    postgresoperator.Test,
+		"platform-operator":    platformoperator.Test,
 		"promtheus":            monitoring.TestPrometheus,
 		"quack":                quack.Test,
 		"registry-creds":       registrycreds.Test,

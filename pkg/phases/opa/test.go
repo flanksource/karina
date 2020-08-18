@@ -1,12 +1,40 @@
 package opa
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type Error struct {
+	Status string `json:"status"`
+	Error  struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+		Errors  []struct {
+			Code     string `json:"code"`
+			Message  string `json:"message"`
+			Location struct {
+				File string `json:"file"`
+				Row  int    `json:"row"`
+				Col  int    `json:"col"`
+			} `json:"location"`
+		} `json:"errors"`
+	} `json:"error"`
+}
+
+func (e Error) String() string {
+	msg := fmt.Sprintf("%s: %s", e.Error.Code, e.Error.Message)
+	for _, item := range e.Error.Errors {
+		msg += fmt.Sprintf(" (%s:%d:%d) %s:%s", item.Location.File, item.Location.Row, item.Location.Col, item.Code, item.Message)
+	}
+	return msg
+}
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.OPA != nil && p.OPA.Disabled {
@@ -15,7 +43,26 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, "opa", test)
+	k8s.TestNamespace(client, Namespace, test)
+	configs, err := client.CoreV1().ConfigMaps(Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		test.Failf(Namespace, "failed to list policies via configmap: %v", err)
+	} else {
+		for _, cm := range configs.Items {
+			status, ok := cm.Annotations["openpolicyagent.org/policy-status"]
+			if !ok || cm.Name == "opa-config" {
+				// not an OPA policy
+				continue
+			}
+			opaError := Error{}
+			_ = json.Unmarshal([]byte(status), &opaError)
+			if opaError.Status == "ok" {
+				test.Passf(Namespace, "OPA policy %s loaded successfully", cm.Name)
+			} else {
+				test.Failf(Namespace, "OPA policy %s did not load: %s", cm.Name, opaError)
+			}
+		}
+	}
 	if p.E2E {
 		testE2E(p, test)
 	}

@@ -21,11 +21,11 @@ func Install(platform *platform.Platform) error {
 		return nil
 	}
 	if platform.OPA.KubeMgmtVersion == "" {
-		platform.OPA.KubeMgmtVersion = "0.8"
+		platform.OPA.KubeMgmtVersion = "0.11"
 	}
 
 	if platform.OPA.LogLevel == "" {
-		platform.OPA.LogLevel = "error"
+		platform.OPA.LogLevel = "info"
 	}
 
 	if err := platform.CreateOrUpdateNamespace(Namespace, map[string]string{
