@@ -40,7 +40,7 @@
 
 
 ### Getting Started
-To get started provisioning see the quickstart's for [Kind](https://karina.docs.flanksource.com/admin-guide/provisioning/kind.md) and [vSphere](https://karina.docs.flanksource.com/admin-guide/provisioning/vsphere.md) <br>
+To get started provisioning see the quickstart's for [Kind](https://karina.docs.flanksource.com/admin-guide/provisioning/kind/) and [vSphere](https://karina.docs.flanksource.com/admin-guide/provisioning/vsphere/) <br>
 
 ### Production Runtime
 
