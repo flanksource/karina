@@ -55,6 +55,7 @@ test:
     - configmap-reloader
     - registry-creds
     - platform-operator
+    - opa
 platformOperator:
   version: v0.4.3-alpha1
   whitelistedPodAnnotations:
