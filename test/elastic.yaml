@@ -54,6 +54,7 @@ test:
     - kiosk
     - configmap-reloader
     - registry-creds
+    - platform-operator
 platformOperator:
   version: v0.4.3-alpha1
   whitelistedPodAnnotations:
