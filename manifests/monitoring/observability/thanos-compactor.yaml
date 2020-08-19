@@ -27,6 +27,10 @@ spec:
             - "compact"
             - "--log.level=debug"
             - "--data-dir=/var/thanos/store"
+            - "--retention.resolution-5m=50d"
+            - "--retention.resolution-1h=400d"
+            - "--retention.resolution-raw=3d"
+            - "--delete-delay=2h"
             - "--objstore.config-file=/config/thanos.yaml"
             - "--wait"
           ports:
