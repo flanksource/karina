@@ -22,7 +22,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
-	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
@@ -139,7 +138,6 @@ func init() {
 		"eck":                  eck.Test,
 		"elasticsearch":        elasticsearch.Test,
 		"encryption":           kubeadm.TestEncryption,
-		"fluentd":              fluentdoperator.Test,
 		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
 		"kiosk":                kiosk.Test,

@@ -598,16 +598,8 @@ type ThanosE2E struct {
 	Server string `yaml:"server,omitempty"`
 }
 
-type FluentdOperator struct {
-	Disabled             bool       `yaml:"disabled,omitempty"`
-	Version              string     `yaml:"version"`
-	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
-	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
-}
-
 type Filebeat struct {
-	Enabled       `yaml:",inline"`
-	Version       string      `yaml:"version"`
+	Disabled      `yaml:",inline"`
 	Name          string      `yaml:"name"`
 	Index         string      `yaml:"index"`
 	Prefix        string      `yaml:"prefix"`

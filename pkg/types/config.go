@@ -61,7 +61,6 @@ type PlatformConfig struct {
 	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`
 	Nginx               *Nginx               `yaml:"nginx,omitempty"`
 	Minio               *Enabled             `yaml:"minio,omitempty"`
-	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
 	ECK                 *ECK                 `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
 	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`

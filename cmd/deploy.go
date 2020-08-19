@@ -18,7 +18,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/eventrouter"
 	"github.com/flanksource/karina/pkg/phases/filebeat"
-	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/journalbeat"
@@ -54,7 +53,6 @@ var Phases = map[string]DeployFn{
 	"eck":                  eck.Deploy,
 	"elasticsearch":        elasticsearch.Deploy,
 	"eventrouter":          eventrouter.Deploy,
-	"fluentd":              fluentdoperator.Deploy,
 	"filebeat":             filebeat.Deploy,
 	"gitops":               flux.Install,
 	"harbor":               harbor.Deploy,
