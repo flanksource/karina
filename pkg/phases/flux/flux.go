@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -115,7 +116,11 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 			Build()
 	}
 
-	spec.Deployment("flux-"+cr.Name, fmt.Sprintf("%s:%s", "docker.io/fluxcd/flux", cr.FluxVersion)).
+	repo := "docker.io/fluxcd/flux"
+	if strings.Contains(cr.FluxVersion, "flanksource") {
+		repo = "docker.io/flanksource/flux"
+	}
+	spec.Deployment("flux-"+cr.Name, fmt.Sprintf("%s:%s", repo, cr.FluxVersion)).
 		Labels(map[string]string{
 			"app": "flux",
 		}).
