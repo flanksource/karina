@@ -351,12 +351,11 @@ func (platform *Platform) DeleteNode(name string) error {
 	} else if err != nil {
 		return err
 	}
-	if err := client.CoreV1().Nodes().Delete(node.Name, &metav1.DeleteOptions{}); err == nil {
+	err = client.CoreV1().Nodes().Delete(node.Name, &metav1.DeleteOptions{})
+	if err == nil {
 		platform.Infof("[%s] deleted node", node.Name)
-		return nil
-	} else {
-		return err
 	}
+	return err
 }
 
 func (platform *Platform) GetConsulClient() api.Consul {

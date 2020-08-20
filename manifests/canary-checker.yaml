@@ -492,9 +492,8 @@ spec:
               format: date-time
               type: string
             latency1h:
-              description: Average latency in milliseconds to complete all checks
-              format: int64
-              type: integer
+              description: Average latency to complete all checks
+              type: string
             message:
               type: string
             observedGeneration:

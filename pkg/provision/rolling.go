@@ -52,7 +52,11 @@ func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster,
 
 	if err := waitForNode(platform, replacement.Name(), opts.Timeout); err != nil {
 		platform.Errorf("[%s] terminating node that did not come up healthy", replacement)
-		go cluster.Terminate(replacement)
+		go func() {
+			if err := cluster.Terminate(replacement); err != nil {
+				platform.Errorf("failed to terminate %s, %v", replacement, err)
+			}
+		}()
 		return err
 	}
 	return nil
@@ -82,7 +86,6 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 	}
 	sort.Sort(toReplace)
 	return &toReplace
-
 }
 
 // Perform a rolling update of nodes
@@ -105,7 +108,8 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 	total := 0
 
 	workerOpts := RollingOptions{}
-	copier.Copy(&workerOpts, &opts)
+
+	_ = copier.Copy(&workerOpts, &opts)
 	if opts.Masters {
 		opts.Workers = false
 		// first we roll all masters sequentially
@@ -155,7 +159,6 @@ func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (i
 					wg.Done()
 					replaced <- _nodeMachine
 				}
-
 			}()
 			// force each replacement to have a different timestamp
 			time.Sleep(2 * time.Second)
@@ -171,6 +174,7 @@ func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (i
 				toReplace.Push(nodeMachine)
 			case nodeMachine := <-replaced:
 				// terminate successful replacements
+				// nolint: errcheck
 				go cluster.Terminate(nodeMachine.Machine)
 				rolled++
 			default:
@@ -190,7 +194,7 @@ func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (i
 			}
 			return true
 		}); !succeededWithinTimeout {
-			return rolled, fmt.Errorf("Health degraded after waiting %v", timer)
+			return rolled, fmt.Errorf("health degraded after waiting %v", timer)
 		}
 		if platform.GetHealth().IsDegradedComparedTo(health, opts.HealthTolerance) {
 			return rolled, fmt.Errorf("cluster is not healthy, aborting rollout after %d of %d ", rolled, cluster.Nodes.Len())

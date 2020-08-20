@@ -187,7 +187,9 @@ func downscale(platform *platform.Platform) error {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					cluster.Terminate(vm)
+					if err := cluster.Terminate(vm); err != nil {
+						platform.Errorf("failed to terminate %s: %v", vm, err)
+					}
 				}()
 			}
 		}
@@ -310,13 +312,13 @@ func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) erro
 		}
 	}
 
-	wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
+	_ = wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
 		err := fn()
 		if err == nil {
 			return true, nil
 		}
 		log.Warnf("retrying after error: %v", err)
-		*returnErr = err
+		returnErr = &err
 		return false, nil
 	})
 	if returnErr != nil {

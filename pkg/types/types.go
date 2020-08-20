@@ -74,10 +74,9 @@ func (vm VM) GetTags() map[string]string {
 }
 
 type Calico struct {
-	Disabled  bool                    `yaml:"disabled,omitempty"`
+	Disabled  `yaml:",inline"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
-	Version   string                  `yaml:"version"`
 	Log       string                  `yaml:"log,omitempty"`
 	BGPPeers  []calico.BGPPeer        `yaml:"bgpPeers,omitempty"`
 	BGPConfig calico.BGPConfiguration `yaml:"bgpConfig,omitempty"`
@@ -778,9 +777,10 @@ type RegistryCredentialsACR struct {
 }
 
 type PlatformOperator struct {
-	Disabled                  bool     `yaml:"disabled,omitempty"`
-	Version                   string   `yaml:"version"`
-	WhitelistedPodAnnotations []string `yaml:"whitelistedPodAnnotations"`
+	Disabled                   bool     `yaml:"disabled,omitempty"`
+	Version                    string   `yaml:"version"`
+	EnableClusterResourceQuota bool     `yaml:"enableClusterResourceQuota,omitempty"`
+	WhitelistedPodAnnotations  []string `yaml:"whitelistedPodAnnotations,omitempty"`
 }
 
 type Vsphere struct {

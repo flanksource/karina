@@ -23,7 +23,9 @@ func TerminateOrphans(platform *platform.Platform) error {
 	for _, orphan := range cluster.Orphans {
 		time.Sleep(1 * time.Second) // sleep to allow for cancellation
 		platform.Infof("Deleting %s", orphan.Name())
-		cluster.Terminate(orphan)
+		if err := cluster.Terminate(orphan); err != nil {
+			platform.Errorf("failed to terminate %s: %v", orphan, err)
+		}
 	}
 	return nil
 }
@@ -50,7 +52,9 @@ func TerminateNodes(platform *platform.Platform, nodes []string) error {
 		if err := cluster.Cordon(node); err != nil {
 			return err
 		}
-		cluster.Terminate(machine)
+		if err := cluster.Terminate(machine); err != nil {
+			platform.Errorf("failed to terminate %s: %v", machine, err)
+		}
 	}
 	return nil
 }
@@ -156,7 +160,6 @@ func terminateConsul(platform *platform.Platform, name string) error {
 }
 
 func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
-
 	if err := backoff(func() error {
 		return terminateEtcd(platform, etcdClient, name)
 	}, platform.Logger, nil); err != nil {
@@ -214,7 +217,9 @@ func Cleanup(platform *platform.Platform) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			cluster.Terminate(vm)
+			if err := cluster.Terminate(vm); err != nil {
+				platform.Errorf("failed to terminate %s: %v", vm, err)
+			}
 		}()
 	}
 

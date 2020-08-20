@@ -46,8 +46,18 @@ eventrouter:
   version: v0.3
 eck:
   version: 1.0.0
+test:
+  exclude:
+    - dex
+    - audit
+    - encryption
+    - kiosk
+    - configmap-reloader
+    - registry-creds
+    - platform-operator
+    - opa
 platformOperator:
-  version: v0.4.3
+  version: v0.4.3-alpha1
   whitelistedPodAnnotations:
     # used by filebeat
     - com.flanksource.infra.logs/enabled

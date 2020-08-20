@@ -453,7 +453,7 @@ metadata:
   name: platform-operator
   namespace: platform-system
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       control-plane: controller-manager
@@ -463,32 +463,35 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - args:
-        - --enable-leader-election
-        - --annotations={{ conv.Join .platformOperator.whitelistedPodAnnotations "," }}
-        - --oauth2-proxy-service-name=oauth2-proxy
-        - --oauth2-proxy-service-namespace=ingress-nginx
-        - --domain={{ .domain }}
-        command:
-        - /manager
-        image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"
-        imagePullPolicy: IfNotPresent
-        name: manager
-        ports:
-        - containerPort: 9443
-          name: webhook-server
-          protocol: TCP
-        resources:
-          limits:
-            cpu: 100m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
-        volumeMounts:
-        - mountPath: /tmp/k8s-webhook-server/serving-certs
-          name: cert
-          readOnly: true
+        - args:
+            - --enable-leader-election
+            - --enable-cluster-resource-quota={{.platformOperator.enableClusterResourceQuota}}
+            - --annotations={{ conv.Join .platformOperator.whitelistedPodAnnotations "," }}
+            - --oauth2-proxy-service-name=oauth2-proxy
+            - --oauth2-proxy-service-namespace=ingress-nginx
+          command:
+            - /manager
+          image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"
+          imagePullPolicy: Always
+          name: manager
+          ports:
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+            - containerPort: 6060
+              name: pprof
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 384Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: cert
+              readOnly: true
       serviceAccountName: platform-operator
       terminationGracePeriodSeconds: 10
       volumes:
