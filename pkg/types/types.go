@@ -34,7 +34,7 @@ type CertManager struct {
 }
 
 type VaultClient struct {
-	// The address of a remote Vault server to use for signinig
+	// The address of a remote Vault server to use for signing
 	Address string `yaml:"address"`
 
 	// The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca
@@ -581,9 +581,10 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled bool   `yaml:"disabled"`
-	Version  string `yaml:"version"`
-	// Must be either `client` or `obeservability`.
+	Disabled `yaml:",inline"`
+	// Retention of long-term storage, defaults to 180d
+	Retention string `yaml:"retention,omitempty"`
+	// Must be either `client` or `observability`.
 	Mode string `yaml:"mode,omitempty"`
 	// Bucket to store metrics. Must be the same across all environments
 	Bucket string `yaml:"bucket,omitempty"`
@@ -644,7 +645,7 @@ type Vault struct {
 	Roles         map[string]map[string]interface{} `yaml:"roles,omitempty"`
 	Policies      map[string]VaultPolicy            `yaml:"policies,omitempty"`
 	GroupMappings map[string][]string               `yaml:"groupMappings,omitempty"`
-	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
+	// ExtraConfig is an escape hatch that allows writing to arbitrary vault paths
 	ExtraConfig map[string]map[string]interface{} `yaml:"config,omitempty"`
 	Disabled    bool                              `yaml:"disabled,omitempty"`
 	AccessKey   string                            `yaml:"accessKey,omitempty"`
