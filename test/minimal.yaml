@@ -37,6 +37,7 @@ calico:
   version: v3.8.2
 s3:
   endpoint: https://play.min.io
+  externalEndpoint: play.min.io
   #  externalEndpoint: minio.127.0.0.1.nip.io
   # access_key: minio
   # secret_key: minio123
