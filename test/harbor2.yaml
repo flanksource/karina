@@ -2,7 +2,7 @@ importConfigs:
   - minimal.yaml
 harbor:
   replicas: 1
-  bucket: harbor-blobs
+  bucket: karina-harbor-e2e
   version: v2.0.0
 postgresOperator:
   version: v1.3.4.flanksource.1

@@ -92,4 +92,4 @@ vault:
       allowed_domains:
         - 127.0.0.1.nip.io
   consul:
-    bucket: "consul-backups"
+    bucket: "karina-consul-backups"

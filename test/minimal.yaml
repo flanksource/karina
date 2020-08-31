@@ -36,17 +36,18 @@ serviceSubnet: 100.100.0.0/16
 calico:
   version: v3.8.2
 s3:
-  endpoint: http://minio.minio.svc:9000
-  externalEndpoint: minio.127.0.0.1.nip.io
-  bucket: harbor
-  access_key: minio
-  secret_key: minio123
+  endpoint: https://play.min.io
+  #  externalEndpoint: minio.127.0.0.1.nip.io
+  # access_key: minio
+  # secret_key: minio123
   region: us-east1
-  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
+  secret_key: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+  access_key: Q3AM3UQ867SPQQA43P2F
+  #kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
   usePathStyle: true
   skipTLSVerify: true
   e2e:
-    minio: true
+    minio: false
 ca:
   cert: .certs/root-ca.crt
   privateKey: .certs/root-ca.key

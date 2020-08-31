@@ -13,7 +13,7 @@ opa:
   logLevel: debug
   setDecisionLogs: true
 velero:
-  bucket: velero
+  bucket: karina-velero
 configmapReloader:
   version: "v0.0.56"
 sealedSecrets:
