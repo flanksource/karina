@@ -85,7 +85,12 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [ "/bin/sh",
             "-ce",
-            "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  http://minio-{0...{{ math.Add .minio.replicas -1 }}}.minio-svc.minio:9000/export" ]
+            {{ if eq .minio.replicas 1}}
+             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  /export"
+            {{else}}
+             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  http://minio-{0...{{ math.Add .minio.replicas -1 }}}.minio-svc.minio:9000/export"
+            {{end}}
+            ]
           volumeMounts:
             - name: export
               mountPath: /export

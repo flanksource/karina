@@ -48,7 +48,7 @@ minio:
   version: RELEASE.2020-09-02T18-19-50Z
   access_key: minio
   secret_key: minio123
-  replicas: 4
+  replicas: 1
 ca:
   cert: .certs/root-ca.crt
   privateKey: .certs/root-ca.key

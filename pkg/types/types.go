@@ -223,7 +223,7 @@ type S3Connection struct {
 
 type Minio struct {
 	Disabled     `yaml:",inline"`
-	Replicas     int         `yaml:"replicas,omitempty`
+	Replicas     int         `yaml:"replicas,omitempty"`
 	AccessKey    string      `yaml:"access_key,omitempty"`
 	SecretKey    string      `yaml:"secret_key,omitempty"`
 	KMSMasterKey string      `yaml:"kmsMasterKey,omitempty"`
