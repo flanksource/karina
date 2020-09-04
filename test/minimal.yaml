@@ -33,6 +33,8 @@ versions:
   apacheds: 0.7.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
+platformOperator:
+  version: v0.4.3-alpha1
 calico:
   version: v3.8.2
 s3:
@@ -46,7 +48,7 @@ minio:
   version: RELEASE.2020-09-02T18-19-50Z
   access_key: minio
   secret_key: minio123
-  replicas: 2
+  replicas: 4
 ca:
   cert: .certs/root-ca.crt
   privateKey: .certs/root-ca.key
