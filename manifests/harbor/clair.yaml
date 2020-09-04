@@ -73,6 +73,12 @@ spec:
             - name: config
               mountPath: /etc/clair/config.yaml
               subPath: config.yaml
+            - name: trusted-certs
+              mountPath: /harbor_cust_cert/trusted_ca.crt
+              subPath: ca.crt
+            - name: core-internal-certs
+              mountPath: /harbor_cust_cert/core.crt
+              subPath: ca.crt
         - name: adapter
           {{- if .harbor.version | strings.HasPrefix "v1" }}
           image: docker.io/goharbor/clair-adapter-photon:v1.0.1-{{.harbor.version}}
@@ -110,8 +116,21 @@ spec:
               value: "{{.harbor.logLevel}}"
           ports:
             - containerPort: 8080
+          volumeMounts:
+          - name: trusted-certs
+            mountPath: /harbor_cust_cert/trusted_ca.crt
+            subPath: ca.crt
+          - name: core-internal-certs
+            mountPath: /harbor_cust_cert/core.crt
+            subPath: ca.crt
       volumes:
         - name: config
           secret:
             secretName: "harbor-clair"
----
+        - name: trusted-certs
+          configMap:
+            name: trusted-certs
+        - name: core-internal-certs
+          secret:
+            secretName: core-internal-certs
+

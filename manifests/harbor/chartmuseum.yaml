@@ -33,9 +33,9 @@ data:
   {{ else }}
   STORAGE: "amazon"
   STORAGE_AMAZON_BUCKET: "{{.harbor.bucket}}"
-  STORAGE_AMAZON_REGION: "{{.s3.region}}"
-  STORAGE_AMAZON_ENDPOINT: "{{.s3.endpoint}}"
-  AWS_ACCESS_KEY_ID: "{{.s3.access_key}}"
+  STORAGE_AMAZON_REGION: "{{.harbor.s3.region}}"
+  STORAGE_AMAZON_ENDPOINT: "{{.harbor.s3.endpoint}}"
+  AWS_ACCESS_KEY_ID: "{{.harbor.s3.access_key}}"
   {{ end }}
 
 ---
@@ -136,8 +136,13 @@ spec:
             - name: chart-internal-certs
               mountPath: /etc/harbor/ssl/chartmuseum.key
               subPath: tls.key
-
+            - name: trusted-certs
+              mountPath: /harbor_cust_cert/trusted_ca.crt
+              subPath: ca.crt
       volumes:
+        - name: trusted-certs
+          configMap:
+            name: trusted-certs
         - name: chart-internal-certs
           secret:
             secretName: chart-internal-certs
@@ -148,7 +153,6 @@ spec:
           {{ else }}
           emptyDir: {}
           {{ end }}
-
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate

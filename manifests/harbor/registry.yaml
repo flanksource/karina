@@ -20,9 +20,9 @@ data:
         maxthreads: 100
       {{ else }}
       s3:
-        region: {{.s3.region}}
+        region: {{.harbor.s3.region}}
         bucket: {{.harbor.bucket}}
-        regionendpoint: {{.s3.endpoint}}
+        regionendpoint: {{.harbor.s3.endpoint}}
         skipverify: true
       {{ end }}
       cache:

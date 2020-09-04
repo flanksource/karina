@@ -3,9 +3,19 @@ importConfigs:
 harbor:
   replicas: 1
   bucket: karina-harbor-e2e
-  version: v2.0.0
+  version: v2.0.2
+  s3:
+    access_key: minio
+    secret_key: minio123
+    externalEndpoint: minio.127.0.0.1.nip.io
+    endpoint: minio.minio.svc
 postgresOperator:
   version: v1.3.4.flanksource.1
+minio:
+  version: RELEASE.2020-09-02T18-19-50Z
+  access_key: minio
+  secret_key: minio123
+  replicas: 2
 test:
   exclude:
     - postgres-operator

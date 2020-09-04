@@ -119,6 +119,7 @@ type Harbor struct {
 	Projects map[string]HarborProject `yaml:"projects,omitempty"`
 	Settings *HarborSettings          `yaml:"settings,omitempty"`
 	Replicas int                      `yaml:"replicas,omitempty"`
+	S3       *S3Connection            `yaml:"s3,omitempty"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
@@ -196,6 +197,14 @@ type SMTP struct {
 }
 
 type S3 struct {
+	S3Connection `yaml:",inline"`
+	CSIVolumes   bool `yaml:"csiVolumes,omitempty"`
+	// Provide a KMS Master Key
+	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
+	E2E          S3E2E  `yaml:"e2e,omitempty"`
+}
+
+type S3Connection struct {
 	AccessKey string `yaml:"access_key,omitempty"`
 	SecretKey string `yaml:"secret_key,omitempty"`
 	Bucket    string `yaml:"bucket,omitempty"`
@@ -206,14 +215,12 @@ type S3 struct {
 	// The endpoint at which S3 is accessible outside the cluster,
 	// When deploying locally on kind specify: *minio.127.0.0.1.nip.io*
 	ExternalEndpoint string `yaml:"externalEndpoint,omitempty"`
-	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
-	// S3 buckets
-	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
-	// Provide a KMS Master Key
-	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
 	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
 	UsePathStyle bool `yaml:"usePathStyle"`
 	// Skip TLS verify when connecting to S3
+	SkipTLSVerify bool `yaml:"skipTLSVerify"`
+}
+
 type Minio struct {
 	Disabled     `yaml:",inline"`
 	Replicas     int         `yaml:"replicas,omitempty`
@@ -227,7 +234,7 @@ type S3E2E struct {
 	Minio bool `yaml:"minio,omitempty"`
 }
 
-func (s3 S3) GetExternalEndpoint() string {
+func (s3 S3Connection) GetExternalEndpoint() string {
 	if s3.ExternalEndpoint != "" {
 		return s3.ExternalEndpoint
 	}
