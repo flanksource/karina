@@ -689,23 +689,73 @@ func (platform *Platform) GetOrCreateBucket(name string) error {
 	return nil
 }
 
-func (platform *Platform) GetS3Client() (*minio.Client, error) {
-	endpoint := platform.S3.GetExternalEndpoint()
+func (platform *Platform) GetOrCreateBucketFor(conn types.S3Connection, name string) error {
+	if platform.ApplyDryRun {
+		platform.Debugf("[dry-run] creating bucket %s", name)
+		return nil
+	}
+	s3Client, err := platform.GetS3ClientFor(conn)
+	if err != nil {
+		return fmt.Errorf("failed to get S3 client: %v", err)
+	}
+
+	exists, err := s3Client.BucketExists(name)
+	if err != nil {
+		return fmt.Errorf("failed to check S3 bucket: %v", err)
+	}
+	if !exists {
+		platform.Infof("Creating s3://%s", name)
+		if err := s3Client.MakeBucket(name, platform.S3.Region); err != nil {
+			return fmt.Errorf("failed to create S3 bucket: %v", err)
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client, error) {
+	endpoint := conn.Endpoint
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: tr}
 
-	if endpoint == "" {
-		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", platform.S3.Region)
+	if strings.HasSuffix(endpoint, ".svc") {
+		client, _ := platform.GetClientset()
+		name := strings.Split(endpoint, ".")[0]
+		ns := strings.Split(endpoint, ".")[1]
+		svc, err := client.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		port := int(svc.Spec.Ports[0].Port)
+
+		dialer, _ := platform.GetProxyDialer(proxy.Proxy{
+			Namespace:    ns,
+			Kind:         "pods",
+			ResourceName: name + "-0",
+			Port:         port,
+		})
+		platform.Infof("proxying %s through svc=%s ns=%s port=%d", endpoint, name, ns, port)
+		tr = &http.Transport{
+			DialContext:     dialer.DialContext,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
 	}
 
-	s3, err := minio.New(endpoint, platform.S3.AccessKey, platform.S3.SecretKey, false)
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", conn.Region)
+	}
+
+	s3, err := minio.New(endpoint, conn.AccessKey, conn.SecretKey, false)
 	if err != nil {
 		return nil, err
 	}
-	s3.SetCustomTransport(client.Transport)
+	s3.SetCustomTransport(tr)
 	return s3, nil
+}
+
+func (platform *Platform) GetS3Client() (*minio.Client, error) {
+	return platform.GetS3ClientFor(platform.S3.S3Connection)
 }
 
 func (platform *Platform) GetAWSSession() (*session.Session, error) {

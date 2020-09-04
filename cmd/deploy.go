@@ -6,6 +6,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/canary"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
+	"github.com/flanksource/karina/pkg/phases/minio"
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
@@ -60,6 +61,7 @@ var Phases = map[string]DeployFn{
 	"kiosk":                kiosk.Deploy,
 	"kube-web-view":        kubewebview.Install,
 	"kube-resource-report": kuberesourcereport.Install,
+	"minio":                minio.Install,
 	"monitoring":           monitoring.Install,
 	"opa":                  opa.Install,
 	"nsx":                  nsx.Install,
@@ -81,7 +83,7 @@ var PhasesExtra = map[string]DeployFn{
 	"quack":             quack.Install,
 }
 
-var PhaseOrder = []string{"calico", "nsx", "base", "stubs", "postgres-operator", "dex", "vault"}
+var PhaseOrder = []string{"calico", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
 
 var Deploy = &cobra.Command{
 	Use: "deploy",

@@ -25,7 +25,4 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 		k8s.TestNamespace(client, "ingress-nginx", test)
 	}
 
-	if platform.Minio == nil || !platform.Minio.Disabled {
-		k8s.TestNamespace(client, "minio", test)
-	}
 }

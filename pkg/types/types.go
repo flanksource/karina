@@ -214,8 +214,13 @@ type S3 struct {
 	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
 	UsePathStyle bool `yaml:"usePathStyle"`
 	// Skip TLS verify when connecting to S3
-	SkipTLSVerify bool  `yaml:"skipTLSVerify"`
-	E2E           S3E2E `yaml:"e2e,omitempty"`
+type Minio struct {
+	Disabled     `yaml:",inline"`
+	Replicas     int         `yaml:"replicas,omitempty`
+	AccessKey    string      `yaml:"access_key,omitempty"`
+	SecretKey    string      `yaml:"secret_key,omitempty"`
+	KMSMasterKey string      `yaml:"kmsMasterKey,omitempty"`
+	Persistence  Persistence `yaml:"persistence,omitempty"`
 }
 
 type S3E2E struct {

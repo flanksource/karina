@@ -13,6 +13,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
+	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 
 	"github.com/flanksource/commons/console"
@@ -144,6 +145,7 @@ func init() {
 		"monitoring":           monitoring.Test,
 		"kube-web-view":        kubewebview.TestKubeWebView,
 		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
+		"minio":                minio.Test,
 		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
 		"postgres-operator":    postgresoperator.Test,
