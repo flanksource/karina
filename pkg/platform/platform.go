@@ -712,34 +712,39 @@ func (platform *Platform) GetOrCreateBucketFor(conn types.S3Connection, name str
 	return nil
 }
 
+func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, error) {
+	client, _ := platform.GetClientset()
+	name := strings.Split(endpoint, ".")[0]
+	ns := strings.Split(endpoint, ".")[1]
+	svc, err := client.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	port := int(svc.Spec.Ports[0].Port)
+	dialer, _ := platform.GetProxyDialer(proxy.Proxy{
+		Namespace:    ns,
+		Kind:         "pods",
+		ResourceName: name + "-0",
+		Port:         port,
+	})
+	platform.Infof("proxying %s through svc=%s ns=%s port=%d", endpoint, name, ns, port)
+	return &http.Transport{
+		DialContext:     dialer.DialContext,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}, nil
+}
+
 func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client, error) {
 	endpoint := conn.Endpoint
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-
+	var err error
 	if strings.HasSuffix(endpoint, ".svc") {
-		client, _ := platform.GetClientset()
-		name := strings.Split(endpoint, ".")[0]
-		ns := strings.Split(endpoint, ".")[1]
-		svc, err := client.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+		tr, err = platform.GetProxyTransport(endpoint)
 		if err != nil {
 			return nil, err
 		}
-		port := int(svc.Spec.Ports[0].Port)
-
-		dialer, _ := platform.GetProxyDialer(proxy.Proxy{
-			Namespace:    ns,
-			Kind:         "pods",
-			ResourceName: name + "-0",
-			Port:         port,
-		})
-		platform.Infof("proxying %s through svc=%s ns=%s port=%d", endpoint, name, ns, port)
-		tr = &http.Transport{
-			DialContext:     dialer.DialContext,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-
 	}
 
 	if endpoint == "" {
@@ -760,12 +765,21 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 
 func (platform *Platform) GetAWSSession() (*session.Session, error) {
 	tr := &http.Transport{}
+
 	if platform.S3.SkipTLSVerify {
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
+	var err error
+	if strings.HasSuffix(platform.S3.Endpoint, ".svc") {
+		tr, err = platform.GetProxyTransport(platform.S3.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cfg := aws.NewConfig().
 		WithRegion(platform.S3.Region).
-		WithEndpoint(platform.S3.ExternalEndpoint).
+		WithEndpoint(platform.S3.Endpoint).
 		WithCredentials(
 			credentials.NewStaticCredentials(platform.S3.AccessKey, platform.S3.SecretKey, ""),
 		).

@@ -134,10 +134,6 @@ func deployThanos(p *platform.Platform) error {
 		return nil
 	}
 
-	if p.S3.ExternalEndpoint == "" {
-		p.S3.ExternalEndpoint = p.S3.Endpoint
-	}
-
 	if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
 		return err
 	}

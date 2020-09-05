@@ -212,9 +212,6 @@ type S3Connection struct {
 	// The endpoint at which the S3-like object storage will be available from inside the cluster
 	// e.g. if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000`
 	Endpoint string `yaml:"endpoint,omitempty"`
-	// The endpoint at which S3 is accessible outside the cluster,
-	// When deploying locally on kind specify: *minio.127.0.0.1.nip.io*
-	ExternalEndpoint string `yaml:"externalEndpoint,omitempty"`
 	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
 	UsePathStyle bool `yaml:"usePathStyle"`
 	// Skip TLS verify when connecting to S3
@@ -232,13 +229,6 @@ type Minio struct {
 
 type S3E2E struct {
 	Minio bool `yaml:"minio,omitempty"`
-}
-
-func (s3 S3Connection) GetExternalEndpoint() string {
-	if s3.ExternalEndpoint != "" {
-		return s3.ExternalEndpoint
-	}
-	return s3.Endpoint
 }
 
 type NFS struct {
