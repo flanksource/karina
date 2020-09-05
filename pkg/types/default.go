@@ -24,6 +24,10 @@ func DefaultPlatformConfig() PlatformConfig {
 		EventRouter: EventRouter{
 			FilebeatPrefix: "com.flanksource.infra",
 		},
+		PlatformOperator: &PlatformOperator{
+			EnableClusterResourceQuota: false,
+			WhitelistedPodAnnotations:  []string{"com.flanksource.infra.logs/enabled", "co.elastic.logs/enabled"},
+		},
 	}
 	return config
 }
