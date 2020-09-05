@@ -86,11 +86,10 @@ spec:
           command: [ "/bin/sh",
             "-ce",
             {{ if eq .minio.replicas 1}}
-             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  /export"
+             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  /export" ]
             {{else}}
-             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  http://minio-{0...{{ math.Add .minio.replicas -1 }}}.minio-svc.minio:9000/export"
+             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  http://minio-{0...{{ math.Add .minio.replicas -1 }}}.minio-svc.minio:9000/export" ]
             {{end}}
-            ]
           volumeMounts:
             - name: export
               mountPath: /export
@@ -138,32 +137,21 @@ spec:
         - name: minio-user
           secret:
             secretName: minio
-  volumeClaimTemplates:
-    - metadata:
-        name: export
-      spec:
-        storageClassName: "{{ .minio.persistence.storageClass | default "local-path"}}"
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: "{{ .minio.persistence.capacity | default "10Gi"}}"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: minio-console
-  namespace: minio
-  labels:
-    app: minio-console
-spec:
-  ports:
-    - name: http
-      port: 9090
-      protocol: TCP
-  selector:
-    app: minio-console
+{{ if eq .minio.replicas 1}}
+        - name: export
+          emptyDir: {}
+{{else}}
+      volumeClaimTemplates:
+      - metadata:
+          name: export
+        spec:
+          storageClassName: "{{ .minio.persistence.storageClass | default "local-path"}}"
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: "{{ .minio.persistence.capacity | default "10Gi"}}"
+{{end}}
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -184,5 +172,3 @@ spec:
           - backend:
               serviceName: minio
               servicePort: 9000
-
-
