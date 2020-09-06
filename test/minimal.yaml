@@ -60,6 +60,7 @@ ingressCA:
 test:
   exclude:
     - configmap-reloader
+    - quack
     - dex
     - audit
     - encryption

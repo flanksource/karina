@@ -3,6 +3,8 @@ importConfigs:
 test:
   exclude:
     - configmap-reloader
+    - quack
+    - platform-operator
     - consul #quarantine flakey test
 kubernetes:
   auditing:
