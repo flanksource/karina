@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/flanksource/commons/logger"
@@ -94,20 +95,13 @@ func (nsx *NSXProvider) AfterProvision(platform *Platform, vm types.Machine) err
 		return nil
 	}
 
-	var returnErr *error
-	_ = backoff(func() error {
-		err := nsx.tag(platform, vm)
-		if err != nil {
-			*returnErr = err
-		} else {
-			returnErr = nil
-		}
-		return err
+	err := backoff(func() error {
+		return nsx.tag(platform, vm)
 	}, platform.Logger, nil)
 
-	if returnErr != nil {
+	if err != nil {
 		go terminate(platform, vm)
-		return *returnErr
+		return err
 	}
 	return nil
 }
@@ -173,16 +167,22 @@ func updateDNS(platform *Platform, dns string, ip string) string {
 	if !platform.DNS.IsEnabled() {
 		return ip
 	}
-	ips, err := platform.GetDNSClient().Get(dns)
+	lookupDNS := dns
+	if strings.HasPrefix(dns, "*") {
+		// Wildcard domains are set using "*", but a lookup for a * domain
+		// will fail so we substitute it with a random domain
+		lookupDNS = "random-wildcard" + dns[1:]
+	}
+	ips, err := platform.GetDNSClient().Get(lookupDNS)
 	if err != nil {
 		// try using the system resolver
-		_ips, err := net.LookupIP(dns)
+		_ips, err := net.LookupIP(lookupDNS)
 		if err == nil {
 			for _, ip := range _ips {
 				ips = append(ips, ip.To4().String())
 			}
 		} else {
-			platform.Warnf("Failed lookup DNS entry for %s: %v", dns, err)
+			platform.Warnf("Failed lookup DNS entry for %s: %v", lookupDNS, err)
 		}
 	}
 	if len(ips) == 0 {
@@ -223,7 +223,7 @@ func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) erro
 			return true, nil
 		}
 		log.Warnf("retrying after error: %v", err)
-		*returnErr = err
+		returnErr = &err
 		return false, nil
 	})
 	if returnErr != nil {
