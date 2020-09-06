@@ -7,13 +7,14 @@ harbor:
   s3:
     access_key: minio
     secret_key: minio123
-    externalEndpoint: minio.127.0.0.1.nip.io
-    endpoint: minio.minio.svc
+    endpoint: http://minio.minio.svc:9000
 postgresOperator:
   version: v1.3.4.flanksource.1
 test:
   exclude:
     - postgres-operator
+    - platform-operator
+    - quack
     - configmap-reloader
     - dex
     - audit

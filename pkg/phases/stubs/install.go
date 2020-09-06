@@ -8,7 +8,6 @@ const MinioNamespace = "minio"
 const LdapNamespace = "ldap"
 
 func Install(platform *platform.Platform) error {
-
 	if platform.Ldap != nil && !platform.Ldap.Disabled && platform.Ldap.E2E.Mock {
 		if err := platform.CreateOrUpdateNamespace(LdapNamespace, nil, nil); err != nil {
 			return err

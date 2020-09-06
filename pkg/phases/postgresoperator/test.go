@@ -181,7 +181,6 @@ func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Dur
 	walPath := fmt.Sprintf("%s/wal/wal_005", clusterName)
 
 	for {
-
 		if time.Now().After(deadline) {
 			break
 		}

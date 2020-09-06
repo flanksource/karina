@@ -25,12 +25,12 @@ fi
 
 $BIN version
 
-$BIN deploy phases --base --stubs --dex --calico -v
+$BIN deploy phases --base --stubs --dex --calico --minio -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
 # wait for the base deployment with stubs to come up healthy
-$BIN test phases --base --stubs --wait 120 --progress=false
+$BIN test phases --base --stubs --minio  --wait 120 --progress=false
 
 # deploy the OPA bundle to the Minio instance for use by OPA
 $BIN opa deploy-bundle test/opa/bundles/automobile.tar.gz
