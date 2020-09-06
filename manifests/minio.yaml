@@ -141,16 +141,16 @@ spec:
         - name: export
           emptyDir: {}
 {{else}}
-      volumeClaimTemplates:
-      - metadata:
-          name: export
-        spec:
-          storageClassName: "{{ .minio.persistence.storageClass | default "local-path"}}"
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: "{{ .minio.persistence.capacity | default "10Gi"}}"
+  volumeClaimTemplates:
+  - metadata:
+      name: export
+    spec:
+      storageClassName: "{{ .minio.persistence.storageClass | default "local-path"}}"
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: "{{ .minio.persistence.capacity | default "10Gi"}}"
 {{end}}
 ---
 apiVersion: extensions/v1beta1
