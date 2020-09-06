@@ -13,6 +13,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
+	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 
 	"github.com/flanksource/commons/console"
@@ -22,7 +23,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
-	"github.com/flanksource/karina/pkg/phases/fluentdoperator"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
@@ -139,13 +139,13 @@ func init() {
 		"eck":                  eck.Test,
 		"elasticsearch":        elasticsearch.Test,
 		"encryption":           kubeadm.TestEncryption,
-		"fluentd":              fluentdoperator.Test,
 		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
 		"kiosk":                kiosk.Test,
 		"monitoring":           monitoring.Test,
 		"kube-web-view":        kubewebview.TestKubeWebView,
 		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
+		"minio":                minio.Test,
 		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
 		"postgres-operator":    postgresoperator.Test,

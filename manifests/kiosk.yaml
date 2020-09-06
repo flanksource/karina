@@ -204,7 +204,7 @@ webhooks:
           - "*"
         scope: Namespaced
     timeoutSeconds: 30
-    sideEffects: Unknown
+    sideEffects: None
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
@@ -218,7 +218,7 @@ webhooks:
     name: config.kiosk.sh
     namespaceSelector: {}
     objectSelector: {}
-    sideEffects: Unknown
+    sideEffects: None
     rules:
       - apiGroups:
           - config.kiosk.sh

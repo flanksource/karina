@@ -14,7 +14,7 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 	for _, f := range p.Filebeat {
-		if f.Disabled {
+		if f.IsDisabled() {
 			continue
 		}
 

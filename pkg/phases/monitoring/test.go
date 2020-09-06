@@ -35,7 +35,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 }
 
 func TestThanos(p *platform.Platform, test *console.TestResults) {
-	if p.Thanos == nil || p.Thanos.Disabled {
+	if p.Thanos == nil || p.Thanos.IsDisabled() {
 		test.Skipf("thanos", "thanos is disabled")
 		return
 	}

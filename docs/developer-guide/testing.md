@@ -1,5 +1,5 @@
 # Running Tests
 
 ```shell
-./test/e2e.sh
+./test/test.sh
 ```

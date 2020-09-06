@@ -2,11 +2,9 @@
 default: build
 NAME:=karina
 
-ifeq ($(GITHUB_REF),)
-GITHUB_REF := dev
-endif
+
 ifeq ($(VERSION),)
-VERSION := $(shell echo $(GITHUB_REF) | sed 's|refs/tags/||')  built $(shell date)
+VERSION=$(shell git describe --tags  --long)-$(shell date +"%Y%m%d%H%M%S")
 endif
 
 .PHONY: help

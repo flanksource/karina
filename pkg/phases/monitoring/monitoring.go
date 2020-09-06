@@ -39,7 +39,8 @@ func Install(p *platform.Platform) error {
 		// setup default values so that all resources are rendered
 		// so that we know what to try and delete
 		p.Monitoring = &types.Monitoring{}
-		p.Thanos = &types.Thanos{Version: "deleted", Mode: "observability"}
+		p.Thanos = &types.Thanos{Mode: "observability"}
+		p.Thanos.Version = "deleted"
 		for _, spec := range append(specs, cleanup...) {
 			if err := p.DeleteSpecs(Namespace, "monitoring/"+spec); err != nil {
 				p.Warnf("failed to delete specs: %v", err)
@@ -129,13 +130,8 @@ func Install(p *platform.Platform) error {
 }
 
 func deployThanos(p *platform.Platform) error {
-	if p.Thanos == nil || p.Thanos.Disabled {
-		p.Debugf("Thanos is disabled")
+	if p.Thanos == nil || p.Thanos.IsDisabled() {
 		return nil
-	}
-
-	if p.S3.ExternalEndpoint == "" {
-		p.S3.ExternalEndpoint = p.S3.Endpoint
 	}
 
 	if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {

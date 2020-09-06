@@ -180,6 +180,9 @@ spec:
             - name: core-internal-certs
               mountPath: /etc/harbor/ssl/core.key
               subPath: tls.key
+            - name: trusted-certs
+              mountPath: /harbor_cust_cert/trusted_ca.crt
+              subPath: ca.crt
       volumes:
         - name: core-internal-certs
           secret:
@@ -196,6 +199,9 @@ spec:
             items:
               - key: secretKey
                 path: key
+        - name: trusted-certs
+          configMap:
+            name: trusted-certs
         - name: token-service-private-key
           secret:
             secretName: token-key
@@ -223,7 +229,6 @@ spec:
         # we don't use harbor.endpoint as it points to a single cluster only and would make
         # a backup cluster inaccessible prior to promotion
         - "harbor.{{ .domain}}"
-
   rules:
     - http:
         paths:

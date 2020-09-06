@@ -33,20 +33,22 @@ versions:
   apacheds: 0.7.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
+platformOperator:
+  version: v0.4.3-alpha1
 calico:
   version: v3.8.2
 s3:
   endpoint: http://minio.minio.svc:9000
-  externalEndpoint: minio.127.0.0.1.nip.io
-  bucket: harbor
   access_key: minio
   secret_key: minio123
   region: us-east1
-  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
   usePathStyle: true
   skipTLSVerify: true
-  e2e:
-    minio: true
+minio:
+  version: RELEASE.2020-09-02T18-19-50Z
+  access_key: minio
+  secret_key: minio123
+  replicas: 1
 ca:
   cert: .certs/root-ca.crt
   privateKey: .certs/root-ca.key
@@ -58,6 +60,8 @@ ingressCA:
 test:
   exclude:
     - configmap-reloader
+    - quack
     - dex
     - audit
     - encryption
+    - platform-operator

@@ -1,4 +1,4 @@
-package stubs
+package minio
 
 import (
 	"crypto/tls"
@@ -7,24 +7,31 @@ import (
 	"github.com/flanksource/commons/console"
 
 	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	client, _ := p.GetClientset()
-	if p.Ldap.E2E.Mock {
-		k8s.TestNamespace(client, "ldap", test)
-	}
-	if !p.S3.E2E.Minio {
+	if p.Minio.IsDisabled() {
 		return
 	}
-	k8s.TestNamespace(client, "minio", test)
+	client, _ := p.GetClientset()
 
-	net := &http.Client{Transport: &http.Transport{
+	k8s.TestNamespace(client, Namespace, test)
+
+	dialer, _ := p.GetProxyDialer(proxy.Proxy{
+		Namespace:    Namespace,
+		Kind:         "pods",
+		ResourceName: "minio-0",
+		Port:         9000,
+	})
+	net := &http.Transport{
+		DialContext:     dialer.DialContext,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}}
+	}
 
-	resp, err := net.Get("https://" + p.S3.Endpoint)
+	netClient := http.Client{Transport: net}
+	resp, err := netClient.Get("http://host")
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close() // nolint: errcheck
 	}

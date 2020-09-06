@@ -11,10 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
@@ -689,52 +685,80 @@ func (platform *Platform) GetOrCreateBucket(name string) error {
 	return nil
 }
 
-func (platform *Platform) GetS3Client() (*minio.Client, error) {
-	endpoint := platform.S3.GetExternalEndpoint()
+func (platform *Platform) GetOrCreateBucketFor(conn types.S3Connection, name string) error {
+	if platform.ApplyDryRun {
+		platform.Debugf("[dry-run] creating bucket %s", name)
+		return nil
+	}
+	s3Client, err := platform.GetS3ClientFor(conn)
+	if err != nil {
+		return fmt.Errorf("failed to get S3 client: %v", err)
+	}
+
+	exists, err := s3Client.BucketExists(name)
+	if err != nil {
+		return fmt.Errorf("failed to check S3 bucket: %v", err)
+	}
+	if !exists {
+		platform.Infof("Creating s3://%s", name)
+		if err := s3Client.MakeBucket(name, platform.S3.Region); err != nil {
+			return fmt.Errorf("failed to create S3 bucket: %v", err)
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, error) {
+	client, _ := platform.GetClientset()
+	name := strings.Split(endpoint, ".")[0]
+	ns := strings.Split(endpoint, ".")[1]
+	svc, err := client.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	port := int(svc.Spec.Ports[0].Port)
+	dialer, _ := platform.GetProxyDialer(proxy.Proxy{
+		Namespace:    ns,
+		Kind:         "pods",
+		ResourceName: name + "-0",
+		Port:         port,
+	})
+	platform.Infof("proxying %s through svc=%s ns=%s port=%d", endpoint, name, ns, port)
+	return &http.Transport{
+		DialContext:     dialer.DialContext,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}, nil
+}
+
+func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client, error) {
+	endpoint := conn.Endpoint
+	endpoint = strings.ReplaceAll(endpoint, "http://", "")
+	endpoint = strings.ReplaceAll(endpoint, "https://", "")
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: tr}
-
-	if endpoint == "" {
-		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", platform.S3.Region)
+	var err error
+	if strings.HasSuffix(endpoint, ".svc") || strings.Contains(endpoint, ".svc:") {
+		tr, err = platform.GetProxyTransport(endpoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	s3, err := minio.New(endpoint, platform.S3.AccessKey, platform.S3.SecretKey, false)
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", conn.Region)
+	}
+
+	s3, err := minio.New(endpoint, conn.AccessKey, conn.SecretKey, false)
 	if err != nil {
 		return nil, err
 	}
-	s3.SetCustomTransport(client.Transport)
+	s3.SetCustomTransport(tr)
 	return s3, nil
 }
 
-func (platform *Platform) GetAWSSession() (*session.Session, error) {
-	tr := &http.Transport{}
-	if platform.S3.SkipTLSVerify {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	cfg := aws.NewConfig().
-		WithRegion(platform.S3.Region).
-		WithEndpoint(platform.S3.ExternalEndpoint).
-		WithCredentials(
-			credentials.NewStaticCredentials(platform.S3.AccessKey, platform.S3.SecretKey, ""),
-		).
-		WithHTTPClient(&http.Client{Transport: tr})
-	ssn, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create new aws session")
-	}
-	return ssn, nil
-}
-
-func (platform *Platform) GetAWSS3Client() (*s3.S3, error) {
-	ssn, err := platform.GetAWSSession()
-	if err != nil {
-		return nil, err
-	}
-	client := s3.New(ssn)
-	client.Config.S3ForcePathStyle = aws.Bool(platform.S3.UsePathStyle)
-	return client, nil
+func (platform *Platform) GetS3Client() (*minio.Client, error) {
+	return platform.GetS3ClientFor(platform.S3.S3Connection)
 }
 
 func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {

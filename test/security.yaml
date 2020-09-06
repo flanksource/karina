@@ -3,6 +3,8 @@ importConfigs:
 test:
   exclude:
     - configmap-reloader
+    - quack
+    - platform-operator
     - consul #quarantine flakey test
 kubernetes:
   auditing:
@@ -92,4 +94,4 @@ vault:
       allowed_domains:
         - 127.0.0.1.nip.io
   consul:
-    bucket: "consul-backups"
+    bucket: "karina-consul-backups"

@@ -119,7 +119,7 @@ func getSnapshotFilename(p *platform.Platform, namespace, pod, timestamp string)
 
 	cfg := aws.NewConfig().
 		WithRegion(p.S3.Region).
-		WithEndpoint(p.S3.GetExternalEndpoint()).
+		WithEndpoint(p.S3.Endpoint).
 		WithCredentials(
 			credentials.NewStaticCredentials(p.S3.AccessKey, p.S3.SecretKey, ""),
 		).

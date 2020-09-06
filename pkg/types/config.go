@@ -33,6 +33,7 @@ type PlatformConfig struct {
 	Ldap                  *Ldap               `yaml:"ldap,omitempty"`
 	LocalPath             *Enabled            `yaml:"localPath,omitempty"`
 	Master                VM                  `yaml:"master,omitempty"`
+	Minio                 Minio               `yaml:"minio,omitempty"`
 	Monitoring            *Monitoring         `yaml:"monitoring,omitempty"`
 	Name                  string              `yaml:"name"`
 	NamespaceConfigurator *Enabled            `yaml:"namespaceConfigurator,omitempty"`
@@ -60,8 +61,6 @@ type PlatformConfig struct {
 	Versions            map[string]string    `yaml:"versions,omitempty"`
 	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`
 	Nginx               *Nginx               `yaml:"nginx,omitempty"`
-	Minio               *Enabled             `yaml:"minio,omitempty"`
-	FluentdOperator     *FluentdOperator     `yaml:"fluentd,omitempty"`
 	ECK                 *ECK                 `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
 	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
