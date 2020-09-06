@@ -11,10 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
@@ -736,11 +732,13 @@ func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, e
 
 func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client, error) {
 	endpoint := conn.Endpoint
+	endpoint = strings.ReplaceAll(endpoint, "http://", "")
+	endpoint = strings.ReplaceAll(endpoint, "https://", "")
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	var err error
-	if strings.HasSuffix(endpoint, ".svc") {
+	if strings.HasSuffix(endpoint, ".svc") || strings.Contains(endpoint, ".svc:") {
 		tr, err = platform.GetProxyTransport(endpoint)
 		if err != nil {
 			return nil, err
@@ -761,44 +759,6 @@ func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client
 
 func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	return platform.GetS3ClientFor(platform.S3.S3Connection)
-}
-
-func (platform *Platform) GetAWSSession() (*session.Session, error) {
-	tr := &http.Transport{}
-
-	if platform.S3.SkipTLSVerify {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	var err error
-	if strings.HasSuffix(platform.S3.Endpoint, ".svc") {
-		tr, err = platform.GetProxyTransport(platform.S3.Endpoint)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	cfg := aws.NewConfig().
-		WithRegion(platform.S3.Region).
-		WithEndpoint(platform.S3.Endpoint).
-		WithCredentials(
-			credentials.NewStaticCredentials(platform.S3.AccessKey, platform.S3.SecretKey, ""),
-		).
-		WithHTTPClient(&http.Client{Transport: tr})
-	ssn, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create new aws session")
-	}
-	return ssn, nil
-}
-
-func (platform *Platform) GetAWSS3Client() (*s3.S3, error) {
-	ssn, err := platform.GetAWSSession()
-	if err != nil {
-		return nil, err
-	}
-	client := s3.New(ssn)
-	client.Config.S3ForcePathStyle = aws.Bool(platform.S3.UsePathStyle)
-	return client, nil
 }
 
 func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {

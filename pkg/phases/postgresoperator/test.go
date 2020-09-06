@@ -3,17 +3,15 @@ package postgresoperator
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/go-pg/pg/v9/orm"
+	"github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,57 +159,46 @@ func testFixturesArePresent(p *platform.Platform, clusterName string, timeout ti
 	}
 }
 
+func listObjects(client *minio.Client, bucket, path string) []minio.ObjectInfo {
+	var objects []minio.ObjectInfo
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+	for obj := range client.ListObjectsV2(bucket, path, true, doneCh) {
+		objects = append(objects, obj)
+	}
+	return objects
+}
+
 func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Duration, timestamp time.Time, test *console.TestResults) error {
-	client, err := p.GetAWSS3Client()
+	client, err := p.GetS3Client()
 	if err != nil {
 		return errors.Wrap(err, "failed to get aws client")
 	}
 
 	bucket := getBackupBucket(p)
 	deadline := time.Now().Add(timeout)
-	paths := []string{
-		fmt.Sprintf("%s/wal/basebackups_005", clusterName),
-		fmt.Sprintf("%s/wal/wal_005", clusterName),
-	}
+	baseBackupPath := fmt.Sprintf("%s/wal/basebackups_005", clusterName)
+	walPath := fmt.Sprintf("%s/wal/wal_005", clusterName)
 
 	for {
-		foundAll := true
-		walSegments := []*s3.Object{}
-		for i, path := range paths {
-			req := &s3.ListObjectsInput{
-				Bucket:  aws.String(bucket),
-				Marker:  aws.String(path),
-				MaxKeys: aws.Int64(500),
-			}
-			resp, err := client.ListObjects(req)
-			if err != nil {
-				return fmt.Errorf("failed to list objects in bucket %s: %v", bucket, err)
-			}
-			if len(resp.Contents) == 0 || !strings.HasPrefix(aws.StringValue(resp.Contents[0].Key), path) {
-				test.Infof("Did not find any object in bucket %s, retrying in 5 seconds", bucket)
-				foundAll = false
-				continue
-			} else {
-				test.Tracef("Found key %s for prefix %s, backups found", aws.StringValue(resp.Contents[0].Key), path)
-				if i == 1 {
-					// save wal segments objects to check for latest timestamp
-					walSegments = resp.Contents
-				}
-			}
-		}
-		if foundAll {
-			for _, o := range walSegments {
-				// Check if latest backup file timestamp is after we inserted the test data
-				if strings.HasPrefix(aws.StringValue(o.Key), paths[1]) && aws.TimeValue(o.LastModified).After(timestamp) {
-					return nil
-				}
-			}
-		}
-		time.Sleep(5 * time.Second)
+
 		if time.Now().After(deadline) {
-			return fmt.Errorf("could not find any backups in bucket %s, deadline exceeded", bucket)
+			break
+		}
+
+		if len(listObjects(client, bucket, baseBackupPath)) == 0 {
+			test.Infof("Did not find any base backups in bucket %s, retrying in 5 seconds", bucket)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		for _, wal := range listObjects(client, bucket, walPath) {
+			if wal.LastModified.After(timestamp) {
+				return nil
+			}
 		}
 	}
+	return fmt.Errorf("did not find base backup and/or wals in bucket %s, deadline exceeded", bucket)
 }
 
 func checkReplicaLag(p *platform.Platform, clusters ...string) error {

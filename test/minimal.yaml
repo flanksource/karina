@@ -38,7 +38,7 @@ platformOperator:
 calico:
   version: v3.8.2
 s3:
-  endpoint: minio.minio.svc
+  endpoint: http://minio.minio.svc:9000
   access_key: minio
   secret_key: minio123
   region: us-east1
