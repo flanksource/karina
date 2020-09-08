@@ -2046,6 +2046,13 @@ spec:
           volumeMounts:
             - mountPath: /target
               name: plugins
+        - image: dpcpinternal/velero-plugin-for-vsphere:1.0.2-8c2a99d-03.Sep.2020.06.46.43
+          imagePullPolicy: IfNotPresent
+          name: velero-plugin-for-vsphere
+          resources: {}
+          volumeMounts:
+            - mountPath: /target
+              name: plugins
       restartPolicy: Always
       serviceAccountName: velero
       volumes:

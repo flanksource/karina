@@ -16,8 +16,10 @@ func Install(platform *platform.Platform) error {
 	if err := platform.CreateOrUpdateSecret("vsphere-secrets", Namespace, platform.Vsphere.GetSecret()); err != nil {
 		platform.Errorf("Failed to create vsphere secrets: %s", err)
 	}
-	if err := platform.CreateOrUpdateSecret("vsphere-config", Namespace, map[string][]byte{
-		"vsphere.conf": []byte(fmt.Sprintf(`
+	configNames := []string{"vsphere-config", "vsphere-config-secret"}
+	for _, configName := range configNames {
+		if err := platform.CreateOrUpdateSecret(configName, Namespace, map[string][]byte{
+			"vsphere.conf": []byte(fmt.Sprintf(`
 [Global]
 cluster-id = "%s"
 port = "443"
@@ -30,8 +32,9 @@ datacenters = "%s"
 user = "%s"
 password = "%s"
 			`, platform.Name, v.Hostname, v.Datacenter, v.Username, v.Password)),
-	}); err != nil {
-		platform.Errorf("Failed to create vsphere config: %s", err)
+		}); err != nil {
+			platform.Errorf("Failed to create vsphere config: %s", err)
+		}
 	}
 
 	if platform.Vsphere.CPIVersion != "" {
