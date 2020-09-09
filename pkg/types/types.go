@@ -253,10 +253,8 @@ type Nginx struct {
 }
 
 type OAuth2Proxy struct {
-	Disabled     bool   `yaml:"disabled"`
-	CookieSecret string `yaml:"cookieSecret,omitempty"`
-	Version      string `yaml:"version,omitempty"`
-	OidcGroup    string `yaml:"oidcGroup,omitempty"`
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version,omitempty"`
 }
 
 type Ldap struct {
@@ -346,20 +344,13 @@ type CanaryChecker struct {
 }
 
 type Dashboard struct {
-	Enabled          `yaml:",inline"`
-	Version          string           `yaml:"version,omitempty"`
-	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
+	Enabled `yaml:",inline"`
+	Version string `yaml:"version,omitempty"`
 }
 
 type Dex struct {
 	Enabled `yaml:",inline"`
 	Version string `yaml:"version,omitempty"`
-}
-
-type LdapAccessConfig struct {
-	Enabled bool     `yaml:"enabled,omitempty"`
-	Groups  []string `yaml:"groups,omitempty"`
-	Snippet string   `yaml:"snippet,omitempty"`
 }
 
 type DynamicDNS struct {
