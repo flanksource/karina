@@ -3,7 +3,6 @@ package nginx
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/platform"
@@ -73,7 +72,8 @@ func Install(platform *platform.Platform) error {
 	if err := platform.ApplySpecs(v1.NamespaceAll, "nginx.yaml"); err != nil {
 		return err
 	}
-	// wait for the webhook to come up ready as otherwise subsequent ingress
-	// creations will fail due to the validating webhook
-	return platform.WaitForDeployment(Namespace, "nginx-ingress-webhook", 3*time.Minute)
+	return nil
+	// // wait for the webhook to come up ready as otherwise subsequent ingress
+	// // creations will fail due to the validating webhook
+	// return platform.WaitForDeployment(Namespace, "nginx-ingress-webhook", 3*time.Minute)
 }
