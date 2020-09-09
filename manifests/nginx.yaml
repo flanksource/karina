@@ -13,7 +13,6 @@ apiVersion: v1
 metadata:
   name: tcp-services
   namespace: ingress-nginx
-
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -70,6 +69,7 @@ rules:
       - "networking.k8s.io"
     resources:
       - ingresses
+      - ingressclasses
     verbs:
       - get
       - list
@@ -81,7 +81,6 @@ rules:
       - ingresses/status
     verbs:
       - update
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
@@ -103,10 +102,6 @@ rules:
     resources:
       - configmaps
     resourceNames:
-      # Defaults to "<election-id>-<ingress-class>"
-      # Here: "<ingress-controller-leader>-<nginx>"
-      # This has to be adapted if you change either parameter
-      # when launching the nginx-ingress-controller.
       - "ingress-controller-leader-nginx"
     verbs:
       - get
@@ -170,10 +165,19 @@ spec:
         app: ingress-nginx
     spec:
       serviceAccountName: nginx-ingress-serviceaccount
+      volumes:
+        - name: scripts
+          configMap:
+            name: lua-scripts
       hostNetwork: true
       containers:
         - name: nginx-ingress-controller
-          image: docker.io/flanksource/nginx-ingress-controller:0.25.1.flanksource.1
+          image: k8s.gcr.io/ingress-nginx/controller:v0.35.0
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /wait-shutdown
           requests:
             cpu: 100m
             memory: 512Mi
@@ -192,8 +196,7 @@ spec:
                 - ALL
               add:
                 - NET_BIND_SERVICE
-            # www-data -> 33
-            runAsUser: 33
+            runAsUser: 101
           env:
             - name: POD_NAME
               valueFrom:
@@ -203,6 +206,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: LUA_PATH
+              value: /usr/local/share/luajit-2.1.0-beta3/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/lib/lua/?.lua;/usr/local/share/lua/5.1/flanksource/?.lua;;
           ports:
             - name: http
               containerPort: 80
@@ -210,6 +215,9 @@ spec:
               containerPort: 443
             - name: metrics
               containerPort: 10254
+            - name: webhook
+              containerPort: 8443
+              protocol: TCP
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -229,7 +237,169 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 10
+          volumeMounts:
+            - name: scripts
+              mountPath: /usr/local/share/lua/5.1/flanksource
 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress-webhook
+  namespace: ingress-nginx
+  annotations:
+    reload/all: "true" #restart on cm/secret change
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingress-nginx-webhook
+  template:
+    metadata:
+      labels:
+        app: ingress-nginx-webhook
+    spec:
+      serviceAccountName: nginx-ingress-serviceaccount
+      volumes:
+        - name: scripts
+          configMap:
+            name: lua-scripts
+        - name: webhook-cert
+          secret:
+            secretName: ingress-nginx-admission
+      containers:
+        - name: ingress-nginx-webhook
+          image: k8s.gcr.io/ingress-nginx/controller:v0.35.0
+          requests:
+            cpu: 10m
+            memory: 20Mi
+          args:
+            - /nginx-ingress-controller
+            - --configmap=$(POD_NAMESPACE)/nginx-configuration
+            - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+            - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+            - --publish-service=$(POD_NAMESPACE)/ingress-nginx
+            - --annotations-prefix=nginx.ingress.kubernetes.io
+            - --validating-webhook=:8443
+            - --validating-webhook-certificate=/usr/local/certificates/tls.crt
+            - --validating-webhook-key=/usr/local/certificates/tls.key
+            - --enable-ssl-passthrough
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+            runAsUser: 101
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: LUA_PATH
+              value: /usr/local/share/luajit-2.1.0-beta3/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/lib/lua/?.lua;/usr/local/share/lua/5.1/flanksource/?.lua;;
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+            - name: metrics
+              containerPort: 10254
+            - name: webhook
+              containerPort: 8443
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: scripts
+              mountPath: /usr/local/share/lua/5.1/flanksource
+            - name: webhook-cert
+              mountPath: /usr/local/certificates/
+              readOnly: true
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: ingress-nginx-admission
+  namespace: ingress-nginx
+  annotations:
+    cert-manager.io/allow-direct-injection: "true"
+spec:
+  secretName: ingress-nginx-admission
+  dnsNames:
+    - ingress-nginx-controller-admission
+    - ingress-nginx-controller-admission.ingress-nginx.svc
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: ingress-nginx-admission
+  annotations:
+    cert-manager.io/inject-ca-from: ingress-nginx/ingress-nginx-admission
+webhooks:
+  - name: validate.nginx.ingress.kubernetes.io
+    rules:
+      - apiGroups:
+          - extensions
+          - networking.k8s.io
+        apiVersions:
+          - v1beta1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - ingresses
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        namespace: ingress-nginx
+        name: ingress-nginx-controller-admission
+        path: /extensions/v1beta1/ingresses
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ingress-nginx-webhook
+  name: ingress-nginx-controller-admission
+  namespace: ingress-nginx
+spec:
+  type: ClusterIP
+  ports:
+    - name: https-webhook
+      port: 443
+      targetPort: webhook
+  selector:
+    app: ingress-nginx-webhook
 ---
 apiVersion: v1
 kind: Service

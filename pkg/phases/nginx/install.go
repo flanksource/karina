@@ -1,8 +1,10 @@
 package nginx
 
 import (
+	"bytes"
 	"fmt"
 
+	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	v1 "k8s.io/api/core/v1"
@@ -44,6 +46,25 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {
+		scripts, _ := platform.GetResourcesByDir("/nginx", "manifests")
+		data := make(map[string]string)
+		for name, file := range scripts {
+			buf := new(bytes.Buffer)
+			if _, err := buf.ReadFrom(file); err != nil {
+				return err
+			}
+			data[name] = buf.String()
+		}
+		if err := platform.CreateOrUpdateConfigMap("lua-scripts", Namespace, data); err != nil {
+			return err
+		}
+		if !platform.HasSecret(Namespace, "oauth2-cookie-secret") {
+			if err := platform.CreateOrUpdateSecret("oauth2-cookie-secret", Namespace, map[string][]byte{
+				"secret": []byte(utils.RandomString(32)),
+			}); err != nil {
+				return err
+			}
+		}
 		return platform.ApplySpecs(Namespace, "nginx-oauth.yaml")
 	}
 	if err := platform.DeleteSpecs(Namespace, "nginx-oauth.yaml"); err != nil {

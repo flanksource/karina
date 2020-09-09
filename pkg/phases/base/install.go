@@ -8,7 +8,6 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/certmanager"
 	"github.com/flanksource/karina/pkg/phases/ingress"
-	"github.com/flanksource/karina/pkg/phases/nginx"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/quack"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
@@ -71,9 +70,8 @@ func Install(platform *platform.Platform) error {
 			platform.Errorf("Error deploying node-local-dns: %s", err)
 		}
 	}
-
-	if err := nginx.Install(platform); err != nil {
-		platform.Fatalf("Error deploying nginx %s", err)
+	if err := ingress.Install(platform); err != nil {
+		return err
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
@@ -86,7 +84,6 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.Dashboard.Version != "" && !platform.Dashboard.Disabled {
-		platform.Dashboard.AccessRestricted.Snippet = ingress.NginxAccessSnippet(platform, platform.Dashboard.AccessRestricted)
 		if err := platform.ApplySpecs("kube-system", "k8s-dashboard.yaml"); err != nil {
 			platform.Errorf("Error installing K8s dashboard: %s", err)
 		}
