@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/minio"
@@ -63,6 +64,7 @@ var Phases = map[string]DeployFn{
 	"kube-resource-report": kuberesourcereport.Install,
 	"minio":                minio.Install,
 	"monitoring":           monitoring.Install,
+	"ingress":              ingress.Install,
 	"opa":                  opa.Install,
 	"nsx":                  nsx.Install,
 	"packetbeat":           packetbeat.Deploy,

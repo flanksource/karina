@@ -356,7 +356,7 @@ func createSpace(p *platform.Platform, user, accountName string) (*kioskapi.Spac
 func createAccount(p *platform.Platform, test *console.TestResults, user, accountName string) (deferFunction, error) {
 	account := &kioskapi.Account{
 		TypeMeta:   metav1.TypeMeta{Kind: "Account", APIVersion: "tenancy.kiosk.sh/v1alpha1"},
-		ObjectMeta: metav1.ObjectMeta{Name: accountName},
+		ObjectMeta: metav1.ObjectMeta{Name: accountName, Labels: map[string]string{"openpolicyagent.org/webhook": "ignore"}},
 		Spec: kioskapi.AccountSpec{
 			AccountSpec: kioskconfigapi.AccountSpec{
 				Subjects: []rbacv1.Subject{
@@ -385,9 +385,9 @@ func createAccount(p *platform.Platform, test *console.TestResults, user, accoun
 	}
 
 	fn := func() {
-		if err := accountClient.Delete(account.Name, nil); err != nil {
-			p.Errorf("failed to delete account %s", account.Name)
-		}
+		// if err := accountClient.Delete(account.Name, nil); err != nil {
+		// 	p.Errorf("failed to delete account %s", account.Name)
+		// }
 	}
 
 	return fn, nil
@@ -463,7 +463,6 @@ func doUntil(fn func() bool) bool {
 		if fn() {
 			return true
 		}
-		// if time.Now().After(start.Add(5 * time.Minute)) {
 		if time.Now().After(start.Add(15 * time.Second)) {
 			return false
 		}

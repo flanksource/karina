@@ -371,6 +371,23 @@ rules:
       - list
       - watch
   - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
       - platform.flanksource.com
     resources:
       - clusterresourcequotas
@@ -452,6 +469,9 @@ spec:
             - --enable-leader-election
             - --enable-cluster-resource-quota={{.platformOperator.enableClusterResourceQuota}}
             - --annotations={{ conv.Join .platformOperator.whitelistedPodAnnotations "," }}
+            - --oauth2-proxy-service-name=oauth2-proxy
+            - --oauth2-proxy-service-namespace=ingress-nginx
+            - --domain={{.domain}}
           command:
             - /manager
           image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"
