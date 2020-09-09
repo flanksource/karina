@@ -831,7 +831,8 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			} else if unstructuredObj.GetKind() == "ServiceAccount" {
 				unstructuredObj.Object["secrets"] = existing.Object["secrets"]
 			}
-			//apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
+			// apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
+			// webhook CA's
 
 			c.trace("updating", unstructuredObj)
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
@@ -857,9 +858,21 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 				c.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
 				c.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-				diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
-				if len(diff) > 0 {
-					c.Tracef("%s", diff)
+				if logger.IsTraceEnabled() {
+
+					// remove "runtime" fields from objects that woulds otherwise increase the verbosity of diffs
+					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "managedFields")
+					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "generation")
+					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "annotations", "deprecated.daemonset.template.generation")
+
+					unstructured.RemoveNestedField(existing.Object, "metadata", "managedFields")
+					unstructured.RemoveNestedField(existing.Object, "metadata", "generation")
+					unstructured.RemoveNestedField(existing.Object, "metadata", "annotations", "deprecated.daemonset.template.generation")
+
+					diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
+					if len(diff) > 0 {
+						c.Tracef("%s", diff)
+					}
 				}
 			}
 		}
@@ -1399,6 +1412,34 @@ func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1
 				return nil
 			}
 		}
+	}
+}
+
+// WaitForDeployment waits for a deployment to have at least 1 ready replica, or returns an
+// error if the timeout is exceeded
+func (c *Client) WaitForDeployment(ns, name string, timeout time.Duration) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
+	}
+	deployments := client.AppsV1().Deployments(ns)
+	start := time.Now()
+	msg := false
+	for {
+		deployment, _ := deployments.Get(name, metav1.GetOptions{})
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for deployment to become ready %s", name)
+		}
+		if deployment != nil && deployment.Status.ReadyReplicas > 1 {
+			return nil
+		}
+
+		if !msg {
+			c.Infof("waiting for %s/%s to have 1 ready replica", ns, name)
+			msg = true
+		}
+
+		time.Sleep(2 * time.Second)
 	}
 }
 

@@ -172,7 +172,7 @@ spec:
       hostNetwork: true
       containers:
         - name: nginx-ingress-controller
-          image: k8s.gcr.io/ingress-nginx/controller:v0.35.0
+          image: k8s.gcr.io/ingress-nginx/controller:{{.nginx.version | default "v0.35.0"}}
           lifecycle:
             preStop:
               exec:
@@ -269,7 +269,7 @@ spec:
             secretName: ingress-nginx-admission
       containers:
         - name: ingress-nginx-webhook
-          image: k8s.gcr.io/ingress-nginx/controller:v0.35.0
+          image: k8s.gcr.io/ingress-nginx/controller:{{.nginx.version | default "v0.35.0"}}
           requests:
             cpu: 10m
             memory: 20Mi

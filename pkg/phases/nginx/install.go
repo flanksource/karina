@@ -3,6 +3,7 @@ package nginx
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/platform"
@@ -29,9 +30,6 @@ func Install(platform *platform.Platform) error {
 	if platform.Nginx == nil {
 		platform.Nginx = &types.Nginx{}
 	}
-	if platform.Nginx.Version == "" {
-		platform.Nginx.Version = "0.25.1.flanksource.1"
-	}
 
 	if platform.Nginx.RequestBodyBuffer == "" {
 		platform.Nginx.RequestBodyBuffer = "16M"
@@ -40,11 +38,6 @@ func Install(platform *platform.Platform) error {
 	if platform.Nginx.RequestBodyMax == "" {
 		platform.Nginx.RequestBodyMax = "32M"
 	}
-
-	if err := platform.ApplySpecs(v1.NamespaceAll, "nginx.yaml"); err != nil {
-		platform.Errorf("Error deploying nginx: %s\n", err)
-	}
-
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {
 		scripts, _ := platform.GetResourcesByDir("/nginx", "manifests")
 		data := make(map[string]string)
@@ -65,10 +58,22 @@ func Install(platform *platform.Platform) error {
 				return err
 			}
 		}
-		return platform.ApplySpecs(Namespace, "nginx-oauth.yaml")
+		if err := platform.ApplySpecs(Namespace, "nginx-oauth.yaml"); err != nil {
+			return err
+		}
+	} else {
+		// need to create empty configmap for lua scripts
+		if err := platform.CreateOrUpdateConfigMap("lua-scripts", Namespace, nil); err != nil {
+			return err
+		}
+		if err := platform.DeleteSpecs(Namespace, "nginx-oauth.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 	}
-	if err := platform.DeleteSpecs(Namespace, "nginx-oauth.yaml"); err != nil {
-		platform.Warnf("failed to delete specs: %v", err)
+	if err := platform.ApplySpecs(v1.NamespaceAll, "nginx.yaml"); err != nil {
+		return err
 	}
-	return nil
+	// wait for the webhook to come up ready as otherwise subsequent ingress
+	// creations will fail due to the validating webhook
+	return platform.WaitForDeployment(Namespace, "nginx-ingress-webhook", 3*time.Minute)
 }
