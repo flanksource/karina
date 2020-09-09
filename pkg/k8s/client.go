@@ -859,7 +859,6 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			} else {
 				c.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 				if logger.IsTraceEnabled() {
-
 					// remove "runtime" fields from objects that woulds otherwise increase the verbosity of diffs
 					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "managedFields")
 					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "generation")
