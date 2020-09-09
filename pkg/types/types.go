@@ -622,6 +622,10 @@ type EventRouter struct {
 	FilebeatPrefix string `yaml:"filebeatPrefix"`
 }
 
+type RabbitmqOperator struct {
+	Disabled `yaml:",inline"`
+}
+
 type Consul struct {
 	Version        string `yaml:"version"`
 	Disabled       bool   `yaml:"disabled,omitempty"`
