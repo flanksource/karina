@@ -8,6 +8,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/minio"
+	"github.com/flanksource/karina/pkg/phases/redisoperator"
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
@@ -69,6 +70,7 @@ var Phases = map[string]DeployFn{
 	"opa":                  opa.Install,
 	"nsx":                  nsx.Install,
 	"packetbeat":           packetbeat.Deploy,
+	"redis-operator":       redisoperator.Install,
 	"rabbitmq-operator":    rabbitmqoperator.Install,
 	"postgres-operator":    postgresoperator.Deploy,
 	"registry-creds":       registrycreds.Install,

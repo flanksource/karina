@@ -32,6 +32,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/quack"
 	"github.com/flanksource/karina/pkg/phases/rabbitmqoperator"
+	"github.com/flanksource/karina/pkg/phases/redisoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
@@ -150,6 +151,7 @@ func init() {
 		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
 		"postgres-operator":    postgresoperator.Test,
+		"redis-operator":       redisoperator.Test,
 		"rabbitmq-operator":    rabbitmqoperator.Test,
 		"platform-operator":    platformoperator.Test,
 		"promtheus":            monitoring.TestPrometheus,

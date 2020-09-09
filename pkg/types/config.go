@@ -50,6 +50,7 @@ type PlatformConfig struct {
 	Patches             []string             `yaml:"patches,omitempty"`
 	Quack               *Enabled             `yaml:"quack,omitempty"`
 	RegistryCredentials *RegistryCredentials `yaml:"registryCredentials,omitempty"`
+	RedisOperator       RedisOperator        `yaml:"redisOperator,omitempty"`
 	RabbitmqOperator    RabbitmqOperator     `yaml:"rabbitmqOperator,omitempty"`
 	Resources           map[string]string    `yaml:"resources,omitempty"`
 	S3                  S3                   `yaml:"s3,omitempty"`

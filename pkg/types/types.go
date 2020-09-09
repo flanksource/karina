@@ -622,6 +622,9 @@ type EventRouter struct {
 	FilebeatPrefix string `yaml:"filebeatPrefix"`
 }
 
+type RedisOperator struct {
+	Disabled `yaml:",inline"`
+}
 type RabbitmqOperator struct {
 	Disabled `yaml:",inline"`
 }

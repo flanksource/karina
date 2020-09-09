@@ -2,3 +2,5 @@ importConfigs:
   - minimal.yaml
 rabbitmqOperator:
   version: "@sha256:485f81a21f62c94178d9462b0d8194c56f142ebe7731dee3573b6a2dff566ec9"
+redisOperator:
+  version: v1.0.0
