@@ -349,8 +349,7 @@ type Dashboard struct {
 }
 
 type Dex struct {
-	Enabled `yaml:",inline"`
-	Version string `yaml:"version,omitempty"`
+	Disabled `yaml:",inline"`
 }
 
 type DynamicDNS struct {
@@ -625,6 +624,7 @@ type EventRouter struct {
 type RedisOperator struct {
 	Disabled `yaml:",inline"`
 }
+
 type RabbitmqOperator struct {
 	Disabled `yaml:",inline"`
 }

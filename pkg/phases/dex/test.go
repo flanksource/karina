@@ -14,7 +14,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.Ldap.Disabled || p.Dex.Disabled {
+	if p.Ldap.Disabled || p.Dex.IsDisabled() {
 		test.Skipf("dex", "LDAP is disabled in platform config - skipping.")
 		return
 	}
