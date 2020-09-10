@@ -8,6 +8,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/minio"
+	"github.com/flanksource/karina/pkg/phases/redisoperator"
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
@@ -31,6 +32,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/quack"
+	"github.com/flanksource/karina/pkg/phases/rabbitmqoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/s3uploadcleaner"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
@@ -68,6 +70,8 @@ var Phases = map[string]DeployFn{
 	"opa":                  opa.Install,
 	"nsx":                  nsx.Install,
 	"packetbeat":           packetbeat.Deploy,
+	"redis-operator":       redisoperator.Install,
+	"rabbitmq-operator":    rabbitmqoperator.Install,
 	"postgres-operator":    postgresoperator.Deploy,
 	"registry-creds":       registrycreds.Install,
 	"s3-upload-cleaner":    s3uploadcleaner.Deploy,

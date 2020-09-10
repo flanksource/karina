@@ -349,8 +349,7 @@ type Dashboard struct {
 }
 
 type Dex struct {
-	Enabled `yaml:",inline"`
-	Version string `yaml:"version,omitempty"`
+	Disabled `yaml:",inline"`
 }
 
 type DynamicDNS struct {
@@ -620,6 +619,14 @@ type Packetbeat struct {
 type EventRouter struct {
 	Disabled       `yaml:",inline"`
 	FilebeatPrefix string `yaml:"filebeatPrefix"`
+}
+
+type RedisOperator struct {
+	Disabled `yaml:",inline"`
+}
+
+type RabbitmqOperator struct {
+	Disabled `yaml:",inline"`
 }
 
 type Consul struct {

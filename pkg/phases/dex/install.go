@@ -17,7 +17,7 @@ func Install(platform *platform.Platform) error {
 	if platform.Dex.Version == "" {
 		platform.Dex.Version = "v2.17.0"
 	}
-	if platform.Dex.Disabled {
+	if platform.Dex.IsDisabled() {
 		return platform.DeleteSpecs(Namespace, "dex.yaml")
 	}
 

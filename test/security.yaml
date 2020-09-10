@@ -19,9 +19,11 @@ kubernetes:
     "audit-log-format": legacy # default is json
 dex:
   disabled: false
+dashboard:
+  version: v2.0.4
 ldap:
   disabled: false
-  adminGroup: NA1
+  adminGroup: cn=k8s,ou=groups,dc=example,dc=com
   username: uid=admin,ou=system
   password: secret
   port: 10636

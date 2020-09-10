@@ -9,15 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/karina/pkg/phases/canary"
-	"github.com/flanksource/karina/pkg/phases/kiosk"
-	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
-	"github.com/flanksource/karina/pkg/phases/kubewebview"
-	"github.com/flanksource/karina/pkg/phases/minio"
-	"github.com/flanksource/karina/pkg/phases/platformoperator"
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/base"
+	"github.com/flanksource/karina/pkg/phases/canary"
 	"github.com/flanksource/karina/pkg/phases/configmapreloader"
 	"github.com/flanksource/karina/pkg/phases/consul"
 	"github.com/flanksource/karina/pkg/phases/dex"
@@ -25,12 +19,19 @@ import (
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
+	"github.com/flanksource/karina/pkg/phases/kubewebview"
+	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
+	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/quack"
+	"github.com/flanksource/karina/pkg/phases/rabbitmqoperator"
+	"github.com/flanksource/karina/pkg/phases/redisoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
@@ -149,6 +150,8 @@ func init() {
 		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
 		"postgres-operator":    postgresoperator.Test,
+		"redis-operator":       redisoperator.Test,
+		"rabbitmq-operator":    rabbitmqoperator.Test,
 		"platform-operator":    platformoperator.Test,
 		"promtheus":            monitoring.TestPrometheus,
 		"quack":                quack.Test,
