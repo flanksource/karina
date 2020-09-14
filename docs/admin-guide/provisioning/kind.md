@@ -1,43 +1,82 @@
-# Kind
+# Kind Quickstart
 
-### Provision kind cluster in docker
+### 1) Install karina
 
-```shell
-$ platform-cli provision kind-cluster
-Creating cluster "kind" ...
- • Ensuring node image (kindest/node:v1.15.7) 🖼  ...
- ✓ Ensuring node image (kindest/node:v1.15.7) 🖼
- • Preparing nodes 📦  ...
- ✓ Preparing nodes 📦
- • Writing configuration 📜  ...
- ✓ Writing configuration 📜
- • Starting control-plane 🕹️  ...
- ✓ Starting control-plane 🕹️
- • Installing StorageClass 💾  ...
- ✓ Installing StorageClass 💾
-Set kubectl context to "kind-kind"
-You can now use your cluster with:
+Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/karina/releases/latest).
 
-kubectl cluster-info --context kind-kind --kubeconfig /Users/toni/.kube/config
-
-Not sure what to do next? 😅 Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+=== "Linux"
+```bash
+wget https://github.com/flanksource/karina/releases/download/v0.15.1/karina
+chmod +x karina
+mv karina /usr/local/bin/karina
+```
+=== "MacOSX"
+```bash
+wget https://github.com/flanksource/karina/releases/download/v0.15.1/karina_osx
+chmod +x karina_osx
+mv karina_osx /usr/local/bin/karina
 ```
 
-### Deploy CNI compatible network
 
-```shell
-$ platform-cli deploy calico
+#### 2) Create a configuration file:
 
-# Optional if running on Docker for Mac
-$ kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+`test-cluster.yml`
+
+```yaml
+domain: 127.0.0.1.nip.io
+name: test-cluster
+calico:
+  version: v3.8.2
+kubernetes:
+  version: v1.16.9
+  masterIP: localhost
+  containerRuntime: containerd
+ca:
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ingressCA:
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
+  password: foobar
 ```
 
-### Deploy the platform
+#### 3) Generate the necessary CA's:
 
 ```shell
-$ platform-cli deploy stubs
-$ platform-cli deploy base
-$ platform-cli deploy dex
-$ platform-cli deploy minio
-...
+# generate CA for kubernetes api-server authentication
+karina ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+
+# generate ingressCA for ingress certificates
+karina ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
+
 ```
+
+#### 4) Provision the cluster in kind:
+
+```shell
+karina provision kind-cluster -c test-cluster.yml
+```
+
+#### 5) Deploy the bare minimum configuration:
+
+```shell
+karina deploy phases --base --dex --calico -c test-cluster.yml
+```
+
+#### 6) Deploy everything else that may be configured:
+
+```shell
+karina deploy all
+```
+
+
+
+## Troubleshooting
+
+KIND cluster creation issues can be debugged by specifying the `--trace` argument to `karina` during creation:
+
+```bash
+karina provision kind-cluster --trace
+```
+

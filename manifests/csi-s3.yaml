@@ -53,13 +53,16 @@ spec:
       port: 12345
 ---
 kind: StatefulSet
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 metadata:
   name: csi-provisioner-s3
   namespace: kube-system
 spec:
   serviceName: "csi-provisioner-s3"
   replicas: 1
+  selector:
+    matchLabels:
+      app: csi-provisioner-s3
   template:
     metadata:
       labels:
@@ -81,7 +84,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/kubelet/plugins/ch.ctrox.csi.s3-driver
         - name: csi-s3
-          image: ctrox/csi-s3:v1.1.1
+          image: docker.io/ctrox/csi-s3:v1.1.1
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--nodeid=$(NODE_ID)"
@@ -246,7 +249,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: DaemonSet
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: csi-s3
   namespace: kube-system
@@ -288,7 +291,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: ctrox/csi-s3:v1.1.1
+          image: docker.io/ctrox/csi-s3:v1.1.1
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--nodeid=$(NODE_ID)"

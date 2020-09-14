@@ -1,0 +1,21 @@
+importConfigs:
+  - minimal.yaml
+harbor:
+  replicas: 1
+  bucket: karina-harbor-e2e
+  version: v2.0.2
+  s3:
+    access_key: minio
+    secret_key: minio123
+    endpoint: http://minio.minio.svc:9000
+postgresOperator:
+  version: v1.3.4.flanksource.1
+test:
+  exclude:
+    - postgres-operator
+    - platform-operator
+    - quack
+    - configmap-reloader
+    - dex
+    - audit
+    - encryption

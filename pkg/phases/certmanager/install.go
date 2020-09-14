@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/certs"
-	"github.com/moshloop/platform-cli/pkg/api/certmanager"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/api/certmanager"
+	"github.com/flanksource/karina/pkg/platform"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -23,7 +24,6 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	platform.Infof("Installing CertMananager")
 	if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
 		return err
 	}
@@ -32,7 +32,18 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	platform.WaitForNamespace(Namespace, 180*time.Second)
+	if !platform.ApplyDryRun {
+		// Make sure all webhook services are up an running before continuing
+		platform.WaitForNamespace(Namespace, 180*time.Second)
+
+		// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
+		// 1) Not polluting the audit log with unnecessary read requests to the CA Key
+		// 2) Allow running deployment with less secrets once the CA is deployed
+		if err := platform.WaitForResource("clusterissuer", v1.NamespaceAll, IngressCA, 10*time.Second); err == nil {
+			platform.Tracef("Ingress CA already configured, skipping")
+			return nil
+		}
+	}
 
 	var issuerConfig certmanager.IssuerConfig
 	if platform.CertManager.Vault == nil {
@@ -54,7 +65,6 @@ func Install(platform *platform.Platform) error {
 		}
 	} else {
 		// TODO(moshloop): delete previously imported CA
-
 		platform.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
 			"token": []byte(platform.CertManager.Vault.Token),

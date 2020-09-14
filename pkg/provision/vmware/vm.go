@@ -15,7 +15,7 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	vim "github.com/vmware/govmomi/vim25/types"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 // VM represents a specific instance of a VM
@@ -24,18 +24,24 @@ type vm struct {
 	name, ip string
 	dryRun   bool
 	ctx      context.Context
+	config   *types.VM
 	vm       *object.VirtualMachine
 }
 
-func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine) types.Machine {
+func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine, config *types.VM) types.Machine {
 	_vm := vm{
 		Logger: logrus.WithField("vm", obj.Name()),
 		ctx:    ctx,
 		dryRun: dryRun,
 		vm:     obj,
+		config: config,
 		name:   obj.Name(),
 	}
 	return &_vm
+}
+
+func (vm *vm) GetTags() map[string]string {
+	return vm.config.Tags
 }
 
 func (vm *vm) IP() string {
@@ -48,6 +54,17 @@ func (vm *vm) IP() string {
 
 func (vm *vm) Name() string {
 	return vm.name
+}
+
+func (vm *vm) GetAge() time.Duration {
+	attributes, _ := vm.GetAttributes()
+	created, _ := time.ParseInLocation("02Jan06-15:04:05", attributes["CreatedDate"], time.Local)
+	return time.Since(created)
+}
+
+func (vm *vm) GetTemplate() string {
+	attributes, _ := vm.GetAttributes()
+	return attributes["Template"]
 }
 
 func (vm *vm) String() string {
@@ -98,6 +115,9 @@ func (vm *vm) GetNics(ctx context.Context) ([]vim.GuestNicInfo, error) {
 
 // WaitForIP waits for a non-local IPv4 address to be reported by vCenter
 func (vm *vm) GetIP(timeout time.Duration) (string, error) {
+	if !vm.IsPoweredOn() {
+		return "<powered off>", nil
+	}
 	deadline := time.Now().Add(timeout)
 	for {
 		if time.Now().After(deadline) {
@@ -221,6 +241,11 @@ func (vm *vm) Shutdown() error {
 		return errors.Wrapf(err, "Failed to shutdown %s: %v", vm.Name(), err)
 	}
 	return nil
+}
+
+func (vm *vm) IsPoweredOn() bool {
+	power, _ := vm.vm.PowerState(vm.ctx)
+	return power == vim.VirtualMachinePowerStatePoweredOn
 }
 
 func (vm *vm) Terminate() error {

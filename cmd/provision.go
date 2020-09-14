@@ -2,14 +2,16 @@ package cmd
 
 import (
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/provision"
-	"github.com/moshloop/platform-cli/pkg/provision/vmware"
+	"github.com/flanksource/karina/pkg/provision"
+	"github.com/flanksource/karina/pkg/provision/vmware"
 )
 
+var burninPeriod time.Duration
 var Provision = &cobra.Command{
 	Use:   "provision",
 	Short: "Commands for provisioning clusters and VMs",
@@ -19,7 +21,7 @@ var vsphereCluster = &cobra.Command{
 	Short: "Provision a new vsphere cluster",
 	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := provision.VsphereCluster(getPlatform(cmd)); err != nil {
+		if err := provision.VsphereCluster(getPlatform(cmd), burninPeriod); err != nil {
 			log.Fatalf("Failed to provision cluster, %s", err)
 		}
 	},
@@ -55,7 +57,7 @@ var vm = &cobra.Command{
 		platform := getPlatform(cmd)
 		//copy master config
 		vm := platform.Master
-		vmware.LoadGovcEnvVars(&vm)
+		vmware.LoadGovcEnvVars(*platform.Vsphere, &vm)
 		vm.MemoryGB = int64(mem)
 		vm.DiskGB = disk
 		vm.CPUs = int32(cpu)
@@ -86,6 +88,7 @@ var vm = &cobra.Command{
 }
 
 func init() {
+	vsphereCluster.Flags().DurationVar(&burninPeriod, "burnin-period", time.Minute*3, "Period to burn-in new nodes before scheduling workloads on")
 	Provision.AddCommand(vsphereCluster, kindCluster, vm)
 	vm.Flags().String("name", "", "Name of vm")
 	vm.Flags().String("dns", "", "DNS entry to add")

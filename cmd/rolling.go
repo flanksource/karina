@@ -3,7 +3,7 @@ package cmd
 import (
 	"time"
 
-	"github.com/moshloop/platform-cli/pkg/provision"
+	"github.com/flanksource/karina/pkg/provision"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -37,9 +37,15 @@ var RollingUpdate = &cobra.Command{
 
 func init() {
 	rollingOpts = provision.RollingOptions{}
-	RollingUpdate.Flags().DurationVar(&rollingOpts.MinAge, "min-age", time.Hour*24*7, "Minimum age of VM's to update")
-	Rolling.PersistentFlags().DurationVar(&rollingOpts.Timeout, "timeout", time.Minute*2, "timeout between actions")
+	RollingUpdate.Flags().DurationVar(&rollingOpts.MinAge, "min-age", time.Hour*24*7, "Minimum age of nodes to roll")
+	Rolling.PersistentFlags().DurationVar(&rollingOpts.Timeout, "timeout", time.Minute*5, "timeout between actions")
+	Rolling.PersistentFlags().DurationVar(&rollingOpts.BurninPeriod, "burnin-period", time.Minute*3, "Period to burn-in new nodes before scheduling workloads on")
+	Rolling.PersistentFlags().IntVar(&rollingOpts.Max, "max", 100, "Max number of nodes to roll")
+	RollingUpdate.PersistentFlags().IntVar(&rollingOpts.MaxSurge, "max-surge", 3, "Max number of nodes surge to, the higher the number the faster the rollout, but the more capacity that will be used ")
+	RollingUpdate.PersistentFlags().IntVar(&rollingOpts.HealthTolerance, "health-tolerance", 1, "Max number of failing pods to tolerate")
 	Rolling.PersistentFlags().BoolVar(&rollingOpts.MigrateLocalVolumes, "migrate-local-volumes", true, "Delete and recreate local PVC's")
 	Rolling.PersistentFlags().BoolVar(&rollingOpts.Force, "force", false, "ignore errors and continue with the rolling action regardless of health")
+	Rolling.PersistentFlags().BoolVar(&rollingOpts.Masters, "masters", true, "include master nodes")
+	Rolling.PersistentFlags().BoolVar(&rollingOpts.Workers, "workers", true, "include worker nodes")
 	Rolling.AddCommand(RollingRestart, RollingUpdate)
 }

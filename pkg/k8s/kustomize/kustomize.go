@@ -182,6 +182,10 @@ func (km *Manager) Kustomize(namespace string, data []byte) ([]runtime.Object, e
 	for _, _resource := range raw {
 		resource := _resource.(*unstructured.Unstructured)
 
+		if resource == nil {
+			continue
+		}
+
 		// get patches corresponding to this resource
 		strategicMerge := km.strategicMergePatches.filterByResource(namespace, resource)
 		json6902 := km.json6902Patches.filterByResource(namespace, resource)

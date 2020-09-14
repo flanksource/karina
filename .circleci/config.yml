@@ -6,7 +6,7 @@ go: &go
     GOPROXY: https://proxy.golang.org
   docker:
     - image: circleci/golang:1.13
-  working_directory: /go/src/github.com/moshloop/platform-cli
+  working_directory: /go/src/github.com/flanksource/karina
 jobs:
   lint:
     <<: *go
@@ -17,65 +17,42 @@ jobs:
       - run: ./scripts/golint.sh
       - store_test_results:
           path: test-results
-  test:
+
+  kind-image:
     resource_class: xlarge
     environment:
-      VERSION: v1.15.3
+      VERSION: v1.16.9
+      KUBERNETES_VERSION: v1.16.9
+      DOCKER_PUSH: "true"
+      GO111MODULE: "on"
+      DEPLOY_KIND_CLUSTER: "true"
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
-      - run: ./test/e2e.sh
+      - run: sudo apt-get update; sudo apt-get install -y moreutils
+      - run: mkdir -p .bin
+      - run: docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:1.13  pack build
+      - run: ./scripts/generate_kind_image.sh
       - store_test_results:
           path: test-results
       - store_artifacts:
           path: artifacts
-
-  test-next:
-    resource_class: xlarge
-    environment:
-      VERSION: v1.16.3
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - run: ./test/e2e.sh
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: artifacts
-
-  release:
-    <<: *go
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run: go mod download
-      - run: ./scripts/release.sh
-
-  release-docs:
-    docker:
-      - image: flanksource/build-tools
-    steps:
-      - checkout
-      - run: ./scripts/release-docs.sh
 
 workflows:
   version: 2
-  build:
+  lint:
     jobs:
-      - test
-      - test-next
       - lint
-      - release:
-          requires:
-            - test
-            - test-next
-          context: Github
+
+  kind-image-daily:
+    triggers:
+      - schedule:
+          cron: "0 12 * * *"
           filters:
-            tags:
-              only: /.*/
-      - release-docs:
-          requires:
-            - release
-          context: Github
+            branches:
+              only:
+                - master
+    jobs:
+      - kind-image:
+          context: DOCKERHUB

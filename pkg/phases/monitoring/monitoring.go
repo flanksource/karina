@@ -3,8 +3,9 @@ package monitoring
 import (
 	"fmt"
 
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 const (
@@ -13,6 +14,7 @@ const (
 )
 
 var specs = []string{
+	"karma.yaml",
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",
 	"prometheus-adapter.yaml",
@@ -20,11 +22,50 @@ var specs = []string{
 	"node-exporter.yaml",
 	"alertmanager-rules.yaml.raw",
 	"service-monitors.yaml",
+	"namespace-rules.yaml.raw",
+	"kubernetes-rules.yaml.raw",
+}
+
+var cleanup = []string{
+	"observability/thanos-compactor.yaml",
+	"observability/thanos-querier.yaml",
+	"observability/thanos-store.yaml",
+	"thanos-config.yaml",
+	"thanos-sidecar.yaml",
 }
 
 func Install(p *platform.Platform) error {
 	if p.Monitoring == nil || p.Monitoring.Disabled {
+		// setup default values so that all resources are rendered
+		// so that we know what to try and delete
+		p.Monitoring = &types.Monitoring{}
+		p.Thanos = &types.Thanos{Mode: "observability"}
+		p.Thanos.Version = "deleted"
+		for _, spec := range append(specs, cleanup...) {
+			if err := p.DeleteSpecs(Namespace, "monitoring/"+spec); err != nil {
+				p.Warnf("failed to delete specs: %v", err)
+			}
+		}
 		return nil
+	}
+
+	if p.Monitoring.Karma.Version == "" {
+		p.Monitoring.Karma.Version = "v0.63"
+	}
+
+	if p.Monitoring.Karma.AlertManagers == nil {
+		p.Monitoring.Karma.AlertManagers = map[string]string{}
+	}
+
+	if len(p.Monitoring.Karma.AlertManagers) == 0 {
+		p.Monitoring.Karma.AlertManagers["alertmanager-main"] = "http://alertmanager-main:9093"
+	}
+	if p.Monitoring.Prometheus.Version == "" {
+		p.Monitoring.Prometheus.Version = "v2.19.0"
+	}
+
+	if p.Monitoring.AlertManager.Version == "" {
+		p.Monitoring.AlertManager.Version = "v0.20.0"
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
@@ -52,7 +93,6 @@ func Install(p *platform.Platform) error {
 	}
 
 	for _, spec := range specs {
-		p.Infof("Applying %s", spec)
 		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
 			return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
 		}
@@ -90,13 +130,8 @@ func Install(p *platform.Platform) error {
 }
 
 func deployThanos(p *platform.Platform) error {
-	if p.Thanos == nil || p.Thanos.Disabled {
-		p.Debugf("Thanos is disabled")
+	if p.Thanos == nil || p.Thanos.IsDisabled() {
 		return nil
-	}
-
-	if p.S3.ExternalEndpoint == "" {
-		p.S3.ExternalEndpoint = p.S3.Endpoint
 	}
 
 	if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {

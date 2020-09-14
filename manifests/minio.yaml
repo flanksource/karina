@@ -1,84 +1,157 @@
 apiVersion: v1
-kind: Namespace
+kind: ServiceAccount
 metadata:
-  name: minio
+  name: "minio"
+  namespace: "minio"
   labels:
-    openpolicyagent.org/webhook: ignore
+    app: minio
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Secret
 metadata:
   name: minio
   namespace: minio
-spec:
-  selector:
-    matchLabels:
-      app: minio
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: minio
-    spec:
-      volumes:
-        - name: data
-          emptyDir: {}
-      containers:
-        - name: minio
-          volumeMounts:
-            - name: data
-              mountPath: "/data"
-          image: minio/minio:RELEASE.2019-10-12T01-39-57Z
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "50Mi"
-            limits:
-              cpu: "500m"
-              memory: "500Mi"
-          args:
-            - server
-            - /data
-          env:
-            - name: MINIO_ACCESS_KEY
-              value: "{{.s3.access_key}}"
-            - name: MINIO_SECRET_KEY
-              value: "{{.s3.secret_key}}"
-            - name: MINIO_KMS_MASTER_KEY
-              value: "{{.s3.kmsMasterKey}}"
-          ports:
-            - containerPort: 9000
-          # Readiness probe detects situations when MinIO server instance
-          # is not ready to accept traffic. Kubernetes doesn't forward
-          # traffic to the pod while readiness checks fail.
-          readinessProbe:
-            httpGet:
-              path: /minio/health/ready
-              port: 9000
-            initialDelaySeconds: 10
-          # Liveness probe detects situations where MinIO server instance
-          # is not working properly and needs restart. Kubernetes automatically
-          # restarts the pods if liveness checks fail.
-          livenessProbe:
-            httpGet:
-              path: /minio/health/live
-              port: 9000
-            initialDelaySeconds: 10
+  labels:
+    app: minio
+type: Opaque
+data:
+  accesskey: "{{.minio.access_key | base64.Encode }}"
+  secretkey: "{{.minio.secret_key | base64.Encode }}"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: minio
   namespace: minio
+  labels:
+    app: minio
 spec:
+  type: ClusterIP
   ports:
-    - port: 9000
+    - name: http
+      port: 9000
+      protocol: TCP
       targetPort: 9000
+  selector:
+    app: minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-svc
+  namespace: minio
+  labels:
+    app: minio
+spec:
+  publishNotReadyAddresses: true
+  clusterIP: None
+  ports:
+    - name: http
+      port: 9000
       protocol: TCP
   selector:
     app: minio
-
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    app: minio
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: "Parallel"
+  serviceName: minio-svc
+  replicas: {{.minio.replicas}}
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      name: minio
+      labels:
+        app: minio
+    spec:
+      serviceAccountName: "minio"
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: minio
+          image: docker.io/minio/minio:{{.minio.version | default "deleteme" }}
+          imagePullPolicy: IfNotPresent
+          command: [ "/bin/sh",
+            "-ce",
+            {{ if eq .minio.replicas 1}}
+             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  /export" ]
+            {{else}}
+             "/usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server  http://minio-{0...{{ math.Add .minio.replicas -1 }}}.minio-svc.minio:9000/export" ]
+            {{end}}
+          volumeMounts:
+            - name: export
+              mountPath: /export
+          ports:
+            - name: http
+              containerPort: 9000
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: accesskey
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: secretkey
+            - name: MINIO_API_READY_DEADLINE
+              value: "5s"
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 6
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 10m
+      volumes:
+        - name: minio-user
+          secret:
+            secretName: minio
+{{ if eq .minio.replicas 1}}
+        - name: export
+          emptyDir: {}
+{{else}}
+  volumeClaimTemplates:
+  - metadata:
+      name: export
+    spec:
+      storageClassName: "{{ .minio.persistence.storageClass | default "local-path"}}"
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: "{{ .minio.persistence.capacity | default "10Gi"}}"
+{{end}}
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

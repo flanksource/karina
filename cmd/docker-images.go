@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"github.com/flanksource/commons/exec"
+	"gopkg.in/flanksource/yaml.v3"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var Images = &cobra.Command{
@@ -16,27 +16,59 @@ var Images = &cobra.Command{
 }
 
 func init() {
-	Images.AddCommand(&cobra.Command{
+	listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all docker images used by the platform",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			images := []string{}
-			for _, prefix := range []string{"image:", "image=="} {
-				stdout, ok := exec.SafeExec("cat build/*.yaml | grep -i %s | cut -d: -f2 -f3 | sort | uniq", prefix)
-				if !ok {
-					log.Fatalf("Failed to list images %s", stdout)
+
+			outputFormat, _ := cmd.Flags().GetString("output")
+
+			p := getPlatform(cmd)
+			// in order to list all images we perform an dry-run deployment
+			// with an ApplyHook
+			p.DryRun = true
+			p.ApplyDryRun = true
+			p.TerminationProtection = true
+			p.ApplyHook = func(ns string, obj unstructured.Unstructured) {
+				containers := []interface{}{}
+				if image, found := obj.GetAnnotations()["image"]; found {
+					images = append(images, image)
 				}
-				for _, line := range strings.Split(stdout, "\n") {
-					if line == "" {
-						continue
+				list, found, _ := unstructured.NestedSlice(obj.UnstructuredContent(), "spec", "template", "spec", "containers")
+				if found {
+					containers = append(containers, list...)
+				}
+				list, found, _ = unstructured.NestedSlice(obj.UnstructuredContent(), "spec", "template", "spec", "initContainers")
+				if found {
+					containers = append(containers, list...)
+				}
+				for _, container := range containers {
+					image, found := container.(map[string]interface{})["image"].(string)
+					if found {
+						images = append(images, image)
 					}
-					images = append(images, strings.Trim(line, " "))
 				}
 			}
-			fmt.Println(strings.Join(images, "\n"))
+
+			for name, fn := range Phases {
+				if err := fn(p); err != nil {
+					log.Errorf("Failed to dry-run deploy %s: %v", name, err)
+				}
+			}
+
+			if outputFormat == "text" {
+				fmt.Println(strings.Join(images, "\n"))
+			} else if outputFormat == "yaml" {
+				yml, _ := yaml.Marshal(images)
+				fmt.Println(string(yml))
+			}
 		},
-	})
+	}
+
+	listCmd.PersistentFlags().StringP("output", "o", "text", "Output format (string, yaml)")
+	Images.AddCommand(listCmd)
 
 	Images.AddCommand(&cobra.Command{
 		Use:   "sync",

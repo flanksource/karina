@@ -8,8 +8,8 @@ import (
 	minio "github.com/minio/minio-go/v6"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	api "github.com/moshloop/platform-cli/pkg/api/postgres"
-	"github.com/moshloop/platform-cli/pkg/k8s"
+	api "github.com/flanksource/karina/pkg/api/postgres"
+	"github.com/flanksource/karina/pkg/k8s"
 )
 
 const Namespace = "postgres-operator"

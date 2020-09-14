@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: harbor-redis
+  namespace: harbor
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: "harbor"
+    component: redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: harbor-redis
+  namespace: harbor
+  labels:
+    app: "harbor"
+    component: redis
+spec:
+  replicas: 1
+  serviceName: harbor-redis
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: redis
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: redis
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: redis
+          image: docker.io/goharbor/redis-photon:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/redis
+              subPath:
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: "harbor"
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "1Gi"

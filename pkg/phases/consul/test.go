@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 )
 
@@ -119,7 +119,7 @@ func getSnapshotFilename(p *platform.Platform, namespace, pod, timestamp string)
 
 	cfg := aws.NewConfig().
 		WithRegion(p.S3.Region).
-		WithEndpoint(p.S3.GetExternalEndpoint()).
+		WithEndpoint(p.S3.Endpoint).
 		WithCredentials(
 			credentials.NewStaticCredentials(p.S3.AccessKey, p.S3.SecretKey, ""),
 		).

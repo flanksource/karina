@@ -1,7 +1,7 @@
 package postgresoperator
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
@@ -10,7 +10,9 @@ const (
 
 func Deploy(platform *platform.Platform) error {
 	if platform.PostgresOperator == nil || platform.PostgresOperator.Disabled {
-		platform.Infof("Postgres operator is disabled")
+		if err := platform.DeleteSpecs("", "postgres-operator.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 	if platform.PostgresOperator.Version == "" {
@@ -27,7 +29,7 @@ func Deploy(platform *platform.Platform) error {
 	}
 
 	if err := platform.GetOrCreateBucket(platform.PostgresOperator.BackupBucket); err != nil {
-		return err
+		platform.Warnf("Failed to get/create s3://%s %v", platform.PostgresOperator.BackupBucket, err)
 	}
 
 	if platform.PostgresOperator.BackupSchedule == "" {

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,11 +27,15 @@ const (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
+	if p.Monitoring == nil {
+		test.Skipf("monitoring", "monitoring is not configured")
+		return
+	}
 	k8s.TestNamespace(client, "monitoring", test)
 }
 
 func TestThanos(p *platform.Platform, test *console.TestResults) {
-	if p.Thanos == nil || p.Thanos.Disabled {
+	if p.Thanos == nil || p.Thanos.IsDisabled() {
 		test.Skipf("thanos", "thanos is disabled")
 		return
 	}
@@ -110,7 +114,6 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	for _, activeTarget := range targets.Active {
 		targetEndpointName := activeTarget.DiscoveredLabels["__meta_kubernetes_endpoints_name"]
 		targetEndpointAddress := activeTarget.DiscoveredLabels["__address__"]
-		test.Tracef("Testing endpoint: %s -> %s", targetEndpointName, activeTarget)
 		if activeTarget.Health == "down" {
 			test.Failf(targetEndpointName, "%s (%s) endpoint is down\n %s", targetEndpointName, targetEndpointAddress, activeTarget.LastError)
 		} else {

@@ -1,7 +1,8 @@
 package registrycreds
 
 import (
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/constants"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 )
 
@@ -10,7 +11,7 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 	if p.RegistryCredentials.Namespace == "" {
-		p.RegistryCredentials.Namespace = "platform-system"
+		p.RegistryCredentials.Namespace = constants.PlatformSystem
 	}
 	namespace := p.RegistryCredentials.Namespace
 

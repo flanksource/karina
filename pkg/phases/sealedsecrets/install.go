@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/ca"
+
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +27,9 @@ var (
 
 func Install(platform *platform.Platform) error {
 	if platform.SealedSecrets == nil || platform.SealedSecrets.Disabled {
+		if err := platform.DeleteSpecs(Namespace, "sealed-secrets.yaml"); err != nil {
+			platform.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 
@@ -32,7 +37,12 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if platform.SealedSecrets.Certificate != nil {
+	if platform.SealedSecrets.Certificate != nil && !platform.ApplyDryRun {
+		ca, err := ca.ReadCA(platform.SealedSecrets.Certificate)
+		if err != nil {
+			return errors.Wrap(err, "failed to read platform ca")
+		}
+
 		client, err := platform.GetClientset()
 		if err != nil {
 			return errors.Wrap(err, "failed to get k8s client")
@@ -62,7 +72,7 @@ func Install(platform *platform.Platform) error {
 						SealedSecretsKeyLabel: "active",
 					},
 				},
-				Data: platform.SealedSecrets.Certificate.AsTLSSecret(),
+				Data: ca.AsTLSSecret(),
 				Type: "kubernetes.io/tls",
 			}
 
@@ -73,7 +83,7 @@ func Install(platform *platform.Platform) error {
 			}
 		} else {
 			secret := items[len(items)-1]
-			secret.Data = platform.SealedSecrets.Certificate.AsTLSSecret()
+			secret.Data = ca.AsTLSSecret()
 
 			platform.Infof("Updating %s/secret/%s", Namespace, secret.Name)
 

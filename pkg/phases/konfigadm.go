@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"github.com/flanksource/commons/files"
+	"github.com/flanksource/commons/logger"
+	"gopkg.in/flanksource/yaml.v3"
 
-	"github.com/flanksource/commons/certs"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/platform"
 	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/flanksource/yaml"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
 	"github.com/pkg/errors"
 )
 
@@ -22,88 +22,121 @@ var envVars = map[string]string{
 	"KUBECONFIG":        "/etc/kubernetes/admin.conf",
 }
 
-var noCAErrorText = `Must specify a 'ca'' section in the platform config.
-e.g.:
-ca:
-   cert: .certs/root-ca-crt.pem
-   privateKey: .certs/root-ca-key.pem
-   password: foobar
+const (
+	updateHostsFileCmd = "echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts"
+	kubeadmInitCmd     = "kubeadm init --config /etc/kubernetes/kubeadm.conf -v 5 2>&1 | tee -a /var/log/kubeadm.log"
+	kubeadmNodeJoinCmd = "kubeadm join --config /etc/kubernetes/kubeadm.conf -v 5 2>&1 | tee -a /var/log/kubeadm.log"
+)
 
-CA certs are generated using platform-cli ca generate
-`
+var downloadCustomClusterSigningFiles = []string{
+	// Because the certificate-signing-cert can only contain a single certificate and the ca.crt contains 2 (the root ca, and cluster ca)
+	// ca.{key,crt} are copied removing the 2nd cert and specified as extra arguments to the api server, because of this kubeadm upload/download certs
+	// is not aware of these and they get recreated for each new master, causing node join issues down the line, the fix below is to recreate these certs
+	// from the ca cert|key downloaded by kubeadm
+	"kubeadm join phase control-plane-prepare download-certs --config /etc/kubernetes/kubeadm.conf -v 5 2>&1 | tee -a /var/log/kubeadm.log",
+	"cp /etc/kubernetes/pki/ca.key /etc/kubernetes/pki/csr-ca.key",
+	"cat /etc/kubernetes/pki/ca.crt | awk '1;/-----END CERTIFICATE-----/{exit}' > /etc/kubernetes/pki/csr-ca.crt",
+}
 
+// CreatePrimaryMaster creates a konfigadm config for the primary master.
 func CreatePrimaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
 	if platform.Name == "" {
 		return nil, errors.New("Must specify a platform name")
 	}
-	if platform.Datacenter == "" {
-		return nil, errors.New("Must specify a platform datacenter")
-	}
-	hostname := ""
-	cfg, err := baseKonfig(platform)
+	cfg, err := baseKonfig(platform.Master.KonfigadmFile, platform)
 	if err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to get baseKonfig: %v", err)
 	}
 	if err := addInitKubeadmConfig(platform, cfg); err != nil {
 		return nil, fmt.Errorf("createPrimaryMaster: failed to add kubeadm config: %v", err)
 	}
-	createConsulService(hostname, platform, cfg)
-	createClientSideLoadbalancers(platform, cfg)
-	if err := addCerts(platform, cfg); err != nil {
-		return nil, errors.Wrap(err, "failed to add certs")
+	files, err := kubeadm.GetFilesToMountForPrimary(platform)
+	if err != nil {
+		return nil, err
 	}
-	cfg.AddCommand("kubeadm init --config /etc/kubernetes/kubeadm.conf | tee /var/log/kubeadm.log")
+	for file, content := range files {
+		cfg.Files[file] = content
+	}
+	cfg.AddCommand(kubeadmInitCmd)
 	return cfg, nil
 }
 
-func baseKonfig(platform *platform.Platform) (*konfigadm.Config, error) {
-	platform.Init()
-	cfg, err := konfigadm.NewConfig().Build()
+// CreateSecondaryMaster creates a konfigadm config for a secondary master.
+func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
+	cfg, err := baseKonfig(platform.Master.KonfigadmFile, platform)
+	if err != nil {
+		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
+	}
+	if err := addControlPlaneJoinConfig(platform, cfg); err != nil {
+		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
+	}
+
+	files, err := kubeadm.GetFilesToMountForSecondary(platform)
+	if err != nil {
+		return nil, err
+	}
+	for file, content := range files {
+		cfg.Files[file] = content
+	}
+
+	for _, cmd := range downloadCustomClusterSigningFiles {
+		cfg.AddCommand(cmd)
+	}
+	cfg.AddCommand(kubeadmNodeJoinCmd)
+	return cfg, nil
+}
+
+// CreateWorker creates a konfigadm config for a worker in node group nodegroup
+func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Config, error) {
+	if platform.Nodes == nil {
+		return nil, fmt.Errorf("CreateWorker failed to create worker - nil Nodes supplied")
+	}
+	if _, ok := platform.Nodes[nodegroup]; !ok {
+		return nil, fmt.Errorf("CreateWorker failed to create worker - supplied nodegroup not found")
+	}
+
+	node := platform.Nodes[nodegroup]
+	baseConfig := node.KonfigadmFile
+	cfg, err := baseKonfig(baseConfig, platform)
+	if err != nil {
+		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
+	}
+	if err := addJoinKubeadmConfig(platform, cfg); err != nil {
+		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
+	}
+
+	cfg.AddCommand(kubeadmNodeJoinCmd)
+	return cfg, nil
+}
+
+// baseKonfig generates a base konfigadm configuration.
+// It copies in the required environment variables and
+// initial commands.
+//nolint:unparam
+func baseKonfig(initialKonfigadmFile string, platform *platform.Platform) (*konfigadm.Config, error) {
+	var cfg *konfigadm.Config
+	var err error
+	if initialKonfigadmFile == "" {
+		cfg, err = konfigadm.NewConfig().Build()
+	} else {
+		cfg, err = konfigadm.NewConfig(initialKonfigadmFile).Build()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("baseKonfig: failed to get config: %v", err)
 	}
+
 	for k, v := range envVars {
 		cfg.Environment[k] = v
 	}
 
 	// update hosts file with hostname
-	cfg.AddCommand("echo $(ifconfig ens160 | grep inet | awk '{print $2}' | head -n1 ) $(hostname) >> /etc/hosts")
+	cfg.AddCommand(updateHostsFileCmd)
 	return cfg, nil
 }
 
-func addCerts(platform *platform.Platform, cfg *konfigadm.Config) error {
-	if platform.CA == nil {
-		return errors.New(noCAErrorText)
-	}
-
-	clusterCA := certs.NewCertificateBuilder("kubernetes-ca").CA().Certificate
-	clusterCA, err := platform.GetCA().SignCertificate(clusterCA, 10)
-	if err != nil {
-		return fmt.Errorf("addCerts: failed to sign certificate: %v", err)
-	}
-
-	// plus any cert signed by this cluster specific CA
-	crt := string(clusterCA.EncodedCertificate()) + "\n"
-	// any cert signed by the global CA should be allowed
-	crt = crt + string(platform.GetCA().GetPublicChain()[0].EncodedCertificate()) + "\n"
-	// csrsigning controller doesn't like having more than 1 CA cert passed to it
-	cfg.Files["/etc/kubernetes/pki/csr-ca.crt"] = string(clusterCA.EncodedCertificate())
-	cfg.Files["/etc/kubernetes/pki/csr-ca.key"] = string(clusterCA.EncodedPrivateKey())
-
-	cfg.Files["/etc/kubernetes/pki/ca.crt"] = crt
-	cfg.Files["/etc/kubernetes/pki/ca.key"] = string(clusterCA.EncodedPrivateKey())
-	cfg.Files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
-	return nil
-}
-
+// addInitKubeadmConfig derives the initial kubeadm config for a cluster from its platform
+// config and adds it to its konfigadm files
 func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	cluster := kubeadm.NewClusterConfig(platform)
-	data, err := yaml.Marshal(cluster)
-	if err != nil {
-		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
-	}
-	platform.Tracef("Using kubeadm config: \n%s", string(data))
-	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	if platform.Kubernetes.AuditConfig.PolicyFile != "" {
 		// clusters audit policy files are injected into the machine via konfigadm
 		ap := files.SafeRead(platform.Kubernetes.AuditConfig.PolicyFile)
@@ -112,93 +145,33 @@ func addInitKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) er
 		}
 		cfg.Files[kubeadm.AuditPolicyPath] = ap
 	}
+
+	cluster := kubeadm.NewClusterConfig(platform)
+	data, err := yaml.Marshal(cluster)
+	return addKubeadmConf(platform, data, err, cfg)
+}
+
+func addKubeadmConf(platform *platform.Platform, data []byte, err error, cfg *konfigadm.Config) error {
+	if err != nil {
+		return fmt.Errorf("addInitKubeadmConfig: failed to marshal cluster config: %v", err)
+	}
+	if platform.PlatformConfig.Trace {
+		logger.Tracef("Using kubeadm config: \n%s", string(data))
+	}
+	cfg.Files["/etc/kubernetes/kubeadm.conf"] = string(data)
 	return nil
 }
 
-func createConsulService(hostname string, platform *platform.Platform, cfg *konfigadm.Config) {
-	cfg.Files["/etc/kubernetes/consul/api.json"] = fmt.Sprintf(`
-{
-	"leave_on_terminate": true,
-  "rejoin_after_leave": true,
-	"service": {
-		"id": "%s",
-		"name": "%s",
-		"address": "",
-		"check": {
-			"id": "api-server",
-			"name": " TCP on port 6443",
-			"tcp": "localhost:6443",
-			"interval": "120s",
-			"timeout": "60s"
-		},
-		"port": 6443,
-		"enable_tag_override": false
-	}
-}
-	`, hostname, platform.Name)
+// addJoinKubeadmConfig derives the initial kubeadm config for a cluster from its platform
+// config and adds it to its konfigadm files
+func addJoinKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
+	data, err := kubeadm.NewJoinConfiguration(platform)
+	return addKubeadmConf(platform, data, err, cfg)
 }
 
-func createClientSideLoadbalancers(platform *platform.Platform, cfg *konfigadm.Config) {
-	cfg.Containers = append(cfg.Containers, konfigadm.Container{
-		Image: platform.GetImagePath("docker.io/consul:1.3.1"),
-		Env: map[string]string{
-			"CONSUL_CLIENT_INTERFACE": "ens160",
-			"CONSUL_BIND_INTERFACE":   "ens160",
-		},
-		Args:       fmt.Sprintf("agent -join=%s:8301 -datacenter=%s -data-dir=/consul/data -domain=consul -config-dir=/consul-configs", platform.Consul, platform.Datacenter),
-		DockerOpts: "--net host",
-		Volumes: []string{
-			"/etc/kubernetes/consul:/consul-configs",
-		},
-	}, konfigadm.Container{
-		Image:      platform.GetImagePath("docker.io/moshloop/tcp-loadbalancer:0.1"),
-		Service:    "haproxy",
-		DockerOpts: "--net host -p 8443:8443",
-		Env: map[string]string{
-			"CONSUL_CONNECT": platform.Consul + ":8500",
-			"SERVICE_NAME":   platform.Name,
-			"PORT":           "8443",
-		},
-	})
-}
-
-func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, error) {
-	hostname := ""
-	cfg, err := baseKonfig(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createSecondaryMaster: failed to get baseKonfig: %v", err)
-	}
-	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createSecondaryMaster: failed to get/create bootstrap token: %v", err)
-	}
-	certKey, err := kubeadm.UploadControlPaneCerts(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createSecondaryMaster: failed to upload control plane certs: %v", err)
-	}
-	createConsulService(hostname, platform, cfg)
-	createClientSideLoadbalancers(platform, cfg)
-	if err = addCerts(platform, cfg); err != nil {
-		return nil, errors.Wrap(err, "Failed to add certs")
-	}
-	cfg.AddCommand(fmt.Sprintf(
-		"kubeadm join --control-plane --token %s --certificate-key %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log",
-		token, certKey, platform.JoinEndpoint))
-	return cfg, nil
-}
-
-func CreateWorker(platform *platform.Platform) (*konfigadm.Config, error) {
-	cfg, err := baseKonfig(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
-	}
-	token, err := kubeadm.GetOrCreateBootstrapToken(platform)
-	if err != nil {
-		return nil, fmt.Errorf("createWorker: failed to get/create bootstrap token: %v", err)
-	}
-	createClientSideLoadbalancers(platform, cfg)
-	cfg.AddCommand(fmt.Sprintf(
-		"kubeadm join --token %s --discovery-token-unsafe-skip-ca-verification %s  | tee /var/log/kubeadm.log",
-		token, platform.JoinEndpoint))
-	return cfg, nil
+// addJoinKubeadmConfig derives the initial kubeadm config for a cluster from its platform
+// config and adds it to its konfigadm files
+func addControlPlaneJoinConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
+	data, err := kubeadm.NewControlPlaneJoinConfiguration(platform)
+	return addKubeadmConf(platform, data, err, cfg)
 }

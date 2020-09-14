@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/moshloop/platform-cli/pkg/phases"
+	"github.com/flanksource/karina/pkg/phases"
 )
 
 var Conformance = &cobra.Command{

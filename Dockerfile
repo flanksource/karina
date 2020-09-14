@@ -1,5 +1,16 @@
-FROM ubuntu:bionic
+FROM golang:1.13.6 as builder
+WORKDIR /app
+COPY ./ ./
+ARG NAME
+ARG VERSION
+# upx 3.95 has issues compressing darwin binaries - https://github.com/upx/upx/issues/301
+RUN  apt-get update && apt-get install -y xz-utils && \
+  wget -nv -O upx.tar.xz https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz; tar xf upx.tar.xz; mv upx-3.96-amd64_linux/upx /usr/bin
+RUN GOOS=linux GOARCH=amd64 make setup pack linux compress
 
+
+FROM ubuntu:bionic
+COPY --from=builder /app/.bin/karina /bin/
 ARG SYSTOOLS_VERSION=3.6
 
 RUN apt-get update && \
@@ -15,5 +26,4 @@ RUN install_bin https://github.com/CrunchyData/postgres-operator/releases/downlo
 RUN install_bin https://github.com/hongkailiu/gojsontoyaml/releases/download/e8bd32d/gojsontoyaml
 RUN pip install awscli
 
-COPY .bin/platform-cli /bin/
-ENTRYPOINT [ "/bin/platform-cli" ]
+ENTRYPOINT [ "/bin/karina" ]

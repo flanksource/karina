@@ -18,24 +18,24 @@ spec:
       containers:
         - name: oauth2-proxy
           args:
-            - "-upstream=file:///dev/null"
-            - "-http-address=0.0.0.0:4180"
-            - "-whitelist-domain=.{{.domain}}"
-            - "-cookie-domain=.{{.domain}}"
-            - "-provider=oidc"
-            - "-provider-display-name=Dex"
-            - "-client-id=kubernetes"
-            - "-client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0"
-            - "-redirect-url=https://oauth2.{{.domain}}/oauth2/callback"
-            - "-oidc-issuer-url=https://dex.{{.domain}}"
-            - "-oidc-group={{.oauth2Proxy.oidcGroup}}"
-            - "-skip-oidc-discovery"
-            - "-login-url=https://dex.{{.domain}}/auth"
-            - "-redeem-url=https://dex.dex.svc:443/token"
-            - "-ssl-insecure-skip-verify"
-            - "-oidc-jwks-url=https://dex.dex.svc/keys"
-            - "-cookie-secure=true"
-            - "-email-domain=*"
+            - "--upstream=file:///dev/null"
+            - "--http-address=0.0.0.0:4180"
+            - "--whitelist-domain=.{{.domain}}"
+            - "--cookie-domain=.{{.domain}}"
+            - "--provider=oidc"
+            - "--provider-display-name=Dex"
+            - "--client-id=kubernetes"
+            - "--client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0"
+            - "--redirect-url=https://oauth2.{{.domain}}/oauth2/callback"
+            - "--oidc-issuer-url=https://dex.{{.domain}}"
+            - "--scope=openid email groups profile"
+            - "--skip-oidc-discovery"
+            - "--login-url=https://dex.{{.domain}}/auth"
+            - "--redeem-url=https://dex.dex.svc:443/token"
+            - "--ssl-insecure-skip-verify"
+            - "--oidc-jwks-url=https://dex.dex.svc/keys"
+            - "--cookie-secure=true"
+            - "--email-domain=*"
             - "--pass-authorization-header=true"
             - "--pass-host-header=true"
             - "--pass-access-token=true"
@@ -44,8 +44,11 @@ spec:
             - "--request-logging=true"
           env:
             - name: OAUTH2_PROXY_COOKIE_SECRET
-              value: "{{.oauth2Proxy.cookieSecret}}"
-          image: flanksource/oauth2_proxy:{{.oauth2Proxy.version}}
+              valueFrom:
+                secretKeyRef:
+                  key: secret
+                  name: oauth2-cookie-secret
+          image: quay.io/oauth2-proxy/oauth2-proxy:{{.oauth2Proxy.version}}
           resources:
             requests:
               cpu: 25m

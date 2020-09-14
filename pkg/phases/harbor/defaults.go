@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moshloop/platform-cli/pkg/types"
+	"github.com/flanksource/karina/pkg/types"
 )
 
 var dbCluster = "harbor"
@@ -41,6 +41,13 @@ func Defaults(p *types.PlatformConfig) {
 		harbor.URL = "https://harbor." + p.Domain
 	}
 
+	if !strings.HasPrefix(harbor.Version, "v1") {
+		// from v2 all images use the same version label
+		harbor.ClairVersion = harbor.Version
+		harbor.RegistryVersion = harbor.Version
+		harbor.ChartVersion = harbor.Version
+	}
+
 	if harbor.ClairVersion == "" {
 		if version, ok := clairVersions[harbor.Version]; ok {
 			harbor.ClairVersion = version
@@ -48,6 +55,7 @@ func Defaults(p *types.PlatformConfig) {
 			harbor.ClairVersion = clairVersions["latest"]
 		}
 	}
+
 	if harbor.RegistryVersion == "" {
 		harbor.RegistryVersion = "v2.7.1-patch-2819-2553-" + harbor.Version
 	}
@@ -66,7 +74,7 @@ func Defaults(p *types.PlatformConfig) {
 		if settings == nil {
 			settings = &types.HarborSettings{}
 		}
-		settings.LdapURL = "ldaps://" + p.Ldap.Host
+		settings.LdapURL = p.Ldap.GetConnectionURL()
 		settings.LdapBaseDN = p.Ldap.UserDN
 		verify := false
 		settings.LdapVerifyCert = &verify

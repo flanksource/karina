@@ -1,0 +1,136 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-clair"
+  namespace: harbor
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - name: adapter
+      port: 8080
+  selector:
+    app: "harbor"
+    component: clair
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-clair
+  namespace: harbor
+  annotations:
+    reload/all: "true" # restart on cm/secret change
+  labels:
+    app: "harbor"
+    component: clair
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: clair
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: clair
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: clair
+          {{- if .harbor.version | strings.HasPrefix "v1" }}
+          image: docker.io/goharbor/clair-photon:v{{.harbor.clairVersion}}-{{.harbor.version}}
+          {{- else }}
+          image: docker.io/goharbor/clair-photon:{{.harbor.version}}
+          {{- end }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6061
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6061
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          args: ["-log-level", "{{.harbor.logLevel}}"]
+          env:
+            - name: HTTP_PROXY
+              value: ""
+            - name: HTTPS_PROXY
+              value: ""
+            - name: NO_PROXY
+              value: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
+          ports:
+            - containerPort: 6060
+          volumeMounts:
+            - name: config
+              mountPath: /etc/clair/config.yaml
+              subPath: config.yaml
+            - name: trusted-certs
+              mountPath: /harbor_cust_cert/trusted_ca.crt
+              subPath: ca.crt
+            - name: core-internal-certs
+              mountPath: /harbor_cust_cert/core.crt
+              subPath: ca.crt
+        - name: adapter
+          {{- if .harbor.version | strings.HasPrefix "v1" }}
+          image: docker.io/goharbor/clair-adapter-photon:v1.0.1-{{.harbor.version}}
+          {{- else }}
+          image: docker.io/goharbor/clair-adapter-photon:{{.harbor.version}}
+          {{- end }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /probe/healthy
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /probe/ready
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          env:
+            - name: SCANNER_CLAIR_URL
+              # To avoid a pod cannot reach itself via service IP when the clusters disable hairpin
+              value: "http://127.0.0.1:6060"
+            - name: SCANNER_STORE_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-clair
+                  key: redis
+            - name: SCANNER_CLAIR_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-clair
+                  key: database
+            - name: SCANNER_LOG_LEVEL
+              value: "{{.harbor.logLevel}}"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+          - name: trusted-certs
+            mountPath: /harbor_cust_cert/trusted_ca.crt
+            subPath: ca.crt
+          - name: core-internal-certs
+            mountPath: /harbor_cust_cert/core.crt
+            subPath: ca.crt
+      volumes:
+        - name: config
+          secret:
+            secretName: "harbor-clair"
+        - name: trusted-certs
+          configMap:
+            name: trusted-certs
+        - name: core-internal-certs
+          secret:
+            secretName: core-internal-certs
+

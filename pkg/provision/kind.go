@@ -8,31 +8,66 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 
-	"github.com/flanksource/yaml"
+	"gopkg.in/flanksource/yaml.v3"
 
 	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
-)
-
-var (
-	kindCADir = "/etc/flanksource/ingress-ca"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 // KindCluster provisions a new Kind cluster
-func KindCluster(platform *platform.Platform) error {
-	kubeadmPatches, err := createKubeAdmPatches(platform)
+func KindCluster(p *platform.Platform) error {
+	p.MasterDiscovery = platform.KindProvider{}
+	p.ProvisionHook = platform.CompositeHook{}
+	if p.Kubernetes.Version == "" {
+		return fmt.Errorf("must specify kubernetes.version")
+	}
+	kubeadmPatches, err := createKubeAdmPatches(p)
 	if err != nil {
 		return errors.Wrap(err, "failed to generate kubeadm patches")
 	}
 
-	caPath, err := filepath.Abs(platform.IngressCA.Cert)
+	var extraMounts []kindapi.Mount
+
+	files, err := kubeadm.GetFilesToMountForPrimary(p)
 	if err != nil {
-		return errors.Wrap(err, "failed to expand ca file path")
+		return err
+	}
+
+	for file, content := range files {
+		cache := fmt.Sprintf("%s/.kind/%s%s", os.ExpandEnv("$HOME"), p.Name, file)
+		_ = os.MkdirAll(path.Dir(cache), 0755)
+		if err := ioutil.WriteFile(cache, []byte(content), 0644); err != nil {
+			return err
+		}
+		extraMounts = append(extraMounts, kindapi.Mount{
+			ContainerPath: file,
+			HostPath:      cache,
+			Readonly:      true,
+		})
+	}
+
+	portMappings := []kindapi.PortMapping{
+		{
+			ContainerPort: 80,
+			HostPort:      80,
+			Protocol:      kindapi.PortMappingProtocolTCP,
+		},
+		{
+			ContainerPort: 443,
+			HostPort:      443,
+			Protocol:      kindapi.PortMappingProtocolTCP,
+		},
+	}
+
+	for from, to := range p.Kind.PortMappings {
+		portMappings = append(portMappings, kindapi.PortMapping{
+			ContainerPort: to,
+			HostPort:      from,
+			Protocol:      kindapi.PortMappingProtocolTCP,
+		})
 	}
 
 	kindConfig := kindapi.Cluster{
@@ -45,55 +80,13 @@ func KindCluster(platform *platform.Platform) error {
 		},
 		Nodes: []kindapi.Node{
 			{
-				Role:  "control-plane",
-				Image: fmt.Sprintf("kindest/node:%s", platform.Kubernetes.Version),
-				ExtraPortMappings: []kindapi.PortMapping{
-					{
-						ContainerPort: 80,
-						HostPort:      80,
-						Protocol:      kindapi.PortMappingProtocolTCP,
-					},
-					{
-						ContainerPort: 443,
-						HostPort:      443,
-						Protocol:      kindapi.PortMappingProtocolTCP,
-					},
-					{
-						ContainerPort: 6443,
-						HostPort:      6443,
-						Protocol:      kindapi.PortMappingProtocolTCP,
-					},
-				},
+				Role:                 "control-plane",
+				Image:                fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
+				ExtraPortMappings:    portMappings,
 				KubeadmConfigPatches: kubeadmPatches,
-				ExtraMounts: []kindapi.Mount{
-					{
-						ContainerPath: kindCADir,
-						HostPath:      path.Dir(caPath),
-						Readonly:      true,
-					},
-				},
+				ExtraMounts:          extraMounts,
 			},
 		},
-	}
-
-	if policyFile := platform.Kubernetes.AuditConfig.PolicyFile; policyFile != "" {
-		// for kind clusters audit policy files are mapped in via a dual
-		// host -> master,
-		// master -> kube-api-server pod
-		// mapping
-
-		absFile, err := filepath.Abs(policyFile)
-		if err != nil {
-			return errors.Wrap(err, "failed to expand audit policy file path")
-		}
-
-		mnts := &kindConfig.Nodes[0].ExtraMounts
-
-		*mnts = append(*mnts, kindapi.Mount{
-			ContainerPath: kubeadm.AuditPolicyPath,
-			HostPath:      absFile,
-			Readonly:      true,
-		})
 	}
 
 	yml, err := yaml.Marshal(kindConfig)
@@ -101,9 +94,8 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to marshal config")
 	}
 
-	if platform.PlatformConfig.Trace {
-		platform.Infof("KIND Config YAML:")
-		platform.Infof(string(yml))
+	if p.PlatformConfig.Trace {
+		p.Infof(string(yml))
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kind.yaml")
@@ -116,23 +108,24 @@ func KindCluster(platform *platform.Platform) error {
 		return errors.Wrap(err, "failed to write kind config file")
 	}
 
-	if platform.DryRun {
+	if p.DryRun {
 		fmt.Println(string(yml))
 		return nil
 	}
 
-	kind := platform.GetBinary("kind")
-	kubeConfig, err := platform.GetKubeConfig()
-	if err != nil {
-		return errors.Wrap(err, "failed to get kube config")
+	kind := p.GetBinary("kind")
+
+	if err := kind("create cluster --config %s --kubeconfig %s --name %s", tmpfile.Name(), p.KubeConfigPath, p.Name); err != nil {
+		return err
 	}
 
-	if err := kind("create cluster --config %s --kubeconfig %s", tmpfile.Name(), kubeConfig); err != nil {
+	client, err := p.GetClientset()
+	if err != nil {
 		return err
 	}
 
 	// delete the default storageclass created by kind as we install our own
-	return platform.GetKubectl()("delete sc standard")
+	return client.StorageV1().StorageClasses().Delete("standard", nil)
 }
 
 // createKubeAdmPatches reads a Platform config, creates a new ClusterConfiguration from it and
@@ -142,19 +135,6 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	clusterConfig.ControlPlaneEndpoint = ""
 	clusterConfig.ClusterName = platform.Name
 	clusterConfig.APIServer.CertSANs = nil
-
-	vol := &clusterConfig.APIServer.ExtraVolumes
-	*vol = append(*vol, api.HostPathMount{
-		Name:      "oidc-certificates",
-		HostPath:  path.Join(kindCADir, filepath.Base(platform.IngressCA.Cert)),
-		MountPath: "/etc/ssl/oidc/ingress-ca.pem",
-		ReadOnly:  true,
-		PathType:  api.HostPathFile,
-	})
-
-	clusterConfig.APIServer.ExtraArgs["oidc-ca-file"] = "/etc/ssl/oidc/ingress-ca.pem"
-
-	clusterConfig.ControllerManager.ExtraArgs = nil
 	clusterConfig.CertificatesDir = ""
 	clusterConfig.Networking.PodSubnet = ""
 	clusterConfig.Networking.ServiceSubnet = ""

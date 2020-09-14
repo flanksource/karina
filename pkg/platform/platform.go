@@ -3,7 +3,6 @@ package platform
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,10 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/deps"
@@ -24,41 +19,46 @@ import (
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/commons/text"
+	"github.com/flanksource/karina/manifests"
+	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/ca"
+	"github.com/flanksource/karina/pkg/client/dns"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
+	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/karina/templates"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/flanksource/yaml"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
-	"github.com/moshloop/platform-cli/manifests"
-	"github.com/moshloop/platform-cli/pkg/api"
-	"github.com/moshloop/platform-cli/pkg/client/dns"
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
-	"github.com/moshloop/platform-cli/pkg/nsx"
-	"github.com/moshloop/platform-cli/pkg/types"
-	"github.com/moshloop/platform-cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	yaml "gopkg.in/flanksource/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Platform struct {
 	Cluster types.Cluster
 	types.PlatformConfig
+	MasterDiscovery MasterDiscovery
+	ProvisionHook   ProvisionHook
 	logger.Logger
 	logFields map[string]interface{}
 	k8s.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
-	ctx        context.Context //nolint
-	nsx        *nsx.NSXClient
-	kubeConfig []byte
-	ca         certs.CertificateAuthority
-	ingressCA  certs.CertificateAuthority
+	ctx            context.Context //nolint
+	kubeConfig     []byte
+	KubeConfigPath string
+	ca             certs.CertificateAuthority
+	ingressCA      certs.CertificateAuthority
 	// Terminating is true if the cluster is in a terminating state
 	Terminating bool
 }
 
-func (platform *Platform) Init() {
-	platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+func (platform *Platform) Init() error {
+	if platform.Client.GetKubeConfigBytes == nil {
+		platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
+	}
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
@@ -66,25 +66,67 @@ func (platform *Platform) Init() {
 	platform.Client.Trace = platform.PlatformConfig.Trace
 	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
 	platform.Client.Logger = platform.Logger
+
 	platform.logFields = make(map[string]interface{})
+	consul := NewConsulProvider(platform)
+	dns := NewDNSProvider(platform.GetDNSClient())
+
+	if platform.NSX != nil && !platform.NSX.Disabled {
+		nsx, err := NewNSXProvider(platform)
+		if err != nil {
+			return err
+		}
+		platform.MasterDiscovery = nsx
+		if platform.DNS.IsEnabled() && platform.DNS.UpdateHosts {
+			platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{nsx, dns}}
+		} else {
+			platform.ProvisionHook = nsx
+		}
+	} else if platform.Consul != "" && platform.DNS.IsEnabled() && platform.DNS.UpdateHosts {
+		// when both consul and DNS are specified, Consul is used for master discovery
+		// and DNS used for external access
+		platform.MasterDiscovery = consul
+		platform.ProvisionHook = CompositeHook{Hooks: []ProvisionHook{consul, dns}}
+	} else if platform.Consul != "" {
+		platform.MasterDiscovery = consul
+		platform.ProvisionHook = consul
+	} else if platform.DNS.IsEnabled() && platform.DNS.UpdateHosts {
+		platform.MasterDiscovery = dns
+		platform.ProvisionHook = dns
+	} else {
+		platform.MasterDiscovery = KindProvider{}
+		platform.ProvisionHook = CompositeHook{}
+	}
+
+	if platform.KubeConfigPath == "" {
+		if os.Getenv("KUBECONFIG") == "" {
+			platform.KubeConfigPath = os.ExpandEnv("$HOME/.kube/config")
+		} else {
+			platform.KubeConfigPath = os.Getenv("KUBECONFIG")
+		}
+	}
+	return nil
 }
+
 func (platform *Platform) clone() *Platform {
 	logFields := make(map[string]interface{})
 	for k, v := range platform.logFields {
 		logFields[k] = v
 	}
 	return &Platform{
-		Cluster:        platform.Cluster,
-		PlatformConfig: platform.PlatformConfig,
-		Logger:         platform.Logger,
-		logFields:      logFields,
-		Client:         platform.Client,
-		ctx:            context.TODO(),
-		nsx:            platform.nsx,
-		kubeConfig:     platform.kubeConfig,
-		ca:             platform.ca,
-		ingressCA:      platform.ingressCA,
-		Terminating:    platform.Terminating,
+		Cluster:         platform.Cluster,
+		PlatformConfig:  platform.PlatformConfig,
+		Logger:          platform.Logger,
+		logFields:       logFields,
+		Client:          platform.Client,
+		ctx:             context.TODO(),
+		MasterDiscovery: platform.MasterDiscovery,
+		ProvisionHook:   platform.ProvisionHook,
+		kubeConfig:      platform.kubeConfig,
+		ca:              platform.ca,
+		ingressCA:       platform.ingressCA,
+		KubeConfigPath:  platform.KubeConfigPath,
+		Terminating:     platform.Terminating,
 	}
 }
 
@@ -111,21 +153,62 @@ func (platform *Platform) WithLogOutput(output io.Writer) *Platform {
 	return copy
 }
 
+func (platform *Platform) ResetMasterConnection() {
+	platform.kubeConfig = nil
+	platform.Client.ResetConnection()
+}
+
+// GetAPIEndpoint returns an endpoint for reaching a master node that is reachable on 6443 or
+// an error otherwise
+func (platform *Platform) GetAPIEndpoint() (string, error) {
+	if platform.DNS.IsEnabled() {
+		ip := fmt.Sprintf("k8s-api.%s", platform.Domain)
+		if net.Ping(ip, 6443, 10) {
+			return ip, nil
+		}
+		platform.Warnf("DNS endpoint is not healthy, failing back to master IP")
+	}
+
+	masters, err := platform.MasterDiscovery.GetExternalEndpoints(platform)
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to discover any external endpoints")
+	}
+
+	if len(masters) == 0 {
+		return "", fmt.Errorf("could not find any master ips")
+	}
+
+	for _, master := range masters {
+		if net.Ping(master, 6443, 10) {
+			return master, nil
+		}
+	}
+	return "", fmt.Errorf("none of the masters are up: %v", masters)
+}
+
 func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	if platform.kubeConfig != nil {
 		return platform.kubeConfig, nil
 	}
 
-	if platform.CA == nil || os.Getenv("KUBECONFIG") != "" {
-		return []byte(files.SafeRead(os.Getenv("KUBECONFIG"))), nil
+	context := k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath)
+	platform.Tracef("Current KUBECONFIG: path=%s, context=%s", platform.KubeConfigPath, context)
+	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		return ioutil.ReadFile(platform.KubeConfigPath)
 	}
 
-	masters := platform.GetMasterIPs()
-	if len(masters) == 0 {
-		return nil, fmt.Errorf("could not find any master ips")
+	ip, err := platform.GetAPIEndpoint()
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
 	}
 
-	return k8s.CreateKubeConfig(platform.Name, platform.GetCA(), masters[0], "system:masters", "admin", 24*7*time.Hour)
+	platform.Debugf("Generating a new kubeconfig for %s", ip)
+	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	if err != nil {
+		return nil, err
+	}
+	platform.kubeConfig = kubeConfig
+	return platform.kubeConfig, nil
 }
 
 // GetCA retrieves the cert.CertificateAuthority
@@ -135,26 +218,12 @@ func (platform *Platform) GetCA() certs.CertificateAuthority {
 	if platform.ca != nil {
 		return platform.ca
 	}
-	ca, err := readCA(platform.CA)
+	ca, err := ca.ReadCA(platform.CA)
 	if err != nil {
 		platform.Fatalf("Unable to open %s: %v", platform.CA.PrivateKey, err)
 	}
 	platform.ca = ca
 	return ca
-}
-
-// readCA opens the CA stored in the file ca.Cert using the private key in ca.PrivateKey
-// with key password ca.Password.
-func readCA(ca *types.CA) (*certs.Certificate, error) {
-	cert := files.SafeRead(ca.Cert)
-	if cert == "" {
-		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
-	}
-	privateKey := files.SafeRead(ca.PrivateKey)
-	if privateKey == "" {
-		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
-	}
-	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
 }
 
 func (platform *Platform) ReadIngressCACertString() string {
@@ -174,7 +243,7 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 		return platform.ingressCA
 	}
 	platform.Debugf("[IngressCA] loading from disk: %s", platform.IngressCA.Cert)
-	ca, err := readCA(platform.IngressCA)
+	ca, err := ca.ReadCA(platform.IngressCA)
 	if err != nil {
 		platform.Fatalf("Unable to open Ingress CA: %v", err)
 	}
@@ -185,20 +254,24 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 
 // WaitFor at least 1 master IP to be reachable
 func (platform *Platform) WaitFor() error {
+	if platform.DryRun {
+		return nil
+	}
 	for {
-		masters := platform.GetMasterIPs()
-		if len(masters) > 0 && net.Ping(masters[0], 6443, 3) && platform.PingMaster() {
+		api, _ := platform.GetAPIEndpoint()
+		if api != "" && platform.PingMaster() {
 			return nil
 		}
+		platform.ResetMasterConnection()
 		time.Sleep(5 * time.Second)
 	}
 }
 
 func (platform *Platform) GetDNSClient() dns.Client {
-	if platform.DNS == nil || platform.DNS.Disabled {
+	if !platform.DNS.IsEnabled() {
 		return &dns.DummyDNSClient{
 			Logger: platform.Logger,
-			Zone:   platform.DNS.Zone,
+			Zone:   "nip.io",
 		}
 	}
 
@@ -223,38 +296,16 @@ func (platform *Platform) GetDNSClient() dns.Client {
 	}
 }
 
-func (platform *Platform) GetNSXClient() (*nsx.NSXClient, error) {
-	if platform.nsx != nil {
-		return platform.nsx, nil
-	}
-	if platform.NSX == nil || platform.NSX.Disabled {
-		return nil, fmt.Errorf("NSX not configured or disabled")
-	}
-	if platform.NSX.NsxV3 == nil || len(platform.NSX.NsxV3.NsxAPIManagers) == 0 {
-		return nil, fmt.Errorf("nsx_v3.nsx_api_managers not configured")
-	}
-
-	client := &nsx.NSXClient{
-		Logger:   platform.Logger,
-		Host:     platform.NSX.NsxV3.NsxAPIManagers[0],
-		Username: platform.NSX.NsxV3.NsxAPIUser,
-		Password: platform.NSX.NsxV3.NsxAPIPass,
-	}
-	platform.Debugf("Connecting to NSX-T %s@%s", client.Username, client.Host)
-
-	if err := client.Init(); err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to init client: %v", err)
-	}
-	platform.nsx = client
-	version, err := platform.nsx.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("getNSXClient: failed to ping: %v", err)
-	}
-	platform.Infof("Logged into NSX-T %s@%s, version=%s", client.Username, client.Host, version)
-	return platform.nsx, nil
-}
-
 func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Machine, error) {
+	if platform.DryRun {
+		return types.NullMachine{}, nil
+	}
+	vm.Konfigadm = config
+
+	if err := platform.ProvisionHook.BeforeProvision(platform, &vm); err != nil {
+		return types.NullMachine{}, err
+	}
+
 	for _, cmd := range vm.Commands {
 		config.AddCommand(cmd)
 	}
@@ -277,84 +328,74 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 	}
 	vm.IP = ip
 	platform.Tracef("[%s] found ip %s", vm.Name, ip)
-	if platform.NSX != nil && !platform.NSX.Disabled {
-		ctx := context.TODO()
-		nsxClient, err := platform.GetNSXClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get NSX client: %v", err)
-		}
 
-		ports, err := nsxClient.GetLogicalPorts(ctx, vm.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find ports for %s: %v", vm.Name, err)
-		}
-		if len(ports) != 2 {
-			return nil, fmt.Errorf("expected to find 2 ports, found %d", len(ports))
-		}
-		managementNic := make(map[string]string)
-		transportNic := make(map[string]string)
-
-		for k, v := range vm.Tags {
-			managementNic[k] = v
-		}
-
-		transportNic["ncp/node_name"] = vm.Name
-		transportNic["ncp/cluster"] = platform.Name
-
-		if err := nsxClient.TagLogicalPort(ctx, ports[0].Id, managementNic); err != nil {
-			return nil, fmt.Errorf("failed to tag management nic %s: %v", ports[0].Id, err)
-		}
-		if err := nsxClient.TagLogicalPort(ctx, ports[1].Id, transportNic); err != nil {
-			return nil, fmt.Errorf("failed to tag transport nic %s: %v", ports[1].Id, err)
-		}
+	if err := platform.ProvisionHook.AfterProvision(platform, VM); err != nil {
+		return types.NullMachine{}, err
 	}
+
 	return VM, nil
 }
 
-// GetMasterIPs returns a list of healthy master IP's
-func (platform *Platform) GetMasterIPs() []string {
-	if platform.Kubernetes.MasterIP != "" {
-		return []string{platform.Kubernetes.MasterIP}
+func (platform *Platform) DeleteNode(name string) error {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return err
 	}
-	url := fmt.Sprintf("http://%s/v1/health/service/%s", platform.Consul, platform.Name)
-	platform.Tracef("Finding masters via consul: %s\n", url)
-	response, _ := net.GET(url)
-	var consul api.Consul
-	if err := json.Unmarshal(response, &consul); err != nil {
-		fmt.Println(err)
+	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return err
 	}
-	var addresses []string
-node:
-	for _, node := range consul {
-		for _, check := range node.Checks {
-			if check.Status != "passing" {
-				platform.Tracef("skipping unhealthy node %s -> %s", node.Node.Address, check.Status)
-				continue node
-			}
-		}
-		addresses = append(addresses, node.Node.Address)
+	err = client.CoreV1().Nodes().Delete(node.Name, &metav1.DeleteOptions{})
+	if err == nil {
+		platform.Infof("[%s] deleted node", node.Name)
 	}
-	return addresses
+	return err
+}
+
+func (platform *Platform) GetConsulClient() api.Consul {
+	return api.Consul{
+		Logger:  platform.Logger,
+		Host:    fmt.Sprintf("http://%s:8500", platform.Consul),
+		Service: platform.Name,
+	}
+}
+
+func (platform *Platform) GetNodeNames() map[string]bool {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil
+	}
+	existingNodes := map[string]bool{}
+	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	for _, node := range nodeList.Items {
+		existingNodes[node.Name] = true
+	}
+	return existingNodes
 }
 
 // GetKubeConfig gets the path to the admin kubeconfig, creating it if necessary
 func (platform *Platform) GetKubeConfig() (string, error) {
-	if os.Getenv("KUBECONFIG") != "" && os.Getenv("KUBECONFIG") != "false" {
-		platform.Tracef("Using KUBECONFIG from ENV")
-		return os.Getenv("KUBECONFIG"), nil
+	// if the current kubeconfig context already has a reference to the cluster
+	// then we can just reuse it
+	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		return platform.KubeConfigPath, nil
 	}
-	cwd, _ := os.Getwd()
-	name := cwd + "/" + platform.Name + "-admin.yml"
-	if !is.File(name) {
+
+	if !is.File(platform.KubeConfigPath) {
 		data, err := platform.GetKubeConfigBytes()
 		if err != nil {
 			return "", err
 		}
-		if err := ioutil.WriteFile(name, data, 0644); err != nil {
+		if err := ioutil.WriteFile(platform.KubeConfigPath, data, 0644); err != nil {
 			return "", err
 		}
 	}
-	return name, nil
+	return platform.KubeConfigPath, nil
 }
 
 func (platform *Platform) GetBinaryWithKubeConfig(binary string) deps.BinaryFunc {
@@ -394,7 +435,7 @@ func (platform *Platform) GetKubectl() deps.BinaryFunc {
 
 func (platform *Platform) CreateTLSSecret(namespace, subDomain, secretName string) error {
 	if platform.HasSecret(namespace, secretName) {
-		platform.Debugf("secret/%s/%s' for %s alredy exists", namespace, secretName, subDomain)
+		platform.Debugf("secret/%s/%s' for %s already exists", namespace, secretName, subDomain)
 		//TODO(moshloop) check certificate expiry and renew if necessary
 		return nil
 	}
@@ -424,6 +465,13 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 	platform.Infof("Creating new ingress cert %s.%s", subDomain, platform.Domain)
 	cert := certs.NewCertificateBuilder(subDomain + "." + platform.Domain).Server().Certificate
 	return platform.GetIngressCA().SignCertificate(cert, 3)
+}
+
+func (platform *Platform) NewSelfSigned(domain string) *certs.Certificate {
+	platform.Infof("Creating new self signed cert %s", domain)
+	cert := certs.NewCertificateBuilder(domain).Server().Certificate
+	cert, _ = cert.SignCertificate(cert, 10)
+	return cert
 }
 
 func (platform *Platform) CreateInternalCertificate(service string, namespace string, clusterDomain string) (*certs.Certificate, error) {
@@ -543,9 +591,44 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	k8s.WaitForNamespace(client, ns, timeout)
 }
 
+func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
+	if platform.TerminationProtection {
+		platform.Debugf("Skipping deletion of resources when termination protection is enabled ")
+		return nil
+	}
+	for _, spec := range specs {
+		template, err := platform.Template(spec, "manifests")
+		if err != nil {
+			return err
+		}
+		objects, err := k8s.GetUnstructuredObjects([]byte(template))
+		if err != nil {
+			return err
+		}
+		// reverse the order of the objects so that they can be deleted in reverse-order
+		for i, j := 0, len(objects)-1; i < j; i, j = i+1, j-1 {
+			objects[i], objects[j] = objects[j], objects[i]
+		}
+
+		platform.Debugf("Deleting %s", console.Redf("%s", spec))
+		for _, object := range objects {
+			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
+				platform.Tracef("resources already deleted skipping, %v", err)
+				return nil
+			}
+
+			platform.Tracef("Deleting %s/%s/%s", object.GetNamespace(), object.GetKind(), object.GetName())
+			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		platform.Debugf("Applying %s", spec)
+		platform.Debugf("Applying %s", console.Greenf("%s", spec))
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
 			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
@@ -575,10 +658,15 @@ func (platform *Platform) GetBinary(name string) deps.BinaryFunc {
 			return nil
 		}
 	}
+	os.Mkdir(".bin", 0755) //nolint: errcheck
 	return deps.Binary(name, platform.Versions[name], ".bin")
 }
 
 func (platform *Platform) GetOrCreateBucket(name string) error {
+	if platform.ApplyDryRun {
+		platform.Debugf("[dry-run] creating bucket %s", name)
+		return nil
+	}
 	s3Client, err := platform.GetS3Client()
 	if err != nil {
 		return fmt.Errorf("failed to get S3 client: %v", err)
@@ -597,52 +685,80 @@ func (platform *Platform) GetOrCreateBucket(name string) error {
 	return nil
 }
 
-func (platform *Platform) GetS3Client() (*minio.Client, error) {
-	endpoint := platform.S3.GetExternalEndpoint()
+func (platform *Platform) GetOrCreateBucketFor(conn types.S3Connection, name string) error {
+	if platform.ApplyDryRun {
+		platform.Debugf("[dry-run] creating bucket %s", name)
+		return nil
+	}
+	s3Client, err := platform.GetS3ClientFor(conn)
+	if err != nil {
+		return fmt.Errorf("failed to get S3 client: %v", err)
+	}
+
+	exists, err := s3Client.BucketExists(name)
+	if err != nil {
+		return fmt.Errorf("failed to check S3 bucket: %v", err)
+	}
+	if !exists {
+		platform.Infof("Creating s3://%s", name)
+		if err := s3Client.MakeBucket(name, platform.S3.Region); err != nil {
+			return fmt.Errorf("failed to create S3 bucket: %v", err)
+		}
+	}
+	return nil
+}
+
+func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, error) {
+	client, _ := platform.GetClientset()
+	name := strings.Split(endpoint, ".")[0]
+	ns := strings.Split(endpoint, ".")[1]
+	svc, err := client.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	port := int(svc.Spec.Ports[0].Port)
+	dialer, _ := platform.GetProxyDialer(proxy.Proxy{
+		Namespace:    ns,
+		Kind:         "pods",
+		ResourceName: name + "-0",
+		Port:         port,
+	})
+	platform.Infof("proxying %s through svc=%s ns=%s port=%d", endpoint, name, ns, port)
+	return &http.Transport{
+		DialContext:     dialer.DialContext,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}, nil
+}
+
+func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client, error) {
+	endpoint := conn.Endpoint
+	endpoint = strings.ReplaceAll(endpoint, "http://", "")
+	endpoint = strings.ReplaceAll(endpoint, "https://", "")
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: tr}
-
-	if endpoint == "" {
-		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", platform.S3.Region)
+	var err error
+	if strings.HasSuffix(endpoint, ".svc") || strings.Contains(endpoint, ".svc:") {
+		tr, err = platform.GetProxyTransport(endpoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	s3, err := minio.New(endpoint, platform.S3.AccessKey, platform.S3.SecretKey, false)
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("https://s3.%s.amazonaws.com", conn.Region)
+	}
+
+	s3, err := minio.New(endpoint, conn.AccessKey, conn.SecretKey, false)
 	if err != nil {
 		return nil, err
 	}
-	s3.SetCustomTransport(client.Transport)
+	s3.SetCustomTransport(tr)
 	return s3, nil
 }
 
-func (platform *Platform) GetAWSSession() (*session.Session, error) {
-	tr := &http.Transport{}
-	if platform.S3.SkipTLSVerify {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	cfg := aws.NewConfig().
-		WithRegion(platform.S3.Region).
-		WithEndpoint(platform.S3.ExternalEndpoint).
-		WithCredentials(
-			credentials.NewStaticCredentials(platform.S3.AccessKey, platform.S3.SecretKey, ""),
-		).
-		WithHTTPClient(&http.Client{Transport: tr})
-	ssn, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create new aws session")
-	}
-	return ssn, nil
-}
-
-func (platform *Platform) GetAWSS3Client() (*s3.S3, error) {
-	ssn, err := platform.GetAWSSession()
-	if err != nil {
-		return nil, err
-	}
-	client := s3.New(ssn)
-	client.Config.S3ForcePathStyle = aws.Bool(platform.S3.UsePathStyle)
-	return client, nil
+func (platform *Platform) GetS3Client() (*minio.Client, error) {
+	return platform.GetS3ClientFor(platform.S3.S3Connection)
 }
 
 func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {
@@ -682,4 +798,51 @@ func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*
 	})
 
 	return pgdb, nil
+}
+
+func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	// set default labels
+	defaultLabels := make(map[string]string)
+	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
+	if labels != nil {
+		for k, v := range defaultLabels {
+			labels[k] = v
+		}
+	} else {
+		labels = defaultLabels
+	}
+	// set default annotations
+	defaultAnnotations := make(map[string]string)
+	defaultAnnotations["com.flanksource.infra.logs/enabled"] = "true"
+	if annotations != nil {
+		for k, v := range defaultAnnotations {
+			annotations[k] = v
+		}
+	} else {
+		annotations = defaultAnnotations
+	}
+
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
+}
+
+func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels map[string]string, annotations map[string]string) error {
+	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
+}
+
+func (platform *Platform) DefaultNamespaceLabels() map[string]string {
+	annotations := map[string]string{
+		"openpolicyagent.org/webhook": "ignore",
+	}
+	return annotations
+}
+
+func (platform *Platform) DefaultNamespaceAnnotations() map[string]string {
+	annotations := map[string]string{
+		"com.flanksource.infra.logs/enabled": "true",
+	}
+	return annotations
+}
+
+func (platform *Platform) IsMaster(machine types.TagInterface) bool {
+	return machine.GetTags()["Role"] == platform.Name+"-masters"
 }

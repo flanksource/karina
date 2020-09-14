@@ -3,16 +3,15 @@ package configmapreloader
 import (
 	"github.com/flanksource/commons/utils"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
-)
-
-const (
-	Namespace = "platform-system"
+	"github.com/flanksource/karina/pkg/constants"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Deploy(p *platform.Platform) error {
 	if p.ConfigMapReloader.Disabled {
-		p.Infof("Skipping deployment of configmap-reloader, it is disabled")
+		if err := p.DeleteSpecs(constants.PlatformSystem, "configmap-reloader.yaml"); err != nil {
+			p.Warnf("failed to delete specs: %v", err)
+		}
 		return nil
 	}
 
@@ -22,11 +21,8 @@ func Deploy(p *platform.Platform) error {
 		p.ConfigMapReloader.Version = utils.NormalizeVersion(p.ConfigMapReloader.Version)
 	}
 
-	p.Infof("Deploying configmap-reloader %s into %s", p.ConfigMapReloader.Version, Namespace)
-
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(constants.PlatformSystem, nil, nil); err != nil {
 		return err
 	}
-
 	return p.ApplySpecs("", "configmap-reloader.yaml")
 }

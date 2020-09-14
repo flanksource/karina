@@ -4,24 +4,34 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+
+	"net"
+	"net/http"
+	"reflect"
+
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	certs "github.com/flanksource/commons/certs"
 	"github.com/flanksource/commons/files"
 	"github.com/flanksource/commons/logger"
 	utils "github.com/flanksource/commons/utils"
+	"github.com/flanksource/karina/pkg/k8s/drain"
+	"github.com/flanksource/karina/pkg/k8s/etcd"
+	"github.com/flanksource/karina/pkg/k8s/kustomize"
+	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
-	"github.com/moshloop/platform-cli/pkg/k8s/drain"
-	"github.com/moshloop/platform-cli/pkg/k8s/kustomize"
-	"github.com/moshloop/platform-cli/pkg/k8s/proxy"
-	appsv1 "k8s.io/api/apps/v1"
+	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -44,21 +54,47 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
-	"sigs.k8s.io/yaml"
+	"k8s.io/client-go/transport"
 )
 
 type Client struct {
 	logger.Logger
 	GetKubeConfigBytes  func() ([]byte, error)
 	ApplyDryRun         bool
+	ApplyHook           ApplyHook
 	Trace               bool
 	GetKustomizePatches func() ([]string, error)
 	client              *kubernetes.Clientset
 	dynamicClient       dynamic.Interface
 	restConfig          *rest.Config
+	etcdClientGenerator *etcd.EtcdClientGenerator
+	kustomizeManager    *kustomize.Manager
+	restMapper          meta.RESTMapper
+}
 
-	kustomizeManager *kustomize.Manager
-	restMapper       meta.RESTMapper
+func (c *Client) ResetConnection() {
+	c.client = nil
+	c.dynamicClient = nil
+	c.restConfig = nil
+	c.etcdClientGenerator = nil
+}
+
+func (c *Client) GetEtcdClientGenerator(ca *certs.Certificate) (*etcd.EtcdClientGenerator, error) {
+	if c.etcdClientGenerator != nil {
+		return c.etcdClientGenerator, nil
+	}
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	rest, _ := c.GetRESTConfig()
+	caPool := x509.NewCertPool()
+	caPool.AppendCertsFromPEM(ca.EncodedCertificate())
+	cert, _ := tls.X509KeyPair(ca.EncodedCertificate(), ca.EncodedPrivateKey())
+	return etcd.NewEtcdClientGenerator(client, rest, &tls.Config{
+		RootCAs:      caPool,
+		Certificates: []tls.Certificate{cert},
+	}), nil
 }
 
 func (c *Client) getDrainHelper() (*drain.Helper, error) {
@@ -114,14 +150,12 @@ func (c *Client) GetPodReplicas(pod v1.Pod) (int, error) {
 	for _, owner := range pod.GetOwnerReferences() {
 		if owner.Kind == "ReplicaSet" {
 			replicasets := client.AppsV1().ReplicaSets(pod.Namespace)
-
 			rs, err := replicasets.Get(owner.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, err
 			}
 			return int(*rs.Spec.Replicas), nil
 		}
-		c.Infof("Ignore pod controller: %s", owner.Kind)
 	}
 	return 1, nil
 }
@@ -135,7 +169,7 @@ func (c *Client) Drain(nodeName string, timeout time.Duration) error {
 }
 
 func (c *Client) EvictPod(pod v1.Pod) error {
-	if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) {
+	if IsPodDaemonSet(pod) || IsPodFinished(pod) || IsDeleted(&pod) || IsStaticPod(pod) {
 		return nil
 	}
 	client, err := c.GetClientset()
@@ -270,25 +304,99 @@ func (c *Client) GetKustomize() (*kustomize.Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	no := 1
+	var (
+		patchData *[]byte
+		name      string
+	)
 	for _, patch := range patches {
 		if files.Exists(patch) {
-			if err := files.Copy(patch, dir+"/"+files.GetBaseName(patch)); err != nil {
+			name = filepath.Base(patch)
+			patchBytes, err := ioutil.ReadFile(patch)
+			if err != nil {
 				return nil, err
 			}
+			patchData = &patchBytes
 		} else {
-			name := fmt.Sprintf("patch-%d.yaml", no)
+			patchBytes := []byte(patch)
+			patchData = &patchBytes
+			name = fmt.Sprintf("patch-%d.yaml", no)
 			no++
-			if _, err := files.CopyFromReader(bytes.NewBufferString(patch), dir+"/"+name, 0644); err != nil {
-				return nil, err
-			}
+		}
+		patchData, err = templatizePatch(patchData)
+		if err != nil {
+			return nil, err
+		}
+		if c.Trace {
+			c.Tracef("patch file %v after templating:\n%v\n\n", name, string(*patchData))
+		}
+		if _, err := files.CopyFromReader(bytes.NewBuffer(*patchData), dir+"/"+name, 0644); err != nil {
+			return nil, err
 		}
 	}
-
 	kustomizeManager, err := kustomize.GetManager(dir)
 	c.kustomizeManager = kustomizeManager
 	return c.kustomizeManager, err
+}
+
+// templatizePatch takes a patch stream (possibly containing multiple
+// YAML documents) and templatizes each.
+// blank documents are skipped.
+func templatizePatch(patch *[]byte) (*[]byte, error) {
+	var result []byte
+	remainingData := patch
+	for {
+		first, rest := getDocumentsFromYamlFile(*remainingData)
+		remainingData = &rest
+		if len(first) == 0 {
+			continue
+		}
+		templated, err := templatizeDocument(first)
+		if err != nil {
+			return nil, err
+		}
+		if len(result) > 0 {
+			result = append(result, []byte("---\n")...)
+		}
+		result = append(result, *templated...)
+		if len(rest) == 0 {
+			break
+		}
+	}
+	return &result, nil
+}
+
+// templatizeDocument applies templating to a supplied YAML
+// document via the templating functionality in
+// "gopkg.in/flanksource/yaml.v3"
+// NOTE: only the first YAML document in a stream will be processed.
+func templatizeDocument(patch []byte) (*[]byte, error) {
+	var body interface{}
+	if err := yaml.Unmarshal(patch, &body); err != nil {
+		return nil, err
+	}
+	if body == nil {
+		return &[]byte{}, nil
+	}
+	templated, err := yaml.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	return &templated, nil
+}
+
+// getDocumentsFromYamlFile returns the first YAML document
+// from a stream and a byte slice containing the remainder of the stream.
+// This is needed since yaml.v3 (and the flanksource derived yaml.v3) only
+// unmarshalls the **first** document in a stream.
+//
+// (see https://pkg.go.dev/gopkg.in/flanksource/yaml.v3@v3.1.1?tab=doc#Unmarshal)
+func getDocumentsFromYamlFile(yamlData []byte) (firstDoc []byte, rest []byte) {
+	endIndex := bytes.Index(yamlData, []byte("---"))
+	if endIndex == -1 {
+		return yamlData, []byte{}
+	}
+	return yamlData[:endIndex], yamlData[endIndex+3:]
 }
 
 // GetDynamicClient creates a new k8s client
@@ -309,6 +417,7 @@ func (c *Client) GetClientset() (*kubernetes.Clientset, error) {
 	if c.client != nil {
 		return c.client, nil
 	}
+
 	cfg, err := c.GetRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
@@ -325,6 +434,10 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
 	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("kubeConfig is empty")
+	}
+
 	c.restConfig, err = clientcmd.RESTConfigFromKubeConfig(data)
 	return c.restConfig, err
 }
@@ -394,6 +507,48 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	return decoder.Decode(unstructuredObj.Object)
 }
 
+func decodeStringToTimeDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(time.Duration(5)) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTimeDuration: Failed to parse duration: %v", err)
+	}
+	return d, nil
+}
+
+func decodeStringToDuration(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Duration{Duration: time.Duration(5)}) {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
+	}
+	return metav1.Duration{Duration: d}, nil
+}
+
+func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t != reflect.TypeOf(metav1.Time{Time: time.Now()}) {
+		return data, nil
+	}
+	d, err := time.Parse(time.RFC3339, data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
+	}
+	return metav1.Time{Time: d}, nil
+}
+
 func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
 	if c.restMapper != nil {
 		return c.restMapper, nil
@@ -415,17 +570,92 @@ func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
 	return c.restMapper, err
 }
 
+func (c *Client) GetClientByKind(kind string) (dynamic.NamespaceableResourceInterface, error) {
+	dynamicClient, err := c.GetDynamicClient()
+	if err != nil {
+		return nil, err
+	}
+	rm, _ := c.GetRestMapper()
+	gvk, err := rm.KindFor(schema.GroupVersionResource{
+		Resource: kind,
+	})
+	if err != nil {
+		return nil, err
+	}
+	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
+	mapping, err := rm.RESTMapping(gk, gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+	return dynamicClient.Resource(mapping.Resource), nil
+}
+
 func (c *Client) GetDynamicClientFor(namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	dynamicClient, err := c.GetDynamicClient()
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("getDynamicClientFor: failed to get dynamic client: %v", err)
 	}
 
+	return c.getDynamicClientFor(dynamicClient, namespace, obj)
+}
+
+func (c *Client) GetDynamicClientForUser(namespace string, obj runtime.Object, user string) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
+	data, err := c.GetKubeConfigBytes()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
+	}
+	if len(data) == 0 {
+		return nil, nil, nil, fmt.Errorf("kubeConfig is empty")
+	}
+
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(data)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getClientset: failed to get REST config: %v", err)
+	}
+
+	impersonate := transport.ImpersonationConfig{UserName: user}
+
+	transportConfig, err := cfg.TransportConfig()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get transport config: %v", err)
+	}
+	tlsConfig, err := transport.TLSConfigFor(transportConfig)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get tls config: %v", err)
+	}
+	timeout := 5 * time.Second
+
+	tr := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   timeout,
+			KeepAlive: 30 * time.Second,
+			DualStack: false, // K8s do not work well with IPv6
+		}).DialContext,
+		TLSHandshakeTimeout:   timeout,
+		ResponseHeaderTimeout: 10 * time.Second,
+		MaxIdleConns:          10,
+		MaxIdleConnsPerHost:   2,
+		IdleConnTimeout:       20 * time.Second,
+		TLSClientConfig:       tlsConfig,
+	}
+
+	cfg.Transport = transport.NewImpersonatingRoundTripper(impersonate, tr)
+	cfg.TLSClientConfig = rest.TLSClientConfig{}
+	dynamicClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get dynamic from config: %v", err)
+	}
+
+	return c.getDynamicClientFor(dynamicClient, namespace, obj)
+}
+
+func (c *Client) getDynamicClientFor(dynamicClient dynamic.Interface, namespace string, obj runtime.Object) (dynamic.ResourceInterface, *schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 	rm, _ := c.GetRestMapper()
+
 	mapping, err := rm.RESTMapping(gk, gvk.Version)
-	if err != nil && meta.IsNoMatchError(err) {
+	if err != nil && meta.IsNoMatchError(err) && !c.ApplyDryRun {
 		// new CRD may still becoming ready, flush caches and retry
 		time.Sleep(5 * time.Second)
 		c.restMapper = nil
@@ -503,8 +733,11 @@ func (c *Client) ApplyUnstructured(namespace string, objects ...*unstructured.Un
 			return err
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
-			c.Infof("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s/%s created/configured", client.Resource, unstructuredObj, unstructuredObj.GetName())
 		} else {
 			_, err = client.Create(namespace, true, unstructuredObj, &metav1.CreateOptions{})
 			if errors.IsAlreadyExists(err) {
@@ -539,16 +772,44 @@ func (c *Client) trace(msg string, objects ...runtime.Object) {
 	}
 }
 
+func (c *Client) DeleteUnstructured(namespace string, objects ...*unstructured.Unstructured) error {
+	for _, unstructuredObj := range objects {
+		client, err := c.GetRestClient(*unstructuredObj)
+		if err != nil {
+			return err
+		}
+
+		if c.ApplyDryRun {
+			c.Debugf("[dry-run] %s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+		} else {
+			if _, err := client.Delete(namespace, unstructuredObj.GetName()); err != nil {
+				return err
+			}
+			c.Infof("%s/%s/%s removed", namespace, client.Resource, unstructuredObj.GetName())
+		}
+	}
+	return nil
+}
+
+type ApplyHook func(namespace string, obj unstructured.Unstructured)
+
 func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 	for _, obj := range objects {
 		client, resource, unstructuredObj, err := c.GetDynamicClientFor(namespace, obj)
 		if err != nil {
+			if c.ApplyDryRun && strings.HasPrefix(err.Error(), "no matches for kind") {
+				c.Debugf("[dry-run] failed to get dynamic client for namespace %s", namespace)
+				continue
+			}
 			return fmt.Errorf("failed to get dynamic client for %v: %v", obj, err)
 		}
 
+		if c.ApplyHook != nil {
+			c.ApplyHook(namespace, *unstructuredObj)
+		}
 		if c.ApplyDryRun {
 			c.trace("apply", unstructuredObj)
-			c.Infof("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
+			c.Debugf("[dry-run] %s/%s created/configured", resource.Resource, unstructuredObj.GetName())
 			continue
 		}
 
@@ -559,18 +820,34 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 			_, err = client.Create(unstructuredObj, metav1.CreateOptions{})
 			if err != nil {
 				c.Errorf("error creating: %s/%s/%s : %+v", resource.Group, resource.Version, resource.Resource, err)
+			} else {
+				c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			}
-			c.Infof("%s/%s/%s created", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 		} else {
 			if unstructuredObj.GetKind() == "Service" {
 				// Workaround for immutable spec.clusterIP error message
 				spec := unstructuredObj.Object["spec"].(map[string]interface{})
 				spec["clusterIP"] = existing.Object["spec"].(map[string]interface{})["clusterIP"]
+			} else if unstructuredObj.GetKind() == "ServiceAccount" {
+				unstructuredObj.Object["secrets"] = existing.Object["secrets"]
 			}
-			//apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
+			// apps/DameonSet MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
+			// webhook CA's
 
 			c.trace("updating", unstructuredObj)
 			unstructuredObj.SetResourceVersion(existing.GetResourceVersion())
+			unstructuredObj.SetSelfLink(existing.GetSelfLink())
+			unstructuredObj.SetUID(existing.GetUID())
+			unstructuredObj.SetCreationTimestamp(existing.GetCreationTimestamp())
+			unstructuredObj.SetGeneration(existing.GetGeneration())
+			if existing.GetAnnotations() != nil && existing.GetAnnotations()["deployment.kubernetes.io/revision"] != "" {
+				annotations := unstructuredObj.GetAnnotations()
+				if annotations == nil {
+					annotations = make(map[string]string)
+				}
+				annotations["deployment.kubernetes.io/revision"] = existing.GetAnnotations()["deployment.kubernetes.io/revision"]
+				unstructuredObj.SetAnnotations(annotations)
+			}
 			updated, err := client.Update(unstructuredObj, metav1.UpdateOptions{})
 			if err != nil {
 				c.Errorf("error updating: %s/%s/%s : %+v", unstructuredObj.GetNamespace(), resource.Resource, unstructuredObj.GetName(), err)
@@ -581,9 +858,20 @@ func (c *Client) Apply(namespace string, objects ...runtime.Object) error {
 				c.Debugf("%s/%s/%s (unchanged)", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
 			} else {
 				c.Infof("%s/%s/%s configured", resource.Resource, unstructuredObj.GetNamespace(), unstructuredObj.GetName())
-				diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
-				if len(diff) > 0 {
-					c.Tracef("%s", diff)
+				if logger.IsTraceEnabled() {
+					// remove "runtime" fields from objects that woulds otherwise increase the verbosity of diffs
+					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "managedFields")
+					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "generation")
+					unstructured.RemoveNestedField(unstructuredObj.Object, "metadata", "annotations", "deprecated.daemonset.template.generation")
+
+					unstructured.RemoveNestedField(existing.Object, "metadata", "managedFields")
+					unstructured.RemoveNestedField(existing.Object, "metadata", "generation")
+					unstructured.RemoveNestedField(existing.Object, "metadata", "annotations", "deprecated.daemonset.template.generation")
+
+					diff := deep.Equal(unstructuredObj.Object["metadata"], existing.Object["metadata"])
+					if len(diff) > 0 {
+						c.Tracef("%s", diff)
+					}
 				}
 			}
 		}
@@ -626,21 +914,10 @@ func (c *Client) Label(obj runtime.Object, labels map[string]string) error {
 	return nil
 }
 
-func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
+func (c *Client) CreateOrUpdateNamespace(name string, labels, annotations map[string]string) error {
 	k8s, err := c.GetClientset()
 	if err != nil {
 		return fmt.Errorf("createOrUpdateNamespace: failed to get client set: %v", err)
-	}
-
-	// set default labels
-	defaultLabels := make(map[string]string)
-	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
-	if labels != nil {
-		for k, v := range defaultLabels {
-			labels[k] = v
-		}
-	} else {
-		labels = defaultLabels
 	}
 
 	ns := k8s.CoreV1().Namespaces()
@@ -668,10 +945,7 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		}
 
 		// update incoming and current annotations
-		switch {
-		case cm.ObjectMeta.Annotations != nil && annotations == nil:
-			annotations = cm.ObjectMeta.Annotations
-		case cm.ObjectMeta.Annotations != nil && annotations != nil:
+		if cm.ObjectMeta.Annotations != nil && annotations != nil {
 			for k, v := range annotations {
 				cm.ObjectMeta.Annotations[k] = v
 			}
@@ -686,6 +960,31 @@ func (c *Client) CreateOrUpdateNamespace(name string, labels map[string]string, 
 		if _, err := ns.Update(cm); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// ForceDeleteNamespace deletes a namespace forcibly
+// by overriding it's finalizers first
+func (c *Client) ForceDeleteNamespace(ns string, timeout time.Duration) error {
+	c.Warnf("Clearing finalizers for %v", ns)
+	k8s, err := c.GetClientset()
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: failed to get client set: %v", err)
+	}
+
+	namespace, err := k8s.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: failed to get namespace: %v", err)
+	}
+	namespace.Spec.Finalizers = []v1.FinalizerName{}
+	_, err = k8s.CoreV1().Namespaces().Finalize(namespace)
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: error removing finalisers: %v", err)
+	}
+	err = k8s.CoreV1().Namespaces().Delete(ns, &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("ForceDeleteNamespace: error deleting namespace: %v", err)
 	}
 	return nil
 }
@@ -720,62 +1019,26 @@ func (c *Client) GetOrCreateSecret(name, ns string, data map[string][]byte) erro
 }
 
 func (c *Client) CreateOrUpdateSecret(name, ns string, data map[string][]byte) error {
-	client, err := c.GetClientset()
-	if err != nil {
-		return fmt.Errorf("createOrUpdateSecret: failed to get clientset: %v", err)
+	if c.ApplyDryRun {
+		c.Debugf("[dry-run] secrets/%s/%s created/configured", ns, name)
+		return nil
 	}
-	secrets := client.CoreV1().Secrets(ns)
-	cm, err := secrets.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data,
-		}
-		c.Infof("Creating %s/secret/%s", ns, name)
-		if !c.ApplyDryRun {
-			if _, err := secrets.Create(cm); err != nil {
-				return fmt.Errorf("createOrUpdateSecret: failed to namespace: %v", err)
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !c.ApplyDryRun {
-			c.Infof("Updating %s/secret/%s", ns, name)
-			if _, err := secrets.Update(cm); err != nil {
-				return fmt.Errorf("createOrUpdateSecret: failed to update configmap: %v", err)
-			}
-		}
-	}
-	return nil
+	return c.Apply(ns, &v1.Secret{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+		Data:       data,
+	})
 }
 
 func (c *Client) CreateOrUpdateConfigMap(name, ns string, data map[string]string) error {
-	client, err := c.GetClientset()
-	if err != nil {
-		return fmt.Errorf("createOrUpdateConfigMap: failed to get client set: %v", err)
+	if c.ApplyDryRun {
+		c.Debugf("[dry-run] configmaps/%s/%s created/configured", ns, name)
+		return nil
 	}
-	configs := client.CoreV1().ConfigMaps(ns)
-	cm, err := configs.Get(name, metav1.GetOptions{})
-	if cm == nil || err != nil {
-		cm = &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Data:       data}
-		c.Infof("Creating %s/cm/%s", ns, name)
-		if !c.ApplyDryRun {
-			if _, err := configs.Create(cm); err != nil {
-				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
-			}
-		}
-	} else {
-		(*cm).Data = data
-		if !c.ApplyDryRun {
-			c.Infof("Updating %s/cm/%s", ns, name)
-			if _, err := configs.Update(cm); err != nil {
-				return fmt.Errorf("createOrUpdateConfigMap: failed to update configmap: %v", err)
-			}
-		}
-	}
-	return nil
+	return c.Apply(ns, &v1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+		Data:       data})
 }
 
 func (c *Client) ExposeIngress(namespace, service string, domain string, port int, annotations map[string]string) error {
@@ -1014,6 +1277,51 @@ func CreateOIDCKubeConfig(clusterName string, ca certs.CertificateAuthority, end
 	return clientcmd.Write(cfg)
 }
 
+// CreateMultiKubeConfig creates a kubeconfig file contents for a map of
+// cluster name -> cluster API endpoint hosts, all with a shared
+// user name, group and cert expiry.
+// NOTE: these clusters all need to share the same plaform CA
+func CreateMultiKubeConfig(ca certs.CertificateAuthority, clusters map[string]string, group string, user string, expiry time.Duration) ([]byte, error) {
+	if len(clusters) < 1 {
+		return []byte{}, fmt.Errorf("CreateMultiKubeConfig failed since it was given an empty cluster map")
+	}
+	cfg := api.Config{
+		Clusters:       map[string]*api.Cluster{},
+		Contexts:       map[string]*api.Context{},
+		AuthInfos:      map[string]*api.AuthInfo{},
+		CurrentContext: "",
+	}
+	for clusterName, endpoint := range clusters {
+		cert := certs.NewCertificateBuilder(user).Organization(group).Client().Certificate
+		if cert.X509.PublicKey == nil && cert.PrivateKey != nil {
+			cert.X509.PublicKey = cert.PrivateKey.Public()
+		}
+		signed, err := ca.Sign(cert.X509, expiry)
+		if err != nil {
+			return nil, fmt.Errorf("createKubeConfig: failed to sign certificate: %v", err)
+		}
+		cert = &certs.Certificate{
+			X509:       signed,
+			PrivateKey: cert.PrivateKey,
+		}
+		cfg.Clusters[clusterName] = &api.Cluster{
+			Server:                endpoint,
+			InsecureSkipTLSVerify: true,
+		}
+		context := fmt.Sprintf("%s@%s", user, clusterName)
+		cfg.Contexts[clusterName] = &api.Context{
+			Cluster:   clusterName,
+			AuthInfo:  context,
+			Namespace: "kube-system", //TODO: verify
+		}
+		cfg.AuthInfos[context] = &api.AuthInfo{
+			ClientKeyData:         cert.EncodedPrivateKey(),
+			ClientCertificateData: cert.EncodedCertificate(),
+		}
+	}
+	return clientcmd.Write(cfg)
+}
+
 // PingMaster attempts to connect to the API server and list nodes and services
 // to ensure the API server is ready to accept any traffic
 func (c *Client) PingMaster() bool {
@@ -1038,6 +1346,41 @@ func (c *Client) PingMaster() bool {
 		return false
 	}
 	return true
+}
+
+func (c *Client) WaitForResource(kind, namespace, name string, timeout time.Duration) error {
+	client, err := c.GetClientByKind(kind)
+	if err != nil {
+		return err
+	}
+	start := time.Now()
+	for {
+		item, err := client.Namespace(namespace).Get(name, metav1.GetOptions{})
+
+		if errors.IsNotFound(err) {
+			return err
+		}
+
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for %s/%s is %s, error: %v", kind, name, "", err)
+		}
+
+		if err != nil {
+			c.Debugf("Unable to get %s/%s: %v", kind, name, err)
+			continue
+		}
+
+		conditions := item.Object["status"].(map[string]interface{})["conditions"].([]interface{})
+
+		for _, raw := range conditions {
+			condition := raw.(map[string]interface{})
+			c.Debugf("%s/%s is %s/%s: %s", namespace, name, condition["type"], condition["status"], condition["message"])
+			if condition["type"] == "Ready" && condition["status"] == "True" {
+				return nil
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
 
 // WaitForPod waits for a pod to be in the specified phase, or returns an
@@ -1068,6 +1411,34 @@ func (c *Client) WaitForPod(ns, name string, timeout time.Duration, phases ...v1
 				return nil
 			}
 		}
+	}
+}
+
+// WaitForDeployment waits for a deployment to have at least 1 ready replica, or returns an
+// error if the timeout is exceeded
+func (c *Client) WaitForDeployment(ns, name string, timeout time.Duration) error {
+	client, err := c.GetClientset()
+	if err != nil {
+		return err
+	}
+	deployments := client.AppsV1().Deployments(ns)
+	start := time.Now()
+	msg := false
+	for {
+		deployment, _ := deployments.Get(name, metav1.GetOptions{})
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for deployment to become ready %s", name)
+		}
+		if deployment != nil && deployment.Status.ReadyReplicas > 1 {
+			return nil
+		}
+
+		if !msg {
+			c.Infof("waiting for %s/%s to have 1 ready replica", ns, name)
+			msg = true
+		}
+
+		time.Sleep(2 * time.Second)
 	}
 }
 
@@ -1108,6 +1479,36 @@ func (c *Client) WaitForNode(name string, timeout time.Duration, condition v1.No
 			}
 		}
 		time.Sleep(2 * time.Second)
+	}
+}
+
+// WaitForNode waits for a pod to be in the specified phase, or returns an
+// error if the timeout is exceeded
+func (c *Client) WaitForTaintRemoval(name string, timeout time.Duration, taintKey string) error {
+	start := time.Now()
+outerLoop:
+	for {
+		if time.Since(start) > timeout {
+			return fmt.Errorf("timeout exceeded waiting for %s to not have %s", name, taintKey)
+		}
+
+		client, err := c.GetClientset()
+		if err != nil {
+			return err
+		}
+		node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, taint := range node.Spec.Taints {
+			if taint.Key == taintKey {
+				time.Sleep(2 * time.Second)
+				continue outerLoop
+			}
+		}
+		// taint not found
+		return nil
 	}
 }
 
@@ -1283,14 +1684,33 @@ func (c *Client) GetMasterNode() (string, error) {
 		return "", err
 	}
 
-	var masterNode string
 	for _, node := range nodes.Items {
-		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
-			masterNode = node.Name
-			break
+		if IsMasterNode(node) {
+			return node.Name, nil
 		}
 	}
-	return masterNode, nil
+	return "", fmt.Errorf("no master nodes found")
+}
+
+// GetMasterNode returns a list of all master nodes
+func (c *Client) GetMasterNodes() ([]string, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, nil
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, nil
+	}
+
+	var nodeNames []string
+	for _, node := range nodes.Items {
+		if IsMasterNode(node) {
+			nodeNames = append(nodeNames, node.Name)
+		}
+	}
+	return nodeNames, nil
 }
 
 // Returns the first pod found by label
@@ -1314,59 +1734,23 @@ func (c *Client) GetFirstPodByLabelSelector(namespace string, labelSelector stri
 	return &pods.Items[0], nil
 }
 
-type Health struct {
-	RunningPods, PendingPods, ErrorPods, CrashLoopBackOff int
-	ReadyNodes, UnreadyNodes                              int
-	Error                                                 error
-}
-
-func (h Health) IsDegradedComparedTo(h2 Health) bool {
-	if h2.RunningPods > h.RunningPods ||
-		h.PendingPods-1 > h2.PendingPods || h.ErrorPods > h2.ErrorPods || h.CrashLoopBackOff > h2.CrashLoopBackOff {
-		return true
+func (c *Client) GetEventsFor(kind string, object metav1.Object) ([]v1.Event, error) {
+	client, err := c.GetClientset()
+	if err != nil {
+		return nil, err
 	}
-	return h.UnreadyNodes > h2.UnreadyNodes
-}
-
-func IsPodCrashLoopBackoff(pod v1.Pod) bool {
-	for _, status := range pod.Status.ContainerStatuses {
-		if status.State.Waiting != nil && status.State.Waiting.Reason == "CrashLoopBackOff" {
-			return true
-		}
+	selector := client.CoreV1().Events(object.GetNamespace()).GetFieldSelector(
+		pointer.ToString(object.GetName()),
+		pointer.ToString(object.GetNamespace()),
+		&kind,
+		pointer.ToString(string(object.GetUID())))
+	events, err := client.CoreV1().Events(object.GetNamespace()).List(metav1.ListOptions{
+		FieldSelector: selector.String(),
+	})
+	if err != nil {
+		return nil, err
 	}
-	return false
-}
-
-func IsPodHealthy(pod v1.Pod) bool {
-	conditions := true
-	for _, condition := range pod.Status.Conditions {
-		if condition.Status == v1.ConditionFalse {
-			conditions = false
-		}
-	}
-	return conditions && (pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded)
-}
-
-func IsPodFinished(pod v1.Pod) bool {
-	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
-}
-
-func IsPodPending(pod v1.Pod) bool {
-	return pod.Status.Phase == v1.PodPending
-}
-
-func IsDeleted(object metav1.Object) bool {
-	return object.GetDeletionTimestamp() != nil && !object.GetDeletionTimestamp().IsZero()
-}
-
-func IsPodDaemonSet(pod v1.Pod) bool {
-	controllerRef := metav1.GetControllerOf(&pod)
-	return controllerRef != nil && controllerRef.Kind == appsv1.SchemeGroupVersion.WithKind("DaemonSet").Kind
-}
-
-func (h Health) String() string {
-	return fmt.Sprintf("pods(running=%d, pending=%d, crashloop=%d, error=%d)  nodes(ready=%d, notready=%d)",
-		h.RunningPods, h.PendingPods, h.CrashLoopBackOff, h.ErrorPods, h.ReadyNodes, h.UnreadyNodes)
+	return events.Items, nil
 }
 
 func (c *Client) GetHealth() Health {
@@ -1384,6 +1768,10 @@ func (c *Client) GetHealth() Health {
 		if IsDeleted(&pod) {
 			continue
 		}
+		if pod.Spec.Priority != nil && *pod.Spec.Priority < 0 {
+			continue
+		}
+
 		if IsPodCrashLoopBackoff(pod) {
 			health.CrashLoopBackOff++
 		} else if IsPodHealthy(pod) {

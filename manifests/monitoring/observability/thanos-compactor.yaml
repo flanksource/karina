@@ -22,11 +22,15 @@ spec:
     spec:
       containers:
         - name: thanos-compactor
-          image: thanosio/thanos:{{.thanos.version}}
+          image: docker.io/thanosio/thanos:{{.thanos.version}}
           args:
             - "compact"
             - "--log.level=debug"
             - "--data-dir=/var/thanos/store"
+            - "--retention.resolution-5m={{.thanos.retention | default "180d" }}"
+            - "--retention.resolution-1h={{.thanos.retention | default "180d" }}"
+            - "--retention.resolution-raw={{.thanos.retention | default "180d" }}"
+            - "--delete-delay=2h"
             - "--objstore.config-file=/config/thanos.yaml"
             - "--wait"
           ports:
@@ -44,7 +48,7 @@ spec:
               memory: 128Mi
             limits:
               cpu: 500m
-              memory: 512Mi    
+              memory: 512Mi
       volumes:
         - name: data
           emptyDir: {}

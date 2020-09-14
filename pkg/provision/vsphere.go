@@ -6,53 +6,99 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/yaml"
-	"github.com/moshloop/platform-cli/pkg/phases"
-	"github.com/moshloop/platform-cli/pkg/phases/kubeadm"
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/moshloop/platform-cli/pkg/provision/vmware"
-	"github.com/moshloop/platform-cli/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/flanksource/karina/pkg/controller/burnin"
+	"github.com/flanksource/karina/pkg/phases"
+	"github.com/flanksource/karina/pkg/phases/calico"
+	"github.com/flanksource/karina/pkg/phases/kubeadm"
+	"github.com/flanksource/karina/pkg/phases/nsx"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/provision/vmware"
+	"github.com/flanksource/karina/pkg/types"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func WithVmwareCluster(platform *platform.Platform) error {
-	cluster, err := vmware.NewVMwareCluster(platform.HostPrefix + "-" + platform.Name)
+func WithVmwareCluster(p *platform.Platform) error {
+	cluster, err := vmware.NewVMwareCluster(p.PlatformConfig)
 	if err != nil {
 		return err
 	}
-	platform.Cluster = cluster
+	p.Cluster = cluster
+	if err := p.Init(); err != nil {
+		return err
+	}
+
+	joinEndpoint, err := p.MasterDiscovery.GetControlPlaneEndpoint(p)
+	if err != nil {
+		return err
+	}
+	p.JoinEndpoint = joinEndpoint
+
 	return nil
 }
 
-// VsphereCluster provision or create a kubernetes cluster
-func VsphereCluster(platform *platform.Platform) error {
+// VsphereCluster provisions or creates a kubernetes cluster
+func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) error {
 	if err := WithVmwareCluster(platform); err != nil {
 		return err
 	}
 
-	masters := platform.GetMasterIPs()
-	if len(masters) == 0 {
+	if platform.CA == nil {
+		return fmt.Errorf("must specify a ca")
+	}
+
+	if platform.IngressCA == nil {
+		return fmt.Errorf("must specify an ingressCA")
+	}
+
+	if platform.Consul == "" && (platform.NSX == nil || platform.NSX.Disabled) && (platform.DNS.Disabled) {
+		return fmt.Errorf("must specify a master discovery service e.g. consul, NSX or DNS")
+	}
+
+	// first we start a burnin controller in the background that checks
+	// new nodes with the burnin taint for health, removing the taint
+	// once they become healthy
+	burninCancel := make(chan bool)
+	go burnin.Run(platform, burninPeriod, burninCancel)
+	defer func() {
+		burninCancel <- false
+	}()
+
+	api, err := platform.GetAPIEndpoint()
+	if api == "" || err != nil || !platform.PingMaster() {
+		platform.Tracef("No healthy master nodes, creating new master: %v", err)
+		// no healthy master endpoint is detected, so we need to create the first control plane node
+		// FIXME: Detect situations where all control pane nodes have failed
 		_, err := createMaster(platform)
+		// after creating the first master we need to deploy the CNI and Cloud Providers to ensure subsequent
+		// nodes are tested correctly with the burnin controller
+		if err := vsphere.Install(platform); err != nil {
+			return err
+		}
+
+		if err := calico.Install(platform); err != nil {
+			return err
+		}
+
+		if err := nsx.Install(platform); err != nil {
+			return err
+		}
+
 		if err != nil {
 			platform.Fatalf("Failed to create master: %v", err)
 		}
 	}
 
-	// make sure admin kubeconfig is available
-	platform.GetKubeConfig() // nolint: errcheck
-	if platform.JoinEndpoint == "" {
-		platform.JoinEndpoint = "localhost:8443"
+	masters, err := platform.GetMasterNodes()
+	if err != nil {
+		return err
 	}
-
-	masters = platform.GetMasterIPs()
 	platform.Infof("Detected %d existing masters: %s", len(masters), masters)
 
-	if platform.Master.Count != len(masters) {
-		// upload control plane certs first
-		kubeadm.UploadControlPaneCerts(platform) // nolint: errcheck
-	}
+	// master nodes are created sequentially due to race conditions when joining etcd
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
 		_, err := createSecondaryMaster(platform)
 		if err != nil {
@@ -61,10 +107,21 @@ func VsphereCluster(platform *platform.Platform) error {
 	}
 
 	wg := sync.WaitGroup{}
+	existingNodes := platform.GetNodeNames()
 	for nodeGroup, worker := range platform.Nodes {
-		vms, err := platform.Cluster.GetMachinesByPrefix(worker.Prefix)
+		vms, err := platform.Cluster.GetMachinesFor(&worker)
 		if err != nil {
 			return err
+		}
+		missing := []string{}
+		for _, vm := range vms {
+			if _, ok := existingNodes[vm.Name()]; !ok {
+				missing = append(missing, vm.Name())
+			}
+		}
+		for _, m := range missing {
+			platform.Errorf("vm did not join kubernetes cluster: %s", m)
+			delete(vms, m)
 		}
 
 		for i := 0; i < worker.Count-len(vms); i++ {
@@ -73,10 +130,47 @@ func VsphereCluster(platform *platform.Platform) error {
 			_nodeGroup := nodeGroup
 			go func() {
 				defer wg.Done()
-				if _, err := createWorker(platform, _nodeGroup); err != nil {
+				if w, err := createWorker(platform, _nodeGroup); err != nil {
 					platform.Errorf("Failed to provision worker %v", err)
+				} else {
+					if err := waitForNode(platform, w.Name(), burninPeriod); err != nil {
+						platform.Errorf("%s did not come up healthy, it may need to be re-provisioned %v", w.Name(), err)
+					}
 				}
 			}()
+		}
+		wg.Wait()
+	}
+
+	if err := downscale(platform); err != nil {
+		platform.Warnf("failed to downscale: %v ", err)
+	}
+
+	endpoint, _ := platform.GetAPIEndpoint()
+	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: https://%s \n\n\n", platform.Name, endpoint)
+	return nil
+}
+
+func downscale(platform *platform.Platform) error {
+	wg := sync.WaitGroup{}
+	cluster, err := GetCluster(platform)
+	if err != nil {
+		return err
+	}
+	existingNodes := platform.GetNodeNames()
+	for _, worker := range platform.Nodes {
+		vms, err := platform.Cluster.GetMachinesFor(&worker)
+		if err != nil {
+			return err
+		}
+		missing := []string{}
+		for _, vm := range vms {
+			if _, ok := existingNodes[vm.Name()]; !ok {
+				missing = append(missing, vm.Name())
+			}
+		}
+		for _, m := range missing {
+			delete(vms, m)
 		}
 
 		if worker.Count < len(vms) {
@@ -93,27 +187,28 @@ func VsphereCluster(platform *platform.Platform) error {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					terminate(platform, vm)
+					if err := cluster.Terminate(vm); err != nil {
+						platform.Errorf("failed to terminate %s: %v", vm, err)
+					}
 				}()
 			}
 		}
 	}
 	wg.Wait()
-
-	path, err := platform.GetKubeConfig()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("\n\n\n A new cluster called %s has been provisioned, access it via: kubectl --kubeconfig %s get nodes\n\n Next deploy the CNI and addons\n\n\n", platform.Name, path)
-	masterLB, workerLB, err := provisionLoadbalancers(platform)
-	if err != nil {
-		platform.Errorf("Failed to provision load balancers: %v", err)
-	}
-	fmt.Printf("Provisioned LoadBalancers:\n Masters: %s\nWorkers: %s\n", masterLB, workerLB)
 	return nil
 }
 
+// creating masters needs to be done sequentially due to race conditions in kubeadm
+var masterLock sync.Mutex
+
 func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
+	// upload control plane certs first
+	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
+		return nil, err
+	}
+	masterLock.Lock()
+	defer masterLock.Unlock()
+
 	vm := platform.Master
 	vm.Name = fmt.Sprintf("%s-%s-%s-%s", platform.HostPrefix, platform.Name, vm.Prefix, utils.ShortTimestamp())
 	if vm.Tags == nil {
@@ -132,11 +227,8 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone secondary master: %s", err)
 	}
-	if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), cloned.IP()); err != nil {
-		platform.Warnf("Failed to update DNS for %s", cloned.IP())
-	} else {
-		platform.Infof("Provisioned new master: %s\n", cloned.IP())
-	}
+
+	platform.Infof("Provisioned new master: %s\n", cloned.IP())
 	return cloned, nil
 }
 
@@ -147,33 +239,21 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 		vm.Tags = make(map[string]string)
 	}
 	vm.Tags["Role"] = platform.Name + "-masters"
-	platform.Infof("No masters detected, deploying new master %s", vm.Name)
+	platform.Infof("No masters detected, deploying new master with %s for master discovery and %s for load balancing", platform.MasterDiscovery, platform.ProvisionHook)
 	config, err := phases.CreatePrimaryMaster(platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create primary master: %s", err)
 	}
 
-	data, err := yaml.Marshal(platform.PlatformConfig)
+	machine, err := platform.Clone(vm, config)
+
 	if err != nil {
-		return nil, fmt.Errorf("error saving config %s", err)
+		return nil, err
 	}
+	platform.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
 
-	platform.Tracef("Using configuration: \n%s\n", console.StripSecrets(string(data)))
-
-	var machine types.Machine
-	if !platform.DryRun {
-		//Note: = not :=, otherwise the new `machine` shadows the one declared
-		//                outside the if and this function always return nil
-		machine, err = platform.Clone(vm, config)
-
-		if err != nil {
-			return nil, err
-		}
-		if err := platform.GetDNSClient().Append(fmt.Sprintf("k8s-api.%s", platform.Domain), machine.IP()); err != nil {
-			platform.Errorf("Failed to update DNS record for %s: %v", machine, err)
-		}
-		platform.Infof("Provisioned new master: %s, waiting for it to become ready", machine.IP())
-	}
+	// reset any cached connection details
+	platform.ResetMasterConnection()
 	if err := platform.WaitFor(); err != nil {
 		return nil, fmt.Errorf("primary master failed to come up %s ", err)
 	}
@@ -188,7 +268,7 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	}
 	worker := platform.Nodes[nodeGroup]
 	vm := worker
-	config, err := phases.CreateWorker(platform)
+	config, err := phases.CreateWorker(nodeGroup, platform)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create worker %v", err)
 	}
@@ -198,57 +278,51 @@ func createWorker(platform *platform.Platform, nodeGroup string) (types.Machine,
 	}
 	vm.Tags["Role"] = platform.Name + "-workers"
 	platform.Infof("Creating new worker %s", vm.Name)
-	if platform.DryRun {
-		return nil, nil
-	}
 
 	cloned, err := platform.Clone(vm, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone worker: %s", err)
 	}
-	if err := platform.GetDNSClient().Append(fmt.Sprintf("*.%s", platform.Domain), cloned.IP()); err != nil {
-		platform.Warnf("Failed to update DNS for %s", cloned.IP())
-	} else {
-		platform.Infof("Provisioned new worker: %s\n", cloned.IP())
-	}
+
+	platform.Infof("Provisioned new worker: %s", cloned.IP())
 	return cloned, nil
 }
 
-func terminate(platform *platform.Platform, vm types.Machine) {
-	if !platform.Terminating {
-		if err := platform.Drain(vm.Name(), 2*time.Minute); err != nil {
-			platform.Warnf("[%s] failed to drain: %v", vm.Name(), err)
-		}
-	}
-	client, err := platform.GetClientset()
-	if err != nil {
-		platform.Warnf("Failed to get client to delete node")
-	} else {
-		if err := client.CoreV1().Nodes().Delete(vm.Name(), &metav1.DeleteOptions{}); err != nil {
-			platform.Warnf("Failed to delete node for %s: %v", vm, err)
-		}
+// waitForNode waits for the node to become ready and have its burnin taint removed
+func waitForNode(platform *platform.Platform, name string, timeout time.Duration) error {
+	platform.Infof("[%s] waiting to become ready", name)
+	if status, err := platform.WaitForNode(name, timeout, v1.NodeReady, v1.ConditionTrue); err != nil {
+		return fmt.Errorf("[%s] did not come up healthy: %v", name, status)
 	}
 
-	if err := RemoveDNS(platform, vm); err != nil {
-		platform.Warnf("Failed to remove dns for %s: %v", vm, err)
+	platform.Infof("[%s] Node has become healthy, waiting for burnin-taint removal", name)
+	if err := platform.WaitForTaintRemoval(name, timeout, burnin.Taint); err != nil {
+		return fmt.Errorf("[%s] replacement burn-in taint was not removed: %v", name, err)
 	}
-	if err := vm.Terminate(); err != nil {
-		platform.Warnf("Failed to terminate %s: %v", vm.Name(), err)
-	}
+	return nil
 }
 
-func RemoveDNS(p *platform.Platform, vm types.Machine) error {
-	ip, err := vm.GetIP(time.Second * 5)
-	if err != nil {
-		return fmt.Errorf("failed to get IP for %s, unable to remove DNS: %v", vm, err)
+func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) error {
+	var returnErr *error
+	if backoffOpts == nil {
+		backoffOpts = &wait.Backoff{
+			Duration: 500 * time.Millisecond,
+			Factor:   2.0,
+			Steps:    7,
+		}
 	}
-	if ip != "" {
-		if err := p.GetDNSClient().Delete(fmt.Sprintf("*.%s", p.Domain), ip); err != nil {
-			return err
+
+	_ = wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
+		err := fn()
+		if err == nil {
+			return true, nil
 		}
-		if err := p.GetDNSClient().Delete(fmt.Sprintf("k8s-api.%s", p.Domain), ip); err != nil {
-			return err
-		}
+		log.Warnf("retrying after error: %v", err)
+		returnErr = &err
+		return false, nil
+	})
+	if returnErr != nil {
+		return *returnErr
 	}
 	return nil
 }

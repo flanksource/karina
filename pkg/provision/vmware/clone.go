@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	ptypes "github.com/flanksource/karina/pkg/types"
+	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-
-	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
-	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	ptypes "github.com/moshloop/platform-cli/pkg/types"
 )
 
 const (
@@ -65,13 +64,17 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting cdrom")
 	}
-
 	deviceSpecs = append(deviceSpecs, cdrom)
+
+	serial, err := s.getSerial(vm, devices)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting serial device")
+	}
+	deviceSpecs = append(deviceSpecs, serial)
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			Annotation: "Created by platform-cli from " + vm.Template,
-
+			Annotation:   "Created by karina from " + vm.Template,
 			Flags:        newVMFlagInfo(),
 			DeviceChange: deviceSpecs,
 			NumCPUs:      vm.CPUs,
@@ -131,23 +134,55 @@ func (s *Session) getCdrom(datastore *object.Datastore, vm ptypes.VM, devices ob
 		}
 		op = types.VirtualDeviceConfigSpecOperationAdd
 	}
-	s.Infof("Creating ISO for %s", vm.Name)
+	s.Debugf("Creating ISO for %s", vm.Name)
 	iso, err := cloudinit.CreateISO(vm.Name, config.ToCloudInit().String())
 	if err != nil {
 		return nil, fmt.Errorf("getCdrom: failed to create ISO: %v", err)
 	}
 	path := fmt.Sprintf("cloud-init/%s.iso", vm.Name)
-	s.Infof("Uploading to [%s] %s", datastore.Name(), path)
+	s.Debugf("Uploading to [%s] %s", datastore.Name(), path)
 	if err = datastore.UploadFile(context.TODO(), iso, path, &soap.DefaultUpload); err != nil {
-		s.Infof("%+v\n", err)
 		return nil, err
 	}
 	s.Tracef("Uploaded to %s", path)
-	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", vm.Datastore, path))
+
+	//NOTE: using the datastore Name as the vm.Datastore may be "" and
+	//      the datastore may have been determined from default values.
+	cdrom = devices.InsertIso(cdrom, fmt.Sprintf("[%s] %s", datastore.Name(), path))
 	devices.Connect(cdrom) // nolint: errcheck
 	return &types.VirtualDeviceConfigSpec{
 		Operation: op,
 		Device:    cdrom,
+	}, nil
+}
+
+// getSerial finds the first serial device (adding a new serial device if none are found).
+// The serial device is a requirement for Ubuntu image booting which can have a range of issues
+// with the default configuration if a working serial device is not present.
+func (s *Session) getSerial(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirtualDeviceConfigSpec, error) {
+	op := types.VirtualDeviceConfigSpecOperationEdit
+	serial, err := devices.FindSerialPort("")
+	if err != nil || serial == nil {
+		s.Debugf("No serial device found for %s, creating a new one", vm.Name)
+		serial, err = devices.CreateSerialPort()
+		if err != nil {
+			return nil, fmt.Errorf("getSerial: failed to create a new serial device: %v", err)
+		}
+		op = types.VirtualDeviceConfigSpecOperationAdd
+	}
+
+	serial.Backing = &types.VirtualSerialPortURIBackingInfo{
+		VirtualDeviceURIBackingInfo: types.VirtualDeviceURIBackingInfo{
+			Direction:  "client",
+			ServiceURI: "localhost:0",
+		},
+	}
+
+	devices.Connect(serial) // nolint: errcheck
+
+	return &types.VirtualDeviceConfigSpec{
+		Operation: op,
+		Device:    serial,
 	}, nil
 }
 

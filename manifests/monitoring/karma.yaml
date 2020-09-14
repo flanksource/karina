@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: karma
+  namespace: monitoring
+  labels:
+    k8s-app: karma
+spec:
+  selector:
+    k8s-app: karma
+  ports:
+    - name: web
+      protocol: TCP
+      port: 8080
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karma
+  namespace: monitoring
+data:
+  karma.yml: |+
+    alertmanager:
+      interval: 1m
+      servers:
+
+      {{ range $name, $alertmanager := .monitoring.karma.alertManagers }}
+        - name: {{ $name }}
+          uri: {{$alertmanager}}
+          tls:
+            insecureSkipVerify: true
+          timeout: 20s
+          proxy: true
+      {{ end }}
+
+
+    sorting:
+      order: label
+      reverse: false
+      label: severity
+      customValues:
+        labels:
+          severity:
+            critical: 1
+            warning: 2
+            info: 3
+
+    alertAcknowledgement:
+      enabled: true
+      duration: 72h
+      author: team
+      commentPrefix: SILENCE
+
+    labels:
+      strip:
+        - job
+        - prometheus
+        - "@alertmanager"
+        - instance
+
+    log:
+      level: warning
+
+    ui:
+      refresh: 30s
+      hideFiltersWhenIdle: true
+      colorTitlebar: false
+      minimalGroupWidth: 600
+      alertsPerGroup: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karma
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: karma
+  template:
+    metadata:
+      name: karma
+      labels:
+        k8s-app: karma
+      annotations:
+        reload/all: "true"
+    spec:
+      containers:
+        - name: karma
+          image: docker.io/lmierzwa/karma:{{.monitoring.karma.version | default "none"}}
+          args:
+            - --config.file
+            - /config/karma.yml
+          ports:
+            - name: web
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              memory: 50Mi
+              cpu: "20m"
+          volumeMounts:
+            - mountPath: /config
+              name: config
+      volumes:
+        - name: config
+          configMap:
+            name: karma
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    k8s-app: karma
+  name: karma
+  namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+    - host: karma.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: karma
+              servicePort: 8080
+  tls:
+    - secretName: karma-tls
+      hosts:
+        - karma.{{.domain}}

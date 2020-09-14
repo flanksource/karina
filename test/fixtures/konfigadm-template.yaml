@@ -1,0 +1,7 @@
+pre_commands:
+  - "echo 'hello cloud-init'"
+containers:
+  - image: "docker.io/nginxdemos/hello:latest"
+    docker_args: "-p 9191:80"
+post_commands:
+  - "echo 'goodbye cloud-init'"

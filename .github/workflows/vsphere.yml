@@ -1,0 +1,59 @@
+name: E2E vSphere
+
+on:
+  workflow_dispatch:
+  schedule:
+    # daily at 00h00 - https://crontab.guru/#0_0_*_*_*
+    # * is a special character in YAML so you have to quote this string
+    - cron: "0 0 * * *"
+jobs:
+  binary:
+    runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.6
+    steps:
+      - uses: actions/checkout@master
+      - run: make pack linux
+      - uses: actions/upload-artifact@v2
+        with:
+          name: karina
+          path: ./.bin/karina
+  test:
+    runs-on: [self-hosted]
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.16.9
+        suite:
+          - minimal
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
+      - name: Run e2e minimal testing script
+        env:
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+
+        run: |
+          # Run the testing commands in subshell with decoded environment
+          sops exec-env test/vsphere/lab.enc.env './test/vsphere/e2e.sh'
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: vsphere-test-results-${{matrix.k8s}}-${{matrix.suite}}
+          path: test-results/
+      - name: Upload snapshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: vsphere-snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/snapshot.zip

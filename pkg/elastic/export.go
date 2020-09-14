@@ -6,19 +6,22 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"time"
 
-	"github.com/moshloop/platform-cli/pkg/platform"
-	"github.com/olivere/elastic/v7"
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
+	elastic "github.com/olivere/elastic/v7"
 )
 
 type Query struct {
-	Namespace string
-	Cluster   string
-	Pod       string
-	Count     int
-	Query     string
-	Since     string
-	From, To  string
+	Namespace  string
+	Cluster    string
+	Pod        string
+	Count      int
+	Query      string
+	Since      string
+	From, To   string
+	Timestamps bool
 }
 
 type Fields struct {
@@ -69,10 +72,24 @@ func (query Query) ToQuery() elastic.Query {
 	return q
 }
 
-func ExportLogs(p *platform.Platform, query Query) error {
+func ExportLogs(p *platform.Platform, filebeatName string, query Query) error {
+	var filebeat *types.Filebeat = nil
+
+	for _, f := range p.Filebeat {
+		if f.Name == filebeatName {
+			filebeat = &f
+		}
+	}
+
+	if filebeat == nil {
+		return fmt.Errorf("failed to find filebeat with name %s", filebeatName)
+	}
+
+	p.Infof("Exporting logs from %s@%s", filebeat.Elasticsearch.User, filebeat.Elasticsearch.GetURL())
+
 	es, err := elastic.NewSimpleClient(
-		elastic.SetBasicAuth(p.Filebeat.Elasticsearch.User, p.Filebeat.Elasticsearch.Password),
-		elastic.SetURL(p.Filebeat.Elasticsearch.GetURL()),
+		elastic.SetBasicAuth(filebeat.Elasticsearch.User, filebeat.Elasticsearch.Password),
+		elastic.SetURL(filebeat.Elasticsearch.GetURL()),
 	)
 	if err != nil {
 		return err
@@ -97,20 +114,36 @@ func ExportLogs(p *platform.Platform, query Query) error {
 	for result.ScrollId != "" && count < query.Count {
 		for _, hit := range result.Each(reflect.TypeOf(Message{})) {
 			msg := hit.(Message)
-			fmt.Printf("[%s/%s/%s] %v\n", msg.Fields.Cluster, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			if query.Timestamps {
+				fmt.Printf("[%s/%s/%s] %s %v\n", msg.Fields.Cluster, msg.Timestamp, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			} else {
+				fmt.Printf("[%s/%s/%s] %v\n", msg.Fields.Cluster, msg.Kubernetes.Pod, msg.Kubernetes.Container, msg.Message)
+			}
 			count++
 			if count >= query.Count {
 				break
 			}
 		}
-		result, err = scroll.ScrollId(result.ScrollId).Do(context.Background())
+		scollID := result.ScrollId
+		result, err = scroll.ScrollId(scollID).Do(context.Background())
 		if err != nil && errors.Is(err, io.EOF) {
 			p.Infof("Exported %d results of %d total", count, result.TotalHits())
 			return nil
 		}
+
+		if err != nil {
+			time.Sleep(5 * time.Second)
+			p.Infof("Retrying %s", err)
+			result, err = scroll.ScrollId(scollID).Do(context.Background())
+			if err != nil && errors.Is(err, io.EOF) {
+				p.Infof("Exported %d results of %d total", count, result.TotalHits())
+				return nil
+			}
+		}
 		if err != nil {
 			return err
 		}
+
 		p.Infof("Exported %d results of %d total", count, result.TotalHits())
 	}
 

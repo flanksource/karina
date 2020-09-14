@@ -1,0 +1,65 @@
+importConfigs:
+  - ../minimal.yaml
+hostPrefix: vsphere-k8s
+
+kubernetes:
+  version: v1.16.4
+
+dns:
+  disabled: true
+
+## Endpoint for externally hosted consul cluster
+## NOTE: a working consul config required to verify
+##       that primary master is available.
+consul: 10.100.0.13
+# Name of consul datacenter
+datacenter: lab
+patches: []
+## The VM configuration for master nodes
+master:
+  count: 1
+  cpu: 2 #NOTE: minimum of 2
+  memory: 4
+  disk: 10
+  networks:
+    - !!env GOVC_NETWORK
+  cluster: !!env GOVC_CLUSTER
+  prefix: m
+  template: "k8s-1.16.4"
+workers:
+  worker-group-a:
+    prefix: w
+    networks:
+      - !!env GOVC_NETWORK
+    cluster: !!env GOVC_CLUSTER
+    count: 1
+    cpu: 2
+    memory: 4
+    disk: 10
+    template: "k8s-1.16.4"
+
+vsphere:
+  username: !!env GOVC_USER
+  datacenter: !!env GOVC_DATACENTER
+  cluster: !!env GOVC_CLUSTER
+  folder: !!env GOVC_FOLDER
+  datastore: !!env GOVC_DATASTORE
+  # can be found on the Datastore summary page
+  datastoreUrl: !!env GOVC_DATASTORE_URL
+  password: !!env GOVC_PASS
+  hostname: !!env GOVC_FQDN
+  resourcePool: !!env GOVC_RESOURCE_POOL
+  network: !!env GOVC_NETWORK
+
+s3:
+  endpoint: http://minio.minio.svc:9000
+  externalEndpoint: minio.127.0.0.1.nip.io
+  bucket: harbor
+  access_key: minio
+  secret_key: minio123
+  region: us-east1
+  kmsMasterKey: minio-demo-key:6368616e676520746869732070617373776f726420746f206120736563726574
+  usePathStyle: true
+  skipTLSVerify: true
+  e2e:
+    minio: false

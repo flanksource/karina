@@ -81,12 +81,14 @@ spec:
         app: reloader
     spec:
       containers:
-        - env: []
-          image: "stakater/reloader:{{.configmapReloader.version}}"
+        - image: "docker.io/stakater/reloader:{{.configmapReloader.version}}"
           imagePullPolicy: IfNotPresent
           name: reloader
           args:
             - --configmap-annotation=reload/configmap
             - --secret-annotation=reload/secret
             - --auto-annotation=reload/all
+          requests:
+            cpu: 10m
+            memory: 32Mi
       serviceAccountName: reloader

@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-jobservice-env"
+  namespace: harbor
+  labels:
+    app: "harbor"
+data:
+  CORE_URL: "https://harbor-core"
+  TOKEN_SERVICE_URL: "https://harbor-core/service/token"
+  REGISTRY_URL: "https://harbor-registry:5443"
+  REGISTRY_CONTROLLER_URL: "https://harbor-registry:8443"
+  REGISTRY_CREDENTIAL_USERNAME: "harbor_registry_user"
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-jobservice"
+  namespace: harbor
+  labels:
+    app: "harbor"
+data:
+  config.yml: |+
+    protocol: "https"
+    https_config:
+      cert: "/etc/harbor/ssl/job_service.crt"
+      key: "/etc/harbor/ssl/job_service.key"
+    port: 8443
+    worker_pool:
+      workers: 10
+      backend: "redis"
+      redis_pool:
+        redis_url: "harbor-redis:6379/1"
+        namespace: "harbor_job_service_namespace"
+    job_loggers:
+      - name: "FILE"
+        level: INFO
+        settings: # Customized settings of logger
+          base_dir: "/var/log/jobs"
+        sweeper:
+          duration: 14 #days
+          settings: # Customized settings of sweeper
+            work_dir: "/var/log/jobs"
+    #Loggers for the job service
+    loggers:
+      - name: "STD_OUTPUT"
+        level: "{{.harbor.logLevel | strings.ToUpper }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-jobservice"
+  namespace: harbor
+  labels:
+    app: "harbor"
+spec:
+  ports:
+    - port: 443
+      targetPort: 8443
+  selector:
+    app: "harbor"
+    component: jobservice
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: jobservice-internal-certs
+  namespace: harbor
+spec:
+  secretName: jobservice-internal-certs
+  dnsNames:
+    - harbor-jobservice
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-jobservice"
+  namespace: harbor
+  labels:
+    app: "harbor"
+    component: jobservice
+  annotations:
+    reload/all: "true" # restart on cm/secret change
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: jobservice
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: jobservice
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: jobservice
+          image: docker.io/goharbor/harbor-jobservice:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /api/v1/stats
+              scheme: HTTPS
+              port: 8443
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/stats
+              scheme: HTTPS
+              port: 8443
+
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          env:
+            - name: INTERNAL_TLS_ENABLED
+              value: "true"
+            - name: INTERNAL_TLS_KEY_PATH
+              value: /etc/harbor/ssl/job_service.key
+            - name: INTERNAL_TLS_CERT_PATH
+              value: /etc/harbor/ssl/job_service.crt
+            - name: INTERNAL_TLS_TRUST_CA_PATH
+              value: /harbor_cust_cert/harbor_internal_ca.crt
+            - name: CORE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+            - name: JOBSERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "harbor-jobservice"
+                  key: secret
+            - name: CORE_URL
+              value: "https://harbor-core"
+            - name: REGISTRY_CONTROLLER_URL
+              value: "https://harbor-registry:8443"
+            - name: LOG_LEVEL
+              value: "{{.harbor.logLevel}}"
+            - name: HTTP_PROXY
+              value: ""
+            - name: HTTPS_PROXY
+              value: ""
+            - name: NO_PROXY
+              value: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: jobservice-config
+              mountPath: /etc/jobservice/config.yml
+              subPath: config.yml
+            - name: job-logs
+              mountPath: /var/log/jobs
+              subPath:
+            - name: jobservice-internal-certs
+              mountPath: /harbor_cust_cert/harbor_internal_ca.crt
+              subPath: ca.crt
+            - name: jobservice-internal-certs
+              mountPath: /etc/harbor/ssl/job_service.crt
+              subPath: tls.crt
+            - name: jobservice-internal-certs
+              mountPath: /etc/harbor/ssl/job_service.key
+              subPath: tls.key
+      volumes:
+        - name: jobservice-internal-certs
+          secret:
+            secretName: jobservice-internal-certs
+        - name: jobservice-config
+          configMap:
+            name: "harbor-jobservice"
+        - name: job-logs
+          emptyDir: {}

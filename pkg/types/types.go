@@ -5,13 +5,25 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/flanksource/commons/certs"
-	"github.com/flanksource/yaml"
-	"github.com/moshloop/platform-cli/pkg/api/calico"
+	"github.com/flanksource/karina/pkg/api/calico"
+	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
 type Enabled struct {
 	Disabled bool `yaml:"disabled"`
+}
+
+type Disabled struct {
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version"`
+}
+
+func (d Disabled) IsDisabled() bool {
+	if d.Disabled {
+		return true
+	}
+	return d.Version == ""
 }
 
 type CertManager struct {
@@ -22,7 +34,7 @@ type CertManager struct {
 }
 
 type VaultClient struct {
-	// The address of a remote Vault server to use for signinig
+	// The address of a remote Vault server to use for signing
 	Address string `yaml:"address"`
 
 	// The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca
@@ -32,6 +44,7 @@ type VaultClient struct {
 	Token string `yaml:"token"`
 }
 
+// VM captures the specifications of a virtual machine
 type VM struct {
 	Name   string `yaml:"name,omitempty"`
 	Prefix string `yaml:"prefix,omitempty"`
@@ -50,14 +63,20 @@ type VM struct {
 	// Tags to be applied to the VM
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
-	IP       string            `yaml:"-"`
+	// A path to a konfigadm specification used for configuring the VM on creation.
+	KonfigadmFile string            `yaml:"konfigadm,omitempty"`
+	IP            string            `yaml:"-"`
+	Konfigadm     *konfigadm.Config `yaml:"-"`
+}
+
+func (vm VM) GetTags() map[string]string {
+	return vm.Tags
 }
 
 type Calico struct {
-	Disabled  bool                    `yaml:"disabled,omitempty"`
+	Disabled  `yaml:",inline"`
 	IPIP      calico.IPIPMode         `yaml:"ipip"`
 	VxLAN     calico.VXLANMode        `yaml:"vxlan"`
-	Version   string                  `yaml:"version,omitempty"`
 	Log       string                  `yaml:"log,omitempty"`
 	BGPPeers  []calico.BGPPeer        `yaml:"bgpPeers,omitempty"`
 	BGPConfig calico.BGPConfiguration `yaml:"bgpConfig,omitempty"`
@@ -65,18 +84,17 @@ type Calico struct {
 }
 
 type OPA struct {
-	Disabled           bool     `yaml:"disabled,omitempty"`
-	NamespaceWhitelist []string `yaml:"namespaceWhitelist,omitempty"`
-	KubeMgmtVersion    string   `yaml:"kubeMgmtVersion,omitempty"`
-	Version            string   `yaml:"version,omitempty"`
-	BundleURL          string   `yaml:"bundleUrl,omitempty"`
-	BundlePrefix       string   `yaml:"bundlePrefix,omitempty"`
-	BundleServiceName  string   `yaml:"bundleServiceName,omitempty"`
-	LogFormat          string   `yaml:"logFormat,omitempty"`
-	SetDecisionLogs    bool     `yaml:"setDecisionLogs,omitempty"`
+	Disabled          bool   `yaml:"disabled,omitempty"`
+	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty"`
+	Version           string `yaml:"version,omitempty"`
+	BundleURL         string `yaml:"bundleUrl,omitempty"`
+	BundlePrefix      string `yaml:"bundlePrefix,omitempty"`
+	BundleServiceName string `yaml:"bundleServiceName,omitempty"`
+	LogFormat         string `yaml:"logFormat,omitempty"`
+	SetDecisionLogs   bool   `yaml:"setDecisionLogs,omitempty"`
 	// Policies is a path to directory containing .rego policy files
 	Policies string `yaml:"policies,omitempty"`
-	// Log level for opa server, one of: debug,info,error, defaults to error
+	// Log level for opa server, one of: `debug`,`info`,`error` (default: `error`)
 	LogLevel string `yaml:"logLevel,omitempty"`
 	E2E      OPAE2E `yaml:"e2e,omitempty"`
 }
@@ -88,17 +106,20 @@ type OPAE2E struct {
 type Harbor struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	Version         string `yaml:"version,omitempty"`
+	RegistryPVC     string `yaml:"registryPVC,omitempty"`
+	ChartPVC        string `yaml:"chartPVC,omitempty"`
 	ChartVersion    string `yaml:"chartVersion,omitempty"`
 	AdminPassword   string `yaml:"-"`
 	ClairVersion    string `yaml:"clairVersion"`
 	RegistryVersion string `yaml:"registryVersion"`
-	// Logging level for various components, defaults to warn - valid options are info,warn,debug
+	// Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`)
 	LogLevel string                   `yaml:"logLevel,omitempty"`
 	DB       *DB                      `yaml:"db,omitempty"`
 	URL      string                   `yaml:"url,omitempty"`
 	Projects map[string]HarborProject `yaml:"projects,omitempty"`
 	Settings *HarborSettings          `yaml:"settings,omitempty"`
 	Replicas int                      `yaml:"replicas,omitempty"`
+	S3       *S3Connection            `yaml:"s3,omitempty"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
@@ -176,37 +197,38 @@ type SMTP struct {
 }
 
 type S3 struct {
+	S3Connection `yaml:",inline"`
+	CSIVolumes   bool `yaml:"csiVolumes,omitempty"`
+	// Provide a KMS Master Key
+	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
+	E2E          S3E2E  `yaml:"e2e,omitempty"`
+}
+
+type S3Connection struct {
 	AccessKey string `yaml:"access_key,omitempty"`
 	SecretKey string `yaml:"secret_key,omitempty"`
 	Bucket    string `yaml:"bucket,omitempty"`
 	Region    string `yaml:"region,omitempty"`
 	// The endpoint at which the S3-like object storage will be available from inside the cluster
-	// e.g. if minio is deployed inside the cluster, specify: *http://minio.minio.svc:9000*
+	// e.g. if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000`
 	Endpoint string `yaml:"endpoint,omitempty"`
-	// The endpoint at which S3 is accessible outside the cluster,
-	// When deploying locally on kind specify: *minio.127.0.0.1.nip.io*
-	ExternalEndpoint string `yaml:"externalEndpoint,omitempty"`
-	// Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to
-	// S3 buckets
-	CSIVolumes bool `yaml:"csiVolumes,omitempty"`
-	// Provide a KMS Master Key
-	KMSMasterKey string `yaml:"kmsMasterKey,omitempty"`
 	// UsePathStyle http://s3host/bucket instead of http://bucket.s3host
 	UsePathStyle bool `yaml:"usePathStyle"`
 	// Skip TLS verify when connecting to S3
-	SkipTLSVerify bool  `yaml:"skipTLSVerify"`
-	E2E           S3E2E `yaml:"e2e,omitempty"`
+	SkipTLSVerify bool `yaml:"skipTLSVerify"`
+}
+
+type Minio struct {
+	Disabled     `yaml:",inline"`
+	Replicas     int         `yaml:"replicas,omitempty"`
+	AccessKey    string      `yaml:"access_key,omitempty"`
+	SecretKey    string      `yaml:"secret_key,omitempty"`
+	KMSMasterKey string      `yaml:"kmsMasterKey,omitempty"`
+	Persistence  Persistence `yaml:"persistence,omitempty"`
 }
 
 type S3E2E struct {
 	Minio bool `yaml:"minio,omitempty"`
-}
-
-func (s3 S3) GetExternalEndpoint() string {
-	if s3.ExternalEndpoint != "" {
-		return s3.ExternalEndpoint
-	}
-	return s3.Endpoint
 }
 
 type NFS struct {
@@ -215,26 +237,24 @@ type NFS struct {
 }
 
 // Configures the Nginx Ingress Controller, the controller Docker image is forked from upstream
-// to include more LUA packages for OAuth.
-// To configure global settings not available below, override the 'ingress-nginx/nginx-configuration` configmap with
-// settings from https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+// to include more LUA packages for OAuth. <br>
+// To configure global settings not available below, override the <b>ingress-nginx/nginx-configuration</b> configmap with
+// settings from [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
 type Nginx struct {
 	Disabled bool `yaml:"disabled"`
-	// The version of the nginx controller to deploy, defaults to: 0.25.1.flanksource.1
+	// The version of the nginx controller to deploy (default: `0.25.1.flanksource.1`)
 	Version string `yaml:"version"`
 	// Disable access logs
 	DisableAccessLog bool `yaml:"disableAccessLog,omitempty"`
-	// Size of request body buffer, defaults to 16M
+	// Size of request body buffer (default: `16M`)
 	RequestBodyBuffer string `yaml:"requestBodyBuffer,omitempty"`
-	// Max size of request body, defaults to 32M
+	// Max size of request body (default: `32M`)
 	RequestBodyMax string `yaml:"requestBodyMax,omitempty"`
 }
 
 type OAuth2Proxy struct {
-	Disabled     bool   `yaml:"disabled"`
-	CookieSecret string `yaml:"cookieSecret,omitempty"`
-	Version      string `yaml:"version,omitempty"`
-	OidcGroup    string `yaml:"oidcGroup,omitempty"`
+	Disabled bool   `yaml:"disabled"`
+	Version  string `yaml:"version,omitempty"`
 }
 
 type Ldap struct {
@@ -256,7 +276,7 @@ type Ldap struct {
 }
 
 type LdapE2E struct {
-	// if true, deploy a mock LDAP server for testing
+	// Ff true, deploy a mock LDAP server for testing
 	Mock bool `yaml:"mock,omitempty"`
 	// Username to be used for OIDC integration tests
 	Username string `yaml:"username,omitempty"`
@@ -270,34 +290,27 @@ func (ldap Ldap) GetConnectionURL() string {
 
 type Kubernetes struct {
 	Version string `yaml:"version"`
-	// KubeletExtraArgs is used to configure additional kubelet command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+	// Configure additional kubelet [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/)
 	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
-	// ControlllerExtraArgs is used to configure additional kube-controller-manager command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+	// Configure additional kube-controller-manager [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/)
 	ControllerExtraArgs map[string]string `yaml:"controllerExtraArgs,omitempty"`
-	// SchedulerExtraArgs is used to configure additional kube-scheduler command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+	// Configure additional kube-scheduler [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/)
 	SchedulerExtraArgs map[string]string `yaml:"schedulerExtraArgs,omitempty"`
-	// APIServerExtraArgs is used to configure additional kube-apiserver command line flags
-	// The list of available flags can be viewed here:
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+	// Configure additional kube-apiserver [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/)
 	APIServerExtraArgs map[string]string `yaml:"apiServerExtraArgs,omitempty"`
-	// EtcdExtraArgs is used to configure additional etcd command line flags
-	// The list of available flags can be viewed here:
-	// https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md
+	// Configure additional etcd [flags](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md)
 	EtcdExtraArgs map[string]string `yaml:"etcdExtraArgs,omitempty"`
 	MasterIP      string            `yaml:"masterIP,omitempty"`
-	// AuditConfig is used to specify the audit policy file.
-	// If a policy file is specified the cluster audit is enabled.
-	// Several api-server flags can be added to APIServerExtraArgs to further
-	// customize the logging configuration.
-	// The relevant flags are:
-	//   --audit-log-maxage, --audit-log-maxbackup, --audit-log-maxsize, --audit-log-format
-	AuditConfig *AuditConfig `yaml:"auditing,omitempty"`
+	// Configure Kubernetes auditing
+	AuditConfig AuditConfig `yaml:"auditing,omitempty"`
+	// EncryptionConfig is used to specify the encryption configuration file.
+	EncryptionConfig EncryptionConfig `yaml:"encryption,omitempty"`
+	// Configure container runtime: docker/containerd
+	ContainerRuntime string `yaml:"containerRuntime"`
+}
+
+type Kind struct {
+	PortMappings map[int32]int32 `yaml:"portMappings,omitempty"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of
@@ -310,7 +323,10 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
-	if raw.AuditConfig != nil && raw.AuditConfig.PolicyFile != "" {
+	if raw.AuditConfig.PolicyFile != "" {
+		if raw.APIServerExtraArgs == nil {
+			raw.APIServerExtraArgs = make(map[string]string)
+		}
 		if _, found := raw.APIServerExtraArgs["audit-log-path"]; !found {
 			raw.APIServerExtraArgs["audit-log-path"] = "/var/log/audit/cluster-audit.log"
 		}
@@ -320,27 +336,45 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-type Dashboard struct {
-	Enabled
-	AccessRestricted LdapAccessConfig `yaml:"accessRestricted,omitempty"`
+// Canary-checker allows for the deployment and configuration of the canary-checker
+type CanaryChecker struct {
+	Enabled          `yaml:",inline"`
+	Version          string   `yaml:"version"`
+	AggregateServers []string `yaml:"aggregateServers"`
 }
 
-type LdapAccessConfig struct {
-	Enabled bool     `yaml:"enabled,omitempty"`
-	Groups  []string `yaml:"groups,omitempty"`
-	Snippet string   `yaml:"snippet,omitempty"`
+type Dashboard struct {
+	Enabled `yaml:",inline"`
+	Version string `yaml:"version,omitempty"`
+}
+
+type Dex struct {
+	Disabled `yaml:",inline"`
 }
 
 type DynamicDNS struct {
-	Disabled   bool   `yaml:"disabled,omitempty"`
+	Disabled bool `yaml:"disabled,omitempty"`
+	// Set to true if you want DNS records added to k8s-api and "*" for every new
+	// worker and master created.
+	UpdateHosts bool `yaml:"updateHosts,omitempty"`
+	// Nameserver and port for dynamic DNS updates
 	Nameserver string `yaml:"nameserver,omitempty"`
-	Key        string `yaml:"key,omitempty"`
-	KeyName    string `yaml:"keyName,omitempty"`
-	Algorithm  string `yaml:"algorithm,omitempty"`
-	Zone       string `yaml:"zone,omitempty"`
-	AccessKey  string `yaml:"accessKey,omitempty"`
-	SecretKey  string `yaml:"secretKey,omitempty"`
-	Type       string `yaml:"type,omitempty"`
+	// Dynamic DNS key secret
+	Key string `yaml:"key,omitempty"`
+	// Dynamic DNS key name
+	KeyName string `yaml:"keyName,omitempty"`
+	// A Dynamic DNS signature algorithm, one of: hmac-md5, hmac-sha1, hmac-256, hmac-512
+	Algorithm string `yaml:"algorithm,omitempty"`
+	Zone      string `yaml:"zone,omitempty"`
+	AccessKey string `yaml:"accessKey,omitempty"`
+	SecretKey string `yaml:"secretKey,omitempty"`
+	// Type of DNS provider. Defaults to RFC 2136 Dynamic DNS. If using "route53" you
+	// must specify accessKey, secretKey and zone
+	Type string `yaml:"type,omitempty"`
+}
+
+func (dns DynamicDNS) IsEnabled() bool {
+	return !dns.Disabled
 }
 
 type Monitoring struct {
@@ -348,14 +382,86 @@ type Monitoring struct {
 	AlertEmail         string        `yaml:"alert_email,omitempty"`
 	Version            string        `yaml:"version,omitempty" json:"version,omitempty"`
 	Prometheus         Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Karma              Karma         `yaml:"karma,omitempty"`
 	Grafana            Grafana       `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager       string        `yaml:"alertMmanager,omitempty"`
+	AlertManager       AlertManager  `yaml:"alertmanager,omitempty"`
 	KubeStateMetrics   string        `yaml:"kubeStateMetrics,omitempty"`
 	KubeRbacProxy      string        `yaml:"kubeRbacProxy,omitempty"`
 	NodeExporter       string        `yaml:"nodeExporter,omitempty"`
 	AddonResizer       string        `yaml:"addonResizer,omitempty"`
 	PrometheusOperator string        `yaml:"prometheus_operator,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty"`
+}
+
+// ExternalClusters is a map of clusterName: clusterApiEndpoints
+// with convenience methods.
+type ExternalClusters map[string]string
+
+// AddSelf adds the default internal k8s API endpoint under the given cluster name
+// to describe "internal" access.
+func (ec *ExternalClusters) AddSelf(name string) {
+	if *ec == nil {
+		newmap := make(ExternalClusters)
+		*ec = newmap
+	}
+	(*ec)[name] = "https://kubernetes.default"
+}
+
+// Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
+type KubeWebView struct {
+	Disabled       bool   `yaml:"disabled,omitempty"`
+	Version        string `yaml:"version,omitempty"`
+	LogsEnabled    bool   `yaml:"viewLogs,omitempty"`
+	SecretsEnabled bool   `yaml:"viewSecrets,omitempty"`
+	// a map of extra clusters that kube-resource report will report on.
+	// in the form:
+	// clusterName: cluster API endpoint
+	// e.g.:
+	//  extraClusters:
+	//    k8s-reports2: "https://10.100.2.69:6443"
+	// the CA for the current cluster needs to be trusted by
+	// the given external cluster.
+	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
+}
+
+// Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
+type Karma struct {
+	Version       string            `yaml:"version,omitempty"`
+	AlertManagers map[string]string `yaml:"alertManagers"`
+}
+
+// Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
+type KubeResourceReport struct {
+	// Disable kube-resource-report
+	Disabled bool `yaml:"disabled,omitempty"`
+	// Specify version to use (see [releases](https://github.com/hjacobs/kube-resource-report/releases))
+	Version string `yaml:"version,omitempty"`
+	// update interval in minutes
+	UpdateInterval int `yaml:"updateInterval,omitempty"`
+	// add a fixed extra cost per cluster
+	AdditionalClusterCost float32 `yaml:"additionalClusterCost,omitempty"`
+	// specify costs inline
+	Costs map[string]float32 `yaml:"costs,omitempty"`
+	// specify a CSV file with custom costs for nodes with rows in the form:
+	// columns: region,instance-type,monthly-price-usd
+	// to apply this add labels to cluster nodes:
+	// region is defined via the node label "failure-domain.beta.kubernetes.io/region"
+	// instance-type is defined via the node label "beta.kubernetes.io/instance-type"
+	CostsFile string `yaml:"costsfile,omitempty"`
+	// a map of extra clusters that kube-resource report will report on.
+	// in the form:
+	// clusterName: cluster API endpoint
+	// e.g.:
+	//  extraClusters:
+	//    k8s-reports2: "https://10.100.2.69:6443"
+	// the CA for the current cluster needs to be trusted by
+	// the given external cluster.
+	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty"`
+	// A comma separated list of labels applied to k8s objects
+	// to identify team ownership. These are reported on in the *Teams* tab of the report.
+	// Multiple labels may be specified.
+	// Default value is "team,owner".
+	TeamLabels string `yaml:"teamlabels,omitempty"`
 }
 
 type MonitoringE2E struct {
@@ -370,9 +476,14 @@ type Prometheus struct {
 	Persistence Persistence `yaml:"persistence,omitempty"`
 }
 
+type AlertManager struct {
+	Version  string `yaml:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty"`
+}
+
 type Persistence struct {
 	// Enable persistence for Prometheus
-	Enabled bool `yaml:"enabled,omitempty"`
+	Enabled bool `yaml:"enabled"`
 	// Storage class to use. If not set default one will be used
 	StorageClass string `yaml:"storageClass,omitempty"`
 	// Capacity. Required if persistence is enabled
@@ -395,9 +506,16 @@ type Brand struct {
 	Logo string `yaml:"logo,omitempty"`
 }
 
+type Kiosk struct {
+	Disabled `yaml:",inline"`
+}
+
 type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
+
+	// Do not scan container image registries to fill in the registry cache, implies `--git-read-only` (default: true)
+	DisableScanning *bool `yaml:"disableScanning,omitempty"`
 
 	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
 	Namespace string `yaml:"namespace,omitempty"`
@@ -405,19 +523,19 @@ type GitOps struct {
 	// The URL to git repository to clone
 	GitURL string `yaml:"gitUrl"`
 
-	// The git branch to use (default: master)
+	// The git branch to use (default: `master`)
 	GitBranch string `yaml:"gitBranch,omitempty"`
 
-	// The path with in the git repository to look for YAML in (default: .)
+	// The path with in the git repository to look for YAML in (default: `.`)
 	GitPath string `yaml:"gitPath,omitempty"`
 
-	// The frequency with which to fetch the git repository (default: 5m0s)
+	// The frequency with which to fetch the git repository (default: `5m0s`)
 	GitPollInterval string `yaml:"gitPollInterval,omitempty"`
 
-	// The frequency with which to sync the manifests in the repository to the cluster (default: 5m0s)
+	// The frequency with which to sync the manifests in the repository to the cluster (default: `5m0s`)
 	SyncInterval string `yaml:"syncInterval,omitempty"`
 
-	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: flux-$name-git-deploy or $GIT_SECRET_NAME)
+	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: `flux-$name-git-deploy`)
 	GitKey string `yaml:"gitKey,omitempty"`
 
 	// The contents of the known_hosts file to mount into Flux and helm-operator
@@ -426,10 +544,10 @@ type GitOps struct {
 	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
 	SSHConfig string `yaml:"sshConfig,omitempty"`
 
-	// The version to use for flux (default: 1.4.0 or $FLUX_VERSION)
+	// The version to use for flux (default: 1.20.0 )
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
-	// a map of args to pass to flux without -- prepended
+	// a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list
 	Args map[string]string `yaml:"args,omitempty"`
 }
 
@@ -440,11 +558,12 @@ type Versions struct {
 }
 
 type Velero struct {
-	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version"`
-	Schedule string `yaml:"schedule,omitempty"`
-	Bucket   string `yaml:"bucket,omitempty"`
-	Volumes  bool   `yaml:"volumes"`
+	Disabled bool              `yaml:"disabled,omitempty"`
+	Version  string            `yaml:"version"`
+	Schedule string            `yaml:"schedule,omitempty"`
+	Bucket   string            `yaml:"bucket,omitempty"`
+	Volumes  bool              `yaml:"volumes"`
+	Config   map[string]string `yaml:"config,omitempty"`
 }
 
 type CA struct {
@@ -454,13 +573,14 @@ type CA struct {
 }
 
 type Thanos struct {
-	Disabled bool   `yaml:"disabled"`
-	Version  string `yaml:"version"`
-	// Mode. Should be client or obeservability.
+	Disabled `yaml:",inline"`
+	// Retention of long-term storage, defaults to 180d
+	Retention string `yaml:"retention,omitempty"`
+	// Must be either `client` or `observability`.
 	Mode string `yaml:"mode,omitempty"`
-	// Bucket to store metrics. Should be the same across all environments
+	// Bucket to store metrics. Must be the same across all environments
 	Bucket string `yaml:"bucket,omitempty"`
-	// Only for observability mode. List of client sidecars in <hostname>:<port> format
+	// Only for observability mode. List of client sidecars in `<hostname>:<port>`` format
 	ClientSidecars []string `yaml:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
 	EnableCompactor bool      `yaml:"enableCompactor,omitempty"`
@@ -471,18 +591,42 @@ type ThanosE2E struct {
 	Server string `yaml:"server,omitempty"`
 }
 
-type FluentdOperator struct {
-	Disabled             bool       `yaml:"disabled,omitempty"`
-	Version              string     `yaml:"version"`
-	Elasticsearch        Connection `yaml:"elasticsearch,omitempty"`
-	DisableDefaultConfig bool       `yaml:"disableDefaultConfig"`
-}
-
 type Filebeat struct {
-	Version       string      `yaml:"version"`
-	Disabled      bool        `yaml:"disabled,omitempty"`
+	Disabled      `yaml:",inline"`
+	Name          string      `yaml:"name"`
+	Index         string      `yaml:"index"`
+	Prefix        string      `yaml:"prefix"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
 	Logstash      *Connection `yaml:"logstash,omitempty"`
+}
+
+type Journalbeat struct {
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
+}
+
+type Auditbeat struct {
+	Disabled `yaml:",inline"`
+	Kibana   *Connection `yaml:"kibana,omitempty"`
+}
+
+type Packetbeat struct {
+	Disabled      `yaml:",inline"`
+	Elasticsearch *Connection `yaml:"elasticsearch,omitempty"`
+	Kibana        *Connection `yaml:"kibana,omitempty"`
+}
+
+type EventRouter struct {
+	Disabled       `yaml:",inline"`
+	FilebeatPrefix string `yaml:"filebeatPrefix"`
+}
+
+type RedisOperator struct {
+	Disabled `yaml:",inline"`
+}
+
+type RabbitmqOperator struct {
+	Disabled `yaml:",inline"`
 }
 
 type Consul struct {
@@ -497,11 +641,11 @@ type Vault struct {
 	Version string `yaml:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
 	Token string `yaml:"token,omitempty"`
-	// A map of PKI secret roles to create/update See https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role
+	// A map of PKI secret roles to create/update See [pki](https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role)
 	Roles         map[string]map[string]interface{} `yaml:"roles,omitempty"`
 	Policies      map[string]VaultPolicy            `yaml:"policies,omitempty"`
 	GroupMappings map[string][]string               `yaml:"groupMappings,omitempty"`
-	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
+	// ExtraConfig is an escape hatch that allows writing to arbitrary vault paths
 	ExtraConfig map[string]map[string]interface{} `yaml:"config,omitempty"`
 	Disabled    bool                              `yaml:"disabled,omitempty"`
 	AccessKey   string                            `yaml:"accessKey,omitempty"`
@@ -572,9 +716,17 @@ type NodeLocalDNS struct {
 }
 
 type SealedSecrets struct {
-	Enabled
-	Version     string             `yaml:"version,omitempty"`
-	Certificate *certs.Certificate `yaml:"certificate,omitempty"`
+	Enabled     `yaml:",inline"`
+	Version     string `yaml:"version,omitempty"`
+	Certificate *CA    `yaml:"certificate,omitempty"`
+}
+
+type S3UploadCleaner struct {
+	Enabled  `yaml:",inline"`
+	Version  string `yaml:"version"`
+	Endpoint string `yaml:"endpoint"`
+	Bucket   string `yaml:"bucket"`
+	Schedule string `yaml:"schedule"`
 }
 
 type RegistryCredentials struct {
@@ -617,6 +769,49 @@ type RegistryCredentialsACR struct {
 	Password string `yaml:"password,omitempty"`
 }
 
+type PlatformOperator struct {
+	Disabled                   bool     `yaml:"disabled,omitempty"`
+	Version                    string   `yaml:"version"`
+	EnableClusterResourceQuota bool     `yaml:"enableClusterResourceQuota"`
+	WhitelistedPodAnnotations  []string `yaml:"whitelistedPodAnnotations,omitempty"`
+}
+
+type Vsphere struct {
+	// GOVC_USER
+	Username string `yaml:"username,omitempty"`
+	// GOVC_PASS
+	Password string `yaml:"password,omitempty"`
+	// GOVC_DATACENTER
+	Datacenter string `yaml:"datacenter,omitempty"`
+	// e.g. ds:///vmfs/volumes/vsan:<id>/
+	DatastoreURL string `yaml:"datastoreUrl,omitempty"`
+	// GOVC_DATASTORE
+	Datastore string `yaml:"datastore,omitempty"`
+	// GOVC_NETWORK
+	Network string `yaml:"network,omitempty"`
+	// Cluster for VM placement via DRS (GOVC_CLUSTER)
+	Cluster string `yaml:"cluster,omitempty"`
+	// GOVC_RESOURCE_POOL
+	ResourcePool string `yaml:"resourcePool,omitempty"`
+	//  Inventory folder (GOVC_FOLDER)
+	Folder string `yaml:"folder,omitempty"`
+	// GOVC_FQDN
+	Hostname string `yaml:"hostname,omitempty"`
+	// Version of the vSphere CSI Driver
+	CSIVersion string `yaml:"csiVersion,omitempty"`
+	// Version of the vSphere External Cloud Provider
+	CPIVersion string `yaml:"cpiVersion,omitempty"`
+	// Skip verification of server certificate
+	SkipVerify bool `yaml:"verify"`
+}
+
+func (v Vsphere) GetSecret() map[string][]byte {
+	return map[string][]byte{
+		v.Hostname + ".username": []byte(v.Username),
+		v.Hostname + ".password": []byte(v.Password),
+	}
+}
+
 type Connection struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user,omitempty"`
@@ -626,8 +821,17 @@ type Connection struct {
 	Verify   string `yaml:"verify,omitempty"`
 }
 
+// AuditConfig is used to specify the audit policy file.
+// If a policy file is specified them cluster auditing is enabled.
+// Configure additional `--audit-log-*` flags under kubernetes.apiServerExtraArgs
 type AuditConfig struct {
 	PolicyFile string `yaml:"policyFile,omitempty"`
+}
+
+// Specifies Cluster Encryption Provider Config,
+// primarily by specifying the Encryption Provider Config File supplied to the cluster API Server.
+type EncryptionConfig struct {
+	EncryptionProviderConfigFile string `yaml:"encryptionProviderConfigFile,omitempty"`
 }
 
 type ConfigMapReloader struct {
@@ -641,6 +845,24 @@ type Elasticsearch struct {
 	Replicas    int          `yaml:"replicas,omitempty"`
 	Persistence *Persistence `yaml:"persistence,omitempty"`
 	Disabled    bool         `yaml:"disabled,omitempty"`
+}
+
+type Tekton struct {
+	Version          string            `yaml:"version,omitempty"`
+	DashboardVersion string            `yaml:"dashboardVersion,omitempty"`
+	EventsVersion    string            `yaml:"eventsVersion,omitempty"`
+	Disabled         bool              `yaml:"disabled,omitempty"`
+	Persistence      Persistence       `yaml:"persistence,omitempty"`
+	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
+}
+
+type VPA struct {
+	Disabled `yaml:",inline"`
+}
+
+type Test struct {
+	// A list of tests to exclude from testings
+	Exclude []string `yaml:"exclude,omitempty"`
 }
 
 func (c Connection) GetURL() string {

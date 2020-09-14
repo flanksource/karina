@@ -1,0 +1,293 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "harbor-registry"
+  namespace: harbor
+  labels:
+    app: "harbor"
+data:
+  config.yml: |+
+    version: 0.1
+    log:
+      level: "{{.harbor.logLevel}}"
+      fields:
+        service: registry
+    storage:
+      {{ if .harbor.registryPVC }}
+      filesystem:
+        rootdirectory: /storage
+        maxthreads: 100
+      {{ else }}
+      s3:
+        region: {{.harbor.s3.region}}
+        bucket: {{.harbor.bucket}}
+        regionendpoint: {{.harbor.s3.endpoint}}
+        skipverify: true
+      {{ end }}
+      cache:
+        layerinfo: redis
+      maintenance:
+        uploadpurging:
+          enabled: false
+      delete:
+        enabled: true
+      redirect:
+        disable: false
+    redis:
+      addr: "harbor-redis:6379"
+      db: 2
+    http:
+      relativeurls: false
+      addr: :5443
+      tls:
+        certificate: /etc/harbor/tls/registry.crt
+        key: /etc/harbor/tls/registry.key
+        minimumtls: tls1.2
+      debug:
+        addr: :5001
+        prometheus:
+          enabled: true
+          path: "/metrics"
+    validation:
+      disabled: true
+    auth:
+      htpasswd:
+        realm: harbor-registry-basic-realm
+        path: /etc/registry/passwd
+
+  ctl-config.yml: |+
+    protocol: "https"
+    port: 8443
+    https_config:
+      cert: "/etc/harbor/ssl/registryctl.crt"
+      key: "/etc/harbor/ssl/registryctl.key"
+    log_level: "{{.harbor.logLevel}}"
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: registry-internal-certs
+  namespace: harbor
+spec:
+  secretName: registry-internal-certs
+  dnsNames:
+    - harbor-registry
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "harbor-registry"
+  namespace: harbor
+  labels:
+    app: "harbor"
+    component: registry
+spec:
+  ports:
+    - name: registry
+      port: 5443
+    - name: controller
+      port: 8443
+    - name: metrics
+      port: 5001
+  selector:
+    app: "harbor"
+    component: registry
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: "harbor"
+    component: registry
+  name: harbor-registry
+  namespace: harbor
+spec:
+  jobLabel: harbor-registry
+  namespaceSelector:
+    matchNames:
+      - harbor
+  endpoints:
+    - port: metrics
+      interval: 10s
+      honorLabels: true
+      path: /metrics
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: registry
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "harbor-registry"
+  namespace: harbor
+  labels:
+    app: "harbor"
+    component: registry
+  annotations:
+    reload/all: "true" # restart on cm/secret change
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: registry
+  template:
+    metadata:
+      labels:
+        app: "harbor"
+        component: registry
+    spec:
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: registry
+          image: docker.io/goharbor/registry-photon:{{.harbor.registryVersion}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5443
+              scheme: HTTPS
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5443
+              scheme: HTTPS
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          args: ["serve", "/etc/registry/config.yml"]
+          env:
+          - name: INTERNAL_TLS_ENABLED
+            value: "true"
+          - name: INTERNAL_TLS_KEY_PATH
+            value: /etc/harbor/tls/registry.key
+          - name: INTERNAL_TLS_CERT_PATH
+            value: /etc/harbor/tls/registry.crt
+          - name: INTERNAL_TLS_TRUST_CA_PATH
+            value: /harbor_cust_cert/harbor_internal_ca.crt
+
+          envFrom:
+            - secretRef:
+                name: "harbor-registry"
+          ports:
+            - containerPort: 5443
+            - containerPort: 5001
+          volumeMounts:
+            - name: registry-data
+              mountPath: /storage
+              subPath:
+            - name: registry-root-certificate
+              mountPath: /etc/registry/root.crt
+              subPath: tls.crt
+            - name: registry-config
+              mountPath: /etc/registry/config.yml
+              subPath: config.yml
+            - name: registry-htpasswd
+              mountPath: /etc/registry/passwd
+              subPath: passwd
+            - name: registry-internal-certs
+              mountPath: /harbor_cust_cert/harbor_internal_ca.crt
+              subPath: ca.crt
+            - name: registry-internal-certs
+              mountPath: /etc/harbor/tls/registry.crt
+              subPath: tls.crt
+            - name: registry-internal-certs
+              mountPath: /etc/harbor/tls/registry.key
+              subPath: tls.key
+        - name: registryctl
+          image: docker.io/goharbor/harbor-registryctl:{{.harbor.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 1
+            periodSeconds: 10
+          args: ["serve", "/etc/registry/config.yml"]
+          envFrom:
+            - secretRef:
+                name: "harbor-registry"
+          env:
+            - name: INTERNAL_TLS_ENABLED
+              value: "true"
+            - name: INTERNAL_TLS_KEY_PATH
+              value: /etc/harbor/ssl/registryctl.key
+            - name: INTERNAL_TLS_CERT_PATH
+              value: /etc/harbor/ssl/registryctl.crt
+            - name: INTERNAL_TLS_TRUST_CA_PATH
+              value: /harbor_cust_cert/harbor_internal_ca.crt
+            - name: CORE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-core
+                  key: secret
+            - name: JOBSERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-jobservice
+                  key: secret
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: registry-data
+              mountPath: /storage
+              subPath:
+            - name: registry-config
+              mountPath: /etc/registry/config.yml
+              subPath: config.yml
+            - name: registry-config
+              mountPath: /etc/registryctl/config.yml
+              subPath: ctl-config.yml
+            - name: registry-internal-certs
+              mountPath: /harbor_cust_cert/harbor_internal_ca.crt
+              subPath: ca.crt
+            - name: registry-internal-certs
+              mountPath: /etc/harbor/ssl/registryctl.crt
+              subPath: tls.crt
+            - name: registry-internal-certs
+              mountPath: /etc/harbor/ssl/registryctl.key
+              subPath: tls.key
+      volumes:
+        - name: registry-internal-certs
+          secret:
+            secretName: registry-internal-certs
+        - name: registry-htpasswd
+          secret:
+            secretName: harbor-registry
+            items:
+              - key: REGISTRY_HTPASSWD
+                path: passwd
+        - name: registry-root-certificate
+          secret:
+            secretName: token-key
+        - name: registry-config
+          configMap:
+            name: "harbor-registry"
+        {{ if .harbor.registryPVC }}
+        - name: registry-data
+          persistentVolumeClaim:
+            claimName: {{.harbor.registryPVC}}
+        {{ else }}
+        - name: registry-data
+          emptyDir: {}
+        {{ end }}
+---

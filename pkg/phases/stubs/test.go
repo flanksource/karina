@@ -6,8 +6,8 @@ import (
 
 	"github.com/flanksource/commons/console"
 
-	"github.com/moshloop/platform-cli/pkg/k8s"
-	"github.com/moshloop/platform-cli/pkg/platform"
+	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -24,7 +24,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}}
 
-	resp, err := net.Get("https://" + p.S3.GetExternalEndpoint())
+	resp, err := net.Get("https://" + p.S3.Endpoint)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close() // nolint: errcheck
 	}

@@ -1,8 +1,13 @@
 # Developer Guide
 
-platform-cli is built using Make as defined in it's Makefile
-
 ## Quickstart
+
+#### Clone the repo
+
+```bash
+git clone git@github.com:flanksource/karina.git
+cd karina
+```
 
 Run the following to get going:
 
@@ -16,7 +21,7 @@ sudo make install # install the executable to /usr/local/bin/
 
 ## Documentation
 
-Documentation is done using [MkDocs](https://github.com/mkdocs/mkdocs). 
+Documentation is done using [MkDocs](https://github.com/mkdocs/mkdocs).
 
 Documentation files are MarkDown formatted text files. These are in the `doc/` hierarchy.
 
@@ -32,13 +37,13 @@ Update the documentation sources located in the repository in `doc/` (and its su
 
 ## Common Issues
 
-* `build command-line-arguments: cannot load github.com/moshloop/platform-cli/manifests: no matching versions for query "latest"`
+* `build command-line-arguments: cannot load github.com/moshloop/karina/manifests: no matching versions for query "latest"`
 
 You didn't run `make pack` to generate the golang sources embedding the template and manifest files.
 
 Run:
 ```sh
-make pack 
+make pack
 ```
 
 This generates the `static.go` files in the `manifests/` and `templates/` directories.

@@ -304,6 +304,9 @@ kind: Deployment
 metadata:
   name: grafana-operator
   namespace: monitoring
+  annotations:
+    com.flanksource.infra.logs/processors.1.decode_json_fields.fields: message
+    com.flanksource.infra.logs/processors.1.decode_json_fields.target: ""
 spec:
   replicas: 1
   selector:
@@ -318,6 +321,9 @@ spec:
       containers:
         - name: grafana-operator
           image: quay.io/integreatly/grafana-operator:v3.1.0
+          requests:
+            cpu: 10m
+            memory: 32Mi
           args:
             - "--grafana-image=grafana/grafana"
             - "--grafana-image-tag=6.6.2"
