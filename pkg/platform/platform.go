@@ -542,12 +542,6 @@ func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string
 	return out, nil
 }
 
-func (platform *Platform) ExposeIngressTLS(namespace, service string, port int) error {
-	return platform.Client.ExposeIngress(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port, map[string]string{
-		"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
-	})
-}
-
 func (platform *Platform) ExposeIngress(namespace, service string, port int, annotations map[string]string) error {
 	return platform.Client.ExposeIngress(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port, annotations)
 }

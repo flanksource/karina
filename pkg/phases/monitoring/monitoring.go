@@ -31,7 +31,6 @@ var cleanup = []string{
 	"observability/thanos-querier.yaml",
 	"observability/thanos-store.yaml",
 	"thanos-config.yaml",
-	"thanos-sidecar.yaml",
 }
 
 func Install(p *platform.Platform) error {
