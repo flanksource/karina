@@ -49,7 +49,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 
-	if err := platform.CreateOrUpdateConfigMap(Namespace, "nginx-configuration", platform.Nginx.Config); err != nil {
+	if err := platform.CreateOrUpdateConfigMap("nginx-configuration", Namespace, platform.Nginx.Config); err != nil {
 		return err
 	}
 
