@@ -14,6 +14,15 @@ const (
 	Namespace = "ingress-nginx"
 )
 
+var Defaults = map[string]string{
+	"client-body-buffer-size": "16M",
+	"proxy-body-size":         "32M",
+	"disable-access-log":      "true",
+	"client-body-timeout":     "600",
+	"proxy-read-timeout":      "600",
+	"proxy-write-timeout":     "600",
+}
+
 func Install(platform *platform.Platform) error {
 	if platform.Nginx != nil && platform.Nginx.Disabled {
 		if err := platform.DeleteSpecs(v1.NamespaceAll, "nginx.yaml", "nginx-oauth.yaml"); err != nil {
@@ -30,13 +39,20 @@ func Install(platform *platform.Platform) error {
 		platform.Nginx = &types.Nginx{}
 	}
 
-	if platform.Nginx.RequestBodyBuffer == "" {
-		platform.Nginx.RequestBodyBuffer = "16M"
+	if platform.Nginx.Config == nil {
+		platform.Nginx.Config = make(map[string]string)
 	}
 
-	if platform.Nginx.RequestBodyMax == "" {
-		platform.Nginx.RequestBodyMax = "32M"
+	for k, v := range Defaults {
+		if _, ok := platform.Nginx.Config[k]; !ok {
+			platform.Nginx.Config[k] = v
+		}
 	}
+
+	if err := platform.CreateOrUpdateConfigMap(Namespace, "nginx-configuration", platform.Nginx.Config); err != nil {
+		return err
+	}
+
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {
 		scripts, _ := platform.GetResourcesByDir("/nginx", "manifests")
 		data := make(map[string]string)
@@ -73,7 +89,7 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 	return nil
-	// // wait for the webhook to come up ready as otherwise subsequent ingress
-	// // creations will fail due to the validating webhook
+	// wait for the webhook to come up ready as otherwise subsequent ingress
+	// creations will fail due to the validating webhook
 	// return platform.WaitForDeployment(Namespace, "nginx-ingress-webhook", 3*time.Minute)
 }

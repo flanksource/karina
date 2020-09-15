@@ -1,16 +1,6 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: nginx-configuration
-  namespace: ingress-nginx
-data:
-  client-body-buffer-size: "{{.nginx.requestBodyBuffer}}"
-  proxy-body-size: "{{.nginx.requestBodyMax}}"
-  disable-access-log: "{{.nginx.disableAccessLog}}"
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
   name: tcp-services
   namespace: ingress-nginx
 ---
@@ -188,7 +178,6 @@ spec:
             - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
             - --publish-service=$(POD_NAMESPACE)/ingress-nginx
             - --annotations-prefix=nginx.ingress.kubernetes.io
-            - --enable-ssl-passthrough
           securityContext:
             allowPrivilegeEscalation: true
             capabilities:
