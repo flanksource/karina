@@ -244,12 +244,9 @@ type Nginx struct {
 	Disabled bool `yaml:"disabled"`
 	// The version of the nginx controller to deploy (default: `0.25.1.flanksource.1`)
 	Version string `yaml:"version"`
-	// Disable access logs
-	DisableAccessLog bool `yaml:"disableAccessLog,omitempty"`
-	// Size of request body buffer (default: `16M`)
-	RequestBodyBuffer string `yaml:"requestBodyBuffer,omitempty"`
-	// Max size of request body (default: `32M`)
-	RequestBodyMax string `yaml:"requestBodyMax,omitempty"`
+
+	// Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) for a full list of options
+	Config map[string]string `yaml:"config,omitempty"`
 }
 
 type OAuth2Proxy struct {

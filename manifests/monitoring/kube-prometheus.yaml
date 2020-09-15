@@ -86,7 +86,6 @@ subjects:
 ---
 {{- if index . "thanos" }}
 {{- if not (index .thanos "disabled") }}
-
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
@@ -100,7 +99,40 @@ spec:
     kind: ClusterIssuer
     name: ingress-ca
   secretName: thanos-sidecar
-
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-sidecar
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - protocol: TCP
+      port: 10901
+      targetPort: 10901
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: thanos-sidecar
+  namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+spec:
+  tls:
+    - secretName: thanos-sidecar
+      hosts:
+        - "thanos-sidecar.{{.domain}}"
+  rules:
+    - host: "thanos-sidecar.{{.domain}}"
+      http:
+        paths:
+          - backend:
+              serviceName: thanos-sidecar
+              servicePort: 10901
 {{- end }}
 {{- end }}
 
@@ -266,7 +298,6 @@ spec:
   dashboardLabelSelector:
     - matchExpressions:
         - { key: app, operator: In, values: [grafana] }
-
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
@@ -350,16 +381,11 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/tls-acme: "true"
-  {{ if .oauth2Proxy.enabled }}
-    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
-    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
-  {{ end }}
 spec:
   tls:
     - secretName: prometheus-tls
       hosts:
         - prometheus.{{.domain}}
-
   rules:
     - host: prometheus.{{.domain}}
       http:
@@ -375,16 +401,11 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/tls-acme: "true"
-  {{ if .oauth2Proxy.enabled }}
-    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
-    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
-  {{ end }}
 spec:
   tls:
     - secretName: grafana-tls
       hosts:
         - grafana.{{.domain}}
-
   rules:
     - host: grafana.{{.domain}}
       http:
@@ -392,7 +413,6 @@ spec:
           - backend:
               serviceName: grafana-service
               servicePort: 3000
-
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -401,13 +421,6 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/tls-acme: "true"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-    nginx.ingress.kubernetes.io/configuration-snippet: 'more_set_headers "Access-Control-Allow-Origin: $http_origin";'
-  {{ if .oauth2Proxy.enabled }}
-    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.{{.domain}}/oauth2/auth"
-    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.{{.domain}}/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
-  {{ end }}
 spec:
   tls:
     - secretName: alertmanager-tls
