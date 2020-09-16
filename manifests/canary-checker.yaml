@@ -679,7 +679,7 @@ spec:
           env:
             - name: DOCKER_API_VERSION
               value: "1.39"
-          image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.11.2"}}
+          image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.12.2"}}
           name: canary-checker
           ports:
             - name: metrics
@@ -700,12 +700,17 @@ spec:
           volumeMounts:
             - mountPath: /var/run/docker.sock
               name: dockersock
+            - mountPath: /run/containerd/containerd.sock
+              name: containerdsock
       serviceAccountName: canary-checker-sa
       terminationGracePeriodSeconds: 10
       volumes:
         - hostPath:
             path: /var/run/docker.sock
           name: dockersock
+        - name: containerdsock
+          hostPath:
+            path: /run/containerd/containerd.sock
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
