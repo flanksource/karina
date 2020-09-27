@@ -356,7 +356,7 @@
           "refId": "E"
         },
         {
-          "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}) by ( instance)",
+          "expr": "min(node_filesystem_avail_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}/node_filesystem_size_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}) by ( instance)",
           "format": "table",
           "instant": true,
           "refId": "F"
