@@ -109,6 +109,10 @@ type OPAE2E struct {
 	Fixtures string `yaml:"fixtures,omitempty"`
 }
 
+type Gatekeeper struct {
+	Disabled `yaml:",inline"`
+}
+
 type Harbor struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	Version         string `yaml:"version,omitempty"`

@@ -1,0 +1,18 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sWhitelistRegistries
+metadata:
+  name: whitelist-registries
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["*"]
+        kinds: ["CronJob"]
+      - apiGroups: ["*"]
+        kinds: ["Deployment", "ReplicationController", "ReplicaSet", "DaemonSet", "StatefulSet", "Job"]
+  parameters:
+    tags:
+      - "docker.io"
+      - "quay.io"
