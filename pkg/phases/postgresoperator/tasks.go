@@ -11,10 +11,15 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/pkg/errors"
+
+	pv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+const exporterPort = 9547
 
 func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.DB, error) {
 	clusterName := "postgres-" + config.Name
@@ -39,6 +44,10 @@ func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.
 			},
 		}
 
+		db.Spec.Sidecars = []postgres.Sidecar{
+			patroniExporterSidecar(),
+		}
+
 		envVarsList := []v1.EnvVar{}
 		if config.EnableWalArchiving {
 			db.Spec.Parameters = map[string]string{
@@ -58,6 +67,10 @@ func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.
 		if err := p.Apply(ns, db); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := createExporterServiceMonitor(p, clusterName, ns, exporterPort); err != nil {
+		log.Errorf("Failed to create prometheus service monitor: %v", err)
 	}
 
 	doUntil(func() bool {
@@ -235,4 +248,96 @@ func GetPatroniClient(p *platform.Platform, namespace, clusterName string) (*htt
 	httpClient := &http.Client{Transport: tr}
 
 	return httpClient, nil
+}
+
+func createExporterServiceMonitor(p *platform.Platform, clusterName, ns string, port int32) error {
+	service := &v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-exporter", clusterName),
+			Namespace: ns,
+			Labels: map[string]string{
+				"application":  "spilo",
+				"cluster-name": clusterName,
+				"role":         "exporter",
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Name:       "exporter",
+					Port:       port,
+					TargetPort: intstr.FromInt(int(port)),
+					Protocol:   v1.ProtocolTCP,
+				},
+			},
+			Selector: map[string]string{
+				"application":  "spilo",
+				"cluster-name": clusterName,
+			},
+		},
+	}
+	if err := p.Apply(ns, service); err != nil {
+		return errors.Wrap(err, "failed to create exporter service")
+	}
+
+	serviceMonitor := &pv1.ServiceMonitor{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "monitoring.coreos.com/v1",
+			Kind:       "ServiceMonitor",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: ns,
+		},
+		Spec: pv1.ServiceMonitorSpec{
+			Endpoints: []pv1.Endpoint{
+				{
+					Interval: "30s",
+					Port:     "exporter",
+					Path:     "/metrics",
+				},
+			},
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"application":  "spilo",
+					"cluster-name": clusterName,
+					"role":         "exporter",
+				},
+			},
+		},
+	}
+	return p.Apply(ns, serviceMonitor)
+}
+
+func patroniExporterSidecar() postgres.Sidecar {
+	sidecar := postgres.Sidecar{
+		Name:        "patroni-exporter",
+		DockerImage: "quay.io/toni0/patroni-exporter:v0.1.0-flanksource1",
+		Ports: []v1.ContainerPort{
+			{
+				Name:          "exporter",
+				ContainerPort: exporterPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+		},
+		Env: []v1.EnvVar{
+			{
+				Name:  "PATRONI_EXPORTER_PORT",
+				Value: "9547",
+			},
+			{
+				Name:  "PATRONI_EXPORTER_URL",
+				Value: "http://localhost:8008",
+			},
+			{
+				Name:  "PATRONI_EXPORTER_BIND",
+				Value: "0.0.0.0",
+			},
+		},
+	}
+	return sidecar
 }
