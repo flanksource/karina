@@ -549,6 +549,9 @@ type GitOps struct {
 	// The version to use for flux (default: 1.20.0 )
 	FluxVersion string `yaml:"fluxVersion,omitempty"`
 
+	// The version to use for helm operator (default: 1.20.0 )
+	HelmOperatorVersion string `yaml:"helmOperatorVersion,omitempty"`
+
 	// a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list
 	Args map[string]string `yaml:"args,omitempty"`
 }

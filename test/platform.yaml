@@ -22,12 +22,6 @@ sealedSecrets:
     cert: .certs/sealed-secrets-crt.pem
     privateKey: .certs/sealed-secrets-key.pem
     password: foobar
-gitops:
-  - name: karina
-    namespace: gitops-e2e-test
-    gitUrl: https://github.com/flanksource/gitops-test.git
-    gitBranch: master
-    gitPath: .
 registryCredentials:
   disabled: true # quarantine registry creds
   version: "v1.10.flanksource.2"

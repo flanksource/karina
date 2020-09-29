@@ -36,6 +36,15 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Passf("gitops", "Pods for deployment nginx created successfully")
 	}
 
+	pods, err = client.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: "app=podinfo"})
+	if err != nil {
+		test.Failf("helm-operator", "Failed to list pods in namespace %s: %v", namespace, err)
+	} else if len(pods.Items) != 1 {
+		test.Failf("helm-operator", "Expected 1 podinfo in namespace %s got %d", namespace, len(pods.Items))
+	} else {
+		test.Passf("helm-operator", "Pods for podinfo helm chart created successfully")
+	}
+
 	if _, err = client.CoreV1().Services(namespace).Get("nginx", metav1.GetOptions{}); err != nil {
 		test.Failf("gitops", "Failed to get service nginx in namespace %s: %v", namespace, err)
 	} else {

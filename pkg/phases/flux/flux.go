@@ -18,6 +18,9 @@ func Install(p *platform.Platform) error {
 	if len(p.GitOps) == 0 {
 		return nil
 	}
+	if err := p.ApplySpecs("", "helm-operator-crd.yaml"); err != nil {
+		return err
+	}
 	for _, gitops := range p.GitOps {
 		if gitops.Namespace != "" && gitops.Namespace != constants.KubeSystem && gitops.Namespace != constants.PlatformSystem {
 			if err := p.CreateOrUpdateWorkloadNamespace(gitops.Namespace, nil, nil); err != nil {
@@ -130,6 +133,20 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		MountConfigMap(sshConfig, "/root/.ssh").
 		Expose(3030).
 		Build()
+
+	if cr.HelmOperatorVersion != "" {
+		spec.Deployment("helm-operator-"+cr.Name, fmt.Sprintf("docker.io/fluxcd/helm-operator:%s", cr.HelmOperatorVersion)).
+			Labels(map[string]string{
+				"app": "helm-operator",
+			}).
+			Args("--enabled-helm-versions=v3").
+			ServiceAccount(saName).
+			MountSecret(secretName, "/etc/fluxd/ssh", int32(0400)).
+			MountConfigMap(sshConfig, "/root/.ssh").
+			Expose(3030).
+			Build()
+	}
+	//TODO: else delete existing helm-operator deployment
 
 	if cr.Namespace == constants.KubeSystem {
 		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
