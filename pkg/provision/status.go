@@ -98,7 +98,8 @@ func Status(p *platform.Platform) error {
 			fmt.Fprintf(w, "\t\t")
 		}
 
-		fmt.Fprintf(w, "%s\t", nodeMachine.Machine.IP())
+		ip, _ := nodeMachine.Machine.GetIP(5 * time.Second)
+		fmt.Fprintf(w, "%s\t", ip)
 		fmt.Fprintf(w, "%s\t", age(nodeMachine.Machine.GetAge()))
 		fmt.Fprintf(w, "%s\t", nodeMachine.Machine.GetTemplate())
 		fmt.Fprintf(w, "%d/%d\t", node.Status.Allocatable.Cpu().Value(), node.Status.Capacity.Cpu().Value())
@@ -110,10 +111,12 @@ func Status(p *platform.Platform) error {
 	}
 
 	for _, orphan := range cluster.Orphans {
+
 		fmt.Fprintf(w, "%s\t", orphan.Name())
 		fmt.Fprintf(w, "%s\t", "orphan")
 		fmt.Fprintf(w, "\t\t")
-		fmt.Fprintf(w, "%s\t", orphan.IP())
+		ip, _ := orphan.GetIP(5 * time.Second)
+		fmt.Fprintf(w, "%s\t", ip)
 		fmt.Fprintf(w, "%s\t", age(orphan.GetAge()))
 		fmt.Fprintf(w, "%s\t", orphan.GetTemplate())
 		fmt.Fprintf(w, "\n")
