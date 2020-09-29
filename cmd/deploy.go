@@ -64,6 +64,7 @@ var Phases = map[string]DeployFn{
 	"harbor":               harbor.Deploy,
 	"journalbeat":          journalbeat.Deploy,
 	"kiosk":                kiosk.Deploy,
+	"kpack":                kpack.Deploy,
 	"kube-web-view":        kubewebview.Install,
 	"kube-resource-report": kuberesourcereport.Install,
 	"minio":                minio.Install,

@@ -20,6 +20,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
+	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
@@ -143,6 +144,7 @@ func init() {
 		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
 		"kiosk":                kiosk.Test,
+		"kpack":                kpack.Test,
 		"monitoring":           monitoring.Test,
 		"kube-web-view":        kubewebview.TestKubeWebView,
 		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,

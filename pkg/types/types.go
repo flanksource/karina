@@ -354,6 +354,10 @@ type Dex struct {
 	Disabled `yaml:",inline"`
 }
 
+type Kpack struct {
+	Disabled `yaml:",inline"`
+}
+
 type DynamicDNS struct {
 	Disabled bool `yaml:"disabled,omitempty"`
 	// Set to true if you want DNS records added to k8s-api and "*" for every new
