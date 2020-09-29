@@ -26,6 +26,29 @@ data:
         - log_delay:
             usage: "GAUGE"
             description: "Replication log delay behind master in seconds"
+
+    pg_master_max_replication:
+      master: true
+      query: |
+        select
+          GREATEST(0, max(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn))) as lag
+        from pg_stat_replication;
+      metrics:
+        - lag:
+            usage: "GAUGE"
+            description: "Maximum replay delay for all standby servers"
+
+    pg_master_replica:
+      master: true
+      query: |
+        SELECT CASE WHEN pg_is_in_recovery()
+          THEN null
+          ELSE (select count(*) from pg_stat_replication)
+        END as count
+      metrics:
+        - count:
+            usage: "GAUGE"
+            description: "Number of replicas"
   
     pg_postmaster:
       query: "SELECT pg_postmaster_start_time as start_time_seconds from pg_postmaster_start_time()"
