@@ -111,7 +111,6 @@ func Status(p *platform.Platform) error {
 	}
 
 	for _, orphan := range cluster.Orphans {
-
 		fmt.Fprintf(w, "%s\t", orphan.Name())
 		fmt.Fprintf(w, "%s\t", "orphan")
 		fmt.Fprintf(w, "\t\t")
