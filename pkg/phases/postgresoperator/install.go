@@ -40,6 +40,10 @@ func Deploy(platform *platform.Platform) error {
 		return err
 	}
 
+	if err := platform.ApplySpecs(Namespace, "postgres-exporter-config.yaml"); err != nil {
+		return err
+	}
+
 	if err := platform.ApplySpecs(Namespace, "postgres-operator.crd.yaml"); err != nil {
 		return err
 	}

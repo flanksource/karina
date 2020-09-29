@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const exporterPort = 9547
+const exporterPort = 9187
 
 func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.DB, error) {
 	clusterName := "postgres-" + config.Name
@@ -45,7 +45,21 @@ func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.
 		}
 
 		db.Spec.Sidecars = []postgres.Sidecar{
-			patroniExporterSidecar(),
+			patroniExporterSidecar(clusterName),
+		}
+		db.Spec.AdditionalVolumes = []postgres.AdditionalVolume{
+			{
+				Name:             "exporter-extra-queries",
+				MountPath:        "/opt/extra-queries",
+				TargetContainers: []string{"exporter"},
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: "postgres-exporter-config",
+						},
+					},
+				},
+			},
 		}
 
 		envVarsList := []v1.EnvVar{}
@@ -313,10 +327,10 @@ func createExporterServiceMonitor(p *platform.Platform, clusterName, ns string, 
 	return p.Apply(ns, serviceMonitor)
 }
 
-func patroniExporterSidecar() postgres.Sidecar {
+func patroniExporterSidecar(clusterName string) postgres.Sidecar {
 	sidecar := postgres.Sidecar{
-		Name:        "patroni-exporter",
-		DockerImage: "quay.io/toni0/patroni-exporter:v0.1.0-flanksource1",
+		Name:        "exporter",
+		DockerImage: "docker.io/bitnami/postgres-exporter:0.8.0",
 		Ports: []v1.ContainerPort{
 			{
 				Name:          "exporter",
@@ -326,16 +340,38 @@ func patroniExporterSidecar() postgres.Sidecar {
 		},
 		Env: []v1.EnvVar{
 			{
-				Name:  "PATRONI_EXPORTER_PORT",
-				Value: "9547",
+				Name:  "PG_EXPORTER_WEB_LISTEN_ADDRESS",
+				Value: fmt.Sprintf(":%d", exporterPort),
 			},
 			{
-				Name:  "PATRONI_EXPORTER_URL",
-				Value: "http://localhost:8008",
+				Name:  "DATA_SOURCE_URI",
+				Value: "localhost?sslmode=disable",
 			},
 			{
-				Name:  "PATRONI_EXPORTER_BIND",
-				Value: "0.0.0.0",
+				Name: "DATA_SOURCE_USER",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: fmt.Sprintf("postgres.%s.credentials", clusterName),
+						},
+						Key: "username",
+					},
+				},
+			},
+			{
+				Name: "DATA_SOURCE_PASS",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: fmt.Sprintf("postgres.%s.credentials", clusterName),
+						},
+						Key: "password",
+					},
+				},
+			},
+			{
+				Name:  "PG_EXPORTER_EXTEND_QUERY_PATH",
+				Value: "/opt/extra-queries/queries.yaml",
 			},
 		},
 	}
