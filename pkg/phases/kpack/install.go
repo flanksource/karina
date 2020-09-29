@@ -8,7 +8,7 @@ const (
 	Namespace = "kpack"
 )
 
-func Install(p *platform.Platform) error {
+func Deploy(p *platform.Platform) error {
 	if p.Kpack.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "kpack.yaml")
 	}
