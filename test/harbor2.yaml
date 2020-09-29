@@ -3,7 +3,7 @@ importConfigs:
 harbor:
   replicas: 1
   bucket: karina-harbor-e2e
-  version: v2.0.2
+  version: v2.1.0
   s3:
     access_key: minio
     secret_key: minio123
