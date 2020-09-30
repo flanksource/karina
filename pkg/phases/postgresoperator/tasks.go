@@ -338,6 +338,16 @@ func patroniExporterSidecar(clusterName string) postgres.Sidecar {
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
+		Resources: postgres.Resources{
+			ResourceRequests: postgres.ResourceDescription{
+				CPU:    "10m",
+				Memory: "128m",
+			},
+			ResourceLimits: postgres.ResourceDescription{
+				CPU:    "200m",
+				Memory: "128m",
+			},
+		},
 		Env: []v1.EnvVar{
 			{
 				Name:  "PG_EXPORTER_WEB_LISTEN_ADDRESS",
