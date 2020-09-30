@@ -160,6 +160,11 @@ spec:
           configMap:
             name: lua-scripts
       hostNetwork: true
+      {{ if not (eq .kind.workerCount 0) }}
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          effect: "NoSchedule"
+      {{ end }}
       containers:
         - name: nginx-ingress-controller
           image: k8s.gcr.io/ingress-nginx/controller:{{.nginx.version | default "v0.35.0"}}
