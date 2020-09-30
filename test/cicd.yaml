@@ -1,13 +1,11 @@
 importConfigs:
   - minimal.yaml
-kpack:
-  version: b6.20200923.201421
 tekton:
   version: v0.12.1
   dashboardVersion: v0.6.1.5
 gitops:
   - name: karina
-    helmOperatorVersion: v1.2.0
+    helmOperatorVersion: 1.2.0
     namespace: gitops-e2e-test
     gitUrl: https://github.com/flanksource/gitops-test.git
     gitBranch: master

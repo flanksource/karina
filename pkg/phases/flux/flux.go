@@ -134,25 +134,33 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		Expose(3030).
 		Build()
 
+	var sa *k8s.ServiceAccountBuilder
+	if cr.Namespace == constants.KubeSystem {
+		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
+	} else {
+		sa = spec.ServiceAccount(saName).AddRole("namespace-admin").AddRole("namespace-creator")
+	}
+
 	if cr.HelmOperatorVersion != "" {
+		args := []string{"--enabled-helm-versions=v3"}
+		if cr.Namespace != constants.KubeSystem {
+			args = append(args, "--allow-namespace="+cr.Namespace)
+		}
 		spec.Deployment("helm-operator-"+cr.Name, fmt.Sprintf("docker.io/fluxcd/helm-operator:%s", cr.HelmOperatorVersion)).
 			Labels(map[string]string{
 				"app": "helm-operator",
 			}).
-			Args("--enabled-helm-versions=v3").
+			Args(args...).
 			ServiceAccount(saName).
 			MountSecret(secretName, "/etc/fluxd/ssh", int32(0400)).
 			MountConfigMap(sshConfig, "/root/.ssh").
 			Expose(3030).
 			Build()
+		if sa != nil {
+			sa.AddClusterRole("helm-operator-admin")
+		}
 	}
 	//TODO: else delete existing helm-operator deployment
-
-	if cr.Namespace == constants.KubeSystem {
-		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
-	} else {
-		spec.ServiceAccount(saName).AddRole("namespace-admin").AddRole("namespace-creator")
-	}
 
 	data, _ := base64.StdEncoding.DecodeString(cr.GitKey)
 	spec.Secret(secretName, map[string][]byte{
