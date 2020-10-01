@@ -10,8 +10,13 @@ gitops:
     gitUrl: https://github.com/flanksource/gitops-test.git
     gitBranch: master
     gitPath: .
+minio:
+  disabled: true
+configmapReloader:
+  disabled: true
 test:
   exclude:
     - dex
     - audit
     - encryption
+    - platform-operator
