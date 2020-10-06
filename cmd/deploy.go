@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/canary"
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
@@ -48,6 +49,7 @@ import (
 type DeployFn func(p *platform.Platform) error
 
 var Phases = map[string]DeployFn{
+	"antrea":               antrea.Install,
 	"auditbeat":            auditbeat.Deploy,
 	"base":                 base.Install,
 	"calico":               calico.Install,
@@ -89,7 +91,7 @@ var PhasesExtra = map[string]DeployFn{
 	"quack":             quack.Install,
 }
 
-var PhaseOrder = []string{"calico", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
+var PhaseOrder = []string{"calico", "antrea", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
 
 var Deploy = &cobra.Command{
 	Use: "deploy",

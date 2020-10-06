@@ -1,0 +1,71 @@
+# in order to connect to cluster after provisioning
+# the kubeconfig cluster name needs to match this name
+name: kind-kind
+patches:
+  - ./test/patch1.yaml
+  - ./test/templatePatch.yaml
+  - |-
+    # This ConfigMap is used to verify template
+    # value injection
+    kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: template-test-direct
+      namespace: default
+      labels:
+        template: test
+    data:
+      configuredValue: !!env CONFIGURED_VALUE
+domain: 127.0.0.1.nip.io
+dex:
+  disabled: true
+ldap:
+  disabled: true
+kubernetes:
+  version: !!env KUBERNETES_VERSION
+  kubeletExtraArgs:
+    node-labels: "ingress-ready=true"
+    authorization-mode: "AlwaysAllow"
+  containerRuntime: containerd
+versions:
+  sonobuoy: 0.16.4
+  ketall: v1.3.0
+  apacheds: 0.7.0
+podSubnet: 100.200.0.0/16
+serviceSubnet: 100.100.0.0/16
+platformOperator:
+  version: v0.4.5
+calico:
+  disabled: true
+antrea:
+  version: v0.10.0
+kind:
+  workerCount: 2
+s3:
+  endpoint: http://minio.minio.svc:9000
+  access_key: minio
+  secret_key: minio123
+  region: us-east1
+  usePathStyle: true
+  skipTLSVerify: true
+minio:
+  version: RELEASE.2020-09-02T18-19-50Z
+  access_key: minio
+  secret_key: minio123
+  replicas: 1
+ca:
+  cert: .certs/root-ca.crt
+  privateKey: .certs/root-ca.key
+  password: foobar
+ingressCA:
+  cert: .certs/ingress-ca.crt
+  privateKey: .certs/ingress-ca.key
+  password: foobar
+test:
+  exclude:
+    - configmap-reloader
+    - quack
+    - dex
+    - audit
+    - encryption
+    - platform-operator
