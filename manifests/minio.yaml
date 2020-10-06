@@ -76,9 +76,9 @@ spec:
     spec:
       serviceAccountName: "minio"
       securityContext:
+        supplementalGroups: [1000]
         runAsUser: 1000
         runAsGroup: 1000
-        fsGroup: 1000
       containers:
         - name: minio
           image: docker.io/minio/minio:{{.minio.version | default "deleteme" }}
