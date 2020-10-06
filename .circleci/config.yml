@@ -18,41 +18,8 @@ jobs:
       - store_test_results:
           path: test-results
 
-  kind-image:
-    resource_class: xlarge
-    environment:
-      VERSION: v1.16.9
-      KUBERNETES_VERSION: v1.16.9
-      DOCKER_PUSH: "true"
-      GO111MODULE: "on"
-      DEPLOY_KIND_CLUSTER: "true"
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - run: sudo apt-get update; sudo apt-get install -y moreutils
-      - run: mkdir -p .bin
-      - run: docker run --rm -it -v $PWD:$PWD -v /go:/go -w $PWD --entrypoint make -e GOPROXY=https://proxy.golang.org golang:1.13  pack build
-      - run: ./scripts/generate_kind_image.sh
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: artifacts
-
 workflows:
   version: 2
   lint:
     jobs:
       - lint
-
-  kind-image-daily:
-    triggers:
-      - schedule:
-          cron: "0 12 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - kind-image:
-          context: DOCKERHUB

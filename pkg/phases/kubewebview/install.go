@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	Namespace = constants.PlatformSystem
-	Group     = "system:reporting"
-	User      = "kube-web-view"
+	Namespace     = constants.PlatformSystem
+	Group         = "system:reporting"
+	User          = "kube-web-view"
+	ClusterConfig = "kube-web-view-clusters"
 )
 
 func Install(p *platform.Platform) error {
@@ -28,11 +29,13 @@ func Install(p *platform.Platform) error {
 		// remove the secret containing access information to external clusters
 		cs, err := p.GetClientset()
 		if err != nil {
-			return fmt.Errorf("failed to get clientset for cluster: %v", err)
+			return err
 		}
-		err = cs.CoreV1().Secrets(Namespace).Delete("kube-web-view-clusters", &metav1.DeleteOptions{})
-		if err != nil {
-			p.Warnf("failed to remove external cluster access secret: %v", err)
+		if p.HasSecret(Namespace, ClusterConfig) {
+			err = cs.CoreV1().Secrets(Namespace).Delete("kube-web-view-clusters", &metav1.DeleteOptions{})
+			if err != nil {
+				return err
+			}
 		}
 		return p.DeleteSpecs(Namespace, "kube-web-view.yaml")
 	}

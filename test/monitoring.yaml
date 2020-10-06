@@ -4,6 +4,8 @@ thanos:
   version: v0.13.0
   mode: client
   bucket: thanos
+canaryChecker:
+  version: v0.11.9
 monitoring:
   prometheus:
     persistence:

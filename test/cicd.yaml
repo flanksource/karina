@@ -1,0 +1,22 @@
+importConfigs:
+  - minimal.yaml
+tekton:
+  version: v0.12.1
+  dashboardVersion: v0.6.1.5
+gitops:
+  - name: karina
+    helmOperatorVersion: 1.2.0
+    namespace: gitops-e2e-test
+    gitUrl: https://github.com/flanksource/gitops-test.git
+    gitBranch: master
+    gitPath: .
+minio:
+  disabled: true
+configmapReloader:
+  disabled: true
+test:
+  exclude:
+    - dex
+    - audit
+    - encryption
+    - platform-operator
