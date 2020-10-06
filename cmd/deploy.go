@@ -5,6 +5,7 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
@@ -62,6 +63,7 @@ var Phases = map[string]DeployFn{
 	"eventrouter":          eventrouter.Deploy,
 	"filebeat":             filebeat.Deploy,
 	"gitops":               flux.Install,
+	"git-operator":         gitoperator.Install,
 	"harbor":               harbor.Deploy,
 	"journalbeat":          journalbeat.Deploy,
 	"kiosk":                kiosk.Deploy,

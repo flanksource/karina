@@ -18,6 +18,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/flux"
+	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
@@ -142,6 +143,7 @@ func init() {
 		"elasticsearch":        elasticsearch.Test,
 		"encryption":           kubeadm.TestEncryption,
 		"gitops":               flux.Test,
+		"git-operator":         gitoperator.Test,
 		"harbor":               harbor.Test,
 		"kiosk":                kiosk.Test,
 		"kpack":                kpack.Test,
