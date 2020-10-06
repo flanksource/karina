@@ -63,7 +63,7 @@ data:
       cert: "/etc/harbor/ssl/registryctl.crt"
       key: "/etc/harbor/ssl/registryctl.key"
     log_level: "{{.harbor.logLevel}}"
-
+    registry_config: "/etc/registry/config.yml"
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate

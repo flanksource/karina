@@ -30,7 +30,8 @@ const (
 	// usually unused region in the
 	// region,instancetype,cost in the
 	// platform YAML file.
-	DefaultRegion = "unknown"
+	DefaultRegion  = "unknown"
+	ClusterConfigs = "kube-resource-report-clusters"
 )
 
 func Install(p *platform.Platform) error {
@@ -44,11 +45,12 @@ func Install(p *platform.Platform) error {
 		if err != nil {
 			return fmt.Errorf("failed to get clientset for cluster: %v", err)
 		}
-		err = cs.CoreV1().Secrets(Namespace).Delete("kube-resource-report-clusters", &metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to remove external cluster access secret: %v", err)
+
+		if p.HasSecret(Namespace, ClusterConfigs) {
+			if err := cs.CoreV1().Secrets(Namespace).Delete(ClusterConfigs, &metav1.DeleteOptions{}); err != nil {
+				return err
+			}
 		}
-		p.Infof("Removed external cluster access secret")
 		return p.DeleteSpecs(Namespace, "kube-resource-report.yaml")
 	}
 

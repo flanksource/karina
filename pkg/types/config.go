@@ -31,6 +31,7 @@ type PlatformConfig struct {
 	KubeWebView           *KubeWebView        `yaml:"kubeWebView,omitempty"`
 	KubeResourceReport    *KubeResourceReport `yaml:"kubeResourceReport,omitempty"`
 	Kubernetes            Kubernetes          `yaml:"kubernetes"`
+	Kpack                 Kpack               `yaml:"kpack,omitempty"`
 	Ldap                  *Ldap               `yaml:"ldap,omitempty"`
 	LocalPath             *Enabled            `yaml:"localPath,omitempty"`
 	Master                VM                  `yaml:"master,omitempty"`

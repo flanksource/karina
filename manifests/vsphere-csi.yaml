@@ -10,14 +10,14 @@ metadata:
   name: vsphere-csi-controller-role
 rules:
   - apiGroups: [""]
-    resources: ["nodes", "persistentvolumeclaims", "pods"]
+    resources: ["nodes", "persistentvolumeclaims", "pods", "configmaps"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["persistentvolumeclaims/status"]
-    verbs: ["update", "patch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
@@ -79,7 +79,7 @@ spec:
       dnsPolicy: "Default"
       containers:
         - name: csi-attacher
-          image: quay.io/k8scsi/csi-attacher:v2.0.0
+          image: quay.io/k8scsi/csi-attacher:v2.2.0
           args:
             - "--v=4"
             - "--timeout=300s"
@@ -91,19 +91,6 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        # - name: csi-resizer
-        #   image: quay.io/k8scsi/csi-resizer:v0.3.0
-        #   args:
-        #     - "--v=4"
-        #     - "--csiTimeout=300s"
-        #     - "--csi-address=$(ADDRESS)"
-        #     - "--leader-election"
-        #   env:
-        #     - name: ADDRESS
-        #       value: /csi/csi.sock
-        #   volumeMounts:
-        #     - mountPath: /csi
-        #       name: socket-dir
         - name: vsphere-csi-controller
           image: gcr.io/cloud-provider-vsphere/csi/release/driver:{{.vsphere.csiVersion}}
           lifecycle:
@@ -144,7 +131,7 @@ spec:
             periodSeconds: 5
             failureThreshold: 3
         - name: liveness-probe
-          image: quay.io/k8scsi/livenessprobe:v1.1.0
+          image: quay.io/k8scsi/livenessprobe:v2.0.0
           args:
             - "--csi-address=$(ADDRESS)"
           env:
@@ -170,7 +157,7 @@ spec:
               name: vsphere-config-volume
               readOnly: true
         - name: csi-provisioner
-          image: quay.io/k8scsi/csi-provisioner:v1.4.0
+          image: quay.io/k8scsi/csi-provisioner:v1.6.0
           args:
             - "--v=4"
             - "--timeout=300s"
@@ -193,6 +180,14 @@ spec:
           hostPath:
             path: /var/lib/csi/sockets/pluginproxy/csi.vsphere.vmware.com
             type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csi-feature-states
+  namespace: kube-system
+data:
+  "csi-migration": "false"
 ---
 apiVersion: storage.k8s.io/v1beta1
 kind: CSIDriver
@@ -222,7 +217,7 @@ spec:
       dnsPolicy: "Default"
       containers:
         - name: node-driver-registrar
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
           lifecycle:
             preStop:
               exec:
@@ -301,7 +296,7 @@ spec:
             periodSeconds: 5
             failureThreshold: 3
         - name: liveness-probe
-          image: quay.io/k8scsi/livenessprobe:v1.1.0
+          image: quay.io/k8scsi/livenessprobe:v2.0.0
           args:
             - "--csi-address=$(ADDRESS)"
           env:
@@ -337,5 +332,6 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: vsan
 provisioner: csi.vsphere.vmware.com
+allowVolumeExpansion: true
 parameters:
   datastoreurl: "{{.vsphere.datastoreUrl}}"

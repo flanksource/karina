@@ -281,7 +281,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\"})",
+          "expr": "min(node_filesystem_avail_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}/node_filesystem_size_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A",
