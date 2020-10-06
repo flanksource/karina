@@ -62,7 +62,7 @@ type PlatformConfig struct {
 	ServiceSubnet       string               `yaml:"serviceSubnet"`
 	SMTP                SMTP                 `yaml:"smtp,omitempty"`
 	Specs               []string             `yaml:"specs,omitempty"`
-	TemplateOperator    TemplaterOperator    `yaml:"templateOperator,omitempty"`
+	TemplateOperator    TemplateOperator     `yaml:"templateOperator,omitempty"`
 	TrustedCA           string               `yaml:"trustedCA,omitempty"`
 	Versions            map[string]string    `yaml:"versions,omitempty"`
 	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`
