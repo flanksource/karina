@@ -41,6 +41,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
 	"github.com/flanksource/karina/pkg/phases/tekton"
+	"github.com/flanksource/karina/pkg/phases/templateoperator"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
@@ -84,6 +85,7 @@ var Phases = map[string]DeployFn{
 	"sealed-secrets":       sealedsecrets.Install,
 	"stubs":                stubs.Install,
 	"tekton":               tekton.Install,
+	"template-operator":    templateoperator.Install,
 	"vault":                vault.Deploy,
 	"velero":               velero.Install,
 }

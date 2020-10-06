@@ -37,6 +37,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
+	"github.com/flanksource/karina/pkg/phases/templateoperator"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/platform"
@@ -163,6 +164,7 @@ func init() {
 		"sealed-secrets":       sealedsecrets.Test,
 		"stubs":                stubs.Test,
 		"templates":            tests.TestTemplates,
+		"template-operator":    templateoperator.Test,
 		"thanos":               monitoring.TestThanos,
 		"vault":                vault.Test,
 		"velero":               velero.Test,

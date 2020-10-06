@@ -519,6 +519,11 @@ type Kiosk struct {
 type GitOperator struct {
 	Disabled `yaml:",inline"`
 }
+
+type TemplateOperator struct {
+	Disabled `yaml:",inline"`
+}
+
 type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty"`
