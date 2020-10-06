@@ -91,7 +91,7 @@ var PhasesExtra = map[string]DeployFn{
 	"quack":             quack.Install,
 }
 
-var PhaseOrder = []string{"calico", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
+var PhaseOrder = []string{"calico", "antrea", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
 
 var Deploy = &cobra.Command{
 	Use: "deploy",
