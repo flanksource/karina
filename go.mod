@@ -6,6 +6,7 @@ require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/aktau/github-release v0.8.1 // indirect
 	github.com/aws/aws-sdk-go v1.29.25
+	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.2.0
@@ -39,10 +40,10 @@ require (
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
 	k8s.io/cli-runtime v0.17.3
-	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.17.2
 	k8s.io/klog v1.0.0
-	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
+	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6
 	sigs.k8s.io/controller-runtime v0.4.0
 	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
 	sigs.k8s.io/kustomize v2.0.3+incompatible

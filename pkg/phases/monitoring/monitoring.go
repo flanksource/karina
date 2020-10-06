@@ -24,6 +24,7 @@ var specs = []string{
 	"service-monitors.yaml",
 	"namespace-rules.yaml.raw",
 	"kubernetes-rules.yaml.raw",
+	"postgres-rules.yaml.raw",
 }
 
 var cleanup = []string{

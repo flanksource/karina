@@ -11,10 +11,15 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/pkg/errors"
+
+	pv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+const exporterPort = 9187
 
 func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.DB, error) {
 	clusterName := "postgres-" + config.Name
@@ -39,6 +44,24 @@ func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.
 			},
 		}
 
+		db.Spec.Sidecars = []postgres.Sidecar{
+			patroniExporterSidecar(clusterName),
+		}
+		db.Spec.AdditionalVolumes = []postgres.AdditionalVolume{
+			{
+				Name:             "exporter-extra-queries",
+				MountPath:        "/opt/extra-queries",
+				TargetContainers: []string{"exporter"},
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: "postgres-exporter-config",
+						},
+					},
+				},
+			},
+		}
+
 		envVarsList := []v1.EnvVar{}
 		if config.EnableWalArchiving {
 			db.Spec.Parameters = map[string]string{
@@ -58,6 +81,10 @@ func GetOrCreateDB(p *platform.Platform, config postgres.ClusterConfig) (*types.
 		if err := p.Apply(ns, db); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := createExporterServiceMonitor(p, clusterName, ns, exporterPort); err != nil {
+		log.Errorf("Failed to create prometheus service monitor: %v", err)
 	}
 
 	doUntil(func() bool {
@@ -235,4 +262,128 @@ func GetPatroniClient(p *platform.Platform, namespace, clusterName string) (*htt
 	httpClient := &http.Client{Transport: tr}
 
 	return httpClient, nil
+}
+
+func createExporterServiceMonitor(p *platform.Platform, clusterName, ns string, port int32) error {
+	service := &v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-exporter", clusterName),
+			Namespace: ns,
+			Labels: map[string]string{
+				"application":  "spilo",
+				"cluster-name": clusterName,
+				"role":         "exporter",
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Name:       "exporter",
+					Port:       port,
+					TargetPort: intstr.FromInt(int(port)),
+					Protocol:   v1.ProtocolTCP,
+				},
+			},
+			Selector: map[string]string{
+				"application":  "spilo",
+				"cluster-name": clusterName,
+			},
+		},
+	}
+	if err := p.Apply(ns, service); err != nil {
+		return errors.Wrap(err, "failed to create exporter service")
+	}
+
+	serviceMonitor := &pv1.ServiceMonitor{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "monitoring.coreos.com/v1",
+			Kind:       "ServiceMonitor",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: ns,
+		},
+		Spec: pv1.ServiceMonitorSpec{
+			Endpoints: []pv1.Endpoint{
+				{
+					Interval: "30s",
+					Port:     "exporter",
+					Path:     "/metrics",
+				},
+			},
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"application":  "spilo",
+					"cluster-name": clusterName,
+					"role":         "exporter",
+				},
+			},
+		},
+	}
+	return p.Apply(ns, serviceMonitor)
+}
+
+func patroniExporterSidecar(clusterName string) postgres.Sidecar {
+	sidecar := postgres.Sidecar{
+		Name:        "exporter",
+		DockerImage: "docker.io/bitnami/postgres-exporter:0.8.0",
+		Ports: []v1.ContainerPort{
+			{
+				Name:          "exporter",
+				ContainerPort: exporterPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+		},
+		Resources: postgres.Resources{
+			ResourceRequests: postgres.ResourceDescription{
+				CPU:    "10m",
+				Memory: "128m",
+			},
+			ResourceLimits: postgres.ResourceDescription{
+				CPU:    "200m",
+				Memory: "128m",
+			},
+		},
+		Env: []v1.EnvVar{
+			{
+				Name:  "PG_EXPORTER_WEB_LISTEN_ADDRESS",
+				Value: fmt.Sprintf(":%d", exporterPort),
+			},
+			{
+				Name:  "DATA_SOURCE_URI",
+				Value: "localhost?sslmode=disable",
+			},
+			{
+				Name: "DATA_SOURCE_USER",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: fmt.Sprintf("postgres.%s.credentials", clusterName),
+						},
+						Key: "username",
+					},
+				},
+			},
+			{
+				Name: "DATA_SOURCE_PASS",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: fmt.Sprintf("postgres.%s.credentials", clusterName),
+						},
+						Key: "password",
+					},
+				},
+			},
+			{
+				Name:  "PG_EXPORTER_EXTEND_QUERY_PATH",
+				Value: "/opt/extra-queries/queries.yaml",
+			},
+		},
+	}
+	return sidecar
 }
