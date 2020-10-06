@@ -1,0 +1,2 @@
+https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/pkg/apis/monitoring/v1/types.go
+https://github.com/vmware-tanzu/velero/tree/main/pkg/apis/velero/v1

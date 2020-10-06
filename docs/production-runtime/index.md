@@ -11,9 +11,9 @@
 * **Authorization & Policy Enforcement** (OPA)
 * **Multi-Tenancy** (Namespace Configurator, Cluster Quotas)
 * **Database as a Service** (Postgres)
+* **S3** (Minio)
 
 
 ### E2E Runtime
 
 * **LDAP** (ApacheDS)
-* **S3** (Minio)

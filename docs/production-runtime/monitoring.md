@@ -1,7 +1,5 @@
 The monitoring stack includes the following components, which are all accessible via default ingress addresses
 
-
-
 | Component                                                    | Use                                                    | Access                              |
 | ------------------------------------------------------------ | ------------------------------------------------------ | ----------------------------------- |
 | Prometheus                                                   |                                                        | https://prometheus.CLUSTER_DOMAIN   |

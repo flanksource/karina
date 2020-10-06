@@ -13,3 +13,6 @@ ldap:
 ```
 
 See [login](/user-guide/login) for how to configure your kubectl client to authenticate via Dex.
+
+
+https://oidcdebugger.com/
