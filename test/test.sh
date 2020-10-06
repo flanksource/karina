@@ -25,7 +25,7 @@ fi
 
 $BIN version
 
-$BIN deploy phases --base --stubs --dex --calico --minio -v
+$BIN deploy phases --base --stubs --dex --calico --antrea --minio -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 

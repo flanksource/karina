@@ -83,6 +83,10 @@ type Calico struct {
 	IPPools   []calico.IPPool         `yaml:"ipPools,omitempty"`
 }
 
+type Antrea struct {
+	Disabled `yaml:",inline"`
+}
+
 type OPA struct {
 	Disabled          bool   `yaml:"disabled,omitempty"`
 	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty"`
@@ -308,6 +312,7 @@ type Kubernetes struct {
 
 type Kind struct {
 	PortMappings map[int32]int32 `yaml:"portMappings,omitempty"`
+	WorkerCount  int             `yaml:"workerCount,omitempty"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of

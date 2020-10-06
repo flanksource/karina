@@ -70,6 +70,21 @@ func KindCluster(p *platform.Platform) error {
 		})
 	}
 
+	nodes := []kindapi.Node{
+		{
+			Role:                 "control-plane",
+			Image:                fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
+			ExtraPortMappings:    portMappings,
+			KubeadmConfigPatches: kubeadmPatches,
+			ExtraMounts:          extraMounts,
+		},
+	}
+
+	if p.Kind.WorkerCount > 0 {
+		workerNodes := kindWorkerNodesConfig(p, nodes[0])
+		nodes = append(nodes, workerNodes...)
+	}
+
 	kindConfig := kindapi.Cluster{
 		TypeMeta: kindapi.TypeMeta{
 			Kind:       "Cluster",
@@ -77,16 +92,9 @@ func KindCluster(p *platform.Platform) error {
 		},
 		Networking: kindapi.Networking{
 			DisableDefaultCNI: true,
+			PodSubnet:         p.PodSubnet,
 		},
-		Nodes: []kindapi.Node{
-			{
-				Role:                 "control-plane",
-				Image:                fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
-				ExtraPortMappings:    portMappings,
-				KubeadmConfigPatches: kubeadmPatches,
-				ExtraMounts:          extraMounts,
-			},
-		},
+		Nodes: nodes,
 	}
 
 	yml, err := yaml.Marshal(kindConfig)
@@ -154,4 +162,19 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+func kindWorkerNodesConfig(p *platform.Platform, master kindapi.Node) []kindapi.Node {
+	nodes := make([]kindapi.Node, p.Kind.WorkerCount)
+
+	for i := 0; i < p.Kind.WorkerCount; i++ {
+		nodes[i] = kindapi.Node{
+			Role:                 kindapi.WorkerRole,
+			Image:                master.Image,
+			ExtraMounts:          master.ExtraMounts,
+			KubeadmConfigPatches: master.KubeadmConfigPatches,
+		}
+	}
+
+	return nodes
 }

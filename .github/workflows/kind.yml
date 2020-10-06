@@ -34,6 +34,7 @@ jobs:
           - v1.18.6
         suite:
           - minimal
+          - minimal-antrea
           - monitoring
           - harbor2
           - postgres
@@ -44,6 +45,8 @@ jobs:
         include:
           - k8s: v1.17.5
             suite: minimal
+          - k8s: v1.17.5
+            suite: minimal-antrea
           - k8s: v1.17.5
             suite: monitoring
           - k8s: v1.16.9
