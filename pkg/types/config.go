@@ -26,6 +26,7 @@ type PlatformConfig struct {
 	ImportConfigs         []string            `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA                 `yaml:"ingressCA"`
 	GitOps                []GitOps            `yaml:"gitops,omitempty"`
+	GitOperator           GitOperator         `yaml:"gitOperator,omitempty"`
 	Kind                  Kind                `yaml:"kind,omitempty"`
 	Kiosk                 Kiosk               `yaml:"kiosk,omitempty"`
 	KubeWebView           *KubeWebView        `yaml:"kubeWebView,omitempty"`
@@ -61,6 +62,7 @@ type PlatformConfig struct {
 	ServiceSubnet       string               `yaml:"serviceSubnet"`
 	SMTP                SMTP                 `yaml:"smtp,omitempty"`
 	Specs               []string             `yaml:"specs,omitempty"`
+	TemplateOperator    TemplateOperator     `yaml:"templateOperator,omitempty"`
 	TrustedCA           string               `yaml:"trustedCA,omitempty"`
 	Versions            map[string]string    `yaml:"versions,omitempty"`
 	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`

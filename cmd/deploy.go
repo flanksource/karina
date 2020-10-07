@@ -5,6 +5,7 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
@@ -40,6 +41,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
 	"github.com/flanksource/karina/pkg/phases/tekton"
+	"github.com/flanksource/karina/pkg/phases/templateoperator"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
@@ -62,6 +64,7 @@ var Phases = map[string]DeployFn{
 	"eventrouter":          eventrouter.Deploy,
 	"filebeat":             filebeat.Deploy,
 	"gitops":               flux.Install,
+	"git-operator":         gitoperator.Install,
 	"harbor":               harbor.Deploy,
 	"journalbeat":          journalbeat.Deploy,
 	"kiosk":                kiosk.Deploy,
@@ -82,6 +85,7 @@ var Phases = map[string]DeployFn{
 	"sealed-secrets":       sealedsecrets.Install,
 	"stubs":                stubs.Install,
 	"tekton":               tekton.Install,
+	"template-operator":    templateoperator.Install,
 	"vault":                vault.Deploy,
 	"velero":               velero.Install,
 }

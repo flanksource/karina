@@ -18,6 +18,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/flux"
+	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
@@ -36,6 +37,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
 	"github.com/flanksource/karina/pkg/phases/stubs"
+	"github.com/flanksource/karina/pkg/phases/templateoperator"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
 	"github.com/flanksource/karina/pkg/platform"
@@ -142,6 +144,7 @@ func init() {
 		"elasticsearch":        elasticsearch.Test,
 		"encryption":           kubeadm.TestEncryption,
 		"gitops":               flux.Test,
+		"git-operator":         gitoperator.Test,
 		"harbor":               harbor.Test,
 		"kiosk":                kiosk.Test,
 		"kpack":                kpack.Test,
@@ -161,6 +164,7 @@ func init() {
 		"sealed-secrets":       sealedsecrets.Test,
 		"stubs":                stubs.Test,
 		"templates":            tests.TestTemplates,
+		"template-operator":    templateoperator.Test,
 		"thanos":               monitoring.TestThanos,
 		"vault":                vault.Test,
 		"velero":               velero.Test,

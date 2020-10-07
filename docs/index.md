@@ -29,18 +29,3 @@
 To get started provisioning see the quickstart's for [Kind](admin-guide/provisioning/kind.md) and [vSphere](admin-guide/provisioning/vsphere.md) <br>
 
 To see what extensions and add-ons are available to workloads running with the production runtime see the User Guide.
-
-### Principles
-
-#### Easy for the operator
-
-#### Batteries Included
-
-Functions are integrated but independent, After deploying the production runtime, the testing framework will test and verify, but it can also be used to to components deployed by other mechanisms. Likewise you can provision and deploy, or provision by other means and then deploy the runtime.
-
-#### Escape Hatches
-
-
-### Naming
-
-Karina is named after the [Carina Constellation](https://en.wikipedia.org/wiki/Carina_(constellation)) - latin for the hull or keel of a ship.

@@ -1,6 +1,8 @@
+### Install & configure velero
 
 
-Configure the backup location:
+
+#### Configure the backup location:
 
 ```yaml
 s3:
@@ -13,7 +15,7 @@ velero:
   bucket: backups
 ```
 
-To run a backup of the cluster objects:
+#### To run a backup of the cluster objects
 
 ```shell
 karina backup
