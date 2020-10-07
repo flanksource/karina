@@ -26,7 +26,6 @@ import (
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/types"
-	"github.com/flanksource/karina/templates"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
@@ -487,11 +486,7 @@ func (platform *Platform) GetResourceByName(file string, pkg string) (string, er
 	if !strings.HasPrefix(file, "/") {
 		file = "/" + file
 	}
-	if pkg == "manifests" {
-		raw, err = manifests.FSString(false, file)
-	} else {
-		raw, err = templates.FSString(false, file)
-	}
+	raw, err = manifests.FSString(false, file)
 	if err != nil {
 		return "", err
 	}
@@ -518,11 +513,7 @@ func (platform *Platform) Template(file string, pkg string) (string, error) {
 func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string]http.File, error) {
 	out := make(map[string]http.File)
 	var fs http.FileSystem
-	if pkg == "manifests" {
-		fs = manifests.FS(false)
-	} else {
-		fs = templates.FS(false)
-	}
+	fs = manifests.FS(false)
 	dir, err := fs.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
