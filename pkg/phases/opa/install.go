@@ -92,5 +92,17 @@ func InstallGatekeeper(p *platform.Platform) error {
 		return err
 	}
 
+	if p.Gatekeeper.Templates != "" {
+		if err := deployTemplates(p, p.Gatekeeper.Templates); err != nil {
+			return err
+		}
+	}
+
+	if p.Gatekeeper.Constrains != "" {
+		if err := deployConstrains(p, p.Gatekeeper.Constrains); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

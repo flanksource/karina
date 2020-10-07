@@ -111,6 +111,15 @@ type OPAE2E struct {
 
 type Gatekeeper struct {
 	Disabled `yaml:",inline"`
+	// Templates is a path to directory containing gatekeeper templates
+	Templates string `yaml:"templates,omitempty"`
+	// Templates is a path to directory containing gatekeeper constrains
+	Constrains string        `yaml:"constrains,omitempty"`
+	E2E        GatekeeperE2E `yaml:"e2e,omitempty"`
+}
+
+type GatekeeperE2E struct {
+	Fixtures string `yaml:"fixtures,omitempty"`
 }
 
 type Harbor struct {

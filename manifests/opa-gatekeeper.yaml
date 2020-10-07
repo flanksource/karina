@@ -553,13 +553,27 @@ subjects:
   name: gatekeeper-admin
   namespace: gatekeeper-system
 ---
-apiVersion: v1
-kind: Secret
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   labels:
+#     gatekeeper.sh/system: "yes"
+#   name: gatekeeper-webhook-server-cert
+#   namespace: gatekeeper-system
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
 metadata:
-  labels:
-    gatekeeper.sh/system: "yes"
-  name: gatekeeper-webhook-server-cert
+  name: gatekeeper-webhook-cert
   namespace: gatekeeper-system
+spec:
+  dnsNames:
+  - gatekeeper-webhook-service.gatekeeper-system.svc
+  - gatekeeper-webhook-service.gatekeeper-system.svc.cluster.local
+  secretName: gatekeeper-webhook-server-cert
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
 ---
 apiVersion: v1
 kind: Service
@@ -768,6 +782,9 @@ metadata:
   creationTimestamp: null
   labels:
     gatekeeper.sh/system: "yes"
+  annotations:
+    cert-manager.io/inject-apiserver-ca: "true"
+    cert-manager.io/inject-ca-from-secret: gatekeeper-webhook-server-cert
   name: gatekeeper-validating-webhook-configuration
 webhooks:
 - clientConfig:

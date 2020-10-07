@@ -3,7 +3,7 @@ kind: K8sWhitelistRegistries
 metadata:
   name: whitelist-registries
 spec:
-  enforcementAction: dryrun
+  # enforcementAction: dryrun
   match:
     kinds:
       - apiGroups: [""]
@@ -13,6 +13,7 @@ spec:
       - apiGroups: ["*"]
         kinds: ["Deployment", "ReplicationController", "ReplicaSet", "DaemonSet", "StatefulSet", "Job"]
   parameters:
-    tags:
+    repos:
+      - "k8s.gcr.io"
       - "docker.io"
       - "quay.io"

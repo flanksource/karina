@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goproxy
+  namespace: opa-test-qa
+  labels:
+    app: goproxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: goproxy
+  template:
+    metadata:
+      labels:
+        app: goproxy
+    spec:
+      containers:
+        - name: goproxy
+          image: k8s.gcr.io/goproxy:0.1
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20

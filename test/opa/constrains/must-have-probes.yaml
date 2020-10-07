@@ -1,9 +1,8 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sBannedImageTags
+kind: K8sRequiredProbes
 metadata:
-  name: ban-latest-tag
+  name: must-have-probes
 spec:
-  # enforcementAction: dryrun
   match:
     kinds:
       - apiGroups: [""]
@@ -13,6 +12,5 @@ spec:
       - apiGroups: ["*"]
         kinds: ["Deployment", "ReplicationController", "ReplicaSet", "DaemonSet", "StatefulSet", "Job"]
   parameters:
-    tags:
-      - "latest"
-      - "v0.4.5"
+    probes: ["readinessProbe", "livenessProbe"]
+    probeTypes: ["tcpSocket", "httpGet", "exec"]
