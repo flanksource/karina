@@ -16,7 +16,8 @@ import (
 
 var (
 	testNamespaceLabels = map[string]string{
-		"openpolicyagent.org/webhook": "ignore",
+		"openpolicyagent.org/webhook":    "ignore",
+		"admission.gatekeeper.sh/ignore": "true",
 	}
 )
 

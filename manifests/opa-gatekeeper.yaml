@@ -712,7 +712,9 @@ spec:
       - args:
         - --port=8443
         - --logtostderr
-        - --exempt-namespace=gatekeeper-system
+        {{- range $ns := .gatekeeper.whitelistNamespaces }}
+        - --exempt-namespace={{ $ns }}
+        {{- end }}
         - --operation=webhook
         command:
         - /manager
