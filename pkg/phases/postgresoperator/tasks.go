@@ -341,11 +341,11 @@ func patroniExporterSidecar(clusterName string) postgres.Sidecar {
 		Resources: postgres.Resources{
 			ResourceRequests: postgres.ResourceDescription{
 				CPU:    "10m",
-				Memory: "128m",
+				Memory: "128Mi",
 			},
 			ResourceLimits: postgres.ResourceDescription{
 				CPU:    "200m",
-				Memory: "128m",
+				Memory: "128Mi",
 			},
 		},
 		Env: []v1.EnvVar{
