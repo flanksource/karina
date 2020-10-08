@@ -17,6 +17,7 @@ gatekeeper:
   version: "v3.1.0-rc.1"
   templates: test/opa/templates
   constrains: test/opa/constrains
+  auditInterval: 10
   e2e:
     fixtures: test/opa/gatekeeper-fixtures
 velero:

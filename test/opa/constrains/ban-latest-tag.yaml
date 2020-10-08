@@ -3,7 +3,7 @@ kind: K8sBannedImageTags
 metadata:
   name: ban-latest-tag
 spec:
-  # enforcementAction: dryrun
+  enforcementAction: dryrun
   match:
     kinds:
       - apiGroups: [""]
@@ -15,4 +15,3 @@ spec:
   parameters:
     tags:
       - "latest"
-      - "v0.4.5"

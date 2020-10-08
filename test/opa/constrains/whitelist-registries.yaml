@@ -3,7 +3,7 @@ kind: K8sWhitelistRegistries
 metadata:
   name: whitelist-registries
 spec:
-  # enforcementAction: dryrun
+  enforcementAction: dryrun
   match:
     kinds:
       - apiGroups: [""]

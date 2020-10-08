@@ -3,6 +3,7 @@ kind: K8sRequiredProbes
 metadata:
   name: must-have-probes
 spec:
+  enforcementAction: dryrun
   match:
     kinds:
       - apiGroups: [""]
