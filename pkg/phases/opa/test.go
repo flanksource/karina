@@ -281,7 +281,7 @@ func findViolationUntil(p *platform.Platform, test *console.TestResults, violati
 			test.Failf("opa", "received timeout waiting for violation %s for %s/%s/%s", violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name)
 			return
 		}
-		found, err := findViolation(p, client, violation, object)
+		found, err := findViolation(client, violation, object)
 		p.Debugf("violation: %s found=%t err=%v", violation.Name, found, err)
 		if err != nil {
 			test.Failf("opa", "failed to find violation: %v", err)
@@ -296,7 +296,7 @@ func findViolationUntil(p *platform.Platform, test *console.TestResults, violati
 	}
 }
 
-func findViolation(p *platform.Platform, client dynamic.NamespaceableResourceInterface, violation Violation, object *Fixture) (bool, error) {
+func findViolation(client dynamic.NamespaceableResourceInterface, violation Violation, object *Fixture) (bool, error) {
 	obj, err := client.Get(violation.Name, metav1.GetOptions{})
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to get %s with name=%s", violation.Kind, violation.Name)
@@ -319,10 +319,9 @@ func findViolation(p *platform.Platform, client dynamic.NamespaceableResourceInt
 		if v.Kind == object.Kind && v.Name == object.Metadata.Name && v.Namespace == object.Metadata.Namespace {
 			if v.Message == violation.Message {
 				return true, nil
-			} else {
-				foundWithDifferentMessage = true
-				foundMessage = v.Message
 			}
+			foundWithDifferentMessage = true
+			foundMessage = v.Message
 		}
 	}
 
