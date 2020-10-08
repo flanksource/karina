@@ -147,7 +147,7 @@ spec:
         component: registry
     spec:
       securityContext:
-        fsGroup: 10000
+        supplementalGroups: [10000]
       containers:
         - name: registry
           image: docker.io/goharbor/registry-photon:{{.harbor.registryVersion}}
