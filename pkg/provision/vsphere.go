@@ -73,6 +73,9 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 		// no healthy master endpoint is detected, so we need to create the first control plane node
 		// FIXME: Detect situations where all control pane nodes have failed
 		_, err := createMaster(platform)
+		if err != nil {
+			return err
+		}
 		// after creating the first master we need to deploy the CNI and Cloud Providers to ensure subsequent
 		// nodes are tested correctly with the burnin controller
 		if err := vsphere.Install(platform); err != nil {

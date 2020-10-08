@@ -12,7 +12,7 @@ spec:
     listKind: TemplateList
     plural: templates
     singular: template
-  scope: Namespaced
+  scope: Cluster
   validation:
     openAPIV3Schema:
       description: Template is the Schema for the templates API
@@ -349,154 +349,13 @@ status:
   storedVersions: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: template-operator-leader-election-role
-  namespace: platform-system
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps/status
-    verbs:
-      - get
-      - update
-      - patch
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: template-operator-manager-role
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - namespaces
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - extensions
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - templating.flanksource.com
-    resources:
-      - templates
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - templating.flanksource.com
-    resources:
-      - templates/status
-    verbs:
-      - get
-      - patch
-      - update
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: template-operator-proxy-role
-rules:
-  - apiGroups:
-      - authentication.k8s.io
-    resources:
-      - tokenreviews
-    verbs:
-      - create
-  - apiGroups:
-      - authorization.k8s.io
-    resources:
-      - subjectaccessreviews
-    verbs:
-      - create
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  name: template-operator-metrics-reader
-rules:
-  - nonResourceURLs:
-      - /metrics
-    verbs:
-      - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: template-operator-leader-election-rolebinding
-  namespace: platform-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: template-operator-leader-election-role
-subjects:
-  - kind: ServiceAccount
-    name: template-operator-manager
-    namespace: platform-system
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: template-operator-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: template-operator-manager-role
-subjects:
-  - kind: ServiceAccount
-    name: template-operator-manager
-    namespace: platform-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: template-operator-proxy-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: template-operator-proxy-role
+  name: cluster-admin
 subjects:
   - kind: ServiceAccount
     name: template-operator-manager
@@ -516,6 +375,12 @@ spec:
       targetPort: https
   selector:
     control-plane: controller-manager
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: template-operator-manager
+  namespace: platform-system
 ---
 apiVersion: apps/v1
 kind: Deployment

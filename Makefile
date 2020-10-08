@@ -26,7 +26,6 @@ build:
 .PHONY: pack
 pack: setup
 	esc --prefix "manifests/" --ignore "static.go" -o manifests/static.go --pkg manifests manifests
-	esc --prefix "templates/" --ignore "static.go" -o templates/static.go --pkg templates templates
 
 .PHONY: linux
 linux:
