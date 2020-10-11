@@ -86,7 +86,8 @@ type Calico struct {
 }
 
 type Antrea struct {
-	Disabled `yaml:",inline"`
+	Disabled    `yaml:",inline"`
+	IsCertReady bool `yaml:"isCertReady"`
 }
 
 type OPA struct {
