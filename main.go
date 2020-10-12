@@ -58,7 +58,6 @@ func main() {
 		cmd.TerminateOrphans,
 		cmd.Upgrade,
 		cmd.Vault,
-		cmd.VM,
 	)
 
 	if len(commit) > 8 {
