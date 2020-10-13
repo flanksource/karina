@@ -26,6 +26,7 @@ type Machine interface {
 	GetAge() time.Duration
 	GetTemplate() string
 	IP() string
+	SetTags(map[string]string) error
 }
 
 type NullMachine struct {
@@ -73,6 +74,10 @@ func (n NullMachine) IP() string {
 }
 func (n NullMachine) GetTags() map[string]string {
 	return make(map[string]string)
+}
+
+func (n NullMachine) SetTags(tags map[string]string) error {
+	return nil
 }
 
 type Cluster interface {
