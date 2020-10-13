@@ -36,8 +36,13 @@ func KindCluster(p *platform.Platform) error {
 		return err
 	}
 
+	cacheDir := os.ExpandEnv("$CACHE_DIR")
+	if cacheDir == "" {
+		cacheDir = os.ExpandEnv("$HOME")
+	}
+
 	for file, content := range files {
-		cache := fmt.Sprintf("%s/.kind/%s%s", os.ExpandEnv("$HOME"), p.Name, file)
+		cache := fmt.Sprintf("%s/.kind/%s%s", cacheDir, p.Name, file)
 		_ = os.MkdirAll(path.Dir(cache), 0755)
 		if err := ioutil.WriteFile(cache, []byte(content), 0644); err != nil {
 			return err
