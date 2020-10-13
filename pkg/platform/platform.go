@@ -512,8 +512,7 @@ func (platform *Platform) Template(file string, pkg string) (string, error) {
 
 func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string]http.File, error) {
 	out := make(map[string]http.File)
-	var fs http.FileSystem
-	fs = manifests.FS(false)
+	fs := manifests.FS(false)
 	dir, err := fs.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
