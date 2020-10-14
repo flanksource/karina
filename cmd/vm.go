@@ -33,6 +33,10 @@ func init() {
 					}
 				}
 
+				if len(tags) == 0 {
+					continue
+				}
+
 				vm := nm.Machine
 				message := fmt.Sprintf("Name: %s Tags: ", vm.Name())
 				for k, v := range tags {
