@@ -79,11 +79,17 @@ func Defaults(p *types.PlatformConfig) {
 		verify := false
 		settings.LdapVerifyCert = &verify
 		settings.AuthMode = "ldap_auth"
-		settings.LdapUID = "sAMAccountName"
+		if settings.LdapUID == "" {
+			settings.LdapUID = "sAMAccountName"
+		}
 		settings.LdapSearchPassword = p.Ldap.Password
 		settings.LdapSearchDN = p.Ldap.Username
-		settings.LdapGroupSearchFilter = fmt.Sprintf("objectclass=%s", p.Ldap.GroupObjectClass)
-		settings.LdapGroupAdminDN = p.Ldap.AdminGroup
+		if settings.LdapGroupSearchFilter == "" {
+			settings.LdapGroupSearchFilter = fmt.Sprintf("objectclass=%s", p.Ldap.GroupObjectClass)
+		}
+		if settings.LdapGroupAdminDN == "" {
+			settings.LdapGroupAdminDN = p.Ldap.AdminGroup
+		}
 		harbor.Settings = settings
 	}
 	if harbor.ChartVersion == "" {

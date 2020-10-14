@@ -163,6 +163,7 @@ spec:
   secretName: chart-internal-certs
   dnsNames:
     - harbor-chartmuseum
+    - harbor-chartmuseum.harbor.svc.cluster.local
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer

@@ -24,9 +24,9 @@ data:
   POSTGRESQL_MAX_IDLE_CONNS: "50"
   POSTGRESQL_MAX_OPEN_CONNS: "100"
   EXT_ENDPOINT: "{{.harbor.url}}"
-  CORE_URL: "https://harbor-core"
-  JOBSERVICE_URL: "https://harbor-jobservice"
-  REGISTRY_URL: "https://harbor-registry:5443"
+  CORE_URL: "https://harbor-core.harbor.svc.cluster.local."
+  JOBSERVICE_URL: "https://harbor-jobservice.harbor.svc.cluster.local."
+  REGISTRY_URL: "https://harbor-registry.harbor.svc.cluster.local.:5443"
   TOKEN_SERVICE_URL: "https://harbor-core/service/token"
   WITH_NOTARY: "false"
   #NOTARY_URL: "http://harbor-notary-server:4443"
@@ -38,24 +38,24 @@ data:
   CLAIR_DB_USERNAME: "{{.harbor.db.username}}"
   CLAIR_DB: "clair"
   CLAIR_DB_SSLMODE: "disable"
-  CLAIR_URL: "http://harbor-clair:6060"
-  CLAIR_ADAPTER_URL: "http://harbor-clair:8080"
+  CLAIR_URL: "http://harbor-clair.harbor.svc.cluster.local.:6060"
+  CLAIR_ADAPTER_URL: "http://harbor-clair.harbor.svc.cluster.local.:8080"
   WITH_TRIVY: "false"
-  TRIVY_ADAPTER_URL: "http://harbor-trivy:8080"
+  TRIVY_ADAPTER_URL: "http://harbor-trivy.harbor.svc.cluster.local.:8080"
   REGISTRY_STORAGE_PROVIDER_NAME: "s3"
   WITH_CHARTMUSEUM: "true"
-  CHART_REPOSITORY_URL: "https://harbor-chartmuseum"
+  CHART_REPOSITORY_URL: "https://harbor-chartmuseum.harbor.svc.cluster.local."
   LOG_LEVEL: "info"
   CONFIG_PATH: "/etc/core/app.conf"
   SYNC_REGISTRY: "false"
   CHART_CACHE_DRIVER: "redis"
   _REDIS_URL: "harbor-redis:6379,100,"
   _REDIS_URL_REG: "redis://harbor-redis:6379/2"
-  PORTAL_URL: "https://harbor-portal"
-  REGISTRYCTL_URL: "https://harbor-registry:8443"
-  REGISTRY_CONTROLLER_URL: "https://harbor-registry:8443"
+  PORTAL_URL: "https://harbor-portal.harbor.svc.cluster.local."
+  REGISTRYCTL_URL: "https://harbor-registry.harbor.svc.cluster.local.:8443"
+  REGISTRY_CONTROLLER_URL: "https://harbor-registry.harbor.svc.cluster.local.:8443"
   REGISTRY_CREDENTIAL_USERNAME: "harbor_registry_user"
-  CLAIR_HEALTH_CHECK_SERVER_URL: "http://harbor-clair:6061"
+  CLAIR_HEALTH_CHECK_SERVER_URL: "http://harbor-clair.harbor.svc.cluster.local.:6061"
   HTTP_PROXY: ""
   HTTPS_PROXY: ""
   NO_PROXY: "harbor-core,harbor-jobservice,harbor-database,harbor-chartmuseum,harbor-clair,harbor-notary-server,harbor-notary-signer,harbor-registry,harbor-portal,127.0.0.1,localhost,.local,.internal"
@@ -84,6 +84,7 @@ spec:
   secretName: core-internal-certs
   dnsNames:
     - harbor-core
+    - harbor-core.harbor.svc.cluster.local.
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer

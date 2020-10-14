@@ -7,9 +7,9 @@ metadata:
     app: "harbor"
 data:
   CORE_URL: "https://harbor-core"
-  TOKEN_SERVICE_URL: "https://harbor-core/service/token"
-  REGISTRY_URL: "https://harbor-registry:5443"
-  REGISTRY_CONTROLLER_URL: "https://harbor-registry:8443"
+  TOKEN_SERVICE_URL: "https://harbor-core.harbor.svc.cluster.local./service/token"
+  REGISTRY_URL: "https://harbor-registry.harbor.svc.cluster.local.:5443"
+  REGISTRY_CONTROLLER_URL: "https://harbor-registry.harbor.svc.cluster.local.:8443"
   REGISTRY_CREDENTIAL_USERNAME: "harbor_registry_user"
   HTTP_PROXY: ""
   HTTPS_PROXY: ""
@@ -33,7 +33,7 @@ data:
       workers: 10
       backend: "redis"
       redis_pool:
-        redis_url: "harbor-redis:6379/1"
+        redis_url: "harbor-redis.harbor.svc.cluster.local.:6379/1"
         namespace: "harbor_job_service_namespace"
     job_loggers:
       - name: "FILE"
@@ -73,6 +73,7 @@ spec:
   secretName: jobservice-internal-certs
   dnsNames:
     - harbor-jobservice
+    - harbor-jobservice.harbor.svc.cluster.local.
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer
@@ -142,9 +143,9 @@ spec:
                   name: "harbor-jobservice"
                   key: secret
             - name: CORE_URL
-              value: "https://harbor-core"
+              value: "https://harbor-core.harbor.svc.cluster.local."
             - name: REGISTRY_CONTROLLER_URL
-              value: "https://harbor-registry:8443"
+              value: "https://harbor-registry.harbor.svc.cluster.local.:8443"
             - name: LOG_LEVEL
               value: "{{.harbor.logLevel}}"
             - name: HTTP_PROXY
