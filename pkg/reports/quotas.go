@@ -7,6 +7,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/flanksource/karina/pkg/k8s"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -40,7 +41,7 @@ func Quotas(opts ReportOptions) error {
 	for _, annotation := range opts.Annotations {
 		fmt.Fprintf(w, "%s%s", strings.ToUpper(annotation), SEP)
 	}
-	fmt.Fprintf(w, "LIMIT%s\n", SEP)
+	fmt.Fprintf(w, "LIMIT_GB%s\n", SEP)
 	for _, quota := range specs.FilterBy("ResourceQuota") {
 		limit, found, err := unstructured.NestedString(quota.Object, "spec", "hard", "limits", "memory")
 		if err != nil {
@@ -56,7 +57,7 @@ func Quotas(opts ReportOptions) error {
 		for _, annotation := range opts.Annotations {
 			fmt.Fprintf(w, "%s%s", annotations[annotation], SEP)
 		}
-		fmt.Fprintf(w, "%s%s\n", limit, SEP)
+		fmt.Fprintf(w, "%d%s\n", normalizeGB(limit), SEP)
 	}
 	for _, quota := range specs.FilterBy("ClusterResourceQuota") {
 		limit, found, err := unstructured.NestedString(quota.Object, "spec", "hard", "limits", "memory")
@@ -72,8 +73,17 @@ func Quotas(opts ReportOptions) error {
 		for _, annotation := range opts.Annotations {
 			fmt.Fprintf(w, "%s%s", annotations[annotation], SEP)
 		}
-		fmt.Fprintf(w, "%s%s\n", limit, SEP)
+		fmt.Fprintf(w, "%d%s\n", normalizeGB(limit), SEP)
 	}
 	w.Flush()
 	return nil
+}
+
+// normalizeGB converts size values like 100Gi into number of GB e.g. 100
+func normalizeGB(size string) int64 {
+	qty, err := resource.ParseQuantity(size)
+	if err != nil {
+		return 0
+	}
+	return qty.Value() / 1024 / 1024 / 1024
 }
