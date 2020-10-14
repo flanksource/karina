@@ -293,10 +293,6 @@ func (vm *vm) SetTags(tags map[string]string) error {
 	message += fmt.Sprintf("] to virtual machine %s", vm.name)
 	vm.Infof(message)
 
-	for k, v := range tags {
-		vm.config.Tags[k] = v
-	}
-
 	restClient := rest.NewClient(vm.vm.Client())
 	manager := vtags.NewManager(restClient)
 
