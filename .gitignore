@@ -25,6 +25,7 @@ snapshot/
 vendor/
 .idea
 .vscode
+*.swp
 .certs
 #goland ide generated files:
 __debug_bin
