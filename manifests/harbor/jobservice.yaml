@@ -73,6 +73,7 @@ spec:
   secretName: jobservice-internal-certs
   dnsNames:
     - harbor-jobservice
+    - harbor-jobservice.harbor.svc.cluster.local.
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer

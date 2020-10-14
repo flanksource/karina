@@ -74,6 +74,7 @@ spec:
   secretName: registry-internal-certs
   dnsNames:
     - harbor-registry
+    - harbor-registry.harbor.svc.cluster.local.
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer

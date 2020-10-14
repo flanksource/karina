@@ -71,6 +71,7 @@ spec:
   secretName: portal-internal-certs
   dnsNames:
     - harbor-portal
+    - harbor-portal.harbor.svc.cluster.local.
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer

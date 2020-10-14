@@ -84,6 +84,7 @@ spec:
   secretName: core-internal-certs
   dnsNames:
     - harbor-core
+    - harbor-core.harbor.svc.cluster.local.
   issuerRef:
     name: default-issuer
     kind: ClusterIssuer
