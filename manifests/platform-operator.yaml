@@ -467,8 +467,8 @@ spec:
       containers:
         - args:
             - --enable-leader-election
-            {{- range k, v := .platform.Operator.args }}
-            - --{{k}}={{v}}
+            {{- range $k, $v := .platform.platformOperator.args }}
+            - --{{$k}}={{$v}}
             {{- end }}
           command:
             - /manager
