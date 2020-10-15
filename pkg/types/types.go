@@ -64,9 +64,11 @@ type VM struct {
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
 	// A path to a konfigadm specification used for configuring the VM on creation.
-	KonfigadmFile string            `yaml:"konfigadm,omitempty"`
-	IP            string            `yaml:"-"`
-	Konfigadm     *konfigadm.Config `yaml:"-"`
+	KonfigadmFile    string            `yaml:"konfigadm,omitempty"`
+	IP               string            `yaml:"-"`
+	Konfigadm        *konfigadm.Config `yaml:"-"`
+	Annotations      map[string]string `yaml:"annotations,omitempty"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
 }
 
 func (vm VM) GetTags() map[string]string {

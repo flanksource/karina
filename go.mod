@@ -9,7 +9,7 @@ require (
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.2.0
+	github.com/flanksource/commons v1.4.3
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/go-pg/pg/v9 v9.1.6
 	github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31
