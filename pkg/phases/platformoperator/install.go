@@ -1,6 +1,10 @@
 package platformoperator
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/blang/semver/v4"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
@@ -47,8 +51,26 @@ func Install(platform *platform.Platform) error {
 		platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
 	}
 	if platform.PlatformOperator.Version == "" {
-		platform.PlatformOperator.Version = "0.3"
+		platform.PlatformOperator.Version = "0.5.1"
 	}
 
+	if platform.PlatformOperator.Args == nil {
+		platform.PlatformOperator.Args = make(map[string]string)
+	}
+	args := platform.PlatformOperator.Args
+	args["annotations"] = strings.Join(platform.PlatformOperator.WhitelistedPodAnnotations, ",")
+	args["oauth2-proxy-service-name"] = "oauth2-proxy"
+	args["oauth2-proxy-service-namespace"] = "ingress-nginx"
+	args["domain"] = platform.Domain
+	args["enable-cluster-resource-quota"] = fmt.Sprintf("%v", platform.PlatformOperator.EnableClusterResourceQuota)
+
+	v, _ := semver.Parse(platform.PlatformOperator.Version)
+	expectedRange, _ := semver.ParseRange(">= 0.5.0")
+	if expectedRange(v) {
+		args["registry-whitelist"] = strings.Join(platform.PlatformOperator.RegistryWhitelist, ",")
+		args["default-image-pull-secret"] = platform.PlatformOperator.DefaultImagePullSecret
+		args["default-registry-prefix"] = platform.PlatformOperator.DefaultRegistry
+	}
+	platform.PlatformOperator.Args = args
 	return platform.ApplySpecs("", "platform-operator.yaml")
 }

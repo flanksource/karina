@@ -455,7 +455,7 @@ metadata:
   name: platform-operator
   namespace: platform-system
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       control-plane: controller-manager
@@ -467,11 +467,9 @@ spec:
       containers:
         - args:
             - --enable-leader-election
-            - --enable-cluster-resource-quota={{.platformOperator.enableClusterResourceQuota}}
-            - --annotations={{ conv.Join .platformOperator.whitelistedPodAnnotations "," }}
-            - --oauth2-proxy-service-name=oauth2-proxy
-            - --oauth2-proxy-service-namespace=ingress-nginx
-            - --domain={{.domain}}
+            {{- range k, v := .platform.Operator.args }}
+            - --{{k}}={{v}}
+            {{- end }}
           command:
             - /manager
           image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"

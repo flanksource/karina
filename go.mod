@@ -4,8 +4,8 @@ go 1.12
 
 require (
 	github.com/AlekSi/pointer v1.1.0
-	github.com/aktau/github-release v0.8.1 // indirect
 	github.com/aws/aws-sdk-go v1.29.25
+	github.com/blang/semver/v4 v4.0.0
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
@@ -33,7 +33,6 @@ require (
 	github.com/vmware/govmomi v0.21.0
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/tools v0.0.0-20200710042808-f1c4188a97a1 // indirect
 	google.golang.org/grpc v1.26.0
 	gopkg.in/flanksource/yaml.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.2.8
