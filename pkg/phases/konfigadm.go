@@ -9,6 +9,7 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 	_ "github.com/flanksource/konfigadm/pkg" // initialize konfigadm
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/pkg/errors"
@@ -101,7 +102,7 @@ func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Con
 	if err != nil {
 		return nil, fmt.Errorf("createWorker: failed to get baseKonfig: %v", err)
 	}
-	if err := addJoinKubeadmConfig(platform, cfg); err != nil {
+	if err := addJoinKubeadmConfig(platform, cfg, node); err != nil {
 		return nil, fmt.Errorf("failed to add kubeadm config: %v", err)
 	}
 
@@ -164,8 +165,8 @@ func addKubeadmConf(platform *platform.Platform, data []byte, err error, cfg *ko
 
 // addJoinKubeadmConfig derives the initial kubeadm config for a cluster from its platform
 // config and adds it to its konfigadm files
-func addJoinKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config) error {
-	data, err := kubeadm.NewJoinConfiguration(platform)
+func addJoinKubeadmConfig(platform *platform.Platform, cfg *konfigadm.Config, node types.VM) error {
+	data, err := kubeadm.NewJoinConfiguration(platform, node)
 	return addKubeadmConf(platform, data, err, cfg)
 }
 
