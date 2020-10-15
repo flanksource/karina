@@ -114,7 +114,7 @@ type Gatekeeper struct {
 	Disabled `yaml:",inline"`
 	// Templates is a path to directory containing gatekeeper templates
 	Templates string `yaml:"templates,omitempty"`
-	// Templates is a path to directory containing gatekeeper constrains
+	// Templates is a path to directory containing gatekeeper constraints
 	Constraints         string        `yaml:"constraints,omitempty"`
 	AuditInterval       int           `yaml:"auditInterval,omitempty"`
 	WhitelistNamespaces []string      `yaml:"whitelistNamespaces,omitempty"`
