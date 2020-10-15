@@ -309,7 +309,7 @@ func (vm *vm) SetTags(tags map[string]string) error {
 		}
 
 		if tagID != "" {
-			manager.AttachTag(vm.ctx, tagID, vm.vm.Reference())
+			return manager.AttachTag(vm.ctx, tagID, vm.vm.Reference())
 		}
 	}
 
