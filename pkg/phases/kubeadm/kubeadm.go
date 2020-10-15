@@ -11,6 +11,7 @@ import (
 	"github.com/flanksource/karina/pkg/api"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -215,17 +216,24 @@ func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
 	return yaml.Marshal(configuration)
 }
 
-func NewJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
+func NewJoinConfiguration(cfg *platform.Platform, node types.VM) ([]byte, error) {
 	token, err := GetOrCreateBootstrapToken(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
+	}
+
+	kubeletExtraArgs := getKubeletArgs(cfg)
+	if node.KubeletExtraArgs != nil {
+		for k, v := range node.KubeletExtraArgs {
+			kubeletExtraArgs[k] = v
+		}
 	}
 
 	configuration := api.JoinConfiguration{
 		APIVersion: "kubeadm.k8s.io/v1beta2",
 		Kind:       "JoinConfiguration",
 		NodeRegistration: api.NodeRegistration{
-			KubeletExtraArgs: getKubeletArgs(cfg),
+			KubeletExtraArgs: kubeletExtraArgs,
 		},
 		Discovery: api.Discovery{
 			BootstrapToken: &api.BootstrapTokenDiscovery{

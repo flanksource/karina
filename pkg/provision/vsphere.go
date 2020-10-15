@@ -17,7 +17,9 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/provision/vmware"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -131,6 +133,7 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 			time.Sleep(1 * time.Second)
 			wg.Add(1)
 			_nodeGroup := nodeGroup
+			annotations := worker.Annotations
 			go func() {
 				defer wg.Done()
 				if w, err := createWorker(platform, _nodeGroup); err != nil {
@@ -138,6 +141,10 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 				} else {
 					if err := waitForNode(platform, w.Name(), burninPeriod); err != nil {
 						platform.Errorf("%s did not come up healthy, it may need to be re-provisioned %v", w.Name(), err)
+					} else {
+						if err := addNodeAnnotations(platform, w.Name(), annotations); err != nil {
+							platform.Errorf("failed to add annotations to worker %s: %v", w.Name(), err)
+						}
 					}
 				}
 			}()
@@ -301,6 +308,26 @@ func waitForNode(platform *platform.Platform, name string, timeout time.Duration
 	platform.Infof("[%s] Node has become healthy, waiting for burnin-taint removal", name)
 	if err := platform.WaitForTaintRemoval(name, timeout, burnin.Taint); err != nil {
 		return fmt.Errorf("[%s] replacement burn-in taint was not removed: %v", name, err)
+	}
+	return nil
+}
+
+func addNodeAnnotations(platform *platform.Platform, name string, annotations map[string]string) error {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return errors.Wrap(err, "failed to get clientset")
+	}
+	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrapf(err, "failed to get node %s", name)
+	}
+
+	for k, v := range annotations {
+		node.Annotations[k] = v
+	}
+
+	if _, err := client.CoreV1().Nodes().Update(node); err != nil {
+		return errors.Wrapf(err, "failed to update node %s", name)
 	}
 	return nil
 }
