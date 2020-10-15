@@ -9,7 +9,6 @@ import (
 
 	"github.com/flanksource/commons/logger"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -32,7 +31,7 @@ type vm struct {
 
 func NewVM(ctx context.Context, dryRun bool, obj *object.VirtualMachine, config *types.VM) types.Machine {
 	_vm := vm{
-		Logger: logrus.WithField("vm", obj.Name()),
+		Logger: logger.WithValues("vm", obj.Name()),
 		ctx:    ctx,
 		dryRun: dryRun,
 		vm:     obj,
