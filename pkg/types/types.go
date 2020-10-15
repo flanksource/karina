@@ -115,7 +115,7 @@ type Gatekeeper struct {
 	// Templates is a path to directory containing gatekeeper templates
 	Templates string `yaml:"templates,omitempty"`
 	// Templates is a path to directory containing gatekeeper constrains
-	Constrains          string        `yaml:"constrains,omitempty"`
+	Constraints         string        `yaml:"constraints,omitempty"`
 	AuditInterval       int           `yaml:"auditInterval,omitempty"`
 	WhitelistNamespaces []string      `yaml:"whitelistNamespaces,omitempty"`
 	E2E                 GatekeeperE2E `yaml:"e2e,omitempty"`

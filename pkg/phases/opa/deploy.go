@@ -46,8 +46,8 @@ func deployTemplates(p *platform.Platform, path string) error {
 	return errors.Wrap(deployManifests(p, path), "failed to deploy templates")
 }
 
-func deployConstrains(p *platform.Platform, path string) error {
-	return errors.Wrap(deployManifests(p, path), "failed to deploy constrains")
+func deployConstraints(p *platform.Platform, path string) error {
+	return errors.Wrap(deployManifests(p, path), "failed to deploy constraints")
 }
 
 func deployManifests(p *platform.Platform, path string) error {

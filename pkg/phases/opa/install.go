@@ -16,6 +16,10 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
+	if platform.OPA != nil && !platform.OPA.Disabled && !platform.Gatekeeper.IsDisabled() {
+		platform.Fatalf("both opa kubemgmt and gatekeeper are enabled. Please disable one of them to continue")
+	}
+
 	if err := InstallGatekeeper(platform); err != nil {
 		return errors.Wrap(err, "failed to install gatekeeper")
 	}
@@ -98,8 +102,8 @@ func InstallGatekeeper(p *platform.Platform) error {
 		}
 	}
 
-	if p.Gatekeeper.Constrains != "" {
-		if err := deployConstrains(p, p.Gatekeeper.Constrains); err != nil {
+	if p.Gatekeeper.Constraints != "" {
+		if err := deployConstraints(p, p.Gatekeeper.Constraints); err != nil {
 			return err
 		}
 	}
