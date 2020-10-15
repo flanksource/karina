@@ -467,7 +467,7 @@ spec:
       containers:
         - args:
             - --enable-leader-election
-            {{- range $k, $v := .platform.platformOperator.args }}
+            {{- range $k, $v := .platformOperator.args }}
             - --{{$k}}={{$v}}
             {{- end }}
           command:

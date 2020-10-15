@@ -43,7 +43,6 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	platform.Infof("Installing platform operator")
 	if platform.PlatformOperator == nil {
 		platform.PlatformOperator = &types.PlatformOperator{}
 	}
