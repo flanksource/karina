@@ -792,7 +792,11 @@ type PlatformOperator struct {
 	Disabled                   bool     `yaml:"disabled,omitempty"`
 	Version                    string   `yaml:"version"`
 	EnableClusterResourceQuota bool     `yaml:"enableClusterResourceQuota"`
+	DefaultImagePullSecret     string   `yaml:"defaultImagePullSecret,omitempty"`
+	RegistryWhitelist          []string `yaml:"registryWhitelist,omitempty"`
+	DefaultRegistry            string   `yaml:"defaultRegistry,omitempty"`
 	WhitelistedPodAnnotations  []string `yaml:"whitelistedPodAnnotations,omitempty"`
+	Args                       map[string]string
 }
 
 type Vsphere struct {

@@ -28,7 +28,7 @@ func init() {
 
 				for k, v := range nm.Node.Annotations {
 					if strings.HasPrefix(k, tagAnnotation) {
-						categoryID := strings.TrimLeft(k, tagAnnotation+"/")
+						categoryID := strings.ReplaceAll(k, tagAnnotation+"/", "")
 						tags[categoryID] = v
 					}
 				}
