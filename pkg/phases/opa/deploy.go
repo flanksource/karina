@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/flanksource/commons/files"
-
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/pkg/errors"
 )
 
 func readFile(filename string) (string, error) {
@@ -40,4 +40,32 @@ func deploy(platform *platform.Platform, policiesPath string) error {
 		}
 	}
 	return err
+}
+
+func deployTemplates(p *platform.Platform, path string) error {
+	return errors.Wrap(deployManifests(p, path), "failed to deploy templates")
+}
+
+func deployConstraints(p *platform.Platform, path string) error {
+	return errors.Wrap(deployManifests(p, path), "failed to deploy constraints")
+}
+
+func deployManifests(p *platform.Platform, path string) error {
+	manifests, err := ioutil.ReadDir(path)
+	if err != nil {
+		return errors.Wrapf(err, "failed to read directory: %s", path)
+	}
+
+	for _, manifestFile := range manifests {
+		manifest, err := readFile(path + "/" + manifestFile.Name())
+		if err != nil {
+			return errors.Wrapf(err, "failed to read file %s", manifestFile.Name())
+		}
+
+		if err := p.ApplyText("", manifest); err != nil {
+			return errors.Wrapf(err, "failed to apply file %s", manifestFile.Name())
+		}
+	}
+
+	return nil
 }

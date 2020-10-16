@@ -86,7 +86,8 @@ type Calico struct {
 }
 
 type Antrea struct {
-	Disabled `yaml:",inline"`
+	Disabled    `yaml:",inline"`
+	IsCertReady bool `yaml:"isCertReady"`
 }
 
 type OPA struct {
@@ -106,6 +107,21 @@ type OPA struct {
 }
 
 type OPAE2E struct {
+	Fixtures string `yaml:"fixtures,omitempty"`
+}
+
+type Gatekeeper struct {
+	Disabled `yaml:",inline"`
+	// Templates is a path to directory containing gatekeeper templates
+	Templates string `yaml:"templates,omitempty"`
+	// Templates is a path to directory containing gatekeeper constraints
+	Constraints         string        `yaml:"constraints,omitempty"`
+	AuditInterval       int           `yaml:"auditInterval,omitempty"`
+	WhitelistNamespaces []string      `yaml:"whitelistNamespaces,omitempty"`
+	E2E                 GatekeeperE2E `yaml:"e2e,omitempty"`
+}
+
+type GatekeeperE2E struct {
 	Fixtures string `yaml:"fixtures,omitempty"`
 }
 

@@ -1,6 +1,7 @@
 importConfigs:
   - minimal.yaml
 opa:
+  disabled: true
   version: 0.22.0
   e2e:
     fixtures: test/opa/opa-fixtures
@@ -12,6 +13,13 @@ opa:
   logFormat: json-pretty
   logLevel: debug
   setDecisionLogs: true
+gatekeeper:
+  version: "v3.1.0-rc.1"
+  templates: test/opa/templates
+  constraints: test/opa/constraints
+  auditInterval: 10
+  e2e:
+    fixtures: test/opa/gatekeeper-fixtures
 velero:
   bucket: karina-velero
 configmapReloader:
