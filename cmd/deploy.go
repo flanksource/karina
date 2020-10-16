@@ -5,6 +5,7 @@ import (
 
 	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/crds"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
@@ -58,6 +59,7 @@ var Phases = map[string]DeployFn{
 	"calico":               calico.Install,
 	"canary":               canary.Deploy,
 	"configmap-reloader":   configmapreloader.Deploy,
+	"crds":                 crds.Install,
 	"dex":                  dex.Install,
 	"eck":                  eck.Deploy,
 	"elasticsearch":        elasticsearch.Deploy,
@@ -97,7 +99,7 @@ var PhasesExtra = map[string]DeployFn{
 	"quack":             quack.Install,
 }
 
-var PhaseOrder = []string{"calico", "antrea", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
+var PhaseOrder = []string{"crds", "calico", "antrea", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
 
 var Deploy = &cobra.Command{
 	Use: "deploy",
