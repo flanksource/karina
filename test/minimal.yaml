@@ -31,6 +31,7 @@ versions:
   sonobuoy: 0.16.4
   ketall: v1.3.0
   apacheds: 0.7.0
+  kind: 0.9.0
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 platformOperator:
