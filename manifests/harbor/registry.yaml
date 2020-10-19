@@ -33,7 +33,7 @@ data:
       delete:
         enabled: true
       redirect:
-        disable: false
+        disable: {{ .harbor.s3DisableRedirect }}
     redis:
       addr: "harbor-redis:6379"
       db: 2

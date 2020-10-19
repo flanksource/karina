@@ -135,13 +135,14 @@ type Harbor struct {
 	ClairVersion    string `yaml:"clairVersion"`
 	RegistryVersion string `yaml:"registryVersion"`
 	// Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`)
-	LogLevel string                   `yaml:"logLevel,omitempty"`
-	DB       *DB                      `yaml:"db,omitempty"`
-	URL      string                   `yaml:"url,omitempty"`
-	Projects map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings *HarborSettings          `yaml:"settings,omitempty"`
-	Replicas int                      `yaml:"replicas,omitempty"`
-	S3       *S3Connection            `yaml:"s3,omitempty"`
+	LogLevel          string                   `yaml:"logLevel,omitempty"`
+	DB                *DB                      `yaml:"db,omitempty"`
+	URL               string                   `yaml:"url,omitempty"`
+	Projects          map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings          *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas          int                      `yaml:"replicas,omitempty"`
+	S3                *S3Connection            `yaml:"s3,omitempty"`
+	S3DisableRedirect bool                     `yaml:"s3DisableRedirect"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
