@@ -822,6 +822,10 @@ webhooks:
       namespace: gatekeeper-system
       path: /v1/admitlabel
   failurePolicy: Fail
+  objectSelector:
+    matchExpressions:
+    - key: admission.gatekeeper.sh/ignore
+      operator: Exists
   name: check-ignore-label.gatekeeper.sh
   rules:
   - apiGroups:
