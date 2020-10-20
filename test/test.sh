@@ -11,7 +11,7 @@ MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/m
 
 [ -z "$KUBERNETES_VERSION" ] && echo -e "KUBERNETES_VERSION not set! Try: \nexport KUBERNETES_VERSION='v1.16.9'" && exit 1
 [ -z "$SUITE" ] && echo -e "SUITE not set! Try: \n export SUITE='minimal'\n or one of these (minus extension):"&& ls  test/*.yaml && exit 1
-kind delete cluster --name kind-kind || echo "No cluster present when starting"
+kind delete cluster --name kind-$SUITE-$KUBERNETES_VERSION || echo "No cluster present when starting"
 
 export CONFIGURED_VALUE=`openssl rand -base64 12`
 export PLATFORM_CONFIG=test/$SUITE.yaml
