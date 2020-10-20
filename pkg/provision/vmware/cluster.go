@@ -3,9 +3,14 @@ package vmware
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/flanksource/karina/pkg/types"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/vapi/rest"
+	vtags "github.com/vmware/govmomi/vapi/tags"
 )
 
 type vmwareCluster struct {
@@ -91,4 +96,41 @@ func (cluster *vmwareCluster) GetMachinesFor(vm *types.VM) (map[string]types.Mac
 func (cluster *vmwareCluster) GetMachine(name string) (types.Machine, error) {
 	machines, err := cluster.GetMachines()
 	return machines[name], err
+}
+
+func (cluster *vmwareCluster) SetTags(vm types.Machine, tags map[string]string) error {
+	message := "Setting tags ["
+	for k, v := range tags {
+		message += fmt.Sprintf("%s=%s ", k, v)
+	}
+	message += fmt.Sprintf("] to virtual machine %s", vm.Name())
+	log.Infof(message)
+
+	restClient := rest.NewClient(cluster.session.Client.Client)
+	user := url.UserPassword(cluster.vsphere.Username, cluster.vsphere.Password)
+	if err := restClient.Login(cluster.ctx, user); err != nil {
+		return errors.Wrap(err, "failed to login")
+	}
+	manager := vtags.NewManager(restClient)
+
+	for categoryID, tagName := range tags {
+		categoryTags, err := manager.GetTagsForCategory(cluster.ctx, categoryID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to list tags for category %s: %v", categoryID, err)
+		}
+		tagID := ""
+		for _, t := range categoryTags {
+			if t.Name == tagName {
+				tagID = t.ID
+			}
+		}
+
+		log.Debugf("Found tag ID: %s", tagID)
+
+		if tagID != "" {
+			return manager.AttachTag(cluster.ctx, tagID, vm.Reference())
+		}
+	}
+
+	return nil
 }
