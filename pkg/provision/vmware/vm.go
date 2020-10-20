@@ -15,8 +15,6 @@ import (
 	vim "github.com/vmware/govmomi/vim25/types"
 
 	"github.com/flanksource/karina/pkg/types"
-	"github.com/vmware/govmomi/vapi/rest"
-	vtags "github.com/vmware/govmomi/vapi/tags"
 )
 
 // VM represents a specific instance of a VM
@@ -284,33 +282,6 @@ func (vm *vm) Terminate() error {
 	return nil
 }
 
-func (vm *vm) SetTags(tags map[string]string) error {
-	message := "Setting tags ["
-	for k, v := range tags {
-		message += fmt.Sprintf("%s=%s ", k, v)
-	}
-	message += fmt.Sprintf("] to virtual machine %s", vm.name)
-	vm.Infof(message)
-
-	restClient := rest.NewClient(vm.vm.Client())
-	manager := vtags.NewManager(restClient)
-
-	for categoryID, tagName := range tags {
-		categoryTags, err := manager.GetTagsForCategory(vm.ctx, categoryID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list tags for category %s: %v", categoryID, err)
-		}
-		tagID := ""
-		for _, t := range categoryTags {
-			if t.Name == tagName {
-				tagID = t.ID
-			}
-		}
-
-		if tagID != "" {
-			return manager.AttachTag(vm.ctx, tagID, vm.vm.Reference())
-		}
-	}
-
-	return nil
+func (vm *vm) Reference() vim.ManagedObjectReference {
+	return vm.vm.Reference()
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 type TagInterface interface {
@@ -26,7 +27,7 @@ type Machine interface {
 	GetAge() time.Duration
 	GetTemplate() string
 	IP() string
-	SetTags(map[string]string) error
+	Reference() types.ManagedObjectReference
 }
 
 type NullMachine struct {
@@ -76,8 +77,8 @@ func (n NullMachine) GetTags() map[string]string {
 	return make(map[string]string)
 }
 
-func (n NullMachine) SetTags(tags map[string]string) error {
-	return nil
+func (n NullMachine) Reference() types.ManagedObjectReference {
+	return types.ManagedObjectReference{}
 }
 
 type Cluster interface {
@@ -85,4 +86,5 @@ type Cluster interface {
 	GetMachine(name string) (Machine, error)
 	GetMachines() (map[string]Machine, error)
 	GetMachinesFor(vm *VM) (map[string]Machine, error)
+	SetTags(vm Machine, tags map[string]string) error
 }
