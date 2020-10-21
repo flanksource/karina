@@ -63,9 +63,12 @@ func Install(platform *platform.Platform) error {
 	args["domain"] = platform.Domain
 	args["enable-cluster-resource-quota"] = fmt.Sprintf("%v", platform.PlatformOperator.EnableClusterResourceQuota)
 
-	v, _ := semver.Parse(platform.PlatformOperator.Version)
+	v, _ := semver.Parse(strings.TrimLeft(platform.PlatformOperator.Version, "v"))
 	expectedRange, _ := semver.ParseRange(">= 0.5.0")
 	if expectedRange(v) {
+		if platform.PlatformOperator.DefaultRegistry != "" {
+			platform.PlatformOperator.RegistryWhitelist = append(platform.PlatformOperator.RegistryWhitelist, platform.PlatformOperator.DefaultRegistry)
+		}
 		args["registry-whitelist"] = strings.Join(platform.PlatformOperator.RegistryWhitelist, ",")
 		args["default-image-pull-secret"] = platform.PlatformOperator.DefaultImagePullSecret
 		args["default-registry-prefix"] = platform.PlatformOperator.DefaultRegistry
