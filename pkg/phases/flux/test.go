@@ -1,6 +1,8 @@
 package flux
 
 import (
+	"time"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
@@ -19,6 +21,15 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	namespace := "gitops-e2e-test"
 	client, _ := p.GetClientset()
+
+	err := p.WaitForDeployment(namespace, "nginx", 150*time.Second)
+	if err != nil {
+		test.Failf("gitops", "Deployment 'nginx' not ready in namespace %s: %v", namespace, err)
+	}
+	err = p.WaitForDeployment(namespace, "gitops-e2e-test-podinfo", 150*time.Second)
+	if err != nil {
+		test.Failf("gitops", "Deployment 'gitops-e2e-test-podinfo' not ready in namespace %s: %v", namespace, err)
+	}
 
 	k8s.TestNamespace(client, namespace, test)
 
