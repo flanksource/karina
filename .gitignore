@@ -1,5 +1,6 @@
 build/
 .bin/
+.kind/
 .go/
 *_cert.yaml
 *-admin.yml
