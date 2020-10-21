@@ -1429,7 +1429,7 @@ func (c *Client) WaitForDeployment(ns, name string, timeout time.Duration) error
 		if start.Add(timeout).Before(time.Now()) {
 			return fmt.Errorf("timeout exceeded waiting for deployment to become ready %s", name)
 		}
-		if deployment != nil && deployment.Status.ReadyReplicas > 1 {
+		if deployment != nil && deployment.Status.ReadyReplicas >= 1 {
 			return nil
 		}
 

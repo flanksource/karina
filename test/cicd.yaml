@@ -10,6 +10,8 @@ gitops:
     gitUrl: https://github.com/flanksource/gitops-test.git
     gitBranch: master
     gitPath: .
+    gitPollInterval: 30s
+    syncInterval: 30s
 minio:
   disabled: true
 configmapReloader:
