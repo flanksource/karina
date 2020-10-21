@@ -1,0 +1,35 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: opa-test-qa
+  annotations:
+    "gatekeeper.flanksource.com/e2e": |
+      violations:
+        - kind: K8sBannedImageTags
+          name: ban-latest-tag
+          message: container <nginx> has banned image tag <latest>, banned tags are {"latest"}
+        - kind: K8sRequiredProbes
+          name: must-have-probes
+          message: Container <nginx> in your <Deployment> <nginx-deployment> has no <readinessProbe>
+        - kind: K8sRequiredProbes
+          name: must-have-probes
+          message: Container <nginx> in your <Deployment> <nginx-deployment> has no <livenessProbe>
+        - kind: K8sWhitelistRegistries
+          name: whitelist-registries
+          message: container <nginx> has an invalid image repo <gcr.io/goharbor/harbor-portal:latest>, allowed repos are ["k8s.gcr.io", "docker.io", "quay.io"]
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: gcr.io/goharbor/harbor-portal:latest
+        ports:
+        - containerPort: 80

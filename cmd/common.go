@@ -12,6 +12,7 @@ import (
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/lookup"
 	"github.com/flanksource/commons/text"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
@@ -84,6 +85,8 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	if base.TrustedCA != "" && !is.File(base.TrustedCA) {
 		base.TrustedCA = text.ToFile(base.TrustedCA, ".pem")
 	}
+
+	base.Gatekeeper.WhitelistNamespaces = append(base.Gatekeeper.WhitelistNamespaces, constants.PlatformNamespaces...)
 
 	for _, extra := range extras {
 		key := strings.Split(extra, "=")[0]

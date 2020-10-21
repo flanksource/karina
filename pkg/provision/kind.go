@@ -126,9 +126,22 @@ func KindCluster(p *platform.Platform) error {
 		return nil
 	}
 
+	debugString := ""
+	if p.Logger.IsDebugEnabled() {
+		debugString = " -v 1"
+	}
+	if p.Logger.IsTraceEnabled() || p.PlatformConfig.Trace {
+		debugString = " -v 6"
+	}
+
 	kind := p.GetBinary("kind")
 
-	if err := kind("create cluster --config %s --kubeconfig %s --name %s", tmpfile.Name(), p.KubeConfigPath, p.Name); err != nil {
+	kindExecution := fmt.Sprintf("create cluster --config %s --kubeconfig %s --name %s%s", tmpfile.Name(), p.KubeConfigPath, p.Name, debugString)
+	if p.PlatformConfig.Trace {
+		p.Infof("Running Kind with: %s", kindExecution)
+	}
+
+	if err := kind(kindExecution); err != nil {
 		return err
 	}
 

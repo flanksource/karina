@@ -4,6 +4,7 @@ metadata:
   name: crontesting
   labels:
     openpolicyagent.org/webhook: "ignore"
+    admission.gatekeeper.sh/ignore: "true"
   annotations:
     com.flanksource.infra.logs/enabled: "true"
 ---

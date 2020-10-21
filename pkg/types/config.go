@@ -25,6 +25,7 @@ type PlatformConfig struct {
 	HostPrefix            string              `yaml:"hostPrefix"`
 	ImportConfigs         []string            `yaml:"importConfigs,omitempty"`
 	IngressCA             *CA                 `yaml:"ingressCA"`
+	Gatekeeper            Gatekeeper          `yaml:"gatekeeper,omitempty"`
 	GitOps                []GitOps            `yaml:"gitops,omitempty"`
 	GitOperator           GitOperator         `yaml:"gitOperator,omitempty"`
 	Kind                  Kind                `yaml:"kind,omitempty"`

@@ -28,6 +28,9 @@ func DefaultPlatformConfig() PlatformConfig {
 			EnableClusterResourceQuota: false,
 			WhitelistedPodAnnotations:  []string{"com.flanksource.infra.logs/enabled", "co.elastic.logs/enabled"},
 		},
+		Gatekeeper: Gatekeeper{
+			AuditInterval: 60,
+		},
 	}
 	return config
 }

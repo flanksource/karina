@@ -64,9 +64,11 @@ type VM struct {
 	Tags     map[string]string `yaml:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty"`
 	// A path to a konfigadm specification used for configuring the VM on creation.
-	KonfigadmFile string            `yaml:"konfigadm,omitempty"`
-	IP            string            `yaml:"-"`
-	Konfigadm     *konfigadm.Config `yaml:"-"`
+	KonfigadmFile    string            `yaml:"konfigadm,omitempty"`
+	IP               string            `yaml:"-"`
+	Konfigadm        *konfigadm.Config `yaml:"-"`
+	Annotations      map[string]string `yaml:"annotations,omitempty"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
 }
 
 func (vm VM) GetTags() map[string]string {
@@ -84,7 +86,8 @@ type Calico struct {
 }
 
 type Antrea struct {
-	Disabled `yaml:",inline"`
+	Disabled    `yaml:",inline"`
+	IsCertReady bool `yaml:"isCertReady"`
 }
 
 type OPA struct {
@@ -107,6 +110,21 @@ type OPAE2E struct {
 	Fixtures string `yaml:"fixtures,omitempty"`
 }
 
+type Gatekeeper struct {
+	Disabled `yaml:",inline"`
+	// Templates is a path to directory containing gatekeeper templates
+	Templates string `yaml:"templates,omitempty"`
+	// Templates is a path to directory containing gatekeeper constraints
+	Constraints         string        `yaml:"constraints,omitempty"`
+	AuditInterval       int           `yaml:"auditInterval,omitempty"`
+	WhitelistNamespaces []string      `yaml:"whitelistNamespaces,omitempty"`
+	E2E                 GatekeeperE2E `yaml:"e2e,omitempty"`
+}
+
+type GatekeeperE2E struct {
+	Fixtures string `yaml:"fixtures,omitempty"`
+}
+
 type Harbor struct {
 	Disabled        bool   `yaml:"disabled,omitempty"`
 	Version         string `yaml:"version,omitempty"`
@@ -117,13 +135,14 @@ type Harbor struct {
 	ClairVersion    string `yaml:"clairVersion"`
 	RegistryVersion string `yaml:"registryVersion"`
 	// Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`)
-	LogLevel string                   `yaml:"logLevel,omitempty"`
-	DB       *DB                      `yaml:"db,omitempty"`
-	URL      string                   `yaml:"url,omitempty"`
-	Projects map[string]HarborProject `yaml:"projects,omitempty"`
-	Settings *HarborSettings          `yaml:"settings,omitempty"`
-	Replicas int                      `yaml:"replicas,omitempty"`
-	S3       *S3Connection            `yaml:"s3,omitempty"`
+	LogLevel          string                   `yaml:"logLevel,omitempty"`
+	DB                *DB                      `yaml:"db,omitempty"`
+	URL               string                   `yaml:"url,omitempty"`
+	Projects          map[string]HarborProject `yaml:"projects,omitempty"`
+	Settings          *HarborSettings          `yaml:"settings,omitempty"`
+	Replicas          int                      `yaml:"replicas,omitempty"`
+	S3                *S3Connection            `yaml:"s3,omitempty"`
+	S3DisableRedirect bool                     `yaml:"s3DisableRedirect"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket"`
 }
@@ -787,10 +806,14 @@ type RegistryCredentialsACR struct {
 }
 
 type PlatformOperator struct {
-	Disabled                   bool     `yaml:"disabled,omitempty"`
-	Version                    string   `yaml:"version"`
-	EnableClusterResourceQuota bool     `yaml:"enableClusterResourceQuota"`
-	WhitelistedPodAnnotations  []string `yaml:"whitelistedPodAnnotations,omitempty"`
+	Disabled                   bool              `yaml:"disabled,omitempty"`
+	Version                    string            `yaml:"version"`
+	EnableClusterResourceQuota bool              `yaml:"enableClusterResourceQuota"`
+	DefaultImagePullSecret     string            `yaml:"defaultImagePullSecret,omitempty"`
+	RegistryWhitelist          []string          `yaml:"registryWhitelist,omitempty"`
+	DefaultRegistry            string            `yaml:"defaultRegistry,omitempty"`
+	WhitelistedPodAnnotations  []string          `yaml:"whitelistedPodAnnotations,omitempty"`
+	Args                       map[string]string `yaml:"args,omitempty"`
 }
 
 type Vsphere struct {

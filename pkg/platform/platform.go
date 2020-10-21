@@ -63,7 +63,8 @@ func (platform *Platform) Init() error {
 	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
-	platform.Logger = logrus.StandardLogger().WithContext(context.Background())
+	loggerBackend := logrus.StandardLogger().WithContext(context.Background())
+	platform.Logger = logger.NewLogrusLogger(loggerBackend)
 	platform.Client.Logger = platform.Logger
 
 	platform.logFields = make(map[string]interface{})
@@ -131,23 +132,22 @@ func (platform *Platform) clone() *Platform {
 
 func (platform *Platform) WithField(key string, value interface{}) *Platform {
 	copy := platform.clone()
-	logger := copy.Logger.(*logrus.Entry)
 	copy.logFields[key] = value
-	copy.Logger = logger.WithField(key, value)
+	copy.Logger = copy.Logger.WithValues(key, value)
 	copy.Client.Logger = copy.Logger
 	return copy
 }
 
 func (platform *Platform) WithLogOutput(output io.Writer) *Platform {
 	copy := platform.clone()
-	logger := logrus.New()
-	logger.SetOutput(output)
-	logger.Formatter = &logrus.TextFormatter{ForceColors: true}
-	newLogger := logger.WithContext(context.Background())
+	loggerBackend := logrus.New()
+	loggerBackend.SetOutput(output)
+	loggerBackend.Formatter = &logrus.TextFormatter{ForceColors: true}
+	newLogger := loggerBackend.WithContext(context.Background())
 	for k, v := range copy.logFields {
 		newLogger = newLogger.WithField(k, v)
 	}
-	copy.Logger = newLogger
+	copy.Logger = logger.NewLogrusLogger(newLogger)
 	copy.Client.Logger = copy.Logger
 	return copy
 }
@@ -788,6 +788,7 @@ func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string
 	// set default labels
 	defaultLabels := make(map[string]string)
 	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
+	defaultLabels["admission.gatekeeper.sh/ignore"] = "true"
 	if labels != nil {
 		for k, v := range defaultLabels {
 			labels[k] = v
@@ -815,7 +816,8 @@ func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels ma
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {
 	annotations := map[string]string{
-		"openpolicyagent.org/webhook": "ignore",
+		"openpolicyagent.org/webhook":    "ignore",
+		"admission.gatekeeper.sh/ignore": "true",
 	}
 	return annotations
 }

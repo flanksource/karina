@@ -1175,6 +1175,9 @@ data:
     #   tls.key: <TLS private key>
     # And the Secret must be mounted to directory "/var/run/antrea/antrea-controller-tls" of the
     # antrea-controller container.
+    {{ if .antrea.isCertReady }}
+    selfSignedCert: false
+    {{ end }}
     #selfSignedCert: true
 kind: ConfigMap
 metadata:
@@ -1247,7 +1250,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: antrea/antrea-ubuntu:{{ .antrea.version }}
+        image: docker.io/antrea/antrea-ubuntu:{{ .antrea.version }}
         name: antrea-controller
         ports:
         - containerPort: 10349
@@ -1271,8 +1274,10 @@ spec:
           name: antrea-config
           readOnly: true
           subPath: antrea-controller.conf
+        {{ if .antrea.isCertReady }}
         - mountPath: /var/run/antrea/antrea-controller-tls
           name: antrea-controller-tls
+        {{ end }}
         - mountPath: /var/log/antrea
           name: host-var-log-antrea
       hostNetwork: true
@@ -1289,11 +1294,13 @@ spec:
       - configMap:
           name: antrea-config-f4kt4bdh8t
         name: antrea-config
+      {{ if .antrea.isCertReady }}
       - name: antrea-controller-tls
         secret:
           defaultMode: 256
           optional: true
           secretName: antrea-controller-tls
+      {{ end }}
       - hostPath:
           path: /var/log/antrea
           type: DirectoryOrCreate
@@ -1403,7 +1410,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: antrea/antrea-ubuntu:{{ .antrea.version }}
+        image: docker.io/antrea/antrea-ubuntu:{{ .antrea.version }}
         livenessProbe:
           exec:
             command:
@@ -1460,7 +1467,7 @@ spec:
           name: xtables-lock
       - command:
         - start_ovs
-        image: antrea/antrea-ubuntu:{{ .antrea.version }}
+        image: docker.io/antrea/antrea-ubuntu:{{ .antrea.version }}
         livenessProbe:
           exec:
             command:
@@ -1493,7 +1500,7 @@ spec:
       initContainers:
       - command:
         - install_cni
-        image: antrea/antrea-ubuntu:{{ .antrea.version }}
+        image: docker.io/antrea/antrea-ubuntu:{{ .antrea.version }}
         name: install-cni
         resources:
           requests:
@@ -1639,3 +1646,17 @@ webhooks:
     scope: Namespaced
   sideEffects: None
   timeoutSeconds: 5
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: antrea-controller-tls
+  namespace: kube-system
+spec:
+  dnsNames:
+  - antrea.kube-system.svc
+  - antrea.kube-system.svc.cluster.local
+  secretName: antrea-controller-tls
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer

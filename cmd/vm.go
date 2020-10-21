@@ -28,7 +28,7 @@ func init() {
 
 				for k, v := range nm.Node.Annotations {
 					if strings.HasPrefix(k, tagAnnotation) {
-						categoryID := strings.TrimLeft(k, tagAnnotation+"/")
+						categoryID := strings.ReplaceAll(k, tagAnnotation+"/", "")
 						tags[categoryID] = v
 					}
 				}
@@ -38,13 +38,12 @@ func init() {
 				}
 
 				vm := nm.Machine
-				message := fmt.Sprintf("Name: %s Tags: ", vm.Name())
+				message := fmt.Sprintf("Name: %s New Tags: ", vm.Name())
 				for k, v := range tags {
 					message += fmt.Sprintf("%s=%s ", k, v)
 				}
 				platform.Infof(message)
-
-				if err := vm.SetTags(tags); err != nil {
+				if err := platform.Cluster.SetTags(vm, tags); err != nil {
 					platform.Errorf("Failed to set tags for node %s: %v", nm.Node.Name, err)
 				}
 			}

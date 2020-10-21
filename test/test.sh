@@ -11,7 +11,7 @@ MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/m
 
 [ -z "$KUBERNETES_VERSION" ] && echo -e "KUBERNETES_VERSION not set! Try: \nexport KUBERNETES_VERSION='v1.16.9'" && exit 1
 [ -z "$SUITE" ] && echo -e "SUITE not set! Try: \n export SUITE='minimal'\n or one of these (minus extension):"&& ls  test/*.yaml && exit 1
-kind delete cluster --name kind-kind || echo "No cluster present when starting"
+kind delete cluster --name kind-$SUITE-$KUBERNETES_VERSION || echo "No cluster present when starting"
 
 export CONFIGURED_VALUE=`openssl rand -base64 12`
 export PLATFORM_CONFIG=test/$SUITE.yaml
@@ -20,12 +20,12 @@ if [[ "$KUBECONFIG" != "$HOME/.kube/kind-config-kind" ]] ; then
   $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
   $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
   $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
-  $BIN provision kind-cluster || exit 1
+  $BIN provision kind-cluster --trace -vv|| exit 1
 fi
 
 $BIN version
 
-$BIN deploy phases --base --stubs --dex --calico --antrea --minio -v
+$BIN deploy phases --crds --base --stubs --dex --calico --antrea --minio -v
 
 [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
@@ -43,7 +43,7 @@ $BIN test all -v --wait 300 --progress=false
 
 failed=false
 
-# e2e do not use --wait at the run level, if needed each individual test implements
+# E2E do not use --wait at the run level, if needed each individual test implements
 # its own wait. e2e tests should always pass once the non e2e have passed
 if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml; then
   failed=true
