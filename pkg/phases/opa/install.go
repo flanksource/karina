@@ -2,6 +2,7 @@ package opa
 
 import (
 	"fmt"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -96,9 +97,45 @@ func InstallGatekeeper(p *platform.Platform) error {
 		return err
 	}
 
+	p.WaitForNamespace(namespace, 600*time.Second)
+
 	if p.Gatekeeper.Templates != "" {
+		start := time.Now()
 		if err := deployTemplates(p, p.Gatekeeper.Templates); err != nil {
 			return err
+		}
+
+		templateClient, err := p.GetClientByKind("ConstraintTemplate")
+
+		if err != nil {
+			return err
+		}
+
+		for {
+			templateList, err := templateClient.List(metav1.ListOptions{})
+
+			if err != nil {
+				return err
+			}
+
+			if start.Add(60 * time.Second).Before(time.Now()) {
+				return fmt.Errorf("timeout exceeded waiting for ConstraintTemplates")
+			}
+
+			ready := true
+			for _, template := range templateList.Items {
+				ctName := template.Object["metadata"].(map[string]interface{})["name"].(string)
+				p.Debugf("Checking creation status of %s", ctName)
+				if template.Object["status"] != nil && !template.Object["status"].(map[string]interface{})["created"].(bool) {
+					ready = false
+				}
+			}
+
+			if ready {
+				break
+			}
+
+			time.Sleep(1 * time.Second)
 		}
 	}
 
