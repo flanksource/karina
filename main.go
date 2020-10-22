@@ -45,6 +45,7 @@ func main() {
 		cmd.Logs,
 		cmd.MachineImages,
 		cmd.Namespace,
+		cmd.Node,
 		cmd.NSX,
 		cmd.Opa,
 		cmd.Provision,

@@ -5,6 +5,8 @@ const PlatformSystem = "platform-system"
 const DockerRuntime = "docker"
 const ContainerdRuntime = "containerd"
 
+const NodePoolLabel = "karina.flanksource.com/pool"
+
 var PlatformNamespaces = []string{
 	"cert-manager",
 	"dex",
