@@ -8,6 +8,7 @@ import (
 
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/utils"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/controller/burnin"
 	"github.com/flanksource/karina/pkg/phases"
 	"github.com/flanksource/karina/pkg/phases/calico"
@@ -144,6 +145,12 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 					} else {
 						if err := addNodeAnnotations(platform, w.Name(), annotations); err != nil {
 							platform.Errorf("failed to add annotations to worker %s: %v", w.Name(), err)
+						}
+						labels := map[string]string{
+							constants.NodePoolLabel: nodeGroup,
+						}
+						if err := addNodeLabels(platform, w.Name(), labels); err != nil {
+							platform.Errorf("failed to add labels to worker: %s: %v", w.Name(), err)
 						}
 					}
 				}
@@ -324,6 +331,26 @@ func addNodeAnnotations(platform *platform.Platform, name string, annotations ma
 
 	for k, v := range annotations {
 		node.Annotations[k] = v
+	}
+
+	if _, err := client.CoreV1().Nodes().Update(node); err != nil {
+		return errors.Wrapf(err, "failed to update node %s", name)
+	}
+	return nil
+}
+
+func addNodeLabels(platform *platform.Platform, name string, labels map[string]string) error {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return errors.Wrap(err, "failed to get clientset")
+	}
+	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrapf(err, "failed to get node %s", name)
+	}
+
+	for k, v := range labels {
+		node.Labels[k] = v
 	}
 
 	if _, err := client.CoreV1().Nodes().Update(node); err != nil {
