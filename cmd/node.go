@@ -31,7 +31,6 @@ func init() {
 			for _, node := range nodes.Items {
 				nodePool, found := node.Labels[constants.NodePoolLabel]
 				if !found {
-					platform.Infof("Node %s does not have %s annotation, skipping ...", node.Name, constants.NodePoolLabel)
 					continue
 				}
 				workerPool, found := platform.Nodes[nodePool]
@@ -49,7 +48,7 @@ func init() {
 					continue
 				}
 
-				platform.Errorf("Node %s annotated !", node.Name)
+				platform.Infof("Node %s annotated", node.Name)
 			}
 		},
 	}
