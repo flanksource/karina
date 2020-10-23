@@ -5,6 +5,7 @@ const PlatformSystem = "platform-system"
 const DockerRuntime = "docker"
 const ContainerdRuntime = "containerd"
 
+const MasterNodeLabel = "node-role.kubernetes.io/master"
 const NodePoolLabel = "karina.flanksource.com/pool"
 
 var PlatformNamespaces = []string{

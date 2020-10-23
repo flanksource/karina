@@ -29,18 +29,25 @@ func init() {
 			}
 
 			for _, node := range nodes.Items {
-				nodePool, found := node.Labels[constants.NodePoolLabel]
-				if !found {
-					continue
-				}
-				workerPool, found := platform.Nodes[nodePool]
-				if !found {
-					platform.Errorf("Node %s has node pool %s which was not found in platform.Nodes", node.Name, nodePool)
-					continue
-				}
-				annotations := workerPool.Annotations
-				for k, v := range annotations {
-					node.Annotations[k] = v
+				_, isMaster := node.Labels[constants.MasterNodeLabel]
+				if isMaster {
+					for k, v := range platform.Master.Annotations {
+						node.Annotations[k] = v
+					}
+				} else {
+					nodePool, found := node.Labels[constants.NodePoolLabel]
+					if !found {
+						continue
+					}
+					workerPool, found := platform.Nodes[nodePool]
+					if !found {
+						platform.Errorf("Node %s has node pool %s which was not found in platform.Nodes", node.Name, nodePool)
+						continue
+					}
+					annotations := workerPool.Annotations
+					for k, v := range annotations {
+						node.Annotations[k] = v
+					}
 				}
 
 				if _, err := clientset.CoreV1().Nodes().Update(&node); err != nil {
