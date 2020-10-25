@@ -11,6 +11,7 @@ import (
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/controller/burnin"
 	"github.com/flanksource/karina/pkg/phases"
+	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/calico"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/phases/nsx"
@@ -89,6 +90,10 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 			return err
 		}
 
+		if err := antrea.Install(platform); err != nil {
+			return err
+		}
+
 		if err := nsx.Install(platform); err != nil {
 			return err
 		}
@@ -106,7 +111,7 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 
 	// master nodes are created sequentially due to race conditions when joining etcd
 	for i := 0; i < platform.Master.Count-len(masters); i++ {
-		_, err := createSecondaryMaster(platform)
+		_, err := createSecondaryMaster(platform, burninPeriod)
 		if err != nil {
 			platform.Warnf("Failed to create secondary master: %v", err)
 		}
@@ -218,7 +223,7 @@ func downscale(platform *platform.Platform) error {
 // creating masters needs to be done sequentially due to race conditions in kubeadm
 var masterLock sync.Mutex
 
-func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
+func createSecondaryMaster(platform *platform.Platform, burninPeriod time.Duration) (types.Machine, error) {
 	// upload control plane certs first
 	if _, err := kubeadm.UploadControlPlaneCerts(platform); err != nil {
 		return nil, err
@@ -246,6 +251,14 @@ func createSecondaryMaster(platform *platform.Platform) (types.Machine, error) {
 	}
 
 	platform.Infof("Provisioned new master: %s\n", cloned.IP())
+
+	if err := waitForNode(platform, cloned.Name(), burninPeriod); err != nil {
+		platform.Errorf("%s did not come up healthy, it may need to be re-provisioned %v", cloned.Name(), err)
+	}
+
+	if err := addNodeAnnotations(platform, cloned.Name(), vm.Annotations); err != nil {
+		return nil, errors.Wrapf(err, "failed to add master %s node annotations", cloned.Name())
+	}
 	return cloned, nil
 }
 
@@ -273,6 +286,10 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 	platform.ResetMasterConnection()
 	if err := platform.WaitFor(); err != nil {
 		return nil, fmt.Errorf("primary master failed to come up %s ", err)
+	}
+
+	if err := addNodeAnnotations(platform, machine.Name(), vm.Annotations); err != nil {
+		return nil, errors.Wrapf(err, "failed to add master %s node annotations", machine.Name())
 	}
 	return machine, nil
 }

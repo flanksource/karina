@@ -39,7 +39,7 @@ func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster,
 	var replacement types.Machine
 	var err error
 	if k8s.IsMasterNode(node) {
-		replacement, err = createSecondaryMaster(platform)
+		replacement, err = createSecondaryMaster(platform, opts.BurninPeriod)
 		if err != nil {
 			return fmt.Errorf("failed to create new secondary master: %v", err)
 		}
