@@ -1,0 +1,239 @@
+apiVersion: templating.flanksource.com/v1
+kind: Template
+metadata:
+  name: postgresql-db
+spec:
+  source:
+    apiVersion: db.flanksource.com/v1
+    kind: PostgresqlDB
+  resources:
+    - apiVersion: acid.zalan.do/v1
+      kind: postgresql
+      metadata:
+        name: postgres-{{.metadata.name}}
+        namespace: postgres-operator
+      spec:
+        additionalVolumes:
+          - mountPath: /opt/extra-queries
+            name: exporter-extra-queries
+            subPath: ""
+            targetContainers:
+              - exporter
+            volumeSource:
+              configMap:
+                name: postgres-exporter-config
+        allowedSourceRanges: null
+        clone: null
+        dockerImage: docker.io/flanksource/spilo:1.6-p2.flanksource
+        enableShmVolume: true
+        env:
+          - name: BACKUP_SCHEDULE
+            value: "*/5 * * * *"
+          - name: USE_WALG_RESTORE
+            value: "true"
+          - name: USE_WALG_BACKUP
+            value: "true"
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: postgres-operator-cluster-environment
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: postgres-operator-cluster-environment
+          - name: AWS_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ENDPOINT
+                name: postgres-operator-cluster-environment
+          - name: AWS_S3_FORCE_PATH_STYLE
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_FORCE_PATH_STYLE
+                name: postgres-operator-cluster-environment
+          - name: WAL_BUCKET_SCOPE_SUFFIX
+          - name: WALG_S3_PREFIX
+            value: "{{.spec.backup.bucket}}"
+          - name: CLONE_WAL_BUCKET_SCOPE_SUFFIX
+            value: /
+        patroni:
+          initdb:
+            data-checksums: "true"
+            encoding: UTF8
+            locale: en_US.UTF-8
+          loop_wait: 10
+          maximum_lag_on_failover: 33554432
+          pg_hba:
+            - hostssl all all 0.0.0.0/0 md5
+            - host    all all 0.0.0.0/0 md5
+          retry_timeout: 10
+          slots: {}
+          synchronous_mode: false
+          synchronous_mode_strict: false
+          ttl: 30
+        podAnnotations: {}
+        postgresql:
+          parameters:
+            log_destination: stderr
+          version: "12"
+        resources:
+          limits:
+            cpu: '{{.spec.cpu | default "1000m"}}'
+            memory: '{{.spec.memory | default "512Mi" }}'
+          requests:
+            cpu: '{{.spec.cpu | default "100m"}}'
+            memory: '{{.spec.memory | default "128Mi" }}'
+        serviceAnnotations: {}
+        sidecars:
+          - env:
+              - name: PG_EXPORTER_WEB_LISTEN_ADDRESS
+                value: :9187
+              - name: DATA_SOURCE_URI
+                value: localhost?sslmode=disable
+              - name: DATA_SOURCE_USER
+                valueFrom:
+                  secretKeyRef:
+                    key: username
+                    name: postgres.postgres-{{.metadata.name}}.credentials
+              - name: DATA_SOURCE_PASS
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    name: postgres.postgres-{{.metadata.name}}.credentials
+              - name: PG_EXPORTER_EXTEND_QUERY_PATH
+                value: /opt/extra-queries/queries.yaml
+            image: docker.io/bitnami/postgres-exporter:0.8.0
+            name: exporter
+            ports:
+              - containerPort: 9187
+                name: exporter
+                protocol: TCP
+            resources:
+              limits:
+                cpu: 200m
+                memory: 128Mi
+              requests:
+                cpu: 10m
+                memory: 128Mi
+        standby: null
+        teamId: postgres
+        tls: null
+        users:
+          app:
+            - createdb
+            - superuser
+        volume:
+          size: '{{ .spec.storage.size | default "20Gi" }}'
+          storageClass: '{{ .spec.storage.storageClass | default "" }}'
+    - apiVersion: batch/v1beta1
+      kind: CronJob
+      metadata:
+        name: "backup-postgres-{{.metadata.name}}"
+        namespace: postgres-operator
+      spec:
+        concurrencyPolicy: Forbid
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          metadata:
+            creationTimestamp: null
+          spec:
+            template:
+              metadata:
+                creationTimestamp: null
+                labels:
+                  application: spilo-logical-backup
+                  cluster-name: "postgres-{{.metadata.name}}"
+              spec:
+                containers:
+                  - env:
+                      - name: POD_NAMESPACE
+                        valueFrom:
+                          fieldRef:
+                            apiVersion: v1
+                            fieldPath: metadata.namespace
+                      - name: PGPASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            key: password
+                            name: "postgres.postgres-{{.metadata.name}}.credentials"
+                      - name: PGHOST
+                        value: postgres-{{.metadata.name}}
+                      - name: AWS_SECRET_ACCESS_KEY
+                        valueFrom:
+                          secretKeyRef:
+                            key: AWS_SECRET_ACCESS_KEY
+                            name: secrets
+                      - name: PGPORT
+                        value: "5432"
+                      - name: AWS_ACCESS_KEY_ID
+                        valueFrom:
+                          secretKeyRef:
+                            key: AWS_ACCESS_KEY_ID
+                            name: postgres-operator-cluster-environment
+                      - name: AWS_SECRET_ACCESS_KEY
+                        valueFrom:
+                          secretKeyRef:
+                            key: AWS_SECRET_ACCESS_KEY
+                            name: postgres-operator-cluster-environment
+                      - name: LOGICAL_BACKUP_S3_ENDPOINT
+                        valueFrom:
+                          secretKeyRef:
+                            key: AWS_ENDPOINT
+                            name: postgres-operator-cluster-environment
+                      - name: AWS_S3_FORCE_PATH_STYLE
+                        valueFrom:
+                          secretKeyRef:
+                            key: AWS_S3_FORCE_PATH_STYLE
+                            name: postgres-operator-cluster-environment
+                      - name: LOGICAL_BACKUP_S3_REGION
+                        valueFrom:
+                          secretKeyRef:
+                            key: AWS_REGION
+                            name: postgres-operator-cluster-environment
+                      - name: SCOPE
+                        value: postgres-{{.metadata.name}}
+                      - name: PGSSLMODE
+                        value: prefer
+                      - name: PGDATABASE
+                        value: postgres
+                      - name: LOGICAL_BACKUP_S3_BUCKET
+                        value: "{{.spec.backup.bucket}}"
+                      - name: LOGICAL_BACKUP_S3_SSE
+                        value: AES256
+                      - name: PG_VERSION
+                        value: "12"
+                      - name: PGUSER
+                        value: postgres
+                      - name: CLUSTER_NAME_LABEL
+                        value: cluster-name
+                    image: docker.io/flanksource/postgres-backups:0.1.5
+                    imagePullPolicy: IfNotPresent
+                    name: backup-postgres-{{.metadata.name}}
+                    ports:
+                      - containerPort: 8080
+                        protocol: TCP
+                      - containerPort: 5432
+                        protocol: TCP
+                      - containerPort: 8008
+                        protocol: TCP
+                    resources:
+                      limits:
+                        cpu: 500m
+                        memory: 512Mi
+                      requests:
+                        cpu: 10m
+                        memory: 128Mi
+                    terminationMessagePath: /dev/termination-log
+                    terminationMessagePolicy: File
+                dnsPolicy: ClusterFirst
+                restartPolicy: Never
+                schedulerName: default-scheduler
+                securityContext: {}
+                serviceAccount: postgres-pod
+                serviceAccountName: postgres-pod
+                terminationGracePeriodSeconds: 30
+        schedule: '{{.spec.backup.schedule | default "0 2 * * *" }}'
+        successfulJobsHistoryLimit: 3
+        suspend: false

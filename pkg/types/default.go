@@ -9,6 +9,9 @@ func DefaultPlatformConfig() PlatformConfig {
 		CertManager: CertManager{
 			Version: "v0.12.0",
 		},
+		TemplateOperator: TemplateOperator{
+			Disabled: Disabled{Version: "v0.1.0"},
+		},
 		Ldap: &Ldap{
 			GroupObjectClass: "group",
 			GroupNameAttr:    "name",

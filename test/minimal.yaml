@@ -32,6 +32,8 @@ versions:
   ketall: v1.3.0
   apacheds: 0.7.0
   kind: 0.9.0
+templateOperator:
+  version: v0.1.0
 podSubnet: 10.200.0.0/16
 serviceSubnet: 10.201.0.0/16
 platformOperator:
