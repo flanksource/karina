@@ -4,6 +4,7 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"time"
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
@@ -22,6 +23,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	k8s.TestNamespace(client, "cert-manager", test)
 
 	if platform.Nginx == nil || !platform.Nginx.Disabled {
+		p.WaitForNamespace("ingress-nginx", 60*time.Second)
 		k8s.TestNamespace(client, "ingress-nginx", test)
 	}
 }
