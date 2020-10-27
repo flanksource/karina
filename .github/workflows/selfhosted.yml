@@ -23,12 +23,6 @@ jobs:
         with:
           name: karina
           path: ./.bin/karina
-  lint:
-    runs-on: [self-hosted]
-    steps:
-      - uses: actions/checkout@main
-      - run: go run test/linter/main.go
-      - run: ./scripts/golint.sh
   test:
     runs-on: [self-hosted]
     if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
