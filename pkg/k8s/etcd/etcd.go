@@ -41,6 +41,8 @@ type Etcd interface {
 	MemberUpdate(ctx context.Context, id uint64, peerURLs []string) (*clientv3.MemberUpdateResponse, error)
 	MoveLeader(ctx context.Context, id uint64) (*clientv3.MoveLeaderResponse, error)
 	Status(ctx context.Context, endpoint string) (*clientv3.StatusResponse, error)
+	Get(ctx context.Context, key string) (*clientv3.GetResponse, error)
+	Put(ctx context.Context, key, value string, opts ...clientv3.OpOption) (*clientv3.PutResponse, error)
 }
 
 // Client wraps an etcd client formatting its output to something more consumable.

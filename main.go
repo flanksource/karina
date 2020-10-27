@@ -57,6 +57,7 @@ func main() {
 		cmd.Test,
 		cmd.TerminateNodes,
 		cmd.TerminateOrphans,
+		cmd.Undelete,
 		cmd.Upgrade,
 		cmd.Vault,
 	)
