@@ -1,6 +1,8 @@
 package configmapreloader
 
 import (
+	"time"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/k8s"
@@ -11,7 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var watchTimeout = int64(30) // Wait for deployment to update only N seconds
+var watchTimeout = int64(180) // Wait for deployment to update only N seconds
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
@@ -19,6 +21,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("configmap-reloader", "configmap-reloader not configured")
 		return
 	}
+	p.WaitForNamespace(constants.PlatformSystem, 180*time.Second)
 	k8s.TestNamespace(client, constants.PlatformSystem, test)
 	if !p.E2E {
 		return
