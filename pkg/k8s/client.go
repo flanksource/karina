@@ -1059,8 +1059,6 @@ func (c *Client) UndeleteCRD(kind, name, namespace string) error {
 		return perrors.Wrap(err, "failed to get api resource")
 	}
 
-	fmt.Printf("Found API resource: name: %s kind %s group %s version %s\n", apiResource.Name, apiResource.Kind, apiResource.Group, apiResource.Version)
-
 	etcdClient, err := c.GetEtcdClient(ctx)
 	if err != nil {
 		return perrors.Wrap(err, "failed to get etcd client")
@@ -1091,6 +1089,113 @@ func (c *Client) UndeleteCRD(kind, name, namespace string) error {
 
 	object.SetDeletionTimestamp(nil)
 	object.SetDeletionGracePeriodSeconds(nil)
+
+	fixedResource, err := json.Marshal(object.Object)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode json object")
+	}
+	_, err = etcdClient.EtcdClient.Put(ctx, key, string(fixedResource))
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
+// Orphan an object by removing ownerReferences
+func (c *Client) Orphan(kind, name, namespace string, object types.RuntimeObjectWithMetadata) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s", apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	protoSerializer, err := c.decodeProtobufResource(kind, object, resp.Kvs[0].Value)
+	if err != nil {
+		return perrors.Wrap(err, "failed to decode protobuf resource")
+	}
+
+	objectMeta := object.GetObjectMeta()
+	ownerReferences := objectMeta.GetOwnerReferences()
+	if len(ownerReferences) == 0 {
+		return fmt.Errorf("%s [%s] has no ownerReferences", apiResource.Kind, name)
+	}
+
+	objectMeta.SetOwnerReferences([]metav1.OwnerReference{})
+
+	var fixedResource bytes.Buffer
+	// Encode fixed resource to protobuf value
+	err = protoSerializer.Encode(object, &fixedResource)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode protobuf")
+	}
+
+	_, err = etcdClient.EtcdClient.Put(ctx, key, fixedResource.String())
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
+// Orphan an object by removing ownerReferences
+func (c *Client) OrphanCRD(kind, name, namespace string) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s/%s", apiResource.Group, apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Group, apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	object := &unstructured.Unstructured{}
+	if err := json.Unmarshal(resp.Kvs[0].Value, &object.Object); err != nil {
+		return perrors.Wrap(err, "failed to unmarshal json crd")
+	}
+
+	if len(object.GetOwnerReferences()) == 0 {
+		return fmt.Errorf("%s [%s] has no ownerReferences", apiResource.Kind, name)
+	}
+
+	object.SetOwnerReferences([]metav1.OwnerReference{})
 
 	fixedResource, err := json.Marshal(object.Object)
 	if err != nil {
@@ -1162,8 +1267,13 @@ func (c *Client) GetAPIResource(name string) (*metav1.APIResource, error) {
 
 			if resource.Name == name || singularName == name {
 				parts := strings.Split(list.GroupVersion, "/")
-				resource.Group = parts[0]
-				resource.Version = parts[1]
+				if len(parts) >= 2 {
+					resource.Group = parts[0]
+					resource.Version = parts[1]
+				} else {
+					resource.Group = ""
+					resource.Version = parts[0]
+				}
 				return &resource, nil
 			}
 		}
