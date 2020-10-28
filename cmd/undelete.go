@@ -18,11 +18,13 @@ var Undelete = &cobra.Command{
 
 		object, found := constants.RuntimeObjects[kind]
 		if !found {
-			platform.Fatalf("kind %s not supported", kind)
-		}
-
-		if err := platform.Undelete(kind, name, namespace, object); err != nil {
-			platform.Fatalf("failed to undelete %s %s in namespace %s: %v", kind, name, namespace, err)
+			if err := platform.UndeleteCRD(kind, name, namespace); err != nil {
+				platform.Fatalf("failed to undelete %s %s in namespace %s: %v", kind, name, namespace, err)
+			}
+		} else {
+			if err := platform.Undelete(kind, name, namespace, object); err != nil {
+				platform.Fatalf("failed to undelete %s %s in namespace %s: %v", kind, name, namespace, err)
+			}
 		}
 	},
 }
