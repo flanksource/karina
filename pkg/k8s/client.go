@@ -1145,7 +1145,6 @@ func (c *Client) GetAPIResource(name string) (*metav1.APIResource, error) {
 		return nil, perrors.Wrap(err, "failed to get rest mapper")
 	}
 
-	clientset.ServerGroupsAndResources()
 	resources, err := clientset.ServerResources()
 	if err != nil {
 		return nil, perrors.Wrap(err, "failed to get server resources")
@@ -1969,7 +1968,7 @@ func (c *Client) GetHealth() Health {
 	return health
 }
 
-func (c *Client) decodeProtobufResource(kind string, object types.RuntimeObjectWithMetadata, message []byte) (*protobuf.Serializer, error) {
+func (c *Client) decodeProtobufResource(kind string, object runtime.Object, message []byte) (*protobuf.Serializer, error) {
 	rm, err := c.GetRestMapper()
 	if err != nil {
 		return nil, perrors.Wrap(err, "failed to get rest mapper")
