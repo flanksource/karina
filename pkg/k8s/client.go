@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"net"
@@ -1049,6 +1050,60 @@ func (c *Client) Undelete(kind, name, namespace string, object types.RuntimeObje
 	return nil
 }
 
+// Undelete an object by removing terminationTimestamp and gracePeriod
+func (c *Client) UndeleteCRD(kind, name, namespace string) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	fmt.Printf("Found API resource: name: %s kind %s group %s version %s\n", apiResource.Name, apiResource.Kind, apiResource.Group, apiResource.Version)
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s/%s", apiResource.Group, apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Group, apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	object := &unstructured.Unstructured{}
+	if err := json.Unmarshal(resp.Kvs[0].Value, &object.Object); err != nil {
+		return perrors.Wrap(err, "failed to unmarshal json crd")
+	}
+
+	if object.GetDeletionTimestamp() == nil {
+		return fmt.Errorf("%s [%s] is not in terminating status", apiResource.Kind, name)
+	}
+
+	object.SetDeletionTimestamp(nil)
+	object.SetDeletionGracePeriodSeconds(nil)
+
+	fixedResource, err := json.Marshal(object.Object)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode json object")
+	}
+	_, err = etcdClient.EtcdClient.Put(ctx, key, string(fixedResource))
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
 func (c *Client) GetEtcdClient(ctx context.Context) (*etcd.Client, error) {
 	clientset, err := c.GetClientset()
 	if err != nil {
@@ -1090,6 +1145,7 @@ func (c *Client) GetAPIResource(name string) (*metav1.APIResource, error) {
 		return nil, perrors.Wrap(err, "failed to get rest mapper")
 	}
 
+	clientset.ServerGroupsAndResources()
 	resources, err := clientset.ServerResources()
 	if err != nil {
 		return nil, perrors.Wrap(err, "failed to get server resources")
@@ -1097,15 +1153,18 @@ func (c *Client) GetAPIResource(name string) (*metav1.APIResource, error) {
 
 	for _, list := range resources {
 		for _, resource := range list.APIResources {
-			if resource.Name == name {
-				return &resource, nil
+			var singularName string
+			if resource.Name != name {
+				singularName, err = rm.ResourceSingularizer(resource.Name)
+				if err != nil {
+					continue
+				}
 			}
 
-			singularName, err := rm.ResourceSingularizer(resource.Name)
-			if err != nil {
-				continue
-			}
-			if singularName == name {
+			if resource.Name == name || singularName == name {
+				parts := strings.Split(list.GroupVersion, "/")
+				resource.Group = parts[0]
+				resource.Version = parts[1]
 				return &resource, nil
 			}
 		}
