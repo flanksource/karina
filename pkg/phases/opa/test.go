@@ -54,11 +54,17 @@ func TestOPA(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	client, _ := p.GetClientset()
+	client, err := p.GetClientset()
+
+	if err != nil {
+		test.Failf(Namespace, "Could not connect to Platform client: %v", err)
+		return
+	}
+
 	k8s.TestNamespace(client, Namespace, test)
 	configs, err := client.CoreV1().ConfigMaps(Namespace).List(metav1.ListOptions{})
 	if err != nil {
-		test.Failf(Namespace, "failed to list policies via configmap: %v", err)
+		test.Failf(Namespace, "failed to list policies via configmap: %s", err)
 	} else {
 		for _, cm := range configs.Items {
 			status, ok := cm.Annotations["openpolicyagent.org/policy-status"]
