@@ -36,11 +36,13 @@ func init() {
 	flag.StringVar(&field, "f", "", "Field selector")
 	api := clientset.CoreV1()
 
-	pods, _ := clientset.CoreV1().Pods("kubernetes").List(metav1.ListOptions{FieldSelector: "metadata.name=kubernetes"})
+	pods, _ := clientset.CoreV1().Pods("").List(metav1.ListOptions{})
 	for _, pod := range pods.Items {
-		fmt.Println(pod.Name, pod.Status)
+	//	if pod.Status == "Running"
+		fmt.Println(pod.Name, *pod.Status.ContainerStatuses[0].Started) // this struct used for testing running or not
+		break
 	}
-
+	fmt.Printf("ended!!!\n")
 	os.Exit(31)
 
 	listOptions := metav1.ListOptions{
