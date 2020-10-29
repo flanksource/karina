@@ -2,19 +2,19 @@ package provision
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
-
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 
-	"gopkg.in/flanksource/yaml.v3"
-
-	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
-
+	"github.com/flanksource/commons/exec"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/pkg/errors"
+	"gopkg.in/flanksource/yaml.v3"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kindapi "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 )
 
 // KindCluster provisions a new Kind cluster
@@ -151,7 +151,72 @@ func KindCluster(p *platform.Platform) error {
 	}
 
 	// delete the default storageclass created by kind as we install our own
-	return client.StorageV1().StorageClasses().Delete("standard", nil)
+	if err := client.StorageV1().StorageClasses().Delete("standard", nil); err != nil {
+		return err
+	}
+
+	if err := createEtcdCertificateSecret(p); err != nil {
+		return errors.Wrap(err, "failed to create etcd-certs secret")
+	}
+	return nil
+}
+
+func createEtcdCertificateSecret(p *platform.Platform) error {
+	podName := fmt.Sprintf("etcd-%s-control-plane", p.Name)
+	if err := p.WaitForPod("kube-system", podName, 3*time.Minute, v1.PodRunning); err != nil {
+		return errors.Wrapf(err, "failed to wait for pod %s to be running", podName)
+	}
+
+	nodeName := fmt.Sprintf("%s-control-plane", p.Name)
+	caCrtFile, err := ioutil.TempFile("", "ca.crt")
+	if err != nil {
+		return errors.Wrap(err, "failed to create ca.crt temp file")
+	}
+	defer os.Remove(caCrtFile.Name())
+	caKeyFile, err := ioutil.TempFile("", "ca.key")
+	if err != nil {
+		return errors.Wrap(err, "failed to create ca.key temp file")
+	}
+	defer os.Remove(caKeyFile.Name())
+
+	cmd := fmt.Sprintf("docker cp %s:/etc/kubernetes/pki/etcd/ca.crt %s", nodeName, caCrtFile.Name())
+	if err := exec.Execf(cmd); err != nil {
+		return errors.Wrap(err, "failed to copy ca.crt")
+	}
+	cmd = fmt.Sprintf("docker cp %s:/etc/kubernetes/pki/etcd/ca.key %s", nodeName, caKeyFile.Name())
+	if err := exec.Execf(cmd); err != nil {
+		return errors.Wrap(err, "failed to copy ca.key")
+	}
+
+	caCrt, err := ioutil.ReadFile(caCrtFile.Name())
+	if err != nil {
+		return errors.Wrap(err, "failed to read ca.crt file")
+	}
+	caKey, err := ioutil.ReadFile(caKeyFile.Name())
+	if err != nil {
+		return errors.Wrap(err, "failed to read ca.key file")
+	}
+
+	secret := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "etcd-certs",
+			Namespace: metav1.NamespaceSystem,
+		},
+		Data: map[string][]byte{
+			"tls.crt": caCrt,
+			"tls.key": caKey,
+		},
+	}
+
+	clientset, err := p.GetClientset()
+	if err != nil {
+		return errors.Wrap(err, "failed to get clientset")
+	}
+	if _, err := clientset.CoreV1().Secrets(metav1.NamespaceSystem).Create(secret); err != nil {
+		return errors.Wrapf(err, "failed to create secret %s in namespace %s", secret.Name, secret.Namespace)
+	}
+	return nil
 }
 
 // createKubeAdmPatches reads a Platform config, creates a new ClusterConfiguration from it and
