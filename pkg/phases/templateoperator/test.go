@@ -12,6 +12,10 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	client, _ := p.GetClientset()
+	client, err := p.GetClientset()
+	if err != nil {
+		test.Failf(Namespace, "Could not connect to Platform client: %v", err)
+		return
+	}
 	k8s.TestNamespace(client, Namespace, test)
 }
