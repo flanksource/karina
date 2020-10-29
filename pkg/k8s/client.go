@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"net"
@@ -29,8 +30,10 @@ import (
 	"github.com/flanksource/karina/pkg/k8s/etcd"
 	"github.com/flanksource/karina/pkg/k8s/kustomize"
 	"github.com/flanksource/karina/pkg/k8s/proxy"
+	"github.com/flanksource/karina/pkg/types"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
+	perrors "github.com/pkg/errors"
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -42,6 +45,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer/protobuf"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cliresource "k8s.io/cli-runtime/pkg/resource"
@@ -989,6 +993,294 @@ func (c *Client) ForceDeleteNamespace(ns string, timeout time.Duration) error {
 	return nil
 }
 
+// Undelete an object by removing terminationTimestamp and gracePeriod
+func (c *Client) Undelete(kind, name, namespace string, object types.RuntimeObjectWithMetadata) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s", apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	protoSerializer, err := c.decodeProtobufResource(kind, object, resp.Kvs[0].Value)
+	if err != nil {
+		return perrors.Wrap(err, "failed to decode protobuf resource")
+	}
+
+	objectMeta := object.GetObjectMeta()
+	if objectMeta.GetDeletionTimestamp() == nil {
+		return fmt.Errorf("%s [%s] is not in terminating status", apiResource.Kind, name)
+	}
+
+	objectMeta.SetDeletionTimestamp(nil)
+	objectMeta.SetDeletionGracePeriodSeconds(nil)
+
+	var fixedResource bytes.Buffer
+	// Encode fixed resource to protobuf value
+	err = protoSerializer.Encode(object, &fixedResource)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode protobuf")
+	}
+
+	_, err = etcdClient.EtcdClient.Put(ctx, key, fixedResource.String())
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
+// Undelete an object by removing terminationTimestamp and gracePeriod
+func (c *Client) UndeleteCRD(kind, name, namespace string) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s/%s", apiResource.Group, apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Group, apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	object := &unstructured.Unstructured{}
+	if err := json.Unmarshal(resp.Kvs[0].Value, &object.Object); err != nil {
+		return perrors.Wrap(err, "failed to unmarshal json crd")
+	}
+
+	if object.GetDeletionTimestamp() == nil {
+		return fmt.Errorf("%s [%s] is not in terminating status", apiResource.Kind, name)
+	}
+
+	object.SetDeletionTimestamp(nil)
+	object.SetDeletionGracePeriodSeconds(nil)
+
+	fixedResource, err := json.Marshal(object.Object)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode json object")
+	}
+	_, err = etcdClient.EtcdClient.Put(ctx, key, string(fixedResource))
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
+// Orphan an object by removing ownerReferences
+func (c *Client) Orphan(kind, name, namespace string, object types.RuntimeObjectWithMetadata) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s", apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	protoSerializer, err := c.decodeProtobufResource(kind, object, resp.Kvs[0].Value)
+	if err != nil {
+		return perrors.Wrap(err, "failed to decode protobuf resource")
+	}
+
+	objectMeta := object.GetObjectMeta()
+	ownerReferences := objectMeta.GetOwnerReferences()
+	if len(ownerReferences) == 0 {
+		return fmt.Errorf("%s [%s] has no ownerReferences", apiResource.Kind, name)
+	}
+
+	objectMeta.SetOwnerReferences([]metav1.OwnerReference{})
+
+	var fixedResource bytes.Buffer
+	// Encode fixed resource to protobuf value
+	err = protoSerializer.Encode(object, &fixedResource)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode protobuf")
+	}
+
+	_, err = etcdClient.EtcdClient.Put(ctx, key, fixedResource.String())
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
+// Orphan an object by removing ownerReferences
+func (c *Client) OrphanCRD(kind, name, namespace string) error {
+	ctx := context.Background()
+
+	apiResource, err := c.GetAPIResource(kind)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get api resource")
+	}
+
+	etcdClient, err := c.GetEtcdClient(ctx)
+	if err != nil {
+		return perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	var key string
+	if apiResource.Namespaced {
+		key = fmt.Sprintf("/registry/%s/%s/%s/%s", apiResource.Group, apiResource.Name, namespace, name)
+	} else {
+		key = fmt.Sprintf("/registry/%s/%s/%s", apiResource.Group, apiResource.Name, name)
+	}
+	resp, err := etcdClient.EtcdClient.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return perrors.Errorf("no results found for key %s", key)
+	}
+
+	object := &unstructured.Unstructured{}
+	if err := json.Unmarshal(resp.Kvs[0].Value, &object.Object); err != nil {
+		return perrors.Wrap(err, "failed to unmarshal json crd")
+	}
+
+	if len(object.GetOwnerReferences()) == 0 {
+		return fmt.Errorf("%s [%s] has no ownerReferences", apiResource.Kind, name)
+	}
+
+	object.SetOwnerReferences([]metav1.OwnerReference{})
+
+	fixedResource, err := json.Marshal(object.Object)
+	if err != nil {
+		return perrors.Wrap(err, "failed to encode json object")
+	}
+	_, err = etcdClient.EtcdClient.Put(ctx, key, string(fixedResource))
+	if err != nil {
+		return perrors.Wrap(err, "failed to update resource in etcd")
+	}
+
+	return nil
+}
+
+func (c *Client) GetEtcdClient(ctx context.Context) (*etcd.Client, error) {
+	clientset, err := c.GetClientset()
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get clientset")
+	}
+	secret, err := clientset.CoreV1().Secrets("kube-system").Get("etcd-certs", metav1.GetOptions{})
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get secret etcd-certs in namespace kube-system")
+	}
+	cert, err := certs.DecodeCertificate(secret.Data["tls.crt"], secret.Data["tls.key"])
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to decode etcd certificates")
+	}
+	etcdClientGenerator, err := c.GetEtcdClientGenerator(cert)
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get etcd client generator")
+	}
+
+	masterNode, err := c.GetMasterNode()
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get master node")
+	}
+	etcdClient, err := etcdClientGenerator.ForNode(ctx, masterNode)
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get etcd client")
+	}
+
+	return etcdClient, nil
+}
+
+func (c *Client) GetAPIResource(name string) (*metav1.APIResource, error) {
+	clientset, err := c.GetClientset()
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get clientset")
+	}
+
+	rm, err := c.GetRestMapper()
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get rest mapper")
+	}
+
+	resources, err := clientset.ServerResources()
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get server resources")
+	}
+
+	for _, list := range resources {
+		for _, resource := range list.APIResources {
+			var singularName string
+			if resource.Name != name {
+				singularName, err = rm.ResourceSingularizer(resource.Name)
+				if err != nil {
+					continue
+				}
+			}
+
+			if resource.Name == name || singularName == name {
+				parts := strings.Split(list.GroupVersion, "/")
+				if len(parts) >= 2 {
+					resource.Group = parts[0]
+					resource.Version = parts[1]
+				} else {
+					resource.Group = ""
+					resource.Version = parts[0]
+				}
+				return &resource, nil
+			}
+		}
+	}
+
+	return nil, perrors.Errorf("no resource with name %s found", name)
+}
+
 func (c *Client) HasSecret(ns, name string) bool {
 	client, err := c.GetClientset()
 	if err != nil {
@@ -1783,4 +2075,34 @@ func (c *Client) GetHealth() Health {
 		}
 	}
 	return health
+}
+
+func (c *Client) decodeProtobufResource(kind string, object runtime.Object, message []byte) (*protobuf.Serializer, error) {
+	rm, err := c.GetRestMapper()
+	if err != nil {
+		return nil, perrors.Wrap(err, "failed to get rest mapper")
+	}
+	gvks, err := rm.KindsFor(schema.GroupVersionResource{
+		Resource: kind,
+	})
+	if err != nil {
+		return nil, perrors.Wrapf(err, "failed to get kind for %s", kind)
+	}
+	if len(gvks) == 0 {
+		return nil, perrors.Errorf("no gvks returned for kind %s", kind)
+	}
+
+	for _, gvk := range gvks {
+		runtimeScheme := runtime.NewScheme()
+		runtimeScheme.AddKnownTypeWithName(gvk, object)
+		protoSerializer := protobuf.NewSerializer(runtimeScheme, runtimeScheme)
+
+		// Decode protobuf value to Go pv struct
+		_, _, err = protoSerializer.Decode(message, &gvk, object)
+		if err == nil {
+			return protoSerializer, nil
+		}
+	}
+
+	return nil, perrors.Errorf("failed to decode protobuf message into runtime object, failed to find any suitable gvk")
 }
