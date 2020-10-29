@@ -1,10 +1,11 @@
 package base
 
 import (
+	"time"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
-	"time"
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
