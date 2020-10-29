@@ -94,19 +94,35 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	client, err := api.NewClient(api.Config{
-		Address:      fmt.Sprintf("https://prometheus.%s", p.Domain),
-		RoundTripper: http.DefaultTransport,
-	})
-	if err != nil {
-		test.Failf("prometheus", "Failed to get client to connect to Prometheus")
-		return
+	startTime := time.Now()
+	var client api.Client
+	var err error
+	for {
+		client, err = api.NewClient(api.Config{
+			Address:      fmt.Sprintf("https://prometheus.%s", p.Domain),
+			RoundTripper: http.DefaultTransport,
+		})
+		if err == nil {
+			break
+		}
+
+		if time.Since(startTime) > 180*time.Second {
+			test.Failf("prometheus", "Timeout connecting to Prometheus: %s", err)
+			return
+		}
 	}
 	promAPI := v1.NewAPI(client)
-	targets, err := promAPI.Targets(context.Background())
-	if err != nil {
-		test.Failf("prometheus", "Failed to get targets: %v", err)
-		return
+	var targets v1.TargetsResult
+	startTime = time.Now()
+	for {
+		targets, err = promAPI.Targets(context.Background())
+		if err == nil {
+			break
+		}
+		if time.Since(startTime) > 60*time.Second {
+			test.Failf("prometheus", "Failed to get targets: %v", err)
+			return
+		}
 	}
 	if targets.Active == nil {
 		test.Failf("NoActiveTargets", "No active targets found in Prometheus")
@@ -121,6 +137,7 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 			test.Passf(targetEndpointName, "%s (%s) endpoint is up", targetEndpointName, targetEndpointAddress)
 		}
 	}
+
 	alerts, err := promAPI.Alerts(context.Background())
 	if err != nil {
 		test.Errorf("pullMetric: failed to get alerts")
