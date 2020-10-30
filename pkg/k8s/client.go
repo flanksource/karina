@@ -272,17 +272,17 @@ func (c *Client) EvictNode(nodeName string) error {
 		}
 	}
 
-	volumeAttachments, err := client.StorageV1().VolumeAttachments().List(metav1.ListOptions{
-		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String(),
-	})
+	volumeAttachments, err := client.StorageV1().VolumeAttachments().List(metav1.ListOptions{})
 
 	if err != nil {
 		return err
 	}
 
 	for _, va := range volumeAttachments.Items {
-		if err := c.RemoveVolumeAttachment(va); err != nil {
-			return err
+		if va.Spec.NodeName == nodeName {
+			if err := c.RemoveVolumeAttachment(va); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -514,6 +514,8 @@ func (c *Client) RemoveVolumeAttachment(va storagev1.VolumeAttachment) error {
 			return fmt.Errorf("failed to remove finalizers from volume attachment %s: %v", va.Name, err)
 		}
 	}
+
+	c.Infof("Removing volume attachment %s", va.Name)
 
 	if err := volumeAPI.Delete(va.Name, nil); err != nil {
 		return fmt.Errorf("failed to delete volume attachment %s: %v", va.Name, err)
