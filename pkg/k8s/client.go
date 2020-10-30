@@ -37,6 +37,7 @@ import (
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
+	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -169,7 +170,14 @@ func (c *Client) Drain(nodeName string, timeout time.Duration) error {
 	if err := c.Cordon(nodeName); err != nil {
 		return fmt.Errorf("error cordoning %s: %v", nodeName, err)
 	}
-	return c.EvictNode(nodeName)
+
+	if err := backoff(func() error {
+		return c.EvictNode(nodeName)
+	}, c.Logger, nil); err != nil {
+		return fmt.Errorf("failed to evict node %s: %v", nodeName, err)
+	}
+
+	return nil
 }
 
 func (c *Client) EvictPod(pod v1.Pod) error {
@@ -263,6 +271,21 @@ func (c *Client) EvictNode(nodeName string) error {
 			return err
 		}
 	}
+
+	volumeAttachments, err := client.StorageV1().VolumeAttachments().List(metav1.ListOptions{
+		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, va := range volumeAttachments.Items {
+		if err := c.RemoveVolumeAttachment(va); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -474,6 +497,29 @@ func (c *Client) GetConfigMap(namespace, name string) *map[string]string {
 		return nil
 	}
 	return &cm.Data
+}
+
+// Remove volume attachment
+func (c *Client) RemoveVolumeAttachment(va storagev1.VolumeAttachment) error {
+	k8s, err := c.GetClientset()
+	if err != nil {
+		return fmt.Errorf("failed to get clientset: %v", err)
+	}
+
+	volumeAPI := k8s.StorageV1().VolumeAttachments()
+
+	if len(va.Finalizers) > 0 {
+		va.Finalizers = []string{}
+		if _, err := volumeAPI.Update(&va); err != nil {
+			return fmt.Errorf("failed to remove finalizers from volume attachment %s: %v", va.Name, err)
+		}
+	}
+
+	if err := volumeAPI.Delete(va.Name, nil); err != nil {
+		return fmt.Errorf("failed to delete volume attachment %s: %v", va.Name, err)
+	}
+
+	return nil
 }
 
 func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
