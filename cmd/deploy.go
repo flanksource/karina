@@ -112,6 +112,10 @@ func init() {
 		Use: "phases",
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
+			if _, err := p.GetClientset(); err != nil {
+				log.Fatalf("Failed to connect to platform, aborting deployment: %s", err)
+				os.Exit(1)
+			}
 			// we track the failure status, and continue on failure to allow degraded operations
 			failed := false
 			// first deploy strictly ordered phases, these phases are often dependencies for other phases
