@@ -179,3 +179,17 @@ func (e *EtcdBackoffAdapter) MoveLeader(ctx context.Context, id uint64) (*client
 	})
 	return response, err
 }
+
+func (e *EtcdBackoffAdapter) Get(ctx context.Context, key string) (*clientv3.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, e.Timeout)
+	defer cancel()
+
+	return e.EtcdClient.Get(ctx, key)
+}
+
+func (e *EtcdBackoffAdapter) Put(ctx context.Context, key string, val string, opts ...clientv3.OpOption) (*clientv3.PutResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, e.Timeout)
+	defer cancel()
+
+	return e.EtcdClient.Put(ctx, key, val, opts...)
+}
