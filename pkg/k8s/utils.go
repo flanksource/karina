@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/logger"
 	log "github.com/sirupsen/logrus"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/wait"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -336,4 +338,29 @@ func HasTaint(node v1.Node, name string) bool {
 		}
 	}
 	return false
+}
+
+func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) error {
+	var returnErr *error
+	if backoffOpts == nil {
+		backoffOpts = &wait.Backoff{
+			Duration: 500 * time.Millisecond,
+			Factor:   2.0,
+			Steps:    7,
+		}
+	}
+
+	_ = wait.ExponentialBackoff(*backoffOpts, func() (bool, error) {
+		err := fn()
+		if err == nil {
+			return true, nil
+		}
+		log.Warnf("retrying after error: %v", err)
+		returnErr = &err
+		return false, nil
+	})
+	if returnErr != nil {
+		return *returnErr
+	}
+	return nil
 }
