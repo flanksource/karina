@@ -431,6 +431,7 @@ func (c *Client) GetRESTConfig() (*rest.Config, error) {
 		return c.restConfig, nil
 	}
 	data, err := c.GetKubeConfigBytes()
+
 	if err != nil {
 		return nil, fmt.Errorf("getRESTConfig: failed to get kubeconfig: %v", err)
 	}
