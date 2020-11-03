@@ -1,5 +1,7 @@
 build/
+build-tools*
 .bin/
+.ref/
 .kind/
 .go/
 *_cert.yaml

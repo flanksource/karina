@@ -1,0 +1,85 @@
+name: Upgrade E2E
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "docs/**"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - "docs/**"
+
+jobs:
+  binary:
+    runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:0.6
+    steps:
+      - uses: actions/checkout@main
+      - run: make pack linux
+      - uses: actions/upload-artifact@v2
+        with:
+          name: karina
+          path: ./.bin/karina
+  test:
+    runs-on: ubuntu-latest
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.18.6
+        suite:
+          - minimal
+        include:
+          - k8s: v1.17.5
+            suite: minimal
+          - k8s: v1.17.5
+            suite: minimal-antrea
+          - k8s: v1.17.5
+            suite: monitoring
+          - k8s: v1.16.9
+            suite: minimal
+          - k8s: v1.16.9
+            suite: monitoring
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
+      - name: Run upgrade testing script
+        env:
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+          REFERENCE_VERSION: v0.20.4
+        run: ./test/upgrade.sh
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
+          path: test-results/
+      - name: Upload snapshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/snapshot.zip
+      - name: Generate Kind logs
+        if: failure()
+        run: |
+          mkdir -p artifacts/kind-logs
+          .bin/kind export logs --name=upgrade-test artifacts/kind-logs
+          tar -cf artifacts/kind-logs/upgrade-${{matrix.suite}}-${{matrix.k8s}}.tar artifacts/kind-logs/*
+      - name: Upload Kind logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: upgrade-${{matrix.k8s}}-${{matrix.suite}}.tar
+          path: artifacts/kind-logs
