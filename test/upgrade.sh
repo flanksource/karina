@@ -63,27 +63,35 @@ fi
 
 if [[ "$failed" = false ]]; then
     echo "Upgrade Test Start"
+    failed=false
     export PLATFORM_CONFIG=test/$SUITE.yaml
 
     $BIN version
 
-    $BIN deploy phases --crds --base --stubs --dex --calico --antrea --minio -v -e name=upgrade-test
+    if ! $BIN deploy phases --crds --base --stubs --dex --calico --antrea --minio -v -e name=upgrade-test; then
+      failed=true
+    fi
 
     [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
 
     # wait for the base deployment with stubs to come up healthy
-    $BIN test phases --base --stubs --minio  --wait 120 --progress=false -e name=upgrade-test
+    if ! $BIN test phases --base --stubs --minio  --wait 120 --progress=false -e name=upgrade-test; then
+      failed=true
+    fi
 
     # deploy the OPA bundle to the Minio instance for use by OPA
     $BIN opa deploy-bundle test/opa/bundles/automobile.tar.gz -e name=upgrade-test
 
-    $BIN deploy all -v -e name=upgrade-test
+    if ! $BIN deploy all -v -e name=upgrade-test; then
+      failed=true
+    fi
 
     # wait for up to 4 minutes, rerunning tests if they fail
     # this allows for all resources to reconcile and images to finish downloading etc..
-    $BIN test all -v --wait 300 --progress=false -e name=upgrade-test
 
-    failed=false
+    if ! $BIN test all -v --wait 300 --progress=false -e name=upgrade-test; then
+      failed=true
+    fi
 
     # E2E do not use --wait at the run level, if needed each individual test implements
     # its own wait. e2e tests should always pass once the non e2e have passed
