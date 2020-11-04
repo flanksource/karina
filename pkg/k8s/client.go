@@ -548,7 +548,7 @@ func (c *Client) Get(namespace string, name string, obj runtime.Object) error {
 	config := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
 		TagName:          "json",
-		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration, decodeStringToTimeDuration),
+		DecodeHook:       mapstructure.ComposeDecodeHookFunc(decodeStringToTime, decodeStringToDuration, decodeStringToTimeDuration, decodeStringToInt64),
 		Result:           obj,
 	}
 
@@ -599,6 +599,20 @@ func decodeStringToTime(f reflect.Type, t reflect.Type, data interface{}) (inter
 		return data, fmt.Errorf("decodeStringToTime: failed to decode to time: %v", err)
 	}
 	return metav1.Time{Time: d}, nil
+}
+
+func decodeStringToInt64(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	if f.Kind() != reflect.String {
+		return data, nil
+	}
+	if t.Kind() != reflect.Int64 {
+		return data, nil
+	}
+	d, err := time.ParseDuration(data.(string))
+	if err != nil {
+		return data, fmt.Errorf("decodeStringToDuration: Failed to parse duration: %v", err)
+	}
+	return int64(d), nil
 }
 
 func (c *Client) GetRestMapper() (meta.RESTMapper, error) {
@@ -1514,7 +1528,7 @@ func (c *Client) StreamLogs(namespace, name string) error {
 		}()
 	}
 	wg.Wait()
-	if err = c.WaitForPod(namespace, name, 120*time.Second, v1.PodSucceeded); err != nil {
+	if err = c.WaitForPod(namespace, name, 300*time.Second, v1.PodSucceeded); err != nil {
 		return err
 	}
 	pod, err = pods.Get(name, metav1.GetOptions{})
