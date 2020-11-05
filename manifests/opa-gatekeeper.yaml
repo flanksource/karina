@@ -633,7 +633,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: openpolicyagent/gatekeeper:{{ .gatekeeper.version }}
+        image: docker.io/openpolicyagent/gatekeeper:{{ .gatekeeper.version | default "na" }}
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -732,7 +732,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: openpolicyagent/gatekeeper:{{ .gatekeeper.version }}
+        image: docker.io/openpolicyagent/gatekeeper:{{ .gatekeeper.version | default "na"}}
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
