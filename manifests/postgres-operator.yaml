@@ -310,4 +310,6 @@ data:
   AWS_ACCESS_KEY_ID: "{{ .s3.access_key | base64.Encode }}"
   AWS_SECRET_ACCESS_KEY: "{{ .s3.secret_key | base64.Encode }}"
   AWS_ENDPOINT: {{ .s3.endpoint | base64.Encode }}
+  AWS_ENDPOINT_URL: {{ (print "https://" .s3.endpoint) | base64.Encode }}
+  AWS_REGION: {{ .s3.region | base64.Encode }}
   AWS_S3_FORCE_PATH_STYLE: {{ "true" | base64.Encode }}

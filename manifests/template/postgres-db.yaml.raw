@@ -180,7 +180,7 @@ spec:
                       - name: LOGICAL_BACKUP_S3_ENDPOINT
                         valueFrom:
                           secretKeyRef:
-                            key: AWS_ENDPOINT
+                            key: AWS_ENDPOINT_URL
                             name: postgres-operator-cluster-environment
                       - name: AWS_S3_FORCE_PATH_STYLE
                         valueFrom:
