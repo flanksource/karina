@@ -1,6 +1,7 @@
 package burnin
 
 import (
+	"context"
 	"time"
 
 	"github.com/flanksource/karina/pkg/platform"
@@ -33,7 +34,7 @@ func reconcile(platform *platform.Platform, period time.Duration) error {
 		return err
 	}
 
-	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -43,7 +44,7 @@ nodeLoop:
 		if !kommons.HasTaint(node, Taint) {
 			continue
 		}
-		podList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+		podList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 			FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": node.Name}).String()})
 		if err != nil {
 			return err
@@ -67,7 +68,7 @@ nodeLoop:
 		// everything looks healthy lets remove the taint
 		platform.Infof("Removing burnin taint node=%s", node.Name)
 		node.Spec.Taints = kommons.RemoveTaint(node.Spec.Taints, Taint)
-		if _, err := client.CoreV1().Nodes().Update(&node); err != nil {
+		if _, err := client.CoreV1().Nodes().Update(context.TODO(), &node, metav1.UpdateOptions{}); err != nil {
 			return err
 		}
 	}

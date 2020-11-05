@@ -1,6 +1,7 @@
 package harbor
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -32,7 +33,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		return nil, err
 	}
 
-	pods, err := clientset.CoreV1().Pods(Namespace).List(metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=harbor,component=core",
 	})
 	if err != nil {

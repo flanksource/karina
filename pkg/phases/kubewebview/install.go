@@ -1,6 +1,7 @@
 package kubewebview
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -32,7 +33,7 @@ func Install(p *platform.Platform) error {
 			return err
 		}
 		if p.HasSecret(Namespace, ClusterConfig) {
-			err = cs.CoreV1().Secrets(Namespace).Delete("kube-web-view-clusters", &metav1.DeleteOptions{})
+			err = cs.CoreV1().Secrets(Namespace).Delete(context.TODO(), "kube-web-view-clusters", metav1.DeleteOptions{})
 			if err != nil {
 				return err
 			}

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -30,7 +31,7 @@ var Exec = &cobra.Command{
 			log.Fatalf("unable to get clientset: %v", err)
 		}
 
-		pods, err := client.CoreV1().Pods(ns).List(metav1.ListOptions{LabelSelector: selector})
+		pods, err := client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{LabelSelector: selector})
 		if err != nil {
 			log.Fatalf("unable to list pods: %v", err)
 		}
@@ -71,7 +72,7 @@ var ExecNode = &cobra.Command{
 			log.Fatalf("unable to get clientset: %v", err)
 		}
 
-		nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{
+		nodes, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
 			LabelSelector: selector,
 		})
 		if err != nil {

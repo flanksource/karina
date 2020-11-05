@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -81,7 +82,7 @@ func GetCluster(platform *platform.Platform) (*Cluster, error) {
 		return nil, err
 	}
 
-	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	list, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

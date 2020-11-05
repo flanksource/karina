@@ -192,7 +192,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 
 	context := kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath)
 	platform.Tracef("Current KUBECONFIG: path=%s, context=%s", platform.KubeConfigPath, context)
-	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+	if platform.Name == kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
 		return ioutil.ReadFile(platform.KubeConfigPath)
 	}
 
@@ -340,13 +340,13 @@ func (platform *Platform) DeleteNode(name string) error {
 	if err != nil {
 		return err
 	}
-	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	node, err := client.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return err
 	}
-	err = client.CoreV1().Nodes().Delete(node.Name, &metav1.DeleteOptions{})
+	err = client.CoreV1().Nodes().Delete(context.TODO(), node.Name, metav1.DeleteOptions{})
 	if err == nil {
 		platform.Infof("[%s] deleted node", node.Name)
 	}
@@ -367,7 +367,7 @@ func (platform *Platform) GetNodeNames() map[string]bool {
 		return nil
 	}
 	existingNodes := map[string]bool{}
-	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil
 	}
@@ -696,7 +696,7 @@ func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, e
 	client, _ := platform.GetClientset()
 	name := strings.Split(endpoint, ".")[0]
 	ns := strings.Split(endpoint, ".")[1]
-	svc, err := client.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+	svc, err := client.CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -748,7 +748,7 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {
 	client, _ := platform.GetClientset()
 	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
-	pods, err := client.CoreV1().Pods(namespace).List(opts)
+	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
 	}

@@ -1,6 +1,7 @@
 package sealedsecrets
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -99,7 +100,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	if err := p.ApplyText(namespace, string(sealedSecret)); err != nil {
@@ -112,7 +113,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	var k8sSecret *apiv1.Secret
 
 	for i := 0; i < iterations; i++ {
-		ks, err := client.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+		ks, err := client.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 		if err != nil {
 			time.Sleep(interval)
 		} else {

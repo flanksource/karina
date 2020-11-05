@@ -1,6 +1,7 @@
 package postgresoperator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -246,12 +247,12 @@ func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *co
 		return
 	}
 
-	_, err = pgClient.Get(clusterName, metav1.GetOptions{})
+	_, err = pgClient.Get(context.TODO(), clusterName, metav1.GetOptions{})
 	if kerrors.IsNotFound(err) {
 		return
 	}
 
-	if err := pgClient.Delete(clusterName, nil); err != nil {
+	if err := pgClient.Delete(context.TODO(), clusterName, metav1.DeleteOptions{}); err != nil {
 		test.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
 		return
 	}

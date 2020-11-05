@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
@@ -215,7 +216,7 @@ func RollingRestart(platform *platform.Platform, opts RollingOptions) error {
 		return err
 	}
 
-	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	list, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

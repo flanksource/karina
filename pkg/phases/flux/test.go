@@ -1,6 +1,7 @@
 package flux
 
 import (
+	"context"
 	"time"
 
 	"github.com/flanksource/commons/console"
@@ -33,7 +34,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 	kommons.TestNamespace(client, namespace, test)
 
-	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: "app=nginx"})
+	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=nginx"})
 	if err != nil {
 		test.Failf("gitops", "Failed to list pods in namespace %s: %v", namespace, err)
 	} else if len(pods.Items) != 2 {
@@ -42,7 +43,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Passf("gitops", "Pods for deployment nginx created successfully")
 	}
 
-	pods, err = client.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: "app=podinfo"})
+	pods, err = client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=podinfo"})
 	if err != nil {
 		test.Failf("helm-operator", "Failed to list pods in namespace %s: %v", namespace, err)
 	} else if len(pods.Items) != 1 {
@@ -51,7 +52,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Passf("helm-operator", "Pods for podinfo helm chart created successfully")
 	}
 
-	if _, err = client.CoreV1().Services(namespace).Get("nginx", metav1.GetOptions{}); err != nil {
+	if _, err = client.CoreV1().Services(namespace).Get(context.TODO(), "nginx", metav1.GetOptions{}); err != nil {
 		test.Failf("gitops", "Failed to get service nginx in namespace %s: %v", namespace, err)
 	} else {
 		test.Passf("gitops", "Service nginx created successfully")

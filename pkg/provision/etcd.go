@@ -123,7 +123,7 @@ func (cluster *EtcdClient) GetEtcdLeader() (*etcd.Client, error) {
 	if cluster.PreferredHostname != "" {
 		return cluster.Etcd.ForNode(context.TODO(), cluster.PreferredHostname)
 	}
-	list, err := cluster.Kubernetes.CoreV1().Nodes().List(metav1.ListOptions{})
+	list, err := cluster.Kubernetes.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (cluster *EtcdClient) PrintStatus() error {
 	for _, member := range members {
 		fmt.Fprintf(w, "%d\t", member.ID)
 		fmt.Fprintf(w, "%s\t", member.Name)
-		node, err := cluster.Kubernetes.CoreV1().Nodes().Get(member.Name, metav1.GetOptions{})
+		node, err := cluster.Kubernetes.CoreV1().Nodes().Get(context.TODO(), member.Name, metav1.GetOptions{})
 		if err == nil {
 			fmt.Fprintf(w, "%s\t", kommons.GetNodeStatus(*node))
 		} else {

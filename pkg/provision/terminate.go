@@ -75,7 +75,7 @@ func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) 
 	if err != nil {
 		platform.Warnf("[%s] failed to get client to delete node: %v", vm, err)
 	} else {
-		node, err := client.CoreV1().Nodes().Get(vm.Name(), metav1.GetOptions{})
+		node, err := client.CoreV1().Nodes().Get(context.TODO(), vm.Name(), metav1.GetOptions{})
 		if err != nil {
 			// we always attempt to terminate a node as a master if we don't know
 			// to ensure it is always removed from etcd

@@ -1,6 +1,7 @@
 package kuberesourcereport
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -43,7 +44,7 @@ func Install(p *platform.Platform) error {
 		}
 
 		if p.HasSecret(Namespace, ClusterConfigs) {
-			if err := cs.CoreV1().Secrets(Namespace).Delete(ClusterConfigs, &metav1.DeleteOptions{}); err != nil {
+			if err := cs.CoreV1().Secrets(Namespace).Delete(context.TODO(), ClusterConfigs, metav1.DeleteOptions{}); err != nil {
 				return err
 			}
 		}

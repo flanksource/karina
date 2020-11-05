@@ -1,6 +1,7 @@
 package kiosk
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -53,7 +54,7 @@ func TestUserDirectNamespaceAccess(p *platform.Platform, test *console.TestResul
 		return
 	}
 
-	_, err = user1Client.CoreV1().Namespaces().List(metav1.ListOptions{})
+	_, err = user1Client.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err == nil {
 		test.Failf("kiosk", "expected user1 to not be able to list namespaces")
 	} else if err.Error() != "namespaces is forbidden: User \"user1\" cannot list resource \"namespaces\" in API group \"\" at the cluster scope" {
@@ -67,7 +68,7 @@ func TestUserDirectNamespaceAccess(p *platform.Platform, test *console.TestResul
 		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 	}
-	_, err = user1Client.CoreV1().Namespaces().Create(ns)
+	_, err = user1Client.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 	if err == nil {
 		test.Failf("kiosk", "expected user1 to not be able to create namespaces")
 	} else if err.Error() != "namespaces is forbidden: User \"user1\" cannot create resource \"namespaces\" in API group \"\" at the cluster scope" {
@@ -88,7 +89,7 @@ func TestUserDirectNamespaceAccess(p *platform.Platform, test *console.TestResul
 		return
 	}
 
-	_, err = spaceClient.List(metav1.ListOptions{})
+	_, err = spaceClient.List(context.TODO(), metav1.ListOptions{})
 	if err == nil {
 		test.Failf("kiosk", "expected user1 to not be able to list spaces")
 	} else if err.Error() != "spaces.tenancy.kiosk.sh is forbidden: User \"user1\" cannot list resource \"spaces\" in API group \"tenancy.kiosk.sh\" at the cluster scope" {
@@ -130,7 +131,7 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 		test.Failf("kiosk", "failed to get space client: %v", err)
 		return
 	}
-	spaceList, err := spaceClient.List(metav1.ListOptions{})
+	spaceList, err := spaceClient.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		test.Failf("kiosk", "failed to list spaces %v", err)
 		return
@@ -151,7 +152,7 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 
 	test.Passf("kiosk", "user %s created space %s", user, space.Name)
 
-	spaces, err := spaceClient.List(metav1.ListOptions{})
+	spaces, err := spaceClient.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		test.Failf("kiosk", "failed to list spaces: %v", err)
 		return
@@ -173,7 +174,7 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	_, err = k8s.CoreV1().Namespaces().Get(space.Name, metav1.GetOptions{})
+	_, err = k8s.CoreV1().Namespaces().Get(context.TODO(), space.Name, metav1.GetOptions{})
 	if err != nil {
 		test.Failf("kiosk", "failed to get namespace %s: %v", space.Name, err)
 		return
@@ -181,7 +182,7 @@ func TestUserCreateSpace(p *platform.Platform, test *console.TestResults) {
 
 	test.Passf("kiosk", "user %s can get namespace %s", user, space.Name)
 
-	err = spaceClient.Delete(space.Name, nil)
+	err = spaceClient.Delete(context.TODO(), space.Name, metav1.DeleteOptions{})
 	if err != nil {
 		test.Failf("kiosk", "Expected user %s to be able to delete space %s", user, space.Name)
 		return
@@ -260,11 +261,11 @@ func TestAccountQuota(p *platform.Platform, test *console.TestResults) {
 		test.Failf("kiosk", "failed to impersonate user: %s", user)
 		return
 	}
-	_, err = client.CoreV1().Pods(space1.Name).Create(pod)
+	_, err = client.CoreV1().Pods(space1.Name).Create(context.TODO(), pod, metav1.CreateOptions{})
 	expectedError := fmt.Sprintf("admission webhook \"accountquota.kiosk.sh\" denied the request: pods \"%s\" is forbidden: exceeded quota: %s, requested: cpu=4, used: cpu=0, limited: cpu=2", pod.Name, accountQuota.Name)
 	if err == nil {
 		test.Failf("kiosk", "expected pod %s to not be created, exceeds limits", pod.Name)
-		if err = client.CoreV1().Pods(space1.Name).Delete(pod.Name, nil); err != nil {
+		if err = client.CoreV1().Pods(space1.Name).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{}); err != nil {
 			p.Errorf("failed to delete pod %s", pod.Name)
 		}
 	} else if err.Error() != expectedError {
@@ -291,11 +292,11 @@ func createAccountQuota(p *platform.Platform, accountName string) (*kioskconfiga
 	if err != nil {
 		return nil, noopFn, errors.Wrap(err, "failed to get account quota client")
 	}
-	if _, err = accountClient.Create(accountObj, metav1.CreateOptions{}); err != nil {
+	if _, err = accountClient.Create(context.TODO(), accountObj, metav1.CreateOptions{}); err != nil {
 		return nil, noopFn, err
 	}
 	fn := func() {
-		if err := accountClient.Delete(accountQuota.Name, nil); err != nil {
+		if err := accountClient.Delete(context.TODO(), accountQuota.Name, metav1.DeleteOptions{}); err != nil {
 			p.Errorf("failed to delete account quota %s", accountQuota.Name)
 		}
 	}
@@ -312,7 +313,7 @@ func waitSpacesList(p *platform.Platform, user string) error {
 	err = nil
 	// Wait until Account has permissions to list spaces
 	doUntil(func() bool {
-		_, err = spaceClient.List(metav1.ListOptions{})
+		_, err = spaceClient.List(context.TODO(), metav1.ListOptions{})
 		if err != nil && !strings.HasPrefix(err.Error(), forbiddenStr) {
 			return true
 		}
@@ -340,12 +341,12 @@ func createSpace(p *platform.Platform, user, accountName string) (*kioskapi.Spac
 		return nil, noopFn, errors.Wrap(err, "failed to get dynamic client for spaces")
 	}
 
-	if _, err := spaceClient.Create(spaceObj, metav1.CreateOptions{}); err != nil {
+	if _, err := spaceClient.Create(context.TODO(), spaceObj, metav1.CreateOptions{}); err != nil {
 		return nil, noopFn, errors.Wrap(err, "failed to create space")
 	}
 
 	deferFn := func() {
-		if err := adminSpaceClient.Delete(space.Name, nil); err != nil {
+		if err := adminSpaceClient.Delete(context.TODO(), space.Name, metav1.DeleteOptions{}); err != nil {
 			p.Errorf("failed to delete space %s: %v", space.Name, err)
 		}
 	}
@@ -385,7 +386,7 @@ func createAccount(p *platform.Platform, test *console.TestResults, user, accoun
 		test.Failf("kiosk", "failed to get dynamic client for accounts: %v", err)
 		return noopFn, err
 	}
-	if _, err := accountClient.Create(accountObj, metav1.CreateOptions{}); err != nil {
+	if _, err := accountClient.Create(context.TODO(), accountObj, metav1.CreateOptions{}); err != nil {
 		test.Failf("kiosk", "failed to create %s Account: %v", user, err)
 		return noopFn, err
 	}

@@ -1,6 +1,7 @@
 package opa
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -112,7 +113,7 @@ func InstallGatekeeper(p *platform.Platform) error {
 		}
 
 		for {
-			templateList, err := templateClient.List(metav1.ListOptions{})
+			templateList, err := templateClient.List(context.TODO(), metav1.ListOptions{})
 
 			if err != nil {
 				return err

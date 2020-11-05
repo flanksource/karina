@@ -1,6 +1,7 @@
 package postgresoperator
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -235,7 +236,7 @@ func doUntil(fn func() bool) bool {
 func GetPatroniClient(p *platform.Platform, namespace, clusterName string) (*http.Client, error) {
 	client, _ := p.GetClientset()
 	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
-	pods, err := client.CoreV1().Pods(namespace).List(opts)
+	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
 	}

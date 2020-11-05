@@ -1,6 +1,7 @@
 package opa
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -62,7 +63,7 @@ func TestOPA(p *platform.Platform, test *console.TestResults) {
 	}
 
 	kommons.TestNamespace(client, Namespace, test)
-	configs, err := client.CoreV1().ConfigMaps(Namespace).List(metav1.ListOptions{})
+	configs, err := client.CoreV1().ConfigMaps(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		test.Failf(Namespace, "failed to list policies via configmap: %s", err)
 	} else {
@@ -303,7 +304,7 @@ func findViolationUntil(p *platform.Platform, test *console.TestResults, violati
 }
 
 func findViolation(client dynamic.NamespaceableResourceInterface, violation Violation, object *Fixture) (bool, error) {
-	obj, err := client.Get(violation.Name, metav1.GetOptions{})
+	obj, err := client.Get(context.TODO(), violation.Name, metav1.GetOptions{})
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to get %s with name=%s", violation.Kind, violation.Name)
 	}

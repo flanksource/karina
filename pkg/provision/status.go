@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -20,7 +21,7 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		return err
 	}
 
-	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -39,10 +40,10 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		fmt.Fprintf(w, "%s\t", pod.Namespace)
 		fmt.Fprintf(w, "%s\t", pod.Spec.NodeName)
 		fmt.Fprintf(w, "%s\t", pod.Name)
-		podStatus := k8s.GetPodStatus(pod)
+		podStatus := kommons.GetPodStatus(pod)
 
 		fmt.Fprintf(w, "%s\t", podStatus)
-		if k8s.IsPodReady(pod) {
+		if kommons.IsPodReady(pod) {
 			fmt.Fprintf(w, "TRUE\t")
 		} else {
 			fmt.Fprintf(w, "FALSE\t")
@@ -90,7 +91,7 @@ func Status(p *platform.Platform) error {
 	for _, nodeMachine := range cluster.Nodes {
 		node := nodeMachine.Node
 		fmt.Fprintf(w, "%s\t", node.Name)
-		fmt.Fprintf(w, "%s\t", k8s.GetNodeStatus(node))
+		fmt.Fprintf(w, "%s\t", kommons.GetNodeStatus(node))
 		if kommons.IsMasterNode(node) {
 			fmt.Fprintf(w, "%s\t", kubeadm.GetNodeVersion(p, nodeMachine.Node))
 			fmt.Fprintf(w, "%s\t", cluster.GetHealth(node))

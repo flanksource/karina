@@ -1,14 +1,14 @@
 package registrycreds
 
 import (
+	"context"
 	"time"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -34,7 +34,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	defer func() {
-		_ = client.CoreV1().Namespaces().Delete(testNamespace, nil)
+		_ = client.CoreV1().Namespaces().Delete(context.TODO(), testNamespace, metav1.DeleteOptions{})
 	}()
 
 	// wait for up to 4 minutes for registry-credentials to create the secrets
@@ -44,7 +44,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return p.HasSecret(testNamespace, secretName), nil
 	})
 
-	secret, err := client.CoreV1().Secrets(testNamespace).Get(secretName, metav1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(testNamespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		test.Failf("registry-creds", "failed to get secret %s in namespace %s: %v", secretName, testNamespace, err)
 		return

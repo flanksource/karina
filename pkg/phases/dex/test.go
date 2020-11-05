@@ -1,6 +1,7 @@
 package dex
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/flanksource/commons/console"
@@ -61,7 +62,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Failf("dex", "failed to create k8s config: %v", err)
 		return
 	}
-	pods, err := k8s.CoreV1().Pods("dex").List(metav1.ListOptions{})
+	pods, err := k8s.CoreV1().Pods("dex").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		test.Failf("dex", "failed to list pods: %v", err)
 		return

@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
@@ -341,7 +342,7 @@ func addNodeAnnotations(platform *platform.Platform, name string, annotations ma
 	if err != nil {
 		return errors.Wrap(err, "failed to get clientset")
 	}
-	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	node, err := client.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node %s", name)
 	}
@@ -350,7 +351,7 @@ func addNodeAnnotations(platform *platform.Platform, name string, annotations ma
 		node.Annotations[k] = v
 	}
 
-	if _, err := client.CoreV1().Nodes().Update(node); err != nil {
+	if _, err := client.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
 		return errors.Wrapf(err, "failed to update node %s", name)
 	}
 	return nil
@@ -361,7 +362,7 @@ func addNodeLabels(platform *platform.Platform, name string, labels map[string]s
 	if err != nil {
 		return errors.Wrap(err, "failed to get clientset")
 	}
-	node, err := client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	node, err := client.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node %s", name)
 	}
@@ -370,7 +371,7 @@ func addNodeLabels(platform *platform.Platform, name string, labels map[string]s
 		node.Labels[k] = v
 	}
 
-	if _, err := client.CoreV1().Nodes().Update(node); err != nil {
+	if _, err := client.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
 		return errors.Wrapf(err, "failed to update node %s", name)
 	}
 	return nil

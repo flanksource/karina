@@ -1,6 +1,7 @@
 package nsx
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -27,7 +28,7 @@ func SetLogLevel(p *platform.Platform, level string) error {
 		return err
 	}
 
-	pods, err := client.CoreV1().Pods(Namespace).List(v1.ListOptions{})
+	pods, err := client.CoreV1().Pods(Namespace).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
 		return err
 	}
