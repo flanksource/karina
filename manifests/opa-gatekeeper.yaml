@@ -680,8 +680,10 @@ metadata:
     gatekeeper.sh/system: "yes"
   name: gatekeeper-controller-manager
   namespace: gatekeeper-system
+  annotations:
+      reload/all: "true"
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       control-plane: controller-manager

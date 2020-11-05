@@ -76,8 +76,10 @@ metadata:
     app: opa
   namespace: opa
   name: opa
+  annotations:
+    reload/all: "true"
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: opa

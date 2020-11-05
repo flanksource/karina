@@ -96,8 +96,10 @@ kind: Deployment
 metadata:
   name: vpa-admission-controller
   namespace: kube-system
+  annotations:
+    reload/all: "true"
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: vpa-admission-controller
@@ -137,7 +139,6 @@ spec:
         - name: tls-certs
           secret:
             secretName: vpa-tls-certs
-
 
 ---
 apiVersion: cert-manager.io/v1alpha2

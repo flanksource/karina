@@ -1211,6 +1211,8 @@ metadata:
     component: antrea-controller
   name: antrea-controller
   namespace: kube-system
+  annotations:
+    reload/all: "true"
 spec:
   replicas: 1
   selector:

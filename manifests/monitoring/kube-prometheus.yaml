@@ -19,6 +19,9 @@ spec:
     runAsUser: 1000
   serviceAccountName: alertmanager-main
   version: {{.monitoring.alertmanager.version}}
+  podMetadata:
+    annotations:
+      reload/all: "true"
 ---
 apiVersion: v1
 kind: Service
@@ -180,6 +183,9 @@ spec:
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
+  podMetadata:
+    annotations:
+      reload/all: "true
   externalLabels:
     cluster: {{.name}}
   version: {{.monitoring.prometheus.version}}

@@ -454,6 +454,8 @@ metadata:
     control-plane: controller-manager
   name: platform-operator
   namespace: platform-system
+  annotations:
+    reload/all: "true"
 spec:
   replicas: 2
   selector:
