@@ -1,6 +1,7 @@
 package platformoperator
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -46,12 +47,12 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	time.Sleep(15 * time.Second)
 
-	ns, err := client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	ns, err := client.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 	if err != nil {
 		test.Failf("platform-operator", "failed to get namespace %s: %v", ns, err)
 	}
@@ -81,7 +82,7 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	podName := fmt.Sprintf("test-pod-annotations-%s", utils.RandomString(6))
@@ -98,12 +99,12 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 		},
 	}
 
-	if _, err := client.CoreV1().Pods(namespace).Create(pod); err != nil {
+	if _, err := client.CoreV1().Pods(namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
 		test.Failf("platform-operator", "failed to create pod %s in namespace %s: %v", podName, namespace, err)
 		return
 	}
 
-	fetchedPod, err := client.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	fetchedPod, err := client.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 	if err != nil {
 		test.Failf("platform-operator", "failed to get pod %s in namespace %s: %v", podName, namespace, err)
 		return
@@ -141,7 +142,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace1, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace1, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	if err := p.CreateOrUpdateWorkloadNamespace(namespace2, nil, nil); err != nil {
@@ -150,7 +151,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace2, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace2, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	crqName := fmt.Sprintf("e2e-cluster-resource-quota-%s", utils.RandomString(6))
@@ -174,7 +175,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 		test.Errorf("Failed to get dynamic client: %v", err)
 		return
 	}
-	if _, err := crqClient.Create(unstructuredObj, metav1.CreateOptions{}); err != nil {
+	if _, err := crqClient.Create(context.TODO(), unstructuredObj, metav1.CreateOptions{}); err != nil {
 		test.Failf("platform-operator", "failed to create cluster resource quota: %v", err)
 		return
 	}
@@ -185,7 +186,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	rqAPI2 := client.CoreV1().ResourceQuotas(namespace2)
 
 	rq1 := newResourceQuota("resource-quota", namespace1, "2", "4Gi")
-	if _, err := rqAPI1.Create(rq1); err != nil {
+	if _, err := rqAPI1.Create(context.TODO(), rq1, metav1.CreateOptions{}); err != nil {
 		test.Failf("platform-operator", "failed to create resource quota cpu=2 memory=4Gi: %v", err)
 		return
 	}
@@ -195,7 +196,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	time.Sleep(2 * time.Second)
 
 	rq := newResourceQuota("resource-quota", namespace2, "4", "2Gi")
-	_, err = rqAPI2.Create(rq)
+	_, err = rqAPI2.Create(context.TODO(), rq, metav1.CreateOptions{})
 	if err == nil {
 		removeResourceQuota(p, test, rq1, rq)
 		test.Failf("platform-operator", "expected to fail creating second resource quota with 4 cpu and 2Gi")
@@ -204,7 +205,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	test.Infof("resource quota with cpu=4 and memory=2Gi was not permitted as expected")
 
 	rq = newResourceQuota("resource-quota", namespace2, "2", "7Gi")
-	_, err = rqAPI2.Create(rq)
+	_, err = rqAPI2.Create(context.TODO(), rq, metav1.CreateOptions{})
 	if err == nil {
 		removeResourceQuota(p, test, rq1, rq)
 		test.Failf("platform-operator", "expected to fail creating second resource quota with cpu=2 and memory=7Gi")
@@ -213,7 +214,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	test.Infof("resource quota with cpu=2 and memory=7Gi was not permitted as expected")
 
 	rq2 := newResourceQuota("resource-quota", namespace2, "2", "2Gi")
-	_, err = rqAPI2.Create(rq2)
+	_, err = rqAPI2.Create(context.TODO(), rq2, metav1.CreateOptions{})
 	if err != nil {
 		test.Failf("platform-operator", "expected to create second resource quota with cpu=2 and memory=2Gi: %v", err)
 		return
@@ -226,13 +227,13 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 	// Wait until all ClusterResourceQuota and ResourceQuota are removed
 	// Otherwise the next test will not pass
 	doUntil(func() bool {
-		if _, err := rqAPI1.Get(rq1.Name, metav1.GetOptions{}); !errors.IsNotFound(err) {
+		if _, err := rqAPI1.Get(context.TODO(), rq1.Name, metav1.GetOptions{}); !errors.IsNotFound(err) {
 			return false
 		}
-		if _, err := rqAPI2.Get(rq2.Name, metav1.GetOptions{}); !errors.IsNotFound(err) {
+		if _, err := rqAPI2.Get(context.TODO(), rq2.Name, metav1.GetOptions{}); !errors.IsNotFound(err) {
 			return false
 		}
-		if _, err := crqClient.Get(crq.Name, metav1.GetOptions{}); !errors.IsNotFound(err) {
+		if _, err := crqClient.Get(context.TODO(), crq.Name, metav1.GetOptions{}); !errors.IsNotFound(err) {
 			return false
 		}
 		return true
@@ -256,7 +257,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace1, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace1, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	if err := p.CreateOrUpdateWorkloadNamespace(namespace2, nil, nil); err != nil {
@@ -265,19 +266,19 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace2, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace2, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	rqAPI1 := client.CoreV1().ResourceQuotas(namespace1)
 	rqAPI2 := client.CoreV1().ResourceQuotas(namespace2)
 
-	if _, err := rqAPI1.Create(newResourceQuota("resource-quota", namespace1, "2", "4Gi")); err != nil {
+	if _, err := rqAPI1.Create(context.TODO(), newResourceQuota("resource-quota", namespace1, "2", "4Gi"), metav1.CreateOptions{}); err != nil {
 		test.Failf("platform-operator", "failed to create resource quota 1: %v", err)
 		return
 	}
 	test.Infof("resource quota with cpu=2 and memory=4Gi created")
 
-	if _, err := rqAPI2.Create(newResourceQuota("resource-quota", namespace2, "2", "6Gi")); err != nil {
+	if _, err := rqAPI2.Create(context.TODO(), newResourceQuota("resource-quota", namespace2, "2", "6Gi"), metav1.CreateOptions{}); err != nil {
 		test.Failf("platform-operator", "failed to create resource quota 2: %v", err)
 		return
 	}
@@ -292,7 +293,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 		test.Errorf("Failed to get dynamic client: %v", err)
 		return
 	}
-	if _, err := crqClient.Create(unstructuredObj, metav1.CreateOptions{}); err == nil {
+	if _, err := crqClient.Create(context.TODO(), unstructuredObj, metav1.CreateOptions{}); err == nil {
 		removeClusterResourceQuota(p, crq, test)
 		test.Failf("platform-operator", "expected to fail creating cluster resource quota with cpu=5 and memory=8Gi")
 		return
@@ -305,7 +306,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 		test.Errorf("Failed to get dynamic client: %v", err)
 		return
 	}
-	if _, err := crqClient.Create(unstructuredObj, metav1.CreateOptions{}); err == nil {
+	if _, err := crqClient.Create(context.TODO(), unstructuredObj, metav1.CreateOptions{}); err == nil {
 		removeClusterResourceQuota(p, crq, test)
 		test.Failf("platform-operator", "expected to fail creating cluster resource quota with cpu=3 and memory=12Gi")
 		return
@@ -318,7 +319,7 @@ func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *conso
 		test.Errorf("Failed to get dynamic client: %v", err)
 		return
 	}
-	if _, err := crqClient.Create(unstructuredObj, metav1.CreateOptions{}); err != nil {
+	if _, err := crqClient.Create(context.TODO(), unstructuredObj, metav1.CreateOptions{}); err != nil {
 		test.Failf("platform-operator", "expected to create cluster resource quota with 5 cpu and 12 Gi: %v", err)
 		return
 	}
@@ -369,7 +370,7 @@ func removeClusterResourceQuota(p *platform.Platform, crq *platformv1.ClusterRes
 		return
 	}
 
-	if err := apiClient.Delete(crq.Name, nil); err != nil && !errors.IsNotFound(err) {
+	if err := apiClient.Delete(context.TODO(), crq.Name, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
 		test.Warnf("Failed to delete cluster resource quota %s: %v", crq.Name, err)
 		return
 	}
@@ -378,7 +379,7 @@ func removeClusterResourceQuota(p *platform.Platform, crq *platformv1.ClusterRes
 func removeResourceQuota(p *platform.Platform, test *console.TestResults, rqs ...*v1.ResourceQuota) {
 	client, _ := p.GetClientset()
 	for _, rq := range rqs {
-		if err := client.CoreV1().ResourceQuotas(rq.Namespace).Delete(rq.Name, nil); err != nil && !errors.IsNotFound(err) {
+		if err := client.CoreV1().ResourceQuotas(rq.Namespace).Delete(context.TODO(), rq.Name, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
 			test.Errorf("failed to delete resource quota %s in namespace %s: %v", rq.Name, rq.Namespace, err)
 		}
 	}

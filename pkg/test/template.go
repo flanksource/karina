@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"os"
 
 	"github.com/flanksource/commons/console"
@@ -28,7 +29,7 @@ func TestTemplates(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	cmFile, err := client.CoreV1().ConfigMaps(templateTestNamespace).Get("template-test-file", metav1.GetOptions{})
+	cmFile, err := client.CoreV1().ConfigMaps(templateTestNamespace).Get(context.TODO(), "template-test-file", metav1.GetOptions{})
 	if err != nil {
 		test.Failf(templateTestName, "couldn't get configmap templated from file: %v", err)
 		return
@@ -39,7 +40,7 @@ func TestTemplates(p *platform.Platform, test *console.TestResults) {
 		test.Passf(templateTestName, "patch file templated using'%v'", os.Getenv(templateTestEnv))
 	}
 
-	cmDirect, err := client.CoreV1().ConfigMaps(templateTestNamespace).Get("template-test-direct", metav1.GetOptions{})
+	cmDirect, err := client.CoreV1().ConfigMaps(templateTestNamespace).Get(context.TODO(), "template-test-direct", metav1.GetOptions{})
 	if err != nil {
 		test.Failf(templateTestName, "couldn't get configmap templated from directly included patch: %v", err)
 		return

@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
@@ -19,12 +19,12 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	k8s.TestNamespace(client, "kube-system", test)
-	k8s.TestNamespace(client, "local-path-storage", test)
-	k8s.TestNamespace(client, "cert-manager", test)
+	kommons.TestNamespace(client, "kube-system", test)
+	kommons.TestNamespace(client, "local-path-storage", test)
+	kommons.TestNamespace(client, "cert-manager", test)
 
 	if platform.Nginx == nil || !platform.Nginx.Disabled {
 		platform.WaitForNamespace("ingress-nginx", 180*time.Second)
-		k8s.TestNamespace(client, "ingress-nginx", test)
+		kommons.TestNamespace(client, "ingress-nginx", test)
 	}
 }

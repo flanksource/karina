@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -9,9 +10,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,14 +47,14 @@ func Take(p *platform.Platform, opts Options) error {
 		return errors.Wrap(err, "failed to get clientset")
 	}
 	if len(opts.Namespaces) == 0 {
-		namespaceList, err = k8s.CoreV1().Namespaces().List(metav1.ListOptions{})
+		namespaceList, err = k8s.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			return errors.Wrap(err, "failed to list namespaces")
 		}
 	} else {
 		var namespaces []v1.Namespace
 		for _, ns := range opts.Namespaces {
-			nsData, _ := k8s.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			nsData, _ := k8s.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
 			namespaces = append(namespaces, *nsData)
 		}
 		namespaceList = &v1.NamespaceList{Items: namespaces, TypeMeta: metav1.TypeMeta{}}
@@ -99,7 +99,7 @@ func (s *SnapshotFetcher) queueFetchLogs(namespace v1.Namespace, sinceTime metav
 		s.ch <- 1
 
 		pods := s.k8s.CoreV1().Pods(namespace.Name)
-		list, err := pods.List(metav1.ListOptions{})
+		list, err := pods.List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			s.Errorf("failed to list pods for namespace %s: %v", namespace.Name, err)
 			<-s.ch
@@ -140,7 +140,7 @@ func (s *SnapshotFetcher) queueFetchPodLogs(namespace v1.Namespace, pod v1.Pod, 
 			})
 		}
 
-		podLogs, err := logs.Stream()
+		podLogs, err := logs.Stream(context.TODO())
 		if err != nil {
 			s.Errorf("Failed to stream logs %v", err)
 			<-s.ch
@@ -200,7 +200,7 @@ func (s *SnapshotFetcher) queueFetchEvents(namespace v1.Namespace) {
 		s.ch <- 1
 
 		events := s.k8s.CoreV1().Events(namespace.Name)
-		eventList, err := events.List(metav1.ListOptions{})
+		eventList, err := events.List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			s.Errorf("failed to get events for %s: %v", namespace.Name, err)
 			<-s.ch

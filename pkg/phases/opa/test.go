@@ -1,14 +1,15 @@
 package opa
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -61,8 +62,8 @@ func TestOPA(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	k8s.TestNamespace(client, Namespace, test)
-	configs, err := client.CoreV1().ConfigMaps(Namespace).List(metav1.ListOptions{})
+	kommons.TestNamespace(client, Namespace, test)
+	configs, err := client.CoreV1().ConfigMaps(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		test.Failf(Namespace, "failed to list policies via configmap: %s", err)
 	} else {
@@ -153,7 +154,7 @@ func TestGatekeeper(p *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, GatekeeperNamespace, test)
+	kommons.TestNamespace(client, GatekeeperNamespace, test)
 	if p.E2E {
 		testE2EGatekeeper(p, test)
 	}
@@ -303,7 +304,7 @@ func findViolationUntil(p *platform.Platform, test *console.TestResults, violati
 }
 
 func findViolation(client dynamic.NamespaceableResourceInterface, violation Violation, object *Fixture) (bool, error) {
-	obj, err := client.Get(violation.Name, metav1.GetOptions{})
+	obj, err := client.Get(context.TODO(), violation.Name, metav1.GetOptions{})
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to get %s with name=%s", violation.Kind, violation.Name)
 	}

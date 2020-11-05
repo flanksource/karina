@@ -2,9 +2,8 @@ package velero
 
 import (
 	"github.com/flanksource/commons/console"
-
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -18,7 +17,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	k8s.TestNamespace(client, Namespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 
 	if !p.E2E {
 		return

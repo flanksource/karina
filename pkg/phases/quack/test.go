@@ -1,12 +1,14 @@
 package quack
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
@@ -15,7 +17,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := platform.GetClientset()
-	k8s.TestNamespace(client, Namespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 
 	if !platform.E2E {
 		return
@@ -29,7 +31,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 
 	defer func() {
-		client.CoreV1().Namespaces().Delete(namespace, nil) // nolint: errcheck
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	configMapName := "test-configmap"

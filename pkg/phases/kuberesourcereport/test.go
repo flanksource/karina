@@ -2,8 +2,8 @@ package kuberesourcereport
 
 import (
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func TestKubeResourceReport(p *platform.Platform, test *console.TestResults) {
@@ -12,6 +12,6 @@ func TestKubeResourceReport(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("kube-resource-report", "kube-resource-report is not configured")
 		return
 	}
-	k8s.TestNamespace(client, Namespace, test)
-	k8s.TestDeploy(client, Namespace, "kube-resource-report", test)
+	kommons.TestNamespace(client, Namespace, test)
+	kommons.TestDeploy(client, Namespace, "kube-resource-report", test)
 }

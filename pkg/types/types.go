@@ -8,9 +8,6 @@ import (
 	"github.com/flanksource/karina/pkg/api/calico"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	yaml "gopkg.in/flanksource/yaml.v3"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Enabled struct {
@@ -937,10 +934,4 @@ func (p PlatformConfig) GetVMCount() int {
 func (p *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(p)
 	return string(data)
-}
-
-type RuntimeObjectWithMetadata interface {
-	GetObjectMeta() metav1.Object
-	GetObjectKind() schema.ObjectKind
-	DeepCopyObject() runtime.Object
 }

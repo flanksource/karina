@@ -1,6 +1,7 @@
 package kubeadm
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -282,7 +283,7 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 		},
 	}
 
-	if _, err = client.Create(secretToken); err != nil {
+	if _, err = client.Create(context.TODO(), secretToken, metav1.CreateOptions{}); err != nil {
 		return "", err
 	}
 	return token, nil
@@ -300,12 +301,12 @@ func UploadEtcdCerts(platform *platform.Platform) (*certs.Certificate, error) {
 	}
 
 	secrets := client.CoreV1().Secrets("kube-system")
-	secret, err := secrets.Get("etcd-certs", metav1.GetOptions{})
+	secret, err := secrets.Get(context.TODO(), "etcd-certs", metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		platform.Infof("Uploading etcd certs from %s", masterNode)
 		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system create secret tls etcd-certs --cert=/etc/kubernetes/pki/etcd/ca.crt --key=/etc/kubernetes/pki/etcd/ca.key")
 		platform.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
-		secret, err = secrets.Get("etcd-certs", metav1.GetOptions{})
+		secret, err = secrets.Get(context.TODO(), "etcd-certs", metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -327,19 +328,19 @@ func UploadControlPlaneCerts(platform *platform.Platform) (string, error) {
 
 	secrets := client.CoreV1().Secrets("kube-system")
 	var key string
-	secret, err := secrets.Get("kubeadm-certs", metav1.GetOptions{})
+	secret, err := secrets.Get(context.TODO(), "kubeadm-certs", metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		key = utils.RandomKey(32)
 		platform.Infof("Uploading control plane cert from %s", masterNode)
 		stdout, err := platform.Executef(masterNode, 2*time.Minute, "kubeadm init phase upload-certs --upload-certs --skip-certificate-key-print --certificate-key %s", key)
 		platform.Infof("Uploaded control plane certs: %s (%v)", stdout, err)
-		secret, err = secrets.Get("kubeadm-certs", metav1.GetOptions{})
+		secret, err = secrets.Get(context.TODO(), "kubeadm-certs", metav1.GetOptions{})
 		if err != nil {
 			return "", err
 		}
 		// FIXME storing the encryption key in plain text alongside the certs, kind of defeats the purpose
 		secret.Annotations = map[string]string{"key": key}
-		if _, err := secrets.Update(secret); err != nil {
+		if _, err := secrets.Update(context.TODO(), secret, metav1.UpdateOptions{}); err != nil {
 			return "", err
 		}
 		return key, nil
@@ -381,7 +382,7 @@ func GetNodeVersion(platform *platform.Platform, node v1.Node) string {
 	if err != nil {
 		return "<err>"
 	}
-	pods, err := client.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{
+	pods, err := client.CoreV1().Pods(v1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: "spec.nodeName=" + node.Name,
 		LabelSelector: "component=kube-apiserver",
 	})

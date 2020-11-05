@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api "github.com/flanksource/karina/pkg/api/postgres"
-	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/kommons"
 )
 
 const Namespace = "postgres-operator"
@@ -23,10 +23,10 @@ type PostgresDB struct {
 	version   string
 	Superuser string
 	op        *api.OperatorConfiguration
-	client    *k8s.Client
+	client    *kommons.Client
 }
 
-func GetGenericPostgresDB(client *k8s.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
+func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
 	db := PostgresDB{client: client}
 
 	op := api.OperatorConfiguration{TypeMeta: metav1.TypeMeta{
@@ -47,7 +47,7 @@ func GetGenericPostgresDB(client *k8s.Client, s3 *minio.Client, namespace, name,
 	return &db, nil
 }
 
-func GetPostgresDB(client *k8s.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
+func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
 	db := PostgresDB{client: client}
 
 	_db := &api.Postgresql{TypeMeta: metav1.TypeMeta{
@@ -121,10 +121,10 @@ func (db *PostgresDB) Restore(backup string) error {
 	return db.client.StreamLogs(db.Namespace, job.Name)
 }
 
-func (db *PostgresDB) GenerateBackupJob() *k8s.DeploymentBuilder {
+func (db *PostgresDB) GenerateBackupJob() *kommons.DeploymentBuilder {
 	op := db.op.Configuration
 
-	builder := k8s.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), op.LogicalBackup.DockerImage)
+	builder := kommons.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), op.LogicalBackup.DockerImage)
 	return builder.
 		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
 		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").

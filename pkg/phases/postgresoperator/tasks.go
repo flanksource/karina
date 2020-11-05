@@ -1,15 +1,16 @@
 package postgresoperator
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/flanksource/karina/pkg/api/postgres"
-	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons/proxy"
 	"github.com/pkg/errors"
 
 	pv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -235,7 +236,7 @@ func doUntil(fn func() bool) bool {
 func GetPatroniClient(p *platform.Platform, namespace, clusterName string) (*http.Client, error) {
 	client, _ := p.GetClientset()
 	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
-	pods, err := client.CoreV1().Pods(namespace).List(opts)
+	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
 	}

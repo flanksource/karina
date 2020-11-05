@@ -1,6 +1,7 @@
 package base
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -55,7 +56,7 @@ func Install(platform *platform.Platform) error {
 			return fmt.Errorf("install: Failed to get clientset: %v", err)
 		}
 
-		kubeDNS, err := client.CoreV1().Services("kube-system").Get("kube-dns", metav1.GetOptions{})
+		kubeDNS, err := client.CoreV1().Services("kube-system").Get(context.TODO(), "kube-dns", metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("install: Failed to get service: %v", err)
 		}

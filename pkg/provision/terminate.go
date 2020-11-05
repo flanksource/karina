@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/karina/pkg/k8s"
-	"github.com/flanksource/karina/pkg/k8s/etcd"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/etcd"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -75,14 +75,14 @@ func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) 
 	if err != nil {
 		platform.Warnf("[%s] failed to get client to delete node: %v", vm, err)
 	} else {
-		node, err := client.CoreV1().Nodes().Get(vm.Name(), metav1.GetOptions{})
+		node, err := client.CoreV1().Nodes().Get(context.TODO(), vm.Name(), metav1.GetOptions{})
 		if err != nil {
 			// we always attempt to terminate a node as a master if we don't know
 			// to ensure it is always removed from etcd
 			if err := terminateMaster(platform, etcd, vm.Name()); err != nil {
 				platform.Warnf("Failed to terminate master %v", err)
 			}
-		} else if k8s.IsMasterNode(*node) {
+		} else if kommons.IsMasterNode(*node) {
 			if err := terminateMaster(platform, etcd, node.Name); err != nil {
 				platform.Warnf("Failed to terminate master %v", err)
 			}
