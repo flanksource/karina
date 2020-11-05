@@ -164,7 +164,7 @@ spec:
                         valueFrom:
                           secretKeyRef:
                             key: AWS_SECRET_ACCESS_KEY
-                            name: secrets
+                            name: postgres-operator-cluster-environment
                       - name: PGPORT
                         value: "5432"
                       - name: AWS_ACCESS_KEY_ID
