@@ -52,12 +52,11 @@ require (
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.0.0+incompatible
-	github.com/flanksource/kommons => /Users/toni/code/flanksource/kommons
 	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
+	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20191230161307-f3c370f40bfb
+	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 	gopkg.in/hairyhenderson/yaml.v2 => github.com/maxaudron/yaml v0.0.0-20190411130442-27c13492fe3c
 	k8s.io/client-go => k8s.io/client-go v0.19.3
-	google.golang.org/grpc => google.golang.org/grpc v1.26.0 
-	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20191230161307-f3c370f40bfb
 )
