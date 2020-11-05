@@ -185,7 +185,7 @@ spec:
   serviceMonitorSelector: {}
   podMetadata:
     annotations:
-      reload/all: "true
+      reload/all: "true"
   externalLabels:
     cluster: {{.name}}
   version: {{.monitoring.prometheus.version}}
