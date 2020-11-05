@@ -5,20 +5,19 @@ import (
 	"net/http"
 
 	"github.com/flanksource/commons/console"
-
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.Ldap.E2E.Mock {
-		k8s.TestNamespace(client, "ldap", test)
+		kommons.TestNamespace(client, "ldap", test)
 	}
 	if !p.S3.E2E.Minio {
 		return
 	}
-	k8s.TestNamespace(client, "minio", test)
+	kommons.TestNamespace(client, "minio", test)
 
 	net := &http.Client{Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

@@ -1,15 +1,16 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -20,15 +21,15 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		return err
 	}
 
-	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+	pods, err := client.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 	w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', tabwriter.DiscardEmptyColumns)
 	fmt.Fprintf(w, "NAMESPACE\tNODE\tNAME\tPHASE\tREADY\tIP\tAGE\tRESTARTED\t \n")
 	for _, pod := range pods.Items {
-		lastRestarted := k8s.GetLastRestartTime(pod)
-		if k8s.IsPodHealthy(pod) && (lastRestarted == nil || time.Since(*lastRestarted) > period) {
+		lastRestarted := kommons.GetLastRestartTime(pod)
+		if kommons.IsPodHealthy(pod) && (lastRestarted == nil || time.Since(*lastRestarted) > period) {
 			continue
 		}
 		events, _ := p.GetEventsFor("Pod", &pod)
@@ -39,10 +40,10 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		fmt.Fprintf(w, "%s\t", pod.Namespace)
 		fmt.Fprintf(w, "%s\t", pod.Spec.NodeName)
 		fmt.Fprintf(w, "%s\t", pod.Name)
-		podStatus := k8s.GetPodStatus(pod)
+		podStatus := kommons.GetPodStatus(pod)
 
 		fmt.Fprintf(w, "%s\t", podStatus)
-		if k8s.IsPodReady(pod) {
+		if kommons.IsPodReady(pod) {
 			fmt.Fprintf(w, "TRUE\t")
 		} else {
 			fmt.Fprintf(w, "FALSE\t")
@@ -65,7 +66,7 @@ func PodStatus(p *platform.Platform, period time.Duration) error {
 		if lastEvent != nil && lastEvent.Reason != "Started" && lastEvent.Reason != "BackOff" {
 			fmt.Fprintf(w, "%s: %s", lastEvent.Reason, lastEvent.Message)
 		}
-		fmt.Fprint(w, k8s.GetContainerStatus(pod))
+		fmt.Fprint(w, kommons.GetContainerStatus(pod))
 		fmt.Fprintf(w, "\t\n")
 	}
 
@@ -90,8 +91,8 @@ func Status(p *platform.Platform) error {
 	for _, nodeMachine := range cluster.Nodes {
 		node := nodeMachine.Node
 		fmt.Fprintf(w, "%s\t", node.Name)
-		fmt.Fprintf(w, "%s\t", k8s.GetNodeStatus(node))
-		if k8s.IsMasterNode(node) {
+		fmt.Fprintf(w, "%s\t", kommons.GetNodeStatus(node))
+		if kommons.IsMasterNode(node) {
 			fmt.Fprintf(w, "%s\t", kubeadm.GetNodeVersion(p, nodeMachine.Node))
 			fmt.Fprintf(w, "%s\t", cluster.GetHealth(node))
 		} else {

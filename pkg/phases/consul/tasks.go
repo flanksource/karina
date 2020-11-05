@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 type BackupRestore struct {
@@ -78,11 +78,11 @@ func (b *BackupRestore) Restore(backup string) error {
 	return b.StreamLogs(b.Namespace, job.Name)
 }
 
-func (b *BackupRestore) GenerateBackupJob() *k8s.DeploymentBuilder {
+func (b *BackupRestore) GenerateBackupJob() *kommons.DeploymentBuilder {
 	vault := b.Vault
 	consulBackupSecret := "consul-backup-config"
 
-	builder := k8s.Deployment("consul-backup-"+b.Name+"-"+utils.ShortTimestamp(), b.dockerImage)
+	builder := kommons.Deployment("consul-backup-"+b.Name+"-"+utils.ShortTimestamp(), b.dockerImage)
 	return builder.
 		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
 		EnvVarFromSecret("AWS_ACCESS_KEY_ID", consulBackupSecret, "AWS_ACCESS_KEY_ID").

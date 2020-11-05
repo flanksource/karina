@@ -7,10 +7,10 @@ import (
 	"text/tabwriter"
 
 	"github.com/flanksource/commons/collections"
-	"github.com/flanksource/karina/pkg/k8s"
-	"github.com/flanksource/karina/pkg/k8s/etcd"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/etcd"
 	"go.etcd.io/etcd/clientv3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,7 +123,7 @@ func (cluster *EtcdClient) GetEtcdLeader() (*etcd.Client, error) {
 	if cluster.PreferredHostname != "" {
 		return cluster.Etcd.ForNode(context.TODO(), cluster.PreferredHostname)
 	}
-	list, err := cluster.Kubernetes.CoreV1().Nodes().List(metav1.ListOptions{})
+	list, err := cluster.Kubernetes.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -149,9 +149,9 @@ func (cluster *EtcdClient) PrintStatus() error {
 	for _, member := range members {
 		fmt.Fprintf(w, "%d\t", member.ID)
 		fmt.Fprintf(w, "%s\t", member.Name)
-		node, err := cluster.Kubernetes.CoreV1().Nodes().Get(member.Name, metav1.GetOptions{})
+		node, err := cluster.Kubernetes.CoreV1().Nodes().Get(context.TODO(), member.Name, metav1.GetOptions{})
 		if err == nil {
-			fmt.Fprintf(w, "%s\t", k8s.GetNodeStatus(*node))
+			fmt.Fprintf(w, "%s\t", kommons.GetNodeStatus(*node))
 		} else {
 			fmt.Fprintf(w, "MISSING\t")
 		}

@@ -1,6 +1,7 @@
 package harbor
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -12,9 +13,9 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/text"
-	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons/proxy"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,7 +33,7 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		return nil, err
 	}
 
-	pods, err := clientset.CoreV1().Pods(Namespace).List(metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=harbor,component=core",
 	})
 	if err != nil {

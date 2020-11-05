@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +25,7 @@ func init() {
 				platform.Fatalf("failed to get clientset: %s", err)
 			}
 
-			nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+			nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				platform.Fatalf("failed to list nodes: %v", err)
 			}
@@ -50,7 +52,7 @@ func init() {
 					}
 				}
 
-				if _, err := clientset.CoreV1().Nodes().Update(&node); err != nil {
+				if _, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, metav1.UpdateOptions{}); err != nil {
 					platform.Errorf("Failed to update node %s: %v", node, err)
 					continue
 				}

@@ -3,7 +3,7 @@ package postgres
 import (
 	"time"
 
-	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/kommons"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -95,7 +95,7 @@ type Postgresql struct {
 }
 
 func (in Postgresql) GetObjectKind() schema.ObjectKind {
-	return k8s.DynamicKind{
+	return kommons.DynamicKind{
 		APIVersion: "acid.zalan.do/v1",
 		Kind:       "postgresql",
 	}

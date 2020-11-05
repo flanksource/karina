@@ -1,6 +1,7 @@
 package sealedsecrets
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -48,7 +49,7 @@ func Install(platform *platform.Platform) error {
 			return errors.Wrap(err, "failed to get k8s client")
 		}
 
-		secretList, err := client.CoreV1().Secrets(Namespace).List(metav1.ListOptions{
+		secretList, err := client.CoreV1().Secrets(Namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: keySelector.String(),
 		})
 
@@ -78,7 +79,7 @@ func Install(platform *platform.Platform) error {
 
 			platform.Infof("Creating %s/secret/%s", Namespace, SecretPrefix)
 
-			if _, err := secrets.Create(secret); err != nil {
+			if _, err := secrets.Create(context.TODO(), secret, metav1.CreateOptions{}); err != nil {
 				return errors.Wrap(err, "failed to create new secret")
 			}
 		} else {
@@ -87,7 +88,7 @@ func Install(platform *platform.Platform) error {
 
 			platform.Infof("Updating %s/secret/%s", Namespace, secret.Name)
 
-			if _, err := secrets.Update(&secret); err != nil {
+			if _, err := secrets.Update(context.TODO(), &secret, metav1.UpdateOptions{}); err != nil {
 				return errors.Wrapf(err, "failed to update secret %s", secret.Name)
 			}
 		}

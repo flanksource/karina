@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -151,7 +152,7 @@ func KindCluster(p *platform.Platform) error {
 	}
 
 	// delete the default storageclass created by kind as we install our own
-	if err := client.StorageV1().StorageClasses().Delete("standard", nil); err != nil {
+	if err := client.StorageV1().StorageClasses().Delete(context.TODO(), "standard", metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
@@ -213,7 +214,7 @@ func createEtcdCertificateSecret(p *platform.Platform) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to get clientset")
 	}
-	if _, err := clientset.CoreV1().Secrets(metav1.NamespaceSystem).Create(secret); err != nil {
+	if _, err := clientset.CoreV1().Secrets(metav1.NamespaceSystem).Create(context.TODO(), secret, metav1.CreateOptions{}); err != nil {
 		return errors.Wrapf(err, "failed to create secret %s in namespace %s", secret.Name, secret.Namespace)
 	}
 	return nil

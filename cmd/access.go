@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flanksource/kommons"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"github.com/flanksource/karina/pkg/k8s"
 )
 
 var Access = &cobra.Command{
@@ -29,7 +28,7 @@ func init() {
 			group, _ := cmd.Flags().GetString("group")
 			name, _ := cmd.Flags().GetString("name")
 			expiry, _ := cmd.Flags().GetDuration("expiry")
-			data, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), endpoint, group, name, expiry)
+			data, err := kommons.CreateKubeConfig(platform.Name, platform.GetCA(), endpoint, group, name, expiry)
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}
@@ -47,7 +46,7 @@ func init() {
 		Short: "Generate a new kubeconfig file for accessing the cluster using sso",
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
-			data, err := k8s.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
+			data, err := kommons.CreateOIDCKubeConfig(platform.Name, platform.GetCA(), fmt.Sprintf("k8s-api.%s", platform.Domain), fmt.Sprintf("dex.%s", platform.Domain), "", "", "")
 			if err != nil {
 				log.Fatalf("Failed to create kubeconfig %s", err)
 			}

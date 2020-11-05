@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,7 +32,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	p.WaitForNamespace("monitoring", 180*time.Second)
-	k8s.TestNamespace(client, "monitoring", test)
+	kommons.TestNamespace(client, "monitoring", test)
 }
 
 func TestThanos(p *platform.Platform, test *console.TestResults) {

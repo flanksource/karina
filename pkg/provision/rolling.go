@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
@@ -8,9 +9,9 @@ import (
 
 	"github.com/flanksource/commons/timer"
 	"github.com/flanksource/karina/pkg/controller/burnin"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
 	"github.com/jinzhu/copier"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +39,7 @@ func replace(platform *platform.Platform, opts RollingOptions, cluster *Cluster,
 	// then we surge up
 	var replacement types.Machine
 	var err error
-	if k8s.IsMasterNode(node) {
+	if kommons.IsMasterNode(node) {
 		replacement, err = createSecondaryMaster(platform, opts.BurninPeriod)
 		if err != nil {
 			return fmt.Errorf("failed to create new secondary master: %v", err)
@@ -72,9 +73,9 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 		template := machine.GetTemplate()
 
 		// check if a node is available for update
-		if k8s.IsMasterNode(node) && !opts.Masters {
+		if kommons.IsMasterNode(node) && !opts.Masters {
 			continue
-		} else if !k8s.IsMasterNode(node) && !opts.Workers {
+		} else if !kommons.IsMasterNode(node) && !opts.Workers {
 			continue
 		}
 		if age > opts.MinAge {
@@ -215,7 +216,7 @@ func RollingRestart(platform *platform.Platform, opts RollingOptions) error {
 		return err
 	}
 
-	list, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	list, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -228,7 +229,7 @@ func RollingRestart(platform *platform.Platform, opts RollingOptions) error {
 	sort.Sort(sort.Reverse(names))
 	for _, name := range names {
 		node := nodes[name]
-		if k8s.IsMasterNode(node) {
+		if kommons.IsMasterNode(node) {
 			platform.Infof("Skipping master %s", node.Name)
 			continue
 		}

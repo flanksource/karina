@@ -1,12 +1,13 @@
 package configmapreloader
 
 import (
+	"context"
 	"time"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/constants"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +23,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	p.WaitForNamespace(constants.PlatformSystem, 180*time.Second)
-	k8s.TestNamespace(client, constants.PlatformSystem, test)
+	kommons.TestNamespace(client, constants.PlatformSystem, test)
 	if !p.E2E {
 		return
 	}
@@ -36,7 +37,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	defer cleanup(client)
-	_, err := client.CoreV1().ConfigMaps("default").Create(&v1.ConfigMap{
+	_, err := client.CoreV1().ConfigMaps("default").Create(context.TODO(), &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -52,13 +53,13 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		Data: map[string]string{
 			"test": "Before reload",
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		test.Failf("configmap-reloader", "Cannot create configmap-reload config map")
 		return
 	}
 	var replicas int32 = 1
-	_, err = client.AppsV1().Deployments("default").Create(&appsv1.Deployment{
+	_, err = client.AppsV1().Deployments("default").Create(context.TODO(), &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
@@ -114,14 +115,14 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 				Type: appsv1.RollingUpdateDeploymentStrategyType,
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 
 	if err != nil {
 		test.Failf("configmap-reloader", "Cannot create test deployment")
 		return
 	}
 
-	watch, _ := client.AppsV1().Deployments("default").Watch(metav1.ListOptions{
+	watch, _ := client.AppsV1().Deployments("default").Watch(context.TODO(), metav1.ListOptions{
 		LabelSelector:  "k8s-app=configmap-reloader-test",
 		TimeoutSeconds: &watchTimeout,
 	})
@@ -136,7 +137,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		}
 	}
 
-	_, err = client.CoreV1().ConfigMaps("default").Update(&v1.ConfigMap{
+	_, err = client.CoreV1().ConfigMaps("default").Update(context.TODO(), &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -152,7 +153,7 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 		Data: map[string]string{
 			"test": "After reload",
 		},
-	})
+	}, metav1.UpdateOptions{})
 	if err != nil {
 		test.Failf("configmap-reloader", "ConfigMap configmap-reloader was not updated: %v", err)
 		return
@@ -177,6 +178,6 @@ func e2eTest(p *platform.Platform, test *console.TestResults) {
 
 //nolint
 func cleanup(client *kubernetes.Clientset) {
-	client.CoreV1().ConfigMaps(constants.PlatformSystem).Delete("reloader-test", &metav1.DeleteOptions{})
-	client.AppsV1().Deployments(constants.PlatformSystem).Delete("configmap-reloader-test", &metav1.DeleteOptions{})
+	client.CoreV1().ConfigMaps(constants.PlatformSystem).Delete(context.TODO(), "reloader-test", metav1.DeleteOptions{})
+	client.AppsV1().Deployments(constants.PlatformSystem).Delete(context.TODO(), "configmap-reloader-test", metav1.DeleteOptions{})
 }
