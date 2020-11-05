@@ -48,6 +48,7 @@ func main() {
 		cmd.Node,
 		cmd.NSX,
 		cmd.Opa,
+		cmd.Operator,
 		cmd.Orphan,
 		cmd.Provision,
 		cmd.Render,
