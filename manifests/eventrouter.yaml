@@ -71,7 +71,7 @@ spec:
               cpu: 10m
               memory: 32Mi
             limits:
-              cpu: 100m
+              cpu: 500m
               memory: 256Mi
       serviceAccount: eventrouter
       volumes:
