@@ -6,9 +6,9 @@ import (
 
 	"github.com/flanksource/commons/console"
 
-	"github.com/flanksource/karina/pkg/k8s"
-	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/proxy"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -17,7 +17,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	client, _ := p.GetClientset()
 
-	k8s.TestNamespace(client, Namespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 
 	dialer, _ := p.GetProxyDialer(proxy.Proxy{
 		Namespace:    Namespace,

@@ -8,8 +8,8 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -20,7 +20,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, "sealed-secrets", test)
+	kommons.TestNamespace(client, "sealed-secrets", test)
 	if !p.E2E {
 		return
 	}

@@ -3,9 +3,9 @@ package monitoring
 import (
 	"fmt"
 
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
 )
 
 const (
@@ -107,10 +107,10 @@ func Install(p *platform.Platform) error {
 		if err != nil {
 			return fmt.Errorf("failed to template the dashboard: %v ", err)
 		}
-		if err := p.ApplyCRD("monitoring", k8s.CRD{
+		if err := p.ApplyCRD("monitoring", kommons.CRD{
 			APIVersion: "integreatly.org/v1alpha1",
 			Kind:       "GrafanaDashboard",
-			Metadata: k8s.Metadata{
+			Metadata: kommons.Metadata{
 				Name:      name,
 				Namespace: Namespace,
 				Labels: map[string]string{

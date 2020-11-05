@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/kommons"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -17,7 +17,7 @@ type ReportOptions struct {
 	Format      string
 }
 
-func GetNamespaces(specs k8s.Specs) map[string]map[string]string {
+func GetNamespaces(specs kommons.Specs) map[string]map[string]string {
 	namespaces := map[string]map[string]string{}
 
 	for _, ns := range specs.FilterBy("Namespace") {
@@ -27,7 +27,7 @@ func GetNamespaces(specs k8s.Specs) map[string]map[string]string {
 }
 
 func Quotas(opts ReportOptions) error {
-	specs, err := k8s.Walk(opts.Path)
+	specs, err := kommons.Walk(opts.Path)
 	if err != nil {
 		return err
 	}

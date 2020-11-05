@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	"gopkg.in/yaml.v2"
 )
 
@@ -62,7 +62,7 @@ func Upgrade(platform *platform.Platform) error {
 
 	for _, nodeMachine := range cluster.Nodes {
 		node := nodeMachine.Node
-		if !k8s.IsMasterNode(node) {
+		if !kommons.IsMasterNode(node) {
 			continue
 		}
 		nodeVersion := kubeadm.GetNodeVersion(platform, node)

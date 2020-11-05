@@ -5,8 +5,8 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/constants"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +22,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	p.WaitForNamespace(constants.PlatformSystem, 180*time.Second)
-	k8s.TestNamespace(client, constants.PlatformSystem, test)
+	kommons.TestNamespace(client, constants.PlatformSystem, test)
 	if !p.E2E {
 		return
 	}

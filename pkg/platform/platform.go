@@ -23,9 +23,9 @@ import (
 	"github.com/flanksource/karina/pkg/api"
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
-	"github.com/flanksource/karina/pkg/k8s"
-	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/proxy"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
 	minio "github.com/minio/minio-go/v6"
@@ -43,7 +43,7 @@ type Platform struct {
 	ProvisionHook   ProvisionHook
 	logger.Logger
 	logFields map[string]interface{}
-	k8s.Client
+	kommons.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
 	ctx            context.Context //nolint
 	kubeConfig     []byte
@@ -190,7 +190,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return platform.kubeConfig, nil
 	}
 
-	context := k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath)
+	context := kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath)
 	platform.Tracef("Current KUBECONFIG: path=%s, context=%s", platform.KubeConfigPath, context)
 	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
 		return ioutil.ReadFile(platform.KubeConfigPath)
@@ -202,7 +202,7 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 	}
 
 	platform.Debugf("Generating a new kubeconfig for %s", ip)
-	kubeConfig, err := k8s.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
+	kubeConfig, err := kommons.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {
 		return nil, err
 	}
@@ -381,7 +381,7 @@ func (platform *Platform) GetNodeNames() map[string]bool {
 func (platform *Platform) GetKubeConfig() (string, error) {
 	// if the current kubeconfig context already has a reference to the cluster
 	// then we can just reuse it
-	if platform.Name == k8s.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+	if platform.Name == kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
 		return platform.KubeConfigPath, nil
 	}
 
@@ -536,7 +536,7 @@ func (platform *Platform) ExposeIngress(namespace, service string, port int, ann
 	return platform.Client.ExposeIngress(namespace, service, fmt.Sprintf("%s.%s", service, platform.Domain), port, annotations)
 }
 
-func (platform *Platform) ApplyCRD(namespace string, specs ...k8s.CRD) error {
+func (platform *Platform) ApplyCRD(namespace string, specs ...kommons.CRD) error {
 	for _, spec := range specs {
 		data, err := yaml.Marshal(spec)
 		if err != nil {
@@ -572,7 +572,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 	if err != nil {
 		return
 	}
-	k8s.WaitForNamespace(client, ns, timeout)
+	kommons.WaitForNamespace(client, ns, timeout)
 }
 
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
@@ -585,7 +585,7 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		if err != nil {
 			return err
 		}
-		objects, err := k8s.GetUnstructuredObjects([]byte(template))
+		objects, err := kommons.GetUnstructuredObjects([]byte(template))
 		if err != nil {
 			return err
 		}

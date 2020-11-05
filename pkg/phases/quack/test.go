@@ -5,8 +5,8 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
@@ -15,7 +15,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := platform.GetClientset()
-	k8s.TestNamespace(client, Namespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 
 	if !platform.E2E {
 		return

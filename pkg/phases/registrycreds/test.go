@@ -7,8 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -23,7 +23,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	testNamespace := "0001-test-registry-creds"
 	secretName := "awsecr-cred"
 
-	k8s.TestNamespace(client, namespace, test)
+	kommons.TestNamespace(client, namespace, test)
 
 	if !p.E2E {
 		return

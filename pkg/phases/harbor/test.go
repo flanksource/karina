@@ -2,8 +2,8 @@ package harbor
 
 import (
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
@@ -12,7 +12,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, "harbor", test)
+	kommons.TestNamespace(client, "harbor", test)
 	harbor, err := NewClient(p)
 	if err != nil {
 		test.Failf(Namespace, "failed to get harbor client: %v", err)

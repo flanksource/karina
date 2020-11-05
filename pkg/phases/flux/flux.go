@@ -6,12 +6,11 @@ import (
 	"sort"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"github.com/flanksource/karina/pkg/constants"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func Install(p *platform.Platform) error {
@@ -104,7 +103,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		"memcached-service": "",
 	}
 
-	spec := k8s.Builder{
+	spec := kommons.Builder{
 		Namespace: cr.Namespace,
 	}
 
@@ -134,7 +133,7 @@ func NewFluxDeployment(cr *types.GitOps) []runtime.Object {
 		Expose(3030).
 		Build()
 
-	var sa *k8s.ServiceAccountBuilder
+	var sa *kommons.ServiceAccountBuilder
 	if cr.Namespace == constants.KubeSystem {
 		spec.ServiceAccount(saName).AddClusterRole("cluster-admin")
 	} else {

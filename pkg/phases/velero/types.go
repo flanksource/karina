@@ -1,7 +1,7 @@
 package velero
 
 import (
-	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -289,7 +289,7 @@ func (in Backup) DeepCopyObject() runtime.Object {
 }
 
 func (in Backup) GetObjectKind() schema.ObjectKind {
-	return k8s.DynamicKind{
+	return kommons.DynamicKind{
 		APIVersion: "velero.io/v1",
 		Kind:       "Backup",
 	}

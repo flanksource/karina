@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -61,7 +61,7 @@ func TestOPA(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	k8s.TestNamespace(client, Namespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 	configs, err := client.CoreV1().ConfigMaps(Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		test.Failf(Namespace, "failed to list policies via configmap: %s", err)
@@ -153,7 +153,7 @@ func TestGatekeeper(p *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, GatekeeperNamespace, test)
+	kommons.TestNamespace(client, GatekeeperNamespace, test)
 	if p.E2E {
 		testE2EGatekeeper(p, test)
 	}

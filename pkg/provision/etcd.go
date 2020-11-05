@@ -7,10 +7,10 @@ import (
 	"text/tabwriter"
 
 	"github.com/flanksource/commons/collections"
-	"github.com/flanksource/karina/pkg/k8s"
-	"github.com/flanksource/karina/pkg/k8s/etcd"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/etcd"
 	"go.etcd.io/etcd/clientv3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -151,7 +151,7 @@ func (cluster *EtcdClient) PrintStatus() error {
 		fmt.Fprintf(w, "%s\t", member.Name)
 		node, err := cluster.Kubernetes.CoreV1().Nodes().Get(member.Name, metav1.GetOptions{})
 		if err == nil {
-			fmt.Fprintf(w, "%s\t", k8s.GetNodeStatus(*node))
+			fmt.Fprintf(w, "%s\t", kommons.GetNodeStatus(*node))
 		} else {
 			fmt.Fprintf(w, "MISSING\t")
 		}

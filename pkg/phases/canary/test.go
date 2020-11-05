@@ -3,8 +3,8 @@ package canary
 import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/constants"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 const testName = "canary-checker"
@@ -20,5 +20,5 @@ func TestCanary(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	k8s.TestDeploy(client, constants.PlatformSystem, "canary-checker", test)
+	kommons.TestDeploy(client, constants.PlatformSystem, "canary-checker", test)
 }

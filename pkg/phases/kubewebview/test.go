@@ -2,8 +2,8 @@ package kubewebview
 
 import (
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 )
 
 func TestKubeWebView(p *platform.Platform, test *console.TestResults) {
@@ -12,6 +12,6 @@ func TestKubeWebView(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("kube-web-view", "kube-web-view is not configured")
 		return
 	}
-	k8s.TestNamespace(client, Namespace, test)
-	k8s.TestDeploy(client, Namespace, "kube-web-view", test)
+	kommons.TestNamespace(client, Namespace, test)
+	kommons.TestDeploy(client, Namespace, "kube-web-view", test)
 }

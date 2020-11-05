@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/flanksource/karina/pkg/api/postgres"
-	"github.com/flanksource/karina/pkg/k8s/proxy"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons/proxy"
 	"github.com/pkg/errors"
 
 	pv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"

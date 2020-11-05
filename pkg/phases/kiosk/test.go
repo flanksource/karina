@@ -12,8 +12,8 @@ import (
 	kioskconfigapi "github.com/flanksource/karina/pkg/api/kiosk/config/v1alpha1"
 	kioskapi "github.com/flanksource/karina/pkg/api/kiosk/tenancy/v1alpha1"
 	"github.com/flanksource/karina/pkg/constants"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -35,7 +35,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := p.GetClientset()
-	k8s.TestDeploy(client, constants.PlatformSystem, "kiosk", test)
+	kommons.TestDeploy(client, constants.PlatformSystem, "kiosk", test)
 
 	if !p.E2E {
 		return

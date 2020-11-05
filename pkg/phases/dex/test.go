@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
 	testlib "github.com/flanksource/karina/pkg/test"
+	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
@@ -19,11 +19,11 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, "dex", test)
+	kommons.TestNamespace(client, "dex", test)
 	if !p.E2E {
 		return
 	}
-	k8s.TestNamespace(client, "ldap", test)
+	kommons.TestNamespace(client, "ldap", test)
 
 	dexClient := &testlib.DexOauth{
 		DexURL:       fmt.Sprintf("https://dex.%s", p.Domain),
@@ -43,7 +43,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	test.Passf("dex", "OIDC Authentication flow")
 
 	ca := p.GetIngressCA()
-	kubeConfig, err := k8s.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token.IDToken, token.AccessToken, token.RefreshToken)
+	kubeConfig, err := kommons.CreateOIDCKubeConfig(p.Name, ca, "localhost", fmt.Sprintf("https://dex.%s", p.Domain), token.IDToken, token.AccessToken, token.RefreshToken)
 
 	if err != nil {
 		test.Failf("dex", "failed to generate kube config: %v", err)

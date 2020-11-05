@@ -1,13 +1,13 @@
 package constants
 
 import (
-	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
-var RuntimeObjects = map[string]types.RuntimeObjectWithMetadata{
+var RuntimeObjects = map[string]kommons.RuntimeObjectWithMetadata{
 	"configmap":              &v1.ConfigMap{},
 	"daemonset":              &extensionsv1beta1.DaemonSet{},
 	"deployment":             &extensionsv1beta1.Deployment{},

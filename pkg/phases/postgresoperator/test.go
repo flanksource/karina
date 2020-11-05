@@ -8,8 +8,8 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	"github.com/go-pg/pg/v9/orm"
 	"github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
@@ -43,7 +43,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	client, _ := p.GetClientset()
-	k8s.TestNamespace(client, Namespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 	if p.E2E {
 		TestE2E(p, test)
 	}

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/flanksource/karina/pkg/ca"
-	"github.com/flanksource/karina/pkg/k8s"
+	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flanksource/karina/pkg/constants"
@@ -55,7 +55,7 @@ func Install(p *platform.Platform) error {
 	p.KubeWebView.ExternalClusters.AddSelf(p.Name)
 	// create a secret containing a kubeconfig file that allows access to
 	// this cluster via user/cert as well as the given external clusters
-	kubeConfig, err := k8s.CreateMultiKubeConfig(ca, p.KubeWebView.ExternalClusters, Group, User, 2*356*24*time.Hour)
+	kubeConfig, err := kommons.CreateMultiKubeConfig(ca, p.KubeWebView.ExternalClusters, Group, User, 2*356*24*time.Hour)
 	if err != nil {
 		return fmt.Errorf("failed to generate kubeconfig for multi-cluster access: %v", err)
 	}

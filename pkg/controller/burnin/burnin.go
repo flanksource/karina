@@ -3,8 +3,8 @@ package burnin
 import (
 	"time"
 
-	"github.com/flanksource/karina/pkg/k8s"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 )
@@ -40,7 +40,7 @@ func reconcile(platform *platform.Platform, period time.Duration) error {
 
 nodeLoop:
 	for _, node := range nodes.Items {
-		if !k8s.HasTaint(node, Taint) {
+		if !kommons.HasTaint(node, Taint) {
 			continue
 		}
 		podList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
@@ -50,11 +50,11 @@ nodeLoop:
 		}
 
 		for _, pod := range podList.Items {
-			if !k8s.IsPodHealthy(pod) {
+			if !kommons.IsPodHealthy(pod) {
 				platform.Infof("Node is not healthy yet, pod is unhealthy pod=%s node=%s", pod.Name, node.Name)
 				continue nodeLoop
 			}
-			lastRestartTime := k8s.GetLastRestartTime(pod)
+			lastRestartTime := kommons.GetLastRestartTime(pod)
 			if lastRestartTime != nil && time.Since(*lastRestartTime) < period {
 				platform.Infof("Node is not healthy yet, pod restarted %s ago pod=%s node=%s", time.Since(*lastRestartTime), pod.Name, node.Name)
 				continue nodeLoop
@@ -66,7 +66,7 @@ nodeLoop:
 		}
 		// everything looks healthy lets remove the taint
 		platform.Infof("Removing burnin taint node=%s", node.Name)
-		node.Spec.Taints = k8s.RemoveTaint(node.Spec.Taints, Taint)
+		node.Spec.Taints = kommons.RemoveTaint(node.Spec.Taints, Taint)
 		if _, err := client.CoreV1().Nodes().Update(&node); err != nil {
 			return err
 		}
