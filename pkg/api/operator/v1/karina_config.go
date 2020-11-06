@@ -8,14 +8,24 @@ import (
 
 // KarinaConfigSpec defines the desired state of KarinaConfig
 type KarinaConfigSpec struct {
-	Config       types.PlatformConfig        `json:"config,omitempty"`
-	EnvFrom      map[string]v1.EnvVarSource  `json:"envFrom,omitmepty"`
-	TemplateFrom map[string]v1.EnvFromSource `json:"templateFrom,omitempty"`
+	DryRun       bool                      `json:"dryRun,omitempty"`
+	Config       types.PlatformConfig      `json:"config,omitempty"`
+	TemplateFrom map[string]TemplateSource `json:"templateFrom,omitempty"`
 }
 
 // KarinaConfigStatus defines the observed state of KarinaConfig
 type KarinaConfigStatus struct {
 	LastApplied metav1.Time `json:"lastApplied,omitempty"`
+}
+
+type TemplateSource struct {
+	Template string `json:"template,omitempty"`
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a secret in the pod's namespace
+	// +optional
+	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // +kubebuilder:object:root=true
