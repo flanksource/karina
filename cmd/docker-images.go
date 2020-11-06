@@ -109,5 +109,4 @@ func init() {
 	}
 	syncCmd.Flags().StringArrayVarP(&imagesToSync, "image", "i", []string{}, "A list of images to sync")
 	Images.AddCommand(listCmd, syncCmd)
-
 }
