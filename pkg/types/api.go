@@ -7,11 +7,13 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+// +kubebuilder:object:generate=false
 type TagInterface interface {
 	GetTags() map[string]string
 }
 
 // Machine represents a running instance of a VM
+// +kubebuilder:object:generate=false
 type Machine interface {
 	TagInterface
 	String() string
@@ -30,6 +32,7 @@ type Machine interface {
 	Reference() types.ManagedObjectReference
 }
 
+// +kubebuilder:object:generate=false
 type NullMachine struct {
 	Hostname string
 }
@@ -81,6 +84,7 @@ func (n NullMachine) Reference() types.ManagedObjectReference {
 	return types.ManagedObjectReference{}
 }
 
+// +kubebuilder:object:generate=false
 type Cluster interface {
 	Clone(template VM, config *konfigadm.Config) (Machine, error)
 	CloneTemplate(template VM, config *konfigadm.Config) (Machine, error)
