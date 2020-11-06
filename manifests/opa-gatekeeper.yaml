@@ -714,6 +714,7 @@ spec:
       - args:
         - --port=8443
         - --logtostderr
+        - --disable-cert-rotation
         {{- range $ns := .gatekeeper.whitelistNamespaces }}
         - --exempt-namespace={{ $ns }}
         {{- end }}
