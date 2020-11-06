@@ -16,7 +16,6 @@ func Install(p *platform.Platform) error {
 		"git-operator":      f,
 		"platform-operator": f,
 		"prometheus":        f,
-		"service-monitor":   f,
 		"antrea":            func() bool { return p.Antrea == nil || p.Antrea.IsDisabled() },
 		"calico":            func() bool { return p.Calico == nil || p.Calico.IsDisabled() },
 		"eck":               p.ECK.IsDisabled,
