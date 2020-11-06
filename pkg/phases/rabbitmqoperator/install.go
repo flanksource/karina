@@ -17,5 +17,5 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	return p.ApplySpecs(Namespace, "rabbitmq.yaml", "rabbitmq-crd.yaml")
+	return p.ApplySpecs(Namespace, "rabbitmq.yaml")
 }
