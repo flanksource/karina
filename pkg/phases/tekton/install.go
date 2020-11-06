@@ -9,7 +9,7 @@ const (
 )
 
 func Install(p *platform.Platform) error {
-	if p.Tekton.Disabled || p.Tekton.Version == "" {
+	if p.Tekton.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "tekton.yaml")
 	}
 

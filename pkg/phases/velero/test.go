@@ -7,7 +7,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.Velero == nil || p.Velero.Disabled {
+	if p.Velero.IsDisabled() {
 		test.Skipf("velero", "Velero is disabled")
 		return
 	}

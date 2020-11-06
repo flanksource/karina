@@ -9,7 +9,7 @@ const (
 )
 
 func Deploy(platform *platform.Platform) error {
-	if platform.PostgresOperator == nil || platform.PostgresOperator.Disabled {
+	if platform.PostgresOperator.IsDisabled() {
 		if err := platform.DeleteSpecs("", "postgres-operator.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}

@@ -14,7 +14,7 @@ const (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.Velero == nil || platform.Velero.Disabled {
+	if platform.Velero.IsDisabled() {
 		if err := platform.DeleteSpecs(Namespace, "velero.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}
