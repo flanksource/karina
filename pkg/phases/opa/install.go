@@ -159,7 +159,6 @@ func InstallGatekeeper(p *platform.Platform) error {
 		if start.Add(120 * time.Second).Before(time.Now()) {
 			return fmt.Errorf("timeout waiting for ValidatingWebhook to get a CA injected")
 		}
-
 	}
 
 	return nil
