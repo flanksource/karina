@@ -7,7 +7,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.VPA == nil || p.VPA.Version == "" {
+	if p.VPA.IsDisabled() {
 		return
 	}
 	client, _ := p.GetClientset()
