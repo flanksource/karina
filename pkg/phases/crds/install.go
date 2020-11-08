@@ -19,8 +19,9 @@ func Install(p *platform.Platform) error {
 		"sealed-secrets":    f,
 		"antrea":            func() bool { return p.Antrea == nil || p.Antrea.IsDisabled() },
 		"calico":            func() bool { return p.Calico == nil || p.Calico.IsDisabled() },
-		"eck":               p.ECK.IsDisabled,
 		"helm-operator":     func() bool { return len(p.GitOps) == 0 },
+		"eck":               p.ECK.IsDisabled,
+		"gatekeeper":        p.Gatekeeper.IsDisabled,
 		"postgres-db":       p.PostgresOperator.IsDisabled,
 		"postgres-operator": p.PostgresOperator.IsDisabled,
 		"rabbitmq":          p.RabbitmqOperator.IsDisabled,
@@ -32,7 +33,6 @@ func Install(p *platform.Platform) error {
 	wg := sync.WaitGroup{}
 	for crd, fn := range crds {
 		if fn() {
-			p.Infof("Skipped %s", crd)
 			continue
 		}
 		wg.Add(1)
