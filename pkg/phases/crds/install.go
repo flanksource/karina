@@ -28,6 +28,7 @@ func Install(p *platform.Platform) error {
 		"tekton":            p.Tekton.IsDisabled,
 		"velero":            p.Velero.IsDisabled,
 		"vpa":               p.VPA.IsDisabled,
+		"kiosk":             p.Kiosk.IsDisabled,
 	}
 
 	wg := sync.WaitGroup{}
