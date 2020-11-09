@@ -7,7 +7,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.Tekton.Disabled || p.Tekton.Version == "" {
+	if p.Tekton.IsDisabled() {
 		return
 	}
 

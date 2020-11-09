@@ -202,8 +202,7 @@ func (db DB) GetConnectionURL(name string) string {
 }
 
 type PostgresOperator struct {
-	Disabled       bool   `yaml:"disabled,omitempty"`
-	Version        string `yaml:"version"`
+	Disabled       `yaml:",inline"`
 	DBVersion      string `yaml:"dbVersion,omitempty"`
 	BackupBucket   string `yaml:"backupBucket,omitempty"`
 	BackupSchedule string `yaml:"backupSchedule,omitempty"`
@@ -594,8 +593,7 @@ type Versions struct {
 }
 
 type Velero struct {
-	Disabled bool              `yaml:"disabled,omitempty"`
-	Version  string            `yaml:"version"`
+	Disabled `yaml:",inline"`
 	Schedule string            `yaml:"schedule,omitempty"`
 	Bucket   string            `yaml:"bucket,omitempty"`
 	Volumes  bool              `yaml:"volumes"`
@@ -740,8 +738,7 @@ func wrap(with string, array ...string) []string {
 }
 
 type ECK struct {
-	Disabled bool   `yaml:"disabled,omitempty"`
-	Version  string `yaml:"version"`
+	Disabled `yaml:",inline"`
 }
 
 type NodeLocalDNS struct {
@@ -888,10 +885,9 @@ type Elasticsearch struct {
 }
 
 type Tekton struct {
-	Version          string            `yaml:"version,omitempty"`
+	Disabled         `yaml:",inline"`
 	DashboardVersion string            `yaml:"dashboardVersion,omitempty"`
 	EventsVersion    string            `yaml:"eventsVersion,omitempty"`
-	Disabled         bool              `yaml:"disabled,omitempty"`
 	Persistence      Persistence       `yaml:"persistence,omitempty"`
 	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty"`
 }

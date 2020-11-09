@@ -109,11 +109,13 @@ metadata:
   namespace: platform-system
   labels:
     app: kiosk
+  annotations:
+    reload/all: "true"
 spec:
   selector:
     matchLabels:
       app: kiosk
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:

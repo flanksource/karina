@@ -24,10 +24,6 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	if err := platform.ApplySpecs("", "cert-manager-crd.yaml"); err != nil {
-		return err
-	}
-
 	if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
 		return err
 	}

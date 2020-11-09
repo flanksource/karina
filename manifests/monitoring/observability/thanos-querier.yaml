@@ -5,6 +5,8 @@ metadata:
   namespace: monitoring
   labels:
     app: thanos-query
+  annotations:
+      reload/all: "true"
 spec:
   replicas: 1
   selector:

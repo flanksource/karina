@@ -115,6 +115,39 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: gatekeeper-controller-manager
+  namespace: gatekeeper-system
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: manager
+          resources:
+            requests:
+              cpu: 10m
+              memory: 10Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gatekeeper-audit
+  namespace: gatekeeper-system
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: manager
+          resources:
+            requests:
+              cpu: 10m
+              memory: 10Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: quack
   namespace: quack
 spec:

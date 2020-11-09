@@ -10,7 +10,7 @@ const (
 )
 
 func Install(p *platform.Platform) error {
-	if p.VPA == nil || p.VPA.IsDisabled() {
+	if p.VPA.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "vpa.yaml")
 	}
 
