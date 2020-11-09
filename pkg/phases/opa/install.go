@@ -140,17 +140,13 @@ func InstallGatekeeper(p *platform.Platform) error {
 		}
 	}
 
-	if p.Gatekeeper.Constraints != "" && !p.DryRun {
-		if err := deployConstraints(p, p.Gatekeeper.Constraints); err != nil {
-			return err
-		}
-	}
-
 	start := time.Now()
 	clientset, _ := p.GetClientset()
 	for {
+		// Wait until the validating webhooks have their CA injected by cert-manager so that
+		// subsequent namespace creation requests don't fail
 		webhook, _ := clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Get(context.TODO(), "gatekeeper-validating-webhook-configuration", metav1.GetOptions{})
-		if webhook != nil && len(webhook.Webhooks[0].ClientConfig.CABundle) > 100 {
+		if webhook != nil && len(webhook.Webhooks) > 0 && len(webhook.Webhooks[0].ClientConfig.CABundle) > 100 {
 			break
 		} else {
 			time.Sleep(3 * time.Second)
@@ -158,6 +154,12 @@ func InstallGatekeeper(p *platform.Platform) error {
 
 		if start.Add(120 * time.Second).Before(time.Now()) {
 			return fmt.Errorf("timeout waiting for ValidatingWebhook to get a CA injected")
+		}
+	}
+
+	if p.Gatekeeper.Constraints != "" && !p.DryRun {
+		if err := deployConstraints(p, p.Gatekeeper.Constraints); err != nil {
+			return err
 		}
 	}
 
