@@ -16,6 +16,7 @@ import (
 )
 
 // +kubebuilder:rbac:groups="*",resources="*",verbs="*"
+
 type Operator struct {
 	log logr.Logger
 	mgr manager.Manager
