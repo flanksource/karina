@@ -15,10 +15,15 @@ type KarinaConfigSpec struct {
 
 // KarinaConfigStatus defines the observed state of KarinaConfig
 type KarinaConfigStatus struct {
-	LastApplied metav1.Time `json:"lastApplied,omitempty"`
+	LastApplied         metav1.Time `json:"lastApplied,omitempty"`
+	LastAppliedChecksum *string     `json:"lastAppliedChecsum,omitempty`
 }
 
 type TemplateSource struct {
+	// Write the content of secret/configmap/template to a file
+	// and set field to file name
+	// +optional
+	Tmpfile bool `json:"tmpFile,omitempty"`
 	// Applies a Golang template
 	// +optional
 	Template *TemplateSourceValue `json:"templateValue,omitempty"`

@@ -18,7 +18,6 @@ IMG ?= flanksource/karina:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
-
 .PHONY: help
 help:
 	@cat docs/developer-guide/make-targets.md
@@ -43,6 +42,10 @@ pack: setup
 linux:
 	GOOS=linux go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
 
+.PHONY: linux-static
+linux-static: pack
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -tags netgo -ldflags -w -o ./.bin/static/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
+
 .PHONY: darwin
 darwin:
 	GOOS=darwin go build -o ./.bin/$(NAME)_osx -ldflags "-X \"main.version=$(VERSION)\""  main.go
@@ -58,6 +61,10 @@ install:
 .PHONY: docker
 docker:
 	docker build ./ -t $(NAME)
+
+.PHONY: docker-fast
+docker-fast: linux-static
+	docker build ./ -t $(IMG) -f Dockerfile.fast
 
 .PHONY: serve-docs
 serve-docs:

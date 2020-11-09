@@ -17,8 +17,10 @@ type Enabled struct {
 }
 
 type Disabled struct {
-	Disabled bool   `yaml:"disabled" json:"disabled"`
-	Version  string `yaml:"version" json:"version"`
+	// +optional
+	Disabled bool `yaml:"disabled" json:"disabled"`
+	// +optional
+	Version string `yaml:"version" json:"version"`
 }
 
 func (d Disabled) IsDisabled() bool {
@@ -95,17 +97,26 @@ func (vm *VM) DeepCopy() *VM {
 }
 
 type Calico struct {
-	Disabled  `yaml:",inline" json:"disabled,omitempty"`
-	IPIP      calico.IPIPMode         `yaml:"ipip" json:"ipip"`
-	VxLAN     calico.VXLANMode        `yaml:"vxlan" json:"vxLAN"`
-	Log       string                  `yaml:"log,omitempty" json:"log,omitempty"`
-	BGPPeers  []calico.BGPPeer        `yaml:"bgpPeers,omitempty" json:"bgpPeers,omitempty"`
+	// +optional
+	Disabled `yaml:",inline" json:",inline"`
+	// +optional
+	IPIP calico.IPIPMode `yaml:"ipip" json:"ipip"`
+	// +optional
+	VxLAN calico.VXLANMode `yaml:"vxlan" json:"vxLAN"`
+	// +optional
+	Log string `yaml:"log,omitempty" json:"log,omitempty"`
+	// +optional
+	BGPPeers []calico.BGPPeer `yaml:"bgpPeers,omitempty" json:"bgpPeers,omitempty"`
+	// +optional
 	BGPConfig calico.BGPConfiguration `yaml:"bgpConfig,omitempty" json:"bgpConfig,omitempty"`
-	IPPools   []calico.IPPool         `yaml:"ipPools,omitempty" json:"ipPools,omitempty"`
+	// +optional
+	IPPools []calico.IPPool `yaml:"ipPools,omitempty" json:"ipPools,omitempty"`
 }
 
 type Antrea struct {
-	Disabled    `yaml:",inline" json:",inline"`
+	// +optional
+	Disabled `yaml:",inline" json:",inline"`
+	// +optional
 	IsCertReady bool `yaml:"isCertReady" json:"isCertReady"`
 }
 

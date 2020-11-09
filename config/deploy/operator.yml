@@ -44,10 +44,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - isCertReady
-                    - version
                     type: object
                   auditbeat:
                     properties:
@@ -72,9 +68,6 @@ spec:
                         type: object
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   brand:
                     properties:
@@ -193,15 +186,7 @@ spec:
                           type: object
                         type: array
                       disabled:
-                        properties:
-                          disabled:
-                            type: boolean
-                          version:
-                            type: string
-                        required:
-                        - disabled
-                        - version
-                        type: object
+                        type: boolean
                       ipPools:
                         items:
                           description: IPPool contains information about a IPPool
@@ -268,11 +253,10 @@ spec:
                         type: string
                       log:
                         type: string
+                      version:
+                        type: string
                       vxLAN:
                         type: string
-                    required:
-                    - ipip
-                    - vxLAN
                     type: object
                   canaryChecker:
                     description: Canary-checker allows for the deployment and configuration
@@ -349,9 +333,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   dns:
                     properties:
@@ -443,9 +424,7 @@ spec:
                       version:
                         type: string
                     required:
-                    - disabled
                     - filebeatPrefix
-                    - version
                     type: object
                   filebeat:
                     items:
@@ -495,11 +474,9 @@ spec:
                         version:
                           type: string
                       required:
-                      - disabled
                       - index
                       - name
                       - prefix
-                      - version
                       type: object
                     type: array
                   gatekeeper:
@@ -527,9 +504,6 @@ spec:
                         items:
                           type: string
                         type: array
-                    required:
-                    - disabled
-                    - version
                     type: object
                   gitOperator:
                     properties:
@@ -537,9 +511,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   gitops:
                     items:
@@ -800,9 +771,6 @@ spec:
                         type: object
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   kind:
                     properties:
@@ -820,9 +788,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   kpack:
                     properties:
@@ -830,9 +795,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   kubeResourceReport:
                     description: Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
@@ -1091,9 +1053,6 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   monitoring:
                     properties:
@@ -1831,9 +1790,6 @@ spec:
                         type: object
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   patches:
                     description: A list of strategic merge patches that will be applied
@@ -1904,9 +1860,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   redisOperator:
                     properties:
@@ -1914,9 +1867,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   registryCredentials:
                     properties:
@@ -2104,9 +2054,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   terminationProtection:
                     description: If true, terminate operations will return an error.
@@ -2151,9 +2098,6 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   trustedCA:
                     type: string
@@ -2264,9 +2208,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
-                    - version
                     type: object
                   vsphere:
                     properties:
@@ -2357,6 +2298,10 @@ spec:
                         template:
                           type: string
                       type: object
+                    tmpFile:
+                      description: Write the content of secret/configmap/template
+                        to a file and set field to file name
+                      type: boolean
                   type: object
                 type: object
             type: object
@@ -2499,11 +2444,12 @@ spec:
         - containerPort: 8443
           name: https
       - args:
+        - operator
         - --metrics-addr=127.0.0.1:8080
         - --enable-leader-election
         - --log-level=debug
         command:
-        - /manager
+        - /bin/karina
         image: flanksource/karina-operator:v1
         imagePullPolicy: IfNotPresent
         name: manager

@@ -2,13 +2,18 @@ package operator
 
 import (
 	"context"
+	"crypto/sha1"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"strconv"
 
 	"github.com/flanksource/commons/lookup"
 	karinav1 "github.com/flanksource/karina/pkg/api/operator/v1"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/order"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/go-logr/logr"
 	"github.com/imdario/mergo"
@@ -16,6 +21,7 @@ import (
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,7 +67,30 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
-	fmt.Printf("Platform config:\n%s\n", yml)
+	h := sha1.New()
+	io.WriteString(h, string(yml))
+	checksum := string(h.Sum(nil))
+
+	if karinaConfig.Status.LastAppliedChecksum != nil && *karinaConfig.Status.LastAppliedChecksum != checksum {
+		log.Info("Karina config already deployed", "checksum", checksum, "name", karinaConfig.Name, "namespace", karinaConfig.Namespace)
+		return ctrl.Result{}, nil
+	}
+
+	platform := platform.Platform{
+		PlatformConfig: platformConfig,
+	}
+
+	if err := r.deploy(karinaConfig, &platform); err != nil {
+		log.Error(err, "failed to deploy config")
+		return ctrl.Result{}, err
+	}
+
+	karinaConfig.Status.LastAppliedChecksum = &checksum
+	karinaConfig.Status.LastApplied = metav1.Now()
+	if err := r.Status().Update(ctx, karinaConfig); err != nil {
+		log.Error(err, "failed to update status")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -72,17 +101,36 @@ func (r *KarinaConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func addDefaults(p *types.PlatformConfig) {
-	ldap := p.Ldap
-	if ldap.Port == "" {
-		ldap.Port = "636"
-	}
-	if ldap != nil {
-		p.Ldap = ldap
+func (r *KarinaConfigReconciler) deploy(karinaConfig *karinav1.KarinaConfig, p *platform.Platform) error {
+	log := r.Log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
+	phases := order.GetPhases()
+	// we track the failure status, and continue on failure to allow degraded operations
+	failed := false
+
+	errorMessage := ""
+
+	// first deploy strictly ordered phases, these phases are often dependencies for other phases
+	for _, name := range order.PhaseOrder {
+		if err := phases[name](p); err != nil {
+			log.Error(err, "failed to deploy", "phase", name)
+			errorMessage += fmt.Sprintf("failed to deploy phase=%s error: %v\n", name, err)
+			failed = true
+		}
+		// remove the phase from the map so it isn't run again
+		delete(phases, name)
 	}
 
-	p.Gatekeeper.WhitelistNamespaces = append(p.Gatekeeper.WhitelistNamespaces, constants.PlatformNamespaces...)
-	harbor.Defaults(p)
+	for name, fn := range phases {
+		if err := fn(p); err != nil {
+			log.Error(err, "failed to deploy", "phase", name)
+			errorMessage += fmt.Sprintf("failed to deploy phase=%s error: %v\n", name, err)
+			failed = true
+		}
+	}
+	if failed {
+		return errors.Errorf(errorMessage)
+	}
+	return nil
 }
 
 func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p *types.PlatformConfig) error {
@@ -104,9 +152,26 @@ func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p
 			}
 		}
 
+		if templateFrom.Tmpfile {
+			tempfile, err := ioutil.TempFile("", "")
+			if err != nil {
+				return errors.Wrapf(err, "failed to create tempfile")
+			}
+			if err := ioutil.WriteFile(tempfile.Name(), []byte(value), 0600); err != nil {
+				return errors.Wrapf(err, "failed to write tempfile for key %s", key)
+			}
+
+			if p.TmpFiles == nil {
+				p.TmpFiles = []string{}
+			}
+
+			p.TmpFiles = append(p.TmpFiles, tempfile.Name())
+			value = tempfile.Name()
+		}
+
 		r.Log.Info("Looking up key", "key", key)
 
-		rvalue, err := lookup.LookupString(&p, key)
+		rvalue, err := lookup.LookupString(p, key)
 		if err != nil {
 			return errors.Wrapf(err, "cannot lookup key %s", key)
 		}
@@ -162,4 +227,17 @@ func (r *KarinaConfigReconciler) getConfigmapValue(name, namespace, key string) 
 	}
 
 	return data, nil
+}
+
+func addDefaults(p *types.PlatformConfig) {
+	ldap := p.Ldap
+	if ldap.Port == "" {
+		ldap.Port = "636"
+	}
+	if ldap != nil {
+		p.Ldap = ldap
+	}
+
+	p.Gatekeeper.WhitelistNamespaces = append(p.Gatekeeper.WhitelistNamespaces, constants.PlatformNamespaces...)
+	harbor.Defaults(p)
 }

@@ -18,8 +18,9 @@ spec:
       serviceAccountName: manager
       containers:
       - command:
-        - /manager
+        - /bin/karina
         args:
+        - operator
         - --enable-leader-election
         - --log-level=debug
         image: controller:latest
