@@ -19,7 +19,9 @@ type KarinaConfigStatus struct {
 }
 
 type TemplateSource struct {
-	Template string `json:"template,omitempty"`
+	// Applies a Golang template
+	// +optional
+	Template *TemplateSourceValue `json:"templateValue,omitempty"`
 	// Selects a key of a ConfigMap.
 	// +optional
 	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
@@ -28,9 +30,13 @@ type TemplateSource struct {
 	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
+type TemplateSourceValue struct {
+	Template string `json:"template,omitempty"`
+}
+
 // +kubebuilder:object:root=true
 
-// KarinaConfig is the Schema for the KarinaConfiges API
+// KarinaConfig is the Schema for the KarinaConfigs API
 type KarinaConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

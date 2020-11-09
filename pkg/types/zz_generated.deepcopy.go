@@ -680,7 +680,7 @@ func (in *Kind) DeepCopyInto(out *Kind) {
 	*out = *in
 	if in.PortMappings != nil {
 		in, out := &in.PortMappings, &out.PortMappings
-		*out = make(map[int32]int32, len(*in))
+		*out = make(map[string]int32, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -734,7 +734,7 @@ func (in *KubeResourceReport) DeepCopyInto(out *KubeResourceReport) {
 	*out = *in
 	if in.Costs != nil {
 		in, out := &in.Costs, &out.Costs
-		*out = make(map[string]float32, len(*in))
+		*out = make(map[string]int32, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}

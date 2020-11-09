@@ -13,6 +13,12 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Image URL to use all building/pushing image targets
+IMG ?= flanksource/karina:latest
+# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
+CRD_OPTIONS ?= "crd:trivialVersions=true"
+
+
 .PHONY: help
 help:
 	@cat docs/developer-guide/make-targets.md
@@ -83,6 +89,21 @@ generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./pkg/api/operator/..."
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./pkg/types/..."
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./pkg/api/calico/..."
+
+static: manifests
+	mkdir -p config/deploy
+	cd config/operator/manager && kustomize edit set image controller=${IMG}
+	kustomize build config/crd > config/deploy/crd.yml
+	kustomize build config/operator/default > config/deploy/operator.yml
+
+# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+deploy: manifests
+	cd config/operator/manager && kustomize edit set image controller=${IMG}
+	kustomize build config/operator/default | kubectl apply -f -
+
+# Generate manifests e.g. CRD, RBAC etc.
+manifests: controller-gen
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager webhook paths="./pkg/api/operator/..." output:crd:artifacts:config=config/crd/bases output:rbac:artifacts:config=config/operator/rbac
 
 # find or download controller-gen
 # download controller-gen if necessary
