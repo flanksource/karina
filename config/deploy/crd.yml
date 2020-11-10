@@ -373,8 +373,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - version
                     type: object
                   elasticsearch:
                     properties:
@@ -1834,8 +1832,6 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - version
                     type: object
                   quack:
                     properties:
