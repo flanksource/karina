@@ -19,7 +19,7 @@ var Operator = &cobra.Command{
 		logLevel, _ := cmd.Flags().GetString("log-level")
 		port, _ := cmd.Flags().GetInt("port")
 
-		operatorConfig := operator.OperatorConfig{
+		operatorConfig := operator.Config{
 			MetricsAddr:          metricsAddr,
 			EnableLeaderElection: enableLeaderElection,
 			SyncPeriod:           syncPeriod,

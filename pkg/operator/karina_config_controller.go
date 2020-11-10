@@ -72,7 +72,7 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	h := sha1.New()
-	io.WriteString(h, string(yml))
+	io.WriteString(h, string(yml)) // nolint: errcheck
 	checksum := hex.EncodeToString(h.Sum(nil))
 
 	log.Info("Current ", "checksum", checksum)
@@ -100,6 +100,7 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	platformConfig := karinaConfig.Spec.Config
 	defaultConfig := types.DefaultPlatformConfig()
+	addDefaults(&platformConfig)
 	if err := r.addExtra(karinaConfig, &platformConfig); err != nil {
 		log.Error(err, "failed to add extra variables")
 		return ctrl.Result{}, err

@@ -22,7 +22,7 @@ type Operator struct {
 	mgr manager.Manager
 }
 
-type OperatorConfig struct {
+type Config struct {
 	MetricsAddr          string
 	EnableLeaderElection bool
 	SyncPeriod           time.Duration
@@ -30,7 +30,7 @@ type OperatorConfig struct {
 	Port                 int
 }
 
-func New(config OperatorConfig) (*Operator, error) {
+func New(config Config) (*Operator, error) {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = karinav1.AddToScheme(scheme)
