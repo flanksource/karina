@@ -158,7 +158,7 @@ func init() {
 		"redis-operator":       redisoperator.Test,
 		"rabbitmq-operator":    rabbitmqoperator.Test,
 		"platform-operator":    platformoperator.Test,
-		"promtheus":            monitoring.TestPrometheus,
+		"prometheus":           monitoring.TestPrometheus,
 		"quack":                quack.Test,
 		"registry-creds":       registrycreds.Test,
 		"sealed-secrets":       sealedsecrets.Test,
