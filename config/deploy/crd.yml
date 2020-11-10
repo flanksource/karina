@@ -270,10 +270,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - aggregateServers
-                    - disabled
-                    - version
                     type: object
                   certmanager:
                     properties:
@@ -322,8 +318,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
                     type: object
                   datacenter:
                     type: string
@@ -964,8 +958,6 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                    required:
-                    - disabled
                     type: object
                   master:
                     description: VM captures the specifications of a virtual machine
@@ -1137,8 +1129,6 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                    required:
-                    - disabled
                     type: object
                   nfs:
                     properties:
@@ -1851,8 +1841,6 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                    required:
-                    - disabled
                     type: object
                   rabbitmqOperator:
                     properties:
@@ -1976,7 +1964,6 @@ spec:
                         type: string
                     required:
                     - bucket
-                    - disabled
                     - endpoint
                     - schedule
                     - version
@@ -1996,8 +1983,6 @@ spec:
                         type: boolean
                       version:
                         type: string
-                    required:
-                    - disabled
                     type: object
                   serviceSubnet:
                     type: string
@@ -2311,10 +2296,14 @@ spec:
               lastApplied:
                 format: date-time
                 type: string
+              lastAppliedChecksum:
+                type: string
             type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

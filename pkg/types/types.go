@@ -13,6 +13,7 @@ import (
 )
 
 type Enabled struct {
+	// +optional
 	Disabled bool `yaml:"disabled" json:"disabled"`
 }
 
@@ -388,8 +389,10 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Canary-checker allows for the deployment and configuration of the canary-checker
 type CanaryChecker struct {
-	Enabled          `yaml:",inline" json:",inline"`
-	Version          string   `yaml:"version" json:"version,"`
+	Enabled `yaml:",inline" json:",inline"`
+	// +optional
+	Version string `yaml:"version" json:"version,"`
+	// +optional
 	AggregateServers []string `yaml:"aggregateServers" json:"aggregateServers"`
 }
 

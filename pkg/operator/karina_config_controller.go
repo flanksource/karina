@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -49,6 +50,23 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
+	yml, err := yaml.Marshal(karinaConfig.Spec)
+	if err != nil {
+		log.Error(err, "failed to marshal spec")
+		return ctrl.Result{}, err
+	}
+
+	h := sha1.New()
+	io.WriteString(h, string(yml))
+	checksum := hex.EncodeToString(h.Sum(nil))
+
+	log.Info("Current ", "checksum", checksum)
+	log.Info("Last applied ", "checksum", karinaConfig.Status.LastAppliedChecksum)
+	if karinaConfig.Status.LastAppliedChecksum == checksum {
+		log.Info("Karina config already deployed", "checksum", checksum, "name", karinaConfig.Name, "namespace", karinaConfig.Namespace)
+		return ctrl.Result{}, nil
+	}
+
 	platformConfig := karinaConfig.Spec.Config
 	defaultConfig := types.DefaultPlatformConfig()
 	if err := r.addExtra(karinaConfig, &platformConfig); err != nil {
@@ -62,21 +80,6 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	platformConfig.DryRun = karinaConfig.Spec.DryRun
-
-	yml, err := yaml.Marshal(platformConfig)
-	if err != nil {
-		log.Error(err, "failed to marshal config")
-		return ctrl.Result{}, err
-	}
-
-	h := sha1.New()
-	io.WriteString(h, string(yml))
-	checksum := string(h.Sum(nil))
-
-	if karinaConfig.Status.LastAppliedChecksum != nil && *karinaConfig.Status.LastAppliedChecksum != checksum {
-		log.Info("Karina config already deployed", "checksum", checksum, "name", karinaConfig.Name, "namespace", karinaConfig.Namespace)
-		return ctrl.Result{}, nil
-	}
 
 	platform := platform.Platform{
 		PlatformConfig: platformConfig,
@@ -92,7 +95,7 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
-	karinaConfig.Status.LastAppliedChecksum = &checksum
+	karinaConfig.Status.LastAppliedChecksum = checksum
 	karinaConfig.Status.LastApplied = metav1.Now()
 	if err := r.Status().Update(ctx, karinaConfig); err != nil {
 		log.Error(err, "failed to update status")

@@ -16,7 +16,7 @@ type KarinaConfigSpec struct {
 // KarinaConfigStatus defines the observed state of KarinaConfig
 type KarinaConfigStatus struct {
 	LastApplied         metav1.Time `json:"lastApplied,omitempty"`
-	LastAppliedChecksum *string     `json:"lastAppliedChecsum,omitempty`
+	LastAppliedChecksum string      `json:"lastAppliedChecksum,omitempty"`
 }
 
 type TemplateSource struct {
@@ -40,6 +40,7 @@ type TemplateSourceValue struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // KarinaConfig is the Schema for the KarinaConfigs API
 type KarinaConfig struct {
