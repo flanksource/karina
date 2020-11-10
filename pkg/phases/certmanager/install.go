@@ -27,6 +27,9 @@ func Install(platform *platform.Platform) error {
 	if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
 		return err
 	}
+	if err := platform.ApplySpecs("", "cert-manager-monitor.yaml.raw"); err != nil {
+		return err
+	}
 
 	if !platform.ApplyDryRun {
 		// Make sure all webhook services are up an running before continuing

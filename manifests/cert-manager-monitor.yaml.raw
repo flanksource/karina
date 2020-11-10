@@ -1,0 +1,57 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+  labels:
+    app: cert-manager
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/name: cert-manager
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app: cert-manager
+      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/instance: cert-manager
+      app.kubernetes.io/component: "controller"
+  namespaceSelector:
+    matchNames:
+      - cert-manager
+  endpoints:
+    - targetPort: 9402
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-cert-manager-rules
+  namespace: cert-manager
+spec:
+  groups:
+  - name: cert-manager.rules
+    rules:
+      - alert: CertManagerInvalidCertificate
+        annotations:
+          description:
+            Certificate {{ $labels.name }} not ready after 10 minutes
+          summary: Associated service not issued a valid certificate.
+        expr: |
+          certmanager_certificate_ready_status{condition="False"}
+        for: 1m
+        labels:
+          severity: critical
+      - alert: CertManagerCertificateExpiry
+        annotations:
+          description:
+            Certificate {{ $labels.name }} will expire in 7 days
+          summary: Associated service not issued a valid certificate.
+        expr: |
+          certmanager_certificate_expiration_timestamp_seconds / (60 * 60 * 24) < 7
+        for: 1m
+        labels:
+          severity: warning
