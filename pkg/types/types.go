@@ -56,14 +56,14 @@ type VM struct {
 	// Number of VM's to provision
 	Count          int      `yaml:"count" json:"count,omitempty"`
 	ContentLibrary string   `yaml:"contentLibrary" json:"contentLibrary,omitempty"`
-	Template     string   `yaml:"template" json:"template,omitempty"`
-	Cluster      string   `yaml:"cluster,omitempty" json:"cluster,omitempty"`
-	Folder       string   `yaml:"folder,omitempty" json:"folder,omitempty"`
-	Datastore    string   `yaml:"datastore,omitempty" json:"datastore,omitempty"`
-	ResourcePool string   `yaml:"resourcePool,omitempty" json:"resourcePool,omitempty"`
-	CPUs         int32    `yaml:"cpu" json:"cpu,omitempty"`
-	MemoryGB     int64    `yaml:"memory" json:"memory,omitempty"`
-	Network      []string `yaml:"networks,omitempty" json:"networks,omitempty"`
+	Template       string   `yaml:"template" json:"template,omitempty"`
+	Cluster        string   `yaml:"cluster,omitempty" json:"cluster,omitempty"`
+	Folder         string   `yaml:"folder,omitempty" json:"folder,omitempty"`
+	Datastore      string   `yaml:"datastore,omitempty" json:"datastore,omitempty"`
+	ResourcePool   string   `yaml:"resourcePool,omitempty" json:"resourcePool,omitempty"`
+	CPUs           int32    `yaml:"cpu" json:"cpu,omitempty"`
+	MemoryGB       int64    `yaml:"memory" json:"memory,omitempty"`
+	Network        []string `yaml:"networks,omitempty" json:"networks,omitempty"`
 	// Size in GB of the VM root volume
 	DiskGB int `yaml:"disk" json:"disk"`
 	// Tags to be applied to the VM
@@ -623,7 +623,7 @@ type Versions struct {
 }
 
 type Velero struct {
-	Disabled              		 `yaml:",inline" json:",inline"`
+	Disabled `yaml:",inline" json:",inline"`
 	Schedule string            `yaml:"schedule,omitempty" json:"schedule,omitempty"`
 	Bucket   string            `yaml:"bucket,omitempty" json:"bucket,omitempty"`
 	Volumes  bool              `yaml:"volumes" json:"volumes,omitempty"`
@@ -768,7 +768,7 @@ func wrap(with string, array ...string) []string {
 }
 
 type ECK struct {
-	Disabled `yaml:",inline"` `json:",inline"`
+	Disabled `yaml:",inline" json:",inline"`
 }
 
 type NodeLocalDNS struct {
@@ -915,7 +915,7 @@ type Elasticsearch struct {
 }
 
 type Tekton struct {
-	Disabled         `yaml:",inline"` `json:",inline"`
+	Disabled         `yaml:",inline" json:",inline"`
 	DashboardVersion string            `yaml:"dashboardVersion,omitempty" json:"dashboardVersion,omitempty"`
 	EventsVersion    string            `yaml:"eventsVersion,omitempty" json:"eventsVersion,omitempty"`
 	Persistence      Persistence       `yaml:"persistence,omitempty" json:"persistence,omitempty"`

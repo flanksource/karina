@@ -61,6 +61,8 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
+	platformConfig.DryRun = karinaConfig.Spec.DryRun
+
 	yml, err := yaml.Marshal(platformConfig)
 	if err != nil {
 		log.Error(err, "failed to marshal config")
@@ -78,6 +80,11 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	platform := platform.Platform{
 		PlatformConfig: platformConfig,
+	}
+	platform.InClusterConfig = true
+	if err := platform.Init(); err != nil {
+		log.Error(err, "failed to initialise platform")
+		return ctrl.Result{}, err
 	}
 
 	if err := r.deploy(karinaConfig, &platform); err != nil {

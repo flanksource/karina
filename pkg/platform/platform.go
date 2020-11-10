@@ -58,6 +58,11 @@ func (platform *Platform) Init() error {
 	if platform.Client.GetKubeConfigBytes == nil {
 		platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes
 	}
+	if platform.InClusterConfig {
+		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigInCluster
+	} else {
+		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigFromKubeconfig
+	}
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
