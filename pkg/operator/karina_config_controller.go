@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
+	"sync"
 
 	"github.com/flanksource/commons/lookup"
 	karinav1 "github.com/flanksource/karina/pkg/api/operator/v1"
@@ -19,6 +20,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/semaphore"
 	"gopkg.in/flanksource/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,13 +35,26 @@ import (
 // KarinaConfigReconciler reconciles a KarinaConfig object
 type KarinaConfigReconciler struct {
 	client.Client
-	Log    logr.Logger
+	log    logr.Logger
 	Scheme *runtime.Scheme
+	mtx    *sync.Mutex
+	locks  map[string]*semaphore.Weighted
+}
+
+func NewKarinaConfigReconciler(k8s client.Client, log logr.Logger, scheme *runtime.Scheme) *KarinaConfigReconciler {
+	reconciler := &KarinaConfigReconciler{
+		Client: k8s,
+		log:    log,
+		Scheme: scheme,
+		mtx:    &sync.Mutex{},
+		locks:  map[string]*semaphore.Weighted{},
+	}
+	return reconciler
 }
 
 func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("KarinaConfig", req.NamespacedName)
+	log := r.log.WithValues("KarinaConfig", req.NamespacedName)
 
 	karinaConfig := &karinav1.KarinaConfig{}
 	if err := r.Get(ctx, req.NamespacedName, karinaConfig); err != nil {
@@ -66,6 +81,22 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		log.Info("Karina config already deployed", "checksum", checksum, "name", karinaConfig.Name, "namespace", karinaConfig.Namespace)
 		return ctrl.Result{}, nil
 	}
+
+	r.mtx.Lock()
+	namespacedName := namespacedName(req.Name, req.Namespace)
+	lock, found := r.locks[namespacedName]
+	if !found {
+		lock = semaphore.NewWeighted(1)
+		r.locks[namespacedName] = lock
+	}
+	r.mtx.Unlock()
+
+	if !lock.TryAcquire(1) {
+		err := errors.Errorf("deploy already in progress")
+		log.Error(err, "deploy already in progress, skipping")
+		return ctrl.Result{}, err
+	}
+	defer func() { lock.Release(1) }()
 
 	platformConfig := karinaConfig.Spec.Config
 	defaultConfig := types.DefaultPlatformConfig()
@@ -112,7 +143,7 @@ func (r *KarinaConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *KarinaConfigReconciler) deploy(karinaConfig *karinav1.KarinaConfig, p *platform.Platform) error {
-	log := r.Log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
+	log := r.log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
 	phases := order.GetPhases()
 	// we track the failure status, and continue on failure to allow degraded operations
 	failed := false
@@ -144,6 +175,7 @@ func (r *KarinaConfigReconciler) deploy(karinaConfig *karinav1.KarinaConfig, p *
 }
 
 func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p *types.PlatformConfig) error {
+	log := r.log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
 	for key, templateFrom := range karinaConfig.Spec.TemplateFrom {
 		var value string
 		var err error
@@ -179,13 +211,13 @@ func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p
 			value = tempfile.Name()
 		}
 
-		r.Log.Info("Looking up key", "key", key)
+		log.Info("Looking up key", "key", key)
 
 		rvalue, err := lookup.LookupString(p, key)
 		if err != nil {
 			return errors.Wrapf(err, "cannot lookup key %s", key)
 		}
-		r.Log.Info("Overriding", "key", key)
+		log.Info("Overriding", "key", key)
 		switch rvalue.Interface().(type) {
 		case string:
 			rvalue.SetString(value)
@@ -250,4 +282,8 @@ func addDefaults(p *types.PlatformConfig) {
 
 	p.Gatekeeper.WhitelistNamespaces = append(p.Gatekeeper.WhitelistNamespaces, constants.PlatformNamespaces...)
 	harbor.Defaults(p)
+}
+
+func namespacedName(name, namespace string) string {
+	return fmt.Sprintf("%s/%s", namespace, name)
 }

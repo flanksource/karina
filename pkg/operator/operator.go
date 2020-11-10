@@ -49,11 +49,11 @@ func New(config OperatorConfig) (*Operator, error) {
 		return nil, errors.Wrap(err, "failed to start manager")
 	}
 
-	if err = (&KarinaConfigReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("KarinaConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (NewKarinaConfigReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName("KarinaConfig"),
+		mgr.GetScheme(),
+	)).SetupWithManager(mgr); err != nil {
 		return nil, errors.Wrap(err, "failed to add KarinaConfigReconciler")
 	}
 
