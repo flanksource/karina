@@ -30,10 +30,6 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base monitoring labels/annotations: %s", err)
 	}
 
-	if err := platform.ApplySpecs("", "monitoring/service-monitor-crd.yaml"); err != nil {
-		platform.Errorf("Error deploying service monitor crd: %s", err)
-	}
-
 	if err := vsphere.Install(platform); err != nil {
 		return err
 	}

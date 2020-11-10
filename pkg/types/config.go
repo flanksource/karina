@@ -3,7 +3,7 @@ package types
 type PlatformConfig struct {
 	Brand         Brand          `yaml:"brand,omitempty"`
 	Version       string         `yaml:"version"`
-	Velero        *Velero        `yaml:"velero,omitempty"`
+	Velero        Velero         `yaml:"velero,omitempty"`
 	CA            *CA            `yaml:"ca"`
 	CanaryChecker *CanaryChecker `yaml:"canaryChecker,omitempty"`
 	Calico        *Calico        `yaml:"calico,omitempty"`
@@ -47,7 +47,7 @@ type PlatformConfig struct {
 	NSX                   *NSX                `yaml:"nsx,omitempty"`
 	OAuth2Proxy           *OAuth2Proxy        `yaml:"oauth2Proxy,omitempty"`
 	OPA                   *OPA                `yaml:"opa,omitempty"`
-	PostgresOperator      *PostgresOperator   `yaml:"postgresOperator,omitempty"`
+	PostgresOperator      PostgresOperator    `yaml:"postgresOperator,omitempty"`
 	PodSubnet             string              `yaml:"podSubnet"`
 	Policies              []string            `yaml:"policies,omitempty"`
 	// A list of strategic merge patches that will be applied to all resources created
@@ -68,7 +68,7 @@ type PlatformConfig struct {
 	Versions            map[string]string    `yaml:"versions,omitempty"`
 	PlatformOperator    *PlatformOperator    `yaml:"platformOperator,omitempty"`
 	Nginx               *Nginx               `yaml:"nginx,omitempty"`
-	ECK                 *ECK                 `yaml:"eck,omitempty"`
+	ECK                 ECK                  `yaml:"eck,omitempty"`
 	Thanos              *Thanos              `yaml:"thanos,omitempty"`
 	Filebeat            []Filebeat           `yaml:"filebeat,omitempty"`
 	Journalbeat         Journalbeat          `yaml:"journalbeat,omitempty"`
@@ -79,7 +79,7 @@ type PlatformConfig struct {
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty"`
 	Tekton              Tekton               `yaml:"tekton,omitempty"`
 	Vsphere             *Vsphere             `yaml:"vsphere,omitempty"`
-	VPA                 *VPA                 `yaml:"vpa,omitempty"`
+	VPA                 VPA                  `yaml:"vpa,omitempty"`
 	Test                Test                 `yaml:"test,omitempty"`
 	// If true, terminate operations will return an error. Used to
 	// protect stateful clusters

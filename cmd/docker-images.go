@@ -84,24 +84,29 @@ func init() {
 	}
 
 	listCmd.PersistentFlags().StringP("output", "o", "text", "Output format (string, yaml)")
-	Images.AddCommand(listCmd)
 
-	Images.AddCommand(&cobra.Command{
+	var imagesToSync []string
+	syncCmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Synchronize all platform docker images to a local registry",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
-			images, err := getImages(p)
-			if err != nil {
-				p.Fatalf("Failed to dry-run deploy : %v", err)
+			if len(imagesToSync) == 0 {
+				images, err := getImages(p)
+				imagesToSync = images
+				if err != nil {
+					p.Fatalf("Failed to dry-run deploy : %v", err)
+				}
 			}
-			for _, image := range images {
+			for _, image := range imagesToSync {
 				p.Infof("Syncing %s", image)
 				_ = exec.Execf("docker pull %s", image)
 				_ = exec.Execf("docker tag %s %s/%s", image, p.DockerRegistry, image)
 				_ = exec.Execf("docker push %s/%s", p.DockerRegistry, image)
 			}
 		},
-	})
+	}
+	syncCmd.Flags().StringArrayVarP(&imagesToSync, "image", "i", []string{}, "A list of images to sync")
+	Images.AddCommand(listCmd, syncCmd)
 }

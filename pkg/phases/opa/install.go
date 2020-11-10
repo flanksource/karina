@@ -100,7 +100,7 @@ func InstallGatekeeper(p *platform.Platform) error {
 
 	p.WaitForNamespace(namespace, 600*time.Second)
 
-	if p.Gatekeeper.Templates != "" {
+	if p.Gatekeeper.Templates != "" && !p.DryRun {
 		start := time.Now()
 		if err := deployTemplates(p, p.Gatekeeper.Templates); err != nil {
 			return err
@@ -140,9 +140,24 @@ func InstallGatekeeper(p *platform.Platform) error {
 		}
 	}
 
-	if p.Gatekeeper.Constraints != "" {
+	if p.Gatekeeper.Constraints != "" && !p.DryRun {
 		if err := deployConstraints(p, p.Gatekeeper.Constraints); err != nil {
 			return err
+		}
+	}
+
+	start := time.Now()
+	clientset, _ := p.GetClientset()
+	for {
+		webhook, _ := clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Get(context.TODO(), "gatekeeper-validating-webhook-configuration", metav1.GetOptions{})
+		if webhook != nil && len(webhook.Webhooks[0].ClientConfig.CABundle) > 100 {
+			break
+		} else {
+			time.Sleep(3 * time.Second)
+		}
+
+		if start.Add(120 * time.Second).Before(time.Now()) {
+			return fmt.Errorf("timeout waiting for ValidatingWebhook to get a CA injected")
 		}
 	}
 

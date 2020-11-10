@@ -17,9 +17,6 @@ func Install(p *platform.Platform) error {
 	if len(p.GitOps) == 0 {
 		return nil
 	}
-	if err := p.ApplySpecs("", "helm-operator-crd.yaml"); err != nil {
-		return err
-	}
 	for _, gitops := range p.GitOps {
 		if gitops.Namespace != "" && gitops.Namespace != constants.KubeSystem && gitops.Namespace != constants.PlatformSystem {
 			if err := p.CreateOrUpdateWorkloadNamespace(gitops.Namespace, nil, nil); err != nil {

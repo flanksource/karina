@@ -39,7 +39,7 @@ type ClusterResponseMember struct {
 }
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.PostgresOperator == nil || p.PostgresOperator.Disabled {
+	if p.PostgresOperator.IsDisabled() {
 		test.Skipf("postgres-operator", "Postgres operator is disabled")
 		return
 	}
@@ -52,7 +52,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 func TestE2E(p *platform.Platform, test *console.TestResults) {
 	testName := "postgres-operator-e2e"
-	if p.PostgresOperator == nil || p.PostgresOperator.Disabled {
+	if p.PostgresOperator.IsDisabled() {
 		test.Skipf(testName, "Postgres operator is disabled")
 		return
 	}
