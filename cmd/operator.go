@@ -43,7 +43,7 @@ func init() {
 	Operator.Flags().Bool("enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	Operator.Flags().Duration("sync-period", 60*time.Second, "The resync period used for reconciling")
+	Operator.Flags().Duration("sync-period", 300*time.Second, "The resync period used for reconciling")
 	Operator.Flags().String("log-level", "error", "Logging level: debug, info, error")
 	Operator.Flags().Int("port", 9443, "Port to run the web server")
 }

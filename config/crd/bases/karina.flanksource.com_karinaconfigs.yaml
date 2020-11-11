@@ -2237,6 +2237,8 @@ spec:
                 type: object
               dryRun:
                 type: boolean
+              image:
+                type: string
               templateFrom:
                 additionalProperties:
                   properties:
@@ -2287,14 +2289,28 @@ spec:
                       type: boolean
                   type: object
                 type: object
+              version:
+                type: string
             type: object
           status:
             description: KarinaConfigStatus defines the observed state of KarinaConfig
             properties:
+              configMapName:
+                type: string
               lastApplied:
                 format: date-time
                 type: string
               lastAppliedChecksum:
+                type: string
+              lastAppliedStatus:
+                type: string
+              podName:
+                type: string
+              podStatus:
+                description: PodPhase is a label for the condition of a pod at the
+                  current time.
+                type: string
+              secretName:
                 type: string
             type: object
         type: object

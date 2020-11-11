@@ -11,12 +11,19 @@ type KarinaConfigSpec struct {
 	DryRun       bool                      `json:"dryRun,omitempty"`
 	Config       types.PlatformConfig      `json:"config,omitempty"`
 	TemplateFrom map[string]TemplateSource `json:"templateFrom,omitempty"`
+	Image        string                    `json:"image,omitempty"`
+	Version      string                    `json:"version,omitempty"`
 }
 
 // KarinaConfigStatus defines the observed state of KarinaConfig
 type KarinaConfigStatus struct {
-	LastApplied         metav1.Time `json:"lastApplied,omitempty"`
-	LastAppliedChecksum string      `json:"lastAppliedChecksum,omitempty"`
+	LastApplied         metav1.Time  `json:"lastApplied,omitempty"`
+	LastAppliedStatus   string       `json:"lastAppliedStatus,omitempty"`
+	LastAppliedChecksum string       `json:"lastAppliedChecksum,omitempty"`
+	PodName             string       `json:"podName,omitempty"`
+	PodStatus           *v1.PodPhase `json:"podStatus,omitempty"`
+	ConfigMapName       string       `json:"configMapName,omitempty"`
+	SecretName          string       `json:"secretName,omitempty"`
 }
 
 type TemplateSource struct {

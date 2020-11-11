@@ -6,15 +6,16 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"path"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/flanksource/commons/lookup"
+	"github.com/flanksource/commons/utils"
 	karinav1 "github.com/flanksource/karina/pkg/api/operator/v1"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/phases/harbor"
-	"github.com/flanksource/karina/pkg/phases/order"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/go-logr/logr"
@@ -31,6 +32,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+const secretMountDirectory = "/var/karina/config"
+
+var requeuePeriod = 30 * time.Second
 
 // KarinaConfigReconciler reconciles a KarinaConfig object
 type KarinaConfigReconciler struct {
@@ -63,6 +68,18 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 		log.Error(err, "failed to get KarinaConfig")
 		return ctrl.Result{}, err
+	}
+
+	if karinaConfig.Status.PodStatus != nil {
+		if err := r.updateDeployStatus(ctx, karinaConfig); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if karinaConfig.Status.PodStatus == nil {
+			return ctrl.Result{}, nil
+		}
+
+		return ctrl.Result{RequeueAfter: requeuePeriod}, nil
 	}
 
 	yml, err := yaml.Marshal(karinaConfig.Spec)
@@ -98,10 +115,15 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 	defer func() { lock.Release(1) }()
 
+	secret := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
+		Data:     map[string][]byte{},
+	}
+
 	platformConfig := karinaConfig.Spec.Config
 	defaultConfig := types.DefaultPlatformConfig()
 	addDefaults(&platformConfig)
-	if err := r.addExtra(karinaConfig, &platformConfig); err != nil {
+	if err := r.addExtra(karinaConfig, &platformConfig, secret); err != nil {
 		log.Error(err, "failed to add extra variables")
 		return ctrl.Result{}, err
 	}
@@ -122,7 +144,7 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
-	if err := r.deploy(karinaConfig, &platform); err != nil {
+	if err := r.deploy(ctx, karinaConfig, &platform, secret); err != nil {
 		log.Error(err, "failed to deploy config")
 		return ctrl.Result{}, err
 	}
@@ -131,7 +153,7 @@ func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	karinaConfig.Status.LastApplied = metav1.Now()
 	if err := r.Status().Update(ctx, karinaConfig); err != nil {
 		log.Error(err, "failed to update status")
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: requeuePeriod}, err
 	}
 
 	return ctrl.Result{}, nil
@@ -143,39 +165,146 @@ func (r *KarinaConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *KarinaConfigReconciler) deploy(karinaConfig *karinav1.KarinaConfig, p *platform.Platform) error {
-	log := r.log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
-	phases := order.GetPhases()
-	// we track the failure status, and continue on failure to allow degraded operations
-	failed := false
+func (r *KarinaConfigReconciler) deploy(ctx context.Context, karinaConfig *karinav1.KarinaConfig, p *platform.Platform, secret *v1.Secret) error {
+	name := fmt.Sprintf("karina-deploy-%s-%s", karinaConfig.Name, utils.RandomKey(5))
+	configYaml := p.String()
+	configMap := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{Kind: "ConfigMap", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-config", name),
+			Namespace: karinaConfig.Namespace,
+			Labels: map[string]string{
+				"karina.flanksource.com/config": karinaConfig.Name,
+			},
+		},
+		Data: map[string]string{
+			"config.yaml": configYaml,
+		},
+	}
 
-	errorMessage := ""
+	secret.ObjectMeta = metav1.ObjectMeta{
+		Name:      fmt.Sprintf("%s-files", name),
+		Namespace: karinaConfig.Namespace,
+		Labels: map[string]string{
+			"karina.flanksource.com/config": karinaConfig.Name,
+		},
+	}
 
-	// first deploy strictly ordered phases, these phases are often dependencies for other phases
-	for _, name := range order.PhaseOrder {
-		if err := phases[name](p); err != nil {
-			log.Error(err, "failed to deploy", "phase", name)
-			errorMessage += fmt.Sprintf("failed to deploy phase=%s error: %v\n", name, err)
-			failed = true
+	if err := r.Create(ctx, configMap); err != nil {
+		return errors.Wrapf(err, "failed to create configmap %s", configMap.Name)
+	}
+	if err := r.Create(ctx, secret); err != nil {
+		return errors.Wrapf(err, "failed to create secret %s", secret.Name)
+	}
+
+	image := karinaConfig.Spec.Image
+	version := karinaConfig.Spec.Version
+	if image == "" {
+		if version == "" {
+			version = "latest"
 		}
-		// remove the phase from the map so it isn't run again
-		delete(phases, name)
+		image = fmt.Sprintf("docker.io/flanksource/karina:%s", version)
 	}
 
-	for name, fn := range phases {
-		if err := fn(p); err != nil {
-			log.Error(err, "failed to deploy", "phase", name)
-			errorMessage += fmt.Sprintf("failed to deploy phase=%s error: %v\n", name, err)
-			failed = true
-		}
+	args := []string{"deploy", "all", "-c", "/var/run/karina/config.yaml", "--in-cluster"}
+	if karinaConfig.Spec.DryRun {
+		args = append(args, "--dry-run")
 	}
-	if failed {
-		return errors.Errorf(errorMessage)
+
+	pod := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{Kind: "ConfigMap", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: karinaConfig.Namespace,
+			Labels: map[string]string{
+				"karina.flanksource.com/config": karinaConfig.Name,
+			},
+		},
+		Spec: v1.PodSpec{
+			ServiceAccountName: "karina-operator-manager",
+			Containers: []v1.Container{
+				{
+					Name:            "karina",
+					Image:           image,
+					ImagePullPolicy: v1.PullIfNotPresent,
+					Command:         []string{"karina"},
+					Args:            args,
+					VolumeMounts: []v1.VolumeMount{
+						{
+							Name:      "karina-files",
+							MountPath: secretMountDirectory,
+						},
+						{
+							Name:      "karina-config",
+							MountPath: "/var/run/karina",
+						},
+					},
+				},
+			},
+			Volumes: []v1.Volume{
+				{
+					Name: "karina-files",
+					VolumeSource: v1.VolumeSource{
+						Secret: &v1.SecretVolumeSource{
+							SecretName: secret.Name,
+						},
+					},
+				},
+				{
+					Name: "karina-config",
+					VolumeSource: v1.VolumeSource{
+						ConfigMap: &v1.ConfigMapVolumeSource{
+							LocalObjectReference: v1.LocalObjectReference{Name: configMap.Name},
+						},
+					},
+				},
+			},
+			RestartPolicy: v1.RestartPolicyNever,
+		},
 	}
+
+	karinaConfig.Status.PodName = pod.Name
+	status := v1.PodUnknown
+	karinaConfig.Status.PodStatus = &status
+
+	if err := r.Create(ctx, pod); err != nil {
+		r.cleanup(karinaConfig, pod.Name)
+		return errors.Wrapf(err, "failed to create pod %s", pod.Name)
+	}
+
+	status = v1.PodPending
+	karinaConfig.Status.PodStatus = &status
+
 	return nil
 }
 
-func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p *types.PlatformConfig) error {
+func (r *KarinaConfigReconciler) cleanup(karinaConfig *karinav1.KarinaConfig, name string) {
+	log := r.log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
+	ctx := context.Background()
+
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-config", name),
+			Namespace: karinaConfig.Namespace,
+		},
+	}
+
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-files", name),
+			Namespace: karinaConfig.Namespace,
+		},
+	}
+
+	if err := r.Delete(ctx, configMap); err != nil {
+		log.Error(err, "failed to delete configmap", "name", configMap.Name)
+	}
+	if err := r.Delete(ctx, secret); err != nil {
+		log.Error(err, "failed to delete secret", "name", secret.Name)
+	}
+}
+
+func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p *types.PlatformConfig, secret *v1.Secret) error {
 	log := r.log.WithValues("KarinaConfig", ktypes.NamespacedName{Name: karinaConfig.Name, Namespace: karinaConfig.Namespace})
 	for key, templateFrom := range karinaConfig.Spec.TemplateFrom {
 		var value string
@@ -196,20 +325,8 @@ func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p
 		}
 
 		if templateFrom.Tmpfile {
-			tempfile, err := ioutil.TempFile("", "")
-			if err != nil {
-				return errors.Wrapf(err, "failed to create tempfile")
-			}
-			if err := ioutil.WriteFile(tempfile.Name(), []byte(value), 0600); err != nil {
-				return errors.Wrapf(err, "failed to write tempfile for key %s", key)
-			}
-
-			if p.TmpFiles == nil {
-				p.TmpFiles = []string{}
-			}
-
-			p.TmpFiles = append(p.TmpFiles, tempfile.Name())
-			value = tempfile.Name()
+			secret.Data[key] = []byte(value)
+			value = path.Join(secretMountDirectory, key)
 		}
 
 		log.Info("Looking up key", "key", key)
@@ -235,6 +352,45 @@ func (r *KarinaConfigReconciler) addExtra(karinaConfig *karinav1.KarinaConfig, p
 			}
 			rvalue.SetBool(b)
 		}
+	}
+
+	return nil
+}
+
+func (r *KarinaConfigReconciler) updateDeployStatus(ctx context.Context, karinaConfig *karinav1.KarinaConfig) error {
+	status := *karinaConfig.Status.PodStatus
+
+	pod := &v1.Pod{}
+	namespacedNamed := ktypes.NamespacedName{Name: karinaConfig.Status.PodName, Namespace: karinaConfig.Namespace}
+	if err := r.Get(ctx, namespacedNamed, pod); err != nil {
+		if kerrors.IsNotFound(err) {
+			karinaConfig.Status.LastAppliedStatus = "error/missing-pod"
+			karinaConfig.Status.PodName = ""
+			karinaConfig.Status.PodStatus = nil
+		} else {
+			return errors.Wrapf(err, "failed to get pod %s", karinaConfig.Status.PodName)
+		}
+	} else {
+		newStatus := pod.Status.Phase
+		if newStatus == v1.PodSucceeded {
+			karinaConfig.Status.LastAppliedStatus = "succeeded"
+			karinaConfig.Status.PodName = ""
+			karinaConfig.Status.PodStatus = nil
+			r.cleanup(karinaConfig, karinaConfig.Status.PodName)
+		} else if newStatus == v1.PodFailed {
+			karinaConfig.Status.LastAppliedStatus = "failed"
+			karinaConfig.Status.PodName = ""
+			karinaConfig.Status.PodStatus = nil
+			r.cleanup(karinaConfig, karinaConfig.Status.PodName)
+		} else if newStatus != status {
+			karinaConfig.Status.PodStatus = &newStatus
+		} else {
+			return nil
+		}
+	}
+
+	if err := r.Status().Update(ctx, karinaConfig); err != nil {
+		return errors.Wrapf(err, "failed to update status for karina config %s in namespace %s", karinaConfig.Name, karinaConfig.Namespace)
 	}
 
 	return nil

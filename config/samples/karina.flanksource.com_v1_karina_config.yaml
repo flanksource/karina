@@ -9,6 +9,8 @@ metadata:
   namespace: platform-system
 spec:
   # dryRun: true
+  image: "flanksource/karina-operator:v1"
+  # version: "v9"
   config:
     # in order to connect to cluster after provisioning
     # the kubeconfig cluster name needs to match this name
