@@ -281,6 +281,8 @@ github.com/flanksource/kommons v0.0.1/go.mod h1:nz558SHFS8uw35c56lSUqXnIHiJdBgH+
 github.com/flanksource/kommons v0.1.0/go.mod h1:Dc/oeDDXgybBm1LFr1iSAgARLCja8ep9K42Qouu+yPM=
 github.com/flanksource/kommons v0.1.1 h1:K65TQMAURLqmCgqc/p3/0uE+NKuO3YfLFkSfG7jyKl4=
 github.com/flanksource/kommons v0.1.1/go.mod h1:Dc/oeDDXgybBm1LFr1iSAgARLCja8ep9K42Qouu+yPM=
+github.com/flanksource/kommons v0.1.4 h1:k5nNAojt6b5XB4f1riRmfPPsxoXQFNyfyKv7JM/G1B8=
+github.com/flanksource/kommons v0.1.4/go.mod h1:Dc/oeDDXgybBm1LFr1iSAgARLCja8ep9K42Qouu+yPM=
 github.com/flanksource/kommons v0.1.5 h1:1o8PyBNngemau4Q14NOkvXVqddqheOtDDELoVcRQtoc=
 github.com/flanksource/kommons v0.1.5/go.mod h1:Dc/oeDDXgybBm1LFr1iSAgARLCja8ep9K42Qouu+yPM=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1 h1:mPTWZTM0IkiuWmwLX5XJi8TJt5ELm54Qqqq1tMT6r5g=
