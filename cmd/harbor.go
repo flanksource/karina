@@ -46,4 +46,34 @@ func init() {
 			}
 		},
 	})
+
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "Commands to list objects",
+	}
+	list.AddCommand()
+	Harbor.AddCommand(list)
+
+	listImages := &cobra.Command{
+		Use:   "images",
+		Short: "List images in harbor",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			platform := getPlatform(cmd)
+
+			project, _ := cmd.Flags().GetString("project")
+			listTags, _ := cmd.Flags().GetBool("tags")
+
+			if project == "" {
+				log.Fatalf("Please provide harbor project")
+			}
+
+			if err := harbor.ListImages(platform, project, listTags); err != nil {
+				log.Fatalf("Error listing images: %v", err)
+			}
+		},
+	}
+	listImages.Flags().String("project", "", "Harbor project name")
+	listImages.Flags().Bool("tags", false, "List also tags for each image")
+	list.AddCommand(listImages)
 }

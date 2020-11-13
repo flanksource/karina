@@ -136,6 +136,19 @@ func (harbor *Client) ListMembers(project string) ([]ProjectMember, error) {
 	return nil, nil
 }
 
+func (harbor *Client) ListImages(project string) (images []Image, customError error) {
+	harbor.Infof("Listing images for project: %s\n", project)
+
+	r, err := harbor.sling.New().
+		Get(fmt.Sprintf("%s/projects/%s/repositories", harbor.base, project)).
+		Receive(&images, customError)
+	if err != nil {
+		err = customError
+	}
+	defer r.Body.Close()
+	return images, customError
+}
+
 type Project struct {
 }
 
@@ -214,4 +227,13 @@ type Status struct {
 		Name   string `json:"name"`
 		Status string `json:"status"`
 	} `json:"components"`
+}
+
+type Image struct {
+	ID            int    `json:"id,omitempty"`
+	ProjectID     int    `json:"project_id,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Description   string `json:"description,omitempty"`
+	ArtifactCount int    `json:"artifact_count,omitempty"`
+	PullCount     int    `json:"pull_count,omitempty"`
 }
