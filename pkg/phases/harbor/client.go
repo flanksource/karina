@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/dghubble/sling"
@@ -16,8 +17,11 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons/proxy"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const perPage = 50
 
 type Client struct {
 	logger.Logger
@@ -137,19 +141,110 @@ func (harbor *Client) ListMembers(project string) ([]ProjectMember, error) {
 }
 
 func (harbor *Client) ListImages(project string) (images []Image, customError error) {
-	harbor.Infof("Listing images for project: %s\n", project)
+	allImages := []Image{}
+	page := 1
 
-	r, err := harbor.sling.New().
-		Get(fmt.Sprintf("%s/projects/%s/repositories", harbor.base, project)).
-		Receive(&images, customError)
-	if err != nil {
-		err = customError
+	for {
+		images := []Image{}
+		er := ErrorResponse{}
+		r, err := harbor.sling.New().
+			Get(fmt.Sprintf("%s/projects/%s/repositories?page=%d&perPage=%d", harbor.base, project, page, perPage)).
+			Receive(&images, &er)
+		if r != nil {
+			r.Body.Close()
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to list images")
+		}
+
+		if len(er.Errors) > 0 {
+			return nil, errors.Errorf("received error code from server: %s", er.String())
+		}
+
+		harbor.Debugf("images for project %s page %d %d results", project, page, len(images))
+
+		allImages = append(allImages, images...)
+
+		if len(images) == 0 {
+			break
+		}
+		page++
 	}
-	defer r.Body.Close()
-	return images, customError
+	return allImages, nil
+}
+
+func (harbor *Client) ListProjects() ([]Project, error) {
+	allProjects := []Project{}
+	page := 1
+
+	for {
+		projects := []Project{}
+		er := ErrorResponse{}
+		r, err := harbor.sling.New().
+			Get(fmt.Sprintf("%s/projects?page=%d&per_page=%d", harbor.base, page, perPage)).
+			Receive(&projects, &er)
+		if r != nil {
+			r.Body.Close()
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to list projects")
+		}
+
+		if len(er.Errors) > 0 {
+			return nil, errors.Errorf("received error code from server: %s", er.String())
+		}
+
+		harbor.Debugf("projects page %d  %d results", page, len(projects))
+
+		allProjects = append(allProjects, projects...)
+
+		if len(projects) == 0 {
+			break
+		}
+		page++
+	}
+
+	return allProjects, nil
+}
+
+func (harbor *Client) ListTags(project string, image string) (tags []Tag, customError error) {
+	allTags := []Tag{}
+	page := 1
+
+	imageEncoded := url.QueryEscape(image)
+
+	for {
+		tags := []Tag{}
+		er := ErrorResponse{}
+		r, err := harbor.sling.New().
+			Get(fmt.Sprintf("%s/projects/%s/repositories/%s/artifacts?page=%d&per_page=%d", harbor.base, project, imageEncoded, page, perPage)).
+			Receive(&tags, &er)
+		if r != nil {
+			r.Body.Close()
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to list tags")
+		}
+
+		if len(er.Errors) > 0 {
+			return nil, errors.Errorf("received error code from server: %s", er.String())
+		}
+
+		harbor.Debugf("project %s image %s tags page %d  %d results", project, image, page, len(tags))
+
+		allTags = append(allTags, tags...)
+
+		if len(tags) == 0 {
+			break
+		}
+		page++
+	}
+	return allTags, nil
 }
 
 type Project struct {
+	ID   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 type Replication struct {
@@ -236,4 +331,34 @@ type Image struct {
 	Description   string `json:"description,omitempty"`
 	ArtifactCount int    `json:"artifact_count,omitempty"`
 	PullCount     int    `json:"pull_count,omitempty"`
+
+	ProjectName string `json:"-"`
+}
+
+type Tag struct {
+	ID                int    `json:"id,omitempty"`
+	Type              string `json:"type,omitempty"`
+	MediaType         string `json:"media_type,omitempty"`
+	ManifestMediaType string `json:"manifest_media_type,omitempty"`
+	ProjectID         int    `json:"project_id,omitempty"`
+	RepositoryID      int    `json:"repository_id,omitempty"`
+	Digest            string `json:"digest,omitempty"`
+	Size              int    `json:"size,omitempty"`
+
+	ProjectName    string `json:"-"`
+	RepositoryName string `json:"-"`
+}
+
+type ErrorResponse struct {
+	Errors []Error `json:"errors"`
+}
+
+func (e *ErrorResponse) String() string {
+	j, _ := json.Marshal(e)
+	return string(j)
+}
+
+type Error struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
