@@ -70,6 +70,7 @@ if [[ "$failed" = false ]]; then
 
     if ! $BIN deploy phases --crds --base --stubs --dex --calico --antrea --minio -v -e name=upgrade-test; then
       failed=true
+      echo "Failure in base deployment"
     fi
 
     [[ -e ./test/install_certs.sh ]] && ./test/install_certs.sh
@@ -77,6 +78,7 @@ if [[ "$failed" = false ]]; then
     # wait for the base deployment with stubs to come up healthy
     if ! $BIN test phases --base --stubs --minio  --wait 120 --progress=false -e name=upgrade-test; then
       failed=true
+      echo "Failure in base test"
     fi
 
     # deploy the OPA bundle to the Minio instance for use by OPA
@@ -84,6 +86,7 @@ if [[ "$failed" = false ]]; then
 
     if ! $BIN deploy all -v -e name=upgrade-test; then
       failed=true
+      echo "Failure in feature deployment"
     fi
 
     # wait for up to 4 minutes, rerunning tests if they fail
@@ -91,12 +94,14 @@ if [[ "$failed" = false ]]; then
 
     if ! $BIN test all -v --wait 300 --progress=false -e name=upgrade-test; then
       failed=true
+      echo "Failure in feature test"
     fi
 
     # E2E do not use --wait at the run level, if needed each individual test implements
     # its own wait. e2e tests should always pass once the non e2e have passed
     if ! $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml -e name=upgrade-test; then
       failed=true
+      echo "Failure in e2e test"
     fi
 fi
 
