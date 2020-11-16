@@ -50,7 +50,7 @@ type VM struct {
 	Prefix string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
 	// Number of VM's to provision
 	Count          int      `yaml:"count" json:"count"`
-	ContentLibrary string   `yaml:"contentLibrary", json:"contentLibrary,omitempty"`
+	ContentLibrary string   `yaml:"contentLibrary" json:"contentLibrary,omitempty"`
 	Template       string   `yaml:"template" json:"template,omitempty"`
 	Cluster        string   `yaml:"cluster,omitempty" json:"cluster,omitempty"`
 	Folder         string   `yaml:"folder,omitempty" json:"folder,omitempty"`

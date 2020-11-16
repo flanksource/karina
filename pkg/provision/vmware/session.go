@@ -167,6 +167,7 @@ func (s Session) findVMByName(templateID string) (*object.VirtualMachine, error)
 	return tpl, nil
 }
 
+// nolint: unused
 func (s Session) findLibrary(libraryName string) (*library.Library, error) {
 	restClient := rest.NewClient(s.Client.Client)
 	user := url.UserPassword(os.Getenv("GOVC_USER"), os.Getenv("GOVC_PASS"))

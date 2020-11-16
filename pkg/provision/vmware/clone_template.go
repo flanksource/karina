@@ -50,21 +50,6 @@ func (s Session) CloneTemplate(vm ptypes.VM, config *konfigadm.Config) (*object.
 		return nil, fmt.Errorf("library item type %s not supported", libraryItem.Type)
 	}
 
-	var networks []vcenter.NetworkMapping
-	for _, network := range vm.Network {
-		if network == "" {
-			continue
-		}
-		obj, err := s.Finder.Network(ctx, network)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find network %s", network)
-		}
-		networks = append(networks, vcenter.NetworkMapping{
-			Key:   network,
-			Value: obj.Reference().Reference().Value,
-		})
-	}
-
 	deploy := vcenter.Deploy{
 		DeploymentSpec: vcenter.DeploymentSpec{
 			Name:               vm.Name,
