@@ -25,10 +25,10 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
-		return err
+		return fmt.Errorf("failed to deploy cert-manager: %v", err)
 	}
 	if err := platform.ApplySpecs("", "cert-manager-monitor.yaml.raw"); err != nil {
-		return err
+		return fmt.Errorf("failed to deploy cert-manager alerts: %v", err)
 	}
 
 	if !platform.ApplyDryRun {
@@ -101,7 +101,7 @@ func Install(platform *platform.Platform) error {
 			IssuerConfig: issuerConfig,
 		},
 	}); err != nil {
-		return err
+		return fmt.Errorf("failed to deploy ClusterIssuer: %v", err)
 	}
 
 	return nil
