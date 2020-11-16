@@ -83,6 +83,7 @@ func (n NullMachine) Reference() types.ManagedObjectReference {
 
 type Cluster interface {
 	Clone(template VM, config *konfigadm.Config) (Machine, error)
+	CloneTemplate(template VM, config *konfigadm.Config) (Machine, error)
 	GetMachine(name string) (Machine, error)
 	GetMachines() (map[string]Machine, error)
 	GetMachinesFor(vm *VM) (map[string]Machine, error)

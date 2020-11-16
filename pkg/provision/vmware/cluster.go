@@ -60,6 +60,16 @@ func (cluster *vmwareCluster) Clone(template types.VM, config *konfigadm.Config)
 	return NewVM(cluster.ctx, cluster.DryRun, vm, &template), nil
 }
 
+func (cluster *vmwareCluster) CloneTemplate(template types.VM, config *konfigadm.Config) (types.Machine, error) {
+	LoadGovcEnvVars(cluster.vsphere, &template)
+	vm, err := cluster.session.CloneTemplate(template, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewVM(cluster.ctx, cluster.DryRun, vm, &template), nil
+}
+
 // GetVMs returns a list of all VM's associated with the cluster
 func (cluster *vmwareCluster) GetMachines() (map[string]types.Machine, error) {
 	machines := map[string]types.Machine{}
