@@ -91,7 +91,7 @@ func Install(platform *platform.Platform) error {
 	if err := platform.Apply(Namespace, &certmanager.ClusterIssuer{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterIssuer",
-			APIVersion: "cert-manager.io/v1alpha2",
+			APIVersion: "cert-manager.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      IngressCA,
