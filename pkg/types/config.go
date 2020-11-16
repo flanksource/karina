@@ -92,4 +92,6 @@ type PlatformConfig struct {
 	ControlPlaneEndpoint  string `yaml:"-"`
 	// E2E is true if end to end tests are being run
 	E2E bool `yaml:"-"`
+	// If the platform should use in cluster config
+	InClusterConfig bool `yaml:"-" json:"-"`
 }

@@ -61,6 +61,11 @@ func (platform *Platform) Init() error {
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
+	if platform.InClusterConfig {
+		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigInCluster
+	} else {
+		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigFromKubeconfig
+	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
 	loggerBackend := logrus.StandardLogger().WithContext(context.Background())
