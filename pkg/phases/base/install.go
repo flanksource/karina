@@ -31,11 +31,11 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if err := vsphere.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("vspere: %s", err)
 	}
 
 	if err := certmanager.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("cert-manager: %s", err)
 	}
 
 	if err := quack.Install(platform); err != nil {
@@ -43,7 +43,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if err := platformoperator.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("platformoperator: %s", err)
 	}
 
 	if !platform.NodeLocalDNS.Disabled {
@@ -68,7 +68,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 	if err := ingress.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("ingress: %s", err)
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {
