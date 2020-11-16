@@ -29,6 +29,8 @@ import (
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vapi/library"
+	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vim25/soap"
 
 	"github.com/flanksource/karina/pkg/types"
@@ -134,6 +136,15 @@ func (s Session) FindVM(nameOrID string) (*object.VirtualMachine, error) {
 	return s.findVMByName(nameOrID)
 }
 
+func (s Session) FindTemplate(libraryName, nameOrID string) (*library.Item, error) {
+	template, err := s.findTemplate(libraryName, nameOrID)
+	if err != nil {
+		return nil, fmt.Errorf("findTemplate: failed to find template %s in library %s: %v", nameOrID, libraryName, err)
+	}
+
+	return template, nil
+}
+
 func (s Session) findVMByUUID(templateID string) (*object.VirtualMachine, error) {
 	if !isValidUUID(templateID) {
 		return nil, nil
@@ -154,6 +165,44 @@ func (s Session) findVMByName(templateID string) (*object.VirtualMachine, error)
 		return nil, errors.Wrapf(err, "unable to find tempate by name %q", templateID)
 	}
 	return tpl, nil
+}
+
+func (s Session) findLibrary(libraryName string) (*library.Library, error) {
+	restClient := rest.NewClient(s.Client.Client)
+	user := url.UserPassword(os.Getenv("GOVC_USER"), os.Getenv("GOVC_PASS"))
+	if err := restClient.Login(context.TODO(), user); err != nil {
+		return nil, errors.Wrap(err, "failed to login")
+	}
+	manager := library.NewManager(restClient)
+
+	return manager.GetLibraryByName(context.TODO(), libraryName)
+}
+
+func (s Session) findTemplate(libraryName, nameOrID string) (*library.Item, error) {
+	restClient := rest.NewClient(s.Client.Client)
+	user := url.UserPassword(os.Getenv("GOVC_USER"), os.Getenv("GOVC_PASS"))
+	if err := restClient.Login(context.TODO(), user); err != nil {
+		return nil, errors.Wrap(err, "failed to login")
+	}
+	manager := library.NewManager(restClient)
+
+	lib, err := manager.GetLibraryByName(context.TODO(), libraryName)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get library with name %s", libraryName)
+	}
+
+	items, err := manager.GetLibraryItems(context.TODO(), lib.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to list library items for library %s", lib.ID)
+	}
+
+	for _, i := range items {
+		if i.ID == nameOrID || i.Name == nameOrID {
+			return &i, nil
+		}
+	}
+
+	return nil, fmt.Errorf("could not find any library item with name or id %s", nameOrID)
 }
 
 func isValidUUID(str string) bool {
