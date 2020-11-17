@@ -45,7 +45,7 @@ func UpdateSettings(p *platform.Platform) error {
 }
 
 func ListProjects(p *platform.Platform) ([]Project, error) {
-	client, err := NewClient(p)
+	client, err := NewIngressClient(p)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create harbor client")
 	}
@@ -59,7 +59,7 @@ func ListProjects(p *platform.Platform) ([]Project, error) {
 }
 
 func ListImagesWithTags(p *platform.Platform, concurrency int) ([]Tag, error) {
-	client, err := NewClient(p)
+	client, err := NewIngressClient(p)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create harbor client")
 	}
@@ -123,7 +123,7 @@ func ListImagesWithTags(p *platform.Platform, concurrency int) ([]Tag, error) {
 }
 
 func ListImages(p *platform.Platform, concurrency int) ([]Image, error) {
-	client, err := NewClient(p)
+	client, err := NewIngressClient(p)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create harbor client")
 	}

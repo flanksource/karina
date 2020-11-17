@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -31,6 +32,16 @@ type Client struct {
 	base   string
 }
 
+type IngressClient struct {
+	logger.Logger
+	sling  *sling.Sling
+	client *http.Client
+	url    string
+	host   string
+	base   string
+}
+
+// NewClient creates a new harbor client using proxy dialer
 func NewClient(p *platform.Platform) (*Client, error) {
 	clientset, err := p.GetClientset()
 	if err != nil {
@@ -70,6 +81,42 @@ func NewClient(p *platform.Platform) (*Client, error) {
 		base:   base,
 		url:    p.Harbor.URL,
 		sling: sling.New().Client(client).Base("https://harbor-core"+base).
+			SetBasicAuth("admin", p.Harbor.AdminPassword).
+			Set("accept", "application/json").
+			Set("content-type", "application/json"),
+	}, nil
+}
+
+// NewIngressClient creates a new harbor client using the harbor ingress
+func NewIngressClient(p *platform.Platform) (*IngressClient, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	harborDomain := fmt.Sprintf("harbor.%s", p.Domain)
+
+	harborIP, err := dnsLookup(harborDomain)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to lookup harbor ingress IP")
+	}
+
+	harborURL := "https://" + harborIP
+
+	var base string
+	if strings.HasPrefix(p.Harbor.Version, "v1") {
+		base = "/api"
+	} else {
+		base = "/api/v2.0"
+	}
+	client := &http.Client{Transport: tr}
+	return &IngressClient{
+		Logger: p.Logger,
+		client: client,
+		base:   base,
+		url:    p.Harbor.URL,
+		host:   harborDomain,
+		sling: sling.New().Client(client).Base(harborURL+base).
+			Set("Host", harborDomain).
 			SetBasicAuth("admin", p.Harbor.AdminPassword).
 			Set("accept", "application/json").
 			Set("content-type", "application/json"),
@@ -140,40 +187,7 @@ func (harbor *Client) ListMembers(project string) ([]ProjectMember, error) {
 	return nil, nil
 }
 
-func (harbor *Client) ListImages(project string) (images []Image, customError error) {
-	allImages := []Image{}
-	page := 1
-
-	for {
-		images := []Image{}
-		er := ErrorResponse{}
-		r, err := harbor.sling.New().
-			Get(fmt.Sprintf("%s/projects/%s/repositories?page=%d&perPage=%d", harbor.base, project, page, perPage)).
-			Receive(&images, &er)
-		if r != nil {
-			r.Body.Close()
-		}
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to list images")
-		}
-
-		if len(er.Errors) > 0 {
-			return nil, errors.Errorf("received error code from server: %s", er.String())
-		}
-
-		harbor.Debugf("images for project %s page %d %d results", project, page, len(images))
-
-		allImages = append(allImages, images...)
-
-		if len(images) == 0 {
-			break
-		}
-		page++
-	}
-	return allImages, nil
-}
-
-func (harbor *Client) ListProjects() ([]Project, error) {
+func (harbor *IngressClient) ListProjects() ([]Project, error) {
 	allProjects := []Project{}
 	page := 1
 
@@ -181,7 +195,8 @@ func (harbor *Client) ListProjects() ([]Project, error) {
 		projects := []Project{}
 		er := ErrorResponse{}
 		r, err := harbor.sling.New().
-			Get(fmt.Sprintf("%s/projects?page=%d&per_page=%d", harbor.base, page, perPage)).
+			Get(fmt.Sprintf("https://%s/%s/projects?page=%d&per_page=%d", harbor.host, harbor.base, page, perPage)).
+			Set("Host", harbor.host).
 			Receive(&projects, &er)
 		if r != nil {
 			r.Body.Close()
@@ -207,7 +222,41 @@ func (harbor *Client) ListProjects() ([]Project, error) {
 	return allProjects, nil
 }
 
-func (harbor *Client) ListTags(project string, image string) (tags []Tag, customError error) {
+func (harbor *IngressClient) ListImages(project string) (images []Image, customError error) {
+	allImages := []Image{}
+	page := 1
+
+	for {
+		images := []Image{}
+		er := ErrorResponse{}
+		r, err := harbor.sling.New().
+			Get(fmt.Sprintf("https://%s/%s/projects/%s/repositories?page=%d&perPage=%d", harbor.host, harbor.base, project, page, perPage)).
+			Set("Host", harbor.host).
+			Receive(&images, &er)
+		if r != nil {
+			r.Body.Close()
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to list images")
+		}
+
+		if len(er.Errors) > 0 {
+			return nil, errors.Errorf("received error code from server: %s", er.String())
+		}
+
+		harbor.Debugf("images for project %s page %d %d results", project, page, len(images))
+
+		allImages = append(allImages, images...)
+
+		if len(images) == 0 {
+			break
+		}
+		page++
+	}
+	return allImages, nil
+}
+
+func (harbor *IngressClient) ListTags(project string, image string) (tags []Tag, customError error) {
 	allTags := []Tag{}
 	page := 1
 
@@ -217,7 +266,8 @@ func (harbor *Client) ListTags(project string, image string) (tags []Tag, custom
 		tags := []Tag{}
 		er := ErrorResponse{}
 		r, err := harbor.sling.New().
-			Get(fmt.Sprintf("%s/projects/%s/repositories/%s/artifacts?page=%d&per_page=%d", harbor.base, project, imageEncoded, page, perPage)).
+			Get(fmt.Sprintf("https://%s/%s/projects/%s/repositories/%s/artifacts?page=%d&per_page=%d", harbor.host, harbor.base, project, imageEncoded, page, perPage)).
+			Set("Host", harbor.host).
 			Receive(&tags, &er)
 		if r != nil {
 			r.Body.Close()
@@ -361,4 +411,17 @@ func (e *ErrorResponse) String() string {
 type Error struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+func dnsLookup(hostname string) (string, error) {
+	addrs, err := net.LookupHost(hostname)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to lookup %s", hostname)
+	}
+
+	if len(addrs) == 0 {
+		return "", errors.Errorf("lookup %s did not return any address", hostname)
+	}
+
+	return addrs[0], nil
 }
