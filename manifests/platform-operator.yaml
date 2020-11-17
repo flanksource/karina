@@ -248,7 +248,7 @@ spec:
             defaultMode: 420
             secretName: webhook-server-cert
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: platform-serving-cert
@@ -262,7 +262,7 @@ spec:
     name: platform-selfsigned-issuer
   secretName: webhook-server-cert
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: platform-selfsigned-issuer
