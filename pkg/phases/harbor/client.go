@@ -209,8 +209,6 @@ func (harbor *IngressClient) ListProjects() ([]Project, error) {
 			return nil, errors.Errorf("received error code from server: %s", er.String())
 		}
 
-		harbor.Debugf("projects page %d  %d results", page, len(projects))
-
 		allProjects = append(allProjects, projects...)
 
 		if len(projects) == 0 {
@@ -222,7 +220,7 @@ func (harbor *IngressClient) ListProjects() ([]Project, error) {
 	return allProjects, nil
 }
 
-func (harbor *IngressClient) ListImages(project string) (images []Image, customError error) {
+func (harbor *IngressClient) ListImages(project string) ([]Image, error) {
 	allImages := []Image{}
 	page := 1
 
@@ -244,8 +242,6 @@ func (harbor *IngressClient) ListImages(project string) (images []Image, customE
 			return nil, errors.Errorf("received error code from server: %s", er.String())
 		}
 
-		harbor.Debugf("images for project %s page %d %d results", project, page, len(images))
-
 		allImages = append(allImages, images...)
 
 		if len(images) == 0 {
@@ -256,19 +252,19 @@ func (harbor *IngressClient) ListImages(project string) (images []Image, customE
 	return allImages, nil
 }
 
-func (harbor *IngressClient) ListTags(project string, image string) (tags []Tag, customError error) {
-	allTags := []Tag{}
+func (harbor *IngressClient) ListArtifacts(project string, image string) ([]Artifact, error) {
+	allArtifacts := []Artifact{}
 	page := 1
 
 	imageEncoded := url.QueryEscape(image)
 
 	for {
-		tags := []Tag{}
+		artifacts := []Artifact{}
 		er := ErrorResponse{}
 		r, err := harbor.sling.New().
 			Get(fmt.Sprintf("https://%s/%s/projects/%s/repositories/%s/artifacts?page=%d&per_page=%d", harbor.host, harbor.base, project, imageEncoded, page, perPage)).
 			Set("Host", harbor.host).
-			Receive(&tags, &er)
+			Receive(&artifacts, &er)
 		if r != nil {
 			r.Body.Close()
 		}
@@ -280,16 +276,36 @@ func (harbor *IngressClient) ListTags(project string, image string) (tags []Tag,
 			return nil, errors.Errorf("received error code from server: %s", er.String())
 		}
 
-		harbor.Debugf("project %s image %s tags page %d  %d results", project, image, page, len(tags))
+		allArtifacts = append(allArtifacts, artifacts...)
 
-		allTags = append(allTags, tags...)
-
-		if len(tags) == 0 {
+		if len(artifacts) == 0 {
 			break
 		}
 		page++
 	}
-	return allTags, nil
+	return allArtifacts, nil
+}
+
+func (harbor *IngressClient) GetManifest(project, image, tag string) (*Manifest, error) {
+	manifest := &Manifest{}
+	er := ErrorResponse{}
+	// fmt.Printf("url: https://%s/v2/%s/%s/manifests/%s\n", harbor.host, project, image, tag)
+	r, err := harbor.sling.New().
+		Get(fmt.Sprintf("https://%s/v2/%s/%s/manifests/%s", harbor.host, project, image, tag)).
+		Set("Host", harbor.host).
+		Receive(&manifest, &er)
+	if r != nil {
+		r.Body.Close()
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get manifest")
+	}
+
+	if len(er.Errors) > 0 {
+		return nil, errors.Errorf("received error code from server: %s", er.String())
+	}
+
+	return manifest, nil
 }
 
 type Project struct {
@@ -385,18 +401,40 @@ type Image struct {
 	ProjectName string `json:"-"`
 }
 
-type Tag struct {
-	ID                int    `json:"id,omitempty"`
-	Type              string `json:"type,omitempty"`
-	MediaType         string `json:"media_type,omitempty"`
-	ManifestMediaType string `json:"manifest_media_type,omitempty"`
-	ProjectID         int    `json:"project_id,omitempty"`
-	RepositoryID      int    `json:"repository_id,omitempty"`
-	Digest            string `json:"digest,omitempty"`
-	Size              int    `json:"size,omitempty"`
+type Artifact struct {
+	ID                int           `json:"id,omitempty"`
+	Type              string        `json:"type,omitempty"`
+	MediaType         string        `json:"media_type,omitempty"`
+	ManifestMediaType string        `json:"manifest_media_type,omitempty"`
+	ProjectID         int           `json:"project_id,omitempty"`
+	RepositoryID      int           `json:"repository_id,omitempty"`
+	Digest            string        `json:"digest,omitempty"`
+	Size              int           `json:"size,omitempty"`
+	Tags              []ArtifactTag `json:"tags"`
+}
 
+type ArtifactTag struct {
+	Name string `json:"name"`
+}
+
+type Tag struct {
+	Name           string `json:"-"`
 	ProjectName    string `json:"-"`
 	RepositoryName string `json:"-"`
+	Digest         string `json:"-"`
+}
+
+type Manifest struct {
+	SchemaVersion int             `json:"schemaVersion"`
+	MediaType     string          `json:"mediaType"`
+	Config        ManifestLayer   `json:"config"`
+	Layers        []ManifestLayer `json:"layers"`
+}
+
+type ManifestLayer struct {
+	MediaType string `json:"mediaType"`
+	Size      int    `json:"size"`
+	Digest    string `json:"digest"`
 }
 
 type ErrorResponse struct {
