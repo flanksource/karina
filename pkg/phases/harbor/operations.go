@@ -1,16 +1,18 @@
 package harbor
 
 import (
-	"context"
+	"bufio"
 	"fmt"
-	"sort"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
-	"golang.org/x/sync/semaphore"
 )
+
+const maxHarborImagesChannelLength = 100000
+const maxHarborTagsChannelLength = 300000
 
 func ReplicateAll(p *platform.Platform) error {
 	client, err := NewClient(p)
@@ -58,71 +60,77 @@ func ListProjects(p *platform.Platform) ([]Project, error) {
 	return projects, nil
 }
 
-func ListImagesWithTags(p *platform.Platform, concurrency int) ([]Tag, error) {
+func ListImagesWithTags(p *platform.Platform, concurrency int) (chan Tag, error) {
 	client, err := NewIngressClient(p)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create harbor client")
 	}
 
-	images, err := ListImages(p, concurrency)
+	imagesCh, err := ListImages(p, concurrency)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list images")
 	}
 
-	lock := semaphore.NewWeighted(int64(concurrency))
+	tagsCh := make(chan Tag, maxHarborTagsChannelLength)
 
-	var wg sync.WaitGroup
-	wg.Add(len(images))
+	go func() {
+		wg := &sync.WaitGroup{}
+		wg.Add(concurrency)
 
-	allTags := []Tag{}
-	mtx := &sync.Mutex{}
+		for i := 0; i < concurrency; i++ {
+			go func() {
+				defer wg.Done()
 
-	for _, i := range images {
-		p.Debugf("artifacts count for %s/%s: %d\n", i.ProjectName, i.Name, i.ArtifactCount)
+				for {
+					image, more := <-imagesCh
+					if !more {
+						break
+					}
 
-		go func(project, image string) {
-			lock.Acquire(context.Background(), 1)
-			defer func() {
-				lock.Release(1)
-				wg.Done()
-			}()
-			tags, err := client.ListTags(project, image)
-			if err != nil {
-				p.Errorf("failed to list tags for image %s in project %s: %v", image, project, err)
-			}
-			p.Tracef("tags count for %s/%s: %d\n", project, image, len(tags))
+					artifacts, err := client.ListArtifacts(image.ProjectName, image.Name)
+					if err != nil {
+						p.Errorf("failed to list artifacts for image %s in project %s: %v", image.Name, image.ProjectName, err)
+					}
+					p.Tracef("artifacts count for %s/%s: %d\n", image.ProjectName, image.Name, len(artifacts))
 
-			for i := range tags {
-				tags[i].ProjectName = project
-				tags[i].RepositoryName = image
+					for _, artifact := range artifacts {
+						digest := artifact.Digest
+						// if strings.HasPrefix(digest, "sha256:") {
+						// digest = strings.TrimPrefix(digest, "sha256:")
+						// }
 
-				if strings.HasPrefix(tags[i].Digest, "sha256:") {
-					tags[i].Digest = strings.TrimPrefix(tags[i].Digest, "sha256:")
+						tag := Tag{
+							Name:           digest,
+							ProjectName:    image.ProjectName,
+							RepositoryName: image.Name,
+							Digest:         digest,
+						}
+
+						tagsCh <- tag
+
+						for _, tag := range artifact.Tags {
+							tag := Tag{
+								Name:           tag.Name,
+								ProjectName:    image.ProjectName,
+								RepositoryName: image.Name,
+								Digest:         digest,
+							}
+
+							tagsCh <- tag
+						}
+					}
 				}
-			}
-
-			mtx.Lock()
-			allTags = append(allTags, tags...)
-			mtx.Unlock()
-		}(i.ProjectName, i.Name)
-	}
-
-	wg.Wait()
-
-	sort.SliceStable(allTags, func(i, j int) bool {
-		if allTags[i].ProjectName == allTags[j].ProjectName {
-			if allTags[i].RepositoryName == allTags[j].RepositoryName {
-				return allTags[i].Digest < allTags[j].Digest
-			}
-			return allTags[i].RepositoryName < allTags[j].RepositoryName
+			}()
 		}
-		return allTags[i].ProjectName < allTags[j].ProjectName
-	})
 
-	return allTags, nil
+		wg.Wait()
+		close(tagsCh)
+	}()
+
+	return tagsCh, nil
 }
 
-func ListImages(p *platform.Platform, concurrency int) ([]Image, error) {
+func ListImages(p *platform.Platform, concurrency int) (chan Image, error) {
 	client, err := NewIngressClient(p)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create harbor client")
@@ -133,49 +141,182 @@ func ListImages(p *platform.Platform, concurrency int) ([]Image, error) {
 		return nil, errors.Wrap(err, "failed to list projects")
 	}
 
-	lock := semaphore.NewWeighted(int64(concurrency))
+	projectsCh := make(chan string, len(projects))
+	imagesCh := make(chan Image, maxHarborImagesChannelLength)
 
-	var wg sync.WaitGroup
-	wg.Add(len(projects))
+	go func() {
+		wg := &sync.WaitGroup{}
+		wg.Add(concurrency)
 
-	allImages := []Image{}
-	mtx := &sync.Mutex{}
+		for i := 0; i < concurrency; i++ {
+			go func() {
+				defer wg.Done()
+				for {
+					projectName, more := <-projectsCh
+					if !more {
+						break
+					}
+
+					images, err := client.ListImages(projectName)
+					if err != nil {
+						p.Errorf("failed to list images in project %s: %v", projectName, err)
+					}
+
+					for _, image := range images {
+						image.ProjectName = projectName
+						parts := strings.SplitN(image.Name, "/", 2)
+						image.Name = parts[1]
+						imagesCh <- image
+					}
+				}
+			}()
+		}
+
+		wg.Wait()
+		close(imagesCh)
+	}()
 
 	for _, project := range projects {
-		p.Debugf("listing images for project %s", project.Name)
-
-		go func(projectName string) {
-			lock.Acquire(context.Background(), 1)
-			defer func() {
-				lock.Release(1)
-				wg.Done()
-			}()
-			images, err := client.ListImages(projectName)
-			if err != nil {
-				p.Errorf("failed to list images in project %s: %v", project, err)
-			}
-
-			for i := range images {
-				images[i].ProjectName = projectName
-
-				parts := strings.SplitN(images[i].Name, "/", 2)
-				images[i].Name = parts[1]
-			}
-
-			mtx.Lock()
-			allImages = append(allImages, images...)
-			mtx.Unlock()
-		}(project.Name)
+		projectsCh <- project.Name
 	}
 
-	wg.Wait()
+	close(projectsCh)
 
-	sort.SliceStable(allImages, func(i, j int) bool {
-		if allImages[i].ProjectName == allImages[j].ProjectName {
-			return allImages[i].Name < allImages[j].Name
+	return imagesCh, nil
+}
+
+func IntegrityCheck(p *platform.Platform, concurrency int) (chan Tag, error) {
+	client, err := NewIngressClient(p)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create harbor client")
+	}
+
+	tagsCh, err := ListImagesWithTags(p, concurrency)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list tags")
+	}
+
+	brokenTagsCh := make(chan Tag, maxHarborTagsChannelLength)
+
+	go func() {
+		wg := &sync.WaitGroup{}
+		wg.Add(concurrency)
+
+		for i := 0; i < concurrency; i++ {
+			go func() {
+				defer wg.Done()
+
+				for {
+					tag, more := <-tagsCh
+					if !more {
+						break
+					}
+
+					p.Debugf("tag: %s/%s:%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
+
+					_, err := client.GetManifest(tag.ProjectName, tag.RepositoryName, tag.Name)
+					if err != nil {
+						p.Errorf("failed to get manifest for %s/%s:%s: %v", tag.ProjectName, tag.RepositoryName, tag.Name, err)
+					}
+
+					if err != nil {
+						brokenTagsCh <- tag
+					}
+					//  else {
+					// fmt.Printf("working tag: %s/%s/%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
+					// }
+				}
+			}()
 		}
-		return allImages[i].ProjectName < allImages[j].ProjectName
-	})
 
-	return allImages, nil
+		wg.Wait()
+		close(brokenTagsCh)
+	}()
+
+	return brokenTagsCh, nil
+}
+
+func IntegrityCheckFromFile(p *platform.Platform, concurrency int, file string) (chan Tag, error) {
+	client, err := NewIngressClient(p)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create harbor client")
+	}
+
+	tags, err := parseIntegrityCheckFile(file)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse file: %s", file)
+	}
+
+	tagsCh := make(chan Tag, maxHarborTagsChannelLength)
+	brokenTagsCh := make(chan Tag, maxHarborTagsChannelLength)
+
+	go func() {
+		wg := &sync.WaitGroup{}
+		wg.Add(concurrency)
+
+		for i := 0; i < concurrency; i++ {
+			go func() {
+				defer wg.Done()
+
+				for {
+					tag, more := <-tagsCh
+					if !more {
+						break
+					}
+
+					p.Debugf("tag: %s/%s:%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
+
+					_, err := client.GetManifest(tag.ProjectName, tag.RepositoryName, tag.Name)
+					if err != nil {
+						p.Errorf("failed to get manifest for %s/%s:%s: %v", tag.ProjectName, tag.RepositoryName, tag.Name, err)
+					}
+
+					if err != nil {
+						brokenTagsCh <- tag
+					}
+					//  else {
+					// fmt.Printf("working tag: %s/%s/%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
+					// }
+				}
+			}()
+		}
+
+		wg.Wait()
+		close(brokenTagsCh)
+	}()
+
+	for _, tag := range tags {
+		tagsCh <- tag
+	}
+
+	close(tagsCh)
+
+	return brokenTagsCh, nil
+}
+
+func parseIntegrityCheckFile(filename string) ([]Tag, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to open file %s", filename)
+	}
+	defer file.Close()
+
+	tags := []Tag{}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fullTag := strings.TrimPrefix(scanner.Text(), "broken: ")
+		parts := strings.SplitN(fullTag, ":", 2)
+		tag := parts[1]
+
+		parts = strings.SplitN(parts[0], "/", 2)
+		projectName := parts[0]
+		repositoryName := parts[1]
+
+		tags = append(tags, Tag{ProjectName: projectName, RepositoryName: repositoryName, Name: tag})
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, errors.Wrap(err, "failed to scan file")
+	}
+	return tags, nil
 }
