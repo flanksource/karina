@@ -61,6 +61,11 @@ func (platform *Platform) Init() error {
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
+	if platform.InClusterConfig {
+		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigInCluster
+	} else {
+		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigFromKubeconfig
+	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
 	loggerBackend := logrus.StandardLogger().WithContext(context.Background())
@@ -309,9 +314,18 @@ func (platform *Platform) Clone(vm types.VM, config *konfigadm.Config) (types.Ma
 		config.AddCommand(cmd)
 	}
 
-	VM, err := platform.Cluster.Clone(vm, config)
-	if err != nil {
-		return nil, err
+	var VM types.Machine
+	var err error
+	if vm.ContentLibrary != "" {
+		VM, err = platform.Cluster.CloneTemplate(vm, config)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		VM, err = platform.Cluster.Clone(vm, config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := VM.SetAttributes(map[string]string{

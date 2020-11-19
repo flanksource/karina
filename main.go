@@ -102,6 +102,7 @@ func main() {
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
 	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")
+	root.PersistentFlags().Bool("in-cluster", false, "Use in cluster kubernetes config")
 	root.SetUsageTemplate(root.UsageTemplate() + fmt.Sprintf("\nversion: %s\n ", version))
 
 	if err := root.Execute(); err != nil {

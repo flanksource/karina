@@ -46,29 +46,30 @@ type VaultClient struct {
 
 // VM captures the specifications of a virtual machine
 type VM struct {
-	Name   string `yaml:"name,omitempty"`
-	Prefix string `yaml:"prefix,omitempty"`
+	Name   string `yaml:"name,omitempty" json:"name,omitempty"`
+	Prefix string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
 	// Number of VM's to provision
-	Count        int      `yaml:"count"`
-	Template     string   `yaml:"template"`
-	Cluster      string   `yaml:"cluster,omitempty"`
-	Folder       string   `yaml:"folder,omitempty"`
-	Datastore    string   `yaml:"datastore,omitempty"`
-	ResourcePool string   `yaml:"resourcePool,omitempty"`
-	CPUs         int32    `yaml:"cpu"`
-	MemoryGB     int64    `yaml:"memory"`
-	Network      []string `yaml:"networks,omitempty"`
+	Count          int      `yaml:"count" json:"count"`
+	ContentLibrary string   `yaml:"contentLibrary" json:"contentLibrary,omitempty"`
+	Template       string   `yaml:"template" json:"template,omitempty"`
+	Cluster        string   `yaml:"cluster,omitempty" json:"cluster,omitempty"`
+	Folder         string   `yaml:"folder,omitempty" json:"folder,omitempty"`
+	Datastore      string   `yaml:"datastore,omitempty" json:"datastore,omitempty"`
+	ResourcePool   string   `yaml:"resourcePool,omitempty" json:"resourcePool,omitempty"`
+	CPUs           int32    `yaml:"cpu" json:"cpu"`
+	MemoryGB       int64    `yaml:"memory" json:"memory"`
+	Network        []string `yaml:"networks,omitempty" json:"network,omitempty"`
 	// Size in GB of the VM root volume
-	DiskGB int `yaml:"disk"`
+	DiskGB int `yaml:"disk" json:"disk,omitempty"`
 	// Tags to be applied to the VM
-	Tags     map[string]string `yaml:"tags,omitempty"`
-	Commands []string          `yaml:"commands,omitempty"`
+	Tags     map[string]string `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Commands []string          `yaml:"commands,omitempty" json:"commands,omitempty"`
 	// A path to a konfigadm specification used for configuring the VM on creation.
-	KonfigadmFile    string            `yaml:"konfigadm,omitempty"`
-	IP               string            `yaml:"-"`
-	Konfigadm        *konfigadm.Config `yaml:"-"`
-	Annotations      map[string]string `yaml:"annotations,omitempty"`
-	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty"`
+	KonfigadmFile    string            `yaml:"konfigadm,omitempty" json:"konfigadm,omitempty"`
+	IP               string            `yaml:"-" json:"-"`
+	Konfigadm        *konfigadm.Config `yaml:"-" json:"-"`
+	Annotations      map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty" json:"kubeletExtraArgs,omitempty"`
 }
 
 func (vm VM) GetTags() map[string]string {
