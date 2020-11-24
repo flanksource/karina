@@ -245,7 +245,7 @@ func NewJoinConfiguration(cfg *platform.Platform, node types.VM) ([]byte, error)
 		},
 	}
 	if cfg.Kubernetes.ContainerRuntime == constants.ContainerdRuntime {
-		configuration.NodeRegistration.CRISocket = "unix://run/containerd/containerd.sock"
+		configuration.NodeRegistration.CRISocket = "unix:///run/containerd/containerd.sock"
 	}
 	return yaml.Marshal(configuration)
 }
