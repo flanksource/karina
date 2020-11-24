@@ -18,16 +18,5 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
-	secret := p.GetSecret("kube-system", "antrea-controller-tls")
-	if secret != nil {
-		data := *secret
-		caBytes := data["ca.crt"]
-		crtBytes := data["tls.crt"]
-		keyBytes := data["tls.key"]
-		if len(caBytes) > 0 && len(crtBytes) > 0 && len(keyBytes) > 0 {
-			p.Antrea.IsCertReady = true
-		}
-	}
-
 	return p.ApplySpecs(Namespace, "antrea.yaml")
 }
