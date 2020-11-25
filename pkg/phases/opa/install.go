@@ -149,7 +149,7 @@ func InstallGatekeeper(p *platform.Platform) error {
 	start := time.Now()
 	clientset, _ := p.GetClientset()
 	for {
-		webhook, _ := clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Get(context.TODO(), "gatekeeper-validating-webhook-configuration", metav1.GetOptions{})
+		webhook, _ := clientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Get(context.TODO(), "gatekeeper-validating-webhook-configuration", metav1.GetOptions{})
 		if webhook != nil && len(webhook.Webhooks) > 0 && len(webhook.Webhooks[0].ClientConfig.CABundle) > 100 {
 			break
 		} else {
