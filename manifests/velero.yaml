@@ -91,7 +91,7 @@ spec:
               value: /plugins
             - name: AWS_SHARED_CREDENTIALS_FILE
               value: /credentials/cloud
-          image: docker.io/velero/velero:{{.velero.version}}
+          image: docker.io/velero/velero:{{.velero.version | default "none"}}
           imagePullPolicy: IfNotPresent
           name: velero
           ports:
