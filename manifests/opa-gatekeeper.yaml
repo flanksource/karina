@@ -9,6 +9,7 @@ data:
   ca.crt: ""
   tls.crt: ""
   tls.key: ""
+type: kubernetes.io/tls
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -31,8 +32,6 @@ metadata:
     gatekeeper.sh/system: "yes"
   name: gatekeeper-admin
   namespace: gatekeeper-system
----
-type: kubernetes.io/tls
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
