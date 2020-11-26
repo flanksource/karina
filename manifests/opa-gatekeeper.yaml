@@ -1,3 +1,16 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gatekeeper-webhook-server-cert
+  namespace: gatekeeper-system
+  annotations:
+    cert-manager.io/allow-direct-injection: "true"
+data:
+  ca.crt: ""
+  tls.crt: ""
+  tls.key: ""
+type: kubernetes.io/tls
+---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
@@ -418,7 +431,7 @@ metadata:
     gatekeeper.sh/system: "yes"
   annotations:
     cert-manager.io/inject-apiserver-ca: "true"
-    cert-manager.io/inject-ca-from-secret: gatekeeper-webhook-server-cert
+    cert-manager.io/inject-ca-from-secret: gatekeeper-system/gatekeeper-webhook-server-cert
   name: gatekeeper-validating-webhook-configuration
 webhooks:
 - clientConfig:
