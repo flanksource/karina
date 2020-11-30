@@ -71,6 +71,13 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 		node := nodeMachine.Node
 		age := machine.GetAge()
 		template := machine.GetTemplate()
+		var newTemplate string
+		if kommons.IsMasterNode(node) {
+			newTemplate = platform.PlatformConfig.Master.Template
+		} else {
+			pool := node.Labels["karina.flanksource.com/pool"]
+			newTemplate = platform.PlatformConfig.Nodes[pool].Template
+		}
 
 		// check if a node is available for update
 		if kommons.IsMasterNode(node) && !opts.Masters {
@@ -78,7 +85,7 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 		} else if !kommons.IsMasterNode(node) && !opts.Workers {
 			continue
 		}
-		if age > opts.MinAge {
+		if age > opts.MinAge && newTemplate != template {
 			platform.Infof("Queuing for replacement %s, age=%s, template=%s ", machine.Name(), age, template)
 		} else {
 			continue
