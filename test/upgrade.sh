@@ -68,7 +68,7 @@ if [[ "$failed" = false ]]; then
 
     $BIN version
 
-    if ! $BIN deploy phases --crds --base --stubs --dex --calico --antrea --minio -v -e name=upgrade-test; then
+    if ! $BIN deploy phases --pre --crds --base --stubs --dex --calico --antrea --minio -v -e name=upgrade-test; then
       failed=true
       echo "Failure in base deployment"
     fi

@@ -1,7 +1,9 @@
 package certmanager
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flanksource/commons/certs"
@@ -16,6 +18,40 @@ const (
 	IngressCA      = "ingress-ca"
 	VaultTokenName = "vault-token"
 )
+
+func PreInstall(platform *platform.Platform) error {
+	currentVer := platform.PlatformConfig.CertManager.Version
+
+	client, err := platform.Client.GetClientset()
+	if err != nil {
+		return fmt.Errorf("certmanager: Could not establish k8s client: %s", err)
+	}
+
+	certmanagerDeployments := client.AppsV1().Deployments(Namespace)
+	deployment, err := certmanagerDeployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
+	if err != nil {
+		fmt.Errorf("certmanager: Could not obtain certmanager deployment information: %s", err)
+	}
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		if strings.HasSuffix(container.Image, currentVer) {
+			platform.Debugf("Current cert-manager version %s matches specified version %s", container.Image, currentVer)
+			return nil
+		} else {
+			platform.Debugf("Current cert-manager version %s does not match specified version %s, deleting deployments", container.Image, currentVer)
+		}
+	}
+
+	deploymentnames := []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"}
+	for _, deploymentname := range deploymentnames {
+		err = certmanagerDeployments.Delete(context.TODO(), deploymentname, metav1.DeleteOptions{})
+		if err != nil {
+			return fmt.Errorf("certmanager: error deleting %s: s", deploymentname, err)
+		}
+	}
+
+	return nil
+}
 
 func Install(platform *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it

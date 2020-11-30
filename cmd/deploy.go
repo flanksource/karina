@@ -11,6 +11,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/minio"
+	"github.com/flanksource/karina/pkg/phases/pre"
 	"github.com/flanksource/karina/pkg/phases/redisoperator"
 
 	log "github.com/flanksource/commons/logger"
@@ -53,6 +54,7 @@ import (
 type DeployFn func(p *platform.Platform) error
 
 var Phases = map[string]DeployFn{
+	"pre":                  pre.Install,
 	"antrea":               antrea.Install,
 	"auditbeat":            auditbeat.Deploy,
 	"base":                 base.Install,
@@ -99,7 +101,7 @@ var PhasesExtra = map[string]DeployFn{
 	"quack":             quack.Install,
 }
 
-var PhaseOrder = []string{"crds", "calico", "antrea", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
+var PhaseOrder = []string{"pre", "crds", "calico", "antrea", "nsx", "base", "stubs", "minio", "postgres-operator", "dex", "vault"}
 
 var Deploy = &cobra.Command{
 	Use: "deploy",
