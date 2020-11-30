@@ -138,6 +138,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (int, error) {
 	rolled := 0
 	toReplace := selectMachinesToReplace(platform, opts, cluster)
+	numToReplace := len(*toReplace)
 	var replaced = make(chan NodeMachine, opts.MaxSurge)
 	var replacementError = make(chan NodeMachine, opts.MaxSurge)
 	batch := toReplace.PopN(opts.MaxSurge)
@@ -206,7 +207,12 @@ func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (i
 		// select the next batch of nodes to update
 		batch = toReplace.PopN(opts.MaxSurge)
 	}
-	return rolled, nil
+
+	err := error(nil)
+	if rolled < numToReplace {
+		err = fmt.Errorf("rolling update failed to replace all scheduled nodes")
+	}
+	return rolled, err
 }
 
 // Perform a rolling restart of nodes
