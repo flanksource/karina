@@ -71,6 +71,13 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 		node := nodeMachine.Node
 		age := machine.GetAge()
 		template := machine.GetTemplate()
+		var newTemplate string
+		if kommons.IsMasterNode(node) {
+			newTemplate = platform.PlatformConfig.Master.Template
+		} else {
+			pool := node.Labels["karina.flanksource.com/pool"]
+			newTemplate = platform.PlatformConfig.Nodes[pool].Template
+		}
 
 		// check if a node is available for update
 		if kommons.IsMasterNode(node) && !opts.Masters {
@@ -78,7 +85,7 @@ func selectMachinesToReplace(platform *platform.Platform, opts RollingOptions, c
 		} else if !kommons.IsMasterNode(node) && !opts.Workers {
 			continue
 		}
-		if age > opts.MinAge {
+		if age > opts.MinAge && newTemplate != template {
 			platform.Infof("Queuing for replacement %s, age=%s, template=%s ", machine.Name(), age, template)
 		} else {
 			continue
@@ -138,6 +145,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (int, error) {
 	rolled := 0
 	toReplace := selectMachinesToReplace(platform, opts, cluster)
+	numToReplace := len(*toReplace)
 	var replaced = make(chan NodeMachine, opts.MaxSurge)
 	var replacementError = make(chan NodeMachine, opts.MaxSurge)
 	batch := toReplace.PopN(opts.MaxSurge)
@@ -206,7 +214,12 @@ func roll(platform *platform.Platform, cluster *Cluster, opts RollingOptions) (i
 		// select the next batch of nodes to update
 		batch = toReplace.PopN(opts.MaxSurge)
 	}
-	return rolled, nil
+
+	err := error(nil)
+	if rolled < numToReplace {
+		err = fmt.Errorf("rolling update failed to replace all scheduled nodes")
+	}
+	return rolled, err
 }
 
 // Perform a rolling restart of nodes
