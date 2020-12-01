@@ -1,14 +1,14 @@
 package harbor
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+	"io/ioutil"
 	"strings"
 	"sync"
 
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const maxHarborImagesChannelLength = 100000
@@ -242,7 +242,7 @@ func IntegrityCheckFromFile(p *platform.Platform, concurrency int, file string) 
 		return nil, errors.Wrap(err, "failed to create harbor client")
 	}
 
-	tags, err := parseIntegrityCheckFile(file)
+	tags, _, err := parseIntegrityCheckFile(file)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse file: %s", file)
 	}
@@ -294,29 +294,72 @@ func IntegrityCheckFromFile(p *platform.Platform, concurrency int, file string) 
 	return brokenTagsCh, nil
 }
 
-func parseIntegrityCheckFile(filename string) ([]Tag, error) {
-	file, err := os.Open(filename)
+func DeleteTags(p *platform.Platform, concurrency int, file string, expectedCount int) error {
+	client, err := NewIngressClient(p)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open file %s", filename)
+		return errors.Wrap(err, "failed to create harbor client")
 	}
-	defer file.Close()
 
-	tags := []Tag{}
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		fullTag := strings.TrimPrefix(scanner.Text(), "broken: ")
-		parts := strings.SplitN(fullTag, ":", 2)
-		tag := parts[1]
-
-		parts = strings.SplitN(parts[0], "/", 2)
-		projectName := parts[0]
-		repositoryName := parts[1]
-
-		tags = append(tags, Tag{ProjectName: projectName, RepositoryName: repositoryName, Name: tag})
+	tags, count, err := parseIntegrityCheckFile(file)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse file: %s", file)
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, errors.Wrap(err, "failed to scan file")
+
+	if expectedCount > 0 && count != expectedCount {
+		return errors.Errorf("expected %d tags to be deleted, file contains %d tags", expectedCount, count)
 	}
-	return tags, nil
+
+	wg := &sync.WaitGroup{}
+	wg.Add(concurrency)
+
+	tagsCh := make(chan Tag, maxHarborTagsChannelLength)
+
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			defer wg.Done()
+
+			for {
+				tag, more := <-tagsCh
+				if !more {
+					break
+				}
+
+				if err := client.DeleteTag(tag); err != nil {
+					p.Errorf("failed to delete tag: %s/%s:%s %v", tag.ProjectName, tag.RepositoryName, tag.Name, err)
+				} else {
+					p.Infof("Deleted tag %s/%s:%s", tag.ProjectName, tag.RepositoryName, tag.Name)
+				}
+			}
+		}()
+	}
+
+	for _, tag := range tags {
+		tagsCh <- tag
+	}
+
+	close(tagsCh)
+
+	wg.Wait()
+
+	return nil
+}
+
+type IntegrityCheckFile struct {
+	Artifacts []Tag `yaml:"artifacts"`
+	Count     int   `yaml:"count"`
+}
+
+func parseIntegrityCheckFile(filename string) ([]Tag, int, error) {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, 0, errors.Wrapf(err, "failed to read file %s", filename)
+	}
+
+	integrityCheckFile := IntegrityCheckFile{}
+
+	if err := yaml.Unmarshal(bytes, &integrityCheckFile); err != nil {
+		return nil, 0, errors.Wrapf(err, "failed to unmarshal file")
+	}
+
+	return integrityCheckFile.Artifacts, integrityCheckFile.Count, nil
 }
