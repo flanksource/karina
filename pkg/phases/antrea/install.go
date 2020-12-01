@@ -17,6 +17,6 @@ func Install(p *platform.Platform) error {
 		}
 		return nil
 	}
-
+	p.Antrea.IsCertReady = false
 	return p.ApplySpecs(Namespace, "antrea.yaml")
 }
