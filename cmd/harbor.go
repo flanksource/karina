@@ -180,8 +180,8 @@ func init() {
 	integrityCheck.Flags().StringP("output", "o", "", "Write output to file")
 	Harbor.AddCommand(integrityCheck)
 
-	deleteTags := &cobra.Command{
-		Use:   "delete-tags",
+	bulkDelete := &cobra.Command{
+		Use:   "bulk-delete",
 		Short: "Delete tags/digests from an integrity-check output file",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -191,13 +191,13 @@ func init() {
 			filename, _ := cmd.Flags().GetString("filename")
 			count, _ := cmd.Flags().GetInt("count")
 
-			if err := harbor.DeleteTags(platform, concurrency, filename, count); err != nil {
+			if err := harbor.BulkDelete(platform, concurrency, filename, count); err != nil {
 				log.Fatalf("failed to delete tags: %v", err)
 			}
 		},
 	}
-	deleteTags.Flags().IntP("concurrency", "x", 8, "Number of goroutines to use")
-	deleteTags.Flags().StringP("filename", "f", "", "Filename to parse broken tags from")
-	deleteTags.Flags().Int("count", 0, "Expected number of tags to be deleted")
-	Harbor.AddCommand(deleteTags)
+	bulkDelete.Flags().IntP("concurrency", "x", 8, "Number of goroutines to use")
+	bulkDelete.Flags().StringP("filename", "f", "", "Filename to parse broken tags from")
+	bulkDelete.Flags().Int("count", 0, "Expected number of tags to be deleted")
+	Harbor.AddCommand(bulkDelete)
 }

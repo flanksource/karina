@@ -274,9 +274,6 @@ func IntegrityCheckFromFile(p *platform.Platform, concurrency int, file string) 
 					if err != nil {
 						brokenTagsCh <- tag
 					}
-					//  else {
-					// fmt.Printf("working tag: %s/%s/%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
-					// }
 				}
 			}()
 		}
@@ -294,7 +291,35 @@ func IntegrityCheckFromFile(p *platform.Platform, concurrency int, file string) 
 	return brokenTagsCh, nil
 }
 
-func DeleteTags(p *platform.Platform, concurrency int, file string, expectedCount int) error {
+func CheckManifest(p *platform.Platform, image string) error {
+	parts := strings.SplitN(image, "/", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("Expecting image %s to have project and image name", image)
+	}
+
+	projectName := parts[0]
+	parts = strings.SplitN(parts[1], ":", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("Expecting image %s to have a tag", image)
+	}
+
+	repositoryName := parts[0]
+	tagName := parts[1]
+
+	client, err := NewIngressClient(p)
+	if err != nil {
+		return errors.Wrap(err, "failed to create harbor client")
+	}
+
+	_, err = client.GetManifest(projectName, repositoryName, tagName)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get manifest for image %s", image)
+	}
+
+	return nil
+}
+
+func BulkDelete(p *platform.Platform, concurrency int, file string, expectedCount int) error {
 	client, err := NewIngressClient(p)
 	if err != nil {
 		return errors.Wrap(err, "failed to create harbor client")
