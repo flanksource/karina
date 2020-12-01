@@ -116,6 +116,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 	total := 0
 
 	workerOpts := RollingOptions{}
+	failed := false
 
 	_ = copier.Copy(&workerOpts, &opts)
 	if opts.Masters {
@@ -126,6 +127,7 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		total += rolled
 		if err != nil {
 			platform.Errorf(err.Error())
+			failed = true
 		}
 	}
 	if workerOpts.Workers {
@@ -135,10 +137,14 @@ func RollingUpdate(platform *platform.Platform, opts RollingOptions) error {
 		total += rolled
 		if err != nil {
 			platform.Errorf(err.Error())
+			failed = true
 		}
 	}
 
 	platform.Infof("Rollout finished, rolled %d of %d ", total, cluster.Nodes.Len())
+	if failed {
+		return fmt.Errorf("rolling update unsuccessful")
+	}
 	return nil
 }
 
