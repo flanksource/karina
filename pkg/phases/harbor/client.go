@@ -308,6 +308,28 @@ func (harbor *IngressClient) GetManifest(project, image, tag string) (*Manifest,
 	return manifest, nil
 }
 
+func (harbor *IngressClient) DeleteTag(tag Tag) error {
+	// response := map[string]interface{}{}
+	er := ErrorResponse{}
+	r, err := harbor.sling.New().
+		Delete(fmt.Sprintf("https://%s/v2/%s/%s/manifests/%s", harbor.host, tag.ProjectName, tag.RepositoryName, tag.Digest)).
+		Set("Host", "harbor.host").
+		Receive(nil, &er)
+	if r != nil {
+		r.Body.Close()
+	}
+	if err != nil {
+		return errors.Wrap(err, "failed to delete manifest")
+	}
+	if len(er.Errors) > 0 {
+		return errors.Errorf("received error code from server: %s", er.String())
+	}
+
+	// fmt.Printf("Response: %v", response)
+
+	return nil
+}
+
 type Project struct {
 	ID   int    `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
@@ -418,10 +440,10 @@ type ArtifactTag struct {
 }
 
 type Tag struct {
-	Name           string `json:"-"`
-	ProjectName    string `json:"-"`
-	RepositoryName string `json:"-"`
-	Digest         string `json:"-"`
+	Name           string `json:"-" yaml:"tag"`
+	ProjectName    string `json:"-" yaml:"project"`
+	RepositoryName string `json:"-" yaml:"repository"`
+	Digest         string `json:"-" yaml:"digest"`
 }
 
 type Manifest struct {

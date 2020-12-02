@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/flanksource/commons/exec"
+	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -53,6 +55,24 @@ func getImages(p *platform.Platform) ([]string, error) {
 	return images, nil
 }
 
+func uniqueStrings(list []string) {
+	if len(list) < 2 {
+		return
+	}
+
+	sort.Strings(list)
+	newList := []string{list[0]}
+	length := len(list)
+
+	for i := 1; i < length; i++ {
+		if list[i] != list[i-1] {
+			newList = append(newList, list[i])
+		}
+	}
+
+	list = newList
+}
+
 func init() {
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -99,11 +119,22 @@ func init() {
 					p.Fatalf("Failed to dry-run deploy : %v", err)
 				}
 			}
+
+			uniqueStrings(imagesToSync)
+
 			for _, image := range imagesToSync {
-				p.Infof("Syncing %s", image)
-				_ = exec.Execf("docker pull %s", image)
-				_ = exec.Execf("docker tag %s %s/%s", image, p.DockerRegistry, image)
-				_ = exec.Execf("docker push %s/%s", p.DockerRegistry, image)
+				if strings.HasPrefix(image, p.DockerRegistry) {
+					p.Infof("Image %s is used from target registry", image)
+					continue
+				}
+				if err := harbor.CheckManifest(p, image); err != nil {
+					p.Infof("Syncing %s", image)
+					_ = exec.Execf("docker pull %s", image)
+					_ = exec.Execf("docker tag %s %s/%s", image, p.DockerRegistry, image)
+					_ = exec.Execf("docker push %s/%s", p.DockerRegistry, image)
+				} else {
+					p.Infof("Image %s already exists in target repository", image)
+				}
 			}
 		},
 	}
