@@ -30,23 +30,22 @@ func PreInstall(platform *platform.Platform) error {
 	certmanagerDeployments := client.AppsV1().Deployments(Namespace)
 	deployment, err := certmanagerDeployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
 	if err != nil {
-		fmt.Errorf("certmanager: Could not obtain certmanager deployment information: %s", err)
+		return fmt.Errorf("certmanager: Could not obtain certmanager deployment information: %s", err)
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
 		if strings.HasSuffix(container.Image, currentVer) {
 			platform.Debugf("Current cert-manager version %s matches specified version %s", container.Image, currentVer)
 			return nil
-		} else {
-			platform.Debugf("Current cert-manager version %s does not match specified version %s, deleting deployments", container.Image, currentVer)
 		}
+		platform.Debugf("Current cert-manager version %s does not match specified version %s, deleting deployments", container.Image, currentVer)
 	}
 
 	deploymentnames := []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"}
 	for _, deploymentname := range deploymentnames {
 		err = certmanagerDeployments.Delete(context.TODO(), deploymentname, metav1.DeleteOptions{})
 		if err != nil {
-			return fmt.Errorf("certmanager: error deleting %s: s", deploymentname, err)
+			return fmt.Errorf("certmanager: error deleting %s: %s", deploymentname, err)
 		}
 	}
 
