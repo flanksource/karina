@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -128,53 +129,75 @@ func init() {
 			platform := getPlatform(cmd)
 
 			concurrency, _ := cmd.Flags().GetInt("concurrency")
+			outputFile, _ := cmd.Flags().GetString("output")
+			filename, _ := cmd.Flags().GetString("filename")
 
-			brokenTagsCh, err := harbor.IntegrityCheck(platform, concurrency)
+			var brokenTagsCh chan harbor.Tag
+			var err error
+
+			if filename != "" {
+				brokenTagsCh, err = harbor.IntegrityCheckFromFile(platform, concurrency, filename)
+			} else {
+				brokenTagsCh, err = harbor.IntegrityCheck(platform, concurrency)
+			}
 
 			if err != nil {
 				log.Fatalf("Error checking tags: %v", err)
 			}
 
+			output := os.Stdout
+
+			if outputFile != "" {
+				f, err := os.Create(outputFile)
+				if err != nil {
+					log.Fatalf("Failed to write to filename %s: %v", outputFile, err)
+				}
+				output = f
+			}
+
+			count := 0
+			fmt.Fprintf(output, "artifacts:")
+
 			for {
 				tag, more := <-brokenTagsCh
 				if more {
-					fmt.Printf("broken: %s/%s:%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
+					count++
+					fmt.Fprintf(output, "\n- project: %s\n  repository: %s\n  tag: %s\n  digest: %s", tag.ProjectName, tag.RepositoryName, tag.Name, tag.Digest)
 				} else {
 					break
 				}
 			}
+
+			if count == 0 {
+				fmt.Fprintf(output, " []\n")
+			}
+
+			fmt.Fprintf(output, "count: %d\n", count)
 		},
 	}
 	integrityCheck.Flags().IntP("concurrency", "x", 8, "Number of goroutines to use")
+	integrityCheck.Flags().StringP("filename", "f", "", "Filename to parse broken tags from")
+	integrityCheck.Flags().StringP("output", "o", "", "Write output to file")
 	Harbor.AddCommand(integrityCheck)
 
-	integrityCheckFromFile := &cobra.Command{
-		Use:   "integrity-check-from-file",
-		Short: "Commands to check integrity of each manifest",
+	bulkDelete := &cobra.Command{
+		Use:   "bulk-delete",
+		Short: "Delete tags/digests from an integrity-check output file",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
 
 			concurrency, _ := cmd.Flags().GetInt("concurrency")
 			filename, _ := cmd.Flags().GetString("filename")
+			count, _ := cmd.Flags().GetInt("count")
 
-			brokenTagsCh, err := harbor.IntegrityCheckFromFile(platform, concurrency, filename)
-
-			if err != nil {
-				log.Fatalf("Error checking tags: %v", err)
-			}
-
-			for {
-				tag, more := <-brokenTagsCh
-				if more {
-					fmt.Printf("broken: %s/%s:%s\n", tag.ProjectName, tag.RepositoryName, tag.Name)
-				} else {
-					break
-				}
+			if err := harbor.BulkDelete(platform, concurrency, filename, count); err != nil {
+				log.Fatalf("failed to delete tags: %v", err)
 			}
 		},
 	}
-	integrityCheckFromFile.Flags().IntP("concurrency", "x", 8, "Number of goroutines to use")
-	integrityCheckFromFile.Flags().StringP("filename", "f", "", "Filename to parse broken tag from")
-	Harbor.AddCommand(integrityCheckFromFile)
+	bulkDelete.Flags().IntP("concurrency", "x", 8, "Number of goroutines to use")
+	bulkDelete.Flags().StringP("filename", "f", "", "Filename to parse broken tags from")
+	bulkDelete.Flags().Int("count", 0, "Expected number of tags to be deleted")
+	Harbor.AddCommand(bulkDelete)
 }
