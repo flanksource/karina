@@ -50,6 +50,10 @@ metadata:
   namespace: velero
 spec:
   provider: aws
+  {{ if .velero.config.region }}
+  config:
+    region: "{{ .velero.config.region }}"
+  {{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
