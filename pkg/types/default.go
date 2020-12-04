@@ -7,7 +7,7 @@ func DefaultPlatformConfig() PlatformConfig {
 			VxLAN: "Never",
 		},
 		CertManager: CertManager{
-			Version: "v0.12.0",
+			Version: "v1.0.3",
 		},
 		TemplateOperator: TemplateOperator{
 			Disabled: Disabled{Version: "v0.1.0"},

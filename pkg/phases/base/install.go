@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -31,19 +32,23 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if err := vsphere.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("vspere: %s", err)
 	}
 
 	if err := certmanager.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("cert-manager: %s", err)
 	}
 
 	if err := quack.Install(platform); err != nil {
 		platform.Fatalf("Error installing quack %s", err)
 	}
 
+	//platform operator has a certificate resource, wait for cert manager so that it can be fulfilled
+	time.Sleep(30 * time.Second)
+	platform.WaitForNamespace("cert-manager", 60*time.Second)
+
 	if err := platformoperator.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("platformoperator: %s", err)
 	}
 
 	if !platform.NodeLocalDNS.Disabled {
@@ -68,7 +73,7 @@ func Install(platform *platform.Platform) error {
 		}
 	}
 	if err := ingress.Install(platform); err != nil {
-		return err
+		return fmt.Errorf("ingress: %s", err)
 	}
 
 	if platform.LocalPath == nil || !platform.LocalPath.Disabled {

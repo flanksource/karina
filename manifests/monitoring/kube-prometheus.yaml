@@ -161,6 +161,7 @@ spec:
     kubernetes.io/os: linux
   podMonitorNamespaceSelector: {}
   podMonitorSelector: {}
+  ruleNamespaceSelector: {}
   replicas: 2
   resources:
     requests:

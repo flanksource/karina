@@ -125,7 +125,13 @@ func init() {
 		test = &console.TestResults{
 			Writer: &stdout,
 		}
+		testClient, err := p.GetClientset()
+		if err != nil || testClient == nil {
+			p.Fatalf("test.go", "Could not establish connection to Platform, aborting tests: %s", err)
+			os.Exit(1)
+		}
 	}
+
 	Test.PersistentPostRun = func(cmd *cobra.Command, args []string) {
 		progress.Wait()
 		wg.Wait()
@@ -158,7 +164,7 @@ func init() {
 		"redis-operator":       redisoperator.Test,
 		"rabbitmq-operator":    rabbitmqoperator.Test,
 		"platform-operator":    platformoperator.Test,
-		"promtheus":            monitoring.TestPrometheus,
+		"prometheus":           monitoring.TestPrometheus,
 		"quack":                quack.Test,
 		"registry-creds":       registrycreds.Test,
 		"sealed-secrets":       sealedsecrets.Test,

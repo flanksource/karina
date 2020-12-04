@@ -580,9 +580,6 @@ data:
     #   tls.key: <TLS private key>
     # And the Secret must be mounted to directory "/var/run/antrea/antrea-controller-tls" of the
     # antrea-controller container.
-    {{ if .antrea.isCertReady }}
-    selfSignedCert: false
-    {{ end }}
     #selfSignedCert: true
 kind: ConfigMap
 metadata:
@@ -1053,17 +1050,3 @@ webhooks:
     scope: Namespaced
   sideEffects: None
   timeoutSeconds: 5
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: antrea-controller-tls
-  namespace: kube-system
-spec:
-  dnsNames:
-  - antrea.kube-system.svc
-  - antrea.kube-system.svc.cluster.local
-  secretName: antrea-controller-tls
-  issuerRef:
-    name: default-issuer
-    kind: ClusterIssuer

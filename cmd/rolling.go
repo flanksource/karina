@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"time"
 
 	"github.com/flanksource/karina/pkg/provision"
@@ -31,6 +32,7 @@ var RollingUpdate = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := provision.RollingUpdate(getPlatform(cmd), rollingOpts); err != nil {
 			log.Fatalf("Failed to update nodes %s", err)
+			os.Exit(1)
 		}
 	},
 }
