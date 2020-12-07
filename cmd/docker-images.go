@@ -56,9 +56,9 @@ func getImages(p *platform.Platform) ([]string, error) {
 	return images, nil
 }
 
-func uniqueStrings(list []string) {
+func uniqueStrings(list []string) []string {
 	if len(list) < 2 {
-		return
+		return list
 	}
 
 	sort.Strings(list)
@@ -71,7 +71,7 @@ func uniqueStrings(list []string) {
 		}
 	}
 
-	list = newList
+	return newList
 }
 
 func init() {
@@ -121,7 +121,7 @@ func init() {
 				}
 			}
 
-			uniqueStrings(imagesToSync)
+			imagesToSync = uniqueStrings(imagesToSync)
 
 			for _, image := range imagesToSync {
 				if strings.HasPrefix(image, p.DockerRegistry) {
