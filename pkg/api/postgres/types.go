@@ -133,7 +133,7 @@ type PostgresSpec struct {
 	NumberOfInstances     int32                       `json:"numberOfInstances"`
 	Users                 map[string]UserFlags        `json:"users"`
 	MaintenanceWindows    []MaintenanceWindow         `json:"maintenanceWindows,omitempty"`
-	Clone                 *CloneDescription           `json:"clone"`
+	Clone                 *CloneDescription           `json:"clone,omitempty"`
 	ClusterName           string                      `json:"-"`
 	Databases             map[string]string           `json:"databases,omitempty"`
 	PreparedDatabases     map[string]PreparedDatabase `json:"preparedDatabases,omitempty"`
@@ -144,7 +144,7 @@ type PostgresSpec struct {
 	ShmVolume             *bool                       `json:"enableShmVolume,omitempty"`
 	EnableLogicalBackup   bool                        `json:"enableLogicalBackup,omitempty"`
 	LogicalBackupSchedule string                      `json:"logicalBackupSchedule,omitempty"`
-	StandbyCluster        *StandbyDescription         `json:"standby"`
+	StandbyCluster        *StandbyDescription         `json:"standby,omitempty"`
 	PodAnnotations        map[string]string           `json:"podAnnotations"`
 	ServiceAnnotations    map[string]string           `json:"serviceAnnotations"`
 	TLS                   *TLSDescription             `json:"tls"`
