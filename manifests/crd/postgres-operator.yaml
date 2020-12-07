@@ -45,7 +45,7 @@ spec:
       JSONPath: .status.PostgresClusterStatus
       name: Status
       type: string
-  schema:
+  validation:
     openAPIV3Schema:
       properties:
         apiVersion:
@@ -56,6 +56,8 @@ spec:
           enum:
             - postgresql
           type: string
+        metadata:
+          type: object
         spec:
           properties:
             allowedSourceRanges:
