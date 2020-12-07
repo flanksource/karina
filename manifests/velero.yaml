@@ -50,9 +50,9 @@ metadata:
   namespace: velero
 spec:
   provider: aws
-  {{ if .velero.config.region }}
   config:
-    region: "{{ .velero.config.region }}"
+  {{ range $k, $v := .velero.config }}
+    "{{ $k }}": "{{ $v }}"
   {{ end }}
 ---
 apiVersion: apps/v1
