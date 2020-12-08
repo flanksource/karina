@@ -23,7 +23,6 @@ spec:
               configMap:
                 name: postgres-exporter-config
         allowedSourceRanges: null
-        clone: null
         dockerImage: docker.io/flanksource/spilo:1.6-p2.flanksource
         enableShmVolume: true
         env:
@@ -58,6 +57,7 @@ spec:
             value: "{{.spec.backup.bucket}}"
           - name: CLONE_WAL_BUCKET_SCOPE_SUFFIX
             value: /
+        numberOfInstances: "{{ .spec.replicas }}"
         patroni:
           initdb:
             data-checksums: "true"
@@ -75,8 +75,7 @@ spec:
           ttl: 30
         podAnnotations: {}
         postgresql:
-          parameters:
-            log_destination: stderr
+          parameters: "{{ .spec.parameters | data.ToJSON }}"
           version: "12"
         resources:
           limits:
@@ -117,7 +116,6 @@ spec:
               requests:
                 cpu: 10m
                 memory: 128Mi
-        standby: null
         teamId: postgres
         tls: null
         users:
