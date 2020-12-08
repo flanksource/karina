@@ -572,7 +572,8 @@ type GitOperator struct {
 }
 
 type TemplateOperator struct {
-	Disabled `yaml:",inline" json:",inline"`
+	Disabled   `yaml:",inline" json:",inline"`
+	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }
 
 type GitOps struct {

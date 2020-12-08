@@ -54,6 +54,7 @@ spec:
           args:
             - --metrics-addr=:8080
             - --enable-leader-election
+            - --sync-period={{ .templateOperator.syncPeriod | default "5m" }}
           name: manager
           resources:
             limits:
