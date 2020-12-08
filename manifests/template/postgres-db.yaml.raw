@@ -75,9 +75,7 @@ spec:
           ttl: 30
         podAnnotations: {}
         postgresql:
-          {{- if index .spec "parameters" }}
-          parameters: "{{ .spec.parameters | data.ToJSON }}"
-          {{- end }}
+          parameters: "{{ .spec.parameters | default (coll.Dict) | data.ToJSON }}"
           version: "12"
         resources:
           limits:
