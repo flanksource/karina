@@ -9,6 +9,7 @@ data:
   ca.crt: ""
   tls.crt: ""
   tls.key: ""
+type: kubernetes.io/tls
 ---
 apiVersion: v1
 kind: ServiceAccount
