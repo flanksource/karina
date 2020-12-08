@@ -183,7 +183,7 @@ spec:
     spec:
       containers:
         - name: kubernetes-dashboard
-          image: docker.io/kubernetesui/dashboard:{{.dashboard.version}}
+          image: docker.io/kubernetesui/dashboard:{{ .dashboard.version | default "na" }}
           imagePullPolicy: Always
           ports:
             - containerPort: 8443

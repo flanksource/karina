@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/flanksource/commons/exec"
@@ -69,9 +70,13 @@ func KindCluster(p *platform.Platform) error {
 	}
 
 	for from, to := range p.Kind.PortMappings {
+		hostPort, err := strconv.Atoi(from)
+		if err != nil {
+			return errors.Wrapf(err, "failed to convert port %s to int", from)
+		}
 		portMappings = append(portMappings, kindapi.PortMapping{
 			ContainerPort: to,
-			HostPort:      from,
+			HostPort:      int32(hostPort),
 			Protocol:      kindapi.PortMappingProtocolTCP,
 		})
 	}

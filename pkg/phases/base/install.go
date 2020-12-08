@@ -90,8 +90,6 @@ func Install(platform *platform.Platform) error {
 			platform.Errorf("Error installing K8s dashboard: %s", err)
 		}
 	} else {
-		// set the version so that the spec is valid for deletion
-		platform.Dashboard.Version = "na"
 		if err := platform.DeleteSpecs("kube-system", "k8s-dashboard.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}

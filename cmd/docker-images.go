@@ -7,6 +7,7 @@ import (
 
 	"github.com/flanksource/commons/exec"
 	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/order"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -47,7 +48,7 @@ func getImages(p *platform.Platform) ([]string, error) {
 		}
 	}
 
-	for name, fn := range Phases {
+	for name, fn := range order.Phases {
 		if err := fn(p); err != nil {
 			return nil, errors.Wrapf(err, "error deploying %s", name)
 		}
@@ -55,9 +56,9 @@ func getImages(p *platform.Platform) ([]string, error) {
 	return images, nil
 }
 
-func uniqueStrings(list []string) {
+func uniqueStrings(list []string) []string {
 	if len(list) < 2 {
-		return
+		return list
 	}
 
 	sort.Strings(list)
@@ -70,7 +71,7 @@ func uniqueStrings(list []string) {
 		}
 	}
 
-	list = newList
+	return newList
 }
 
 func init() {
@@ -120,7 +121,7 @@ func init() {
 				}
 			}
 
-			uniqueStrings(imagesToSync)
+			imagesToSync = uniqueStrings(imagesToSync)
 
 			for _, image := range imagesToSync {
 				if strings.HasPrefix(image, p.DockerRegistry) {

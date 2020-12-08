@@ -6,3 +6,4 @@ yamlCheck:
     - mkdocs.yml
     - .git/(.*)
     - .golangci.yml
+    - config/deploy/(.*)

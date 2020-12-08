@@ -294,13 +294,13 @@ func IntegrityCheckFromFile(p *platform.Platform, concurrency int, file string) 
 func CheckManifest(p *platform.Platform, image string) error {
 	parts := strings.SplitN(image, "/", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("Expecting image %s to have project and image name", image)
+		return fmt.Errorf("expecting image %s to have project and image name", image)
 	}
 
 	projectName := parts[0]
 	parts = strings.SplitN(parts[1], ":", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("Expecting image %s to have a tag", image)
+		return fmt.Errorf("expecting image %s to have a tag", image)
 	}
 
 	repositoryName := parts[0]
