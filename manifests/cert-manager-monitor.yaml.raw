@@ -41,8 +41,8 @@ spec:
             Certificate {{ $labels.name }} not ready after 10 minutes
           summary: Associated service not issued a valid certificate.
         expr: |
-          certmanager_certificate_ready_status{condition="False"}
-        for: 1m
+          certmanager_certificate_ready_status{condition="False"} > 0
+        for: 10m
         labels:
           severity: critical
       - alert: CertManagerCertificateExpiry
