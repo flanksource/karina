@@ -63,6 +63,8 @@ spec:
             - start
             - --config
             - /etc/config/config.json
+            - --helper-image
+            - docker.io/library/busybox:latest
           resources:
             requests:
               cpu: 100m
