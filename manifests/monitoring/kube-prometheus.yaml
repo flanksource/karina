@@ -18,10 +18,53 @@ spec:
     runAsNonRoot: true
     runAsUser: 1000
   serviceAccountName: alertmanager-main
+  logLevel: debug
   version: {{.monitoring.alertmanager.version}}
   podMetadata:
     annotations:
       reload/all: "true"
+  alertmanagerConfigSelector:
+    matchLabels:
+      alertmanagerConfig: main
+  alertmanagerConfigNamespaceSelector:
+    matchLabels:
+      namespace-role: platform
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: config-main
+  namespace: monitoring
+  labels:
+    alertmanagerConfig: main
+spec:
+  route:
+    groupBy: ['alertname']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 24h
+    receiver: default
+    match: []
+  receivers:
+    - name: 'default'
+      {{ if index .monitoring "alert_email" }}
+      emailConfigs:
+      - to: '{{.monitoring.alert_email}}'
+        requireTLS: false
+        {{if index . "smtp"}}
+        smtp_smarthost: '{{.smtp.server}}:{{.smtp.port}}'
+        smtp_from: '{{.smtp.from}}'
+        {{end}}
+      {{end}}
+  inhibitRules:
+    - sourceMatch:
+        - name: severity
+          value: warning
+      targetMatch:
+        - name: severity
+          value: warning
+      # Apply inhibition if the alertname is the same.
+      equal: ['alertname', 'cluster', 'service']
 ---
 apiVersion: v1
 kind: Service
