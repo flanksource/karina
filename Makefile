@@ -28,7 +28,6 @@ release: setup pack linux darwin compress
 .PHONY: setup
 setup:
 	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
-	which github-release 2>&1 > /dev/null || go get github.com/aktau/github-release
 
 .PHONY: build
 build:
