@@ -1,0 +1,23 @@
+apiVersion: templating.flanksource.com/v1
+kind: Template
+metadata:
+  name: alertmanager-config
+spec:
+  source:
+    apiVersion: monitoring.coreos.com/v1alpha1
+    kind: AlertmanagerConfig
+    namespaceSelector:
+      matchLabels:
+        karina.flanksource.com/namespace-name: monitoring
+    labelSelector:
+      matchLabels:
+        alertmanagerConfig: main
+  copyToNamespaces:
+    namespaces:
+      {{- if index .monitoring "alertmanager"}}
+      {{- if index .monitoring.alertmanager "configNamespaces"}}
+      {{- range $ns := .monitoring.alertmanager.configNamespaces }}
+      - {{ $ns }}
+      {{- end }}
+      {{- end }}
+      {{- end }}

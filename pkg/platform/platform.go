@@ -808,6 +808,7 @@ func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string
 	defaultLabels := make(map[string]string)
 	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
 	defaultLabels["admission.gatekeeper.sh/ignore"] = "true"
+	defaultLabels["namespace-role"] = "platform"
 	if labels != nil {
 		for k, v := range defaultLabels {
 			labels[k] = v

@@ -21,6 +21,7 @@ var specs = []string{
 	"kube-state-metrics.yaml",
 	"node-exporter.yaml",
 	"alertmanager-rules.yaml.raw",
+	"alertmanager-configs.yaml",
 	"service-monitors.yaml",
 	"namespace-rules.yaml.raw",
 	"kubernetes-rules.yaml.raw",
@@ -32,6 +33,10 @@ var cleanup = []string{
 	"observability/thanos-querier.yaml",
 	"observability/thanos-store.yaml",
 	"thanos-config.yaml",
+}
+
+var monitoringNamespaceLabels = map[string]string{
+	"karina.flanksource.com/namespace-name": "monitoring",
 }
 
 func Install(p *platform.Platform) error {
@@ -68,7 +73,7 @@ func Install(p *platform.Platform) error {
 		p.Monitoring.AlertManager.Version = "v0.20.0"
 	}
 
-	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+	if err := p.CreateOrUpdateNamespace(Namespace, monitoringNamespaceLabels, nil); err != nil {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
@@ -80,16 +85,6 @@ func Install(p *platform.Platform) error {
 
 	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yaml"); err != nil {
 		p.Warnf("Failed to deploy prometheus operator %v", err)
-	}
-
-	data, err := p.Template("monitoring/alertmanager.yaml", "manifests")
-	if err != nil {
-		return fmt.Errorf("install: failed to template alertmanager manifests: %v", err)
-	}
-	if err := p.CreateOrUpdateSecret("alertmanager-main", Namespace, map[string][]byte{
-		"alertmanager.yaml": []byte(data),
-	}); err != nil {
-		return fmt.Errorf("install: failed to create/update secret: %v", err)
 	}
 
 	for _, spec := range specs {
