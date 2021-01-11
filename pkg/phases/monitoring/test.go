@@ -119,7 +119,7 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		if err == nil {
 			break
 		}
-		if time.Since(startTime) > 120*time.Second {
+		if time.Since(startTime) > 240*time.Second {
 			test.Failf("prometheus", "Failed to get targets: %v", err)
 			return
 		}
