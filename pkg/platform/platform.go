@@ -587,6 +587,10 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 }
 
 func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
+	platform.Infof("Waiting for %s to be ready", ns)
+	if platform.DryRun {
+		return
+	}
 	client, err := platform.GetClientset()
 	if err != nil {
 		return
