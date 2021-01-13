@@ -325,7 +325,7 @@ spec:
             cpu: 10m
             memory: 32Mi
           args:
-            - "--grafana-image=grafana/grafana"
+            - "--grafana-image=docker.io/grafana/grafana"
             - "--grafana-image-tag=6.6.2"
           ports:
             - containerPort: 60000
