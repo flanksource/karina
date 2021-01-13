@@ -34,6 +34,8 @@ import (
 	yaml "gopkg.in/flanksource/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// need to import auth package to registry custom auth providers
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 type Platform struct {
