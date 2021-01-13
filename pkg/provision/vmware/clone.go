@@ -7,6 +7,7 @@ import (
 	ptypes "github.com/flanksource/karina/pkg/types"
 	cloudinit "github.com/flanksource/konfigadm/pkg/cloud-init"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
+	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -93,12 +94,14 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	task, err := tpl.Clone(ctx, folder, vm.Name, spec)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error trigging clone op for machine %s/%s %+v\n\n%+v", folder, vm.Name, err, spec)
+		pretty.Print(task, err)
+		return nil, errors.Wrapf(err, "error trigging clone op for machine %s/%s %#v\n\n%+v", folder, vm.Name, err, spec)
 	}
 
-	_, err = task.WaitForResult(context.TODO(), nil)
+	taskInfo, err := task.WaitForResult(context.TODO(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("clone: failed create waiter: %v", err)
+		pretty.Print(spec,taskInfo, err)
+		return nil, fmt.Errorf("clone: failed create waiter: %#v: %#v", err, taskInfo)
 	}
 
 	obj, err := s.FindVM(vm.Name)
@@ -193,6 +196,9 @@ func getDiskSpec(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirt
 	}
 
 	disk := disks[0].(*types.VirtualDisk)
+	if disk.CapacityInKB > int64(vm.DiskGB)*1024*1024 {
+		return nil, fmt.Errorf("Cannot shrink template from %d GB to %d GB ", disk.CapacityInKB/1024/1024, vm.DiskGB)
+	}
 	disk.CapacityInKB = int64(vm.DiskGB) * 1024 * 1024
 
 	return &types.VirtualDeviceConfigSpec{
