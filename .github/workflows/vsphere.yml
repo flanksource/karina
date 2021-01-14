@@ -19,7 +19,7 @@ jobs:
           name: karina
           path: ./.bin/karina
   test:
-    runs-on: [self-hosted]
+    runs-on: vsphere-runner
     if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
     needs: binary
     strategy:
@@ -41,7 +41,8 @@ jobs:
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
-
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KID }}
+          AWS_SECRET_KEY_ID: ${{ secrets.AWS_SAK }}
         run: |
           # Run the testing commands in subshell with decoded environment
           sops exec-env test/vsphere/lab.enc.env './test/vsphere/e2e.sh'
