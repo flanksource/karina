@@ -7,6 +7,8 @@
 * A vcenter user and password with enough permissions to create VM's, etc..
 * A ResourcePool and folder to place VM's
 * A VM/Template available with the matching versions of `kubeadm`, `kubectl` and `kubelet` preinstalled
+* A service discovery mechanism 
+
 
 ### 1. Install karina
 
@@ -64,7 +66,68 @@ karina ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-p
 karina ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar
 ```
 
-## 4. Configure the platform config
+## 4. Setup Service discovery
+
+Karina requires a service discovery mechanism to facilitate the initial connection to the kubernetes hosts.  A containerised consul service discovery can be enabled on a host in the vsphere cluster using the [konfigadm](https://github.com/flanksource/konfigadm) tool:
+
+```bash
+konfigadm apply - << EOF
+commands:
+  - mkdir -p /opt/consul
+  - chown -R 100:1000 /opt/consul
+  - iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8500
+container_runtime:
+  type: docker
+containers:
+  - image: docker.io/consul:1.9.1
+    docker_opts: --net=host
+    args: agent -server -ui -data-dir /opt/consul -datacenter lab -bootstrap
+    volumes:
+      - /opt/consul:/opt/consul
+    env:
+      CONSUL_BIND_INTERFACE: ens160
+      CONSUL_CLIENT_INTERFACE: ens160
+EOF
+```
+
+## 5. Generate Template image
+
+To create a template image with the prerequisite configuration installed use the [konfigadm](https://github.com/flanksource/konfigadm) tool:
+
+```bash
+# Create config file
+echo >> k8s-1.18.yaml << EOF
+kubernetes:
+  version: 1.18.6
+commands:
+  - systemctl start docker
+  - kubeadm config images pull  --kubernetes-version 1.18.6
+  - apt remove -y unattended-upgrades
+  - apt-get update
+  - apt-get upgrade -y
+container_runtime:
+  type: docker
+cleanup: true
+EOF
+
+# Build image
+konfigadm images build -v --image ubuntu1804 \
+   --resize +15g \
+   --output-filename kube-v1.18.6.img  \
+   k8s-1.18.yml
+
+# Upload image as template (Note konfigadm expects $GOVC env vars to be present)
+export NAME=k8s-v1.18.6-template
+echo Pushing image to $GOVC_FQDN/$GOVC_CLUSTER/$GOVC_DATASTORE, net=$GOVC_NETWORK
+konfigadm images upload ova -vv --image kube-v1.18.6.img --name $NAME
+
+# Configure Template
+govc device.serial.add -vm $NAME -
+govc vm.change -vm $NAME -nested-hv-enabled=true -vpmc-enabled=true
+govc vm.upgrade -version=15 -vm $NAME
+```
+
+## 6. Configure the platform config
 
 `karina` uses a YAML configuration file.
 
@@ -130,17 +193,19 @@ versions:
   kubernetes: v1.16.4
 serviceSubnet: 10.96.0.0/16
 podSubnet: 10.97.0.0/16
+calico:
+  version: v3.8.2
 
 ## The VM configuration for master nodes
 master:
   count: 1
   cpu: 2  #NOTE: minimum of 2
   memory: 4
-  disk: 10
+  disk: 20
   network: !!env GOVC_NETWORK
   cluster: !!env GOVC_CLUSTER
   prefix: m
-  template: "k8s-1.16.4"
+  template: k8s-v1.18.6-template
 workers:
   worker-group-a:
     prefix: w
@@ -149,11 +214,11 @@ workers:
     count: 1
     cpu: 2
     memory: 4
-    disk: 10
-    template: k8s-1.16.4
+    disk: 20
+    template: k8s-v1.18.6-template
 ```
 
-## 5. Provision the cluster
+## 7. Provision the cluster
 
 Provision the cluster with:
 
@@ -161,7 +226,15 @@ Provision the cluster with:
 karina provision vsphere-cluster -c cluster.yaml
 ```
 
-## 6. Deploy a CNI
+## 8. Upload CRDs to cluster
+
+Add the CRDs required for cluster configuration with:
+
+```bash
+karina deploy crds -c cluster.yaml
+```
+
+## 9. Deploy a CNI
 
 Deploy Calico:
 
@@ -169,13 +242,13 @@ Deploy Calico:
 karina deploy calico -c cluster.yaml
 ```
 
-## 7. Deploy base configs
+## 10. Deploy base configs
 
 ```bash
 karina deploy base -c cluster.yaml
 ```
 
-## 8. Access the cluster
+## 11. Access the cluster
 
 Export a kubeconfig file (using an X509 admin example):
 
@@ -190,7 +263,7 @@ For the session `kubectl` commands can then be used to access the cluster, e.g.:
 kubectl get nodes
 ```
 
-## 9. Run E2E Tests
+## 12. Run E2E Tests
 
 Run:
 
@@ -198,7 +271,7 @@ Run:
 karina test all --e2e -c cluster.yaml
 ```
 
-## 10. Tear down the cluster
+## 13. Tear down the cluster
 
 Run:
 
