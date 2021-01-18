@@ -3,27 +3,25 @@ module github.com/flanksource/karina
 go 1.12
 
 require (
-	github.com/AlekSi/pointer v1.1.0
 	github.com/aws/aws-sdk-go v1.29.25
 	github.com/blang/semver/v4 v4.0.0
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.4.3
-	github.com/flanksource/kommons v0.1.7
+	github.com/flanksource/kommons v0.1.9
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/go-logr/logr v0.3.0
-	github.com/go-logr/zapr v0.3.0
+	github.com/go-logr/zapr v0.3.0 // indirect
 	github.com/go-pg/pg/v9 v9.1.6
-	github.com/go-test/deep v1.0.7
 	github.com/google/uuid v1.1.1
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.9
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
+	github.com/kr/pretty v0.2.0
 	github.com/miekg/dns v1.1.22
 	github.com/minio/minio-go/v6 v6.0.44
-	github.com/mitchellh/mapstructure v1.3.3
 	github.com/olivere/elastic/v7 v7.0.13
 	github.com/onsi/gomega v1.10.1
 	github.com/pkg/errors v0.9.1
@@ -38,19 +36,16 @@ require (
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	google.golang.org/grpc v1.27.0
 	gopkg.in/flanksource/yaml.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.19.3
 	k8s.io/apimachinery v0.19.3
-	k8s.io/cli-runtime v0.19.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.17.2
-	k8s.io/klog/v2 v2.4.0
+	k8s.io/klog/v2 v2.4.0 // indirect
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 	sigs.k8s.io/controller-runtime v0.6.3
 	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
-	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.2.0
 )
 
