@@ -42,7 +42,7 @@ jobs:
           KUBERNETES_VERSION: ${{matrix.k8s}}
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SAK }}
-          AWS_SECRET_KEY_ID: ${{ secrets.AWS_KID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KID }}
         run: |
           # Run the testing commands in subshell with decoded environment
           sops exec-env test/vsphere/lab.enc.env './test/vsphere/e2e.sh'
