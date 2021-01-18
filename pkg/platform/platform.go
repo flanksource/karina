@@ -18,13 +18,13 @@ import (
 	"github.com/flanksource/commons/is"
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/commons/net"
-	"github.com/flanksource/commons/text"
 	"github.com/flanksource/karina/manifests"
 	"github.com/flanksource/karina/pkg/api"
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/ktemplate"
 	"github.com/flanksource/kommons/proxy"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
@@ -34,6 +34,7 @@ import (
 	yaml "gopkg.in/flanksource/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	// need to import auth package to registry custom auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -522,13 +523,24 @@ func (platform *Platform) Template(file string, pkg string) (string, error) {
 	if strings.HasSuffix(file, ".raw") {
 		return raw, nil
 	}
-	template, err := text.Template(raw, platform.PlatformConfig)
+
+	template, err := platform.TemplateText(raw)
 	if err != nil {
 		data, _ := yaml.Marshal(platform.PlatformConfig)
 		platform.Debugf("Error templating %s: %s", file, console.StripSecrets(string(data)))
 		return "", err
 	}
 	return template, nil
+}
+
+func (platform *Platform) TemplateText(raw string) (string, error) {
+	clientset, err := platform.GetClientset()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get clientset")
+	}
+	fn := ktemplate.NewFunctions(clientset)
+
+	return fn.Template(raw, platform.PlatformConfig)
 }
 
 func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string]http.File, error) {
