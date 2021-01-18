@@ -13,11 +13,15 @@ spec:
       matchLabels:
         alertmanagerConfig: main
   copyToNamespaces:
-    namespaces:
       {{- if index .monitoring "alertmanager"}}
       {{- if index .monitoring.alertmanager "configNamespaces"}}
       {{- range $ns := .monitoring.alertmanager.configNamespaces }}
+    namespaces:
       - {{ $ns }}
       {{- end }}
+      {{- else }}
+    namespaces: []
       {{- end }}
+      {{- else }}
+    namespaces: []
       {{- end }}
