@@ -591,6 +591,10 @@ type TemplateOperator struct {
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }
 
+type IstioOperator struct {
+	Disabled `yaml:",inline" json:",inline"`
+}
+
 type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`

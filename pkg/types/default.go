@@ -9,6 +9,9 @@ func DefaultPlatformConfig() PlatformConfig {
 		CertManager: CertManager{
 			Version: "v1.0.3",
 		},
+		IstioOperator: IstioOperator{
+			Disabled: Disabled{Version: "v1.8.2"},
+		},
 		TemplateOperator: TemplateOperator{
 			Disabled: Disabled{Version: "v0.1.0"},
 		},
