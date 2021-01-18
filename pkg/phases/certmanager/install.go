@@ -30,7 +30,8 @@ func PreInstall(platform *platform.Platform) error {
 	certmanagerDeployments := client.AppsV1().Deployments(Namespace)
 	deployment, err := certmanagerDeployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("certmanager: Could not obtain certmanager deployment information: %s", err)
+		// cert-manager is not installed, nothing todo
+		return nil
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {

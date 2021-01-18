@@ -20,7 +20,7 @@ const Certs = "quack-certs"
 
 func Install(platform *platform.Platform) error {
 	if platform.Quack != nil && platform.Quack.Disabled {
-		return platform.DeleteSpecs(v1.NamespaceAll, "quack.yaml")
+		return platform.DeleteSpecs(Namespace, "quack.yaml")
 	}
 	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return errors.Wrap(err, "failed to create/update namespace quack")
