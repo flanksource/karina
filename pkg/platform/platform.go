@@ -118,6 +118,11 @@ func (platform *Platform) Init() error {
 			platform.KubeConfigPath = os.Getenv("KUBECONFIG")
 		}
 	}
+
+	if platform.Name == "" {
+		platform.Name = kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath)
+	}
+
 	return nil
 }
 
