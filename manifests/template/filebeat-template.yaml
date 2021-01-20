@@ -1,0 +1,230 @@
+apiVersion: templating.flanksource.com/v1
+kind: Template
+metadata:
+  name: filebeat-template
+spec:
+  source:
+    apiVersion: filebeat.flanksource.com/v1
+    kind: FilebeatConfig
+  resources:
+    - apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: filebeat-{{ .metadata.name }}
+        namespace: {{ .metadata.namespace }}
+        labels:
+          k8s-app: filebeat-{{ .metadata.name }}
+        annotations:
+          reload/all: "true" #restart on cm/secret change
+      spec:
+        selector:
+          matchLabels:
+            k8s-app: filebeat-{{ metadata.name }}
+        template:
+          metadata:
+            labels:
+              k8s-app: filebeat-{{ metadata.name }}
+          spec:
+            serviceAccountName: filebeat
+            terminationGracePeriodSeconds: 30
+            tolerations:
+              # this toleration is to have the daemonset runnable on master nodes
+              - key: node-role.kubernetes.io/master
+                effect: NoSchedule
+            containers:
+              - name: filebeat
+                image: docker.elastic.co/beats/filebeat:{{ spec.version }}
+                envFrom:
+                  - secretRef:
+                      name: {{ spec.secretref }}
+                args: ["-c", "/etc/filebeat.yml", "-e"]
+                env:
+                  - name: NODE_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: spec.nodeName
+                securityContext:
+                  runAsUser: 0
+                resources:
+                  limits:
+                    memory: 1Gi
+                  requests:
+                    cpu: 100m
+                    memory: 32Mi
+                volumeMounts:
+                  - name: config
+                    mountPath: /etc/filebeat.yml
+                    readOnly: true
+                    subPath: filebeat.yml
+                  - name: data
+                    mountPath: /usr/share/filebeat/data
+                  - name: varlibdockercontainers
+                    mountPath: /var/lib/docker/containers
+                    readOnly: true
+                  - name: varlog
+                    mountPath: /var/log
+                    readOnly: true
+            volumes:
+              - name: config
+                configMap:
+                  defaultMode: 0600
+                  name: filebeat-{{ .metadata.name }}-config
+              - name: varlibdockercontainers
+                hostPath:
+                  path: /var/lib/docker/containers
+              - name: varlog
+                hostPath:
+                  path: /var/log
+              # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+              - name: data
+                hostPath:
+                  path: /var/lib/filebeat-{{ .metadata.name }}-data
+                  type: DirectoryOrCreate
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: filebeat-{{ .metadata.name }}-config
+        namespace: {{ .metadata.namespace }}
+        labels:
+          k8s-app: filebeat-{{ .metadata.name }}
+      data:
+        filebeat.yml: |-
+          fields:
+            cluster: "{{ (kget "cm/kube-system/kubeadm-config" "data.ClusterConfiguration" | data.YAML).clusterName }}-{{ .metadata.name }}"
+
+          filebeat.autodiscover:
+             providers:
+               - type: kubernetes
+              {{ if eq .spec.prefix "" }}
+                 prefix: co.elastic #default
+              {{ else }}
+                 prefix: {{ .spec.prefix }}
+              {{ end }}
+                 hints.enabled: true
+                 hints.default_config:
+                   enabled: false
+          # assume containerd for now, will need a nodeselector for docker hosts
+                   type: container
+                   paths:
+                     - /var/log/containers/*${data.kubernetes.container.id}.log
+
+          processors:
+            - add_cloud_metadata:
+            - add_kubernetes_metadata:
+            - add_docker_metadata:
+            - drop_event:
+                when:
+                  or:
+                    - contains:
+                        # ignore nsx INFO messages
+                        message: level="INFO"
+                    - contains:
+                        # ignore nsx DEBUG messages
+                        message: level="DEBUG"
+                    - contains:
+                        message: GET / HTTP/1.1" 200
+                    - contains:
+                        # ignore harbor-portal access logging
+                        message: server.go:2774
+                    - contains:
+                        message: GET /api/health HTTP/1.1" 200
+                    - contains:
+                        message: kube-probe/
+                    - contains:
+                        message: GET /healthz
+                    - contains:
+                        message: "journalbeat successfully published"
+                    - contains:
+                        message: "Health check succeeded"
+                    # postgres operator logs
+                    - contains:
+                        message: "no action.  i am a secondary and i am following a leader"
+                    - contains:
+                        message: "no action.  i am the leader with the lock"
+                    - contains:
+                        message: "INFO: Lock owner:"
+                    - contains:
+                        message: "INFO: does not have lock"
+                    - contains:
+                        message: "Sending probe request to CSI driver"
+                    - contains:
+                        message: "csi.v1.Identity/Probe"
+                    # nginx ingress controllers
+                    - contains:
+                        message: "Backend successfully reloaded."
+                    - contains:
+                        message: "Configuration changes detected, backend reload required."
+                    - contains:
+                        message: "does not have any active Endpoint."
+                    - contains:
+                        message: "Error obtaining Endpoints for Service"
+                    - contains:
+                        message: "[pod/canary] request completed with 503, expected [200 201 202], retrying"
+            - drop_fields:
+                fields:
+                  - ecs.version
+                  - agent.id
+                  - agent.ephemeral_id
+                  - agent.hostname
+                  - kubernetes.pod.uid
+                  - log.file.path
+                  - log.offset
+                  - host.os.family
+                ignore_missing: true
+          {{ if eq .spec.output "elasticsearch" }}
+          output.elasticsearch:
+            hosts: ['${OUTPUT_URL}']
+            username: ${OUTPUT_USERNAME}
+            password: ${OUTPUT_PASSWORD}
+            protocol: https
+            ssl.verification_mode: none
+            ssl.supported_protocols: [TLSv1.2, TLSv1.3]
+            {{- if ne .spec.index "" }}
+            index: "{{ .spec.index }}-%{[agent.version]}-%{+yyyy.MM.dd}"
+            setup:
+              template:
+                name: '{{ .spec.index }}'
+                pattern: '{{ .spec.index }}-*'
+                enabled: false
+              ilm:
+                rollover_alias: "{{ .spec.index }}-%{[agent.version]}"
+            {{ end }}
+          {{ else if eq .spec.output "logstash" }}
+          output.logstash:
+            hosts: ["${OUTPUT_URL}"]
+            ssl.verification_mode: none
+          {{ end }}
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: filebeat
+      subjects:
+        - kind: ServiceAccount
+          name: filebeat
+          namespace: {{ .metadata.namespace }}
+      roleRef:
+        kind: ClusterRole
+        name: filebeat
+        apiGroup: rbac.authorization.k8s.io
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: filebeat
+        labels:
+          k8s-app: filebeat
+      rules:
+        - apiGroups: [""] # "" indicates the core API group
+          resources:
+            - namespaces
+            - pods
+          verbs:
+            - get
+            - watch
+            - list
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: filebeat
+        namespace: {{ .metadata.namespace }}
+        labels:
+          k8s-app: filebeat
