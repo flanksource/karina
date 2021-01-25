@@ -21,6 +21,8 @@ unset KUBECONFIG
 
 sshuttle --dns -r $SSHUTTLE_HOST $SSHUTTLE_NETWORK &
 SSHUTTLE_PID=$BASHPID
+# Wait for connection
+sleep 2s
 
 printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
