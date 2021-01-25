@@ -22,7 +22,7 @@ chmod 700 ~/.ssh
 echo "$SSH_SECRET_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
-sshuttle --dns -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -f" -r $SSH_USER@$SSH_JUMP_HOST $VPN_NETWORK
+sshuttle --dns -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r $SSH_USER@$SSH_JUMP_HOST $VPN_NETWORK &
 SSHUTTLE_PID=$BASHPID
 # Wait for connection
 sleep 2s
