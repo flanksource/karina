@@ -4,8 +4,6 @@ mkdir -p .bin
 mkdir -p .certs
 
 export TERM=xterm-256color
-SSHUTTLE_HOST=flanksource@10.175.106.100
-SSHUTTLE_NETWORK=10.175.35.0/24
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 BIN=.bin/karina
 chmod +x $BIN
@@ -19,8 +17,15 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
 
-sshuttle --dns -r $SSHUTTLE_HOST $SSHUTTLE_NETWORK &
+mkdir ~/.ssh
+chmod 700 ~/.ssh
+echo "$SSH_SECRET_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa
+
+sshuttle --dns -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r $SSH_USER@$SSH_JUMP_HOST $VPN_NETWORK &
 SSHUTTLE_PID=$BASHPID
+# Wait for connection
+sleep 2s
 
 printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
