@@ -376,6 +376,8 @@ type Kubernetes struct {
 	EncryptionConfig EncryptionConfig `yaml:"encryption,omitempty" json:"encryption,omitempty"`
 	// Configure container runtime: docker/containerd
 	ContainerRuntime string `yaml:"containerRuntime" json:"containerRuntime,omitempty"`
+	// True for a managed cluster where the user does not have access to the control plane
+	Managed bool `yaml:"managed,omitempty" json:"managed,omitempty"`
 }
 
 type Kind struct {
