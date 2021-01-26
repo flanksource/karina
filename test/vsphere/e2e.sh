@@ -17,46 +17,52 @@ export PLATFORM_OPTIONS_FLAGS="-e name=${PLATFORM_CLUSTER_ID} -e domain=${PLATFO
 export PLATFORM_CONFIG=${PLATFORM_CONFIG:-test/vsphere/vsphere.yaml}
 unset KUBECONFIG
 
-mkdir ~/.ssh
+mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 echo "$SSH_SECRET_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
 sshuttle --dns -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r $SSH_USER@$SSH_JUMP_HOST $VPN_NETWORK &
-SSHUTTLE_PID=$BASHPID
 # Wait for connection
 sleep 2s
+echo "::endgroup::"
 
-printf "\n\n\n\n$(tput bold)Generate Certs$(tput setaf 7)\n"
+echo "::group::Provisioning"
 $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
 $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
 $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
 
-printf "\n\n\n\n$(tput bold)Provision Cluster$(tput setaf 7)\n"
 $BIN provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
+echo "::endgroup::"
 
-
-printf "\n\n\n\n$(tput bold)Basic Deployments$(tput setaf 7)\n"
-
+echo "::group::Deploying Base"
 $BIN deploy phases --crds --calico --base --stubs --dex $PLATFORM_OPTIONS_FLAGS
+echo "::endgroup::"
 
-printf "\n\n\n\n$(tput bold)Up?$(tput setaf 7)\n"
+echo "::group::Waiting for Base"
 # wait for the base deployment with stubs to come up healthy
 $BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
+echo "::endgroup::"
 
-printf "\n\n\n\n$(tput bold)All Deployments$(tput setaf 7)\n"
+echo "::group::Deploy All"
 $BIN deploy all $PLATFORM_OPTIONS_FLAGS
+echo "::endgroup::"
 
-
+echo "::group::Test Dry Run"
+$BIN test all -v --wait 300 --progress=false $PLATFORM_OPTIONS_FLAGS
 failed=false
+echo "::endgroup::"
 
+echo "::group::Final Test Run"
 ## e2e do not use --wait at the run level, if needed each individual test implements
 ## its own wait. e2e tests should always pass once the non e2e have passed
 if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml $PLATFORM_OPTIONS_FLAGS; then
   failed=true
+  echo "Failure in feature test"
 fi
+echo "::endgroup::"
 
-printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
+echo "::group::Uploading Results"
 wget -nv -nc -O build-tools \
   https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
   chmod +x build-tools
@@ -65,11 +71,15 @@ wget -nv -nc -O build-tools \
 mkdir -p artifacts
 $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $PLATFORM_OPTIONS_FLAGS
 zip -r artifacts/snapshot.zip snapshot/*
+echo "::endgroup::"
 
+echo "::group::Clean up"
 $BIN terminate-orphans $PLATFORM_OPTIONS_FLAGS || echo "Orphans not terminated."
 $BIN cleanup $PLATFORM_OPTIONS_FLAGS
-kill "$BASHPID"
+echo "::endgroup::"
 
 if [[ "$failed" = true ]]; then
+  echo "Test failed."
   exit 1
 fi
+echo "Test passed!"
