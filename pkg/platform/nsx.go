@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/logger"
+	"github.com/flanksource/karina/pkg/nsx"
 	nsxapi "github.com/flanksource/karina/pkg/nsx"
 	"github.com/flanksource/karina/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -128,15 +129,17 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	}
 
 	masterDNS := fmt.Sprintf("k8s-api.%s", platform.Domain)
+	defaultPorts := []string{"6443"}
 	masterIP, _, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-masters",
 		IPPool:   platform.NSX.LoadBalancerIPPool,
 		Protocol: nsxapi.TCPProtocol,
-		Ports:    []string{"6443"},
+		Ports:    getPorts(platform, []types.VM{platform.Master}, defaultPorts),
 		Tier0:    platform.NSX.Tier0,
 		MemberTags: map[string]string{
 			"Role": platform.Name + "-masters",
 		},
+		MonitorPort: getMonitorPort(platform, []types.VM{platform.Master}, defaultPorts),
 	})
 	if err != nil {
 		return "", err
@@ -145,15 +148,17 @@ func (nsx *NSXProvider) GetControlPlaneEndpoint(platform *Platform) (string, err
 	masterDNS = updateDNS(platform, masterDNS, masterIP)
 
 	workerDNS := fmt.Sprintf("*.%s", platform.Domain)
+	defaultPorts = []string{"80", "443"}
 	workerIP, _, err := nsx.CreateLoadBalancer(nsxapi.LoadBalancerOptions{
 		Name:     platform.Name + "-workers",
 		IPPool:   platform.NSX.LoadBalancerIPPool,
 		Protocol: nsxapi.TCPProtocol,
-		Ports:    []string{"80", "443"},
+		Ports:    getPorts(platform, getWorkerVms(platform), defaultPorts),
 		Tier0:    platform.NSX.Tier0,
 		MemberTags: map[string]string{
 			"Role": platform.Name + "-workers",
 		},
+		MonitorPort: getMonitorPort(platform, getWorkerVms(platform), defaultPorts),
 	})
 	if err != nil {
 		return "", err
@@ -230,4 +235,76 @@ func backoff(fn func() error, log logger.Logger, backoffOpts *wait.Backoff) erro
 		return *returnErr
 	}
 	return nil
+}
+
+func getWorkerVms(p *Platform) []types.VM {
+	vms := []types.VM{}
+	for _, v := range p.Nodes {
+		vms = append(vms, v)
+	}
+	return vms
+}
+
+func getPorts(p *Platform, vms []types.VM, defaultPorts []string) []string {
+	found := false
+	ports := defaultPorts
+
+	for poolName, pool := range vms {
+		if len(pool.LoadBalancerConfig.Ports) > 0 {
+			if found {
+				p.Warnf("pool name %s: ports already defined for another pool, will be ignored.", poolName)
+			} else {
+				found = true
+				ports = pool.LoadBalancerConfig.Ports
+			}
+		}
+	}
+
+	return ports
+}
+
+func getMonitorPort(p *Platform, vms []types.VM, defaultPorts []string) nsx.MonitorPort {
+	found := false
+	ports := getPorts(p, vms, defaultPorts)
+	monitorPort := nsx.MonitorPort{
+		Port:      ports[0],
+		Timeout:   15,
+		Interval:  5,
+		RiseCount: 5,
+		FallCount: 3,
+	}
+
+	for poolName, pool := range vms {
+		if pool.LoadBalancerConfig.MonitorPort != nil {
+			if found {
+				p.Warnf("pool name %s: monitor port already defined for another pool, will be ignored.", poolName)
+			} else {
+				found = true
+				mp := pool.LoadBalancerConfig.MonitorPort
+				monitorPort = nsx.MonitorPort{
+					Port:      getOrDefaultString(mp.Port, monitorPort.Port),
+					Timeout:   getOrDefault(mp.Timeout, monitorPort.Timeout),
+					Interval:  getOrDefault(mp.Interval, monitorPort.Interval),
+					RiseCount: getOrDefault(mp.RiseCount, monitorPort.RiseCount),
+					FallCount: getOrDefault(mp.FallCount, monitorPort.FallCount),
+				}
+			}
+		}
+	}
+
+	return monitorPort
+}
+
+func getOrDefault(value, defaultValue int64) int64 {
+	if value <= 0 {
+		return defaultValue
+	}
+	return value
+}
+
+func getOrDefaultString(value, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }

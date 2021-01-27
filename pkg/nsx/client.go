@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/logger"
+	"github.com/pkg/errors"
 	nsxt "github.com/vmware/go-vmware-nsxt"
 	"github.com/vmware/go-vmware-nsxt/common"
 	"github.com/vmware/go-vmware-nsxt/loadbalancer"
@@ -394,7 +395,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		return "", false, err
 	}
 	if existingServer != nil {
-		return existingServer.IpAddress, true, nil
+		return c.UpdateLoadBalancer(existingServer, opts)
 	}
 
 	t0, resp, err := routing.ReadLogicalRouter(ctx, opts.Tier0)
@@ -449,12 +450,12 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 	}
 	var monitorID string
 	if opts.Protocol == TCPProtocol {
-		monitorID, err = c.GetOrCreateTCPHealthCheck(opts.Ports[0])
+		monitorID, err = c.CreateOrUpdateTCPHealthCheck("", opts.MonitorPort)
 		if err != nil {
 			return "", false, fmt.Errorf("unable to create tcp loadbalancer monitor: %v", err)
 		}
 	} else {
-		monitorID, err = c.GetOrCreateHTTPHealthCheck(opts.Ports[0])
+		monitorID, err = c.CreateOrUpdateHTTPHealthCheck("", opts.MonitorPort)
 		if err != nil {
 			return "", false, fmt.Errorf("unable to create http loadbalancer monitor: %v", err)
 		}
@@ -515,14 +516,137 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 	return ip, false, nil
 }
 
-func (c *NSXClient) GetOrCreateHTTPHealthCheck(port string) (string, error) {
-	id := fmt.Sprintf("http-%s", port)
+func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts LoadBalancerOptions) (string, bool, error) {
+	ctx := c.api.Context
+	api := c.api.ServicesApi
+
+	if err := c.updateLoadBalancerPool(lb, opts); err != nil {
+		return "", false, errors.Wrap(err, "failed to update load balancer pool")
+	}
+
+	changed := false
+
+	if c.lbPortsChanged(lb, opts) {
+		changed = true
+		lb.Ports = opts.Ports
+	}
+
+	if !changed {
+		return lb.IpAddress, true, nil
+	}
+
+	virtualServer, resp, err := api.UpdateLoadBalancerVirtualServer(ctx, lb.Id, *lb)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to update virtual server: %s", errorString(resp, err))
+	}
+
+	return virtualServer.IpAddress, true, nil
+}
+
+func (c *NSXClient) updateLoadBalancerPool(lb *loadbalancer.LbVirtualServer, opts LoadBalancerOptions) error {
+	ctx := c.api.Context
+	api := c.api.ServicesApi
+
+	group, err := c.CreateOrUpdateNSGroup(opts.Name, "LogicalPort", opts.MemberTags)
+	if err != nil {
+		return errors.Wrap(err, "failed to update NS Group")
+	}
+
+	pool, resp, err := api.ReadLoadBalancerPool(ctx, lb.PoolId)
+	if resp != nil && resp.Body != nil {
+		resp.Body.Close()
+	}
+	if err != nil {
+		return errors.Wrap(err, "failed to read load balancer pool")
+	}
+
+	var monitorID, originalMonitorID string
+	if len(pool.ActiveMonitorIds) > 0 {
+		originalMonitorID = pool.ActiveMonitorIds[0]
+	}
+
+	if opts.Protocol == TCPProtocol {
+		monitorID, err = c.CreateOrUpdateTCPHealthCheck(originalMonitorID, opts.MonitorPort)
+		if err != nil {
+			return errors.Wrap(err, "failed to create tcp loadbalancer monitor: %v")
+		}
+	} else {
+		monitorID, err = c.CreateOrUpdateHTTPHealthCheck(originalMonitorID, opts.MonitorPort)
+		if err != nil {
+			return errors.Wrap(err, "failed to create http loadbalancer monitor: %v")
+		}
+	}
+
+	changed := false
+	if originalMonitorID != monitorID {
+		changed = true
+		pool.ActiveMonitorIds = []string{monitorID}
+	}
+	if group.Id != pool.MemberGroup.GroupingObject.TargetId {
+		changed = true
+		pool.MemberGroup.GroupingObject.TargetId = group.Id
+	}
+
+	if changed {
+		c.Logger.Tracef("Updating load balancer pool %s", pool.Id)
+		_, _, err := api.UpdateLoadBalancerPool(ctx, pool.Id, pool)
+		if err != nil {
+			return errors.Wrap(err, "failed to update pool")
+		}
+	}
+
+	return nil
+}
+
+func (c *NSXClient) CreateOrUpdateHTTPHealthCheck(id string, opts MonitorPort) (string, error) {
+	if id == "" {
+		id = fmt.Sprintf("http-%s", opts.Port)
+	}
 	// ServicesApi.GetMonitors() is not implemented
-	_, _, err := c.GET("/loadbalancer/monitors/" + id)
+	respBytes, _, err := c.GET("/loadbalancer/monitors/" + id)
 
 	if err == nil {
 		// Get returned OK, so the monitor has been created already
-		return id, nil
+		monitor := loadbalancer.LbHttpMonitor{}
+		if err := json.Unmarshal(respBytes, &monitor); err != nil {
+			return "", err
+		}
+
+		changed := false
+		if monitor.MonitorPort != opts.Port {
+			changed = true
+			monitor.MonitorPort = opts.Port
+		}
+		if monitor.Timeout != opts.Timeout {
+			changed = true
+			monitor.Timeout = opts.Timeout
+		}
+		if monitor.Interval != opts.Interval {
+			changed = true
+			monitor.Interval = opts.Interval
+		}
+		if monitor.RiseCount != opts.RiseCount {
+			changed = true
+			monitor.RiseCount = opts.RiseCount
+		}
+		if monitor.FallCount != opts.FallCount {
+			changed = true
+			monitor.FallCount = opts.FallCount
+		}
+
+		if !changed {
+			return monitor.Id, nil
+		}
+
+		c.Logger.Tracef("Updating HTTP monitor %s", id)
+		monitor, resp, err := c.api.ServicesApi.UpdateLoadBalancerHttpMonitor(context.TODO(), id, monitor)
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			return "", err
+		}
+		return monitor.Id, nil
 	}
 
 	monitor, resp, err := c.api.ServicesApi.CreateLoadBalancerHttpMonitor(context.TODO(), loadbalancer.LbHttpMonitor{
@@ -530,14 +654,14 @@ func (c *NSXClient) GetOrCreateHTTPHealthCheck(port string) (string, error) {
 		DisplayName:         id,
 		ResourceType:        "LbHttpMonitor",
 		ResponseStatusCodes: []int32{200, 300, 301, 302, 304, 307, 404},
-		MonitorPort:         port,
+		MonitorPort:         opts.Port,
 		RequestMethod:       "GET",
 		RequestUrl:          "/",
 		RequestVersion:      "HTTP_VERSION_1_1",
-		Timeout:             15,
-		Interval:            5,
-		RiseCount:           5,
-		FallCount:           3,
+		Timeout:             opts.Timeout,
+		Interval:            opts.Interval,
+		RiseCount:           opts.RiseCount,
+		FallCount:           opts.FallCount,
 	})
 	if resp != nil && resp.Body != nil {
 		resp.Body.Close()
@@ -548,25 +672,67 @@ func (c *NSXClient) GetOrCreateHTTPHealthCheck(port string) (string, error) {
 	return monitor.Id, nil
 }
 
-func (c *NSXClient) GetOrCreateTCPHealthCheck(port string) (string, error) {
-	id := fmt.Sprintf("tcp-%s", port)
+func (c *NSXClient) CreateOrUpdateTCPHealthCheck(id string, opts MonitorPort) (string, error) {
+	if id == "" {
+		id = fmt.Sprintf("tcp-%s", opts.Port)
+	}
 	// ServicesApi.GetMonitors() is not implemented
-	_, _, err := c.GET("/loadbalancer/monitors/" + id)
+	respBytes, _, err := c.GET("/loadbalancer/monitors/" + id)
 
 	if err == nil {
+		c.Logger.Tracef("TCP Monitor: %s", string(respBytes))
 		// Get returned OK, so the monitor has been created already
-		return id, nil
+		monitor := loadbalancer.LbTcpMonitor{}
+		if err := json.Unmarshal(respBytes, &monitor); err != nil {
+			return "", err
+		}
+
+		changed := false
+		if monitor.MonitorPort != opts.Port {
+			changed = true
+			monitor.MonitorPort = opts.Port
+		}
+		if monitor.Timeout != opts.Timeout {
+			changed = true
+			monitor.Timeout = opts.Timeout
+		}
+		if monitor.Interval != opts.Interval {
+			changed = true
+			monitor.Interval = opts.Interval
+		}
+		if monitor.RiseCount != opts.RiseCount {
+			changed = true
+			monitor.RiseCount = opts.RiseCount
+		}
+		if monitor.FallCount != opts.FallCount {
+			changed = true
+			monitor.FallCount = opts.FallCount
+		}
+
+		if !changed {
+			return monitor.Id, nil
+		}
+
+		c.Logger.Tracef("Updating TCP monitor %s", id)
+		monitor, resp, err := c.api.ServicesApi.UpdateLoadBalancerTcpMonitor(context.TODO(), id, monitor)
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			return "", err
+		}
+		return monitor.Id, nil
 	}
 
 	monitor, resp, err := c.api.ServicesApi.CreateLoadBalancerTcpMonitor(context.TODO(), loadbalancer.LbTcpMonitor{
 		Id:           id,
 		DisplayName:  id,
 		ResourceType: "LbTcpMonitor",
-		MonitorPort:  port,
-		Timeout:      15,
-		Interval:     5,
-		RiseCount:    5,
-		FallCount:    3,
+		MonitorPort:  opts.Port,
+		Timeout:      opts.Timeout,
+		Interval:     opts.Interval,
+		RiseCount:    opts.RiseCount,
+		FallCount:    opts.FallCount,
 	})
 	if resp != nil && resp.Body != nil {
 		resp.Body.Close()
@@ -575,4 +741,21 @@ func (c *NSXClient) GetOrCreateTCPHealthCheck(port string) (string, error) {
 		return "", err
 	}
 	return monitor.Id, nil
+}
+
+func (c *NSXClient) lbPortsChanged(lb *loadbalancer.LbVirtualServer, opts LoadBalancerOptions) bool {
+	if len(lb.Ports) != len(opts.Ports) {
+		return true
+	}
+
+	portsMap := map[string]bool{}
+	for _, i := range lb.Ports {
+		portsMap[i] = true
+	}
+	for _, i := range opts.Ports {
+		if !portsMap[i] {
+			return true
+		}
+	}
+	return false
 }

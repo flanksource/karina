@@ -105,12 +105,22 @@ type SegmentPort struct {
 }
 
 type LoadBalancerOptions struct {
-	Name       string
-	IPPool     string
-	Protocol   string
-	Ports      []string
-	Tier0      string
-	MemberTags map[string]string
+	Name            string
+	IPPool          string
+	Protocol        string
+	Ports           []string
+	Tier0           string
+	MemberTags      map[string]string
+	SnatTranslation *loadbalancer.LbSnatTranslation
+	MonitorPort     MonitorPort
+}
+
+type MonitorPort struct {
+	Port      string
+	Timeout   int64
+	Interval  int64
+	RiseCount int64
+	FallCount int64
 }
 
 type virtualServersList struct {
