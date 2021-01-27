@@ -1,0 +1,51 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flux
+  namespace: kube-system
+  labels:
+    app: flux
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app: flux
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  endpoints:
+    - targetPort: 9402
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-flux-rules
+  namespace: kube-system
+spec:
+  groups:
+  - name: flux.rules
+    rules:
+      - alert: FluxSyncTimeout
+        annotations:
+          description:
+            Flux synchronisation action exceeded 5 minutes
+          summary: General flux sync errors
+        expr: |
+          delta(flux_daemon_sync_duration_seconds_count{success='true'}[5m]) < 1
+        for: 1m
+        labels:
+          severity: warning
+      - alert: FluxSyncFailure
+        annotations:
+          description:
+            Flux syncronisation action reports failure
+          summary: Git manifest error
+        expr: |
+          flux_daemon_sync_manifests{success='false'} > 0
+        for: 1m
+        labels:
+          severity: warning
