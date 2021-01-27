@@ -71,11 +71,12 @@ type VM struct {
 	Tags     map[string]string `yaml:"tags,omitempty" json:"tags,omitempty"`
 	Commands []string          `yaml:"commands,omitempty" json:"commands,omitempty"`
 	// A path to a konfigadm specification used for configuring the VM on creation.
-	KonfigadmFile    string            `yaml:"konfigadm,omitempty" json:"konfigadm,omitempty"`
-	IP               string            `yaml:"-" json:"-"`
-	Konfigadm        *konfigadm.Config `yaml:"-" json:"-"`
-	Annotations      map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
-	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty" json:"kubeletExtraArgs,omitempty"`
+	KonfigadmFile      string             `yaml:"konfigadm,omitempty" json:"konfigadm,omitempty"`
+	IP                 string             `yaml:"-" json:"-"`
+	Konfigadm          *konfigadm.Config  `yaml:"-" json:"-"`
+	Annotations        map[string]string  `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	KubeletExtraArgs   map[string]string  `yaml:"kubeletExtraArgs,omitempty" json:"kubeletExtraArgs,omitempty"`
+	LoadBalancerConfig LoadBalancerConfig `yaml:"loadBalancerConfig,omitempty" json:"loadBalancerConfig,omitempty"`
 }
 
 func (vm VM) GetTags() map[string]string {
@@ -95,6 +96,19 @@ func (vm *VM) DeepCopy() *VM {
 	out := new(VM)
 	vm.DeepCopyInto(out)
 	return out
+}
+
+type LoadBalancerConfig struct {
+	Ports       []string     `json:"ports" yaml:"ports`
+	MonitorPort *MonitorPort `json:"monitorPort,omitempty" yaml:"monitorPort,omitempty"`
+}
+
+type MonitorPort struct {
+	Port      string `json:"port" yaml:"port"`
+	Timeout   int64  `json:"timeout" yaml:"timeout"`
+	Interval  int64  `json:"interval" yaml:"interval"`
+	RiseCount int64  `json:"riseCount" yaml:"riseCount"`
+	FallCount int64  `json:"fallCount" yaml:"fallCount"`
 }
 
 type Calico struct {
