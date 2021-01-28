@@ -235,3 +235,59 @@ spec:
         schedule: '{{.spec.backup.schedule | default "0 2 * * *" }}'
         successfulJobsHistoryLimit: 3
         suspend: false
+    - apiVersion: canaries.flanksource.com/v1
+      kind: Canary
+      metadata:
+        name: "postgres-backup-{{.metadata.name}}"
+        namespace: postgres-operator
+      spec:
+        interval: 14400 #4h
+        env:
+          AWS_SECRET_ACCESS_KEY:
+            secretKeyRef:
+              key: AWS_SECRET_ACCESS_KEY
+              name: postgres-operator-cluster-environment
+          AWS_ACCESS_KEY_ID:
+            secretKeyRef:
+              key: AWS_ACCESS_KEY_ID
+              name: postgres-operator-cluster-environment
+          AWS_ENDPOINT:
+            secretKeyRef:
+              key: AWS_ENDPOINT_URL
+              name: postgres-operator-cluster-environment
+          LOGICAL_BACKUP_S3_REGION:
+            secretKeyRef:
+              key: AWS_REGION
+              name: postgres-operator-cluster-environment
+        s3Bucket:
+          - bucket: "{{.spec.backup.bucket}}"
+            region: $LOGICAL_BACKUP_S3_REGION
+            endpoint: $AWS_ENDPOINT
+            secretKey: $AWS_SECRET_ACCESS_KEY
+            accessKey: $AWS_ACCESS_KEY_ID
+            objectPath: "postgres-{{.metadata.name}}"
+            minSize: 31457280 #30MB
+            maxAge: 86400 # 24 hours
+            usePathStyle: true
+    - apiVersion: canaries.flanksource.com/v1
+      kind: Canary
+      metadata:
+        name: "postgres-connection-{{.metadata.name}}"
+        namespace: postgres-operator
+      spec:
+        interval: 30
+        env:
+          DATA_SOURCE_USER:
+            secretKeyRef:
+              key: username
+              name: postgres.postgres-{{.metadata.name}}.credentials
+          DATA_SOURCE_PASS:
+            secretKeyRef:
+              key: password
+              name: postgres.postgres-{{.metadata.name}}.credentials
+        postgres:
+          - connection: "user=$DATA_SOURCE_USER password=$DATA_SOURCE_PASS host=postgres-{{.metadata.name}} port=5432 dbname=postgres sslmode=disable"
+            query: "SELECT 1"
+            results: 1
+            driver: postgres
+            description: "postgres-{{.metadata.name}} DB heartbeat"
