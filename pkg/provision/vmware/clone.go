@@ -100,7 +100,7 @@ func (s Session) Clone(vm ptypes.VM, config *konfigadm.Config) (*object.VirtualM
 
 	taskInfo, err := task.WaitForResult(context.TODO(), nil)
 	if err != nil {
-		pretty.Print(spec,taskInfo, err)
+		pretty.Print(spec, taskInfo, err)
 		return nil, fmt.Errorf("clone: failed create waiter: %#v: %#v", err, taskInfo)
 	}
 
@@ -197,7 +197,7 @@ func getDiskSpec(vm ptypes.VM, devices object.VirtualDeviceList) (types.BaseVirt
 
 	disk := disks[0].(*types.VirtualDisk)
 	if disk.CapacityInKB > int64(vm.DiskGB)*1024*1024 {
-		return nil, fmt.Errorf("Cannot shrink template from %d GB to %d GB ", disk.CapacityInKB/1024/1024, vm.DiskGB)
+		return nil, fmt.Errorf("cannot shrink template from %d GB to %d GB ", disk.CapacityInKB/1024/1024, vm.DiskGB)
 	}
 	disk.CapacityInKB = int64(vm.DiskGB) * 1024 * 1024
 
