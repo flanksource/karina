@@ -1,4 +1,4 @@
-package istio
+package istiooperator
 
 import (
 	"github.com/flanksource/karina/pkg/platform"
