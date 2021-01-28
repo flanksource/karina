@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/logger"
-	"github.com/flanksource/karina/pkg/nsx"
 	nsxapi "github.com/flanksource/karina/pkg/nsx"
 	"github.com/flanksource/karina/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -263,10 +262,10 @@ func getPorts(p *Platform, vms []types.VM, defaultPorts []string) []string {
 	return ports
 }
 
-func getMonitorPort(p *Platform, vms []types.VM, defaultPorts []string) nsx.MonitorPort {
+func getMonitorPort(p *Platform, vms []types.VM, defaultPorts []string) nsxapi.MonitorPort {
 	found := false
 	ports := getPorts(p, vms, defaultPorts)
-	monitorPort := nsx.MonitorPort{
+	monitorPort := nsxapi.MonitorPort{
 		Port:      ports[0],
 		Timeout:   15,
 		Interval:  5,
@@ -281,7 +280,7 @@ func getMonitorPort(p *Platform, vms []types.VM, defaultPorts []string) nsx.Moni
 			} else {
 				found = true
 				mp := pool.LoadBalancerConfig.MonitorPort
-				monitorPort = nsx.MonitorPort{
+				monitorPort = nsxapi.MonitorPort{
 					Port:      getOrDefaultString(mp.Port, monitorPort.Port),
 					Timeout:   getOrDefault(mp.Timeout, monitorPort.Timeout),
 					Interval:  getOrDefault(mp.Interval, monitorPort.Interval),

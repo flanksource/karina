@@ -589,7 +589,10 @@ func (c *NSXClient) updateLoadBalancerPool(lb *loadbalancer.LbVirtualServer, opt
 
 	if changed {
 		c.Logger.Tracef("Updating load balancer pool %s", pool.Id)
-		_, _, err := api.UpdateLoadBalancerPool(ctx, pool.Id, pool)
+		_, resp, err := api.UpdateLoadBalancerPool(ctx, pool.Id, pool)
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
 		if err != nil {
 			return errors.Wrap(err, "failed to update pool")
 		}
