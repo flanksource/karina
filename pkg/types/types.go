@@ -99,7 +99,7 @@ func (vm *VM) DeepCopy() *VM {
 }
 
 type LoadBalancerConfig struct {
-	Ports       []string     `json:"ports" yaml:"ports`
+	Ports       []string     `json:"ports" yaml:"ports"`
 	MonitorPort *MonitorPort `json:"monitorPort,omitempty" yaml:"monitorPort,omitempty"`
 }
 
