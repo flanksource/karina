@@ -29,21 +29,21 @@ spec:
   groups:
   - name: flux.rules
     rules:
-      - alert: FluxSyncTimeout
+      - alert: FluxSyncAttemptFailed
         annotations:
           description:
-            Flux synchronisation action exceeded 5 minutes
-          summary: General flux sync errors
+            Flux failed attempting to sync due to an error connecting to Git or an invalid/duplicate manifest
+          summary: Flux Sync Attempt Failed
         expr: |
-          delta(flux_daemon_sync_duration_seconds_count{success='true'}[5m]) < 1
+          delta(flux_daemon_sync_duration_seconds_count{success='true'}[6m]) < 1
         for: 1m
         labels:
           severity: warning
-      - alert: FluxSyncFailure
+      - alert: FluxApplyFailure
         annotations:
           description:
-            Flux syncronisation action reports failure
-          summary: Git manifest error
+            Flux failed to apply manifests due to errors return by api server
+          summary: Flux Apply Failed
         expr: |
           flux_daemon_sync_manifests{success='false'} > 0
         for: 1m
