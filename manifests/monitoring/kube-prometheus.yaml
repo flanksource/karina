@@ -56,6 +56,12 @@ spec:
         smtp_from: '{{.smtp.from}}'
         {{end}}
       {{end}}
+      {{ if index .monitoring "alertmanager" }}
+      {{ if index .monitoring.alertmanager "opsgenieApiKey" }}
+      opsgenieConfigs:
+        - apiKey: {{ .monitoring.alertmanager.opsgenieApiKey }}
+      {{ end }}
+      {{ end }}
   inhibitRules:
     - sourceMatch:
         - name: severity
