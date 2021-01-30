@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/spf13/cobra"
@@ -62,5 +63,32 @@ func init() {
 		},
 	}
 
-	Node.AddCommand(annotate)
+	ips := &cobra.Command{
+		Use:   "ips",
+		Short: "List all internal node IP's",
+		Run: func(cmd *cobra.Command, args []string) {
+			platform := getPlatform(cmd)
+
+			clientset, err := platform.GetClientset()
+			if err != nil {
+				platform.Fatalf("failed to get clientset: %s", err)
+			}
+
+			nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				platform.Fatalf("failed to list nodes: %v", err)
+			}
+
+			for _, node := range nodes.Items {
+
+				for _, address := range node.Status.Addresses {
+					if address.Type == "InternalIP" {
+						fmt.Println(address.Address)
+					}
+				}
+			}
+		},
+	}
+
+	Node.AddCommand(annotate, ips)
 }
