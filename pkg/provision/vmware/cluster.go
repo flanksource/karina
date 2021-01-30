@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/url"
 
+	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/types"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vapi/rest"
 	vtags "github.com/vmware/govmomi/vapi/tags"
 )
@@ -129,17 +129,23 @@ func (cluster *vmwareCluster) SetTags(vm types.Machine, tags map[string]string) 
 			return errors.Wrapf(err, "failed to list tags for category %s: %v", categoryID, err)
 		}
 		tagID := ""
+		names := []string{}
 		for _, t := range categoryTags {
+			names = append(names, t.ID)
 			if t.Name == tagName {
-				tagID = t.ID
+				tagID = t.Name
+				break
 			}
 		}
 
-		log.Debugf("Found tag ID: %s", tagID)
-
-		if tagID != "" {
-			return manager.AttachTag(cluster.ctx, tagID, vm.Reference())
+		if tagID == "" {
+			log.Warnf("%s not found in %v", categoryID, names)
+		} else {
+			if err := manager.AttachTag(cluster.ctx, tagID, vm.Reference()); err != nil {
+				log.Errorf("Failed to set tags for %s %s: %v", categoryID, tagName, err)
+			}
 		}
+
 	}
 
 	return nil
