@@ -100,6 +100,31 @@ metadata:
     component: core
   annotations:
     reload/all: "true" # restart on cm/secret change
+    com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: PULL_ARTIFACT
+    com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: SCANNING_COMPLETED
+    com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: REPLICATION
+    com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: PUSH_ARTIFACT
+    com.flanksource.infra.logs/processors.4.drop_event.when.contains.message: The path /data is not found
+    com.flanksource.infra.logs/processors.5.drop_event.when.contains.message: already exist, skip
+    com.flanksource.infra.logs/processors.6.drop_event.when.contains.message: UPLOADS
+    com.flanksource.infra.logs/processors.7.drop_event.when.contains.message: statusCode:200
+    com.flanksource.infra.logs/processors.8.drop_event.when.contains.message: a previous scan process is
+    com.flanksource.infra.logs/processors.9.drop_event.when.contains.message: /service/token
+    com.flanksource.infra.logs/processors.10.drop_event.when.contains.message: /api/health
+    com.flanksource.infra.logs/processors.11.drop_event.when.contains.message: api/v2.0/ping
+    com.flanksource.infra.logs/processors.12.drop_event.when.contains.message: server.go:2774
+    com.flanksource.infra.logs/processors.13.drop_event.when.contains.message: middleware.go:52
+    com.flanksource.infra.logs/processors.14.drop_event.when.contains.message: Can not get the ldap group name with
+    com.flanksource.infra.logs/processors.15.drop_event.when.contains.message: readonly.go:77
+    com.flanksource.infra.logs/processors.16.drop_event.when.contains.message: TLS handshake error
+    com.flanksource.infra.logs/processors.17.drop_event.when.equals.message: <html>
+    com.flanksource.infra.logs/processors.18.drop_event.when.equals.message: </html>
+    com.flanksource.infra.logs/processors.19.drop_event.when.equals.message: <body>
+    com.flanksource.infra.logs/processors.20.drop_event.when.equals.message: </body>
+    com.flanksource.infra.logs/processors.21.drop_event.when.equals.message: <center><h1>404 Not Found</h1></center>
+    com.flanksource.infra.logs/processors.22.drop_event.when.contains.message: <hr><center>
+    com.flanksource.infra.logs/processors.23.dissect.tokenizer: "%{} [%{log.level}] [%{stacktrace}]: %{log.message}"
+
 spec:
   replicas: 1
   selector:

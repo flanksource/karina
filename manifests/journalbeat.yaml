@@ -9,69 +9,182 @@ data:
   journalbeat.yml: |-
     fields:
       cluster: "{{ .name }}"
-
     journalbeat.inputs:
-    - paths: ["/var/log/journal"]
-      seek: cursor
-
+      - paths:
+          - /var/log/journal
+        seek: cursor
     setup.dashboards.enabled: false
     setup.kibana:
       host: "{{ .packetbeat.kibana.url }}:{{ .packetbeat.kibana.port }}"
-      username: ${ELASTIC_USERNAME}
-      password: ${ELASTIC_PASSWORD}
+      username: "${ELASTIC_USERNAME}"
+      password: "${ELASTIC_PASSWORD}"
       protocol: https
       ssl.verification_mode: none
-      ssl.supported_protocols: [TLSv1.2, TLSv1.3]
-
+      ssl.supported_protocols:
+        - TLSv1.2
+        - TLSv1.3
     processors:
-    - add_cloud_metadata: ~
-    - add_kubernetes_metadata:
-        in_cluster: true
-        default_indexers.enabled: false
-        default_matchers.enabled: false
-        indexers:
-          - container:
-        matchers:
-          - fields:
-              lookup_fields: ["container.id"]
-    - drop_event:
-        when:
-          or:
-            - equals:
-               # cron is very chatty
-               syslog.identifier: CRON
-            - equals:
-               # Ignore auditd
-               syslog.identifier: audit
-            - contains:
-                message: "__main__ nsx_cni plugin invoked with arguments: VERSION"
-            - contains:
-                message: "__main__ CNI Command in environment: VERSION"
-            - contains:
-                message: "__main__ Initialized CNI configuration"
-            - contains:
-                message: "__main__ CNI Command in environment: ADD"
-            - contains:
-                message: "__main__ nsx_cni plugin invoked with arguments: ADD"
-            - contains:
-                message: "__main__ Network config from input"
-            - contains:
-                message: "__main__ Connection closed"
-            - contains:
-                message: "__main__ Reading configuration on standard input"
-            - contains:
-                message: "__main__ CNI VERSION is queried"
-            - contains:
-                message: "https://github.com/kubernetes/kubernetes/issues/69699"
+      - add_cloud_metadata: null
+      - add_kubernetes_metadata:
+          in_cluster: true
+          default_indexers.enabled: false
+          default_matchers.enabled: false
+          indexers:
+            - container: null
+          matchers:
+            - fields:
+                lookup_fields:
+                  - container.id
+      - drop_event:
+          when:
+            or:
+              - contains:
+                  message: __main__ Initialized CNI configuration
+              - contains:
+                  message: "__main__ CNI Command in environment:"
+              - contains:
+                  message: "__main__ nsx_cni plugin invoked with arguments:"
+              - contains:
+                  message: __main__ Network config from input
+              - contains:
+                  message: __main__ Connection closed
+              - contains:
+                  message: __main__ Reading configuration on standard input
+              - contains:
+                  message: __main__ CNI VERSION is queried
+              - contains:
+                  message: "https://github.com/kubernetes/kubernetes/issues/69699"
+              - contains:
+                  message: kauditd_printk_skb
+              - contains:
+                  message: RemoveContainer
+              - contains:
+                  message: Succeeded
+              - contains:
+                  message: Started Kubernetes transient mount
+              - contains:
+                  message: "IPv6:"
+              - contains:
+                  message: audit_log_start"
+              - contains:
+                  message: "eth0: renamed"
+              - contains:
+                  message: autonegotiation is unset or enabled
+              - contains:
+                  message: Lost carrier
+              - contains:
+                  message: entered promiscuous mode
+              - contains:
+                  message: Could not generate persistent MAC
+              - contains:
+                  message: Using default interface naming scheme
+              - contains:
+                  message: left promiscuous mode
+              - contains:
+                  message: reloading interface list
+              - contains:
+                  message: Unconfiguring networking
+              - contains:
+                  message: Pod networking configured on container
+              - contains:
+                  message: Configuring networking for container
+              - contains:
+                  message: operationExecutor.UnmountVolume started for volume
+              - contains:
+                  message: Topology Admit Handler
+              - contains:
+                  message: operationExecutor.VerifyControllerAttachedVolume started for volume
+              - contains:
+                  message: Volume detached for volume
+              - equals:
+                  systemd.unit: dbus.service
+              - equals:
+                  systemd.unit: snapd.service
+              - equals:
+                  journald.custom.unit: fwupd.service
+              - equals:
+                  journald.custom.unit: fwupd-refresh.service
+              - equals:
+                  process.name: fwupdmgr
+              - equals:
+                  journald.custom.unit: packagekit.service
+              - equals:
+                  syslog.identifier: 50-motd-news
+              - equals:
+                  journald.custom.unit: motd-news.service
+              - equals:
+                  systemd.unit: packagekit.service
+              - equals:
+                  syslog.identifier: CRON
+              - equals:
+                  syslog.identifier: audit
+              - contains:
+                  message: 'level=error msg="ContainerStatus'
+              - contains:
+                  message: "remote_runtime.go:295 ContainerStatus"
+              - contains:
+                  message: msg=PullImage
+              - contains:
+                  message: msg=Failed to get usage for snapshot
+              - contains:
+                  message: "error=cgroups: cgroup deleted: unknown"
+              - contains:
+                  message: "container is in CONTAINER_EXITED state"
+              - contains:
+                  message: DVE-2018-0001
+              - equals:
+                  systemd.unit: apt-daily-upgrade.service
+              - contains:
+                  message: Gained IPv6LL
+              - contains:
+                  message: Gained carrier
+              - contains:
+                  message: UnmountVolume.TearDown succeeded for volume
+              - contains:
+                  message: superfluous response.WriteHeader call
+              - contains:
+                  message: ClearQuota called, but quotas disabled
+              - contains:
+                  message: "clientconn.go:"
+              - contains:
+                  message: "operation_generator.go:"
+              - contains:
+                  message: "found, but volume paths are still present on disk"
+              - contains:
+                  message: "ccResolverWrapper:"
+              - equals:
+                  journald.custom.unit:	dbus.socket
+              - and:
+                  - equals:
+                      systemd.transport: kernel
+                  - contains:
+                      message: "audit: "
+              - and:
+                  - equals:
+                      systemd.unit: containerd.service
+                  - contains:
+                      message: level=info
 
+              - and:
+                  - or:
+                      - equals:
+                          process.name: calico-ipam
+                      - equals:
+                          process.name: calico
+
+                  - contains:
+                      message: "[INFO]"
 
     output.elasticsearch:
-      hosts: ['${ELASTIC_URL}']
-      username: ${ELASTIC_USERNAME}
-      password: ${ELASTIC_PASSWORD}
+      hosts:
+        - "${ELASTIC_URL}"
+      username: "${ELASTIC_USERNAME}"
+      password: "${ELASTIC_PASSWORD}"
       protocol: https
       ssl.verification_mode: none
-      ssl.supported_protocols: [TLSv1.2, TLSv1.3]
+      ssl.supported_protocols:
+        - TLSv1.2
+        - TLSv1.3
       ilm.enabled: true
 
 ---
@@ -92,6 +205,11 @@ spec:
     metadata:
       labels:
         k8s-app: journalbeat
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: journalbeat successfully published
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: Non-zero metrics in the last 30s
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: INFO
     spec:
       serviceAccountName: journalbeat
       terminationGracePeriodSeconds: 30

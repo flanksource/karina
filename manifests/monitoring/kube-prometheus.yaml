@@ -23,6 +23,7 @@ spec:
   podMetadata:
     annotations:
       reload/all: "true"
+      com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: level=debug
   alertmanagerConfigSelector:
     matchLabels:
       alertmanagerConfig: main

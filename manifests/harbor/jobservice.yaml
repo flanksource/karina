@@ -101,6 +101,9 @@ spec:
       labels:
         app: "harbor"
         component: jobservice
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: get configuration from url
     spec:
       securityContext:
         fsGroup: 10000

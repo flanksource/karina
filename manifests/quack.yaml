@@ -118,6 +118,10 @@ spec:
       name: quack
       labels:
         app: quack
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: POST /apis/quack.pusher.com/v1alpha1/admissionreviews
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: Processing UPDATE request
     spec:
       serviceAccountName: quack
       containers:

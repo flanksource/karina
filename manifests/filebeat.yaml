@@ -8,8 +8,6 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: filebeat-{{ .name }}
-  annotations:
-    reload/all: "true" #restart on cm/secret change
 spec:
   selector:
     matchLabels:
@@ -18,6 +16,10 @@ spec:
     metadata:
       labels:
         k8s-app: filebeat-{{ .name }}
+    annotations:
+      reload/all: "true" #restart on cm/secret change
+      com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: INFO
+      com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: Error extracting container id
     spec:
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
@@ -111,21 +113,18 @@ data:
     processors:
       - add_cloud_metadata:
       - add_kubernetes_metadata:
+          default_indexers.enabled: false
+          default_matchers.enabled: false
+          matchers:
+            - logs_path:
+                logs_path: /var/log/containers/
+
       - add_docker_metadata:
       - drop_event:
           when:
             or:
               - contains:
-                  # ignore nsx INFO messages
-                  message: level="INFO"
-              - contains:
-                  # ignore nsx DEBUG messages
-                  message: level="DEBUG"
-              - contains:
                   message: GET / HTTP/1.1" 200
-              - contains:
-                  # ignore harbor-portal access logging
-                  message: server.go:2774
               - contains:
                   message: GET /api/health HTTP/1.1" 200
               - contains:
@@ -133,34 +132,11 @@ data:
               - contains:
                   message: GET /healthz
               - contains:
-                  message: "journalbeat successfully published"
-              - contains:
                   message: "Health check succeeded"
-              # postgres operator logs
-              - contains:
-                  message: "no action.  i am a secondary and i am following a leader"
-              - contains:
-                  message: "no action.  i am the leader with the lock"
-              - contains:
-                  message: "INFO: Lock owner:"
-              - contains:
-                  message: "INFO: does not have lock"
-              - contains:
+
                   message: "Sending probe request to CSI driver"
               - contains:
                   message: "csi.v1.Identity/Probe"
-              # nginx ingress controllers
-              - contains:
-                  message: "Backend successfully reloaded."
-              - contains:
-                  message: "Configuration changes detected, backend reload required."
-              - contains:
-                  message: "does not have any active Endpoint."
-              - contains:
-                  message: "Error obtaining Endpoints for Service"
-              - contains:
-                  message: "[pod/canary] request completed with 503, expected [200 201 202], retrying"
-
 
       - drop_fields:
           fields:
