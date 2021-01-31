@@ -77,6 +77,14 @@ spec:
       labels:
         app: "harbor"
         component: chartmuseum
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.decode_json_fields.fields.0: message
+        com.flanksource.infra.logs/processors.0.decode_json_fields.targer: ""
+        com.flanksource.infra.logs/processors.0.decode_json_fields.overwrite_keys: "true"
+        com.flanksource.infra.logs/processors.1.rename.fields.0.from: M
+        com.flanksource.infra.logs/processors.1.rename.fields.0.to: message
+        com.flanksource.infra.logs/processors.1.rename.fields.0.ignore_missing: "true"
     spec:
       securityContext:
         fsGroup: 10000

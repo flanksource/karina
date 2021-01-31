@@ -388,8 +388,7 @@ metadata:
     tier: nsx-networking
     component: nsx-ncp
     version: v1
-  annotations:
-    reload/all: "true"
+
 spec:
   # Active-Standby is supported from NCP 2.4.0 release,
   # so replica can be more than 1 if NCP HA is enabled.
@@ -403,6 +402,17 @@ spec:
         tier: nsx-networking
         component: nsx-ncp
         version: v1
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: level="INFO"
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: level="DEBUG"
+        com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: is deprecated and will be removed
+        com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: nsx_ujo.agent.cache Did not get
+        com.flanksource.infra.logs/processors.4.drop_event.when.contains.message: vmware_nsxlib.v3.utils Finished retry of
+        com.flanksource.infra.logs/processors.5.drop_event.when.contains.message: vmware_nsxlib.v3.utils Retrying call to
+        com.flanksource.infra.logs/processors.6.dissect.tokenizer: '%{} %{@timestamp} %{nsx.host} %{} %{} %{} [nsx@%{} comp="%{nsx.comp}" subcomp="%{nsx.subcomp}" level="%{nsx.loglevel}"] %{message}'
+        com.flanksource.infra.logs/processors.6.dissect.target_prefix: ""
+        com.flanksource.infra.logs/processors.6.dissect.overwrite_keys: "true"
     spec:
       # NCP shares the host management network.
       hostNetwork: true
@@ -661,6 +671,16 @@ spec:
   template:
     metadata:
       annotations:
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: level="INFO"
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: level="DEBUG"
+        com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: with_retries setting is deprecated and will be removed.
+        com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: nsx_ujo.agent.cache Did not get
+        com.flanksource.infra.logs/processors.4.drop_event.when.contains.message: vmware_nsxlib.v3.utils Finished retry of
+        com.flanksource.infra.logs/processors.5.drop_event.when.contains.message: vmware_nsxlib.v3.utils Retrying call to
+        com.flanksource.infra.logs/processors.6.drop_event.when.contains.message: object has no attribute 'exchange_ping'
+        com.flanksource.infra.logs/processors.7.dissect.tokenizer: '%{} %{@timestamp} %{nsx.host} %{} %{} %{} [nsx@%{} comp="%{nsx.comp}" subcomp="%{nsx.subcomp}" level="%{nsx.loglevel}"] %{message}'
+        com.flanksource.infra.logs/processors.7.dissect.target_prefix: ""
+        com.flanksource.infra.logs/processors.7.dissect.overwrite_keys: "true"
         container.apparmor.security.beta.kubernetes.io/nsx-node-agent: localhost/node-agent-apparmor
       labels:
         tier: nsx-networking
@@ -692,6 +712,9 @@ spec:
           requests:
             cpu: 200m
             memory: 512Mi
+          limits:
+            cpu: 1500m
+            memory: 1Gi
           env:
             - name: POD_NAME
               valueFrom:

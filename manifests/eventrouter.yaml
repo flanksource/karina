@@ -58,6 +58,13 @@ spec:
         com.flanksource.infra.logs/processors.1.dissect.tokenizer: "%{log_level} %{date}       1 glogsink.go:42] %{json}"
         com.flanksource.infra.logs/processors.2.decode_json_fields.fields: dissect.json
         com.flanksource.infra.logs/processors.2.decode_json_fields.target: ""
+        com.flanksource.infra.logs/processors.3.rename.fields.0.from: message
+        com.flanksource.infra.logs/processors.3.rename.fields.0.to: _message
+        com.flanksource.infra.logs/processors.3.rename.fields.0.ignore_missing: "true"
+        com.flanksource.infra.logs/processors.4.rename.fields.0.from: event.message
+        com.flanksource.infra.logs/processors.4.rename.fields.0.to: message
+        com.flanksource.infra.logs/processors.5.rename.fields.0.ignore_missing: "true"
+    spec:
     spec:
       containers:
         - name: kube-eventrouter

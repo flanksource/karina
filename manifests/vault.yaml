@@ -152,7 +152,9 @@ spec:
         component: server
         hasDNS: "true"
       annotations:
-        "consul.hashicorp.com/connect-inject": "false"
+        consul.hashicorp.com/connect-inject: "false"
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: does not have associated
     spec:
       affinity:
         podAntiAffinity:
@@ -398,6 +400,9 @@ spec:
       labels:
         app.kubernetes.io/name: vault
         component: server
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: does not have associated TTL
     spec:
       affinity:
         podAntiAffinity:

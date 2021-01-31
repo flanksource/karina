@@ -2,7 +2,7 @@ importConfigs:
   - minimal.yaml
 filebeat:
   - name: infra
-    version: 7.6.0
+    version: 7.10.2
     index: filebeat-infra
     prefix: com.flanksource.infra
     elasticsearch:
@@ -12,7 +12,7 @@ filebeat:
       port: 9200
       scheme: https
 journalbeat:
-  version: 7.6.0
+  version: 7.10.2
   elasticsearch:
     url: logs-es-http.eck.svc.cluster.local
     user: elastic
@@ -21,7 +21,7 @@ journalbeat:
     scheme: https
 auditbeat:
   disabled: true
-  version: 7.7.0
+  version: 7.10.2
   elasticsearch:
     url: logs-es-http.eck.svc.cluster.local
     user: elastic
@@ -29,7 +29,7 @@ auditbeat:
     port: 9200
     scheme: http
 packetbeat:
-  version: 7.6.1
+  version: 7.10.2
   elasticsearch:
     url: logs.127.0.0.1.nip.io
     user: elastic

@@ -153,6 +153,21 @@ spec:
     metadata:
       labels:
         app: ingress-nginx
+      annotations:
+        com.flanksource.infra.logs/enabled: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: while SSL handshaking to upstream
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: failed to query the DNS server for
+        com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: event.go
+        com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: "server returned error code:"
+        com.flanksource.infra.logs/processors.4.drop_event.when.contains.message: Error obtaining Endpoints for Service
+        com.flanksource.infra.logs/processors.5.drop_event.when.contains.message: Configuration changes detected, backend reload required
+        com.flanksource.infra.logs/processors.6.drop_event.when.contains.message: Backend successfully reloaded
+        com.flanksource.infra.logs/processors.7.drop_event.when.contains.message: Adding Secret
+        com.flanksource.infra.logs/processors.8.drop_event.when.contains.message: "type: 'Normal' reason: 'CREATE'"
+        com.flanksource.infra.logs/processors.9.drop_event.when.contains.message: was added and it is used in ingress annotations
+        com.flanksource.infra.logs/processors.10.drop_event.when.contains.message: Error obtaining X.509 certificate
+        com.flanksource.infra.logs/processors.11.drop_event.when.contains.message: Using default certificate
+        com.flanksource.infra.logs/processors.12.drop_event.when.contains.message: does not have any active Endpoint
     spec:
       serviceAccountName: nginx-ingress-serviceaccount
       volumes:

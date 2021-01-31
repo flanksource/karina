@@ -24,9 +24,11 @@ configuration:
     cluster_labels:
       application: spilo
     cluster_name_label: cluster-name
-    # custom_pod_annotations:
-    #   keya: valuea
-    #   keyb: valueb
+    custom_pod_annotations:
+      com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: "no action.  i am a secondary and i am following a leader"
+      com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: "no action.  i am the leader with the lock"
+      com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: "INFO: Lock owner:"
+      com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: "INFO: does not have lock"
     enable_init_containers: true
     enable_pod_antiaffinity: false
     enable_pod_disruption_budget: true

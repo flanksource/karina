@@ -84,8 +84,6 @@ metadata:
   labels:
     app: "harbor"
     component: portal
-  annotations:
-    reload/all: "true" # restart on cm/secret change
 spec:
   replicas: 1
   selector:
@@ -97,6 +95,8 @@ spec:
       labels:
         app: "harbor"
         component: portal
+      annotations:
+        reload/all: "true"
     spec:
       containers:
         - name: portal

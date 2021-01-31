@@ -160,12 +160,14 @@ func terminateConsul(platform *platform.Platform, name string) error {
 }
 
 func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
-	if err := backoff(func() error {
-		return terminateEtcd(platform, etcdClient, name)
-	}, platform.Logger, nil); err != nil {
-		return err
+	// if we are terminating the cluster then we don't need to worry about etcd
+	if !platform.Terminating {
+		if err := backoff(func() error {
+			return terminateEtcd(platform, etcdClient, name)
+		}, platform.Logger, nil); err != nil {
+			return err
+		}
 	}
-
 	if err := backoff(func() error {
 		return terminateConsul(platform, name)
 	}, platform.Logger, nil); err != nil {

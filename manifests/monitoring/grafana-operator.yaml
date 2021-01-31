@@ -304,11 +304,11 @@ kind: Deployment
 metadata:
   name: grafana-operator
   namespace: monitoring
-  annotations:
-    com.flanksource.infra.logs/processors.1.decode_json_fields.fields: message
-    com.flanksource.infra.logs/processors.1.decode_json_fields.target: ""
 spec:
   replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 100%
   selector:
     matchLabels:
       name: grafana-operator
@@ -316,6 +316,11 @@ spec:
     metadata:
       labels:
         name: grafana-operator
+      annotations:
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: SUCCESS
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: running periodic dashboard resync
+        com.flanksource.infra.logs/processors.3.decode_json_fields.fields: message
+        com.flanksource.infra.logs/processors.2.decode_json_fields.target: ""
     spec:
       serviceAccountName: grafana-operator
       containers:
@@ -324,6 +329,9 @@ spec:
           requests:
             cpu: 10m
             memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 256Mi
           args:
             - "--grafana-image=docker.io/grafana/grafana"
             - "--grafana-image-tag=6.6.2"

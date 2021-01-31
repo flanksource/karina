@@ -210,6 +210,12 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+      annotations:
+        reload/all: "true"
+        com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: Reconciling
+        com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: Nothing to update
+        com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
+        com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: Successfully Reconciled
     spec:
       containers:
         - args:
