@@ -34,3 +34,11 @@ receivers:
   - to: '{{.monitoring.alert_email}}'
     require_tls: false
   {{end}}
+  {{ if index .monitoring "alertmanager" }}
+  {{ if index .monitoring.alertmanager "opsgenieApiKey" }}
+  opsgenie_configs:
+    - api_key: {{ .monitoring.alertmanager.opsgenieApiKey }}
+      api_url: {{ .monitoring.alertmanager.opsgenieApiUrl | default "https://api.eu.opsgenie.com/" }}
+      priority: {{ print "{{.GroupLabels.priority}}" }}
+  {{ end }}
+  {{ end }}

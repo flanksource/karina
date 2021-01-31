@@ -15,8 +15,36 @@ spec:
   copyToNamespaces:
       {{- if index .monitoring "alertmanager"}}
       {{- if index .monitoring.alertmanager "configNamespaces"}}
-      {{- range $ns := .monitoring.alertmanager.configNamespaces }}
     namespaces:
+      {{- range $ns := .monitoring.alertmanager.configNamespaces }}
+      - {{ $ns }}
+      {{- end }}
+      {{- else }}
+    namespaces: []
+      {{- end }}
+      {{- else }}
+    namespaces: []
+      {{- end }}
+---
+apiVersion: templating.flanksource.com/v1
+kind: Template
+metadata:
+  name: alertmanager-opsgenie-secret
+spec:
+  source:
+    apiVersion: v1
+    kind: Secret
+    namespaceSelector:
+      matchLabels:
+        karina.flanksource.com/namespace-name: monitoring
+    labelSelector:
+      matchLabels:
+        alertmanagerConfig: main
+  copyToNamespaces:
+      {{- if index .monitoring "alertmanager"}}
+      {{- if index .monitoring.alertmanager "configNamespaces"}}
+    namespaces:
+      {{- range $ns := .monitoring.alertmanager.configNamespaces }}
       - {{ $ns }}
       {{- end }}
       {{- else }}
