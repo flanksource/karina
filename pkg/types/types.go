@@ -317,8 +317,9 @@ type Nginx struct {
 }
 
 type OAuth2Proxy struct {
-	Disabled bool   `yaml:"disabled" json:"disabled"`
-	Version  string `yaml:"version,omitempty" json:"version,omitempty"`
+	Disabled   bool     `yaml:"disabled" json:"disabled"`
+	Version    string   `yaml:"version,omitempty" json:"version,omitempty"`
+	OIDCGroups []string `yaml:"oidcGroups"`
 }
 
 type Ldap struct {

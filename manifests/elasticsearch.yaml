@@ -90,10 +90,12 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     kubernetes.io/tls-acme: "true"
-    platform.flanksource.com/restrict-to-groups: "cn=k8s,ou=groups,dc=example,dc=com"
+    {{ if not (index .oauth2Proxy "disabled") }}
+    platform.flanksource.com/restrict-to-groups: {{ join .oauth2Proxy.oidcGroups ";" }}
     platform.flanksource.com/pass-auth-headers: "false"
     platform.flanksource.com/extra-configuration-snippet: |
      proxy_set_header Authorization "Basic {{ (print "elastic:" (kget "secret/eck/logs-es-elastic-user" "elastic")) | base64.Encode }}";
+    {{ end }}
 spec:
   tls:
     - secretName: kibana-tls
