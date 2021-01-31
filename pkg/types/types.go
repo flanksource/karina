@@ -552,6 +552,7 @@ type AlertManager struct {
 	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	ConfigNamespaces []string `yaml:"configNamespaces" json:"configNamespaces"`
 	OpsgenieAPIKey   string   `yaml:"opsgenieApiKey" json:"opsgenieApiKey"`
+	OpsgenieAPIURL   string   `yaml:"opsgenieApiUrl" json:"opsgenieApiUrl"`
 }
 
 type Persistence struct {
