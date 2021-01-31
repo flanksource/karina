@@ -520,8 +520,13 @@ func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts Lo
 	ctx := c.api.Context
 	api := c.api.ServicesApi
 
+	virtualServer, resp, err := api.UpdateLoadBalancerVirtualServer(ctx, lb.Id, *lb)
+	if err != nil {
+		c.Errorf("failed to update load virtual server: %s", errorString(resp, err))
+	}
+
 	if err := c.updateLoadBalancerPool(lb, opts); err != nil {
-		return "", false, errors.Wrap(err, "failed to update load balancer pool")
+		c.Errorf("failed to update load balancer pool: %v", err)
 	}
 
 	changed := false
@@ -535,10 +540,6 @@ func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts Lo
 		return lb.IpAddress, true, nil
 	}
 
-	virtualServer, resp, err := api.UpdateLoadBalancerVirtualServer(ctx, lb.Id, *lb)
-	if err != nil {
-		return "", false, fmt.Errorf("failed to update virtual server: %s", errorString(resp, err))
-	}
 
 	return virtualServer.IpAddress, true, nil
 }
@@ -690,40 +691,44 @@ func (c *NSXClient) CreateOrUpdateTCPHealthCheck(id string, opts MonitorPort) (s
 			return "", err
 		}
 
-		changed := false
-		if monitor.MonitorPort != opts.Port {
-			changed = true
-			monitor.MonitorPort = opts.Port
-		}
-		if monitor.Timeout != opts.Timeout {
-			changed = true
-			monitor.Timeout = opts.Timeout
-		}
-		if monitor.Interval != opts.Interval {
-			changed = true
-			monitor.Interval = opts.Interval
-		}
-		if monitor.RiseCount != opts.RiseCount {
-			changed = true
-			monitor.RiseCount = opts.RiseCount
-		}
-		if monitor.FallCount != opts.FallCount {
-			changed = true
-			monitor.FallCount = opts.FallCount
-		}
+		// FIXME: Type of load balancer monitor can not be modified.
+		// monitor.ResourceType = "LbTcpMonitor"
 
-		if !changed {
-			return monitor.Id, nil
-		}
+		// // FIXME UpdateLoadBalancerTcpMonitor fails with cannot change type
+		// changed := false
+		// if monitor.MonitorPort != opts.Port {
+		// 	changed = true
+		// 	monitor.MonitorPort = opts.Port
+		// }
+		// if monitor.Timeout != opts.Timeout {
+		// 	changed = true
+		// 	monitor.Timeout = opts.Timeout
+		// }
+		// if monitor.Interval != opts.Interval {
+		// 	changed = true
+		// 	monitor.Interval = opts.Interval
+		// }
+		// if monitor.RiseCount != opts.RiseCount {
+		// 	changed = true
+		// 	monitor.RiseCount = opts.RiseCount
+		// }
+		// if monitor.FallCount != opts.FallCount {
+		// 	changed = true
+		// 	monitor.FallCount = opts.FallCount
+		// }
 
-		c.Logger.Tracef("Updating TCP monitor %s", id)
-		monitor, resp, err := c.api.ServicesApi.UpdateLoadBalancerTcpMonitor(context.TODO(), id, monitor)
-		if resp != nil && resp.Body != nil {
-			resp.Body.Close()
-		}
-		if err != nil {
-			return "", err
-		}
+		// if !changed {
+		// 	return monitor.Id, nil
+		// }
+
+		// c.Logger.Tracef("Updating TCP monitor %s: %+v", id, monitor)
+		// monitor, resp, err := c.api.ServicesApi.UpdateLoadBalancerTcpMonitor(context.TODO(), id, monitor)
+		// if resp != nil && resp.Body != nil {
+		// 	resp.Body.Close()
+		// }
+		// if err != nil {
+		// 	return "", err
+		// }
 		return monitor.Id, nil
 	}
 
