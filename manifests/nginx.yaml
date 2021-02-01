@@ -176,7 +176,7 @@ spec:
             name: lua-scripts
       hostNetwork: true
       {{ if .kind }}
-      {{ if not (eq .kind.workerCount 0) }}
+      {{ if not (eq ( conv.ToInt64 .kind.workerCount ) 0) }}
       tolerations:
         - key: "node-role.kubernetes.io/master"
           effect: "NoSchedule"
