@@ -335,8 +335,9 @@ type Ldap struct {
 	// GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS
 	GroupObjectClass string `yaml:"groupObjectClass,omitempty" json:"groupObjectClass,omitempty"`
 	// GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
-	GroupNameAttr string  `yaml:"groupNameAttr,omitempty" json:"groupNameAttr,omitempty"`
-	E2E           LdapE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+	GroupNameAttr string   `yaml:"groupNameAttr,omitempty" json:"groupNameAttr,omitempty"`
+	UserGroups    []string `yaml:"userGroups" json:"userGroups"`
+	E2E           LdapE2E  `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
 type LdapE2E struct {
