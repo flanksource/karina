@@ -18,6 +18,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/ingress"
+	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/journalbeat"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
@@ -65,6 +66,7 @@ var Phases = map[string]DeployFn{
 	"gitops":               flux.Install,
 	"git-operator":         gitoperator.Install,
 	"harbor":               harbor.Deploy,
+	"istio-operator":       istiooperator.Install,
 	"journalbeat":          journalbeat.Deploy,
 	"kiosk":                kiosk.Deploy,
 	"kpack":                kpack.Deploy,

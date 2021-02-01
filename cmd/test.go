@@ -20,6 +20,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/harbor"
+	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
@@ -152,6 +153,7 @@ func init() {
 		"gitops":               flux.Test,
 		"git-operator":         gitoperator.Test,
 		"harbor":               harbor.Test,
+		"istio-operator":       istiooperator.Test,
 		"kiosk":                kiosk.Test,
 		"kpack":                kpack.Test,
 		"monitoring":           monitoring.Test,
