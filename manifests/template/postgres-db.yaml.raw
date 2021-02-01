@@ -286,7 +286,7 @@ spec:
               key: password
               name: postgres.postgres-{{.metadata.name}}.credentials
         postgres:
-          - connection: "user=$DATA_SOURCE_USER password=$DATA_SOURCE_PASS host=postgres-{{.metadata.name}} port=5432 dbname=postgres sslmode=disable"
+          - connection: "user=$DATA_SOURCE_USER password=$DATA_SOURCE_PASS host=postgres-{{.metadata.name}}.postgres-operator port=5432 dbname=postgres sslmode=disable"
             query: "SELECT 1"
             results: 1
             driver: postgres
