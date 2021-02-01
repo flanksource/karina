@@ -91,7 +91,11 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     kubernetes.io/tls-acme: "true"
     {{ if not (index .oauth2Proxy "disabled") }}
-    platform.flanksource.com/restrict-to-groups: {{ join .oauth2Proxy.oidcGroups ";" }}
+    {{ if eq (len .ldap.userGroups) 0}}
+    platform.flanksource.com/restrict-to-groups: {{ .ldap.adminGroup }}
+    {{ else }}
+    platform.flanksource.com/restrict-to-groups: {{ .ldap.adminGroup }};{{ join .ldap.userGroups ";" }}
+    {{ end }}
     platform.flanksource.com/pass-auth-headers: "false"
     platform.flanksource.com/extra-configuration-snippet: |
      proxy_set_header Authorization "Basic {{ (print "elastic:" (kget "secret/eck/logs-es-elastic-user" "elastic")) | base64.Encode }}";
