@@ -15,7 +15,7 @@ spec:
   copyToNamespaces:
     namespaceSelector:
       matchLabels:
-        namespace-role: platform
+        apps.kubernetes.io/managed-by: karina
     {{- if index .monitoring "alertmanager"}}
     {{- if index .monitoring.alertmanager "configNamespaces"}}
     namespaces:
@@ -46,7 +46,7 @@ spec:
   copyToNamespaces:
     namespaceSelector:
       matchLabels:
-        namespace-role: platform
+        apps.kubernetes.io/managed-by: karina
     {{- if index .monitoring "alertmanager"}}
     {{- if index .monitoring.alertmanager "configNamespaces"}}
     namespaces:
