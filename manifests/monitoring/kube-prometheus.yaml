@@ -31,44 +31,6 @@ spec:
     matchLabels:
       apps.kubernetes.io/managed-by: karina
 ---
-{{ if index .monitoring "alertmanager" }}
-{{ if index .monitoring.alertmanager "opsgenieApiKey" }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: opsgenie-api-key
-  namespace: monitoring
-  labels:
-    alertmanagerConfig: main
-data:
-  api-key: {{ .monitoring.alertmanager.opsgenieApiKey | base64.Encode }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: opsgenie-alert-relabeling
-  namespace: monitoring
-stringData:
-  config.yaml: |
-    - source_labels: [severity]
-      target_label: priority
-      regex: "none" # Seem only the WatchDog alert has "none" severity
-      replacement: "P5"
-    - source_labels: [severity]
-      target_label: priority
-      regex: "info"
-      replacement: "P3"
-    - source_labels: [severity]
-      target_label: priority
-      regex: "warning"
-      replacement: "P2"
-    - source_labels: [severity]
-      target_label: priority
-      regex: "critical"
-      replacement: "P1"
----
-{{ end }}
-{{ end }}
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
@@ -95,16 +57,6 @@ spec:
         smtp_from: '{{.smtp.from}}'
         {{end}}
       {{end}}
-      {{ if index .monitoring "alertmanager" }}
-      {{ if index .monitoring.alertmanager "opsgenieApiKey" }}
-      opsgenieConfigs:
-      - apiKey:
-          name: "opsgenie-api-key"
-          key: "api-key"
-        apiURL: {{ .monitoring.alertmanager.opsgenieApiUrl | default "https://api.eu.opsgenie.com/" }}
-        priority: "{{ print "{{ .GroupLabels.priority }}" }}"
-      {{ end }}
-      {{ end }}
   inhibitRules:
     - sourceMatch:
         - name: severity
@@ -284,9 +236,11 @@ spec:
   externalLabels:
     cluster: {{.name}}
   version: {{.monitoring.prometheus.version}}
+  {{ if (index .monitoring.alertmanager "alertRelabelingConfig") }}
   additionalAlertRelabelConfigs:
-    name: opsgenie-alert-relabeling
+    name: {{ .monitoring.alertmanager.alertRelabelingConfig }}
     key: config.yaml
+  {{ end }}
   {{- if (index .monitoring "prometheus")  }}
   {{- if (index .monitoring.prometheus "persistence") }}
   storage:
