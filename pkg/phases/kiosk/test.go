@@ -360,8 +360,7 @@ func createAccount(p *platform.Platform, test *console.TestResults, user, accoun
 		ObjectMeta: metav1.ObjectMeta{
 			Name: accountName,
 			Labels: map[string]string{
-				"openpolicyagent.org/webhook":    "ignore",
-				"admission.gatekeeper.sh/ignore": "true",
+				"apps.kubernetes.io/managed-by": "karina",
 			},
 		},
 		Spec: kioskapi.AccountSpec{

@@ -4,7 +4,7 @@ kind: Namespace
 metadata:
   name: cert-manager
   labels:
-    namespace-role: platform
+    apps.kubernetes.io/managed-by: karina
 ---
 apiVersion: v1
 kind: ServiceAccount

@@ -224,10 +224,10 @@ webhooks:
   - name: validating-webhook.openpolicyagent.org
     namespaceSelector:
       matchExpressions:
-        - key: openpolicyagent.org/webhook
+        - key: apps.kubernetes.io/managed-by
           operator: NotIn
           values:
-            - ignore
+            - karina
     rules:
       - operations: ["CREATE", "UPDATE"]
         apiGroups: ["*"]

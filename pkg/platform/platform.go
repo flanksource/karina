@@ -829,9 +829,7 @@ func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*
 func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {
 	// set default labels
 	defaultLabels := make(map[string]string)
-	defaultLabels["openpolicyagent.org/webhook"] = "ignore"
-	defaultLabels["admission.gatekeeper.sh/ignore"] = "true"
-	defaultLabels["namespace-role"] = "platform"
+	defaultLabels["apps.kubernetes.io/managed-by"] = "karina"
 	if labels != nil {
 		for k, v := range defaultLabels {
 			labels[k] = v
@@ -859,8 +857,7 @@ func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels ma
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {
 	annotations := map[string]string{
-		"openpolicyagent.org/webhook":    "ignore",
-		"admission.gatekeeper.sh/ignore": "true",
+		"apps.kubernetes.io/managed-by": "karina",
 	}
 	return annotations
 }
