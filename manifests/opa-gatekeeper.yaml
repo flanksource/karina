@@ -468,7 +468,7 @@ webhooks:
   failurePolicy: Fail
   objectSelector:
     matchExpressions:
-    - key: admission.gatekeeper.sh/ignore
+    - key: apps.kubernetes.io/managed-by
       operator: Exists
   name: check-ignore-label.gatekeeper.sh
   rules:
