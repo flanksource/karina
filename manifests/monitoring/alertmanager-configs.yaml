@@ -13,18 +13,21 @@ spec:
       matchLabels:
         alertmanagerConfig: main
   copyToNamespaces:
-      {{- if index .monitoring "alertmanager"}}
-      {{- if index .monitoring.alertmanager "configNamespaces"}}
+    namespaceSelector:
+      matchLabels:
+        apps.kubernetes.io/managed-by: karina
+    {{- if index .monitoring "alertmanager"}}
+    {{- if index .monitoring.alertmanager "configNamespaces"}}
     namespaces:
-      {{- range $ns := .monitoring.alertmanager.configNamespaces }}
+    {{- range $ns := .monitoring.alertmanager.configNamespaces }}
       - {{ $ns }}
-      {{- end }}
-      {{- else }}
+    {{- end }}
+    {{- else }}
     namespaces: []
-      {{- end }}
-      {{- else }}
+    {{- end }}
+    {{- else }}
     namespaces: []
-      {{- end }}
+    {{- end }}
 ---
 apiVersion: templating.flanksource.com/v1
 kind: Template
@@ -41,15 +44,18 @@ spec:
       matchLabels:
         alertmanagerConfig: main
   copyToNamespaces:
-      {{- if index .monitoring "alertmanager"}}
-      {{- if index .monitoring.alertmanager "configNamespaces"}}
+    namespaceSelector:
+      matchLabels:
+        apps.kubernetes.io/managed-by: karina
+    {{- if index .monitoring "alertmanager"}}
+    {{- if index .monitoring.alertmanager "configNamespaces"}}
     namespaces:
-      {{- range $ns := .monitoring.alertmanager.configNamespaces }}
+    {{- range $ns := .monitoring.alertmanager.configNamespaces }}
       - {{ $ns }}
-      {{- end }}
-      {{- else }}
+    {{- end }}
+    {{- else }}
     namespaces: []
-      {{- end }}
-      {{- else }}
+    {{- end }}
+    {{- else }}
     namespaces: []
-      {{- end }}
+    {{- end }}
