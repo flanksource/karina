@@ -540,7 +540,6 @@ func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts Lo
 		return lb.IpAddress, true, nil
 	}
 
-
 	return virtualServer.IpAddress, true, nil
 }
 

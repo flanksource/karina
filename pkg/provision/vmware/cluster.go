@@ -145,7 +145,6 @@ func (cluster *vmwareCluster) SetTags(vm types.Machine, tags map[string]string) 
 				log.Errorf("Failed to set tags for %s %s: %v", categoryID, tagName, err)
 			}
 		}
-
 	}
 
 	return nil
