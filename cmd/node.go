@@ -80,7 +80,6 @@ func init() {
 			}
 
 			for _, node := range nodes.Items {
-
 				for _, address := range node.Status.Addresses {
 					if address.Type == "InternalIP" {
 						fmt.Println(address.Address)

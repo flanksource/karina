@@ -29,7 +29,7 @@ func Install(p *platform.Platform) error {
 		"velero":            p.Velero.IsDisabled,
 		"vpa":               p.VPA.IsDisabled,
 		"kiosk":             p.Kiosk.IsDisabled,
-		"istio":			 p.IstioOperator.IsDisabled,
+		"istio":             p.IstioOperator.IsDisabled,
 	}
 
 	wg := sync.WaitGroup{}
