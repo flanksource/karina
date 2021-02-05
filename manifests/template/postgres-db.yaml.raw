@@ -266,7 +266,7 @@ spec:
             secretKey: $AWS_SECRET_ACCESS_KEY
             accessKey: $AWS_ACCESS_KEY_ID
             objectPath: "postgres-{{.metadata.name}}"
-            minSize: 31457280 #30MB
+            minSize: 10240 #10KiB
             maxAge: 86400 # 24 hours
             usePathStyle: true
     - apiVersion: canaries.flanksource.com/v1
