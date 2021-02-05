@@ -236,10 +236,12 @@ spec:
   externalLabels:
     cluster: {{.name}}
   version: {{.monitoring.prometheus.version}}
+  {{ if (index .monitoring "alertmanager") }}
   {{ if (index .monitoring.alertmanager "alertRelabelingConfig") }}
   additionalAlertRelabelConfigs:
     name: {{ .monitoring.alertmanager.alertRelabelingConfig }}
     key: config.yaml
+  {{ end }}
   {{ end }}
   {{- if (index .monitoring "prometheus")  }}
   {{- if (index .monitoring.prometheus "persistence") }}
