@@ -14,25 +14,25 @@
 
 ---
 
-**karina** is a toolkit for building and operating kubernetes based, multi-cluster platforms. It includes the following high level functions:
+**karina** is a toolkit for building and operating Kubernetes based, multi-cluster platforms. It includes the following high level functions:
 
 
 
 ### Features
 
-* **Provision** kubernetes clusters on vSphere (with NSX-T or Calico), Kind and Cluster API (Coming Soon)
+* **Provision** Kubernetes clusters on vSphere (with NSX-T or Calico), Kind and Cluster API (Coming Soon)
 * **Deploy** a production runtime for monitoring, logging, security, multi-tenancy, backups, storage, container registry and DBaaS
 * **Batteries Included** - Most components require just a version to enable and are pre-configured with ingress, LDAP and TLS (managed by cert-manager) due to a shared infrastructure model that includes information such as top-level wild card domain, LDAP connection details, S3 connection details, etc.
-* **Escape Hatches** for when the defaults don't work for you, easily use kustomize patches to configure resources limits, labels, annotations and arguments.
-* **Integrated, but independent** - karina works best when used to provision a kubernetes cluster and then deploy and test a production runtime, but each function can also be used independently, i.e you can run karina e2e tests in an environment that wasn't provisioned or deployed by karina.
+* **Escape Hatches** for when the defaults don't work for you, easily use kustomize patches to configure resource limits, labels, annotations and arguments.
+* **Integrated, but independent** - karina works best when used to provision a Kubernetes cluster and then deploy and test a production runtime, but each function can also be used independently, i.e you can run karina e2e tests in an environment that wasn't provisioned or deployed by karina.
 * **De-Centralized** multi-cluster authentication using a root CA for administrator-level offline authentication, and Dex for online user authentication.
 CLI Clients for
-* **CLI Addons/Wrappers** to perform day 2 and incident mitigation tasks such as rolling updates, restarts, backup, restore, failover, replication, logging configuration, system dumps etc..
+* **CLI Addons/Wrappers** to perform day 2 and incident mitigation tasks such as rolling updates, restarts, backup, restore, failover, replication, logging configuration, system dumps etc.
 
 
 
 ### Getting Started
-To get started provisioning see the quickstart's for [Kind](https://karina.docs.flanksource.com/admin-guide/provisioning/kind/) and [vSphere](https://karina.docs.flanksource.com/admin-guide/provisioning/vsphere/) <br>
+To get started provisioning see the quickstart guides for [Kind](https://karina.docs.flanksource.com/admin-guide/provisioning/kind/) and [vSphere](https://karina.docs.flanksource.com/admin-guide/provisioning/vsphere/) <br>
 
 ### Production Runtime
 
@@ -52,20 +52,19 @@ To get started provisioning see the quickstart's for [Kind](https://karina.docs.
 
 #### Production Runtime
 
-A production runtime is the suite of tools that are added to a Kubernetes cluster to provide functionality such as Authentication, Logging and  Monitoring
+A production runtime is the suite of tools that are added to a Kubernetes cluster to provide functionality such as Authentication, Logging and Monitoring
 
-| Runtime                                                      | Description |
-| ------------------------------------------------------------ | ----------- |
-| [Bitnami Production Runtime](https://github.com/bitnami/kube-prod-runtime) |             |
-| [Banzai Pipeline](https://github.com/banzaicloud/pipeline)   |             |
-| [Rancher](https://rancher.com/docs/rancher/v2.x/en/overview/) |             |
-| [OpenShift](https://www.openshift.com/)                      |             |
-
-lokomotive
+| Runtime                                                                     | Description |
+| --------------------------------------------------------------------------- | ----------- |
+| [Bitnami Production Runtime](https://github.com/bitnami/kube-prod-runtime)  |             |
+| [Banzai Pipeline](https://github.com/banzaicloud/pipeline)                  |             |
+| [Rancher](https://rancher.com/docs/rancher/v2.x/en/overview/)               |             |
+| [OpenShift](https://www.openshift.com/)                                     |             |
+| [Lokomotive](https://kinvolk.io/docs/lokomotive/0.6/)                       |             | 
 
 #### Provisioners
 
-Provisioners are responsible for creating and managing infrastructure and VM's for a kubernetes cluster to run on.
+Provisioners are responsible for creating and managing infrastructure and VM's for a Kubernetes cluster to run on.
 
 | Framework                                                    | Comparison                                                   |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -75,8 +74,7 @@ Provisioners are responsible for creating and managing infrastructure and VM's f
 | [OpenShift](https://www.openshift.com/)                      |                                                              |
 | [kops](https://kops.sigs.k8s.io/)                            |                                                              |
 | [kubespray](https://github.com/kubernetes-sigs/kubespray)    |                                                              |
-
-lokomotive
+| [Lokomotive](https://kinvolk.io/docs/lokomotive/0.6/concepts/components/)
 
 #### Deployment Tools
 
@@ -93,5 +91,5 @@ lokomotive
 
 ##### Where does the name come from?
 
-Karina is named after the [Carina Constellation](https://en.wikipedia.org/wiki/Carina_(constellation)) - latin for the hull or keel of a ship.
+Karina is named after the [Carina Constellation](https://en.wikipedia.org/wiki/Carina_(constellation)) - Latin for the hull or keel of a ship.
 
