@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/flanksource/karina/pkg/phases/antrea"
+	"github.com/flanksource/karina/pkg/phases/argocdoperator"
 	"github.com/flanksource/karina/pkg/phases/auditbeat"
 	"github.com/flanksource/karina/pkg/phases/base"
 	"github.com/flanksource/karina/pkg/phases/calico"
@@ -51,6 +52,7 @@ type DeployFn func(p *platform.Platform) error
 
 var Phases = map[string]DeployFn{
 	"pre":                  pre.Install,
+	"argocd-operator":      argocdoperator.Deploy,
 	"antrea":               antrea.Install,
 	"auditbeat":            auditbeat.Deploy,
 	"base":                 base.Install,

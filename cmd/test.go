@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/karina/pkg/phases/argocdoperator"
 	"github.com/flanksource/karina/pkg/phases/base"
 	"github.com/flanksource/karina/pkg/phases/canary"
 	"github.com/flanksource/karina/pkg/phases/configmapreloader"
@@ -141,6 +142,7 @@ func init() {
 	}
 
 	tests := map[string]TestFn{
+		"argocd-operator":      argocdoperator.Test,
 		"audit":                kubeadm.TestAudit,
 		"base":                 base.Test,
 		"canary":               canary.TestCanary,
