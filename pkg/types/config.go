@@ -3,14 +3,15 @@ package types
 
 // +kubebuilder:skip
 type PlatformConfig struct {
-	Brand         Brand          `yaml:"brand,omitempty" json:"brand,omitempty"`
-	Version       string         `yaml:"version" json:"version,omitempty"`
-	Velero        Velero         `yaml:"velero,omitempty" json:"velero,omitempty"`
-	CA            *CA            `yaml:"ca" json:"ca,omitempty"`
-	CanaryChecker *CanaryChecker `yaml:"canaryChecker,omitempty" json:"canaryChecker,omitempty"`
-	Calico        *Calico        `yaml:"calico,omitempty" json:"calico,omitempty"`
-	Antrea        *Antrea        `yaml:"antrea,omitempty" json:"antrea,omitempty"`
-	CertManager   CertManager    `yaml:"certmanager,omitempty" json:"certmanager,omitempty"`
+	ArgocdOperator ArgocdOperator `yaml:"argocdOperator,omitempty" json:"argocdOperator,omitempty"`
+	Brand          Brand          `yaml:"brand,omitempty" json:"brand,omitempty"`
+	Version        string         `yaml:"version" json:"version,omitempty"`
+	Velero         Velero         `yaml:"velero,omitempty" json:"velero,omitempty"`
+	CA             *CA            `yaml:"ca" json:"ca,omitempty"`
+	CanaryChecker  *CanaryChecker `yaml:"canaryChecker,omitempty" json:"canaryChecker,omitempty"`
+	Calico         *Calico        `yaml:"calico,omitempty" json:"calico,omitempty"`
+	Antrea         *Antrea        `yaml:"antrea,omitempty" json:"antrea,omitempty"`
+	CertManager    CertManager    `yaml:"certmanager,omitempty" json:"certmanager,omitempty"`
 	// The endpoint for an externally hosted consul cluster
 	// that is used for master discovery
 	Consul         string     `yaml:"consul" json:"consul,omitempty"`

@@ -1,0 +1,133 @@
+# This yaml is built by this command: kustomize build "https://github.com/argoproj-labs/argocd-operator/deploy?ref=cd8ed15cc61b7d5289c8c9180874aeb1c7073b7f"
+# but all CRDs has been moved to crds/argocd-operator.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: argocd-operator
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - endpoints
+      - events
+      - persistentvolumeclaims
+      - pods
+      - secrets
+      - serviceaccounts
+      - services
+      - services/finalizers
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resourceNames:
+      - argocd-operator
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - argocds
+      - argocds/finalizers
+      - argocds/status
+      - argocdexports
+      - argocdexports/finalizers
+      - argocdexports/status
+    verbs:
+      - '*'
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - '*'
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - '*'
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - '*'
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - prometheuses
+      - servicemonitors
+    verbs:
+      - '*'
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+      - routes/custom-host
+    verbs:
+      - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-operator
+subjects:
+  - kind: ServiceAccount
+    name: argocd-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: argocd-operator
+  template:
+    metadata:
+      labels:
+        name: argocd-operator
+    spec:
+      containers:
+        - command:
+            - argocd-operator
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: argocd-operator
+          image: quay.io/redhat-cop/argocd-operator:{{.argocdOperator.version}}
+          imagePullPolicy: Always
+          name: argocd-operator
+          resources: {}
+      serviceAccountName: argocd-operator
