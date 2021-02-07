@@ -20,6 +20,7 @@ func Install(p *platform.Platform) error {
 		"antrea":            func() bool { return p.Antrea == nil || p.Antrea.IsDisabled() },
 		"calico":            func() bool { return p.Calico == nil || p.Calico.IsDisabled() },
 		"helm-operator":     func() bool { return len(p.GitOps) == 0 },
+		"argocd-operator":   p.ArgocdOperator.IsDisabled,
 		"eck":               p.ECK.IsDisabled,
 		"gatekeeper":        p.Gatekeeper.IsDisabled,
 		"postgres-db":       p.PostgresOperator.IsDisabled,

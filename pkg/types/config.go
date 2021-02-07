@@ -3,7 +3,7 @@ package types
 
 // +kubebuilder:skip
 type PlatformConfig struct {
-	ArgoCDOperator ArgoCDOperator `yaml:"argoCDOperator,omitempty" json:"argoCDOperator,omitempty"`
+	ArgocdOperator ArgocdOperator `yaml:"argocdOperator,omitempty" json:"argocdOperator,omitempty"`
 	Brand          Brand          `yaml:"brand,omitempty" json:"brand,omitempty"`
 	Version        string         `yaml:"version" json:"version,omitempty"`
 	Velero         Velero         `yaml:"velero,omitempty" json:"velero,omitempty"`

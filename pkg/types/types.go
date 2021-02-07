@@ -255,7 +255,7 @@ type PostgresOperator struct {
 	BackupImage    string `yaml:"backupImage,omitempty" json:"backupImage,omitempty"`
 }
 
-type ArgoCDOperator struct {
+type ArgocdOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 

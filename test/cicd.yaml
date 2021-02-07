@@ -3,6 +3,8 @@ importConfigs:
 tekton:
   version: v0.12.1
   dashboardVersion: v0.6.1.5
+argocdOperator:
+  version: v0.0.15
 gitops:
   - name: karina
     helmOperatorVersion: 1.2.0

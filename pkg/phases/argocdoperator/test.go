@@ -23,7 +23,7 @@ func NewArgoCDClusterConfig(name string) *argo.ArgoCD {
 }
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.ArgoCDOperator.IsDisabled() {
+	if p.ArgocdOperator.IsDisabled() {
 		test.Skipf("argocd-operator", "ArgoCD Operator is disabled")
 		return
 	}
@@ -36,7 +36,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 func TestE2E(p *platform.Platform, test *console.TestResults) {
 	testName := "argocd-operator-e2e"
-	if p.ArgoCDOperator.IsDisabled() {
+	if p.ArgocdOperator.IsDisabled() {
 		test.Skipf(testName, "ArgoCD Operator is disabled")
 		return
 	}
@@ -52,18 +52,20 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 
 	test.Infof("Checking if ArgoCD cluster is healthy...")
 	// List of expected deployment to be deployed by ArgoCD Operator for ArgoCD Cluster
-	expectedDeployments := []string{
-		fmt.Sprintf("%s-application-controller", clusterName),
-		fmt.Sprintf("%s-dex-server", clusterName),
-		fmt.Sprintf("%s-redis", clusterName),
-		fmt.Sprintf("%s-repo-server", clusterName),
-		fmt.Sprintf("%s-server", clusterName),
+	expectedDeploymentTypes := []string{
+		"application-controller",
+		"dex-server",
+		"redis",
+		"repo-server",
+		"server",
 	}
 
-	for _, deployName := range expectedDeployments {
-		err := p.WaitForDeployment(Namespace, deployName, 1*time.Minute)
+	for _, deployTypeName := range expectedDeploymentTypes {
+		deploymentName := fmt.Sprintf("%s-%s", clusterName, deployTypeName)
+
+		err := p.WaitForDeployment(Namespace, deploymentName, 1*time.Minute)
 		if err != nil {
-			test.Failf(testName, "ArgoCD Cluster component %s is not healthy: %v", deployName, err)
+			test.Failf(testName, "ArgoCD Cluster component %s is not healthy: %v", deploymentName, err)
 			return
 		}
 	}
