@@ -40,6 +40,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		test.Skipf(testName, "ArgoCD Operator is disabled")
 		return
 	}
+
 	clusterName := "test-cluster"
 	testCluster := NewArgoCDClusterConfig(clusterName)
 	err := p.Apply(Namespace, testCluster)
@@ -49,6 +50,13 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	test.Passf(testName, "Cluster %s deployed", clusterName)
+
+	// TODO: Temporarily only. We won't need this anymore once ArgoCD release a new version that incorporate this fix: https://github.com/argoproj-labs/argocd-operator/pull/224
+	// Deploying necessary RBAC Objects for ArgoCD Cluster to fully working
+	if err := p.ApplySpecs(Namespace, "argocd-rbac.yaml"); err != nil {
+		test.Failf(testName, "Error creating RBAC Objects for ArgoCD Cluster: %v", err)
+		return
+	}
 
 	test.Infof("Checking if ArgoCD cluster is healthy...")
 	// List of expected deployment to be deployed by ArgoCD Operator for ArgoCD Cluster
@@ -84,7 +92,11 @@ func removeE2EArgoCluster(p *platform.Platform, clusterName string, test *consol
 	})
 	if err != nil {
 		test.Warnf("Failed to cleanup ArgoCD Test Cluster %s in namespace %s", clusterName, Namespace)
-		return
 	}
-	test.Infof("Deleted ArgoCD cluster: %s", clusterName)
+
+	if err := p.DeleteSpecs("", "argocd-rbac.yaml"); err != nil {
+		test.Warnf("Failed to delete ArgoCD Cluster RBAC Objects: %v", err)
+	}
+
+	test.Infof("Finished cleanup ArgoCD Cluster: %s", clusterName)
 }
