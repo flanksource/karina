@@ -10,20 +10,7 @@ data:
   tls.crt: ""
   tls.key: ""
 type: kubernetes.io/tls
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: gatekeeper-webhook-cert
-  namespace: gatekeeper-system
-spec:
-  dnsNames:
-  - gatekeeper-webhook-service.gatekeeper-system.svc
-  - gatekeeper-webhook-service.gatekeeper-system.svc.cluster.local
-  secretName: gatekeeper-webhook-server-cert
-  issuerRef:
-    name: default-issuer
-    kind: ClusterIssuer
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -496,3 +483,17 @@ spec:
       - {{ $ns }}
       {{- end }}
       processes: ["*"]
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: gatekeeper-webhook-cert
+  namespace: gatekeeper-system
+spec:
+  dnsNames:
+    - gatekeeper-webhook-service.gatekeeper-system.svc
+    - gatekeeper-webhook-service.gatekeeper-system.svc.cluster.local
+  secretName: gatekeeper-webhook-server-cert
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
