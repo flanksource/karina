@@ -48,5 +48,5 @@ func TestTemplates(p *platform.Platform, test *console.TestResults) {
 		test.Failf(templateTestName, "direct patch not templated. expected '%v', got '%v'", os.Getenv(templateTestEnv), cmFile.Data["configuredValue"])
 		return
 	}
-	test.Passf(templateTestName, "patch and direct patch templated using'%v'", os.Getenv(templateTestEnv))
+	test.Passf(templateTestName, "patch and direct patch templated using '%v'", os.Getenv(templateTestEnv))
 }
