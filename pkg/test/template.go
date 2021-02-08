@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	templateTestName        = "Patch Template"
+	templateTestName        = "patch-template"
 	templateTestNamespace   = "default"
 	templateTestFixturePath = "test/fixtures/template-test.yaml"
 	templateTestEnv         = "CONFIGURED_VALUE"
@@ -36,8 +36,7 @@ func TestTemplates(p *platform.Platform, test *console.TestResults) {
 	}
 	if cmFile.Data["configuredValue"] != os.Getenv(templateTestEnv) {
 		test.Failf(templateTestName, "patch file not templated. expected '%v', got '%v'", os.Getenv(templateTestEnv), cmFile.Data["configuredValue"])
-	} else {
-		test.Passf(templateTestName, "patch file templated using'%v'", os.Getenv(templateTestEnv))
+		return
 	}
 
 	cmDirect, err := client.CoreV1().ConfigMaps(templateTestNamespace).Get(context.TODO(), "template-test-direct", metav1.GetOptions{})
@@ -47,7 +46,7 @@ func TestTemplates(p *platform.Platform, test *console.TestResults) {
 	}
 	if cmDirect.Data["configuredValue"] != os.Getenv(templateTestEnv) {
 		test.Failf(templateTestName, "direct patch not templated. expected '%v', got '%v'", os.Getenv(templateTestEnv), cmFile.Data["configuredValue"])
-	} else {
-		test.Passf(templateTestName, "direct patch templated using'%v'", os.Getenv(templateTestEnv))
+		return
 	}
+	test.Passf(templateTestName, "patch and direct patch templated using'%v'", os.Getenv(templateTestEnv))
 }
