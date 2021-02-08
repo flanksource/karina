@@ -37,10 +37,10 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	// 200 or 403 response from minio is fine, 503 is not.
 	if err != nil {
-		test.Failf("minio", "minio GET / - %v", err)
+		test.Failf("minio-response", "minio GET / - %v", err)
 	} else if resp.StatusCode == 200 || resp.StatusCode == 403 {
-		test.Passf("minio", "minio GET /")
+		test.Passf("minio-response", "minio GET /")
 	} else {
-		test.Failf("minio", "minio GET / - %v", resp.StatusCode)
+		test.Failf("minio-response", "minio GET / - %v", resp.StatusCode)
 	}
 }
