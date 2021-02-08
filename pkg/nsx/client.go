@@ -520,11 +520,6 @@ func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts Lo
 	ctx := c.api.Context
 	api := c.api.ServicesApi
 
-	virtualServer, resp, err := api.UpdateLoadBalancerVirtualServer(ctx, lb.Id, *lb)
-	if err != nil {
-		c.Errorf("failed to update load virtual server: %s", errorString(resp, err))
-	}
-
 	if err := c.updateLoadBalancerPool(lb, opts); err != nil {
 		c.Errorf("failed to update load balancer pool: %v", err)
 	}
@@ -538,6 +533,11 @@ func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts Lo
 
 	if !changed {
 		return lb.IpAddress, true, nil
+	}
+
+	virtualServer, resp, err := api.UpdateLoadBalancerVirtualServer(ctx, lb.Id, *lb)
+	if err != nil {
+		c.Errorf("failed to update load virtual server: %s", errorString(resp, err))
 	}
 
 	return virtualServer.IpAddress, true, nil
