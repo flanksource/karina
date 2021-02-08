@@ -3,7 +3,6 @@ package monitoring
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -136,8 +135,8 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		targetEndpointName := activeTarget.DiscoveredLabels["__meta_kubernetes_endpoints_name"]
 		targetEndpointAddress := activeTarget.DiscoveredLabels["__address__"]
 		if activeTarget.Health == "down" {
-			errs = append(errs, errors.New(fmt.Sprintf("%s (%s) endpoint is down\n %s",
-				targetEndpointName, targetEndpointAddress, activeTarget.LastError)))
+			errs = append(errs, fmt.Errorf("%s (%s) endpoint is down\n %s",
+				targetEndpointName, targetEndpointAddress, activeTarget.LastError))
 		}
 	}
 	if len(errs) > 0 {
@@ -176,7 +175,7 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 			continue
 		}
 		if alert.State == "firing" {
-			errs = append(errs, errors.New(fmt.Sprintf("%s alert is firing %s", alertname, alert.Labels)))
+			errs = append(errs, fmt.Errorf("%s alert is firing %s", alertname, alert.Labels))
 		}
 	}
 	if len(errs) > 0 {

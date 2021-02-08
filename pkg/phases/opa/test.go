@@ -134,13 +134,13 @@ func testE2E(p *platform.Platform, test *console.TestResults) {
 	errs := make([]error, 0)
 	for _, rejectedFixture := range rejectedFixtureFiles {
 		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name(), kubeconfig); err == nil {
-			errs = append(errs, errors.New(fmt.Sprintf("%s accepted as not expected", rejectedFixture.Name())))
+			errs = append(errs, fmt.Errorf("%s accepted as not expected", rejectedFixture.Name()))
 		}
 	}
 
 	for _, acceptedFixture := range acceptedFixtureFiles {
 		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name(), kubeconfig); err != nil {
-			errs = append(errs, errors.New(fmt.Sprintf("%s rejected as not expected", acceptedFixture.Name())))
+			errs = append(errs, fmt.Errorf("%s rejected as not expected", acceptedFixture.Name()))
 		}
 	}
 
@@ -252,21 +252,21 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 
 		object := &Fixture{}
 		if err := yaml.Unmarshal(fileContents, object); err != nil {
-			errs = append(errs, errors.New(fmt.Sprintf("%s: failed to unmarshal yaml", rejectedFixture.Name())))
+			errs = append(errs, fmt.Errorf("%s: failed to unmarshal yaml", rejectedFixture.Name()))
 			continue
 		}
 
 		configFile, found := object.Metadata.Annotations[e2eAnnotation]
 		if !found {
-			errs = append(errs, errors.New(fmt.Sprintf("%s: failed to find annotation %s",
-				rejectedFixture.Name(), e2eAnnotation)))
+			errs = append(errs, fmt.Errorf("%s: failed to find annotation %s",
+				rejectedFixture.Name(), e2eAnnotation))
 			continue
 		}
 
 		config := &ViolationConfig{}
 		if err := yaml.Unmarshal([]byte(configFile), config); err != nil {
-			errs = append(errs, errors.New(fmt.Sprintf("%s: failed to read violation config",
-				rejectedFixture.Name())))
+			errs = append(errs, fmt.Errorf("%s: failed to read violation config",
+				rejectedFixture.Name()))
 			continue
 		}
 
@@ -312,7 +312,8 @@ func findViolationUntil(p *platform.Platform, violation Violation, object *Fixtu
 
 	for {
 		if time.Now().After(timeout) {
-			return errors.New(fmt.Sprintf("received timeout waiting for violation %s for %s/%s/%s", violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name))
+			return fmt.Errorf("received timeout waiting for violation %s for %s/%s/%s",
+				violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name)
 		}
 		found, err := findViolation(client, violation, object)
 		p.Debugf("violation: %s found=%t err=%v", violation.Name, found, err)
