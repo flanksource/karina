@@ -483,6 +483,20 @@ spec:
       - {{ $ns }}
       {{- end }}
       processes: ["*"]
+  sync:
+    syncOnly:
+      - group: ""
+        version: "v1"
+        kind: "Namespace"
+      - group: ""
+        version: "v1"
+        kind: "Pod"
+      - group: "extensions"
+        version: "v1beta1"
+        kind: "Ingress"
+      - group: "networking.k8s.io"
+        version: "v1beta1"
+        kind: "Ingress"
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
