@@ -198,25 +198,26 @@ type AuditResourceViolation struct {
 }
 
 func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
+	testName := GatekeeperNamespace + "-e2e"
 	if p.Gatekeeper.IsDisabled() {
-		test.Skipf(GatekeeperNamespace, "Gatekeeper is not configured")
+		test.Skipf(testName, "Gatekeeper is not configured")
 		return
 	}
 
 	if p.Gatekeeper.E2E.Fixtures == "" {
-		test.Skipf(GatekeeperNamespace, "OPA fixtures path not configured under gatekeeper.e2e.fixtures")
+		test.Skipf(testName, "OPA fixtures path not configured under gatekeeper.e2e.fixtures")
 		return
 	}
 
 	kubectl := p.GetKubectl()
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
-		test.Failf(GatekeeperNamespace, "Failed to get kube config: %v", err)
+		test.Failf(testName, "Failed to get kube config: %v", err)
 		return
 	}
 
 	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.OPA.E2E.Fixtures, kubeconfig); err != nil {
-		test.Failf(GatekeeperNamespace, "Failed to setup namespaces: %v", err)
+		test.Failf(testName, "Failed to setup namespaces: %v", err)
 		return
 	}
 	defer func() {
@@ -229,7 +230,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-		test.Failf(GatekeeperNamespace, "Install: Failed to read dir: %s", err)
+		test.Failf(testName, "Install: Failed to read dir: %s", err)
 		return
 	}
 
@@ -283,9 +284,9 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 		for _, err := range errs {
 			failMessage += err.Error() + ". "
 		}
-		test.Failf(GatekeeperNamespace, failMessage)
+		test.Failf(testName, failMessage)
 	}
-	test.Passf(GatekeeperNamespace, "All fixtures accepted or rejected as expected")
+	test.Passf(testName, "All fixtures accepted or rejected as expected")
 }
 
 func findViolationUntil(p *platform.Platform, violation Violation, object *Fixture, timeout time.Time) error {
