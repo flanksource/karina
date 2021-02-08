@@ -86,6 +86,7 @@ func Install(p *platform.Platform) error {
 		if !strings.Contains(label, ",") {
 			//kube-resource-report does not like spaces
 			newRow := fmt.Sprintf("%v,%v,%.3f\n", DefaultRegion, label, value) // nolint: govet, staticcheck
+			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		} else {
 			split := strings.SplitAfterN(label, ",", 2)
