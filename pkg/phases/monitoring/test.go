@@ -36,8 +36,9 @@ func Test(p *platform.Platform, test *console.TestResults) {
 }
 
 func TestThanos(p *platform.Platform, test *console.TestResults) {
+	testName := "thanos"
 	if p.Thanos == nil || p.Thanos.IsDisabled() {
-		test.Skipf("thanos", "thanos is disabled")
+		test.Skipf(testName, "thanos is disabled")
 		return
 	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -46,7 +47,7 @@ func TestThanos(p *platform.Platform, test *console.TestResults) {
 
 	if p.Thanos.Mode != "observability" {
 		if p.Thanos.E2E.Server == "" {
-			test.Skipf("thanos", "Must specify a thanos server under e2e.server in client mode")
+			test.Skipf(testName, "Must specify a thanos server under e2e.server in client mode")
 			return
 		}
 		thanosHost = p.Thanos.E2E.Server
@@ -55,23 +56,23 @@ func TestThanos(p *platform.Platform, test *console.TestResults) {
 	pusher := pushMetric(pushGatewayHost)
 	err := pusher.Add()
 	if err != nil {
-		test.Failf("Thanos: client", "Failed to inject metric to client Prometheus via Pushgateway %v", err)
+		test.Failf(testName, "Client: Failed to inject metric to client Prometheus via Pushgateway %v", err)
 		return
 	}
-	test.Passf("Thanos client", "Metric successfully injected into the client Prometheus. Waiting to receive it in observability cluster.")
+	test.Infof("Client: Metric successfully injected into the client Prometheus. Waiting to receive it in observability cluster.")
 	retries := 12
 	for {
 		if retries == 0 {
-			test.Failf("Thanos observability", "Failed to get test metric in Observability cluster")
+			test.Failf(testName, "Failed to get test metric in Observability cluster")
 			break
 		}
 		metric, err := pullMetric(thanosHost)
 		if err != nil {
-			test.Failf("Thanos observability", "Failed to pull metric in Observability cluster %v", err)
+			test.Failf(testName, "Failed to pull metric in Observability cluster %v", err)
 		} else {
 			test.Tracef("Got metric %v", metric)
 			if metric.String() != "" {
-				test.Passf("Thanos observability", "Got test metric successfully in Observability cluster")
+				test.Passf(testName, "Got test metric successfully in Observability cluster")
 				_ = pusher.Delete()
 				test.Infof("Test metric deleted from pushgateway")
 				break
@@ -89,8 +90,9 @@ func TestThanos(p *platform.Platform, test *console.TestResults) {
 }
 
 func TestPrometheus(p *platform.Platform, test *console.TestResults) {
+	testName := "prometheus"
 	if p.Monitoring == nil || p.Monitoring.Disabled {
-		test.Skipf("prometheus", "monitoring is not configured or enabled")
+		test.Skipf(testName, "monitoring is not configured or enabled")
 		return
 	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -107,7 +109,7 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		}
 
 		if time.Since(startTime) > 180*time.Second {
-			test.Failf("prometheus", "Timeout connecting to Prometheus: %s", err)
+			test.Failf(testName, "Timeout connecting to Prometheus: %s", err)
 			return
 		}
 	}
@@ -120,22 +122,30 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 			break
 		}
 		if time.Since(startTime) > 240*time.Second {
-			test.Failf("prometheus", "Failed to get targets: %v", err)
+			test.Failf(testName, "Failed to get targets: %v", err)
 			return
 		}
 	}
 	if targets.Active == nil {
-		test.Failf("NoActiveTargets", "No active targets found in Prometheus")
+		test.Failf(testName, "No active targets found in Prometheus")
 		return
 	}
+	errs := make([]error, 0)
 	for _, activeTarget := range targets.Active {
 		targetEndpointName := activeTarget.DiscoveredLabels["__meta_kubernetes_endpoints_name"]
 		targetEndpointAddress := activeTarget.DiscoveredLabels["__address__"]
 		if activeTarget.Health == "down" {
-			test.Failf(targetEndpointName, "%s (%s) endpoint is down\n %s", targetEndpointName, targetEndpointAddress, activeTarget.LastError)
-		} else {
-			test.Passf(targetEndpointName, "%s (%s) endpoint is up", targetEndpointName, targetEndpointAddress)
+			errs = append(errs, fmt.Errorf("%s (%s) endpoint is down\n %s",
+				targetEndpointName, targetEndpointAddress, activeTarget.LastError))
 		}
+	}
+	if len(errs) > 0 {
+		failMessage := ""
+		for _, err := range errs {
+			failMessage += err.Error() + ". "
+		}
+		test.Failf(testName, failMessage)
+		return
 	}
 
 	alerts, err := promAPI.Alerts(context.Background())
@@ -144,13 +154,14 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	if alerts.Alerts == nil {
-		test.Failf("prometheus", "Watchdog alert should be firing")
+		test.Failf(testName, "Watchdog alert should be firing")
 		return
 	}
 	alertLevel := p.Monitoring.E2E.MinAlertLevel
 	if alertLevel == "" {
 		alertLevel = critical
 	}
+	errs = make([]error, 0)
 	for _, alert := range alerts.Alerts {
 		alertname := string(alert.Labels["alertname"])
 		severity := string(alert.Labels["severity"])
@@ -164,9 +175,18 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 			continue
 		}
 		if alert.State == "firing" {
-			test.Failf(alertname, "%s alert is firing %s", alertname, alert.Labels)
+			errs = append(errs, fmt.Errorf("%s alert is firing %s", alertname, alert.Labels))
 		}
 	}
+	if len(errs) > 0 {
+		failMessage := ""
+		for _, err := range errs {
+			failMessage += err.Error() + ". "
+		}
+		test.Failf(testName, failMessage)
+		return
+	}
+	test.Passf(testName, "All alerts are not firing")
 }
 
 func pushMetric(pushGatewayHost string) *push.Pusher {

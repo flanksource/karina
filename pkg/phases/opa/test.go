@@ -88,25 +88,26 @@ func TestOPA(p *platform.Platform, test *console.TestResults) {
 }
 
 func testE2E(p *platform.Platform, test *console.TestResults) {
+	testName := "opa-e2e"
 	if p.OPA == nil || p.OPA.Disabled {
-		test.Skipf("opa", "OPA is not configured")
+		test.Skipf(testName, "OPA is not configured")
 		return
 	}
 
 	if p.OPA.E2E.Fixtures == "" {
-		test.Skipf("opa", "OPA fixtures path not configured under opa.e2e.fixtures")
+		test.Skipf(testName, "OPA fixtures path not configured under opa.e2e.fixtures")
 		return
 	}
 
 	kubectl := p.GetKubectl()
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
-		test.Failf("opa", "Failed to get kube config: %v", err)
+		test.Failf(testName, "Failed to get kube config: %v", err)
 		return
 	}
 
 	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.OPA.E2E.Fixtures, kubeconfig); err != nil {
-		test.Failf("opa", "Failed to setup namespaces: %v", err)
+		test.Failf(testName, "Failed to setup namespaces: %v", err)
 		return
 	}
 	defer func() {
@@ -120,36 +121,42 @@ func testE2E(p *platform.Platform, test *console.TestResults) {
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-		test.Failf("opa", "Install: Failed to read dir: %s", err)
+		test.Failf(testName, "Install: Failed to read dir: %s", err)
 		return
 	}
 
 	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)
 	if err != nil {
-		test.Failf("opa", "Failed to list accepted fixtures: %v", err)
+		test.Failf(testName, "Failed to list accepted fixtures: %v", err)
 		return
 	}
 
+	errs := make([]error, 0)
 	for _, rejectedFixture := range rejectedFixtureFiles {
-		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name(), kubeconfig); err != nil {
-			test.Passf(rejectedFixture.Name(), "%s rejected as expected", rejectedFixture.Name())
-		} else {
-			test.Failf(rejectedFixture.Name(), "%s accepted as not expected", rejectedFixture.Name())
+		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name(), kubeconfig); err == nil {
+			errs = append(errs, fmt.Errorf("%s accepted as not expected", rejectedFixture.Name()))
 		}
 	}
 
 	for _, acceptedFixture := range acceptedFixtureFiles {
 		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name(), kubeconfig); err != nil {
-			test.Failf(acceptedFixture.Name(), "%s rejected as not expected", acceptedFixture.Name())
-		} else {
-			test.Passf(acceptedFixture.Name(), "%s accepted as expected", acceptedFixture.Name())
+			errs = append(errs, fmt.Errorf("%s rejected as not expected", acceptedFixture.Name()))
 		}
 	}
+
+	if len(errs) > 0 {
+		failMessage := ""
+		for _, err := range errs {
+			failMessage += err.Error() + ". "
+		}
+		test.Failf(testName, failMessage)
+	}
+	test.Passf(testName, "All fixtures accepted or rejected as expected")
 }
 
 func TestGatekeeper(p *platform.Platform, test *console.TestResults) {
 	if p.Gatekeeper.IsDisabled() {
-		test.Skipf("opa", "Gatekeeper is not configured")
+		test.Skipf(GatekeeperNamespace, "Gatekeeper is not configured")
 		return
 	}
 
@@ -191,25 +198,26 @@ type AuditResourceViolation struct {
 }
 
 func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
+	testName := GatekeeperNamespace + "-e2e"
 	if p.Gatekeeper.IsDisabled() {
-		test.Skipf("opa", "Gatekeeper is not configured")
+		test.Skipf(testName, "Gatekeeper is not configured")
 		return
 	}
 
 	if p.Gatekeeper.E2E.Fixtures == "" {
-		test.Skipf("opa", "OPA fixtures path not configured under gatekeeper.e2e.fixtures")
+		test.Skipf(testName, "OPA fixtures path not configured under gatekeeper.e2e.fixtures")
 		return
 	}
 
 	kubectl := p.GetKubectl()
 	kubeconfig, err := p.GetKubeConfig()
 	if err != nil {
-		test.Failf("opa", "Failed to get kube config: %v", err)
+		test.Failf(testName, "Failed to get kube config: %v", err)
 		return
 	}
 
 	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.OPA.E2E.Fixtures, kubeconfig); err != nil {
-		test.Failf("opa", "Failed to setup namespaces: %v", err)
+		test.Failf(testName, "Failed to setup namespaces: %v", err)
 		return
 	}
 	defer func() {
@@ -222,48 +230,69 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 
 	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
 	if err != nil {
-		test.Failf("opa", "Install: Failed to read dir: %s", err)
+		test.Failf(testName, "Install: Failed to read dir: %s", err)
 		return
 	}
 
+	errs := make([]error, 0)
 	for _, rejectedFixture := range rejectedFixtureFiles {
 		filename := rejectedFixturesPath + "/" + rejectedFixture.Name()
 		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", filename, kubeconfig); err != nil {
-			test.Failf(rejectedFixture.Name(), "%s rejected by admission controller: %v", rejectedFixture.Name(), err)
+			errs = append(errs, errors.Wrap(err, fmt.Sprintf("%s rejected by admission controller",
+				rejectedFixture.Name())))
+			continue
 		}
 
 		fileContents, err := ioutil.ReadFile(filename)
 		if err != nil {
-			test.Failf(rejectedFixture.Name(), "failed to read file contents")
+			errs = append(errs, errors.Wrap(err, fmt.Sprintf("%s: failed to read file contents of %s",
+				rejectedFixture.Name(), filename)))
+			continue
 		}
 
 		object := &Fixture{}
 		if err := yaml.Unmarshal(fileContents, object); err != nil {
-			test.Failf(rejectedFixture.Name(), "failed to unmarshal yaml")
+			errs = append(errs, fmt.Errorf("%s: failed to unmarshal yaml", rejectedFixture.Name()))
+			continue
 		}
 
 		configFile, found := object.Metadata.Annotations[e2eAnnotation]
 		if !found {
-			test.Failf(rejectedFixture.Name(), "failed to find annotation %s", e2eAnnotation)
+			errs = append(errs, fmt.Errorf("%s: failed to find annotation %s",
+				rejectedFixture.Name(), e2eAnnotation))
+			continue
 		}
 
 		config := &ViolationConfig{}
 		if err := yaml.Unmarshal([]byte(configFile), config); err != nil {
-			test.Failf(rejectedFixture.Name(), "failed to read violation config")
+			errs = append(errs, fmt.Errorf("%s: failed to read violation config",
+				rejectedFixture.Name()))
+			continue
 		}
 
 		for _, violation := range config.Violations {
 			timeout := time.Now().Add(120 * time.Second)
-			findViolationUntil(p, test, violation, object, timeout)
+			err = findViolationUntil(p, violation, object, timeout)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
+
+	if len(errs) > 0 {
+		failMessage := ""
+		for _, err := range errs {
+			failMessage += err.Error() + ". "
+		}
+		test.Failf(testName, failMessage)
+	}
+	test.Passf(testName, "All fixtures accepted or rejected as expected")
 }
 
-func findViolationUntil(p *platform.Platform, test *console.TestResults, violation Violation, object *Fixture, timeout time.Time) {
+func findViolationUntil(p *platform.Platform, violation Violation, object *Fixture, timeout time.Time) error {
 	dynamicClient, err := p.GetDynamicClient()
 	if err != nil {
-		test.Failf("opa", "failed to get dynamic client: %v", err)
-		return
+		return errors.Wrap(err, "failed to get dynamic client")
 	}
 	rm, _ := p.GetRestMapper()
 	gvk, err := rm.KindFor(schema.GroupVersionResource{
@@ -272,32 +301,28 @@ func findViolationUntil(p *platform.Platform, test *console.TestResults, violati
 		Resource: violation.Kind,
 	})
 	if err != nil {
-		test.Failf("opa", "failed to get rest mapper for kind %s: %v", violation.Kind, err)
-		return
+		return errors.Wrap(err, fmt.Sprintf("failed to get rest mapper for kind %s", violation.Kind))
 	}
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 	mapping, err := rm.RESTMapping(gk, gvk.Version)
 	if err != nil {
-		test.Failf("opa", "failed to get rest mapping for kind %s: %v", violation.Kind, err)
-		return
+		return errors.Wrap(err, fmt.Sprintf("failed to get rest mapping for kind %s", violation.Kind))
 	}
 	client := dynamicClient.Resource(mapping.Resource)
 
 	for {
 		if time.Now().After(timeout) {
-			test.Failf("opa", "received timeout waiting for violation %s for %s/%s/%s", violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name)
-			return
+			return fmt.Errorf("received timeout waiting for violation %s for %s/%s/%s",
+				violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name)
 		}
 		found, err := findViolation(client, violation, object)
 		p.Debugf("violation: %s found=%t err=%v", violation.Name, found, err)
 		if err != nil {
-			test.Failf("opa", "failed to find violation: %v", err)
-			return
+			return errors.Wrap(err, "failed to find violation")
 		}
 
 		if found {
-			test.Passf("opa", "found violation %s for %s/%s/%s", violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name)
-			return
+			return nil
 		}
 		time.Sleep(5 * time.Second)
 	}

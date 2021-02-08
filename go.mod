@@ -9,7 +9,7 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.4.3
-	github.com/flanksource/kommons v0.1.9
+	github.com/flanksource/kommons v0.2.1
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
@@ -46,7 +46,7 @@ require (
 	k8s.io/klog/v2 v2.4.0 // indirect
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 	sigs.k8s.io/controller-runtime v0.6.3
-	sigs.k8s.io/kind v0.7.1-0.20200303021537-981bd80d3802
+	sigs.k8s.io/kind v0.10.0
 	sigs.k8s.io/yaml v1.2.0
 )
 
