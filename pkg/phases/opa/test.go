@@ -271,7 +271,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 
 		for _, violation := range config.Violations {
 			timeout := time.Now().Add(120 * time.Second)
-			err = findViolationUntil(p, test, violation, object, timeout)
+			err = findViolationUntil(p, violation, object, timeout)
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -288,7 +288,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 	test.Passf(GatekeeperNamespace, "All fixtures accepted or rejected as expected")
 }
 
-func findViolationUntil(p *platform.Platform, test *console.TestResults, violation Violation, object *Fixture, timeout time.Time) error {
+func findViolationUntil(p *platform.Platform, violation Violation, object *Fixture, timeout time.Time) error {
 	dynamicClient, err := p.GetDynamicClient()
 	if err != nil {
 		return errors.Wrap(err, "failed to get dynamic client")
