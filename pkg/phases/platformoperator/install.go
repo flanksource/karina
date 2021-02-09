@@ -50,7 +50,7 @@ func Install(platform *platform.Platform) error {
 		platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
 	}
 	if platform.PlatformOperator.Version == "" {
-		platform.PlatformOperator.Version = "0.5.1"
+		platform.PlatformOperator.Version = "v0.5.2"
 	}
 
 	if platform.PlatformOperator.Args == nil {

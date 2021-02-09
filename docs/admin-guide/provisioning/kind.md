@@ -4,21 +4,22 @@
 
 Download the latest official binary release for your platform from the [github repository](https://github.com/flanksource/karina/releases/latest).
 
-=== "Linux"
+#### Linux
 ```bash
-wget https://github.com/flanksource/karina/releases/download/v0.15.1/karina
-chmod +x karina
+wget -nv -nc -O karina https://github.com/flanksource/karina/releases/latest/download/karina && chmod +x karina
 mv karina /usr/local/bin/karina
 ```
-=== "MacOSX"
+
+#### MacOSX
 ```bash
-wget https://github.com/flanksource/karina/releases/download/v0.15.1/karina_osx
-chmod +x karina_osx
+wget -nv -nc -O karina https://github.com/flanksource/karina/releases/latest/download/karina_osx && chmod +x karina
 mv karina_osx /usr/local/bin/karina
 ```
 
+!!! info
+    For production pipelines you should always pin the version of karina you are using
 
-#### 2) Create a configuration file:
+### 2) Create a configuration file:
 
 `test-cluster.yml`
 
@@ -28,7 +29,7 @@ name: test-cluster
 calico:
   version: v3.8.2
 kubernetes:
-  version: v1.16.9
+  version: v1.18.15
   masterIP: localhost
   containerRuntime: containerd
 ca:
@@ -41,7 +42,7 @@ ingressCA:
   password: foobar
 ```
 
-#### 3) Generate the necessary CA's:
+### 3) Generate the necessary CA's:
 
 ```shell
 # generate CA for kubernetes api-server authentication
@@ -52,31 +53,37 @@ karina ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private
 
 ```
 
-#### 4) Provision the cluster in kind:
+### 4) Provision the cluster in kind:
 
 ```shell
 karina provision kind-cluster -c test-cluster.yml
 ```
 
-#### 5) Deploy the bare minimum configuration:
+### 5) Deploy the bare minimum configuration:
+This command will deploy following:
+- CRDs for all production runtime defined in the 
 
 ```shell
-karina deploy phases --base --dex --calico -c test-cluster.yml
+karina deploy phases --crds --base --dex --calico -c test-cluster.yml
 ```
 
-#### 6) Deploy everything else that may be configured:
+### 6) Deploy everything else that may be configured:
 
 ```shell
 karina deploy all
 ```
 
+### Cleanup
+Stop and delete the container running Kind with
+```shell
+kind delete cluster --name test-cluster-control-plane
+```
 
 
 ## Troubleshooting
 
 KIND cluster creation issues can be debugged by specifying the `--trace` argument to `karina` during creation:
 
-```bash
+```shell
 karina provision kind-cluster --trace
 ```
-
