@@ -1,0 +1,8 @@
+mkdocs-snippet-plugin
+mkdocs-git-info-plugin
+mkdocs-same-dir
+mkdocs-autolinks-plugin
+mkdocs-material-extensions
+mkdocs-git-revision-date-plugin
+mkdocs-macros-plugin
+mkdocs-markdownextradata-plugin

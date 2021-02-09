@@ -1,8 +1,4 @@
-### Install & configure velero
-
-
-
-#### Configure the backup location:
+`karina.yml`
 
 ```yaml
 s3:
@@ -12,7 +8,12 @@ s3:
   access_key: !!env AWS_ACCESS_KEY
   secret_key: !!env AWS_SECRET_KEY
 velero:
+  version: v1.3.2
   bucket: backups
+```
+Deploy using:
+```bash
+karina deploy velero -c karina.yaml
 ```
 
 #### To run a backup of the cluster objects

@@ -67,7 +67,7 @@ docker-fast: linux-static
 
 .PHONY: serve-docs
 serve-docs:
-	docker run --rm -it -p 8000:8000 -v $(PWD):/docs -w /docs squidfunk/mkdocs-material:5.1.5
+	cd docs && make serve
 
 .PHONY: build-api-docs
 build-api-docs:
@@ -76,15 +76,12 @@ build-api-docs:
 
 .PHONY: build-docs
 build-docs:
-	#docker run --rm -v $(PWD):/docs -w /docs squidfunk/mkdocs-material:5.1.5 build -d build/docs
-	which mkdocs || pip install mkdocs mkdocs-material
-	mkdocs build -d build/docs
+	cd docs && make  build
 
 
 .PHONY: deploy-docs
 deploy-docs:
-	which netlify 2>&1 > /dev/null || sudo npm install -g netlify-cli
-	netlify deploy --site b7d97db0-1bc2-4e8c-903d-6ebf3da18358 --prod --dir build/docs
+	cd docs && make deploy
 
 .PHONY: lint
 lint: pack build

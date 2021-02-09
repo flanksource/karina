@@ -17,7 +17,7 @@ For a full list of supported nginx annotation see [here](https://kubernetes.gith
 
 Using a combination of Dex and [Oauth2-Proxy](https://github.com/oauth2-proxy/oauth2-proxy) you can configure ingress'es to require authentication and membership in specific groups:
 
-#### 
+####
 
 See [User Guide --> Ingress](../user-guide/ingress) for more details on configuring ingress objects.
 

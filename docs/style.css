@@ -1,0 +1,17 @@
+:root {
+  --md-admonition-icon--asterix: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink"  width="38px" height="38px" viewbox="0 0 38 38"  preserveAspectRatio="none">  <text x="-0.3" y="70.5" font-size="100" font-family="arial">*</text> </svg>')
+}
+.md-typeset .admonition.asterix,
+.md-typeset details.asterix {
+  border-color: #448aff;
+}
+.md-typeset .asterix > .admonition-title,
+.md-typeset .asterix > summary {
+  background-color: rgba(68,138,255, 0.1);
+}
+.md-typeset .asterix > .admonition-title::before,
+.md-typeset .asterix > summary::before {
+  background-color: #448aff;
+  -webkit-mask-image: var(--md-admonition-icon--asterix);
+          mask-image: var(--md-admonition-icon--asterix);
+}

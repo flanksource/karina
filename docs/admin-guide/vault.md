@@ -1,7 +1,3 @@
-# Vault
-
-### Configuring a Vault Instance
-
 1) First initialize the and seal the vault:
 
 ```yaml
