@@ -1,0 +1,128 @@
+repo_url: https://github.com/flanksource/karina
+repo_name: karina
+docs_dir: ./
+site_name: karina
+theme:
+  name: "material"
+  palette:
+    primary: "royalblue"
+  logo: "img/favicon.png"
+  custom_dir: overrides
+  features:
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - toc.integrate
+    # - git-revision-date:
+    #     enabled_if_env: CI
+extra:
+  kubernetes:
+    version: v1.18.15
+  social:
+    - type: "github"
+      link: "https://github.com/flanksource"
+      icon: fontawesome/brands/github-alt
+markdown_extensions:
+  - admonition
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.smartsymbols
+  - pymdownx.tabbed
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - codehilite:
+      linenums: true
+  - toc:
+      permalink: true
+plugins:
+  - search
+  - autolinks
+  - same-dir
+  - markdownextradata:
+      jinja_options:
+        variable_start_string: "%%{"
+        variable_end_string: "}%%"
+
+extra_javascript:
+  - https://unpkg.com/mermaid@8.6.4/dist/mermaid.min.js
+extra_css:
+  - style.css
+nav:
+  - User Guide:
+      - Overview: ./user-guide/index.md
+      - Canary Checker: ./user-guide/canary-checker.md
+      - Configuration: ./user-guide/configuration.md
+      - Databases: ./user-guide/databases.md
+      - Dynamic Namespaces: ./user-guide/dynamic-namespaces.md
+      - GitOps: ./user-guide/gitops.md
+      - Ingress: ./user-guide/ingress.md
+      - Logging In: ./user-guide/login.md
+      - Logging: ./user-guide/logging.md
+      - Monitoring: ./user-guide/monitoring.md
+
+  - Administrator Guide:
+      - Overview: ./admin-guide/index.md
+      - Provisioning:
+          - Kind: ./admin-guide/provisioning/kind.md
+          - vSphere: ./admin-guide/provisioning/vsphere.md
+          - More:
+              - vCenter Connectivity: ./admin-guide/provisioning/vcenter.md
+              - Master Discovery: ./admin-guide/provisioning/master-discovery.md
+              - Load Balancing: ./admin-guide/provisioning/load-balancing.md
+              - DNS: ./admin-guide/provisioning/dns.md
+              - Machine Images: ./admin-guide/provisioning/machine-images.md
+
+      - Authentication:
+          - Decentralized Auth: ./admin-guide/provisioning/ca.mds
+          - Single Sign On: ./admin-guide/sso.md
+
+      - Multi Cluster:
+          - Discovery: ./admin-guide/provisioning/master-discovery.md
+
+      - Networking:
+          - Calico: ./admin-guide/calico.md
+          - Antrea: ./admin-guide/antrea.md
+          - NSX-T NCP: ./admin-guide/ncp.md
+          - Ingress: ./admin-guide/ingress.md
+          - Istio: ./admin-guide/istio.md
+
+      - Storage:
+          - vSphere: ./admin-guide/vsphere.md
+          - Local Path: ./admin-guide/local-path.md
+          - Minio: ./admin-guide/minio.md
+
+      - Security:
+          - Auditing: ./admin-guide/auditing.md
+          - Encryption: ./admin-guide/encryption.md
+          - Sealed Secrets: ./admin-guide/sealed-secrets.md
+          - Vault: ./admin-guide/vault.md
+          - OPA/Gatekeeper: ./admin-guide/opa.md
+
+      - Monitoring:
+          - Prometheus Stack: ./admin-guide/prometheus.md
+          - Canary Checker: ./admin-guide/canary-checker.md
+          - Logging: ./admin-guide/logging.md
+          - Thanos: ./admin-guide/thanos.md
+
+      - Operators:
+          - Git: ./admin-guide/operators/git.md
+          - Platform: ./admin-guide/operators/platform.md
+          - Canary Checker: ./admin-guide/canary-checker.md
+          - Template: ./admin-guide/operators/template.md
+          - Postgres: ./admin-guide/operators/postgres.md
+          - Elastic: ./admin-guide/operators/elastic.md
+          - RabbitMQ: ./admin-guide/operators/rabbitmq.md
+          - Redis: ./admin-guide/operators/redis.md
+          - Harbor: ./admin-guide/harbor.md
+
+      - Configuration: ./admin-guide/configuration.md
+      - Multi-Tenancy: ./admin-guide/multi-tenancy.md
+
+  - Reference: ./reference/config.md

@@ -1,4 +1,25 @@
-# Harbor
+## Create karina.yml
+`karina.yml`
+```yaml
+harbor:
+  replicas: 2
+  bucket: karina-harbor-e2e
+  version: v2.1.0
+  s3:
+    access_key: minio
+    secret_key: minio123
+    endpoint: http://minio.minio.svc:9000
+postgresOperator:
+  version: v1.3.4.flanksource.1
+```
+
+## Deploy Harbor
+
+```bash
+karina deploy harbor -c karina.yml
+```
+
+
 
 #### Backup
 
