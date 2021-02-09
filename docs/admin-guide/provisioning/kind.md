@@ -6,18 +6,18 @@ Download the latest official binary release for your platform from the [github r
 
 #### Linux
 ```bash
-wget https://github.com/flanksource/karina/releases/download/v0.24.4/karina
-chmod +x karina
+wget -nv -nc -O karina https://github.com/flanksource/karina/releases/latest/download/karina && chmod +x karina
 mv karina /usr/local/bin/karina
 ```
 
 #### MacOSX
 ```bash
-wget https://github.com/flanksource/karina/releases/download/v0.24.4/karina_osx
-chmod +x karina_osx
+wget -nv -nc -O karina https://github.com/flanksource/karina/releases/latest/download/karina_osx && chmod +x karina
 mv karina_osx /usr/local/bin/karina
 ```
 
+!!! info
+    For production pipelines you should always pin the version of karina you are using
 
 ### 2) Create a configuration file:
 
@@ -76,8 +76,7 @@ karina deploy all
 ### Cleanup
 Stop and delete the container running Kind with
 ```shell
-docker stop test-cluster-control-plane
-docker rm test-cluster-control-plane
+kind delete cluster --name test-cluster-control-plane
 ```
 
 
@@ -85,7 +84,6 @@ docker rm test-cluster-control-plane
 
 KIND cluster creation issues can be debugged by specifying the `--trace` argument to `karina` during creation:
 
-```Shell
+```shell
 karina provision kind-cluster --trace
 ```
-
