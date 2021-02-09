@@ -19,7 +19,7 @@ spec:
     spec:
       serviceAccountName: dex
       containers:
-        - image: quay.io/dexidp/dex:{{.dex.version}}
+        - image: ghcr.io/dexidp/dex:{{.dex.version}}
           name: dex
           command: ["/usr/local/bin/dex", "serve", "/etc/dex/cfg/config.yaml"]
           resources:
