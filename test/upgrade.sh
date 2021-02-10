@@ -105,8 +105,9 @@ if [[ "$failed" = false ]]; then
     fi
 fi
 
-wget -nv https://github.com/flanksource/build-tools/releases/download/v0.11.3/build-tools
-chmod +x build-tools
+wget -nv -nc -O build-tools \
+  https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
+  chmod +x build-tools
 ./build-tools gh actions report-junit test-results/results.xml --token $GIT_API_KEY --build "$BUILD"
 
 mkdir -p artifacts
