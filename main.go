@@ -31,6 +31,7 @@ func main() {
 		cmd.Backup,
 		cmd.CA,
 		cmd.Cleanup,
+		cmd.CleanupJobs,
 		cmd.Config,
 		cmd.Conformance,
 		cmd.Consul,
