@@ -21,4 +21,10 @@ func init() {
 			return reports.Quotas(reportOpts)
 		},
 	})
+	Report.AddCommand(&cobra.Command{
+		Use: "violations",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return reports.Violations(getPlatform(cmd))
+		},
+	})
 }
