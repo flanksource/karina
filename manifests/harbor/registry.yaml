@@ -150,8 +150,9 @@ spec:
         com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: HEAD
         com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: GET /v2 HTTP/1.1
         com.flanksource.infra.logs/processors.3.dissect.tokenizer: '%{client} %{} %{} [%{} %{}] "%{method} %{path} %{} %{code} %{size} %{user_agent}'
+        com.flanksource.infra.logs/processors.3.dissect.ignore_failure: "true"
         com.flanksource.infra.logs/processors.3.dissect.target_prefix: ""
-        com.flanksource.infra.logs/processors.4.dissect.overwrite_keys: "true"
+        com.flanksource.infra.logs/processors.3.dissect.overwrite_keys: "true"
     spec:
       securityContext:
         supplementalGroups: [10000]
