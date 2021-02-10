@@ -6,7 +6,7 @@ ARG VERSION
 # upx 3.95 has issues compressing darwin binaries - https://github.com/upx/upx/issues/301
 RUN  apt-get update && apt-get install -y xz-utils && \
   wget -nv -O upx.tar.xz https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz; tar xf upx.tar.xz; mv upx-3.96-amd64_linux/upx /usr/bin
-RUN GOOS=linux GOARCH=amd64 make setup pack linux compress
+RUN GOOS=linux GOARCH=amd64 make pack linux compress
 
 
 FROM ubuntu:bionic

@@ -23,19 +23,21 @@ help:
 	@cat docs/developer-guide/make-targets.md
 
 .PHONY: release
-release: setup pack linux darwin compress
-
-.PHONY: setup
-setup:
-	which esc 2>&1 > /dev/null || go get -u github.com/mjibson/esc
+release: pack linux darwin compress
 
 .PHONY: build
 build:
 	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
 
+ESC := $(shell command -v esc 2> /dev/null)
+
 .PHONY: pack
-pack: setup
-	esc --prefix "manifests/" --ignore "static.go" -o manifests/static.go --pkg manifests manifests
+pack:
+ifndef ESC
+		wget https://github.com/flanksource/esc/releases/download/v0.2.1/esc && chmod +x esc
+		$(eval ESC=./esc)
+endif
+	$(ESC) --prefix "manifests/" --ignore "static.go" -o manifests/static.go --pkg manifests manifests
 
 .PHONY: linux
 linux:

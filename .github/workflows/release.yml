@@ -1,10 +1,10 @@
-name: Publish Binary
+name: Release
 on:
   push:
     tags:
       - "*"
 jobs:
-  release:
+  binary:
     runs-on: ubuntu-latest
     container:
       image: flanksource/build-tools:0.6
@@ -63,3 +63,33 @@ jobs:
           asset_path: ./.bin/karina_osx
           asset_name: karina_osx
           asset_content_type: application/octet-stream
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: flanksource/platform-cli
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tag_names: true
+          snapshot: true
+      - name: Publish to Registry2
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: flanksource/karina
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tag_names: true
+          snapshot: true
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-go@v2
+      - uses: actions/setup-python@v2
+      - uses: actions/setup-node@v2
+      - run: make pack build-api-docs build-docs deploy-docs
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
