@@ -42,12 +42,11 @@ func init() {
 							annotations = pool.Annotations
 						}
 					}
-			}
+				}
 
 				for k, v := range annotations {
 					node.Annotations[k] = v
 				}
-
 
 				if _, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, metav1.UpdateOptions{}); err != nil {
 					platform.Errorf("Failed to update node %s: %v", node, err)
