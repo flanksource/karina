@@ -32,3 +32,4 @@ vendor/
 .certs
 #goland ide generated files:
 __debug_bin
+.scratchpad
