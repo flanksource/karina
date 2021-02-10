@@ -23,6 +23,7 @@ func DefaultPlatformConfig() PlatformConfig {
 			KubeletExtraArgs:    map[string]string{},
 			EtcdExtraArgs:       map[string]string{},
 			ContainerRuntime:    "docker",
+			Managed:			 false,
 		},
 		EventRouter: EventRouter{
 			FilebeatPrefix: "com.flanksource.infra",

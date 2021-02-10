@@ -41,6 +41,7 @@ jobs:
           - elastic
           - security
           - platform
+          - managed
           - nosql
           - cicd
         include:

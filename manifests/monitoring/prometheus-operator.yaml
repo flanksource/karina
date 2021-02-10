@@ -168,3 +168,4 @@ metadata:
     app.kubernetes.io/name: prometheus-operator
   name: prometheus-operator
   namespace: monitoring
+
