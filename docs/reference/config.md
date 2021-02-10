@@ -20,7 +20,8 @@
 | eventRouter |  | *[Enabled](#enabled) |  |
 | harbor |  | *[Harbor](#harbor) |  |
 | hostPrefix | A prefix to be added to VM hostnames. | string | Yes |
-| importConfigs |  | []string |  |
+| importConfigs | Paths to additional config files to be merged into this config | []string |  |
+| secureConfigs | Paths to [sops](https://github.com/mozilla/sops) encrypted config files to be merged into this config | []string |  |
 | ingressCA |  | *[CA](#ca) | Yes |
 | gitops |  | [][GitOps](#gitops) |  |
 | kubernetes |  | [Kubernetes](#kubernetes) | Yes |
