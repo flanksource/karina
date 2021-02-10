@@ -20,6 +20,10 @@ extra:
   generator: false
   kubernetes:
     version: v1.18.15
+  support:
+    email: email group(s) etc
+    channel: Slack, MS Teams, etc..
+
   social:
     - type: "github"
       link: "https://github.com/flanksource"
@@ -38,6 +42,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/icons
   - codehilite:
       linenums: true
   - toc:
@@ -54,7 +61,7 @@ plugins:
 extra_javascript:
   - https://unpkg.com/mermaid@8.6.4/dist/mermaid.min.js
 extra_css:
-  - style.css
+  - overrides/style.css
 nav:
   - User Guide:
       - Getting Started:
@@ -130,6 +137,7 @@ nav:
           - Harbor: ./admin-guide/harbor.md
 
       - Configuration: ./admin-guide/configuration.md
-      - Multi-Tenancy: ./admin-guide/multi-tenancy.md
+      - Troubleshooting:
+          - Checklist: ./admin-guide/troubleshooting.md
 
   - Reference: ./reference/config.md

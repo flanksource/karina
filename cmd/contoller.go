@@ -23,5 +23,4 @@ var BurninController = &cobra.Command{
 
 func init() {
 	BurninController.Flags().DurationVar(&burninControllerPeriod, "burnin-period", time.Minute*3, "Period to burn-in new nodes before scheduling workloads on")
-
 }

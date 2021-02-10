@@ -1,4 +1,4 @@
-name: golangci-lint
+name: Lint
 on:
   push:
     tags:
@@ -14,10 +14,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
+      - run: make pack
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.36
-          only-new-issues: true
       - name: filename check
         run: go run test/linter/main.go
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-go@v2
+      - uses: actions/setup-python@v2
+      - uses: actions/setup-node@v2
+      - run: make pack build-api-docs build-docs
