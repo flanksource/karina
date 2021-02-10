@@ -57,8 +57,9 @@ if ! $BIN test  all --e2e --progress=false --junit-path test-results/results.xml
 fi
 
 printf "\n\n\n\n$(tput bold)Reporting$(tput setaf 7)\n"
-wget -nv https://github.com/flanksource/build-tools/releases/download/v0.9.9/build-tools
-chmod +x build-tools
+wget -nv -nc -O build-tools \
+  https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
+  chmod +x build-tools
 ./build-tools gh actions report-junit test-results/results.xml --token $GIT_API_KEY --build "$BUILD"
 
 mkdir -p artifacts
