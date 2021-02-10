@@ -87,9 +87,10 @@ Provisioners are responsible for creating and managing infrastructure and VM's f
 | [helmsman](https://github.com/Praqma/helmsman) | |
 | [ship](https://github.com/replicatedhq/ship) | |
 
-
-
 ##### Where does the name come from?
 
 Karina is named after the [Carina Constellation](https://en.wikipedia.org/wiki/Carina_(constellation)) - Latin for the hull or keel of a ship.
 
+### Contributing
+Please follow guideline below when contributing to this project
+- Conventional commit: https://www.conventionalcommits.org/en/v1.0.0/
