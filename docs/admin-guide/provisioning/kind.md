@@ -57,7 +57,7 @@ karina deploy phases --crds --base --dex --calico -c karina.yml
 karina deploy all -c karina.yml
 ```
 
-## :fontawesome-solid-trash: Cleanup
+## Cleanup
 Stop and delete the container running Kind with
 ```shell
 kind delete cluster --name test-cluster-control-plane

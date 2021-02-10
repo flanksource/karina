@@ -32,26 +32,22 @@ func init() {
 			}
 
 			for _, node := range nodes.Items {
+				var annotations map[string]string
 				_, isMaster := node.Labels[constants.MasterNodeLabel]
 				if isMaster {
-					for k, v := range platform.Master.Annotations {
-						node.Annotations[k] = v
-					}
+					annotations = platform.Master.Annotations
 				} else {
-					nodePool, found := node.Labels[constants.NodePoolLabel]
-					if !found {
-						continue
+					if nodePoolName, ok := node.Labels[constants.NodePoolLabel]; ok {
+						if pool, ok := platform.Nodes[nodePoolName]; ok {
+							annotations = pool.Annotations
+						}
 					}
-					workerPool, found := platform.Nodes[nodePool]
-					if !found {
-						platform.Errorf("Node %s has node pool %s which was not found in platform.Nodes", node.Name, nodePool)
-						continue
-					}
-					annotations := workerPool.Annotations
-					for k, v := range annotations {
-						node.Annotations[k] = v
-					}
+			}
+
+				for k, v := range annotations {
+					node.Annotations[k] = v
 				}
+
 
 				if _, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, metav1.UpdateOptions{}); err != nil {
 					platform.Errorf("Failed to update node %s: %v", node, err)

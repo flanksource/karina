@@ -1,6 +1,6 @@
 ???+ asterix "Prerequisites"
     * [karina](/admin-guide/#install-karina) is installed
-    * [Machine Image](./machine-image.md) with the matching versions of `kubeadm`, `kubectl` and `kubelet` and either docker or containerd
+    * [Machine Image](./machine-images.md) with the matching versions of `kubeadm`, `kubectl` and `kubelet` and either docker or containerd
     * [Access](./vcenter.md) to a vCenter server
 
 

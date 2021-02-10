@@ -10,7 +10,7 @@ func DefaultPlatformConfig() PlatformConfig {
 			Version: "v1.0.3",
 		},
 		TemplateOperator: TemplateOperator{
-			Disabled: Disabled{Version: "v0.1.0"},
+			Disabled: Disabled{Version: "v0.1.9"},
 		},
 		Ldap: &Ldap{
 			GroupObjectClass: "group",

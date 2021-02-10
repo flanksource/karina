@@ -14,11 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      - run: PATH=${PATH}:`go env GOPATH`/bin make pack
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.29
+          version: v1.36
           only-new-issues: true
       - name: filename check
         run: go run test/linter/main.go
