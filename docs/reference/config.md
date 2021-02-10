@@ -21,7 +21,9 @@
 | harbor |  | *[Harbor](#harbor) |  |
 | hostPrefix | A prefix to be added to VM hostnames. | string | Yes |
 | importConfigs | Paths to additional config files to be merged into this config | []string |  |
-| secureConfigs | Paths to [sops](https://github.com/mozilla/sops) encrypted config files to be merged into this config | []string |  |
+| secureConfigs | Paths to [sops](https://github.com/mozilla/sops) encrypted config files to be merged into this config. Files must be encrypted with the `yaml` format | []string |  |
+| importConfigs (Deprecated) | Paths to additional config files to be merged into this config.  Please use configFrom: []file instead | []string |  |
+| configFrom | List of objects containing karina config | [][ImportDirective](#importdirective) |  |
 | ingressCA |  | *[CA](#ca) | Yes |
 | gitops |  | [][GitOps](#gitops) |  |
 | kubernetes |  | [Kubernetes](#kubernetes) | Yes |

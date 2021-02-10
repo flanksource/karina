@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	sops "go.mozilla.org/sops/v3/decrypt"
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
@@ -67,7 +68,7 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 		Source: paths[0],
 	}
 
-	if err := mergeConfigs(&base, paths); err != nil {
+	if err := mergeConfigs(&base, paths, false); err != nil {
 		log.Fatalf("Failed to merge configs: %v", err)
 	}
 
@@ -126,16 +127,24 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	return base
 }
 
-func mergeConfigs(base *types.PlatformConfig, paths []string) error {
+func mergeConfigs(base *types.PlatformConfig, paths []string, encrypted bool) error {
 	for _, path := range paths {
 		logger.Debugf("Merging %s", path)
 		cfg := types.PlatformConfig{
 			Source: path,
 		}
-
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return errors.Wrapf(err, "Failed to read config file %s", path)
+		var data []byte
+		var err error
+		if encrypted {
+			data, err = sops.File(path, "yaml")
+			if err != nil {
+				return errors.Wrapf(err, "Failed to read secure config file %s", path)
+			}
+		} else {
+			data, err = ioutil.ReadFile(path)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to read config file %s", path)
+			}
 		}
 
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
@@ -157,7 +166,14 @@ func mergeConfigs(base *types.PlatformConfig, paths []string) error {
 
 		for _, config := range cfg.ImportConfigs {
 			fullPath := filepath.Dir(path) + "/" + config
-			if err := mergeConfigs(base, []string{fullPath}); err != nil {
+			if err := mergeConfigs(base, []string{fullPath}, false); err != nil {
+				return err
+			}
+		}
+
+		for _, config := range cfg.SecureConfigs {
+			fullPath := filepath.Dir(path) + "/" + config
+			if err := mergeConfigs(base, []string{fullPath}, true); err != nil {
 				return err
 			}
 		}
