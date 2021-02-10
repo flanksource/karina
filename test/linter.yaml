@@ -5,6 +5,7 @@ yamlCheck:
     - .github/(.*)
     - .goreleaser.yml
     - mkdocs.yml
+    - docs/mkdocs.yml
     - .git/(.*)
     - .golangci.yml
     - config/deploy/(.*)
