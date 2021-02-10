@@ -11,10 +11,6 @@ _Short summary of what is the issue and the solution._
 - [ ] Yes
 - [ ] No
 
-### Visuals
-
-_GIFs or screenshots. Before and After screenshots are encouraged._
-
 ### Testing Notes
 
 **What I did:**
