@@ -319,7 +319,7 @@ spec:
       annotations:
         com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: SUCCESS
         com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: running periodic dashboard resync
-        com.flanksource.infra.logs/processors.3.decode_json_fields.fields: message
+        com.flanksource.infra.logs/processors.2.decode_json_fields.fields: message
         com.flanksource.infra.logs/processors.2.decode_json_fields.target: ""
     spec:
       serviceAccountName: grafana-operator

@@ -80,7 +80,7 @@ spec:
       annotations:
         reload/all: "true"
         com.flanksource.infra.logs/processors.0.decode_json_fields.fields.0: message
-        com.flanksource.infra.logs/processors.0.decode_json_fields.targer: ""
+        com.flanksource.infra.logs/processors.0.decode_json_fields.target: ""
         com.flanksource.infra.logs/processors.0.decode_json_fields.overwrite_keys: "true"
         com.flanksource.infra.logs/processors.1.rename.fields.0.from: M
         com.flanksource.infra.logs/processors.1.rename.fields.0.to: message
