@@ -9,7 +9,7 @@
 === "Linux"
     ```bash
     wget -nv -nc -O konfigadm \
-      https://github.com/flanksource/karina/releases/latest/download/konfigadm && \
+      https://github.com/flanksource/konfigadm/releases/latest/download/konfigadm && \
       chmod +x konfigadm && \
       mv konfigadm /usr/local/bin/konfigadm
     ```

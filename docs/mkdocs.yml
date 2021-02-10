@@ -17,6 +17,7 @@ theme:
     # - git-revision-date:
     #     enabled_if_env: CI
 extra:
+  generator: false
   kubernetes:
     version: v1.18.15
   social:
@@ -56,16 +57,22 @@ extra_css:
   - style.css
 nav:
   - User Guide:
-      - Overview: ./user-guide/index.md
-      - Canary Checker: ./user-guide/canary-checker.md
-      - Configuration: ./user-guide/configuration.md
-      - Databases: ./user-guide/databases.md
-      - Dynamic Namespaces: ./user-guide/dynamic-namespaces.md
-      - GitOps: ./user-guide/gitops.md
-      - Ingress: ./user-guide/ingress.md
-      - Logging In: ./user-guide/login.md
-      - Logging: ./user-guide/logging.md
-      - Monitoring: ./user-guide/monitoring.md
+      - Getting Started:
+          - Installation: ./user-guide/install.md
+          - Logging In: ./user-guide/login.md
+      - Monitoring:
+          - Canary Checker: ./user-guide/canary-checker.md
+          - Prometheus: ./user-guide/monitoring.md
+          - Logging: ./user-guide/logging.md
+      - Operators:
+          - PostgresSQL: ./user-guide/databases.md
+      - CI/CD:
+          - Dynamic Namespaces: ./user-guide/dynamic-namespaces.md
+          - GitOps: ./user-guide/gitops.md
+      - Ingress:
+          - TLS: ./user-guide/tls.md
+
+      - Annotations Reference: ./user-guide/annotations.md
 
   - Administrator Guide:
       - Overview: ./admin-guide/index.md
@@ -80,7 +87,7 @@ nav:
               - Machine Images: ./admin-guide/provisioning/machine-images.md
 
       - Authentication:
-          - Decentralized Auth: ./admin-guide/provisioning/ca.mds
+          - Decentralized Auth: ./admin-guide/provisioning/ca.md
           - Single Sign On: ./admin-guide/sso.md
 
       - Multi Cluster:

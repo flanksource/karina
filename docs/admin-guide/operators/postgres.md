@@ -51,7 +51,7 @@ spec:
 kubectl apply -f db.yml
 ```
 
-The template operator will pick up the new `db.flanksource.com/v1` object and create underlying Zalando `Postgres` objects, `CronJobs` for backups and a 2 `Canary`'s - 1 for the backup freshness and another for connecting to the postgres instance
+The template operator will pick up the new `db.flanksource.com/v1` object and create underlying Zalando `Postgres` objects, `CronJobs` for backups and 2 `Canary`'s - 1 for the backup freshness and another for connecting to the postgres instance
 
 
 
@@ -59,7 +59,7 @@ The template operator will pick up the new `db.flanksource.com/v1` object and cr
 
 ### Failover
 
-### Clone database
+### Clone
 
 This command will create a new database cluster restored from WAL backup of another cluster.
 
@@ -69,7 +69,7 @@ karina db clone --name test1-clone --clone-cluster-name postgres-test1 --clone-t
 
 See [karina db clone](../../../cli/karina_db_clone/) documentation for all command line arguments.
 
-### Backup database
+### Backup
 
 This command will perform a logical backup of the given cluster.
 
@@ -82,7 +82,7 @@ karina db backup --name test1 --schedule "0 4 * * *"
 
 See [karina db backup](../../../cli/karina_db_backup/) documentation for all command line arguments.
 
-### Restore database
+### Restore
 
 This command will restore a given cluster from a previous logical backup
 
@@ -92,7 +92,7 @@ karina db restore http://path/to/backup --name test1
 
 See [karina db restore](../../../cli/karina_db_restore/) documentation for all command line arguments.
 
-### Connect to an exsiting database via port-forwarding
+### Port Forwarding
 
 1. Retrieve the password
 

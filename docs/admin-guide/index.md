@@ -20,6 +20,3 @@
 
 !!! note
     For production pipelines you should always pin the version of karina you are using
-
-
-{{ macros_info() }}

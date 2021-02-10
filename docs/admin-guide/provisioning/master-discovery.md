@@ -1,13 +1,13 @@
 Karina requires a service discovery mechanism to facilitate the initial connection to the kubernetes hosts. A containerised consul service discovery can be enabled on a host in the vsphere cluster using the konfigadm tool:
 
 
-# Load Balancer
+## Load Balancer
 
-# DNS
+## DNS
 
-# Consul
+## Consul
 
-## Create consul.yml
+### Create consul.yml
 `consul.yml`
 ```yaml
 commands:
@@ -27,7 +27,7 @@ containers:
       CONSUL_CLIENT_INTERFACE: ens160
 ```
 
-## Deploy consul
+### Deploy consul
 ```bash
 karina provision vm -c karina.yml -k consul.yaml`
 ```
