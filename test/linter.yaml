@@ -2,8 +2,10 @@ yamlCheck:
   ignore:
     - .circleci/config.yml
     - .github/workflows/(.*)
+    - .github/(.*)
     - .goreleaser.yml
     - mkdocs.yml
+    - docs/mkdocs.yml
     - .git/(.*)
     - .golangci.yml
     - config/deploy/(.*)
