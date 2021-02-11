@@ -1,72 +1,41 @@
-name: Release
+name: Create Release
 on:
-  push:
-    tags:
-      - "*"
+  workflow_dispatch: {}
 jobs:
   binary:
     runs-on: ubuntu-latest
     container:
       image: flanksource/build-tools:0.6
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - run: make release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-        continue-on-error: true
-      - name: Get release
-        id: get_release
-        uses: bruceadams/get-release@v1.2.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./.bin/karina
-          asset_name: platform-cli
-          asset_content_type: application/octet-stream
-      - name: Upload MacOSX Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./.bin/karina_osx
-          asset_name: platform-cli_osx
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset2
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./.bin/karina
-          asset_name: karina
-          asset_content_type: application/octet-stream
-      - name: Upload MacOSX Release Asset2
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./.bin/karina_osx
-          asset_name: karina_osx
-          asset_content_type: application/octet-stream
-  docker:
+          name: karina
+          path: ./.bin/*
+
+  semantic-release:
+    needs: binary
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
+      - run: ls -R ./.bin
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 12
+      - run: npx semantic-release@17
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    needs: semantic-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
@@ -83,10 +52,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           tag_names: true
           snapshot: true
+
   docs:
+    needs: semantic-release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
       - uses: actions/setup-python@v2
       - uses: actions/setup-node@v2
