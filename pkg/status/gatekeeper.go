@@ -1,16 +1,17 @@
-package reports
+package status
 
 import (
 	"context"
 	"fmt"
-	"github.com/flanksource/karina/pkg/platform"
-	"github.com/pkg/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/flanksource/karina/pkg/platform"
+	"github.com/pkg/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func Violations(platform *platform.Platform) error {
@@ -39,7 +40,7 @@ func Violations(platform *platform.Platform) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', tabwriter.DiscardEmptyColumns)
-	fmt.Fprintf(w, "NAME\tCONSTRAINT\tACTION\tVIOLATIONS\tAUDIT\n")
+	_, _ = fmt.Fprintf(w, "NAME\tCONSTRAINT\tACTION\tVIOLATIONS\tAUDIT\n")
 	for _, ct := range constraintTemplates {
 		if ct.Categories != nil {
 			constraintsList := &unstructured.UnstructuredList{}
@@ -55,36 +56,36 @@ func Violations(platform *platform.Platform) error {
 			for _, constraint := range constraintsList.Items {
 				name, _, err := unstructured.NestedString(constraint.Object, "metadata", "name")
 				if err != nil {
-					fmt.Fprintf(w, "\t")
+					_, _ = fmt.Fprintf(w, "\t")
 				} else {
-					fmt.Fprintf(w, "%s\t", name)
+					_, _ = fmt.Fprintf(w, "%s\t", name)
 				}
 				kind, _, err := unstructured.NestedString(constraint.Object, "kind")
 				if err != nil {
-					fmt.Fprintf(w, "\t")
+					_, _ = fmt.Fprintf(w, "\t")
 				} else {
-					fmt.Fprintf(w, "%s\t", kind)
+					_, _ = fmt.Fprintf(w, "%s\t", kind)
 				}
 				enforcement, _, err := unstructured.NestedString(constraint.Object, "spec", "enforcementAction")
 				if err != nil {
-					fmt.Fprintf(w, "\t")
+					_, _ = fmt.Fprintf(w, "\t")
 				} else {
-					fmt.Fprintf(w, "%s\t", enforcement)
+					_, _ = fmt.Fprintf(w, "%s\t", enforcement)
 				}
 				vcount, _, err := unstructured.NestedInt64(constraint.Object, "status", "totalViolations")
 				if err != nil {
-					fmt.Fprintf(w, "\t")
+					_, _ = fmt.Fprintf(w, "\t")
 				} else {
-					fmt.Fprintf(w, "%v\t", vcount)
+					_, _ = fmt.Fprintf(w, "%v\t", vcount)
 				}
 				atime, _, err := unstructured.NestedString(constraint.Object, "status", "auditTimestamp")
 				if err != nil {
-					fmt.Fprintf(w, "\t")
+					_, _ = fmt.Fprintf(w, "\t")
 				} else {
-					fmt.Fprintf(w, "%s\t", atime)
+					_, _ = fmt.Fprintf(w, "%s\t", atime)
 				}
 			}
-			fmt.Fprint(w, "\n")
+			_, _ = fmt.Fprint(w, "\n")
 		}
 	}
 

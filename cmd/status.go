@@ -3,6 +3,8 @@ package cmd
 import (
 	"time"
 
+	"github.com/flanksource/karina/pkg/status"
+
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/provision"
 	"github.com/spf13/cobra"
@@ -35,4 +37,11 @@ func init() {
 	pods.Flags().DurationVar(&restartLimit, "restart-limit", 3*time.Minute, "The previous time window in which if a pod restart it is considered unhealthy")
 
 	Status.AddCommand(pods)
+
+	Status.AddCommand(&cobra.Command{
+		Use: "violations",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return status.Violations(getPlatform(cmd))
+		},
+	})
 }
