@@ -171,10 +171,18 @@ func mergeConfigs(base *types.PlatformConfig, paths []string, encrypted bool) er
 			}
 		}
 
-		for _, config := range cfg.SecureConfigs {
-			fullPath := filepath.Dir(path) + "/" + config
-			if err := mergeConfigs(base, []string{fullPath}, true); err != nil {
-				return err
+		for _, config := range cfg.ConfigFrom {
+			if config.FilePath != "" {
+				fullPath := filepath.Dir(path) + "/" + config.FilePath
+				if err := mergeConfigs(base, []string{fullPath}, false); err != nil {
+					return err
+				}
+			}
+			if config.SopsPath != "" {
+				fullPath := filepath.Dir(path) + "/" + config.SopsPath
+				if err := mergeConfigs(base, []string{fullPath}, true); err != nil {
+					return err
+				}
 			}
 		}
 	}

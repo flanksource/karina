@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/flanksource/karina/pkg/api/calico"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	"github.com/jinzhu/copier"
@@ -1056,4 +1058,10 @@ func (v *Values) DeepCopy() *Values {
 	out := new(Values)
 	v.DeepCopyInto(out)
 	return out
+}
+
+type ConfigDirective struct {
+	FilePath   string             `yaml:"file,omitempty" json:"file,omitempty"`
+	SopsPath   string             `yaml:"sops,omitempty" json:"sops,omitempty"`
+	SecretPath v1.SecretReference `yaml:"secretRef,omitempty" json:"secretRef,omitempty"`
 }
