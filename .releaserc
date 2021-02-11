@@ -1,0 +1,9 @@
+plugins:
+  - "@semantic-release/commit-analyzer"
+  - "@semantic-release/release-notes-generator"
+  - - "@semantic-release/github"
+    - assets:
+      - path: ./.bin/karina
+        name: karina
+      - path: ./.bin/karina_osx
+        name: karina_osx
