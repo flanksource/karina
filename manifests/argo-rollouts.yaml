@@ -1,0 +1,293 @@
+# This yaml was generated from this command: kustomize build "https://github.com/argoproj/argo-rollouts/manifests/cluster-install?ref=v0.10.2"
+# but all CRDs were moved crds/argo-rollouts.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: rollouts-controller
+    app.kubernetes.io/name: argo-rollouts
+    app.kubernetes.io/part-of: argo-rollouts
+  name: argo-rollouts
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: aggregate-cluster-role
+    app.kubernetes.io/name: argo-rollouts-aggregate-to-admin
+    app.kubernetes.io/part-of: argo-rollouts
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+  name: argo-rollouts-aggregate-to-admin
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - rollouts
+      - rollouts/scale
+      - rollouts/status
+      - experiments
+      - analysistemplates
+      - clusteranalysistemplates
+      - analysisruns
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: aggregate-cluster-role
+    app.kubernetes.io/name: argo-rollouts-aggregate-to-edit
+    app.kubernetes.io/part-of: argo-rollouts
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+  name: argo-rollouts-aggregate-to-edit
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - rollouts
+      - rollouts/scale
+      - rollouts/status
+      - experiments
+      - analysistemplates
+      - clusteranalysistemplates
+      - analysisruns
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: aggregate-cluster-role
+    app.kubernetes.io/name: argo-rollouts-aggregate-to-view
+    app.kubernetes.io/part-of: argo-rollouts
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+  name: argo-rollouts-aggregate-to-view
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - rollouts
+      - rollouts/scale
+      - experiments
+      - analysistemplates
+      - clusteranalysistemplates
+      - analysisruns
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: rollouts-controller
+    app.kubernetes.io/name: argo-rollouts-clusterrole
+    app.kubernetes.io/part-of: argo-rollouts
+  name: argo-rollouts-clusterrole
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - rollouts
+      - rollouts/status
+      - rollouts/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - analysisruns
+      - analysisruns/finalizers
+      - experiments
+      - experiments/finalizers
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - analysistemplates
+      - clusteranalysistemplates
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods/eviction
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - update
+      - patch
+  - apiGroups:
+      - networking.k8s.io
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - networking.istio.io
+    resources:
+      - virtualservices
+    verbs:
+      - watch
+      - get
+      - update
+      - list
+  - apiGroups:
+      - split.smi-spec.io
+    resources:
+      - trafficsplits
+    verbs:
+      - create
+      - watch
+      - get
+      - update
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: rollouts-controller
+    app.kubernetes.io/name: argo-rollouts-clusterrolebinding
+    app.kubernetes.io/part-of: argo-rollouts
+  name: argo-rollouts-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-rollouts-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: argo-rollouts
+    namespace: argo-rollouts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argo-rollouts-metrics
+    app.kubernetes.io/part-of: argo-rollouts
+  name: argo-rollouts-metrics
+spec:
+  ports:
+    - name: metrics
+      port: 8090
+      protocol: TCP
+      targetPort: 8090
+  selector:
+    app.kubernetes.io/name: argo-rollouts
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: rollouts-controller
+    app.kubernetes.io/name: argo-rollouts
+    app.kubernetes.io/part-of: argo-rollouts
+  name: argo-rollouts
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argo-rollouts
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argo-rollouts
+    spec:
+      containers:
+        - image: argoproj/argo-rollouts:{{.argoRollouts.version}}
+          imagePullPolicy: Always
+          name: argo-rollouts
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: argo-rollouts

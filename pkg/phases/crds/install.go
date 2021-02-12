@@ -21,6 +21,7 @@ func Install(p *platform.Platform) error {
 		"calico":            func() bool { return p.Calico == nil || p.Calico.IsDisabled() },
 		"helm-operator":     func() bool { return len(p.GitOps) == 0 },
 		"argocd-operator":   p.ArgocdOperator.IsDisabled,
+		"argo-rollouts":     p.ArgoRollouts.IsDisabled,
 		"eck":               p.ECK.IsDisabled,
 		"gatekeeper":        p.Gatekeeper.IsDisabled,
 		"postgres-db":       p.PostgresOperator.IsDisabled,
