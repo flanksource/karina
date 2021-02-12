@@ -27,6 +27,7 @@ type PlatformConfig struct {
 	// A prefix to be added to VM hostnames.
 	HostPrefix            string              `yaml:"hostPrefix" json:"hostPrefix,omitempty"`
 	ImportConfigs         []string            `yaml:"importConfigs,omitempty" json:"importConfigs,omitempty"`
+	ConfigFrom            []ConfigDirective   `yaml:"configFrom,omitempty" json:"configFrom,omitempty"`
 	IngressCA             *CA                 `yaml:"ingressCA" json:"ingressCA,omitempty"`
 	IstioOperator         IstioOperator       `yaml:"istioOperator,omitempty" json:"istioOperator,omitempty"`
 	Gatekeeper            Gatekeeper          `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`

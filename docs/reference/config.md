@@ -20,7 +20,8 @@
 | eventRouter |  | *[Enabled](#enabled) |  |
 | harbor |  | *[Harbor](#harbor) |  |
 | hostPrefix | A prefix to be added to VM hostnames. | string | Yes |
-| importConfigs |  | []string |  |
+| importConfigs (Deprecated) | Paths to additional config files to be merged into this config.  Please use configFrom: []file instead | []string |  |
+| configFrom | List of objects containing karina config | [][ImportDirective](#importdirective) |  |
 | ingressCA |  | *[CA](#ca) | Yes |
 | gitops |  | [][GitOps](#gitops) |  |
 | kubernetes |  | [Kubernetes](#kubernetes) | Yes |
@@ -333,6 +334,14 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | oidc_scope |  | string |  |
 | oidc_verify_cert |  | string |  |
 | robot_token_duration |  | int |  |
+
+## ImportDirective
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| file | Path to normal karina config| string | |
+| sops | Path to [sops](https://github.com/mozilla/sops) encrypted karina config.  Must be encrypted as type `yaml` | string | |
+| secretRef | Reference to k8s secret containing karina config | *[v1.SecretReference](https://pkg.go.dev/k8s.io/api/core/v1@v0.19.3#SecretReference) | |
 
 ## Kubernetes
 

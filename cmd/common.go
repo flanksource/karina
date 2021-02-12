@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	sops "go.mozilla.org/sops/v3/decrypt"
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
@@ -128,36 +129,72 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 
 func mergeConfigs(base *types.PlatformConfig, paths []string) error {
 	for _, path := range paths {
-		logger.Debugf("Merging %s", path)
-		cfg := types.PlatformConfig{
-			Source: path,
-		}
-
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to read config file %s", path)
 		}
-
-		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			return errors.Wrap(err, "Failed to parse YAML")
+		err = mergeConfigBytes(base, data, path)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to merge config file %s", path)
 		}
+	}
+	return nil
+}
 
-		for node, vm := range cfg.Nodes {
-			if baseNode, ok := base.Nodes[node]; ok {
-				if err := mergo.Merge(&baseNode, vm); err != nil {
-					return errors.Wrapf(err, "Failed to merge nodes %s", node)
-				}
-				base.Nodes[node] = baseNode
+func mergeSopsConfigs(base *types.PlatformConfig, paths []string) error {
+	for _, path := range paths {
+		data, err := sops.File(path, "yaml")
+		if err != nil {
+			return errors.Wrapf(err, "Failed to read secure config file %s", path)
+		}
+		err = mergeConfigBytes(base, data, path)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to merge secure config file %s", path)
+		}
+	}
+	return nil
+}
+
+func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) error {
+	logger.Debugf("Merging %s", path)
+	cfg := types.PlatformConfig{
+		Source: path,
+	}
+
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return errors.Wrap(err, "Failed to parse YAML")
+	}
+
+	for node, vm := range cfg.Nodes {
+		if baseNode, ok := base.Nodes[node]; ok {
+			if err := mergo.Merge(&baseNode, vm); err != nil {
+				return errors.Wrapf(err, "Failed to merge nodes %s", node)
+			}
+			base.Nodes[node] = baseNode
+		}
+	}
+
+	if err := mergo.Merge(base, cfg); err != nil {
+		return errors.Wrapf(err, "Failed to merge in %s", path)
+	}
+
+	for _, config := range cfg.ImportConfigs {
+		fullPath := filepath.Dir(path) + "/" + config
+		if err := mergeConfigs(base, []string{fullPath}); err != nil {
+			return err
+		}
+	}
+
+	for _, config := range cfg.ConfigFrom {
+		if config.FilePath != "" {
+			fullPath := filepath.Dir(path) + "/" + config.FilePath
+			if err := mergeConfigs(base, []string{fullPath}); err != nil {
+				return err
 			}
 		}
-
-		if err := mergo.Merge(base, cfg); err != nil {
-			return errors.Wrapf(err, "Failed to merge in %s", path)
-		}
-
-		for _, config := range cfg.ImportConfigs {
-			fullPath := filepath.Dir(path) + "/" + config
-			if err := mergeConfigs(base, []string{fullPath}); err != nil {
+		if config.SopsPath != "" {
+			fullPath := filepath.Dir(path) + "/" + config.SopsPath
+			if err := mergeSopsConfigs(base, []string{fullPath}); err != nil {
 				return err
 			}
 		}
