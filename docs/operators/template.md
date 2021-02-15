@@ -15,7 +15,7 @@ karina deploy template-operator -c karina.yml
 
 ### Namespace Request Example
 
-First define a template based on a CRD:
+:1: First define a template based on a CRD:
 
 `template-definition.yml`
 
@@ -89,13 +89,12 @@ spec:
 
 ```
 
+:2:
 ```bash
 kubectl apply -f template-definition.yml
 ```
 
-
-
-Finally create 1 or more namespace requests:
+:3: create 1 or more namespace requests:
 
 `request.yml`
 
