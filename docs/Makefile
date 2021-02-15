@@ -17,7 +17,7 @@ serve: container
 build:
 	which mkdocs || pip3 install mkdocs
 	pip3 install -r requirements.txt
-
+	mkdocs build -d build/docs
 
 .PHONY: deploy
 deploy: build
