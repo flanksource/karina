@@ -1,10 +1,7 @@
 
-
 ## Incident Roles
 
-
-
-| Role                           | Responsibility                           |
+|                                |                                          |
 | ------------------------------ | ---------------------------------------- |
 | :worker: Incident Responder(s) | The person who has the hands-on keyboard |
 | :captain: Incident Commander   | Communicating with stakeholders          |
@@ -14,19 +11,15 @@
 
 The steps below are applicable for Sev 1 & 2 incidents, see the Escalations section for more detailed steps with times etc..
 
-
-
-
-
-<span style="font-size: 28px; color: grey">:1:</span> The first responder automatically becomes the incident commander until it is transferred:      <br/> 
+<span style="font-size: 28px; color: grey">:1:</span> The first responder automatically becomes the incident commander until it is transferred:      <br/>
 
 !!! warning
-    You are still the commander until someone else says  :speak:  *I have command*
+    You are still the :captain: commander until someone else says  :speak:  *I have command*
 
 <span style="font-size: 28px; color: grey; ">:2:</span> The incident commander is also automatically the incident communicator until it is transferred:
 
-!!! warning 
-    You are still incident communicator until someone else says   :speak:  *I have comms*
+!!! warning
+    You are still :talk:  communicator until someone else says   :speak:  *I have comms*
 
 <span style="font-size: 28px; color: grey">:3:</span> Setup a communications channel on %%{support.channel}%%
 
@@ -116,18 +109,18 @@ After receiving a new alert or ticket, spend a few minutes (&lt; 5m) doing a pre
 
 ## Mitigation
 
-See [Generic mitigations](https://www.oreilly.com/content/generic-mitigations/) 
+See [Generic mitigations](https://www.oreilly.com/content/generic-mitigations/)
 
 ### :etcd: Etcd
 
-|                  | Sev 1                                                        | Sev 2 |
-| ---------------- | ------------------------------------------------------------ | ----- |
-| Slow Performance | Check disk I/O <br>Reduce size of etcd cluster               |       |
-| Loss of Quorum   | See <a href="https://etcd.io/docs/v3.4.0/op-guide/recovery/">Disaster recovery</a> |       |
-| Key Exposure     |                                                              |       |
-| DB Size Exceeded |                                                              |       |
-|                  |                                                              |       |
-|                  |                                                              |       |
+|                  |                                                              |
+| ---------------- | ------------------------------------------------------------ |
+| Slow Performance | :octicons-graph-16: Check disk I/O <br>:worker: Reduce size of etcd cluster |
+| Loss of Quorum   | See <a href="https://etcd.io/docs/v3.4.0/op-guide/recovery/">Disaster recovery</a> |
+| Key Exposure     |                                                              |
+| DB Size Exceeded |                                                              |
+|                  |                                                              |
+|                  |                                                              |
 
 
 
@@ -139,44 +132,36 @@ Health Checks:
 * :bash: `karina status pods`
 * :octicons-graph-16: control-plane logs [TODO - elastic query]
 * :octicons-graph-16: karma,canary alerts
-* :bash: [kubectl-popeye](https://github.com/derailed/popeye) 
+* :bash: [kubectl-popeye](https://github.com/derailed/popeye)
 
 
 
-|                               | Sev 1                                                        | Sev 2                                                        |
-| ----------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-|                               |                                                              |                                                              |
-| Deployments                   | See [Troubleshooting Deployments](https://learnk8s.io/troubleshooting-deployments) <br>:bash: <a href="https://github.com/aylei/kubectl-debug">kubectl-debug</a> |                                                              |
-| No Scheduling                 | :action: Manual schedule by specifying node name in spec |                                                              |
-| Network Connectivity          | See <a href="https://itnext.io/an-illustrated-guide-to-kubernetes-networking-part-1-d1ede3322727">Guide to K8S Networking</a> and :material-video: <a href="https://sookocheff.com/post/kubernetes/understanding-kubernetes-networking-model/">Networking Model</a>  <a href="https://www.youtube.com/watch?v=RQNy1PHd5_A">Packet-level Debugging</a> <br>:bash: <a href="https://github.com/eldadru/ksniff">kubectl-sniff</a> - tcpdump specific pods<br/>:bash: <a href="https://soluble-ai.github.io/kubetap/">kubectl-tap</a>   - expose services locally<br/>:bash: <a href="https://github.com/mehrdadrad/tcpprobe">tcpprobe</a> - measure 60+ metrics for socket connections <br/>:octicons-graph-16: check node to node connectivity using :material-docker: <a href="https://github.com/bloomberg/goldpinger">goldpinger</a> :  <br/>:action: Restart CNI controllers / agents <br> |                                                              |
-| End User Access Denied        | :action: Temporarily increase access level |                                                              |
-| End User Access Denied        | Check access using :bash: <a href="https://github.com/corneliusweig/rakkess">rbac-matrix</a> |                                                              |
-| Disk / Volume Space           | Check PV usage using  :bash: <a href="https://github.com/yashbhutwala/kubectl-df-pv">kubectl-df-pv</a><br/>:action: Remove old filebeat/journal logs <br>:action: Scale down replicated storage <br>:action: Reduce replicas from 3 → 2 → 1 |                                                              |
-| DNS Latency                   |                                                              |                                                              |
-| Failing Webhooks              |                                                              |                                                              |
-| Loss of Control Plane Access  |                                                              |                                                              |
-| Failure during rolling update |                                                              | Run :bash: `karina terminate-node` followed by `karina provision` |
-|                               |                                                              |                                                              |
-| Node Performance              | See <a href="https://publib.boulder.ibm.com/httpserv/cookbook/">Performance Cookbook</a> and <a href="http://www.brendangregg.com/USEmethod/use-linux.html">USE</a> |                                                              |
-| Unable to SSH                 | Try :bash: <a href="https://github.com/kvaps/kubectl-node-shell">kubectl-node-shell</a> |                                                              |
-
-| a               | Sev 1 | Sev2 |
-| --------------- | ----- | ---- |
-| Slow Performace |       |      |
-| Date Loss       |       |      |
-| Key Exposure    |       |      |
-| Failover        |       |      |
+|                               |                                                              |
+| ----------------------------- | ------------------------------------------------------------ |
+| Deployments                   | See [Troubleshooting Deployments](https://learnk8s.io/troubleshooting-deployments) <br>:bash: <a href="https://github.com/aylei/kubectl-debug">kubectl-debug</a> |
+| No Scheduling                 | :worker: Manual schedule by specifying node name in spec     |
+| Network Connectivity          | See <a href="https://itnext.io/an-illustrated-guide-to-kubernetes-networking-part-1-d1ede3322727">Guide to K8S Networking</a> and :material-video: <a href="https://sookocheff.com/post/kubernetes/understanding-kubernetes-networking-model/">Networking Model</a>  <a href="https://www.youtube.com/watch?v=RQNy1PHd5_A">Packet-level Debugging</a> <br>:bash: <a href="https://github.com/eldadru/ksniff">kubectl-sniff</a> - tcpdump specific pods<br/>:bash: <a href="https://soluble-ai.github.io/kubetap/">kubectl-tap</a>   - expose services locally<br/>:bash: <a href="https://github.com/mehrdadrad/tcpprobe">tcpprobe</a> - measure 60+ metrics for socket connections <br/>:octicons-graph-16: check node to node connectivity using :material-docker: <a href="https://github.com/bloomberg/goldpinger">goldpinger</a> :  <br/>:worker: Restart CNI controllers / agents <br> |
+| End User Access Denied        | :action: Temporarily increase access level                   |
+| End User Access Denied        | Check access using :bash: <a href="https://github.com/corneliusweig/rakkess">rbac-matrix</a> |
+| Disk / Volume Space           | Check PV usage using  :bash: <a href="https://github.com/yashbhutwala/kubectl-df-pv">kubectl-df-pv</a><br/>:worker: Remove old filebeat/journal logs <br>:worker: Scale down replicated storage <br>:worker:Reduce replicas from 3 → 2 → 1 |
+| DNS Latency                   |                                                              |
+| Failing Webhooks              |                                                              |
+| Loss of Control Plane Access  |                                                              |
+| Failure during rolling update | Run :bash: `karina terminate-node` followed by `karina provision` |
+|                               |                                                              |
+| Node Performance              | See <a href="https://publib.boulder.ibm.com/httpserv/cookbook/">Performance Cookbook</a> and <a href="http://www.brendangregg.com/USEmethod/use-linux.html">USE</a> |
+| Unable to SSH                 | Try :bash: <a href="https://github.com/kvaps/kubectl-node-shell">kubectl-node-shell</a> |
 
 
 
 ### :postgres: Postgresql
 
-|                 | Sev 1 | Sev2 |
-| --------------- | ----- | ---- |
-| Slow Performace |       |      |
-| Date Loss       |       |      |
-| Key Exposure    |       |      |
-| Failover        |       |      |
+|                 |      |
+| --------------- | ---- |
+| Slow Performace |      |
+| Date Loss       |      |
+| Key Exposure    |      |
+| Failover        |      |
 
 
 
@@ -184,34 +169,34 @@ Health Checks:
 ### :vault: Vault / :consul: Consul
 
 
-|                 | Sev 1 | Sev2 |
-| --------------- | ----- | ---- |
-| Slow Performace |       |      |
-| Date Loss       |       |      |
-| Key Exposure    |       |      |
-| Failover        |       |      |
+|                 |      |
+| --------------- | ---- |
+| Slow Performace |      |
+| Date Loss       |      |
+| Key Exposure    |      |
+| Failover        |      |
 
 
 
 ### :harbor: Harbor
 
-|                 | Sev 1 | Sev2 |
-| --------------- | ----- | ---- |
-| Slow Performace |       |      |
-| Date Loss       |       |      |
-| Key Exposure    |       |      |
-| Failover        |       |      |
+|                 |      |
+| --------------- | ---- |
+| Slow Performace |      |
+| Date Loss       |      |
+| Key Exposure    |      |
+| Failover        |      |
 
 
 
 ### :elastic: Elasticsearch
 
-|                 | Sev 1 | Sev2 |
-| --------------- | ----- | ---- |
-| Slow Performace |       |      |
-| Date Loss       |       |      |
-| Key Exposure    |       |      |
-| Failover        |       |      |
+|                 |      |
+| --------------- | ---- |
+| Slow Performace |      |
+| Date Loss       |      |
+| Key Exposure    |      |
+| Failover        |      |
 
 
 

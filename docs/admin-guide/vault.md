@@ -1,3 +1,9 @@
+:octicons-link-external-24: https://vault.%%{domain}%%
+
+:octicons-link-external-24: https://consul.%%{domain}%%
+
+
+
 1) First initialize the and seal the vault:
 
 ```yaml

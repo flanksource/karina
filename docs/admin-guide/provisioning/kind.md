@@ -3,7 +3,7 @@
 
 
 
-## Generate CA's
+## :1: Generate CA's
 
 ```shell
 # generate CA for kubernetes api-server authentication
@@ -20,7 +20,7 @@ karina ca generate --name ingress-ca \
 ```
 
 
-## Create karina.yml
+## :2: Create karina.yml
 
 `karina.yml`
 ```yaml
@@ -40,24 +40,24 @@ ingressCA:
   privateKey: .certs/ingress-ca.key
   password: foobar
 ```
-## Provision the cluster
+## :3: Provision the cluster
 
 ```shell
 karina provision kind-cluster -c karina.yml
 ```
 
-## Deploy the bare config
+## :4: Deploy the bare config
 ```shell
 karina deploy phases --crds --base --dex --calico -c karina.yml
 ```
 
-## Deploy everything else
+## :5: Deploy everything else
 
 ```shell
 karina deploy all -c karina.yml
 ```
 
-## Cleanup
+## :6: Cleanup
 Stop and delete the container running Kind with
 ```shell
 kind delete cluster --name test-cluster-control-plane

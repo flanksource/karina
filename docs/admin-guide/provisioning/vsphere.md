@@ -5,7 +5,7 @@
 
 
 
-## Generate CA's
+## :1: Generate CA's
 
 ```shell
 # generate CA for kubernetes api-server authentication
@@ -22,7 +22,7 @@ karina ca generate --name ingress-ca \
 ```
 
 
-## Create karina.yaml
+## :2: Create karina.yaml
 
 
 `karina.yaml`
@@ -105,7 +105,7 @@ See other examples in the [test vSphere platform fixtures](https://github.com/fl
 See the [Configuration Reference](config.md) for details of available configurations.
 
 
-## Provision the cluster
+## :3: Provision the cluster
 
 Provision the cluster with:
 
@@ -114,7 +114,7 @@ karina provision vsphere-cluster -c karina.yaml
 karina deploy phases --crd --base --calico -c karina.yaml
 ```
 
-## Access the cluster
+## :4: Access the cluster
 
 Export a kubeconfig:
 
@@ -129,14 +129,14 @@ For the session `kubectl` commands can then be used to access the cluster, e.g.:
 kubectl get nodes
 ```
 
-## Run E2E Tests
+## :5: Run E2E Tests
 
 
 ```bash
 karina test all --e2e -c karina.yaml
 ```
 
-## Tear down the cluster
+## :6: Tear down the cluster
 
 
 ```bash

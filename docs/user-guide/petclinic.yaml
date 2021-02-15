@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+  namespace: petclinic
+spec:
+  selector:
+    matchLabels:
+      app: petclinic
+  template:
+    metadata:
+      labels:
+        app: petclinic
+      annotations:
+        # first turn on logging
+        %%{ filebeat.prefix }%%/enabled: "true"
+        # parse multi-line messages
+        %%{ filebeat.prefix }%%/multiline.pattern: "^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:"
+        %%{ filebeat.prefix }%%/multiline.negate: "true"
+        %%{ filebeat.prefix }%%/multiline.match: after
+        # tokenize log messages into structured fields
+        %%{ filebeat.prefix }%%/processors.0.dissect.tokenizer: "%{date} %{time}  %{level} %{} %{} [%{entry}] %{class}: %{message}"
+        %%{ filebeat.prefix }%%/processors.0.dissect.ignore_failure: "true"
+        # overwrite existing fieds, do not create not fields under `dissect`
+        %%{ filebeat.prefix }%%/processors.0.dissect.target_prefix: ""
+        %%{ filebeat.prefix }%%/processors.0.dissect.overwrite_keys: "true"
+        # trim whitespace from extracted fields
+        %%{ filebeat.prefix }%%/processors.0.dissect.trim_values: "all"
+    spec:
+      containers:
+        - name: petclinic
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+          image: docker.io/arey/springboot-petclinic
+          resources:
+            limits:
+              memory: 1Gi
+              cpu: "500m"
+          ports:
+            - containerPort: 8080

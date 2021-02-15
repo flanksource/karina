@@ -1,4 +1,11 @@
-## Create karina.yml
+
+
+???+ asterix "Prerequisites"
+     * [postgres-operator](/operators/postgres) is installed
+     * An S3 compatible object store or persistent volumes are available to store image content
+
+## Deploy
+
 `karina.yml`
 ```yaml
 harbor:
@@ -13,12 +20,14 @@ postgresOperator:
   version: v1.3.4.flanksource.1
 ```
 
-## Deploy Harbor
-
 ```bash
 karina deploy harbor -c karina.yml
 ```
 
+
+
+!!! warn
+    Persistent Volumes are not recommended due to the large number of files and directories that the docker registry creates
 
 
 #### Backup
@@ -38,9 +47,9 @@ karina db restore --name postgres-harbor s3://path/to/logical_backup.tgz
 ```
 
 !!! warning
-      After database restore it might be required to [reset](#resetting-the-admin-password) the admin password
+      After database restore it might be required to [reset](#password-reset) the admin password
 
-#### Master -> Slave Replication
+#### Replication
 
 (info) Should images/blobs be deleted from the primary instance and need to be recovered than a failover to the standby must take place which uses a different bucket.
 
@@ -48,4 +57,4 @@ karina db restore --name postgres-harbor s3://path/to/logical_backup.tgz
 
 Failover requires flipping the DNS endpoint and will invalidate existing tokens and and robot accounts potentially requiring recreation
 
-#### Resetting the admin password
+#### Password Reset

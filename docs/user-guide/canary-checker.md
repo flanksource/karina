@@ -1,4 +1,13 @@
-Define a canary in `canary.yml`:
+
+???+ asterix "Prerequisites"
+    [canary-checker](/admin-guide/canary-checker) has been setup by the cluster administrator
+
+
+
+
+
+
+:1: Define a canary in `canary.yml`:
 ```yaml
 apiVersion: canaries.flanksource.com/v1
 kind: Canary
@@ -13,18 +22,15 @@ spec:
       responseContent: ""
       maxSSLExpiry: 7
 ```
-Deploy the canary check using:
+:2:  Deploy the canary check using:
 ```bash
 kubectl apply -f canary.yml
 ```
-Check the status of the canary
+:3:  Check the status of the canary
 ```bash
 NAMESPACE         NAME         INTERVAL   STATUS   MESSAGE   UPTIME 1H      LATENCY 1H   LAST TRANSITIONED   LAST CHECK
 default           http-pass    30         Passed             120/120 (100%)     10ms         2d                  6s
 ```
-
-
-
 
 
 ## Check Types
@@ -89,7 +95,7 @@ spec:
       responseCodes: [200]
       responseContent: ""
       maxSSLExpiry: 60
-    
+
 ```
 
 | Field           | Description                                                  | Scheme | Required         |
@@ -102,9 +108,9 @@ spec:
 | responseContent | Exact response content expected to be returned by the endpoint. | string | Yes              |
 | maxSSLExpiry    | Maximum number of days until the SSL Certificate expires.    | int    | Yes              |
 
-<sup>*</sup> One of either endpoint or namespace must be specified, but not both.  
+<sup>*</sup> One of either endpoint or namespace must be specified, but not both.
 
-### Helm 
+### Helm
 
 Build and push a helm chart
 
@@ -223,7 +229,7 @@ spec:
 | results     |             | int    | Yes      |
 
 
-### S3 
+### S3
 
 This check will verify reachability and correctness of an S3 compatible store:
 
@@ -257,7 +263,7 @@ spec:
 | skipTLSVerify | Skip TLS verify when connecting to s3 | bool              | Yes      |
 
 
-### S3 Bucket 
+### S3 Bucket
 
 This check will query the contents of an S3 bucket for freshness
 

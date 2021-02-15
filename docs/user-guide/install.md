@@ -1,6 +1,4 @@
-
-
-## Install kubectl
+## kubectl
 
 === "Linux"
     ```bash
@@ -20,7 +18,9 @@
     ```
 
 
-## Install stern
+## stern
+
+[stern](/user-guide/logging/#realtime-tailing) is a real-time log tailing tool for kubernetes
 
 === "Linux"
     ```bash
@@ -40,3 +40,8 @@
     ```
 
 
+Follow the frontend pods in canary release:
+
+```shell
+stern frontend --selector release=canary
+```

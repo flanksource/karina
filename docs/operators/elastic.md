@@ -1,20 +1,19 @@
-First deploy the Elastic cloud on kubernetes:
-
+First deploy the Elastic Cloud on Kubernetes operator:
 
 
 `karina.yml`
-
 ```yaml
 eck:
   version: 1.0.0
 ```
 
-`karina deploy eck -c karina.yml`
+```shell
+karina deploy eck -c karina.yml
+```
 
-Then create an elastic config:
+Then create an elasticsearch config:
 
 `elastic-stack.yaml`
-
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -123,4 +122,6 @@ spec:
 
 ```
 
-`kubectl deploy -f instance.yaml`
+```shell
+kubectl deploy -f elastic-stack.yaml
+```

@@ -1,4 +1,4 @@
-https://thanos.DOMAIN
+UI: []:octicons-link-external-24: thanos.%%{domain}%%](https://thanos.%%{domain}%%)
 
 Thanos provides long-term persistence via S3 with multi-cluster visibility, it can be deploy in 2 modes:
 
@@ -39,7 +39,7 @@ thanos:
 ```
 
 !!! warning
-   The thanos sidecards need to be exported via GRPCS with TLS passthrough, there is an open issue [#1507](https://github.com/thanos-io/thanos/issues/1507) with the workaround that we apply is a adding a NodePort on **31901** to talk directory to thanos sidecards
+    The thanos sidecards need to be exported via GRPCS with TLS passthrough, there is an open issue [#1507](https://github.com/thanos-io/thanos/issues/1507) with the workaround that we apply is a adding a NodePort on **31901** to talk directory to thanos sidecards
 
 See [thanos config options](/reference/config/#thanos)
 

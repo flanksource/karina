@@ -1,9 +1,11 @@
+UI  [:octicons-link-external-24: canaries.%%{domain}%%](https://canaries.%%{domain}%%)
+
 ## Deploying the operator
 
 `karina.yml`
 
 ```yaml
-domain: DOMAIN
+domain: %%{domain}%%
 canaryChecker:
   version: v0.15.1
 ```
@@ -12,12 +14,10 @@ Then deploy using:
 karina deploy canary-checker -c karina.yml
 ```
 
-The Canary Checker UI will be available on [https://canaries.DOMAIN]()
-
-See the [user-guide](../user-guide/canary-checker.md) for how to configure and interact with canaries.
+See the [user-guide](/user-guide/canary-checker.md) for how to configure and interact with canaries.
 
 
-### Aggregation
+## Multi-Cluster Aggregation
 Aggregation allows the results from multiple canary-checker instances to be view in a single page. To enable just add the endpoints for existing canary-checker instances:
 
 ```yaml
@@ -25,10 +25,6 @@ Aggregation allows the results from multiple canary-checker instances to be view
     - https://canaries.CLUSTER1
     - https://canaries.CLUSTER2
 ```
-
-
-
-
 
 ## Infrastructure Checks
 
