@@ -18,11 +18,14 @@ theme:
     #     enabled_if_env: CI
 extra:
   generator: false
+  domain: 127.0.0.1.nip.io
   kubernetes:
     version: v1.18.15
   support:
     email: email group(s) etc
     channel: Slack, MS Teams, etc..
+  filebeat:
+    prefix: co.elastic.logs
 
   social:
     - type: "github"
@@ -52,24 +55,20 @@ markdown_extensions:
 plugins:
   - search
   - autolinks
+  - macros:
+      j2_block_start_string: "[[%"
+      j2_block_end_string: "%]]"
+      j2_variable_start_string: "%%{"
+      j2_variable_end_string: "}%%"
   - same-dir
-  - markdownextradata:
-      jinja_options:
-        variable_start_string: "%%{"
-        variable_end_string: "}%%"
-
-extra_javascript:
-  - https://unpkg.com/mermaid@8.6.4/dist/mermaid.min.js
 extra_css:
   - overrides/style.css
 nav:
   - User Guide:
-      - Getting Started:
-          - Installation: ./user-guide/install.md
-          - Logging In: ./user-guide/login.md
+      - Overview: ./user-guide/index.md
       - Monitoring:
           - Canary Checker: ./user-guide/canary-checker.md
-          - Prometheus: ./user-guide/monitoring.md
+          - Prometheus: ./user-guide/prometheus.md
           - Logging: ./user-guide/logging.md
       - Operators:
           - PostgresSQL: ./user-guide/databases.md
@@ -79,7 +78,8 @@ nav:
       - Ingress:
           - TLS: ./user-guide/tls.md
 
-      - Annotations Reference: ./user-guide/annotations.md
+      - Reference:
+          Annotations: ./user-guide/annotations.md
 
   - Administrator Guide:
       - Overview: ./admin-guide/index.md
@@ -92,6 +92,12 @@ nav:
               - Load Balancing: ./admin-guide/provisioning/load-balancing.md
               - DNS: ./admin-guide/provisioning/dns.md
               - Machine Images: ./admin-guide/provisioning/machine-images.md
+
+      - Monitoring:
+          - Prometheus: ./admin-guide/prometheus.md
+          - Canary Checker: ./admin-guide/canary-checker.md
+          - Logging: ./admin-guide/logging.md
+          - Thanos: ./admin-guide/thanos.md
 
       - Authentication:
           - Decentralized Auth: ./admin-guide/provisioning/ca.md
@@ -119,25 +125,16 @@ nav:
           - Vault: ./admin-guide/vault.md
           - OPA/Gatekeeper: ./admin-guide/opa.md
 
-      - Monitoring:
-          - Prometheus Stack: ./admin-guide/prometheus.md
-          - Canary Checker: ./admin-guide/canary-checker.md
-          - Logging: ./admin-guide/logging.md
-          - Thanos: ./admin-guide/thanos.md
-
-      - Operators:
-          - Git: ./admin-guide/operators/git.md
-          - Platform: ./admin-guide/operators/platform.md
-          - Canary Checker: ./admin-guide/canary-checker.md
-          - Template: ./admin-guide/operators/template.md
-          - Postgres: ./admin-guide/operators/postgres.md
-          - Elastic: ./admin-guide/operators/elastic.md
-          - RabbitMQ: ./admin-guide/operators/rabbitmq.md
-          - Redis: ./admin-guide/operators/redis.md
-          - Harbor: ./admin-guide/harbor.md
-
       - Configuration: ./admin-guide/configuration.md
       - Troubleshooting:
           - Checklist: ./admin-guide/troubleshooting.md
-
+  - Operators:
+      - Elastic: ./operators/elastic.md
+      - Git: ./operators/git.md
+      - Harbor: ./operators/harbor.md
+      - Platform: ./operators/platform.md
+      - Postgres: ./operators/postgres.md
+      - RabbitMQ: ./operators/rabbitmq.md
+      - Redis: ./operators/redis.md
+      - Template: ./operators/template.md
   - Reference: ./reference/config.md

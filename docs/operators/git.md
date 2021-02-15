@@ -1,8 +1,8 @@
 `karina.yml`
 
 ```yaml
-eck:
+gitOperator:
   version: 1.0.0
 ```
 
-`karina deploy eck -c karina.yml`
+`karina deploy git-operator -c karina.yml`

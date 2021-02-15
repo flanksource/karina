@@ -1,24 +1,117 @@
-### Ingesting logs via Elastic
-
-| Annotation                                                   | Description                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `co.elastic.logs/enabled`                                    | Filebeat gets logs from all containers by default, you can set this hint to false to ignore the output of the container. Filebeat won’t read or send logs from it. If default config is disabled, you can use this annotation to enable log retrieval only for containers with this set to true. |
-| `co.elastic.logs/multiline.*` <br>`co.elastic.logs/multiline.pattern: '^\['` <br>`co.elastic.logs/multiline.negate: true`<br/>`co.elastic.logs/multiline.match: after` | Multiline settings. See Multiline messages for a full list of all supported options. |
-|                                                              |                                                              |
-| `co.elastic.logs/json.*`                                     | JSON settings. See json for a full list of all supported options. |
-| `co.elastic.logs/include_lines`                              | A list of regular expressions to match the lines that you want Filebeat to include. See Inputs for more info. |
-| `co.elastic.logs/exclude_lines`                              | A list of regular expressions to match the lines that you want Filebeat to exclude. See Inputs for more info. |
-| `co.elastic.logs/module`                                     | Instead of using raw docker input, specifies the module to use to parse logs from the container. See Modules for the list of supported modules. |
-| `co.elastic.logs/fileset`                                    | When module is configured, map container logs to module filesets. You can either configure a single fileset like this: |
-| `co.elastic.logs/processors`                                 | Define a processor to be added to the Filebeat input/module configuration. See Processors for the list of supported processors |
-| `co.elastic.logs/processors.1.dissect.tokenizer: "%{key1} %{key2}" co.elastic.logs/processors.dissect.tokenizer: "%{key2} %{key1}"` | In order to provide ordering of the processor definition, numbers can be provided. If not, the hints builder will do arbitrary ordering: <br> In this sample the processor definition tagged with 1 would be executed first. |
-
-### Querying logs using stern
+## Shipping
 
 ???+ asterix "Prerequisites"
-     [stern](/user-guide/#install-stern) is installed
+     A cluster-wide [logging](/admin-guide/logging) collector has been setup by the cluster administrator
 
 
+To ingest your applications logs your pod needs to be annotated with:  `%%{ filebeat.prefix }%%/enabled: true`, This can be done either at the Namespace level or inside your workloads `.spec.template.metadata.annotations` fields.
+
+
+### Filtering
+
+To filter overly verbose messages from being collected, add one or more <a href="https://www.elastic.co/guide/en/beats/filebeat/7.10/drop-event.html" target=_blank>:material-open-in-new: drop_event</a>
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+         %%{ filebeat.prefix }%%/processors.0.drop_event.when.contains.message: DEBUG
+         %%{ filebeat.prefix }%%/processors.1.drop_event.when.contains.message: TRACE
+```
+
+
+### Parsing
+To tokenize unstructured messages into structured fields before use the <a href="https://www.elastic.co/guide/en/beats/filebeat/7.10/dissect.html" target=_blank>:material-open-in-new: dissect</a>
+
+
+Given the following log line:
+```
+2021-02-14 07:35:46.222  INFO 1 --- [           main] o.h.h.i.QueryTranslatorFactoryInitiator  : HHH000397: Using ASTQueryTranslatorFactory
+```
+
+Using a tokenization string of: `%{date} %{time}  %{level} %{} %{} [%{entry}] %{class}: %{message}` will parse it into:
+
+
+```json
+{
+  "class": "o.h.h.i.QueryTranslatorFactoryInitiator  ",
+  "date": "2021-02-14",
+  "entry": "           main",
+  "level": "",
+  "message": "HHH000397: Using ASTQueryTranslatorFactory",
+  "time": "07:35:46.222"
+}
+```
+
+!!! tip
+    <a href="https://dissect-tester.jorgelbg.me" target="_blank">:material-open-in-new: dissect-tester</a> can help testing tokenization strings with sample logs
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+         %%{ filebeat.prefix }%%/processors.0.dissect.tokenizer: '%{date} %{time}  %{level} %{} %{} [%{entry}] %{class}: %{message}'
+         %%{ filebeat.prefix }%%/processors.0.dissect.ignore_failure: "true"
+         %%{ filebeat.prefix }%%/processors.0.dissect.target_prefix: ""
+         %%{ filebeat.prefix }%%/processors.0.dissect.overwrite_keys: "true"
+```
+
+
+
+### JSON
+
+JSON formatted logs can be decoded using <a href="https://www.elastic.co/guide/en/beats/filebeat/7.10/decode-json-fields.html" target=_blank>:material-open-in-new: decode-json-fields</a>
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+         %%{ filebeat.prefix }%%/processors.0.decode_json_fields.fields.0: message
+         %%{ filebeat.prefix }%%/processors.0.decode_json_fields.target: ""
+         %%{ filebeat.prefix }%%/processors.0.decode_json_fields.overwrite_keys: "true"
+         %%{ filebeat.prefix }%%/processors.0.decode_json_fields.add_error_key: "true"
+```
+
+###  Multiline
+
+Multi-line log messages such as Java stack traces can be combined using <a href="https://www.elastic.co/guide/en/beats/filebeat/7.10/multiline-examples.html" target=_blank>:material-open-in-new: multiline</a>
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+        %%{ filebeat.prefix }%%/multiline.pattern: "^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:"
+        %%{ filebeat.prefix }%%/multiline.negate: "true"
+        %%{ filebeat.prefix }%%/multiline.match: after
+```
+
+
+### Example
+
+```yaml
+[[% include './user-guide/petclinic.yaml' %]]
+```
+
+
+
+## Realtime Tailing
+
+???+ asterix "Prerequisites"
+     [stern](/user-guide/install#install-stern) is installed
 
 Tail the `gateway` container running inside of the `envvars` pod on staging
 ```
@@ -35,15 +128,6 @@ Show auth activity from 15min ago with timestamps
 stern auth -t --since 15m
 ```
 
-Follow the development of `some-new-feature` in minikube
-```
-stern some-new-feature --context minikube
-```
-
-View pods from another namespace
-```
-stern kubernetes-dashboard --namespace kube-system
-```
 
 Tail the pods filtered by `run=nginx` label selector across all namespaces
 ```
@@ -71,8 +155,3 @@ Output using a custom template:
 stern --template '{{.Message}} ({{.Namespace}}/{{.PodName}}/{{.ContainerName}})' backend
 ```
 
-Output using a custom template with stern-provided colors:
-
-```
-stern --template '{{.Message}} ({{.Namespace}}/{{color .PodColor .PodName}}/{{color .ContainerColor .ContainerName}})' backend
-```

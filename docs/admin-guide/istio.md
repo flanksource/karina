@@ -7,5 +7,5 @@
 Deploying using :
 
 ```bash
-karina deploy harbor -c karina.yml
+karina deploy istio-operator -c karina.yml
 ```

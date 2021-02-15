@@ -1,3 +1,5 @@
+
+### Deploy
 `karina.yml`
 
 ```yaml
@@ -13,14 +15,37 @@ karina deploy template-operator -c karina.yml
 
 
 
-### Namespace Request Example
+### Example
 
-:1: First define a template based on a CRD:
+To setup a namespace request object that codifies the patterns for setting up a a Namespace with a ResourceQuota and RoleBinding:
 
-`template-definition.yml`
+<script src="https://unpkg.com/mermaid@8.6.4/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  securityLevel: "loose",
+  startOnLoad: true,
+  logLevel: "info",
+  });
+  </script>
+
+
+```mermaid
+
+graph LR
+NamespaceRequest[NamespaceRequest]
+
+
+NamespaceRequest --> Namespace["<img src='/overrides/icons/k8s/ns.svg'; width='24' /> app"]
+NamespaceRequest --> RoleBinding["<img src='/overrides/icons/k8s/rb.svg'; width='24' /> creator"]
+NamespaceRequest --> ResouceQuota["<img src='/overrides/icons/k8s/quota.svg'; width='24' /> compute-resources"]
+```
+
+
+:1: Create the NamespaceRequest CRD
+
+`namespace-request-crd.yml`
 
 ```yaml
----
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -38,11 +63,18 @@ spec:
     - name: v1
       served: true
       storage: true
----
+```
+```bash
+kubectl apply -f namespace-request-crd.yml
+```
+:2: Create a Template that watches for new instances of NamespaceRequest
+
+`namespace-request-template.yml`
+```yaml
 apiVersion: templating.flanksource.com/v1
 kind: Template
 metadata:
-  name: namespacerequest
+  name: namespace-request
 spec:
   source:
     apiVersion: acmp.corp/v1
@@ -86,15 +118,12 @@ spec:
         apiGroup: rbac.authorization.k8s.io
         kind: ClusterRole
         name: namespace-admin
-
 ```
-
-:2:
 ```bash
-kubectl apply -f template-definition.yml
+kubectl apply -f namespace-request-template.yml
 ```
 
-:3: create 1 or more namespace requests:
+:3: Instantiate the template
 
 `request.yml`
 
@@ -102,7 +131,7 @@ kubectl apply -f template-definition.yml
 apiVersion: acmp.corp/v1
 kind: NamespaceRequest
 metadata:
-  name: a
+  name: app
 spec:
   team: blue-team
   memory: 16
@@ -111,7 +140,3 @@ spec:
 ```bash
 kubectl apply -f request.yml
 ```
-
-
-
-The template operator will then pick up the new *NamespaceRequest* and create the corresponding *Namespace*, ResourceQuota and *RoleBinding* objects.

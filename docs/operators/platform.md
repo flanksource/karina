@@ -1,8 +1,8 @@
 `karina.yml`
 
 ```yaml
-eck:
-  version: 1.0.0
+platformOperator:
+   version: v0.1.9
 ```
 
-`karina deploy eck -c karina.yml`
+`karina deploy platform-operator -c karina.yml`

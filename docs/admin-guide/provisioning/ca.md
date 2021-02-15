@@ -1,4 +1,4 @@
-First generate a new CA using [karina ca generate](karina_ca_generate.md)
+First generate a new CA using [karina ca generate](/cli/karina_ca_generate.md)
 
 ```bash
 karina ca generate --name cluster-ca \
@@ -30,4 +30,4 @@ karina kubeconfig admin --expiry 1680h --name $USER -c karina.yml
 
 
 
-See [karina kubeconfig admin](karina_kubeconfig_admin.md)
+See [karina kubeconfig admin](/cli/karina_kubeconfig_admin.md)

@@ -1,3 +1,5 @@
+Access harbor at: [:octicons-link-external-24: consul.%%{domain}%%](https://consul.%%{domain}%%)
+
 # Consul
 
 ### Backup
