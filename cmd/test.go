@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/argorollouts"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/argocdoperator"
 	"github.com/flanksource/karina/pkg/phases/base"
@@ -143,6 +145,7 @@ func init() {
 
 	tests := map[string]TestFn{
 		"argocd-operator":      argocdoperator.Test,
+		"argo-rollouts":        argorollouts.Test,
 		"audit":                kubeadm.TestAudit,
 		"base":                 base.Test,
 		"canary":               canary.TestCanary,
