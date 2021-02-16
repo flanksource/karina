@@ -260,7 +260,7 @@ spec:
               key: AWS_REGION
               name: postgres-operator-cluster-environment
         s3Bucket:
-          - description: Backup for {{.metadata.name}}
+          - description: "{{.metadata.name}} (backup)"
             bucket: "{{.spec.backup.bucket}}"
             region: $LOGICAL_BACKUP_S3_REGION
             endpoint: $AWS_ENDPOINT
@@ -291,4 +291,4 @@ spec:
             query: "SELECT 1"
             results: 1
             driver: postgres
-            description: "Heartbeat for {{.metadata.name}}"
+            description: "{{.metadata.name}} (heartbeat)"
