@@ -70,7 +70,6 @@ func WithVmwareCluster(p *platform.Platform) error {
 			vm.Network = p.Master.Network
 		}
 		p.Nodes[name] = vm
-
 	}
 
 	return nil
