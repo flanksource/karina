@@ -20,6 +20,7 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/provision/vmware"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,6 +43,36 @@ func WithVmwareCluster(p *platform.Platform) error {
 	}
 	p.JoinEndpoint = joinEndpoint
 
+	if p.Master.Prefix == "" {
+		p.Master.Prefix = "master"
+	}
+
+	for name, vm := range p.Nodes {
+		if vm.Prefix == "" {
+			vm.Prefix = name
+		}
+		if vm.Cluster == "" {
+			vm.Cluster = p.Master.Cluster
+		}
+		if vm.Template == "" {
+			vm.Template = p.Master.Template
+		}
+		if vm.Folder == "" {
+			vm.Folder = p.Master.Folder
+		}
+		if vm.ContentLibrary == "" {
+			vm.ContentLibrary = p.Master.ContentLibrary
+		}
+		if len(vm.Annotations) == 0 && len(p.Master.Annotations) > 0 {
+			vm.Annotations = p.Master.Annotations
+		}
+		if len(vm.Network) == 0 && len(p.Master.Network) > 0 {
+			vm.Network = p.Master.Network
+		}
+		p.Nodes[name] = vm
+
+	}
+
 	return nil
 }
 
@@ -49,6 +80,11 @@ func WithVmwareCluster(p *platform.Platform) error {
 func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) error {
 	if err := WithVmwareCluster(platform); err != nil {
 		return err
+	}
+
+	if platform.PlatformConfig.Trace {
+		pretty.Println(platform.Master)
+		pretty.Println(platform.Nodes)
 	}
 
 	if platform.CA == nil {
