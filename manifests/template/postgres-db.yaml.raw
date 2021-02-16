@@ -29,9 +29,9 @@ spec:
           - name: BACKUP_SCHEDULE
             value: "*/5 * * * *"
           - name: USE_WALG_RESTORE
-            value: "true"
+            value: "false"
           - name: USE_WALG_BACKUP
-            value: "true"
+            value: "false"
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
