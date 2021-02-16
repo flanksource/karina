@@ -12,8 +12,10 @@ import (
 
 // CleanupJobs removes all failed jobs in a given namespace
 var CleanupJobs = &cobra.Command{
-	Use:   "cleanupjobs",
-	Short: "remove all failed jobs in a given namespace",
+	Use:       "cleanup jobs",
+	Short:     "remove all failed jobs in a given namespace",
+	ValidArgs: []string{"jobs"},
+	Args:      cobra.ExactValidArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		namespace, _ := cmd.Flags().GetString("namespace")
