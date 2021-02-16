@@ -1,11 +1,8 @@
 package argorollouts
 
 import (
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
-)
-
-const (
-	Namespace = "argo-rollouts"
 )
 
 func Deploy(platform *platform.Platform) error {
@@ -13,9 +10,9 @@ func Deploy(platform *platform.Platform) error {
 		return platform.DeleteSpecs("", "argo-rollouts.yaml")
 	}
 
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, nil, nil); err != nil {
 		return err
 	}
 
-	return platform.ApplySpecs(Namespace, "argo-rollouts.yaml")
+	return platform.ApplySpecs(constants.PlatformSystem, "argo-rollouts.yaml")
 }
