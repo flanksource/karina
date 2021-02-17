@@ -100,11 +100,30 @@ func InstallGatekeeper(p *platform.Platform) error {
 
 	p.WaitForNamespace(namespace, 600*time.Second)
 
+	if !p.DryRun {
+		defaultConstraints, err := p.GetResourcesByDir("/gatekeeper", "manifests")
+		if err != nil {
+			return err
+		}
+		for name := range defaultConstraints {
+			constraint, err := p.GetResourceByName("/gatekeeper/"+name, "manifests")
+			if err != nil {
+				return err
+			}
+			if err = p.ApplyText("", constraint); err != nil {
+				return err
+			}
+		}
+	}
+
 	if p.Gatekeeper.Templates != "" && !p.DryRun {
-		start := time.Now()
 		if err := deployTemplates(p, p.Gatekeeper.Templates); err != nil {
 			return err
 		}
+	}
+
+	if !p.DryRun {
+		start := time.Now()
 
 		templateClient, err := p.GetClientByKind("ConstraintTemplate")
 
