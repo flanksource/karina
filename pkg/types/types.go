@@ -718,7 +718,7 @@ type Packetbeat struct {
 }
 
 type LogsExporter struct {
-	Disabled      `yaml:",inline" json",inline"`
+	Disabled      `yaml:",inline" json:",inline"`
 	Elasticsearch *Connection `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
 	SyncPeriod    string      `yaml:"syncPeriod" json:"syncPeriod"`
 }
