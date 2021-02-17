@@ -17,6 +17,7 @@ resources:
   - https://raw.githubusercontent.com/argoproj/argo-rollouts/$(ARGO_ROLLOUTS_VERSION)/manifests/cluster-install/argo-rollouts-clusterrolebinding.yaml
 images:
   - name: argoproj/argo-rollouts
+    newName: docker.io/argoproj/argo-rollouts
     newTag: "{{.argoRollouts.version}}"
 patchesStrategicMerge:
   - |-
