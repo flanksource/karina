@@ -36,11 +36,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 func TestE2E(p *platform.Platform, test *console.TestResults) {
 	testName := "argocd-operator-e2e"
-	if p.ArgocdOperator.IsDisabled() {
-		test.Skipf(testName, "ArgoCD Operator is disabled")
-		return
-	}
-
 	clusterName := "test-cluster"
 	testCluster := NewArgoCDClusterConfig(clusterName)
 	err := p.Apply(Namespace, testCluster)
