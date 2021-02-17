@@ -80,6 +80,7 @@ type PlatformConfig struct {
 	Journalbeat         Journalbeat          `yaml:"journalbeat,omitempty" json:"journalbeat,omitempty"`
 	Auditbeat           Auditbeat            `yaml:"auditbeat,omitempty" json:"auditbeat,omitempty"`
 	Packetbeat          Packetbeat           `yaml:"packetbeat,omitempty" json:"packetbeat,omitempty"`
+	LogsExporter        LogsExporter         `yaml:"logsExporter,omitempty" json:"logsExporter,omitempty"`
 	Vault               *Vault               `yaml:"vault,omitempty" json:"vault,omitempty"`
 	ConfigMapReloader   ConfigMapReloader    `yaml:"configmapReloader,omitempty" json:"configmapReloader,omitempty"`
 	Elasticsearch       *Elasticsearch       `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`

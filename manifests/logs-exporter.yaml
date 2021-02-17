@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logs-exporter-manager
+  namespace: platform-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: logs-exporter-leader-election-role
+  namespace: platform-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: logs-exporter-manager-role
+rules:
+- apiGroups:
+  - metrics.flanksource.com
+  resources:
+  - elasticlogs
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: logs-exporter-leader-election-rolebinding
+  namespace: platform-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: logs-exporter-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: logs-exporter-manager
+  namespace: platform-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logs-exporter-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: logs-exporter-manager-role
+subjects:
+- kind: ServiceAccount
+  name: logs-exporter-manager
+  namespace: platform-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logs-exporter
+  namespace: platform-system
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:
+    control-plane: logs-exporter
+spec:
+  selector:
+    control-plane: logs-exporter
+  ports:
+    - name: prometheus
+      protocol: TCP
+      port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: logs-exporter
+  name: logs-exporter-controller-manager
+  namespace: platform-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: logs-exporter
+  template:
+    metadata:
+      labels:
+        control-plane: logs-exporter
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --metrics-addr=0.0.0.0:8080
+        - --sync-period={{ .logsExporter.syncPeriod | default "5m" }}
+        env:
+        - name: ELASTIC_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: logs-exporter-elastic
+        - name: ELASTIC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: logs-exporter-elastic
+        - name: ELASTIC_URL
+          valueFrom:
+            secretKeyRef:
+              key: url
+              name: logs-exporter-elastic
+        image: docker.io/flanksource/logs-exporter:{{ .logsExporter.version | default "v0.1.0" }}
+        name: manager
+        ports:
+          - containerPort: 8080
+            name: prometheus
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      serviceAccount: logs-exporter-manager
+      terminationGracePeriodSeconds: 10
