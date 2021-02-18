@@ -29,9 +29,9 @@ spec:
           - name: BACKUP_SCHEDULE
             value: "*/5 * * * *"
           - name: USE_WALG_RESTORE
-            value: "true"
+            value: "false"
           - name: USE_WALG_BACKUP
-            value: "true"
+            value: "false"
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -260,7 +260,8 @@ spec:
               key: AWS_REGION
               name: postgres-operator-cluster-environment
         s3Bucket:
-          - bucket: "{{.spec.backup.bucket}}"
+          - description: "{{.metadata.name}} (backup)"
+            bucket: "{{.spec.backup.bucket}}"
             region: $LOGICAL_BACKUP_S3_REGION
             endpoint: $AWS_ENDPOINT
             secretKey: $AWS_SECRET_ACCESS_KEY
@@ -277,17 +278,17 @@ spec:
       spec:
         interval: 30
         env:
-          DATA_SOURCE_USER:
+          username:
             secretKeyRef:
               key: username
               name: postgres.postgres-{{.metadata.name}}.credentials
-          DATA_SOURCE_PASS:
+          password:
             secretKeyRef:
               key: password
               name: postgres.postgres-{{.metadata.name}}.credentials
         postgres:
-          - connection: "user=$DATA_SOURCE_USER password=$DATA_SOURCE_PASS host=postgres-{{.metadata.name}}.postgres-operator port=5432 dbname=postgres sslmode=disable"
+          - connection: 'user={{ "{{" }}.username{{ "}}" }} password={{ "{{" }}.password{{ "}}" }} host=postgres-{{.metadata.name}}.postgres-operator port=5432 dbname=postgres sslmode=disable'
             query: "SELECT 1"
             results: 1
             driver: postgres
-            description: "postgres-{{.metadata.name}} DB heartbeat"
+            description: "{{.metadata.name}} (heartbeat)"
