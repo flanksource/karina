@@ -1,0 +1,2 @@
+bases:
+  - github.com/argoproj/argo-rollouts/manifests/crds?ref=v0.10.2
