@@ -26,7 +26,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
-	"github.com/flanksource/karina/pkg/phases/logsexporter"
 	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nsx"
@@ -77,7 +76,6 @@ var Phases = map[string]DeployFn{
 	"kpack":                kpack.Deploy,
 	"kube-web-view":        kubewebview.Install,
 	"kube-resource-report": kuberesourcereport.Install,
-	"logs-exporter":        logsexporter.Install,
 	"minio":                minio.Install,
 	"monitoring":           monitoring.Install,
 	"ingress":              ingress.Install,

@@ -44,6 +44,13 @@ metadata:
   name: logs-exporter-manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+- apiGroups:
   - metrics.flanksource.com
   resources:
   - elasticlogs
@@ -125,22 +132,6 @@ spec:
       - args:
         - --metrics-addr=0.0.0.0:8080
         - --sync-period={{ .logsExporter.syncPeriod | default "5m" }}
-        env:
-        - name: ELASTIC_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: logs-exporter-elastic
-        - name: ELASTIC_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: logs-exporter-elastic
-        - name: ELASTIC_URL
-          valueFrom:
-            secretKeyRef:
-              key: url
-              name: logs-exporter-elastic
         image: docker.io/flanksource/logs-exporter:{{ .logsExporter.version | default "v0.1.0" }}
         name: manager
         ports:

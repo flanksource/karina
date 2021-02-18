@@ -1,0 +1,41 @@
+apiVersion: metrics.flanksource.com/v1
+kind: ElasticLogs
+metadata:
+  name: filebeat-counts
+spec:
+  index: filebeat-*
+  url: https://logs-es-http.eck.svc:9200
+  username: elastic
+  password:
+    name: logs-es-elastic-user
+    namespace: eck
+    key: elastic
+  tuples:
+  - aggregate:
+      field: kubernetes.node.name
+      name: count_node
+    filters:
+      count_cluster: fields.cluster
+      count_namespace: kubernetes.namespace
+    metricName: elastic_documents_by_namespace_cluster_node
+---
+apiVersion: metrics.flanksource.com/v1
+kind: ElasticLogs
+metadata:
+  name: journalbeat-counts
+spec:
+  index: journalbeat-*
+  url: https://logs-es-http.eck.svc:9200
+  username: elastic
+  password:
+    name: logs-es-elastic-user
+    namespace: eck
+    key: elastic
+  tuples:
+  - aggregate:
+      field: host.hostname
+      name: count_node
+    filters:
+      count_cluster: fields.cluster
+      count_process: process.name
+    metricName: elastic_documents_by_process_cluster_node
