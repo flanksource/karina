@@ -21,6 +21,11 @@ func Deploy(p *platform.Platform) error {
 	if p.Elasticsearch.Replicas == 0 {
 		p.Elasticsearch.Replicas = 3
 	}
+	if p.OAuth2Proxy == nil {
+		p.OAuth2Proxy = &types.OAuth2Proxy{
+			Disabled: true,
+		}
+	}
 
 	return p.ApplySpecs(Namespace, "elasticsearch.yaml")
 }
