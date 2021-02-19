@@ -1,11 +1,7 @@
-#https://github.com/open-policy-agent/gatekeeper-library/blob/master/library/general/allowedrepos/template.yaml
 apiVersion: templates.gatekeeper.sh/v1beta1
 kind: ConstraintTemplate
 metadata:
   name: k8sallowedrepos
-  annotations:
-    description: Requires container images to begin with a repo string from a specified
-      list.
 spec:
   crd:
     spec:
@@ -22,15 +18,22 @@ spec:
   targets:
     - target: admission.k8s.gatekeeper.sh
       rego: |
-        package k8sallowedrepos
+        package k8ssllowedrepos
+
+        kinds = { "Pod", "Deployment", "ReplicationController", "ReplicaSet", "DaemonSet", "StatefulSet", "Job", "CronJob"}
+
+        get_spec(kind) = input.review.object.spec.template.spec { kinds[kind] }
+        get_spec(kind) = input.review.object.spec { kind == "Pod" }
+        get_spec(kind) = input.review.object.spec.jobTemplate.spec.template.spec { kind == "CronJob" }
+
         violation[{"msg": msg}] {
-          container := input.review.object.spec.containers[_]
+          container := get_spec(input.review.object.kind).containers[_]
           satisfied := [good | repo = input.parameters.repos[_] ; good = startswith(container.image, repo)]
           not any(satisfied)
           msg := sprintf("container <%v> has an invalid image repo <%v>, allowed repos are %v", [container.name, container.image, input.parameters.repos])
         }
         violation[{"msg": msg}] {
-          container := input.review.object.spec.initContainers[_]
+          container := get_spec(input.review.object.kind).containers[_]
           satisfied := [good | repo = input.parameters.repos[_] ; good = startswith(container.image, repo)]
           not any(satisfied)
           msg := sprintf("container <%v> has an invalid image repo <%v>, allowed repos are %v", [container.name, container.image, input.parameters.repos])

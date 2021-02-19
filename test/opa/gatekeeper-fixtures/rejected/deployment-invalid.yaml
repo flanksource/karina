@@ -15,7 +15,7 @@ metadata:
         - kind: K8sRequiredProbes
           name: must-have-probes
           message: Container <nginx> in your <Deployment> <nginx-deployment> has no <livenessProbe>
-        - kind: K8sWhitelistRegistries
+        - kind: K8sAllowedRepos
           name: whitelist-registries
           message: container <nginx> has an invalid image repo <gcr.io/goharbor/harbor-portal:latest>, allowed repos are ["k8s.gcr.io", "docker.io", "quay.io"]
 spec:

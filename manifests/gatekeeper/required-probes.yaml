@@ -1,10 +1,7 @@
-#https://github.com/open-policy-agent/gatekeeper-library/blob/master/library/general/requiredprobes/template.yaml
 apiVersion: templates.gatekeeper.sh/v1beta1
 kind: ConstraintTemplate
 metadata:
   name: k8srequiredprobes
-  annotations:
-    description: Requires Pods to have readiness and/or liveness probes.
 spec:
   crd:
     spec:
@@ -28,8 +25,14 @@ spec:
         probe_type_set = probe_types {
           probe_types := {type | type := input.parameters.probeTypes[_]}
         }
+        kinds = { "Pod", "Deployment", "ReplicationController", "ReplicaSet", "DaemonSet", "StatefulSet", "Job", "CronJob"}
+
+        get_container(kind) = input.review.object.spec.template.spec.containers[_] { kinds[kind] }
+        get_container(kind) = input.review.object.spec.containers[_] { kind == "Pod" }
+        get_container(kind) = input.review.object.spec.jobTemplate.spec.template.spec.containers[_] { kind == "CronJob" }
+
         violation[{"msg": msg}] {
-          container := input.review.object.spec.containers[_]
+          container := get_container(input.review.object.kind)
           probe := input.parameters.probes[_]
           probe_is_missing(container, probe)
           msg := get_violation_message(container, input.review, probe)
@@ -48,4 +51,3 @@ spec:
         get_violation_message(container, review, probe) = msg {
           msg := sprintf("Container <%v> in your <%v> <%v> has no <%v>", [container.name, review.kind.kind, review.object.metadata.name, probe])
         }
-
