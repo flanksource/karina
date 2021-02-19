@@ -5,6 +5,8 @@ tekton:
   dashboardVersion: v0.6.1.5
 argocdOperator:
   version: v0.0.15
+argoRollouts:
+  version: v0.10.2
 gitops:
   - name: karina
     helmOperatorVersion: 1.2.0
