@@ -71,6 +71,11 @@ spec:
             sum(rate(container_cpu_usage_seconds_total{job="kubelet", image!="", container!="POD"}[5m])) by (namespace)
           record: namespace:container_cpu_usage_seconds_total:sum_rate
         - expr: |
+            ( sum by (container, pod, namespace) (
+              rate(container_cpu_usage_seconds_total{container!=""}[30m])
+            ) ) / ( sum by (container, pod, namespace) (kube_pod_container_resource_requests_cpu_cores) )*100
+          record: namespace_pod_container:container_cpu_usage_percentage:sum_rate
+        - expr: |
             sum by (namespace, pod, container) (
               rate(container_cpu_usage_seconds_total{job="kubelet", image!="", container!="POD"}[5m])
             ) * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
@@ -858,6 +863,17 @@ spec:
             message: Errors while reconciling Prometheus in {{ $labels.namespace }} Namespace.
           expr: |
             rate(prometheus_operator_node_address_lookup_errors_total{job="prometheus-operator",namespace="monitoring"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+    - name: pod-resource-allocation
+      rules:
+        - alert: ContainerOverProvisioned
+          annotations:
+            message: Container {{ $labels.container }} in Pod {{ $labels.pod }} is using less than 10 percent of allocated CPU
+          expr: |
+            namespace_pod_container:container_cpu_usage_percentage:sum_rate < 10 and
+            (sum by (container, pod, namespace) (kube_pod_container_resource_requests_cpu_cores{namespace!="postgres-operator"})) > .2
           for: 10m
           labels:
             severity: warning
