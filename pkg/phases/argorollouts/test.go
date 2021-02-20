@@ -44,7 +44,7 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 
 	test.Infof("Checking if Argo Rollouts is working...")
 	client, _ := p.GetClientByKind("Rollout")
-	timeout := 1 * time.Minute
+	timeout := 2 * time.Minute
 	start := time.Now()
 	for {
 		time.Sleep(1 * time.Second)
