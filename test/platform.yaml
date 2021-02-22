@@ -14,8 +14,7 @@ opa:
   logLevel: debug
   setDecisionLogs: true
 gatekeeper:
-  version: "v3.1.0-rc.1"
-  templates: test/opa/templates
+  version: "v3.3.0"
   constraints: test/opa/constraints
   auditInterval: 10
   e2e:
