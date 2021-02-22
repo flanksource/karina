@@ -32,6 +32,7 @@ func Install(p *platform.Platform) error {
 		"vpa":               p.VPA.IsDisabled,
 		"kiosk":             p.Kiosk.IsDisabled,
 		"istio":             p.IstioOperator.IsDisabled,
+		"logs-exporter":     p.LogsExporter.IsDisabled,
 	}
 
 	wg := sync.WaitGroup{}
