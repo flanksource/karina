@@ -1,10 +1,8 @@
 package elasticsearch
 
 import (
-	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
-	"github.com/pkg/errors"
 )
 
 const Namespace = "eck"
@@ -30,12 +28,8 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if !p.LogsExporter.IsDisabled() {
-		if err := p.ApplySpecs(constants.PlatformSystem, "logs-exporter.yaml"); err != nil {
-			return errors.Wrap(err, "failed to deploy logs exporter")
-		}
-
-		if err := p.ApplySpecs(constants.PlatformSystem, "logs-exporter-elasticlogs.yaml"); err != nil {
-			return errors.Wrap(err, "failed to deploy logs exporter elasticlogs")
+		if err := p.ApplySpecs("", "logs-exporter-elasticlogs.yaml"); err != nil {
+			p.Warnf("failed to apply elastic logs instances: %v", err)
 		}
 	}
 
