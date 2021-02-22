@@ -127,28 +127,36 @@ func deployDashboards(p *platform.Platform, rootPath string) error {
 		return fmt.Errorf("unable to find dashboards: %v", err)
 	}
 	for name := range dashboards {
-		contents, err := p.Template(rootPath+"/"+name, "manifests")
-		if err != nil {
-			return fmt.Errorf("failed to template the dashboard: %v ", err)
-		}
-		if err := p.ApplyCRD("monitoring", kommons.CRD{
-			APIVersion: "integreatly.org/v1alpha1",
-			Kind:       "GrafanaDashboard",
-			Metadata: kommons.Metadata{
-				Name:      name,
-				Namespace: Namespace,
-				Labels: map[string]string{
-					"app": "grafana",
-				},
-			},
-			Spec: map[string]interface{}{
-				"name": name,
-				"json": contents,
-			},
-		}); err != nil {
-			return fmt.Errorf("install: failed to apply CRD: %v", err)
+		if err := DeployDashboard(p, name, rootPath+"/"+name); err != nil {
+			return err
 		}
 	}
+	return nil
+}
+
+func DeployDashboard(p *platform.Platform, name, file string) error {
+	contents, err := p.Template(file, "manifests")
+	if err != nil {
+		return fmt.Errorf("failed to template the dashboard: %v ", err)
+	}
+	if err := p.ApplyCRD("monitoring", kommons.CRD{
+		APIVersion: "integreatly.org/v1alpha1",
+		Kind:       "GrafanaDashboard",
+		Metadata: kommons.Metadata{
+			Name:      name,
+			Namespace: Namespace,
+			Labels: map[string]string{
+				"app": "grafana",
+			},
+		},
+		Spec: map[string]interface{}{
+			"name": name,
+			"json": contents,
+		},
+	}); err != nil {
+		return fmt.Errorf("install: failed to apply CRD: %v", err)
+	}
+
 	return nil
 }
 
