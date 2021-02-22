@@ -27,11 +27,5 @@ func Deploy(p *platform.Platform) error {
 		}
 	}
 
-	if !p.LogsExporter.IsDisabled() {
-		if err := p.ApplySpecs("", "logs-exporter-elasticlogs.yaml"); err != nil {
-			p.Warnf("failed to apply elastic logs instances: %v", err)
-		}
-	}
-
 	return p.ApplySpecs(Namespace, "elasticsearch.yaml")
 }
