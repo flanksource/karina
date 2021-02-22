@@ -3,6 +3,7 @@ package opa
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -125,8 +126,12 @@ func InstallGatekeeper(p *platform.Platform) error {
 	if !p.DryRun {
 		start := time.Now()
 
-		templateClient, err := p.GetClientByKind("ConstraintTemplate")
+		k8sclient, err := p.GetClientset()
+		if err != nil {
+			return errors.Wrap(err, "Failed to create clientset")
+		}
 
+		templateClient, err := p.GetClientByKind("ConstraintTemplate")
 		if err != nil {
 			return err
 		}
@@ -149,6 +154,23 @@ func InstallGatekeeper(p *platform.Platform) error {
 				if template.Object["status"] != nil && !template.Object["status"].(map[string]interface{})["created"].(bool) {
 					ready = false
 				}
+			}
+
+			_, resources, err := k8sclient.ServerGroupsAndResources()
+			if err != nil {
+				return errors.Wrap(err, "Failed to obtain server resources")
+			}
+
+			var constraintTemplates []metav1.APIResource
+			for _, res := range resources {
+				if strings.HasPrefix(res.GroupVersion, "constraints.gatekeeper.sh") {
+					constraintTemplates = res.APIResources
+					break
+				}
+			}
+			p.Debugf("Checking creation of constraint resources")
+			if len(constraintTemplates) < len(templateList.Items) {
+				ready = false
 			}
 
 			if ready {
