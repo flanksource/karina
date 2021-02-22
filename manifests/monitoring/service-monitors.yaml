@@ -153,3 +153,21 @@ spec:
   selector:
     matchLabels:
       k8s-app: pushgateway
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    k8s-app: logs-exporter
+  name: logs-exporter
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 15s
+      port: prometheus
+  namespaceSelector:
+    matchNames:
+      - platform-system
+  selector:
+    matchLabels:
+      control-plane: logs-exporter

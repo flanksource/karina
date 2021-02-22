@@ -717,6 +717,11 @@ type Packetbeat struct {
 	Kibana        *Connection `yaml:"kibana,omitempty" json:"kibana,omitempty"`
 }
 
+type LogsExporter struct {
+	Disabled   `yaml:",inline" json:",inline"`
+	SyncPeriod string `yaml:"syncPeriod" json:"syncPeriod"`
+}
+
 type EventRouter struct {
 	Disabled       `yaml:",inline" json:",inline"`
 	FilebeatPrefix string `yaml:"filebeatPrefix" json:"filebeatPrefix"`
