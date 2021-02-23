@@ -35,7 +35,7 @@ func GenerateCA(name, certPath, privateKeyPath, password string, expiryYears int
 
 	if password != "" {
 		pk := x509.MarshalPKCS1PrivateKey(ca.PrivateKey)
-		block, err := x509.EncryptPEMBlock(rand.Reader, "RSA PRIVATE KEY", pk, []byte(password), x509.PEMCipherAES256)
+		block, err := x509.EncryptPEMBlock(rand.Reader, "RSA PRIVATE KEY", pk, []byte(password), x509.PEMCipherAES256) // nolint: staticcheck
 		if err != nil {
 			return errors.Wrap(err, "failed to encrypt private key")
 		}
