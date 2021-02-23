@@ -389,8 +389,6 @@ spec:
   serviceName: vault
   podManagementPolicy: Parallel
   replicas: 3
-  updateStrategy:
-    type: OnDelete
   selector:
     matchLabels:
       app.kubernetes.io/name: vault
