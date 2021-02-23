@@ -3,7 +3,7 @@
 calico:
   disabled: true
 antrea:
-  version: v0.10.0
+  version: v0.13.0
 ```
 
 Deploy using:
