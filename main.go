@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flanksource/commons/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -99,7 +98,7 @@ func main() {
 
 	root.AddCommand(docs)
 
-	root.PersistentFlags().StringArrayP("config", "c", []string{utils.GetEnvOrDefault("PLATFORM_CONFIG", "config.yml")}, "Path to config file")
+	root.PersistentFlags().StringArrayP("config", "c", []string{"karina.yml"}, "Path to config file")
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
 	root.PersistentFlags().StringP("kubeconfig", "", "", "Specify a kubeconfig to use, if empty a new kubeconfig is generated from master CA's at runtime")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
