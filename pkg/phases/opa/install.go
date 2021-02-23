@@ -97,6 +97,9 @@ func InstallGatekeeper(p *platform.Platform) error {
 	if err := p.ApplySpecs(namespace, "opa-gatekeeper.yaml"); err != nil {
 		return err
 	}
+	if err := p.ApplyText(namespace, "opa-gatekeeper-monitoring.yaml.raw"); err != nil {
+		return err
+	}
 
 	p.WaitForNamespace(namespace, 600*time.Second)
 
