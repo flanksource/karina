@@ -1,10 +1,8 @@
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
   name: flux
   namespace: kube-system
-  labels:
-    app: flux
 spec:
   jobLabel: app.kubernetes.io/name
   selector:
@@ -13,8 +11,8 @@ spec:
   namespaceSelector:
     matchNames:
       - kube-system
-  endpoints:
-    - targetPort: 9402
+  podMetricsEndpoints:
+    - targetPort: 3030
       interval: 15s
 ---
 apiVersion: monitoring.coreos.com/v1
