@@ -175,9 +175,13 @@ spec:
           configMap:
             name: lua-scripts
       hostNetwork: true
+      tolerations:
+        # schedule on dedicated node groups
+        - key: node.kubernetes.io/group
+          effect: NoSchedule
+          opertator: Exists
       {{ if .kind }}
       {{ if not (eq ( conv.ToInt64 .kind.workerCount ) 0) }}
-      tolerations:
         - key: "node-role.kubernetes.io/master"
           effect: "NoSchedule"
       {{ end }}
