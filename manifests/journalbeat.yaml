@@ -214,9 +214,12 @@ spec:
       serviceAccountName: journalbeat
       terminationGracePeriodSeconds: 30
       tolerations:
-        # this toleration is to have the daemonset runnable on master nodes
         - key: node-role.kubernetes.io/master
           effect: NoSchedule
+        # schedule on dedicated node groups
+        - key: node.kubernetes.io/group
+          effect: NoSchedule
+          opertator: Exists
       containers:
         - name: journalbeat
           image: docker.elastic.co/beats/journalbeat:{{ .journalbeat.version }}
