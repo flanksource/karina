@@ -11,10 +11,11 @@ jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:v0.12.0
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      - run: make pack
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
@@ -23,9 +24,11 @@ jobs:
         run: go run test/linter/main.go
   docs:
     runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:v0.12.0
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-go@v2
       - uses: actions/setup-python@v2
       - uses: actions/setup-node@v2
-      - run: make pack build-api-docs build-docs
+      - run: make build-api-docs build-docs
