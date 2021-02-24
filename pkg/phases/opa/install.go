@@ -98,19 +98,19 @@ func InstallGatekeeper(p *platform.Platform) error {
 	if err := p.ApplySpecs(namespace, "opa-gatekeeper.yaml"); err != nil {
 		return err
 	}
-	if err := p.ApplyText(namespace, "opa-gatekeeper-monitoring.yaml.raw"); err != nil {
+	if err := p.ApplySpecs(namespace, "opa-gatekeeper-monitoring.yaml.raw"); err != nil {
 		return err
 	}
 
 	p.WaitForNamespace(namespace, 600*time.Second)
 
 	if !p.DryRun {
-		defaultConstraints, err := p.GetResourcesByDir("/gatekeeper", "manifests")
+		defaultConstraints, err := p.GetResourcesByDir("gatekeeper", "manifests")
 		if err != nil {
 			return err
 		}
 		for name := range defaultConstraints {
-			constraint, err := p.GetResourceByName("/gatekeeper/"+name, "manifests")
+			constraint, err := p.GetResourceByName("gatekeeper/"+name, "manifests")
 			if err != nil {
 				return err
 			}

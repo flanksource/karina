@@ -106,13 +106,13 @@ func Install(p *platform.Platform) error {
 		}
 	}
 
-	err := deployDashboards(p, "/monitoring/dashboards")
+	err := deployDashboards(p, "monitoring/dashboards")
 	if err != nil {
 		return err
 	}
 
 	if !p.Kubernetes.Managed {
-		err = deployDashboards(p, "/monitoring/dashboards/unmanaged")
+		err = deployDashboards(p, "monitoring/dashboards/unmanaged")
 		if err != nil {
 			return err
 		}
