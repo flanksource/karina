@@ -417,8 +417,7 @@ spec:
       # NCP shares the host management network.
       hostNetwork: true
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
+        - operator: Exists
       serviceAccountName: ncp-svc-account
       containers:
         - name: nsx-ncp
@@ -516,14 +515,7 @@ spec:
     spec:
       hostNetwork: true
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-        - key: node.kubernetes.io/not-ready
-          effect: NoSchedule
-        - key: node.kubernetes.io/unreachable
-          effect: NoSchedule
-        - key: node.kubernetes.io/burnin
-          effect: NoSchedule
+        - operator: Exists
       hostPID: true
       # If configured with ServiceAccount, update the ServiceAccount
       # name below.
@@ -691,14 +683,7 @@ spec:
       # Give enough time to save flows and perform stop_ovs
       terminationGracePeriodSeconds: 60
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-        - key: node.kubernetes.io/not-ready
-          effect: NoSchedule
-        - key: node.kubernetes.io/unreachable
-          effect: NoSchedule
-        - key: node.kubernetes.io/burnin
-          effect: NoSchedule
+        - operator: Exists
       # If configured with ServiceAccount, update the ServiceAccount
       # name below.
       serviceAccountName: nsx-node-agent-svc-account
