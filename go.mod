@@ -1,6 +1,6 @@
 module github.com/flanksource/karina
 
-go 1.12
+go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.33.18

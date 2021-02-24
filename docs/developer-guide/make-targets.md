@@ -3,8 +3,6 @@
 # Make targets
 
 * `help`           - Lists all valid targets
-* `setup`          - Install required dependencies esc and github-release
-* `pack`           - Packs templates and manifests into golang files
 * `build`(default) - Build binaries
 * `install`        - Installs binary locally (needs admin priviliges)
 * `linux`          - Build for Linux
@@ -18,10 +16,8 @@
 
 Normal first time use:
 ```shell
-make setup        # make sure esc and github-release are installed
-make pack         # pack templates and manifests into go sources
 make              # do a local build
 make compress     # compress the built executable
-sudo make install # install the executable to /usr/local/bin/  make pack
+sudo make install # install the executable to /usr/local/bin/
 ```
 

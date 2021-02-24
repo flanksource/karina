@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -508,16 +509,14 @@ func (platform *Platform) CreateInternalCertificate(service string, namespace st
 }
 
 func (platform *Platform) GetResourceByName(file string, pkg string) (string, error) {
-	var raw string
+	var raw []byte
 	var err error
-	if !strings.HasPrefix(file, "/") {
-		file = "/" + file
-	}
-	raw, err = manifests.FSString(false, file)
+
+	raw, err = manifests.EmbeddedContent.ReadFile(file)
 	if err != nil {
 		return "", err
 	}
-	return raw, nil
+	return string(raw), nil
 }
 
 func (platform *Platform) Template(file string, pkg string) (string, error) {
@@ -548,24 +547,21 @@ func (platform *Platform) TemplateText(raw string) (string, error) {
 	return fn.Template(raw, platform.PlatformConfig)
 }
 
-func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string]http.File, error) {
-	out := make(map[string]http.File)
-	fs := manifests.FS(false)
-	dir, err := fs.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
-	}
-	files, err := dir.Readdir(-1)
+func (platform *Platform) GetResourcesByDir(path string, pkg string) (map[string]fs.File, error) {
+	out := make(map[string]fs.File)
+	files, err := manifests.EmbeddedContent.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("getResourcesByDir: failed to read dir: %v", err)
 	}
 
 	for _, info := range files {
-		file, err := fs.Open(path + "/" + info.Name())
-		if err != nil {
-			return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
+		if !info.Type().IsDir() {
+			file, err := manifests.EmbeddedContent.Open(path + "/" + info.Name())
+			if err != nil {
+				return nil, fmt.Errorf("getResourcesByDir: failed to open fs: %v", err)
+			}
+			out[info.Name()] = file
 		}
-		out[info.Name()] = file
 	}
 	return out, nil
 }

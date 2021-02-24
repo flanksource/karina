@@ -23,21 +23,11 @@ help:
 	@cat docs/developer-guide/make-targets.md
 
 .PHONY: release
-release: pack linux darwin compress
+release: linux darwin compress
 
 .PHONY: build
 build:
 	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
-
-ESC := $(shell command -v esc 2> /dev/null)
-
-.PHONY: pack
-pack:
-ifndef ESC
-		wget https://github.com/flanksource/esc/releases/download/v0.2.1/esc && chmod +x esc
-		$(eval ESC=./esc)
-endif
-	$(ESC) --prefix "manifests/" --ignore "static.go" -o manifests/static.go --pkg manifests manifests
 
 .PHONY: linux
 linux:
@@ -86,7 +76,7 @@ deploy-docs:
 	cd docs && make deploy
 
 .PHONY: lint
-lint: pack build
+lint: build
 	golangci-lint run --verbose --print-resources-usage
 
 # Generate code

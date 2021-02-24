@@ -22,8 +22,6 @@ hack/
 kind
 test-results/
 artifacts/
-manifests/static.go
-templates/static.go
 snapshot/
 vendor/
 .idea

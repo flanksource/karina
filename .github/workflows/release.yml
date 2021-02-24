@@ -55,6 +55,6 @@ jobs:
       - uses: actions/setup-go@v2
       - uses: actions/setup-python@v2
       - uses: actions/setup-node@v2
-      - run: make pack build-api-docs build-docs deploy-docs
+      - run: make build-api-docs build-docs deploy-docs
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

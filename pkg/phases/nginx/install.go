@@ -54,7 +54,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	if platform.OAuth2Proxy != nil && !platform.OAuth2Proxy.Disabled {
-		scripts, _ := platform.GetResourcesByDir("/nginx", "manifests")
+		scripts, _ := platform.GetResourcesByDir("nginx", "manifests")
 		data := make(map[string]string)
 		for name, file := range scripts {
 			buf := new(bytes.Buffer)
