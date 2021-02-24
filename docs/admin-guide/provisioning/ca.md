@@ -21,6 +21,8 @@ ca:
 Run `karina provision` to provision a cluster and the shared CA will be injected into new instances allowing PKI based auth.
 
 
+!!! warning
+    The CA will only be injected into a new master node, you will need to re-provision all existing masters for changes to take effect.
 
 To generate a new kubeconfig file to access a cluster using a CA run:
 
