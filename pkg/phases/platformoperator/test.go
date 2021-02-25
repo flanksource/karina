@@ -30,7 +30,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator == nil {
+	if p.PlatformOperator.IsDisabled() {
 		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}

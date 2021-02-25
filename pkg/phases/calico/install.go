@@ -7,15 +7,12 @@ import (
 const Namespace = "kube-system"
 
 func Install(platform *platform.Platform) error {
-	if (platform.Calico != nil && !platform.Calico.IsDisabled()) && (platform.Antrea != nil && !platform.Antrea.IsDisabled()) {
+	if  !platform.Calico.IsDisabled()) && !platform.Antrea.IsDisabled() {
 		platform.Fatalf("both calico and antrea are enabled. Please disable one of them to continue")
 	}
 
-	if platform.Calico == nil || platform.Calico.IsDisabled() {
-		if err := platform.DeleteSpecs(Namespace, "calico.yaml"); err != nil {
-			platform.Warnf("failed to delete specs: %v", err)
-		}
-		return nil
+	if platform.Calico.IsDisabled() {
+		return latform.DeleteSpecs(Namespace, "calico.yaml")
 	}
 
 	return platform.ApplySpecs(Namespace, "calico.yaml")

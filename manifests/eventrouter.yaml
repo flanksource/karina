@@ -65,7 +65,6 @@ spec:
         com.flanksource.infra.logs/processors.4.rename.fields.0.to: message
         com.flanksource.infra.logs/processors.5.rename.fields.0.ignore_missing: "true"
     spec:
-    spec:
       containers:
         - name: kube-eventrouter
           image: gcr.io/heptio-images/eventrouter:{{ .eventrouter.version | default "none"}}

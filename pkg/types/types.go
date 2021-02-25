@@ -653,12 +653,6 @@ type GitOps struct {
 	Args map[string]string `yaml:"args,omitempty" json:"args,omitempty"`
 }
 
-type Versions struct {
-	Kubernetes       string            `yaml:"kubernetes,omitempty" json:"kubernetes,omitempty"`
-	ContainerRuntime string            `yaml:"containerRuntime,omitempty" json:"containerRuntime,omitempty"`
-	Dependencies     map[string]string `yaml:"dependencies,omitempty" json:"dependencies,omitempty"`
-}
-
 type Velero struct {
 	Disabled `yaml:",inline" json:",inline"`
 	Schedule string            `yaml:"schedule,omitempty" json:"schedule,omitempty"`
@@ -723,8 +717,7 @@ type LogsExporter struct {
 }
 
 type EventRouter struct {
-	Disabled       `yaml:",inline" json:",inline"`
-	FilebeatPrefix string `yaml:"filebeatPrefix" json:"filebeatPrefix"`
+	Disabled `yaml:",inline" json:",inline"`
 }
 
 type RedisOperator struct {
@@ -875,7 +868,7 @@ type RegistryCredentialsACR struct {
 }
 
 type PlatformOperator struct {
-	Disabled                   bool              `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	Enabled                    `yaml:",inline" json:",inline"`
 	Version                    string            `yaml:"version" json:"version,omitempty"`
 	EnableClusterResourceQuota bool              `yaml:"enableClusterResourceQuota" json:"enableClusterResourceQuota,omitempty"`
 	DefaultImagePullSecret     string            `yaml:"defaultImagePullSecret,omitempty" json:"defaultImagePullSecret,omitempty"`
