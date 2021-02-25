@@ -221,12 +221,12 @@ spec:
             severity: warning
 
         - alert: CPUThrottlingHigh
+          expr: namespace:CPUThrottlingHigh{label_apps_kubernetes_io_managed_by="karina"}
           annotations:
             message:
               "{{ $value | humanizePercentage }} throttling of CPU
               {{ $labels.namespace }}/pod {{$labels.pod }}/{{ $labels.container }}
-            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-cputhrottlinghigh
-          expr: namespace:CPUThrottlingHigh{label_apps_kubernetes_io_managed_by="karina"}
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-cputhrottlinghigh"
           for: 15m
           labels:
-            severity: info
+            severity: warning
