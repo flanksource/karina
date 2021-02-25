@@ -205,7 +205,14 @@ spec:
   endpoints:
     - interval: 30s
       targetPort: 8080
-  jobLabel: canary-checker
+  honorLabels: true
+  metricRelabelings:
+        - regex: pod
+          action: labeldrop
+        - regex: container
+          action: labeldrop
+        - regex: service
+          action: labeldrop
   namespaceSelector:
     matchNames:
       - platform-system
