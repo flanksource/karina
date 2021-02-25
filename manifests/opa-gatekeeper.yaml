@@ -347,7 +347,7 @@ spec:
         {{- end }}
         - --operation=webhook
         - --audit-match-kind-only
-        - --audit-interval={{ .gatekeeper.auditInterval }}
+        - --audit-interval={{ .gatekeeper.auditInterval | default "60" }}
         command:
         - /manager
         env:
