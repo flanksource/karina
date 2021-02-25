@@ -89,7 +89,7 @@ type PlatformConfig struct {
 	Vault                 *Vault            `yaml:"vault,omitempty" json:"vault,omitempty"`
 	Velero                Velero            `yaml:"velero,omitempty" json:"velero,omitempty"`
 	Version               string            `yaml:"version" json:"version,omitempty"`
-	Versions              map[string]string `yaml:"versions", json:"versions,omitempty"`
+	Versions              map[string]string `yaml:"versions" json:"versions,omitempty"`
 	VPA                   VPA               `yaml:"vpa,omitempty" json:"vpa,omitempty"`
 	Vsphere               *Vsphere          `yaml:"vsphere,omitempty" json:"vsphere,omitempty"`
 	BootstrapToken        string            `yaml:"-" json:"-"`
