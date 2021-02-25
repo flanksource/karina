@@ -16,7 +16,7 @@ spec:
           record: kubernetes:PodAdmissionLatency:5m
     - name: kubernetes-alerts
       rules:
-        - alert: podAdmissionLatency
+        - alert: PodAdmissionLatency
           annotations:
             message: pod admission latency for webhook {{ $labels.name }} is above 2 seconds for 5 minutes
           expr: kubernetes:PodAdmissionLatency:5m > 2
