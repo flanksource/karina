@@ -3,10 +3,6 @@
     [canary-checker](/admin-guide/canary-checker) has been setup by the cluster administrator
 
 
-
-
-
-
 :1: Define a canary in `canary.yml`:
 ```yaml
 apiVersion: canaries.flanksource.com/v1

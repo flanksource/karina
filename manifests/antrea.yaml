@@ -815,10 +815,7 @@ spec:
       priorityClassName: system-cluster-critical
       serviceAccountName: antrea-controller
       tolerations:
-      - key: CriticalAddonsOnly
-        operator: Exists
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
+      - operator: Exists
       volumes:
       - configMap:
           name: antrea-config-md64tc85t9
@@ -1079,12 +1076,7 @@ spec:
       priorityClassName: system-node-critical
       serviceAccountName: antrea-agent
       tolerations:
-      - key: CriticalAddonsOnly
-        operator: Exists
-      - effect: NoSchedule
-        operator: Exists
-      - effect: NoExecute
-        operator: Exists
+      - operator: Exists
       volumes:
       - configMap:
           name: antrea-config-md64tc85t9

@@ -7,18 +7,13 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
-	"github.com/flanksource/karina/pkg/types"
 )
 
 const Namespace = constants.PlatformSystem
 
 func Install(platform *platform.Platform) error {
-	if platform.PlatformOperator == nil || platform.PlatformOperator.Disabled {
-		platform.PlatformOperator = &types.PlatformOperator{}
-		if err := platform.DeleteSpecs("", "platform-operator.yaml"); err != nil {
-			platform.Warnf("failed to delete specs: %v", err)
-		}
-		return nil
+	if platform.PlatformOperator.IsDisabled() {
+		return platform.DeleteSpecs(Namespace, "platform-operator.yaml")
 	}
 
 	labels := map[string]string{
@@ -43,14 +38,8 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	if platform.PlatformOperator == nil {
-		platform.PlatformOperator = &types.PlatformOperator{}
-	}
 	if platform.PlatformOperator.WhitelistedPodAnnotations == nil {
-		platform.PlatformOperator.WhitelistedPodAnnotations = []string{}
-	}
-	if platform.PlatformOperator.Version == "" {
-		platform.PlatformOperator.Version = "v0.5.2"
+		platform.PlatformOperator.WhitelistedPodAnnotations = []string{"com.flanksource.infra.logs/enabled", "co.elastic.logs/enabled"}
 	}
 
 	if platform.PlatformOperator.Args == nil {

@@ -70,12 +70,11 @@ nav:
           - Canary Checker: ./user-guide/canary-checker.md
           - Prometheus: ./user-guide/prometheus.md
           - Logging: ./user-guide/logging.md
-      - Operators:
-          - PostgresSQL: ./user-guide/databases.md
       - CI/CD:
           - Dynamic Namespaces: ./user-guide/dynamic-namespaces.md
           - GitOps: ./user-guide/gitops.md
       - Ingress:
+          - Overview: ./user-guide/ingress.md
           - TLS: ./user-guide/tls.md
 
       - Reference:
@@ -136,5 +135,8 @@ nav:
       - Postgres: ./operators/postgres.md
       - RabbitMQ: ./operators/rabbitmq.md
       - Redis: ./operators/redis.md
-      - Template: ./operators/template.md
+      - Template:
+          Getting Started: ./operators/template/index.md
+          Syntax: ./operators/template/syntax.md
+          Chaining: ./operators/template/chaining.md
   - Reference: ./reference/config.md

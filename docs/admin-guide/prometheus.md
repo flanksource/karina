@@ -1,15 +1,5 @@
 
 
-<div markdown=1 class="sidebar">
-# Toc Sidebar
-
-It's filled with information specific to this page.
-
-It's locked to the screen just like the ToC!
-</div>
-
-
-
 The monitoring stack includes the following components, which are all accessible via default ingress addresses
 
 | Component                                                    | Use                                                    | Access                         |

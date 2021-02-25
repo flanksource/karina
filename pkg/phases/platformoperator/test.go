@@ -30,7 +30,7 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator == nil {
+	if p.PlatformOperator.IsDisabled() {
 		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
@@ -61,7 +61,7 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 }
 
 func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator == nil {
+	if p.PlatformOperator.IsDisabled() {
 		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
@@ -128,7 +128,7 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 }
 
 func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator == nil {
+	if p.PlatformOperator.IsDisabled() {
 		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}
@@ -243,7 +243,7 @@ func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *conso
 }
 
 func TestPlatformOperatorClusterResourceQuota2(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator == nil {
+	if p.PlatformOperator.IsDisabled() {
 		test.Skipf("platform-operator", "No platform operator configured - skipping")
 		return
 	}

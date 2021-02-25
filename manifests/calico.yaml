@@ -12,13 +12,9 @@ data:
   # Configure the backend to use.
   calico_backend: "bird"
   cluster_type: "k8s,bgp"
-  ipv4pool_ipip: "{{.calico.ipip}}"
+  ipv4pool_ipip: '{{.calico.ipip | default "Never"}}'
   cluster_cidr: "{{.podSubnet}}"
-  {{ if has  .calico "log" -}}
-  felix_log_level: "{{.calico.log}}"
-  {{else -}}
-  felix_log_level: "info"
-  {{end -}}
+  felix_log_level: '{{.calico.log | default "info"}}'
   # Configure the MTU to use
   veth_mtu: "1440"
 
@@ -53,7 +49,6 @@ data:
       ]
     }
 
----
 ---
 # Source: calico/templates/rbac.yaml
 
@@ -258,9 +253,9 @@ roleRef:
   kind: ClusterRole
   name: calico-node
 subjects:
-- kind: ServiceAccount
-  name: calico-node
-  namespace: kube-system
+  - kind: ServiceAccount
+    name: calico-node
+    namespace: kube-system
 
 ---
 # Source: calico/templates/calico-node.yaml
@@ -291,27 +286,19 @@ spec:
         # marks the pod as a critical add-on, ensuring it gets
         # priority scheduling and that its resources are reserved
         # if it ever gets evicted.
-        scheduler.alpha.kubernetes.io/critical-pod: ''
+        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
       nodeSelector:
         beta.kubernetes.io/os: linux
       hostNetwork: true
       tolerations:
-        # Make sure calico-node gets scheduled on all nodes.
-        - effect: NoSchedule
-          operator: Exists
-        # Mark the pod as a critical add-on for rescheduling.
-        - key: CriticalAddonsOnly
-          operator: Exists
-        - effect: NoExecute
-          operator: Exists
+        - operator: Exists
       serviceAccountName: calico-node
       # Minimize downtime during a rolling upgrade or deletion; tell Kubernetes to do a "force
       # deletion": https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods.
       terminationGracePeriodSeconds: 0
       priorityClassName: system-node-critical
       initContainers:
-
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
@@ -351,8 +338,8 @@ spec:
         - name: flexvol-driver
           image: docker.io/calico/pod2daemon-flexvol:{{.calico.version | default "v3.8.2"}}
           volumeMounts:
-          - name: flexvol-driver-host
-            mountPath: /host/driver
+            - name: flexvol-driver-host
+              mountPath: /host/driver
       containers:
         # Runs calico-node container on each Kubernetes node.  This
         # container programs network policy and routes on each
@@ -443,9 +430,9 @@ spec:
           readinessProbe:
             exec:
               command:
-              - /bin/calico-node
-              - -bird-ready
-              - -felix-ready
+                - /bin/calico-node
+                - -bird-ready
+                - -felix-ready
             periodSeconds: 10
           volumeMounts:
             - mountPath: /lib/modules
@@ -495,7 +482,6 @@ spec:
             type: DirectoryOrCreate
             path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds
 ---
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -527,16 +513,12 @@ spec:
       labels:
         k8s-app: calico-kube-controllers
       annotations:
-        scheduler.alpha.kubernetes.io/critical-pod: ''
+        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
       nodeSelector:
         beta.kubernetes.io/os: linux
       tolerations:
-        # Mark the pod as a critical add-on for rescheduling.
-        - key: CriticalAddonsOnly
-          operator: Exists
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
+        - operator: Exists
       serviceAccountName: calico-kube-controllers
       priorityClassName: system-cluster-critical
       containers:
@@ -551,8 +533,8 @@ spec:
           readinessProbe:
             exec:
               command:
-              - /usr/bin/check-status
-              - -r
+                - /usr/bin/check-status
+                - -r
 
 ---
 apiVersion: v1
@@ -560,6 +542,3 @@ kind: ServiceAccount
 metadata:
   name: calico-kube-controllers
   namespace: kube-system
-
-
-
