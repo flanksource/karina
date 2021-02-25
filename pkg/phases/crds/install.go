@@ -24,6 +24,7 @@ func Install(p *platform.Platform) error {
 		"argo-rollouts":     p.ArgoRollouts.IsDisabled,
 		"eck":               p.ECK.IsDisabled,
 		"mongo-db":          p.Keptn.IsDisabled, // TODO: Make this depends on MongoDB Operator instead of Keptn once MongoDB Operator is implemented: https://github.com/flanksource/karina/issues/658
+		"elasticsearchdb":   p.ECK.IsDisabled,
 		"gatekeeper":        p.Gatekeeper.IsDisabled,
 		"postgres-db":       p.PostgresOperator.IsDisabled,
 		"postgres-operator": p.PostgresOperator.IsDisabled,

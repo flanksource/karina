@@ -20,5 +20,5 @@ func Deploy(p *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	return p.ApplySpecs(Namespace, "eck.yaml")
+	return p.ApplySpecs(Namespace, "eck.yaml", "template/elasticsearchdb.yaml.raw")
 }

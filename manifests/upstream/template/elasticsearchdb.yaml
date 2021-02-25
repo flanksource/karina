@@ -1,0 +1,2 @@
+resources:
+  - https://raw.githubusercontent.com/flanksource/template-operator-dbs/main/config/templates/elasticsearch-db.yaml
