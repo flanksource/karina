@@ -26,7 +26,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/csi/s3"
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
-	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/externaldns"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
@@ -176,7 +175,6 @@ func init() {
 		"consul":               consul.Test,
 		"dex":                  dex.Test,
 		"eck":                  eck.Test,
-		"elasticsearch":        elasticsearch.Test,
 		"encryption":           kubeadm.TestEncryption,
 		"externaldns":          externaldns.Test,
 		"git-operator":         gitoperator.Test,

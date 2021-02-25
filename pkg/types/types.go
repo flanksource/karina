@@ -938,14 +938,6 @@ type ConfigMapReloader struct {
 	Disabled bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 }
 
-type Elasticsearch struct {
-	Version     string       `yaml:"version" json:"version"`
-	Mem         *Memory      `yaml:"mem,omitempty" json:"mem,omitempty"`
-	Replicas    int          `yaml:"replicas,omitempty" json:"replicas,omitempty"`
-	Persistence *Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
-	Disabled    bool         `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-}
-
 type Tekton struct {
 	Disabled         `yaml:",inline" json:",inline"`
 	DashboardVersion string            `yaml:"dashboardVersion,omitempty" json:"dashboardVersion,omitempty"`

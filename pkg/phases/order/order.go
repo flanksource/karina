@@ -17,7 +17,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/csi/s3"
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
-	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/eventrouter"
 	"github.com/flanksource/karina/pkg/phases/externaldns"
 	"github.com/flanksource/karina/pkg/phases/filebeat"
@@ -65,7 +64,6 @@ var Phases = map[string]DeployFn{
 	"auditbeat":            auditbeat.Deploy,
 	"canary":               canary.Deploy,
 	"eck":                  eck.Deploy,
-	"elasticsearch":        elasticsearch.Deploy,
 	"eventrouter":          eventrouter.Deploy,
 	"externaldns":          externaldns.Install,
 	"filebeat":             filebeat.Deploy,

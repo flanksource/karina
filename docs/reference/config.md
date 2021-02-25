@@ -60,7 +60,6 @@
 | filebeat |  | *[Filebeat](#filebeat) |  |
 | vault |  | *[Vault](#vault) |  |
 | configmapReloader |  | [ConfigMapReloader](#configmapreloader) |  |
-| elasticsearch |  | *[Elasticsearch](#elasticsearch) |  |
 | terminationProtection | If true, terminate operations will return an error. Used to protect stateful clusters | bool |  |
 
 ## AuditConfig
@@ -194,17 +193,6 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | disabled |  | bool |  |
 | version |  | string | Yes |
 
-## Elasticsearch
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| version |  | string | Yes |
-| mem |  | *[Memory](#memory) |  |
-| replicas |  | int |  |
-| persistence |  | *[Persistence](#persistence) |  |
-| disabled |  | bool |  |
 
 ## Enabled
 
