@@ -868,7 +868,7 @@ type RegistryCredentialsACR struct {
 }
 
 type PlatformOperator struct {
-	Enabled                    `yaml:",inline" json:",inline"`
+	Disabled                   `yaml:",inline" json:",inline"`
 	Version                    string            `yaml:"version" json:"version,omitempty"`
 	EnableClusterResourceQuota bool              `yaml:"enableClusterResourceQuota" json:"enableClusterResourceQuota,omitempty"`
 	DefaultImagePullSecret     string            `yaml:"defaultImagePullSecret,omitempty" json:"defaultImagePullSecret,omitempty"`

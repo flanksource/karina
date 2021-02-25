@@ -82,21 +82,22 @@ type PlatformConfig struct {
 	TemplateOperator    TemplateOperator     `yaml:"templateOperator,omitempty" json:"templateOperator,omitempty"`
 
 	// If true, terminate operations will return an error. Used to  protect stateful clusters
-	TerminationProtection bool     `yaml:"terminationProtection,omitempty" json:"terminationProtection,omitempty"`
-	Test                  Test     `yaml:"test,omitempty" json:"test,omitempty"`
-	Thanos                *Thanos  `yaml:"thanos,omitempty" json:"thanos,omitempty"`
-	TrustedCA             string   `yaml:"trustedCA,omitempty" json:"trustedCA,omitempty"`
-	Vault                 *Vault   `yaml:"vault,omitempty" json:"vault,omitempty"`
-	Velero                Velero   `yaml:"velero,omitempty" json:"velero,omitempty"`
-	Version               string   `yaml:"version" json:"version,omitempty"`
-	VPA                   VPA      `yaml:"vpa,omitempty" json:"vpa,omitempty"`
-	Vsphere               *Vsphere `yaml:"vsphere,omitempty" json:"vsphere,omitempty"`
-	BootstrapToken        string   `yaml:"-" json:"-"`
-	DryRun                bool     `yaml:"-" json:"-"`
-	Trace                 bool     `yaml:"-" json:"-"`
-	JoinEndpoint          string   `yaml:"-" json:"-"`
-	Source                string   `yaml:"-" json:"-"`
-	ControlPlaneEndpoint  string   `yaml:"-" json:"-"`
+	TerminationProtection bool              `yaml:"terminationProtection,omitempty" json:"terminationProtection,omitempty"`
+	Test                  Test              `yaml:"test,omitempty" json:"test,omitempty"`
+	Thanos                *Thanos           `yaml:"thanos,omitempty" json:"thanos,omitempty"`
+	TrustedCA             string            `yaml:"trustedCA,omitempty" json:"trustedCA,omitempty"`
+	Vault                 *Vault            `yaml:"vault,omitempty" json:"vault,omitempty"`
+	Velero                Velero            `yaml:"velero,omitempty" json:"velero,omitempty"`
+	Version               string            `yaml:"version" json:"version,omitempty"`
+	Versions              map[string]string `yaml:"versions", json:"versions,omitempty"`
+	VPA                   VPA               `yaml:"vpa,omitempty" json:"vpa,omitempty"`
+	Vsphere               *Vsphere          `yaml:"vsphere,omitempty" json:"vsphere,omitempty"`
+	BootstrapToken        string            `yaml:"-" json:"-"`
+	DryRun                bool              `yaml:"-" json:"-"`
+	Trace                 bool              `yaml:"-" json:"-"`
+	JoinEndpoint          string            `yaml:"-" json:"-"`
+	Source                string            `yaml:"-" json:"-"`
+	ControlPlaneEndpoint  string            `yaml:"-" json:"-"`
 	// E2E is true if end to end tests are being run
 	E2E bool `yaml:"-" json:"-"`
 	// If the platform should use in cluster config
