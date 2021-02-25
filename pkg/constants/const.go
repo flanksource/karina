@@ -26,6 +26,7 @@ var PlatformNamespaces = []string{
 	"postgres-operator",
 	"quack",
 	"sealed-secrets",
+	"tekton",
 	"vault",
 	"velero",
 }
