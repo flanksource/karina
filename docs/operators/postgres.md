@@ -6,7 +6,7 @@ Postgres databases can be deployed using the Zalando [Postgres Operator](https:/
 postgresOperator:
   version: v1.3.4.flanksource.1
 templateOperator:
-  version: v0.1.9
+  version: v0.1.11
 canaryChecker:
   version: v0.15.1
 ```

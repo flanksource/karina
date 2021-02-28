@@ -1,0 +1,22 @@
+resources:
+  - https://raw.githubusercontent.com/flanksource/template-operator/v0.1.11/config/base/deploy.yml
+images:
+  - name: flanksource/template-operator
+    newName: docker.io/flanksource/template-operator
+    newTag: "{{.templateOperator.version}}"
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: template-operator-controller-manager
+      namespace: platform-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: manager
+              args:
+                - --metrics-addr=0.0.0.0:8080
+                - --enable-leader-election
+                - "--sync-period={{ .templateOperator.syncPeriod | default \"5m\" }}"
