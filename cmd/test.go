@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/keptn"
+
 	"github.com/flanksource/karina/pkg/phases/argorollouts"
 
 	"github.com/flanksource/commons/console"
@@ -159,6 +161,7 @@ func init() {
 		"git-operator":         gitoperator.Test,
 		"harbor":               harbor.Test,
 		"istio-operator":       istiooperator.Test,
+		"keptn":                keptn.Test,
 		"kiosk":                kiosk.Test,
 		"kpack":                kpack.Test,
 		"monitoring":           monitoring.Test,

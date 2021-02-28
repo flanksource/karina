@@ -265,6 +265,10 @@ type ArgoRollouts struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 
+type Keptn struct {
+	Disabled `yaml:",inline" json:",inline"`
+}
+
 type SMTP struct {
 	Server   string `yaml:"server,omitempty" json:"server,omitempty"`
 	Username string `yaml:"username,omitempty" json:"username,omitempty"`
