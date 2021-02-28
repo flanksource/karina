@@ -392,6 +392,17 @@ spec:
                     properties:
                       disabled:
                         type: boolean
+                      google:
+                        properties:
+                          clientID:
+                            type: string
+                          clientSecret:
+                            type: string
+                          hostedDomains:
+                            items:
+                              type: string
+                            type: array
+                        type: object
                       version:
                         type: string
                     type: object
