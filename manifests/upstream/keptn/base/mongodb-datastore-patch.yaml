@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-datastore
+spec:
+  template:
+    spec:
+      containers:
+        - name: mongodb-datastore
+          env:
+            - name: MONGODB_DATABASE
+              value: mongo
+            - name: MONGODB_USER
+              value: mongouser
+              valueFrom: null
+            - name: MONGODB_PASSWORD
+              value: mongouserpassword
+              valueFrom: null
+            - name: MONGODB_HOST
+              value: mongodb-keptn:27017

@@ -1,0 +1,26 @@
+---
+# Source: keptn/charts/control-plane/charts/nats/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: keptn-nats-cluster
+  labels:
+    app: keptn-nats-cluster
+    chart: nats-0.4.2
+spec:
+  selector:
+    app: keptn-nats-cluster
+  clusterIP: None
+  ports:
+  - name: client
+    port: 4222
+  - name: cluster
+    port: 6222
+  - name: monitor
+    port: 8222
+  - name: metrics
+    port: 7777
+  - name: leafnodes
+    port: 7422
+  - name: gateways
+    port: 7522

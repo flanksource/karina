@@ -1,0 +1,4 @@
+apiVersion: db.flanksource.com/v1
+kind: MongoDB
+metadata:
+  name: keptn

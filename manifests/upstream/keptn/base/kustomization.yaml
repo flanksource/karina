@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # NATS (bundled with keptn helm chart)
+  - ../helm/generated_templates/keptn/charts/control-plane/charts/nats/templates/configmap.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/charts/nats/templates/service.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/charts/nats/templates/statefulset.yaml
+
+  # MongoDB (deploy with db.flanksource.com/v1/MongoDB)
+  - mongodb.yaml
+
+  # Keptn control place (generated from keptn helm chart)
+  - ../helm/generated_templates/keptn/charts/control-plane/templates/api-gateway-nginx.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/templates/continuous-operations.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/templates/core.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/templates/mongodb-datastore.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/templates/quality-gates.yaml
+  - ../helm/generated_templates/keptn/charts/control-plane/templates/rbac.yaml
+
+patchesStrategicMerge:
+  - mongodb-datastore-patch.yaml
+  - configuration-service-patch.yaml
