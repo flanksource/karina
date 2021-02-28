@@ -1,6 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+commonLabels:
+  app.kubernetes.io/part-of: keptn
+  app.kubernetes.io/managed-by: karina
+  app.kubernetes.io/instance: keptn
+
 resources:
   # NATS (bundled with keptn helm chart)
   - ../helm/generated_templates/keptn/charts/control-plane/charts/nats/templates/configmap.yaml
@@ -18,6 +23,29 @@ resources:
   - ../helm/generated_templates/keptn/charts/control-plane/templates/quality-gates.yaml
   - ../helm/generated_templates/keptn/charts/control-plane/templates/rbac.yaml
 
+patches:
+  - target:
+      labelSelector: helm.sh/chart
+    patch: |
+      - op: remove
+        path: /metadata/labels/helm.sh~1chart
+  - target:
+      group: apps
+    patch: |
+      - op: add
+        path: /spec/template/metadata/labels/helm.sh~1chart
+        value: temporary
+      - op: remove
+        path: /spec/template/metadata/labels/helm.sh~1chart
+
 patchesStrategicMerge:
   - mongodb-datastore-patch.yaml
   - configuration-service-patch.yaml
+
+images:
+  - name: nats
+    newName: docker.io/nats
+  - name: connecteverything/nats-server-config-reloader
+    newName: docker.io/connecteverything/nats-server-config-reloader
+  - name: synadia/prometheus-nats-exporter
+    newName: docker.io/synadia/prometheus-nats-exporter

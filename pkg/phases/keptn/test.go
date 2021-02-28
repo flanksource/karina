@@ -2,7 +2,6 @@ package keptn
 
 import (
 	"github.com/flanksource/commons/console"
-	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
 )
@@ -26,7 +25,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		"shipyard-service",
 	}
 	for _, deployName := range expectedKeptnDeployments {
-		kommons.TestDeploy(client, constants.PlatformSystem, deployName, test)
+		kommons.TestDeploy(client, Namespace, deployName, test)
 	}
 	test.Passf("Keptn", "Keptn is healthy")
 }

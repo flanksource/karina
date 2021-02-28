@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: mongodata
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: mongodb
     helm.sh/chart: mongodb-0.7.3    
 spec:

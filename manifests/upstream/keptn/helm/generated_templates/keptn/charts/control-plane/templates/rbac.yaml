@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: keptn-default
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 ---
@@ -21,7 +21,7 @@ metadata:
     app.kubernetes.io/name: keptn-configuration-service
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 ---
@@ -34,7 +34,7 @@ metadata:
     app.kubernetes.io/name: keptn-lighthouse-service
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 ---
@@ -47,7 +47,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-service
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 ---
@@ -60,7 +60,7 @@ metadata:
     app.kubernetes.io/name: keptn-manage-secrets
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3 
 rules:
@@ -82,7 +82,7 @@ metadata:
     app.kubernetes.io/name: keptn-read-metadata
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3 
 rules:
@@ -104,7 +104,7 @@ metadata:
     app.kubernetes.io/name: keptn-manage-configmaps
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 rules:
@@ -126,7 +126,7 @@ metadata:
     app.kubernetes.io/name: keptn-configure-bridge
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 rules:
@@ -163,7 +163,7 @@ metadata:
     app.kubernetes.io/name: keptn-lighthouse-service
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 roleRef:
@@ -183,7 +183,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-service-configure-bridge
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 roleRef:
@@ -203,7 +203,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-service-metadata
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 roleRef:
@@ -223,7 +223,7 @@ metadata:
     app.kubernetes.io/name: keptn-configuration-service-manage-secrets
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     helm.sh/chart: control-plane-0.7.3
 roleRef:

@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: lighthouse-service
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane    
     helm.sh/chart: control-plane-0.7.3 
 spec:
@@ -29,7 +29,7 @@ metadata:
     app.kubernetes.io/name: lighthouse-service
     app.kubernetes.io/instance: RELEASE-NAME
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/part-of: keptn-platform-system
+    app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     app.kubernetes.io/version: 0.7.3
     helm.sh/chart: control-plane-0.7.3 
@@ -45,7 +45,7 @@ spec:
         app.kubernetes.io/name: lighthouse-service
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/part-of: keptn-platform-system
+        app.kubernetes.io/part-of: keptn-keptn
         app.kubernetes.io/component: control-plane
         app.kubernetes.io/version: 0.7.3
         helm.sh/chart: control-plane-0.7.3         
