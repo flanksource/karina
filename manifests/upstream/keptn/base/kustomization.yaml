@@ -3,8 +3,6 @@ kind: Kustomization
 
 commonLabels:
   app.kubernetes.io/part-of: keptn
-  app.kubernetes.io/managed-by: karina
-  app.kubernetes.io/instance: keptn
 
 resources:
   # NATS (bundled with keptn helm chart)
@@ -23,21 +21,6 @@ resources:
   - ../helm/generated_templates/keptn/charts/control-plane/templates/quality-gates.yaml
   - ../helm/generated_templates/keptn/charts/control-plane/templates/rbac.yaml
 
-patches:
-  - target:
-      labelSelector: helm.sh/chart
-    patch: |
-      - op: remove
-        path: /metadata/labels/helm.sh~1chart
-  - target:
-      group: apps
-    patch: |
-      - op: add
-        path: /spec/template/metadata/labels/helm.sh~1chart
-        value: temporary
-      - op: remove
-        path: /spec/template/metadata/labels/helm.sh~1chart
-
 patchesStrategicMerge:
   - mongodb-datastore-patch.yaml
   - configuration-service-patch.yaml
@@ -49,3 +32,21 @@ images:
     newName: docker.io/connecteverything/nats-server-config-reloader
   - name: synadia/prometheus-nats-exporter
     newName: docker.io/synadia/prometheus-nats-exporter
+  - name: docker.io/keptn/api
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/bridge2
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/configuration-service
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/distributor
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/eventbroker-go
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/lighthouse-service
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/mongodb-datastore
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/remediation-service
+    newTag: "{{.keptn.version}}"
+  - name: docker.io/keptn/shipyard-service
+    newTag: "{{.keptn.version}}"

@@ -1,4 +1,3 @@
----
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
 kind: Secret
@@ -6,14 +5,11 @@ metadata:
   name: keptn-api-token
   labels:
     app.kubernetes.io/name: keptn-api-token
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3
 type: Opaque
 data:
-  keptn-api-token: "RzBmTlNIQ3Fyd0RoZmxrU1BOT2ZNeEdlcnE4S281cmZlVWF0UVhKbkhua1Rs"
+  keptn-api-token: "Z1ZMOUJaNHhaczhjUW5hN09ZdGlPcjI2UUtHOUNVam5aVmdpU05KYWtMTVJn"
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
@@ -22,15 +18,12 @@ metadata:
   name: bridge-credentials
   labels:
     app.kubernetes.io/name: bridge-credentials
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3  
 type: Opaque
 data:
   BASIC_AUTH_USERNAME: 'a2VwdG4='
-  BASIC_AUTH_PASSWORD: "NFBrU2VPOVUwNGZLemxJeGV5Umk="
+  BASIC_AUTH_PASSWORD: "ZkhPU05rQUl3NXowMEVyM05JcjM="
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 # configuration-service
@@ -41,17 +34,14 @@ metadata:
   name: configuration-volume
   labels:
     app.kubernetes.io/name: configuration-volume
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3     
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage:  100Mi
+      storage: 100Mi
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
@@ -60,11 +50,8 @@ metadata:
   name: api-service
   labels:
     app.kubernetes.io/name: api-service
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3  
 spec:
   ports:
     - port: 8080
@@ -73,7 +60,6 @@ spec:
       protocol: TCP
   selector:
     app.kubernetes.io/name: api-service
-    app.kubernetes.io/instance: RELEASE-NAME
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
@@ -82,11 +68,8 @@ metadata:
   name: bridge
   labels:
     app.kubernetes.io/name: bridge
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3      
 spec:
   ports:
     - port: 8080
@@ -94,7 +77,6 @@ spec:
       protocol: TCP
   selector:
     app.kubernetes.io/name: bridge
-    app.kubernetes.io/instance: RELEASE-NAME
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
@@ -103,11 +85,8 @@ metadata:
   name: event-broker
   labels:
     app.kubernetes.io/name: eventbroker-go
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3      
 spec:
   ports:
     - port: 80
@@ -115,7 +94,6 @@ spec:
       protocol: TCP
   selector:
     app.kubernetes.io/name: eventbroker-go
-    app.kubernetes.io/instance: RELEASE-NAME
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
@@ -124,18 +102,14 @@ metadata:
   name: shipyard-service
   labels:
     app.kubernetes.io/name: shipyard-service
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3   
 spec:
   ports:
     - port: 8080
       protocol: TCP
   selector:
     app.kubernetes.io/name: shipyard-service
-    app.kubernetes.io/instance: RELEASE-NAME
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: v1
@@ -144,11 +118,8 @@ metadata:
   name: configuration-service
   labels:
     app.kubernetes.io/name: configuration-service
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
-    helm.sh/chart: control-plane-0.7.3   
 spec:
   ports:
     - port: 8080
@@ -156,7 +127,6 @@ spec:
       protocol: TCP
   selector:
     app.kubernetes.io/name: configuration-service
-    app.kubernetes.io/instance: RELEASE-NAME
 ---
 # Source: keptn/charts/control-plane/templates/core.yaml
 apiVersion: apps/v1
@@ -165,28 +135,21 @@ metadata:
   name: api-service
   labels:
     app.kubernetes.io/name: api-service
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     app.kubernetes.io/version: 0.7.3
-    helm.sh/chart: control-plane-0.7.3    
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: api-service
-      app.kubernetes.io/instance: RELEASE-NAME
   replicas: 1
   template:
     metadata:
       labels:
         app.kubernetes.io/name: api-service
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: keptn-keptn
         app.kubernetes.io/component: control-plane
         app.kubernetes.io/version: 0.7.3
-        helm.sh/chart: control-plane-0.7.3    
     spec:
       containers:
         - name: api-service
@@ -235,28 +198,21 @@ metadata:
   name: bridge
   labels:
     app.kubernetes.io/name: bridge
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     app.kubernetes.io/version: 0.7.3
-    helm.sh/chart: control-plane-0.7.3      
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: bridge
-      app.kubernetes.io/instance: RELEASE-NAME
   replicas: 1
   template:
     metadata:
       labels:
         app.kubernetes.io/name: bridge
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: keptn-keptn
         app.kubernetes.io/component: control-plane
         app.kubernetes.io/version: 0.7.3
-        helm.sh/chart: control-plane-0.7.3      
     spec:
       containers:
         - name: bridge
@@ -303,28 +259,21 @@ metadata:
   name: eventbroker-go
   labels:
     app.kubernetes.io/name: eventbroker-go
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     app.kubernetes.io/version: 0.7.3
-    helm.sh/chart: control-plane-0.7.3      
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: eventbroker-go
-      app.kubernetes.io/instance: RELEASE-NAME
   replicas: 1
   template:
     metadata:
       labels:
         app.kubernetes.io/name: eventbroker-go
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: keptn-keptn
         app.kubernetes.io/component: control-plane
         app.kubernetes.io/version: 0.7.3
-        helm.sh/chart: control-plane-0.7.3      
     spec:
       containers:
         - name: eventbroker-go
@@ -360,28 +309,21 @@ metadata:
   name: shipyard-service
   labels:
     app.kubernetes.io/name: shipyard-service
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     app.kubernetes.io/version: 0.7.3
-    helm.sh/chart: control-plane-0.7.3      
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: shipyard-service
-      app.kubernetes.io/instance: RELEASE-NAME      
   replicas: 1
   template:
     metadata:
       labels:
         app.kubernetes.io/name: shipyard-service
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: keptn-keptn
         app.kubernetes.io/component: control-plane
         app.kubernetes.io/version: 0.7.3
-        helm.sh/chart: control-plane-0.7.3   
     spec:
       containers:
         - name: shipyard-service
@@ -443,17 +385,13 @@ metadata:
   name: configuration-service
   labels:
     app.kubernetes.io/name: configuration-service
-    app.kubernetes.io/instance: RELEASE-NAME
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: keptn-keptn
     app.kubernetes.io/component: control-plane
     app.kubernetes.io/version: 0.7.3
-    helm.sh/chart: control-plane-0.7.3     
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: configuration-service
-      app.kubernetes.io/instance: RELEASE-NAME
   replicas: 1
   # recreate the deployment if anything changes (we can not do a rolling upgrade of this deployment as we use a volume)
   strategy:
@@ -462,12 +400,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: configuration-service
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: keptn-keptn
         app.kubernetes.io/component: control-plane
         app.kubernetes.io/version: 0.7.3
-        helm.sh/chart: control-plane-0.7.3   
     spec:
       containers:
         - name: configuration-service

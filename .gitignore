@@ -29,6 +29,7 @@ vendor/
 *.swp
 .certs
 .sops.*
+manifests/bin
 #goland ide generated files:
 __debug_bin
 .scratchpad

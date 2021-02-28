@@ -18,6 +18,9 @@ func Deploy(platform *platform.Platform) error {
 		return err
 	}
 
+	// Trim the first character e.g. v0.7.3 -> 0.7.3
+	platform.Keptn.Version = platform.Keptn.Version[1:]
+
 	// TODO: Stop applying template/mongo-db.yaml.raw as part of keptn once MongoDB Operator is implemented. Related issue: https://github.com/flanksource/karina/issues/658
 	return platform.ApplySpecs(Namespace, "template/mongo-db.yaml.raw", "keptn.yaml")
 }
