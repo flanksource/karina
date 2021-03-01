@@ -1,22 +1,19 @@
-TARGET_UPSTREAM_HELM_CHARTS := $(patsubst %,%/zzz_last_build,$(wildcard upstream/**/helm))
 TARGET_CRD_FILES := $(patsubst upstream/%/crd,crd/%.yaml,$(wildcard upstream/**/crd))
 TARGET_MANIFEST_FILES := $(patsubst upstream/%/base,%.yaml,$(wildcard upstream/**/base))
 
-build: build-upstream-helm-charts build-crds build-base
-build-upstream-helm-charts: $(TARGET_UPSTREAM_HELM_CHARTS)
+build: build-crds build-base
 build-crds: $(TARGET_CRD_FILES)
 build-base: $(TARGET_MANIFEST_FILES)
 
 define BUILD_HELM_CHART
-	@if [ -d "$*/helm" ]; then \
-		echo "Generate templates for helm chart defined in $*/helm..." && \
-		cd $*/helm && \
+	@if [ -d "upstream/$*/helm" ]; then \
+		echo "Generate templates for helm chart defined in upstream/$*/helm..." && \
+		cd upstream/$*/helm && \
 		$(HELM) template $$($(YQ) r chart.yaml chart_name) --values values.yaml --output-dir ./generated_templates -n $$($(YQ) r chart.yaml namespace) --version $$($(YQ) r chart.yaml version) --repo=$$($(YQ) r chart.yaml repo) --include-crds && \
 		generated_yaml_files=$$(find generated_templates -iname '*.yaml') && \
 		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/managed-by"' && \
 		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/instance"' && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."helm.sh/chart"' && \
-		echo $$(date +%s) > zzz_last_build; \
+		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."helm.sh/chart"'; \
 	fi
 endef
 
@@ -36,18 +33,18 @@ define BUILD_BASE
 	fi
 endef
 
-%/helm/zzz_last_build: %/helm/chart.yaml %/helm/values.yaml bin/helm bin/yq bin/kustomize
-	$(BUILD_HELM_CHART)
 
 .SECONDEXPANSION:
-crd/%.yaml: $$(wildcard upstream/$$*/crd/*) $$(wildcard upstream/$$*/helm/zzz_last_build) bin/kustomize
+crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
+	$(BUILD_HELM_CHART)
 	$(BUILD_CRD)
 
 .SECONDEXPANSION:
-%.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/zzz_last_build) bin/kustomize
+%.yaml: $$(wildcard upstream/$$*/base/*) bin/kustomize
+	$(BUILD_HELM_CHART)
 	$(BUILD_BASE)
 
-.PHONY: build build-upstream-helm-charts build-crds build-base
+.PHONY: build build-upstream-helm-charts build-crds build-base %/helm
 
 OS   = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH = $(shell uname -m | sed 's/x86_64/amd64/')

@@ -360,7 +360,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  BASIC_AUTH_PASSWORD: ZkhPU05rQUl3NXowMEVyM05JcjM=
+  BASIC_AUTH_PASSWORD: MlJDYUJ5VnNLZ3FmMDdLYk14OVI=
   BASIC_AUTH_USERNAME: a2VwdG4=
 kind: Secret
 metadata:
@@ -373,7 +373,7 @@ type: Opaque
 ---
 apiVersion: v1
 data:
-  keptn-api-token: Z1ZMOUJaNHhaczhjUW5hN09ZdGlPcjI2UUtHOUNVam5aVmdpU05KYWtMTVJn
+  keptn-api-token: U0tBN3NwUlRjZDVNWEIySENnd0VPQVk0NVNZMXJhUGZjWTFCVHlHTGgxajZ6
 kind: Secret
 metadata:
   labels:
