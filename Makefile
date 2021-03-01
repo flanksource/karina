@@ -33,10 +33,6 @@ build:
 linux:
 	GOOS=linux go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
 
-.PHONY: linux-static
-linux-static: pack
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -tags netgo -ldflags -w -o ./.bin/static/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
-
 .PHONY: darwin
 darwin:
 	GOOS=darwin go build -o ./.bin/$(NAME)_osx -ldflags "-X \"main.version=$(VERSION)\""  main.go
