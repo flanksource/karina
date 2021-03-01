@@ -273,6 +273,9 @@ type IssuerConfig struct {
 
 	// +optional
 	Venafi *VenafiIssuer `json:"venafi,omitempty"`
+
+	// +optional
+	Letsencrypt *LetsencryptIssuer `json:"acme,omitempty"`
 }
 
 // VenafiIssuer describes issuer configuration details for Venafi Cloud.
@@ -322,6 +325,38 @@ type VenafiCloud struct {
 
 	// APITokenSecretRef is a secret key selector for the Venafi Cloud API token.
 	APITokenSecretRef SecretKeySelector `json:"apiTokenSecretRef"`
+}
+
+// LetsencryptIssuer defines an issuer that uses the Letsencrypt API to issue
+// certificates
+type LetsencryptIssuer struct {
+	// The API endpoint to use. Defaults to the production endpoint:
+	// https://acme-v02.api.letsencrypt.org/directory
+	Server        string            `json:"server"`
+	Email         string            `json:"email"`
+	PrivateKeyRef SecretKeySelector `json:"privateKeySecretRef,omitempty"`
+	Solvers       []Solver          `json:"solvers"`
+}
+
+type Solver struct {
+	DNS01  DNS01  `json:"dns01,omitempty"`
+	HTTP01 HTTP01 `json:"http,omitempty"`
+}
+
+// The only DNS challenge Karina currently supports is Route53
+type DNS01 struct {
+	Route53 Route53 `json:"route53"`
+}
+
+type Route53 struct {
+	Region             string            `json:"region"`
+	HostedZoneID       string            `json:"hostedZoneID"`
+	AccessKeyID        string            `json:"accessKeyID"`
+	SecretAccessKeyRef SecretKeySelector `json:"secretAccessKeySecretRef"`
+}
+
+type HTTP01 struct {
+	Type string `json:",inline"`
 }
 
 type SelfSignedIssuer struct{}

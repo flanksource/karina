@@ -17,6 +17,7 @@ const (
 	Namespace      = "cert-manager"
 	IngressCA      = "ingress-ca"
 	VaultTokenName = "vault-token"
+	Route53Name    = "prod-route53-credentials"
 )
 
 func PreInstall(platform *platform.Platform) error {
@@ -81,24 +82,7 @@ func Install(platform *platform.Platform) error {
 	}
 
 	var issuerConfig certmanager.IssuerConfig
-	if platform.CertManager.Vault == nil {
-		platform.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
-		ingress := platform.GetIngressCA()
-		switch ingress := ingress.(type) {
-		case *certs.Certificate:
-			if err := platform.CreateOrUpdateSecret(IngressCA, Namespace, ingress.AsTLSSecret()); err != nil {
-				return err
-			}
-			issuerConfig = certmanager.IssuerConfig{
-				Vault: nil,
-				CA: &certmanager.CAIssuer{
-					SecretName: IngressCA,
-				},
-			}
-		default:
-			return fmt.Errorf("unknown cert type:%v", ingress)
-		}
-	} else {
+	if platform.CertManager.Vault != nil {
 		// TODO(moshloop): delete previously imported CA
 		platform.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
 		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
@@ -121,6 +105,68 @@ func Install(platform *platform.Platform) error {
 					},
 				},
 			},
+		}
+	} else if platform.CertManager.Letsencrypt != nil {
+		if platform.DNS.SecretKey != "" {
+			if err := platform.CreateOrUpdateSecret(Route53Name, Namespace, map[string][]byte{
+				"secret-access-key": []byte(platform.DNS.SecretKey),
+			}); err != nil {
+				return err
+			}
+		}
+		var solver certmanager.Solver
+		if platform.DNS.Type == "route53" {
+			solver = certmanager.Solver{
+				DNS01: certmanager.DNS01{
+					Route53: certmanager.Route53{
+						Region:       platform.DNS.Region,
+						HostedZoneID: platform.DNS.Zone,
+						AccessKeyID:  platform.DNS.AccessKey,
+						SecretAccessKeyRef: certmanager.SecretKeySelector{
+							LocalObjectReference: certmanager.LocalObjectReference{
+								Name: Route53Name,
+							},
+							Key: "secret-access-key",
+						},
+					},
+				},
+			}
+		} else {
+			solver = certmanager.Solver{
+				HTTP01: certmanager.HTTP01{
+					Type: "ingress",
+				},
+			}
+		}
+		var server string
+		if platform.CertManager.Letsencrypt.URL == "" {
+			server = "https://acme-v02.api.letsencrypt.org/directory"
+		} else {
+			server = platform.CertManager.Letsencrypt.URL
+		}
+		issuerConfig = certmanager.IssuerConfig{
+			Letsencrypt: &certmanager.LetsencryptIssuer{
+				Server:  server,
+				Email:   platform.CertManager.Letsencrypt.Email,
+				Solvers: []certmanager.Solver{solver},
+			},
+		}
+	} else {
+		platform.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
+		ingress := platform.GetIngressCA()
+		switch ingress := ingress.(type) {
+		case *certs.Certificate:
+			if err := platform.CreateOrUpdateSecret(IngressCA, Namespace, ingress.AsTLSSecret()); err != nil {
+				return err
+			}
+			issuerConfig = certmanager.IssuerConfig{
+				Vault: nil,
+				CA: &certmanager.CAIssuer{
+					SecretName: IngressCA,
+				},
+			}
+		default:
+			return fmt.Errorf("unknown cert type:%v", ingress)
 		}
 	}
 
