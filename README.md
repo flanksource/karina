@@ -3,15 +3,100 @@
 <h1 align="center"><img src="https://github.com/flanksource/karina/raw/master/docs/img/logo.png"></i></h1>
   <p align="center">Kubernetes Platform Toolkit</p>
 <p align="center">
-<img src="https://github.com/flanksource/karina/workflows/E2E/badge.svg"></img>
-<img src="https://github.com/flanksource/karina/workflows/Upgrade%20E2E/badge.svg"></img>
-<img src="https://github.com/flanksource/karina/workflows/E2E%20vSphere/badge.svg"></img>
 <a href="https://goreportcard.com/report/github.com/flanksource/karina"><img src="https://goreportcard.com/badge/github.com/flanksource/karina"></a>
 <img src="https://img.shields.io/badge/K8S-1.17%20%7C%201.18-lightgrey.svg"/>
 <img src="https://img.shields.io/badge/Infra-vSphere%20%7C%20Kind-lightgrey.svg"/>
 <img src="https://img.shields.io/github/license/flanksource/karina.svg?style=flat-square"/>
 <a href="https://karina.docs.flanksource.com"> <img src="https://img.shields.io/badge/☰-Docs-lightgrey.svg"/> </a>
 <a href="https://join.slack.com/t/flanksource/shared_invite/zt-dvh61tg5-w8XOfrGWtCetGXYk48RKnw"><img src="https://img.shields.io/badge/slack-flanksource-brightgreen.svg?logo=slack"></img></a>
+</p>
+<p>
+<table>
+  <tr>
+    <th></th>
+    <th>Minimal</th>
+    <th>Monitoring</th>
+    <th>Minimal Antrea</th>
+    <th>Platform</th>
+    <th>NoSQL</th>
+    <th>CI/CD</th>
+    <th>Security</th>
+    <th>Harbor</th>
+    <th>Postgres</th>
+    <th>Elastic</th>
+    <th>Managed</th>
+  </tr>
+  <tr>
+    <td>v1.16</td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.16.9-minimal"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.16.9-monitoring"></img></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>v1.17</td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.17.5-minimal"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.17.5-monitoring"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.17.5-minimal-antrea"></img></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>v1.18</td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-minimal"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-monitoring"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-minimal-antrea"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-platform"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-nosql"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-cicd"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-security"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-harbor2"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-postgres"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-elastic"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-managed"></img></td>
+  </tr>
+  <tr>
+    <td>Upgrade</td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/upgrade-v1.18.6-minimal"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/upgrade-v1.17.5-monitoring"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/upgrade-v1.17.5-minimal-antrea"></img></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Self-hosted</td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-minimal"></img></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-monitoring"></img></td>
+    <td></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-platform"></img></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-harbor2"></img></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
 </p>
 
 
