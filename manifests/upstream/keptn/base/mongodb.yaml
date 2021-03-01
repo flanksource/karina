@@ -2,3 +2,6 @@ apiVersion: db.flanksource.com/v1
 kind: MongoDB
 metadata:
   name: keptn
+spec:
+  database: keptn
+  user: keptn

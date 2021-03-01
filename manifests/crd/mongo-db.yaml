@@ -35,6 +35,10 @@ spec:
           type: object
         spec:
           properties:
+            database:
+              type: string
+            user:
+              type: string
             backup:
               properties:
                 bucket:

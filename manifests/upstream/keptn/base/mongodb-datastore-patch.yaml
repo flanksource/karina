@@ -9,12 +9,14 @@ spec:
         - name: mongodb-datastore
           env:
             - name: MONGODB_DATABASE
-              value: mongo
+              value: keptn
             - name: MONGODB_USER
-              value: mongouser
+              value: keptn
               valueFrom: null
             - name: MONGODB_PASSWORD
-              value: mongouserpassword
-              valueFrom: null
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-keptn-credentials
+                  key: password
             - name: MONGODB_HOST
               value: mongodb-keptn:27017

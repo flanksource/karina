@@ -793,11 +793,14 @@ spec:
       containers:
       - env:
         - name: MONGO_DB_NAME
-          value: mongo
+          value: keptn
         - name: MONGODB_USER
-          value: mongouser
+          value: keptn
         - name: MONGODB_PASSWORD
-          value: mongouserpassword
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mongodb-keptn-credentials
         - name: MONGODB_HOST
           value: mongodb-keptn:27017
         - name: PREFIX_PATH
@@ -1019,11 +1022,14 @@ spec:
       containers:
       - env:
         - name: MONGODB_DATABASE
-          value: mongo
+          value: keptn
         - name: MONGODB_USER
-          value: mongouser
+          value: keptn
         - name: MONGODB_PASSWORD
-          value: mongouserpassword
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mongodb-keptn-credentials
         - name: MONGODB_HOST
           value: mongodb-keptn:27017
         - name: PREFIX_PATH
@@ -1354,3 +1360,6 @@ metadata:
   labels:
     app.kubernetes.io/part-of: keptn
   name: keptn
+spec:
+  database: keptn
+  user: keptn
