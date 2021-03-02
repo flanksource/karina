@@ -100,7 +100,7 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 
 		log.Debugf("Looking up %s to set it to: %s", key, val)
 		if err := lookup.Set(&base, key, val); err != nil {
-			log.Fatalf("failed to set key %s: %v", key)
+			log.Fatalf("failed to set key %s: %v", key, err)
 		}
 	}
 

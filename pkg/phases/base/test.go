@@ -60,7 +60,7 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	defer func() {
-		clientset.CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{})
+		clientset.CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
 	fixtures := []testSecretsFixture{
