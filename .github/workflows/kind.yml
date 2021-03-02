@@ -91,12 +91,14 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
+          if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
+          if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
@@ -106,6 +108,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          if-no-files-found: ignore
           name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
   upgrade:
@@ -144,25 +147,25 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
+          if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
+          if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: failure()
-        run: |
-          mkdir -p artifacts/kind-logs
-          .bin/kind export logs --name=upgrade-test artifacts/kind-logs
-          tar -cf artifacts/kind-logs/upgrade-${{matrix.suite}}-${{matrix.k8s}}.tar artifacts/kind-logs/*
+        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: upgrade-${{matrix.k8s}}-${{matrix.suite}}.tar
+          if-no-files-found: ignore
+          name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
   selfhosted:
     runs-on: [self-hosted]
@@ -213,14 +216,29 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
+          if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
         uses: actions/upload-artifact@v1
         with:
+          if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
+      - name: Generate Kind logs
+        if: failure()
+        run: |
+          mkdir -p artifacts/kind-logs
+          .bin/kind export logs --name=upgrade-test artifacts/kind-logs
+          tar -cf artifacts/kind-logs/upgrade-${{matrix.suite}}-${{matrix.k8s}}.tar artifacts/kind-logs/*
+      - name: Upload Kind logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          if-no-files-found: ignore
+          name: upgrade-${{matrix.k8s}}-${{matrix.suite}}.tar
+          path: artifacts/kind-logs
   golangci:
     name: lint
     runs-on: ubuntu-20.04
