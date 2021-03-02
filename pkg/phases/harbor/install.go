@@ -179,7 +179,10 @@ func Deploy(p *platform.Platform) error {
 	if err != nil {
 		return err
 	}
-	return client.UpdateSettings(*p.Harbor.Settings)
+	if err := client.UpdateSettings(*p.Harbor.Settings); err != nil {
+		p.Errorf("Failed  to update harbor settings: %v", err)
+	}
+	return nil
 }
 
 func getHtPasswd(password string) ([]byte, error) {
