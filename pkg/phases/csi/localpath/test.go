@@ -1,4 +1,4 @@
-package nsx
+package localpath
 
 import (
 	"github.com/flanksource/commons/console"
@@ -7,9 +7,9 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.NSX == nil || p.NSX.Disabled {
+	if p.LocalPath.Disabled {
 		return
 	}
 	client, _ := p.GetClientset()
-	kommons.TestNamespace(client, "nsx-system", test)
+	kommons.TestNamespace(client, Namespace, test)
 }
