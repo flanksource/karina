@@ -89,14 +89,14 @@ jobs:
         run: ./test/test.sh
       - name: Upload test results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
@@ -145,14 +145,14 @@ jobs:
         run: ./test/upgrade.sh
       - name: Upload test results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
@@ -214,14 +214,14 @@ jobs:
         run: ./test/test.sh
       - name: Upload test results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
         if: ${{ always() }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
