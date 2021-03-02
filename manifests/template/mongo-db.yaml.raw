@@ -18,7 +18,7 @@ spec:
         admin_password: '{{- kget (print "secret/" .metadata.namespace "/mongodb-" .metadata.name "-credentials") "admin_password" | default (random.AlphaNum 16) -}}'
 
     - apiVersion: apps/v1
-      kind: Deployment
+      kind: StatefulSet
       metadata:
         name: mongodb-{{ .metadata.name }}
         namespace: '{{ .metadata.namespace }}'
@@ -28,8 +28,6 @@ spec:
           matchLabels:
             app.kubernetes.io/name: mongodb
             app.kubernetes.io/instance: '{{ .metadata.name }}'
-        strategy:
-          type: Recreate
         template:
           metadata:
             labels:
@@ -67,24 +65,17 @@ spec:
                     cpu: '{{ .spec.cpu | default "100m" }}'
                 volumeMounts:
                   - mountPath: /var/lib/mongodb/data
-                    name: mongodata
+                    name: "mongodata-{{ .metadata.name }}"
             restartPolicy: Always
-            volumes:
-              - name: mongodata
-                persistentVolumeClaim:
-                  claimName: mongodata-{{ .metadata.name }}
-
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: "mongodata-{{ .metadata.name }}"
-        namespace: '{{ .metadata.namespace }}'
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: '{{ .spec.storage.size | default "5Gi" }}'
+        volumeClaimTemplates:
+        - metadata:
+            name: "mongodata-{{ .metadata.name }}"
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: '{{ .spec.storage.size | default "5Gi" }}'
 
     - apiVersion: v1
       kind: Service
