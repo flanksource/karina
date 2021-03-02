@@ -50,8 +50,8 @@ test:
     - dex
     - audit
     - encryption
-kiosk:
-  version: 0.1.21
+# kiosk:
+#   version: 0.1.21
 istioOperator:
   disabled: False
   version: 1.8.2
