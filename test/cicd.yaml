@@ -11,6 +11,7 @@ keptn:
   version: v0.7.3
 templateOperator:
   version: v0.1.10
+  syncPeriod: 15s
 gitops:
   - name: karina
     helmOperatorVersion: 1.2.0
