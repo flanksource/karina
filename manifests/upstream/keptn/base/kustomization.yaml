@@ -21,6 +21,29 @@ resources:
   - ../helm/generated_templates/keptn/charts/control-plane/templates/quality-gates.yaml
   - ../helm/generated_templates/keptn/charts/control-plane/templates/rbac.yaml
 
+patches:
+  - target:
+      kind: Secret
+      name: bridge-credentials
+    patch: |
+      - op: remove
+        path: /data
+      - op: add
+        path: /stringData
+        value:
+          BASIC_AUTH_PASSWORD: '{{- kget "secret/keptn/bridge-credentials" "BASIC_AUTH_PASSWORD" | default (random.AlphaNum 22) -}}'
+          BASIC_AUTH_USERNAME: keptn
+  - target:
+      kind: Secret
+      name: keptn-api-token
+    patch: |
+      - op: remove
+        path: /data
+      - op: add
+        path: /stringData
+        value:
+          keptn-api-token: '{{- kget "secret/keptn/keptn-api-token" "keptn-api-token" | default (random.AlphaNum 47) -}}'
+
 patchesStrategicMerge:
   - mongodb-datastore-patch.yaml
   - configuration-service-patch.yaml

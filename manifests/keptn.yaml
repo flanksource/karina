@@ -359,9 +359,6 @@ metadata:
   name: keptn-nats-cluster-config
 ---
 apiVersion: v1
-data:
-  BASIC_AUTH_PASSWORD: MlJDYUJ5VnNLZ3FmMDdLYk14OVI=
-  BASIC_AUTH_USERNAME: a2VwdG4=
 kind: Secret
 metadata:
   labels:
@@ -369,11 +366,12 @@ metadata:
     app.kubernetes.io/name: bridge-credentials
     app.kubernetes.io/part-of: keptn
   name: bridge-credentials
+stringData:
+  BASIC_AUTH_PASSWORD: '{{- kget "secret/keptn/bridge-credentials" "BASIC_AUTH_PASSWORD" | default (random.AlphaNum 22) -}}'
+  BASIC_AUTH_USERNAME: keptn
 type: Opaque
 ---
 apiVersion: v1
-data:
-  keptn-api-token: U0tBN3NwUlRjZDVNWEIySENnd0VPQVk0NVNZMXJhUGZjWTFCVHlHTGgxajZ6
 kind: Secret
 metadata:
   labels:
@@ -381,6 +379,8 @@ metadata:
     app.kubernetes.io/name: keptn-api-token
     app.kubernetes.io/part-of: keptn
   name: keptn-api-token
+stringData:
+  keptn-api-token: '{{- kget "secret/keptn/keptn-api-token" "keptn-api-token" | default (random.AlphaNum 47) -}}'
 type: Opaque
 ---
 apiVersion: v1
