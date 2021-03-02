@@ -35,16 +35,16 @@ endef
 
 
 .SECONDEXPANSION:
-crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
+crd/%.yaml: $$(wildcard upstream/$$*/crd/*) $$(wildcard upstream/$$*/helm/*.yaml) bin/kustomize
 	$(BUILD_HELM_CHART)
 	$(BUILD_CRD)
 
 .SECONDEXPANSION:
-%.yaml: $$(wildcard upstream/$$*/base/*) bin/kustomize
+%.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/*.yaml) bin/kustomize
 	$(BUILD_HELM_CHART)
 	$(BUILD_BASE)
 
-.PHONY: build build-upstream-helm-charts build-crds build-base %/helm
+.PHONY: build build-upstream-helm-charts build-crds build-base
 
 OS   = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH = $(shell uname -m | sed 's/x86_64/amd64/')
