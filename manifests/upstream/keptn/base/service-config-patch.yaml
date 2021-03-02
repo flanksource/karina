@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: configuration-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: configuration-service
+          env:
+            - name: MONGO_DB_NAME
+              value: keptn
+            - name: MONGODB_USER
+              value: keptn
+              valueFrom: null
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-keptn-credentials
+                  key: password
+            - name: MONGODB_HOST
+              value: mongodb-keptn:27017

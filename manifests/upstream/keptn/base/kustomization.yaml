@@ -46,7 +46,7 @@ patches:
 
 patchesStrategicMerge:
   - mongodb-datastore-patch.yaml
-  - configuration-service-patch.yaml
+  - service-config-patch.yaml
 
 images:
   - name: nats
