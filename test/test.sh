@@ -63,7 +63,7 @@ fi
 $BIN version
 
 echo "::group::Deploying Base"
-$BIN deploy phases --bootstrap --stubs -v
+$BIN deploy phases --bootstrap --stubs -v --prune=false
 echo "::endgroup::"
 
 echo "::group::Waiting for Base"
