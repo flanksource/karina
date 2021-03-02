@@ -12,5 +12,5 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 
 	client, _ := p.GetClientset()
-	kommons.TestNamespace(client, Namespace, test)
+	kommons.TestDeploy(client, Namespace, "git-operator-controller-manager", test)
 }
