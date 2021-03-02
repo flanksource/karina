@@ -925,4 +925,4 @@ metadata:
   name: default-issuer
 spec:
   ca:
-    secretName: cert-manager-webhook-ca
+    secretName: default-issuer-ca

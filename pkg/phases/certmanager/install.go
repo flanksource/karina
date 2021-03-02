@@ -15,12 +15,13 @@ import (
 )
 
 const (
-	Namespace      = "cert-manager"
-	IngressCA      = "ingress-ca"
-	VaultTokenName = "vault-token"
-	Route53Name    = "route53-credentials"
-	SecretKeyName  = "AWS_SECRET_ACCESS_KEY"
-	WebhookService = "cert-manager-webhook"
+	Namespace       = "cert-manager"
+	IngressCA       = "ingress-ca"
+	DefaultIssuerCA = "default-issuer-ca"
+	VaultTokenName  = "vault-token"
+	Route53Name     = "route53-credentials"
+	SecretKeyName   = "AWS_SECRET_ACCESS_KEY"
+	WebhookService  = "cert-manager-webhook"
 )
 
 func PreInstall(platform *platform.Platform) error {
@@ -67,6 +68,12 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
+	if !p.HasSecret(Namespace, DefaultIssuerCA) {
+		if err := p.CreateOrUpdateSecret(DefaultIssuerCA, Namespace, p.NewSelfSigned("default-issuer").AsTLSSecret()); err != nil {
+			return err
+		}
+	}
+
 	if err := p.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
 		return fmt.Errorf("failed to deploy cert-manager: %v", err)
 	}
@@ -78,7 +85,7 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
-	if err := createDefaultIssuer(p); err != nil {
+	if err := createIngressCA(p); err != nil {
 		return err
 	}
 
@@ -104,7 +111,7 @@ func Install(p *platform.Platform) error {
 	return p.Apply(Namespace, webhooks.Build())
 }
 
-func createDefaultIssuer(p *platform.Platform) error {
+func createIngressCA(p *platform.Platform) error {
 	if issuer, _ := p.GetByKind(certmanager.ClusterIssuerKind, v1.NamespaceAll, IngressCA); issuer != nil {
 		// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
 		// 1) Not polluting the audit log with unnecessary read requests to the CA Key
