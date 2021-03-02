@@ -26,6 +26,7 @@ type PlatformConfig struct {
 	ECK           ECK            `yaml:"eck,omitempty" json:"eck,omitempty"`
 	Elasticsearch *Elasticsearch `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
 	EventRouter   EventRouter    `yaml:"eventrouter,omitempty" json:"eventrouter,omitempty"`
+	ExternalDNS   ExternalDNS    `yaml:"externalDns,omitempty" json:"externalDns,omitempty"`
 	Filebeat      []Filebeat     `yaml:"filebeat,omitempty" json:"filebeat,omitempty"`
 	Gatekeeper    Gatekeeper     `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
 	GitOperator   GitOperator    `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`

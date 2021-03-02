@@ -583,6 +583,11 @@ type GitOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 
+type ExternalDNS struct {
+	Disabled `yaml:",inline" json:",inline"`
+	Args     map[string]string `yaml:"args" json:"args"`
+}
+
 type TemplateOperator struct {
 	Disabled   `yaml:",inline" json:",inline"`
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`

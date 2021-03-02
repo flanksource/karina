@@ -15,6 +15,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/eventrouter"
+	"github.com/flanksource/karina/pkg/phases/externaldns"
 	"github.com/flanksource/karina/pkg/phases/filebeat"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
@@ -67,6 +68,7 @@ var Phases = map[string]DeployFn{
 	"eck":                  eck.Deploy,
 	"elasticsearch":        elasticsearch.Deploy,
 	"eventrouter":          eventrouter.Deploy,
+	"externaldns":          externaldns.Install,
 	"filebeat":             filebeat.Deploy,
 	"gitops":               flux.Install,
 	"git-operator":         gitoperator.Install,
