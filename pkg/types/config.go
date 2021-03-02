@@ -58,7 +58,6 @@ type PlatformConfig struct {
 	Nodes                 map[string]VM       `yaml:"workers,omitempty" json:"nodes,omitempty"`
 	NSX                   *NSX                `yaml:"nsx,omitempty" json:"nsx,omitempty"`
 	OAuth2Proxy           *OAuth2Proxy        `yaml:"oauth2Proxy,omitempty" json:"oauth2Proxy,omitempty"`
-	OPA                   *OPA                `yaml:"opa,omitempty" json:"opa,omitempty"`
 	Packetbeat            Packetbeat          `yaml:"packetbeat,omitempty" json:"packetbeat,omitempty"`
 
 	// A list of strategic merge patches that will be applied to all resources created, can either be a path to a file or an inline patch
