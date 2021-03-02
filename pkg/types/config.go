@@ -96,6 +96,7 @@ type PlatformConfig struct {
 	BootstrapToken        string            `yaml:"-" json:"-"`
 	DryRun                bool              `yaml:"-" json:"-"`
 	Trace                 bool              `yaml:"-" json:"-"`
+	Prune                 bool              `yaml:"-" json:"-"`
 	JoinEndpoint          string            `yaml:"-" json:"-"`
 	Source                string            `yaml:"-" json:"-"`
 	ControlPlaneEndpoint  string            `yaml:"-" json:"-"`

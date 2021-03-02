@@ -46,11 +46,14 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	e2e, _ := cmd.Flags().GetBool("e2e")
 	inCluster, _ := cmd.Flags().GetBool("in-cluster")
 
+	prune, _ := cmd.Flags().GetBool("prune")
+
 	config := NewConfig(paths, extras)
 	config.E2E = e2e
 	config.Trace = trace
 	config.DryRun = dryRun
 	config.InClusterConfig = inCluster
+	config.Prune = prune
 	return config
 }
 

@@ -614,8 +614,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 }
 
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
-	if platform.TerminationProtection {
-		platform.Debugf("Skipping deletion of resources when termination protection is enabled ")
+	if platform.TerminationProtection || !platform.Prune {
 		return nil
 	}
 	for _, spec := range specs {
