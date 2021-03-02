@@ -87,6 +87,10 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
+	if err := p.ApplySpecs("", "cert-manager-webhook.yaml"); err != nil {
+		return fmt.Errorf("failed to deploy cert-manager webhook: %v", err)
+	}
+
 	webhooks, err := p.CreateWebhookBuilder(Namespace, WebhookService, ca)
 	if err != nil {
 		return err

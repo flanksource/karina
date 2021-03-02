@@ -75,11 +75,6 @@ func (platform *Platform) Init() error {
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
 	}
-	if platform.InClusterConfig {
-		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigInCluster
-	} else {
-		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigFromKubeconfig
-	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
 	loggerBackend := logrus.StandardLogger().WithContext(context.Background())
@@ -865,7 +860,7 @@ func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels ma
 }
 
 func (platform *Platform) CreateWebhookBuilder(namespace, service string, ca []byte) (*kommons.WebhookConfigBuilder, error) {
-	if err := platform.WaitForDeployment(namespace, service, 2*time.Minute); err != nil {
+	if err := platform.WaitForDeployment(namespace, service, 3*time.Minute); err != nil {
 		return nil, err
 	}
 	return &kommons.WebhookConfigBuilder{
@@ -873,6 +868,9 @@ func (platform *Platform) CreateWebhookBuilder(namespace, service string, ca []b
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      service,
 				Namespace: namespace,
+				Annotations: map[string]string{
+					certmanager.WantInjectFromSecretAnnotation: fmt.Sprintf("%s/%s", namespace, service),
+				},
 			},
 		},
 		CA: ca,
@@ -906,6 +904,7 @@ func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service strin
 	if err := platform.Apply(namespace, &cert); err != nil {
 		return nil, err
 	}
+
 	if err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 60*time.Second); err != nil {
 		return nil, err
 	}

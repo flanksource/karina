@@ -26,10 +26,6 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
-		return err
-	}
-
 	ca, err := platform.CreateOrGetWebhookCertificate(Namespace, WebhookService)
 	if err != nil {
 		return err
