@@ -3,6 +3,8 @@ package types
 
 import (
 	"encoding/json"
+
+	v1 "k8s.io/api/core/v1"
 )
 
 // +kubebuilder:skip
@@ -43,42 +45,42 @@ type PlatformConfig struct {
 	// A prefix to be added to VM hostnames.
 	HostPrefix string `yaml:"hostPrefix" json:"hostPrefix,omitempty"`
 	// Deprecated, use configFrom instead
-	ImportConfigs         []string            `yaml:"importConfigs,omitempty" json:"importConfigs,omitempty"`
-	IngressCA             *CA                 `yaml:"ingressCA" json:"ingressCA,omitempty"`
-	IstioOperator         IstioOperator       `yaml:"istioOperator,omitempty" json:"istioOperator,omitempty"`
-	Journalbeat           Journalbeat         `yaml:"journalbeat,omitempty" json:"journalbeat,omitempty"`
-	Keptn                 Keptn               `yaml:"keptn,omitempty" json:"keptn,omitempty"`
-	KarinaOperator        KarinaOperator      `yaml:"karinaOperator,omitempty" json:"karinaOperator,omitempty"`
-	Kind                  Kind                `yaml:"kind,omitempty" json:"kind,omitempty"`
-	Kiosk                 Kiosk               `yaml:"kiosk,omitempty" json:"kiosk,omitempty"`
-	Kpack                 Kpack               `yaml:"kpack,omitempty" json:"kpack,omitempty"`
-	KubeResourceReport    *KubeResourceReport `yaml:"kubeResourceReport,omitempty" json:"kubeResourceReport,omitempty"`
-	Kubernetes            Kubernetes          `yaml:"kubernetes" json:"kubernetes,omitempty"`
-	KubeWebView           *KubeWebView        `yaml:"kubeWebView,omitempty" json:"kubeWebView,omitempty"`
-	Ldap                  *Ldap               `yaml:"ldap,omitempty" json:"ldap,omitempty"`
-	LocalPath             Disabled            `yaml:"localPath,omitempty" json:"localPath,omitempty"`
-	LogsExporter          LogsExporter        `yaml:"logsExporter,omitempty" json:"logsExporter,omitempty"`
-	Master                VM                  `yaml:"master,omitempty" json:"master,omitempty"`
-	Minio                 Minio               `yaml:"minio,omitempty" json:"minio,omitempty"`
-	MongodbOperator       MongodbOperator     `yaml:"mongodbOperator,omitempty" json:"mongodbOperator,omitempty"`
-	Monitoring            Monitoring          `yaml:"monitoring,omitempty" json:"monitoring,omitempty"`
-	Name                  string              `yaml:"name" json:"name,omitempty"`
-	NamespaceConfigurator *Enabled            `yaml:"namespaceConfigurator,omitempty" json:"namespaceConfigurator,omitempty"`
-	NFS                   *NFS                `yaml:"nfs,omitempty" json:"nfs,omitempty"`
-	Nginx                 *Nginx              `yaml:"nginx,omitempty" json:"nginx,omitempty"`
-	NodeLocalDNS          NodeLocalDNS        `yaml:"nodeLocalDNS,omitempty" json:"nodeLocalDNS,omitempty"`
-	Nodes                 map[string]VM       `yaml:"workers,omitempty" json:"nodes,omitempty"`
-	NSX                   *NSX                `yaml:"nsx,omitempty" json:"nsx,omitempty"`
-	OAuth2Proxy           *OAuth2Proxy        `yaml:"oauth2Proxy,omitempty" json:"oauth2Proxy,omitempty"`
-	Packetbeat            Packetbeat          `yaml:"packetbeat,omitempty" json:"packetbeat,omitempty"`
-
+	ImportConfigs         []string             `yaml:"importConfigs,omitempty" json:"importConfigs,omitempty"`
+	ImportSecrets         []v1.SecretReference `yaml:"importSecrets,omitempty" json:"importSecrets,omitempty"`
+	IngressCA             *CA                  `yaml:"ingressCA" json:"ingressCA,omitempty"`
+	IstioOperator         IstioOperator        `yaml:"istioOperator,omitempty" json:"istioOperator,omitempty"`
+	Journalbeat           Journalbeat          `yaml:"journalbeat,omitempty" json:"journalbeat,omitempty"`
+	Keptn                 Keptn                `yaml:"keptn,omitempty" json:"keptn,omitempty"`
+	KarinaOperator        KarinaOperator       `yaml:"karinaOperator,omitempty" json:"karinaOperator,omitempty"`
+	Kind                  Kind                 `yaml:"kind,omitempty" json:"kind,omitempty"`
+	Kiosk                 Kiosk                `yaml:"kiosk,omitempty" json:"kiosk,omitempty"`
+	Kpack                 Kpack                `yaml:"kpack,omitempty" json:"kpack,omitempty"`
+	KubeResourceReport    *KubeResourceReport  `yaml:"kubeResourceReport,omitempty" json:"kubeResourceReport,omitempty"`
+	Kubernetes            Kubernetes           `yaml:"kubernetes" json:"kubernetes,omitempty"`
+	KubeWebView           *KubeWebView         `yaml:"kubeWebView,omitempty" json:"kubeWebView,omitempty"`
+	Ldap                  *Ldap                `yaml:"ldap,omitempty" json:"ldap,omitempty"`
+	LocalPath             Disabled             `yaml:"localPath,omitempty" json:"localPath,omitempty"`
+	LogsExporter          LogsExporter         `yaml:"logsExporter,omitempty" json:"logsExporter,omitempty"`
+	Master                VM                   `yaml:"master,omitempty" json:"master,omitempty"`
+	Minio                 Minio                `yaml:"minio,omitempty" json:"minio,omitempty"`
+	MongodbOperator       MongodbOperator      `yaml:"mongodbOperator,omitempty" json:"mongodbOperator,omitempty"`
+	Monitoring            Monitoring           `yaml:"monitoring,omitempty" json:"monitoring,omitempty"`
+	Name                  string               `yaml:"name" json:"name,omitempty"`
+	NamespaceConfigurator *Enabled             `yaml:"namespaceConfigurator,omitempty" json:"namespaceConfigurator,omitempty"`
+	NFS                   *NFS                 `yaml:"nfs,omitempty" json:"nfs,omitempty"`
+	Nginx                 *Nginx               `yaml:"nginx,omitempty" json:"nginx,omitempty"`
+	NodeLocalDNS          NodeLocalDNS         `yaml:"nodeLocalDNS,omitempty" json:"nodeLocalDNS,omitempty"`
+	Nodes                 map[string]VM        `yaml:"workers,omitempty" json:"nodes,omitempty"`
+	NSX                   *NSX                 `yaml:"nsx,omitempty" json:"nsx,omitempty"`
+	OAuth2Proxy           *OAuth2Proxy         `yaml:"oauth2Proxy,omitempty" json:"oauth2Proxy,omitempty"`
+	Packetbeat            Packetbeat           `yaml:"packetbeat,omitempty" json:"packetbeat,omitempty"`
 	// A list of strategic merge patches that will be applied to all resources created, can either be a path to a file or an inline patch
 	Patches             []string             `yaml:"patches,omitempty" json:"patches,omitempty"`
 	PlatformOperator    PlatformOperator     `yaml:"platformOperator,omitempty" json:"platformOperator,omitempty"`
 	PodSubnet           string               `yaml:"podSubnet" json:"podSubnet,omitempty"`
 	Policies            []string             `yaml:"policies,omitempty" json:"policies,omitempty"`
 	PostgresOperator    PostgresOperator     `yaml:"postgresOperator,omitempty" json:"postgresOperator,omitempty"`
-	Quack               *Enabled             `yaml:"quack,omitempty" json:"quack,omitempty"`
+	Quack               *XEnabled            `yaml:"quack,omitempty" json:"quack,omitempty"`
 	RabbitmqOperator    RabbitmqOperator     `yaml:"rabbitmqOperator,omitempty" json:"rabbitmqOperator,omitempty"`
 	RedisOperator       RedisOperator        `yaml:"redisOperator,omitempty" json:"redisOperator,omitempty"`
 	RegistryCredentials *RegistryCredentials `yaml:"registryCredentials,omitempty" json:"registryCredentials,omitempty"`

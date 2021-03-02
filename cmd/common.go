@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/flanksource/commons/console"
@@ -98,28 +97,10 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	for _, extra := range extras {
 		key := strings.Split(extra, "=")[0]
 		val := extra[len(key)+1:]
-		log.Debugf("Looking up %s to set it to: %s", key, val)
 
-		value, err := lookup.LookupString(&base, key)
-		if err != nil {
-			log.Fatalf("Cannot lookup %s: %v", key, err)
-		}
-		log.Infof("Overriding %s %v => %v", key, value, val)
-		switch value.Interface().(type) {
-		case string:
-			value.SetString(val)
-		case int:
-			i, err := strconv.ParseInt(val, 10, 64)
-			if err != nil {
-				log.Fatalf("Cannot convert %s to int", val)
-			}
-			value.SetInt(i)
-		case bool:
-			b, err := strconv.ParseBool(val)
-			if err != nil {
-				log.Fatalf("Cannot convert %s to a boolean", val)
-			}
-			value.SetBool(b)
+		log.Debugf("Looking up %s to set it to: %s", key, val)
+		if err := lookup.Set(&base, key, val); err != nil {
+			log.Fatalf("failed to set key %s: %v", key)
 		}
 	}
 

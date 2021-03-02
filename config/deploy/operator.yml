@@ -39,7 +39,7 @@ spec:
                   antrea:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       isCertReady:
                         type: boolean
                       version:
@@ -48,21 +48,21 @@ spec:
                   argoRollouts:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
                   argocdOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
                   auditbeat:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       kibana:
                         properties:
                           password:
@@ -211,7 +211,7 @@ spec:
                           type: object
                         type: array
                       disabled:
-                        type: boolean
+                        type: string
                       ipPools:
                         items:
                           description: IPPool contains information about a IPPool
@@ -303,7 +303,7 @@ spec:
                           ingress certificates
                         properties:
                           disabled:
-                            type: boolean
+                            type: string
                           email:
                             type: string
                           url:
@@ -375,7 +375,7 @@ spec:
                   dashboard:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -389,7 +389,7 @@ spec:
                   dex:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       google:
                         properties:
                           clientID:
@@ -448,7 +448,7 @@ spec:
                   eck:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -488,7 +488,7 @@ spec:
                   eventrouter:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -499,7 +499,7 @@ spec:
                           type: string
                         type: object
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     required:
@@ -509,7 +509,7 @@ spec:
                     items:
                       properties:
                         disabled:
-                          type: boolean
+                          type: string
                         elasticsearch:
                           properties:
                             password:
@@ -571,7 +571,7 @@ spec:
                           constraints
                         type: string
                       disabled:
-                        type: boolean
+                        type: string
                       e2e:
                         properties:
                           fixtures:
@@ -600,7 +600,7 @@ spec:
                   gitOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -832,6 +832,21 @@ spec:
                     items:
                       type: string
                     type: array
+                  importSecrets:
+                    items:
+                      description: SecretReference represents a Secret Reference.
+                        It has enough information to retrieve secret in any namespace
+                      properties:
+                        name:
+                          description: Name is unique within a namespace to reference
+                            a secret resource.
+                          type: string
+                        namespace:
+                          description: Namespace defines the space within which the
+                            secret name must be unique.
+                          type: string
+                      type: object
+                    type: array
                   ingressCA:
                     properties:
                       cert:
@@ -844,14 +859,14 @@ spec:
                   istioOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
                   journalbeat:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       kibana:
                         properties:
                           password:
@@ -875,7 +890,7 @@ spec:
                   karinaOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       syncPeriod:
                         type: string
                       version:
@@ -884,7 +899,7 @@ spec:
                   keptn:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -903,7 +918,7 @@ spec:
                   kiosk:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -1108,14 +1123,14 @@ spec:
                   localPath:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
                   logsExporter:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       syncPeriod:
                         type: string
                       version:
@@ -1219,7 +1234,7 @@ spec:
                       access_key:
                         type: string
                       disabled:
-                        type: boolean
+                        type: string
                       kmsMasterKey:
                         type: string
                       persistence:
@@ -1247,7 +1262,7 @@ spec:
                   mongodbOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -1975,7 +1990,7 @@ spec:
                   packetbeat:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       elasticsearch:
                         properties:
                           password:
@@ -2031,7 +2046,7 @@ spec:
                       defaultRegistry:
                         type: string
                       disabled:
-                        type: boolean
+                        type: string
                       enableClusterResourceQuota:
                         type: boolean
                       registryWhitelist:
@@ -2079,7 +2094,7 @@ spec:
                       defaultBackupSchedule:
                         type: string
                       disabled:
-                        type: boolean
+                        type: string
                       spiloImage:
                         type: string
                       version:
@@ -2093,14 +2108,14 @@ spec:
                   rabbitmqOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
                   redisOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
@@ -2256,7 +2271,7 @@ spec:
                       dashboardVersion:
                         type: string
                       disabled:
-                        type: boolean
+                        type: string
                       eventsVersion:
                         type: string
                       featureFlags:
@@ -2284,7 +2299,7 @@ spec:
                   templateOperator:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       syncPeriod:
                         type: string
                       version:
@@ -2315,7 +2330,7 @@ spec:
                           type: string
                         type: array
                       disabled:
-                        type: boolean
+                        type: string
                       e2e:
                         properties:
                           server:
@@ -2411,7 +2426,7 @@ spec:
                           type: string
                         type: object
                       disabled:
-                        type: boolean
+                        type: string
                       schedule:
                         type: string
                       version:
@@ -2428,7 +2443,7 @@ spec:
                   vpa:
                     properties:
                       disabled:
-                        type: boolean
+                        type: string
                       version:
                         type: string
                     type: object
