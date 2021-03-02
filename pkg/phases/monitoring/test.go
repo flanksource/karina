@@ -89,68 +89,62 @@ func TestThanos(p *platform.Platform, test *console.TestResults) {
 	}
 }
 
+func GetPrometheusClient(p *platform.Platform, service string) (v1.API, error) {
+	tr, err := p.GetProxyTransport(fmt.Sprintf("%s.%s.svc", service, Namespace))
+	if err != nil {
+		return nil, err
+	}
+	client, err := api.NewClient(api.Config{
+		Address:      fmt.Sprintf("http://%s.%s.svc", service, Namespace),
+		RoundTripper: tr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	api := v1.NewAPI(client)
+	return api, nil
+}
+
 func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	testName := "prometheus"
 	if p.Monitoring == nil || p.Monitoring.Disabled {
 		test.Skipf(testName, "monitoring is not configured or enabled")
 		return
 	}
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	startTime := time.Now()
-	var client api.Client
-	var err error
-	for {
-		client, err = api.NewClient(api.Config{
-			Address:      fmt.Sprintf("https://prometheus.%s", p.Domain),
-			RoundTripper: http.DefaultTransport,
-		})
-		if err == nil {
-			break
-		}
 
-		if time.Since(startTime) > 180*time.Second {
-			test.Failf(testName, "Timeout connecting to Prometheus: %s", err)
-			return
-		}
+	promAPI, err := GetPrometheusClient(p, Prometheus)
+	if err != nil {
+		test.Failf(testName, "Cannot connect to prometheus: %v", err)
+		return
 	}
-	promAPI := v1.NewAPI(client)
-	var targets v1.TargetsResult
-	startTime = time.Now()
-	for {
-		targets, err = promAPI.Targets(context.Background())
-		if err == nil {
-			break
-		}
-		if time.Since(startTime) > 240*time.Second {
-			test.Failf(testName, "Failed to get targets: %v", err)
-			return
-		}
+
+	targets, err := promAPI.Targets(context.Background())
+	if err != nil {
+		test.Failf(testName, "Cannot get prometheus targets: %v", err)
+		return
 	}
 	if targets.Active == nil {
 		test.Failf(testName, "No active targets found in Prometheus")
 		return
 	}
-	errs := make([]error, 0)
+	down := 0
 	for _, activeTarget := range targets.Active {
 		targetEndpointName := activeTarget.DiscoveredLabels["__meta_kubernetes_endpoints_name"]
 		targetEndpointAddress := activeTarget.DiscoveredLabels["__address__"]
 		if activeTarget.Health == "down" {
-			errs = append(errs, fmt.Errorf("%s (%s) endpoint is down\n %s",
-				targetEndpointName, targetEndpointAddress, activeTarget.LastError))
+			down++
+			test.Failf(testName, "%s/%s (%s) endpoint is down\n %s", activeTarget.DiscoveredLabels["job"],
+				targetEndpointName, targetEndpointAddress, activeTarget.LastError)
 		}
 	}
-	if len(errs) > 0 {
-		failMessage := ""
-		for _, err := range errs {
-			failMessage += err.Error() + ". "
-		}
-		test.Failf(testName, failMessage)
-		return
+	if down == 0 {
+		test.Passf(testName, "%d prometheus targets up", len(targets.Active))
 	}
 
 	alerts, err := promAPI.Alerts(context.Background())
 	if err != nil {
-		test.Errorf("pullMetric: failed to get alerts")
+		test.Failf(testName, "Failed to get alerts: %v", err)
 		return
 	}
 	if alerts.Alerts == nil {
@@ -161,7 +155,8 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	if alertLevel == "" {
 		alertLevel = critical
 	}
-	errs = make([]error, 0)
+	alertCount := 0
+	alertsFiring := 0
 	for _, alert := range alerts.Alerts {
 		alertname := string(alert.Labels["alertname"])
 		severity := string(alert.Labels["severity"])
@@ -174,19 +169,16 @@ func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 		if alertLevel == warning && severity != critical && severity != warning {
 			continue
 		}
+		alertCount++
 		if alert.State == "firing" {
-			errs = append(errs, fmt.Errorf("%s alert is firing %s", alertname, alert.Labels))
+			alertsFiring++
+			test.Failf(testName, "%s alert is firing %s", alertname, alert.Labels)
 		}
 	}
-	if len(errs) > 0 {
-		failMessage := ""
-		for _, err := range errs {
-			failMessage += err.Error() + ". "
-		}
-		test.Failf(testName, failMessage)
-		return
+
+	if alertsFiring == 0 {
+		test.Passf(testName, "%d alerts healthy", alertCount)
 	}
-	test.Passf(testName, "All alerts are not firing")
 }
 
 func pushMetric(pushGatewayHost string) *push.Pusher {
