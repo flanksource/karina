@@ -4,9 +4,14 @@ const KubeSystem = "kube-system"
 const PlatformSystem = "platform-system"
 const DockerRuntime = "docker"
 const ContainerdRuntime = "containerd"
+const ValidatingWebhookConfiguration = "ValidatingWebhookConfiguration"
+const MutatingWebhookConfiguration = "MutatingWebhookConfiguration"
 
 const MasterNodeLabel = "node-role.kubernetes.io/master"
 const NodePoolLabel = "karina.flanksource.com/pool"
+const NodeGroupTaint = "node.kubernetes.io/group"
+const ManagedBy = "apps.kubernetes.io/managed-by"
+const Karina = "karina"
 
 var PlatformNamespaces = []string{
 	"cert-manager",

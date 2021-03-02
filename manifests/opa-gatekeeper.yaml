@@ -1,16 +1,30 @@
-apiVersion: v1
-kind: Secret
+---
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: Config
 metadata:
-  name: gatekeeper-webhook-server-cert
-  namespace: gatekeeper-system
-  annotations:
-    cert-manager.io/allow-direct-injection: "true"
-data:
-  ca.crt: ""
-  tls.crt: ""
-  tls.key: ""
-type: kubernetes.io/tls
-
+  name: config
+  namespace: "gatekeeper-system"
+spec:
+  match:
+    - excludedNamespaces:
+      {{- range $ns := .gatekeeper.whitelistNamespaces }}
+      - {{ $ns }}
+      {{- end }}
+      processes: ["*"]
+  sync:
+    syncOnly:
+      - group: ""
+        version: "v1"
+        kind: "Namespace"
+      - group: ""
+        version: "v1"
+        kind: "Pod"
+      - group: "extensions"
+        version: "v1beta1"
+        kind: "Ingress"
+      - group: "networking.k8s.io"
+        version: "v1beta1"
+        kind: "Ingress"
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -207,14 +221,14 @@ kind: Service
 metadata:
   labels:
     gatekeeper.sh/system: "yes"
-  name: gatekeeper-webhook-service
+  name: gatekeeper-webhook
   namespace: gatekeeper-system
 spec:
   ports:
   - port: 443
     targetPort: 8443
   selector:
-    control-plane: controller-manager
+    control-plane: gatekeeper
     gatekeeper.sh/operation: webhook
     gatekeeper.sh/system: "yes"
 ---
@@ -222,7 +236,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: gatekeeper
     gatekeeper.sh/operation: audit
     gatekeeper.sh/system: "yes"
   name: gatekeeper-audit
@@ -231,7 +245,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: audit-controller
+      control-plane:  gatekeeper
       gatekeeper.sh/operation: audit
       gatekeeper.sh/system: "yes"
   template:
@@ -239,7 +253,7 @@ spec:
       annotations:
         container.seccomp.security.alpha.kubernetes.io/manager: runtime/default
       labels:
-        control-plane: audit-controller
+        control-plane: gatekeeper
         gatekeeper.sh/operation: audit
         gatekeeper.sh/system: "yes"
     spec:
@@ -247,6 +261,9 @@ spec:
       - args:
         - --operation=audit
         - --operation=status
+        - --emit-audit-events
+        - --emit-admission-events
+        - --constraint-violations-limit=100
         - --logtostderr
         command:
         - /manager
@@ -302,10 +319,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: gatekeeper
     gatekeeper.sh/operation: webhook
     gatekeeper.sh/system: "yes"
-  name: gatekeeper-controller-manager
+  name: gatekeeper-webhook
   namespace: gatekeeper-system
   annotations:
       reload/all: "true"
@@ -313,7 +330,7 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: gatekeeper
       gatekeeper.sh/operation: webhook
       gatekeeper.sh/system: "yes"
   template:
@@ -321,7 +338,7 @@ spec:
       annotations:
         container.seccomp.security.alpha.kubernetes.io/manager: runtime/default
       labels:
-        control-plane: controller-manager
+        control-plane: gatekeeper
         gatekeeper.sh/operation: webhook
         gatekeeper.sh/system: "yes"
     spec:
@@ -400,114 +417,9 @@ spec:
         - mountPath: /certs
           name: cert
           readOnly: true
-      nodeSelector:
-        kubernetes.io/os: linux
       serviceAccountName: gatekeeper-admin
-      terminationGracePeriodSeconds: 60
       volumes:
       - name: cert
         secret:
           defaultMode: 420
-          secretName: gatekeeper-webhook-server-cert
----
-apiVersion: admissionregistration.k8s.io/v1beta1
-kind: ValidatingWebhookConfiguration
-metadata:
-  creationTimestamp: null
-  labels:
-    gatekeeper.sh/system: "yes"
-  annotations:
-    cert-manager.io/inject-apiserver-ca: "true"
-    cert-manager.io/inject-ca-from-secret: gatekeeper-system/gatekeeper-webhook-server-cert
-  name: gatekeeper-validating-webhook-configuration
-webhooks:
-- clientConfig:
-    caBundle: Cg==
-    service:
-      name: gatekeeper-webhook-service
-      namespace: gatekeeper-system
-      path: /v1/admit
-  failurePolicy: Ignore
-  name: validation.gatekeeper.sh
-  namespaceSelector:
-    matchExpressions:
-    - key: apps.kubernetes.io/managed-by
-      operator: NotIn
-      values: ["karina"]
-  rules:
-  - apiGroups:
-    - '*'
-    apiVersions:
-    - '*'
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - '*'
-  sideEffects: None
-  timeoutSeconds: 5
-- clientConfig:
-    caBundle: Cg==
-    service:
-      name: gatekeeper-webhook-service
-      namespace: gatekeeper-system
-      path: /v1/admitlabel
-  failurePolicy: Fail
-  objectSelector:
-    matchExpressions:
-    - key: apps.kubernetes.io/managed-by
-      operator: Exists
-  name: check-ignore-label.gatekeeper.sh
-  rules:
-  - apiGroups:
-    - ""
-    apiVersions:
-    - '*'
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - namespaces
-  sideEffects: None
-  timeoutSeconds: 5
----
-apiVersion: config.gatekeeper.sh/v1alpha1
-kind: Config
-metadata:
-  name: config
-  namespace: "gatekeeper-system"
-spec:
-  match:
-    - excludedNamespaces:
-      {{- range $ns := .gatekeeper.whitelistNamespaces }}
-      - {{ $ns }}
-      {{- end }}
-      processes: ["*"]
-  sync:
-    syncOnly:
-      - group: ""
-        version: "v1"
-        kind: "Namespace"
-      - group: ""
-        version: "v1"
-        kind: "Pod"
-      - group: "extensions"
-        version: "v1beta1"
-        kind: "Ingress"
-      - group: "networking.k8s.io"
-        version: "v1beta1"
-        kind: "Ingress"
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: gatekeeper-webhook-cert
-  namespace: gatekeeper-system
-spec:
-  dnsNames:
-    - gatekeeper-webhook-service.gatekeeper-system.svc
-    - gatekeeper-webhook-service.gatekeeper-system.svc.cluster.local
-  secretName: gatekeeper-webhook-server-cert
-  issuerRef:
-    name: default-issuer
-    kind: ClusterIssuer
+          secretName: gatekeeper-webhook
