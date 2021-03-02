@@ -23,6 +23,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/journalbeat"
+	"github.com/flanksource/karina/pkg/phases/karinaoperator"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
@@ -75,7 +76,7 @@ var Phases = map[string]DeployFn{
 	"harbor":               harbor.Deploy,
 	"istio-operator":       istiooperator.Install,
 	"journalbeat":          journalbeat.Deploy,
-	"kiosk":                kiosk.Deploy,
+	"karina-operator":      karinaoperator.Install,
 	"kpack":                kpack.Deploy,
 	"kube-web-view":        kubewebview.Install,
 	"kube-resource-report": kuberesourcereport.Install,

@@ -39,6 +39,7 @@ type PlatformConfig struct {
 	IngressCA             *CA                 `yaml:"ingressCA" json:"ingressCA,omitempty"`
 	IstioOperator         IstioOperator       `yaml:"istioOperator,omitempty" json:"istioOperator,omitempty"`
 	Journalbeat           Journalbeat         `yaml:"journalbeat,omitempty" json:"journalbeat,omitempty"`
+	KarinaOperator        KarinaOperator      `yaml:"karinaOperator,omitempty" json:"karinaOperator,omitempty"`
 	Kind                  Kind                `yaml:"kind,omitempty" json:"kind,omitempty"`
 	Kiosk                 Kiosk               `yaml:"kiosk,omitempty" json:"kiosk,omitempty"`
 	Kpack                 Kpack               `yaml:"kpack,omitempty" json:"kpack,omitempty"`

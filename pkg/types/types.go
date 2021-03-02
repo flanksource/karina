@@ -593,6 +593,11 @@ type TemplateOperator struct {
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }
 
+type KarinaOperator struct {
+	Disabled   `yaml:",inline" json:",inline"`
+	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
+}
+
 type IstioOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
