@@ -47,7 +47,7 @@ type PlatformConfig struct {
 	Kubernetes            Kubernetes          `yaml:"kubernetes" json:"kubernetes,omitempty"`
 	KubeWebView           *KubeWebView        `yaml:"kubeWebView,omitempty" json:"kubeWebView,omitempty"`
 	Ldap                  *Ldap               `yaml:"ldap,omitempty" json:"ldap,omitempty"`
-	LocalPath             *Enabled            `yaml:"localPath,omitempty" json:"localPath,omitempty"`
+	LocalPath             Disabled            `yaml:"localPath,omitempty" json:"localPath,omitempty"`
 	LogsExporter          LogsExporter        `yaml:"logsExporter,omitempty" json:"logsExporter,omitempty"`
 	Master                VM                  `yaml:"master,omitempty" json:"master,omitempty"`
 	Minio                 Minio               `yaml:"minio,omitempty" json:"minio,omitempty"`
