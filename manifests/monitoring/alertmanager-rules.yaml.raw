@@ -888,10 +888,10 @@ spec:
             message: Container {{ $labels.container }} in Pod {{ $labels.pod }} is using less than 10 percent of allocated CPU
           expr: |
             namespace_pod_container:container_cpu_usage_percentage:sum_rate < 10 and
-            (sum by (container, pod, namespace) (kube_pod_container_resource_requests_cpu_cores{namespace!="postgres-operator"})) > .2
+            (sum by (container, pod, namespace) (kube_pod_container_resource_requests_cpu_cores{namespace!="postgres-operator"})) > 1
           for: 10m
           labels:
-            severity: warning
+            severity: info
         - alert: ContainerRequestTooLarge
           annotations:
             message: Container {{ $labels.container }} in Pod {{ $labels.pod }} is requesting more than 50% of {{ $labels.node }}
