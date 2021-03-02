@@ -6,6 +6,7 @@ test:
     - quack
     - platform-operator
     - consul #quarantine flakey test
+    - gitops
 kubernetes:
   auditing:
     policyFile: ./test/fixtures/audit-policy.yaml

@@ -13,18 +13,37 @@ on:
 
 jobs:
   binary:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: flanksource/build-tools:v0.12.0
     steps:
+      # Get values for cache paths to be used in later steps
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
       - uses: actions/checkout@main
+      # Cache go build cache, used to speedup go test
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      # Cache go mod cache, used to speedup builds
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
       - run: make linux
       - uses: actions/upload-artifact@v2
         with:
           name: karina
           path: ./.bin/karina
-  test:
-    runs-on: ubuntu-latest
+  e2e:
+    runs-on: ubuntu-20.04
     if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
     needs: binary
     strategy:
@@ -82,10 +101,159 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: failure()
-        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+        run: |
+          mkdir -p artifacts/kind-logs
+          .bin/kind export logs --name=upgrade-test artifacts/kind-logs
+          tar -cf artifacts/kind-logs/upgrade-${{matrix.suite}}-${{matrix.k8s}}.tar artifacts/kind-logs/*
       - name: Upload Kind logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
+          name: upgrade-${{matrix.k8s}}-${{matrix.suite}}.tar
           path: artifacts/kind-logs
+  upgrade:
+    runs-on: ubuntu-20.04
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.18.6
+        suite:
+          - minimal
+        include:
+          - k8s: v1.17.5
+            suite: minimal
+          - k8s: v1.17.5
+            suite: minimal-antrea
+          - k8s: v1.17.5
+            suite: monitoring
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
+      - name: Run upgrade testing script
+        env:
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+          REFERENCE_VERSION: v0.24.1
+        run: ./test/upgrade.sh
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
+          path: test-results/
+      - name: Upload snapshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/snapshot.zip
+      - name: Generate Kind logs
+        if: failure()
+        run: |
+          mkdir -p artifacts/kind-logs
+          .bin/kind export logs --name=upgrade-test artifacts/kind-logs
+          tar -cf artifacts/kind-logs/upgrade-${{matrix.suite}}-${{matrix.k8s}}.tar artifacts/kind-logs/*
+      - name: Upload Kind logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: upgrade-${{matrix.k8s}}-${{matrix.suite}}.tar
+          path: artifacts/kind-logs
+  selfhosted:
+    runs-on: [self-hosted]
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.18.8
+        suite:
+          - minimal
+          # - minimal-antrea
+          - monitoring
+          - harbor2
+          # - postgres
+          # - elastic
+          # - security
+          - platform
+          # - nosql
+          # - cicd
+        # include:
+        #   - k8s: v1.17.5
+        #     suite: minimal
+        #   - k8s: v1.17.5
+        #     suite: minimal-antrea
+        #   - k8s: v1.17.5
+        #     suite: monitoring
+        #   - k8s: v1.16.9
+        #     suite: minimal
+        #   - k8s: v1.16.9
+        #     suite: monitoring
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
+      - name: Run e2e testing script
+        env:
+          CACHE_DIR: /runner/_work
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+        run: ./test/test.sh
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
+          path: test-results/
+      - name: Upload snapshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/snapshot.zip
+  golangci:
+    name: lint
+    runs-on: ubuntu-20.04
+    container:
+      image: flanksource/build-tools:v0.12.0
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        # Get values for cache paths to be used in later steps
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+      - uses: actions/checkout@main
+      # Cache go build cache, used to speedup go test
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      # Cache go mod cache, used to speedup builds
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.36
+      - name: filename check
+        run: go run test/linter/main.go
