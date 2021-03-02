@@ -905,7 +905,7 @@ func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service strin
 		return nil, err
 	}
 
-	if err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 60*time.Second); err != nil {
+	if err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 180*time.Second); err != nil {
 		return nil, err
 	}
 
