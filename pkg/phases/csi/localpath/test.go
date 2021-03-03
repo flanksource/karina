@@ -7,7 +7,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.LocalPath.Disabled {
+	if p.LocalPath.IsDisabled() {
 		return
 	}
 	client, _ := p.GetClientset()
