@@ -228,16 +228,13 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: failure()
-        run: |
-          mkdir -p artifacts/kind-logs
-          .bin/kind export logs --name=upgrade-test artifacts/kind-logs
-          tar -cf artifacts/kind-logs/upgrade-${{matrix.suite}}-${{matrix.k8s}}.tar artifacts/kind-logs/*
+        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
-          name: upgrade-${{matrix.k8s}}-${{matrix.suite}}.tar
+          name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
   golangci:
     name: lint
