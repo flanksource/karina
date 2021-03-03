@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/apacheds"
@@ -33,7 +32,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/karinaoperator"
-  "github.com/flanksource/karina/pkg/phases/keptn"
+	"github.com/flanksource/karina/pkg/phases/keptn"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
