@@ -1,0 +1,4 @@
+repo: https://storage.googleapis.com/keptn-installer
+chart_name: keptn
+version: 0.7.3
+namespace: keptn

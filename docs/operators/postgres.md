@@ -14,7 +14,7 @@ canaryChecker:
 Deploying using :
 
 ```bash
-karina deploy posytgres-operator -c karina.yml
+karina deploy postgres-operator -c karina.yml
 ```
 
  A CRD called [PostgresqlDB](https://github.com/flanksource/karina/blob/master/manifests/template/postgres-db.yaml.raw) is used as a wrapper around the core zalando objects

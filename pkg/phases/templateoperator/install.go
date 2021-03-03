@@ -1,11 +1,12 @@
 package templateoperator
 
 import (
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
-	Namespace = "platform-system"
+	Namespace = constants.PlatformSystem
 	Name      = "template-operator-controller-manager"
 )
 
@@ -13,6 +14,10 @@ func Install(p *platform.Platform) error {
 	_ = installNamespaceConfigurator(p)
 	if p.TemplateOperator.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "template-operator.yaml")
+	}
+
+	if err := p.CreateOrUpdateNamespace(constants.PlatformSystem, nil, nil); err != nil {
+		return err
 	}
 
 	return p.ApplySpecs(Namespace, "template-operator.yaml")

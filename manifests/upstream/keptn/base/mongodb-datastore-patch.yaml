@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-datastore
+spec:
+  template:
+    spec:
+      containers:
+        - name: mongodb-datastore
+          env:
+            - name: MONGODB_DATABASE
+              value: keptn
+            - name: MONGODB_USER
+              value: keptn
+              valueFrom: null
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-keptn-credentials
+                  key: password
+            - name: MONGODB_HOST
+              value: mongodb-keptn:27017
