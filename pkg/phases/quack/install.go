@@ -1,55 +1,49 @@
 package quack
 
 import (
-	"time"
-
 	"github.com/flanksource/karina/pkg/platform"
-	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
 	EnabledLabels = map[string]string{
-		"quack.pusher.com/enabled": "true",
+		EnabledLabel: "true",
 	}
 )
 
+const EnabledLabel = "quack.pusher.com/enabled"
 const Namespace = "quack"
+const WebhookService = "quack"
 const Certs = "quack-certs"
 
 func Install(platform *platform.Platform) error {
 	if platform.Quack != nil && platform.Quack.Disabled {
+		if err := platform.DeleteMutatingWebhook(Namespace, WebhookService); err != nil {
+			return err
+		}
 		return platform.DeleteSpecs(Namespace, "quack.yaml")
 	}
 	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
-		return errors.Wrap(err, "failed to create/update namespace quack")
-	}
-
-	if !platform.HasSecret(Namespace, Certs) {
-		secret := platform.NewSelfSigned("quack.quack.svc").AsTLSSecret()
-		secret["ca.crt"] = secret["tls.crt"]
-		if err := platform.Apply(Namespace, &v1.Secret{
-			TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      Certs,
-				Namespace: Namespace,
-				Annotations: map[string]string{
-					"cert-manager.io/allow-direct-injection": "true",
-				},
-			},
-			Data: secret,
-		}); err != nil {
-			return err
-		}
-	}
-	// quack gets deployed across both quack and kube-system namespaces
-	if err := platform.ApplySpecs(v1.NamespaceAll, "quack.yaml"); err != nil {
 		return err
 	}
 
-	if !platform.ApplyDryRun {
-		platform.WaitForNamespace(Namespace, 60*time.Second)
+	ca, err := platform.CreateOrGetWebhookCertificate(Namespace, WebhookService)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	if err := platform.ApplySpecs(Namespace, "quack.yaml"); err != nil {
+		return err
+	}
+
+	webhooks, err := platform.CreateWebhookBuilder(Namespace, WebhookService, ca)
+	if err != nil {
+		return err
+	}
+
+	webhooks = webhooks.NewHook("quack.pusher.com", "/apis/quack.pusher.com/v1alpha1/admissionreviews").
+		WithNamespaceLabel(EnabledLabel, "true").
+		MatchKinds("ingresses", "services", "canaries").
+		Add()
+
+	return platform.Apply(Namespace, webhooks.BuildMutating())
 }

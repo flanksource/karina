@@ -21,8 +21,10 @@ import (
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/karina/manifests"
 	"github.com/flanksource/karina/pkg/api"
+	"github.com/flanksource/karina/pkg/api/certmanager"
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
 	"github.com/flanksource/kommons/ktemplate"
@@ -33,8 +35,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/flanksource/yaml.v3"
+	admission "k8s.io/api/admissionregistration/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	// need to import auth package to registry custom auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -69,11 +74,6 @@ func (platform *Platform) Init() error {
 	}
 	platform.Client.GetKustomizePatches = func() ([]string, error) {
 		return platform.Patches, nil
-	}
-	if platform.InClusterConfig {
-		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigInCluster
-	} else {
-		platform.Client.GetRESTConfig = platform.Client.GetRESTConfigFromKubeconfig
 	}
 	platform.Client.ApplyDryRun = platform.DryRun
 	platform.Client.Trace = platform.PlatformConfig.Trace
@@ -496,7 +496,7 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 
 func (platform *Platform) NewSelfSigned(domain string) *certs.Certificate {
 	platform.Infof("Creating new self signed cert %s", domain)
-	cert := certs.NewCertificateBuilder(domain).Server().Certificate
+	cert := certs.NewCertificateBuilder(domain).Server().CA().Certificate
 	cert, _ = cert.SignCertificate(cert, 10)
 	return cert
 }
@@ -602,7 +602,6 @@ func (platform *Platform) ApplyText(namespace string, specs ...string) error {
 }
 
 func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
-	platform.Infof("Waiting for %s to be ready", ns)
 	if platform.DryRun {
 		return
 	}
@@ -614,8 +613,7 @@ func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
 }
 
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
-	if platform.TerminationProtection {
-		platform.Debugf("Skipping deletion of resources when termination protection is enabled ")
+	if platform.TerminationProtection || !platform.Prune {
 		return nil
 	}
 	for _, spec := range specs {
@@ -738,14 +736,24 @@ func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, e
 	if err != nil {
 		return nil, err
 	}
+
+	//FIXME: should be proxying through the service, not the first pod of the service
+	pod, err := platform.GetFirstPodByLabelSelector(ns, labels.FormatLabels(svc.Spec.Selector))
+	if err != nil {
+		return nil, fmt.Errorf("cannot get pod for service: %s", name)
+	}
+	if pod == nil {
+		return nil, fmt.Errorf("pod not found for %s", name)
+	}
+
 	port := int(svc.Spec.Ports[0].Port)
 	dialer, _ := platform.GetProxyDialer(proxy.Proxy{
 		Namespace:    ns,
 		Kind:         "pods",
-		ResourceName: name + "-0",
+		ResourceName: pod.Name,
 		Port:         port,
 	})
-	platform.Infof("proxying %s through svc=%s ns=%s port=%d", endpoint, name, ns, port)
+	platform.Debugf("proxying %s through svc=%s ns=%s port=%d", endpoint, pod.Name, ns, port)
 	return &http.Transport{
 		DialContext:     dialer.DialContext,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -851,9 +859,66 @@ func (platform *Platform) CreateOrUpdateWorkloadNamespace(name string, labels ma
 	return platform.Client.CreateOrUpdateNamespace(name, labels, annotations)
 }
 
+func (platform *Platform) CreateWebhookBuilder(namespace, service string, ca []byte) (*kommons.WebhookConfigBuilder, error) {
+	if err := platform.WaitForDeployment(namespace, service, 3*time.Minute); err != nil {
+		return nil, err
+	}
+	return &kommons.WebhookConfigBuilder{
+		ValidatingWebhookConfiguration: admission.ValidatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      service,
+				Namespace: namespace,
+				Annotations: map[string]string{
+					certmanager.WantInjectFromSecretAnnotation: fmt.Sprintf("%s/%s", namespace, service),
+				},
+			},
+		},
+		CA: ca,
+	}, nil
+}
+
+func (platform *Platform) DeleteMutatingWebhook(namespace, service string) error {
+	if err := platform.DeleteByKind(certmanager.CertificateKind, namespace, service); err != nil {
+		return err
+	}
+	if err := platform.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, service); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (platform *Platform) DeleteValidatingWebhook(namespace, service string) error {
+	if err := platform.DeleteByKind(certmanager.CertificateKind, namespace, service); err != nil {
+		return err
+	}
+	if err := platform.DeleteByKind(constants.ValidatingWebhookConfiguration, v1.NamespaceAll, service); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service string) ([]byte, error) {
+	// first create the certificate for the webhooks and wait for it to become ready
+	// to avoid any race conditions
+	cert := certmanager.NewCertificateForService(namespace, service)
+	if err := platform.Apply(namespace, &cert); err != nil {
+		return nil, err
+	}
+
+	if err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 180*time.Second); err != nil {
+		return nil, err
+	}
+
+	secret := platform.GetSecret(namespace, service)
+	if secret == nil {
+		return nil, fmt.Errorf("could not find secret: %s", service)
+	}
+	return (*secret)["tls.crt"], nil
+}
+
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {
 	annotations := map[string]string{
-		"apps.kubernetes.io/managed-by": "karina",
+		constants.ManagedBy: constants.Karina,
 	}
 	return annotations
 }

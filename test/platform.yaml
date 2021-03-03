@@ -1,18 +1,5 @@
 importConfigs:
   - minimal.yaml
-opa:
-  disabled: true
-  version: 0.22.0
-  e2e:
-    fixtures: test/opa/opa-fixtures
-  policies: test/opa/policies
-  kubeMgmtVersion: 0.11
-  bundleUrl: http://minio.minio.svc:9000
-  bundlePrefix: bundles
-  bundleServiceName: automobile
-  logFormat: json-pretty
-  logLevel: debug
-  setDecisionLogs: true
 gatekeeper:
   version: "v3.3.0"
   constraints: test/opa/constraints
@@ -63,8 +50,8 @@ test:
     - dex
     - audit
     - encryption
-kiosk:
-  version: 0.1.21
+# kiosk:
+#   version: 0.1.21
 istioOperator:
   disabled: False
   version: 1.8.2

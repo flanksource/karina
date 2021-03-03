@@ -1,25 +1,25 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: manager
+  name: karina-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: manager
+  name: karina-operator
 subjects:
   - kind: ServiceAccount
-    name: manager
+    name: karina-operator
     namespace: system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: manager
+  name: karina-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: manager
+  name: karina-operator
 subjects:
   - kind: ServiceAccount
-    name: manager
+    name: karina-operator
     namespace: system

@@ -25,8 +25,10 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 	TestPlatformOperatorAutoDeleteNamespace(platform, test)
 	TestPlatformOperatorPodAnnotations(platform, test)
-	TestPlatformOperatorClusterResourceQuota1(platform, test)
-	TestPlatformOperatorClusterResourceQuota2(platform, test)
+	if platform.PlatformOperator.EnableClusterResourceQuota {
+		TestPlatformOperatorClusterResourceQuota1(platform, test)
+		TestPlatformOperatorClusterResourceQuota2(platform, test)
+	}
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
@@ -81,9 +83,11 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 		return
 	}
 
-	defer func() {
-		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
-	}()
+	if !p.PlatformConfig.Trace {
+		defer func() {
+			client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
+		}()
+	}
 
 	podName := fmt.Sprintf("test-pod-annotations-%s", utils.RandomString(6))
 	pod := &v1.Pod{

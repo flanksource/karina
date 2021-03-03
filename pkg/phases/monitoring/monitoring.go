@@ -10,6 +10,8 @@ import (
 
 const (
 	Namespace  = "monitoring"
+	Prometheus = "prometheus-k8s"
+	Thanos     = "thanos"
 	CaCertName = "thanos-ca-cert"
 )
 

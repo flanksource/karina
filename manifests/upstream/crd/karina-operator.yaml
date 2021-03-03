@@ -1,0 +1,2 @@
+bases:
+  - github.com/flanksource/karina/config/crd

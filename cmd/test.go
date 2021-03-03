@@ -9,21 +9,29 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/karina/pkg/phases/argorollouts"
-
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/karina/pkg/phases/antrea"
+	"github.com/flanksource/karina/pkg/phases/apacheds"
 	"github.com/flanksource/karina/pkg/phases/argocdoperator"
+	"github.com/flanksource/karina/pkg/phases/argorollouts"
 	"github.com/flanksource/karina/pkg/phases/base"
+	"github.com/flanksource/karina/pkg/phases/calico"
 	"github.com/flanksource/karina/pkg/phases/canary"
+	"github.com/flanksource/karina/pkg/phases/certmanager"
 	"github.com/flanksource/karina/pkg/phases/configmapreloader"
 	"github.com/flanksource/karina/pkg/phases/consul"
+	"github.com/flanksource/karina/pkg/phases/csi/localpath"
+	"github.com/flanksource/karina/pkg/phases/csi/nfs"
+	"github.com/flanksource/karina/pkg/phases/csi/s3"
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
+	"github.com/flanksource/karina/pkg/phases/externaldns"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
+	"github.com/flanksource/karina/pkg/phases/karinaoperator"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
 	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
@@ -31,6 +39,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
+	"github.com/flanksource/karina/pkg/phases/nginx"
 	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
@@ -40,12 +49,12 @@ import (
 	"github.com/flanksource/karina/pkg/phases/redisoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
-	"github.com/flanksource/karina/pkg/phases/stubs"
 	"github.com/flanksource/karina/pkg/phases/templateoperator"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
+	"github.com/flanksource/karina/pkg/phases/vsphere"
 	"github.com/flanksource/karina/pkg/platform"
-	tests "github.com/flanksource/karina/pkg/test"
+
 	"github.com/spf13/cobra"
 	mpb "github.com/vbauerster/mpb/v5"
 )
@@ -88,6 +97,7 @@ func end(test *console.TestResults) {
 type TestFn func(p *platform.Platform, test *console.TestResults)
 
 func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
+	p.Tracef("Testing %s", name)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -143,72 +153,121 @@ func init() {
 		end(test)
 	}
 
+	aliases := map[string][]string{
+		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "quack", "minio", "template-operator", "postgres-operator"},
+		"cni":       []string{"calico", "antrea", "nsx"},
+		"csi":       []string{"s3", "nfs", "local-path"},
+		"cloud":     []string{"vsphere"},
+		"stubs":     []string{"apacheds", "minio"},
+	}
 	tests := map[string]TestFn{
-		"argocd-operator":      argocdoperator.Test,
+		"antrea":               antrea.Test,
+		"apacheds":             apacheds.Test,
 		"argo-rollouts":        argorollouts.Test,
+		"argocd-operator":      argocdoperator.Test,
 		"audit":                kubeadm.TestAudit,
 		"base":                 base.Test,
+		"calico":               calico.Test,
 		"canary":               canary.TestCanary,
+		"cert-manager":         certmanager.Test,
 		"configmap-reloader":   configmapreloader.Test,
 		"consul":               consul.Test,
 		"dex":                  dex.Test,
 		"eck":                  eck.Test,
 		"elasticsearch":        elasticsearch.Test,
 		"encryption":           kubeadm.TestEncryption,
-		"gitops":               flux.Test,
+		"externaldns":          externaldns.Test,
 		"git-operator":         gitoperator.Test,
+		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
 		"istio-operator":       istiooperator.Test,
+		"karina-operator":      karinaoperator.Test,
 		"kiosk":                kiosk.Test,
 		"kpack":                kpack.Test,
-		"monitoring":           monitoring.Test,
-		"kube-web-view":        kubewebview.TestKubeWebView,
 		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
+		"kube-web-view":        kubewebview.TestKubeWebView,
+		"local-path":           localpath.Test,
 		"minio":                minio.Test,
+		"monitoring":           monitoring.Test,
+		"nfs":                  nfs.Test,
+		"nginx":                nginx.Test,
 		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
-		"postgres-operator":    postgresoperator.Test,
-		"redis-operator":       redisoperator.Test,
-		"rabbitmq-operator":    rabbitmqoperator.Test,
 		"platform-operator":    platformoperator.Test,
+		"postgres-operator":    postgresoperator.Test,
 		"prometheus":           monitoring.TestPrometheus,
 		"quack":                quack.Test,
+		"rabbitmq-operator":    rabbitmqoperator.Test,
+		"redis-operator":       redisoperator.Test,
 		"registry-creds":       registrycreds.Test,
+		"s3":                   s3.Test,
 		"sealed-secrets":       sealedsecrets.Test,
-		"stubs":                stubs.Test,
-		"templates":            tests.TestTemplates,
 		"template-operator":    templateoperator.Test,
 		"thanos":               monitoring.TestThanos,
 		"vault":                vault.Test,
 		"velero":               velero.Test,
+		"vsphere":              vsphere.Test,
 	}
 
+	var exec func(name string)
+
+	alreadyRun := make(map[string]bool)
+
+	exec = func(name string) {
+		if ok := alreadyRun[name]; ok {
+			return
+		}
+		alreadyRun[name] = true
+		if _tests, ok := aliases[name]; ok {
+			for _, test := range _tests {
+				exec(test)
+			}
+		} else {
+			queue(name, tests[name], wg, ch)
+		}
+	}
 	var Phases = &cobra.Command{
 		Use: "phases",
 		Run: func(cmd *cobra.Command, args []string) {
-			for name, fn := range tests {
-				_name := name
-				_fn := fn
+			for name := range aliases {
 				flag, _ := cmd.Flags().GetBool(name)
 				if !flag {
 					continue
 				}
-				queue(_name, _fn, wg, ch)
+				exec(name)
+			}
+			for name := range tests {
+				flag, _ := cmd.Flags().GetBool(name)
+				if !flag {
+					continue
+				}
+				exec(name)
 			}
 		},
 	}
 
 	Test.AddCommand(Phases)
 
-	for name, fn := range tests {
+	for name := range tests {
 		_name := name
-		_fn := fn
 		Phases.Flags().Bool(name, false, "Test "+name)
 		Test.AddCommand(&cobra.Command{
 			Use:  name,
 			Args: cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
-				queue(_name, _fn, wg, ch)
+				exec(_name)
+			},
+		})
+	}
+
+	for name, tests := range aliases {
+		_name := name
+		Phases.Flags().Bool(name, false, fmt.Sprintf("Test %v", tests))
+		Test.AddCommand(&cobra.Command{
+			Use:  name,
+			Args: cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+				exec(_name)
 			},
 		})
 	}
@@ -220,7 +279,6 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			for name, fn := range tests {
 				if Contains(p.Test.Exclude, name) {
-					test.Skipf(name, name)
 					continue
 				}
 				queue(name, fn, wg, ch)

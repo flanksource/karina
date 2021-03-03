@@ -139,26 +139,6 @@ type Antrea struct {
 	IsCertReady bool `yaml:"isCertReady" json:"isCertReady"`
 }
 
-type OPA struct {
-	Disabled          bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty" json:"kubeMgmtVersion,omitempty"`
-	Version           string `yaml:"version,omitempty" json:"version,omitempty"`
-	BundleURL         string `yaml:"bundleUrl,omitempty" json:"bundleUrl,omitempty"`
-	BundlePrefix      string `yaml:"bundlePrefix,omitempty" json:"bundlePrefix,omitempty"`
-	BundleServiceName string `yaml:"bundleServiceName,omitempty" json:"bundleServiceName,omitempty"`
-	LogFormat         string `yaml:"logFormat,omitempty" json:"logFormat,omitempty"`
-	SetDecisionLogs   bool   `yaml:"setDecisionLogs,omitempty" json:"setDecisionLogs,omitempty"`
-	// Policies is a path to directory containing .rego policy files
-	Policies string `yaml:"policies,omitempty" json:"policies,omitempty"`
-	// Log level for opa server, one of: `debug`,`info`,`error` (default: `error`)
-	LogLevel string `yaml:"logLevel,omitempty" json:"logLevel,omitempty"`
-	E2E      OPAE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
-}
-
-type OPAE2E struct {
-	Fixtures string `yaml:"fixtures,omitempty" json:"fixtures,omitempty"`
-}
-
 type Gatekeeper struct {
 	Disabled `yaml:",inline" json:",inline"`
 	// Templates is a path to directory containing gatekeeper templates
@@ -603,7 +583,17 @@ type GitOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 
+type ExternalDNS struct {
+	Disabled `yaml:",inline" json:",inline"`
+	Args     map[string]string `yaml:"args" json:"args"`
+}
+
 type TemplateOperator struct {
+	Disabled   `yaml:",inline" json:",inline"`
+	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
+}
+
+type KarinaOperator struct {
 	Disabled   `yaml:",inline" json:",inline"`
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }

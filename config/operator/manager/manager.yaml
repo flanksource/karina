@@ -17,20 +17,19 @@ spec:
     spec:
       serviceAccountName: manager
       containers:
-      - command:
-        - /bin/karina
-        args:
-        - operator
-        - --enable-leader-election
-        - --log-level=debug
-        image: controller:latest
-        imagePullPolicy: IfNotPresent
-        name: manager
-        resources:
-          limits:
-            cpu: 100m
-            memory: 150Mi
-          requests:
-            cpu: 100m
-            memory: 128Mi
-      terminationGracePeriodSeconds: 10
+        - command:
+            - /bin/karina
+          args:
+            - operator
+            - --enable-leader-election
+            - --log-level=debug
+          image: docker.io/flanksource/karina:latest
+          imagePullPolicy: IfNotPresent
+          name: karina-operator
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi

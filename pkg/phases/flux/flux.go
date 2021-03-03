@@ -28,10 +28,7 @@ func Install(p *platform.Platform) error {
 			return fmt.Errorf("install: failed to apply deployment: %v", err)
 		}
 	}
-	if err := p.ApplySpecs("", "flux-monitor.yaml"); err != nil {
-		return fmt.Errorf("failed to deploy flux alerts: %v", err)
-	}
-	return nil
+	return p.ApplySpecs("", "flux-monitor.yaml")
 }
 
 // Create flux command arguments from CR

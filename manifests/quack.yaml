@@ -1,47 +1,3 @@
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: quack
-  namespace: quack
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: quack
-  namespace: quack
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: quack
-subjects:
-  - kind: ServiceAccount
-    name: quack
-    namespace: quack
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: quack:system:extension-apiserver-authentication-reader
-  namespace: kube-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: extension-apiserver-authentication-reader
-subjects:
-  - kind: ServiceAccount
-    name: quack
-    namespace: quack
-
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -72,6 +28,24 @@ roleRef:
 subjects:
   - kind: User
     name: system:anonymous
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: quack:system:api-server-auth
+rules:
+  - apiGroups:
+      - "quack.pusher.com"
+    resources:
+      - admissionreviews
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -163,7 +137,7 @@ spec:
       volumes:
         - name: certs
           secret:
-            secretName: quack-certs
+            secretName: quack
         - name: config
           configMap:
             name: quack-config
@@ -182,44 +156,6 @@ spec:
       port: 443
   selector:
     app: quack
-
----
-apiVersion: admissionregistration.k8s.io/v1beta1
-kind: MutatingWebhookConfiguration
-metadata:
-  name: quack
-  annotations:
-    cert-manager.io/inject-apiserver-ca: "true"
-    cert-manager.io/inject-ca-from-secret: quack/quack-certs
-webhooks:
-  - name: quack.pusher.com
-    clientConfig:
-      service:
-        name: quack
-        namespace: quack
-        path: /apis/quack.pusher.com/v1alpha1/admissionreviews
-      caBundle: ""
-    rules:
-      - operations: ["CREATE", "UPDATE"]
-        apiGroups: ["*"]
-        apiVersions: ["*"]
-        resources:
-          - configmaps
-          - daemonsets
-          - deployments
-          - statefulsets
-          - ingresses
-          - services
-          - canaries
-    failurePolicy: Fail
-    timeoutSeconds: 10
-    namespaceSelector:
-      matchExpressions:
-        - key: quack.pusher.com/enabled
-          operator: In
-          values:
-            - "true"
-
 ---
 apiVersion: v1
 kind: ConfigMap

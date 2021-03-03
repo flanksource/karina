@@ -8,6 +8,7 @@ import (
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
+	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,40 +35,32 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
 
-	configMapName := "test-configmap"
-	data := map[string]string{
-		"prometheus":   "prometheus.{{ .domain }}",
-		"grafana":      "grafana.{{ .domain }}",
-		"cluster.name": "Cluster {{ .name }}",
-	}
+	ingresses := client.NetworkingV1beta1().Ingresses(namespace)
 
-	if err := platform.CreateOrUpdateConfigMap(configMapName, namespace, data); err != nil {
-		test.Failf("quack", "failed to create configmap %s in namespace %s: %v", configMapName, namespace, err)
+	ingress, err := ingresses.Create(context.TODO(), &v1beta1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      namespace,
+			Namespace: namespace,
+		},
+		Spec: v1beta1.IngressSpec{
+
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: namespace + ".{{.domain}}",
+				},
+			},
+		},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		test.Failf("quack", "failed to create ingress: %v", err)
 		return
 	}
 
-	rcm := platform.GetConfigMap(namespace, configMapName)
-	if rcm == nil {
-		test.Failf("quack", "failed to retrieve configmap %s in namespace %s", configMapName, namespace)
-		return
+	exptecedHost := namespace + "." + platform.Domain
+	if ingress.Spec.Rules[0].Host != exptecedHost {
+		test.Failf("quack", "expected %s, got %s", exptecedHost, ingress.Spec.Rules[0].Host)
+	} else {
+		test.Passf("quack", "quack templated ingress successfully")
 	}
-
-	cm := *rcm
-
-	if cm["prometheus"] != fmt.Sprintf("prometheus.%s", platform.Domain) {
-		test.Failf("quack", "expected prometheus config value to equal %s got %s", fmt.Sprintf("prometheus.%s", platform.Domain), cm["prometheus"])
-		return
-	}
-
-	if cm["grafana"] != fmt.Sprintf("grafana.%s", platform.Domain) {
-		test.Failf("quack", "expected grafana config value to equal %s got %s", fmt.Sprintf("grafana.%s", platform.Domain), cm["grafana"])
-		return
-	}
-
-	if cm["cluster.name"] != fmt.Sprintf("Cluster %s", platform.Name) {
-		test.Failf("quack", "expected cluster name config value to equal %s got %s", fmt.Sprintf("Cluster %s", platform.Name), cm["cluster.name"])
-		return
-	}
-
-	test.Passf("quack", "configmap %s in namespace %s was successfully updated by quack", configMapName, namespace)
 }

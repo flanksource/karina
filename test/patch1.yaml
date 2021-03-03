@@ -38,6 +38,10 @@ metadata:
   namespace: monitoring
 spec:
   replicas: 1
+  storage:
+    emptyDir:
+      sizeLimit: 10Gi
+    volumeClaimTemplate: {}
   resources:
     requests:
       memory: 256Mi
@@ -177,3 +181,18 @@ metadata:
   namespace: cert-manager
 spec:
   replicas: 1
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: harbor-redis
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          volumeMounts:
+            - $patch: delete
+              mountPath: /var/lib/redis
+  volumeClaimTemplates: []
