@@ -496,7 +496,7 @@ func (platform *Platform) CreateIngressCertificate(subDomain string) (*certs.Cer
 
 func (platform *Platform) NewSelfSigned(domain string) *certs.Certificate {
 	platform.Infof("Creating new self signed cert %s", domain)
-	cert := certs.NewCertificateBuilder(domain).Server().Certificate
+	cert := certs.NewCertificateBuilder(domain).Server().CA().Certificate
 	cert, _ = cert.SignCertificate(cert, 10)
 	return cert
 }
