@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/cmd"
 )
 
@@ -49,7 +48,6 @@ func main() {
 		cmd.Namespace,
 		cmd.Node,
 		cmd.NSX,
-		cmd.Opa,
 		cmd.Operator,
 		cmd.Orphan,
 		cmd.Provision,
@@ -99,10 +97,16 @@ func main() {
 
 	root.AddCommand(docs)
 
-	root.PersistentFlags().StringArrayP("config", "c", []string{utils.GetEnvOrDefault("PLATFORM_CONFIG", "karina.yml")}, "Path to config file")
+	config := "karina.yml"
+	if env := os.Getenv("PLATFORM_CONFIG"); env != "" {
+		config = env
+	}
+
+	root.PersistentFlags().StringArrayP("config", "c", []string{config}, "Path to config file")
 	root.PersistentFlags().StringArrayP("extra", "e", nil, "Extra arguments to apply e.g. -e ldap.domain=example.com")
 	root.PersistentFlags().StringP("kubeconfig", "", "", "Specify a kubeconfig to use, if empty a new kubeconfig is generated from master CA's at runtime")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
+	root.PersistentFlags().Bool("prune", true, "Delete previously enabled resources")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
 	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")
 	root.PersistentFlags().Bool("in-cluster", false, "Use in cluster kubernetes config")

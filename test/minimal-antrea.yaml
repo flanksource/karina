@@ -69,3 +69,4 @@ test:
     - audit
     - encryption
     - platform-operator
+    - gitops

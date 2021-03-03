@@ -2,7 +2,6 @@ package opa
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"time"
@@ -45,123 +44,13 @@ func (e Error) String() string {
 }
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	TestOPA(p, test)
-	TestGatekeeper(p, test)
-}
-
-func TestOPA(p *platform.Platform, test *console.TestResults) {
-	if p.OPA != nil && p.OPA.Disabled {
-		test.Skipf("opa", "OPA is not configured")
-		return
-	}
-
-	client, err := p.GetClientset()
-
-	if err != nil {
-		test.Failf(Namespace, "Could not connect to Platform client: %v", err)
-		return
-	}
-
-	kommons.TestNamespace(client, Namespace, test)
-	configs, err := client.CoreV1().ConfigMaps(Namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		test.Failf(Namespace, "failed to list policies via configmap: %s", err)
-	} else {
-		for _, cm := range configs.Items {
-			status, ok := cm.Annotations["openpolicyagent.org/policy-status"]
-			if !ok || cm.Name == "opa-config" {
-				// not an OPA policy
-				continue
-			}
-			opaError := Error{}
-			_ = json.Unmarshal([]byte(status), &opaError)
-			if opaError.Status == "ok" {
-				test.Passf(Namespace, "OPA policy %s loaded successfully", cm.Name)
-			} else {
-				test.Failf(Namespace, "OPA policy %s did not load: %s", cm.Name, opaError)
-			}
-		}
-	}
-	if p.E2E {
-		testE2E(p, test)
-	}
-}
-
-func testE2E(p *platform.Platform, test *console.TestResults) {
-	testName := "opa-e2e"
-	if p.OPA == nil || p.OPA.Disabled {
-		test.Skipf(testName, "OPA is not configured")
-		return
-	}
-
-	if p.OPA.E2E.Fixtures == "" {
-		test.Skipf(testName, "OPA fixtures path not configured under opa.e2e.fixtures")
-		return
-	}
-
-	kubectl := p.GetKubectl()
-	kubeconfig, err := p.GetKubeConfig()
-	if err != nil {
-		test.Failf(testName, "Failed to get kube config: %v", err)
-		return
-	}
-
-	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.OPA.E2E.Fixtures, kubeconfig); err != nil {
-		test.Failf(testName, "Failed to setup namespaces: %v", err)
-		return
-	}
-	defer func() {
-		for _, path := range []string{"resources", "accepted", "rejected"} {
-			kubectl("delete -f %s/%s --force  &> /dev/null", p.OPA.E2E.Fixtures, path) //nolint errcheck
-		}
-	}()
-
-	rejectedFixturesPath := p.OPA.E2E.Fixtures + "/rejected"
-	acceptedFixturesPath := p.OPA.E2E.Fixtures + "/accepted"
-
-	rejectedFixtureFiles, err := ioutil.ReadDir(rejectedFixturesPath)
-	if err != nil {
-		test.Failf(testName, "Install: Failed to read dir: %s", err)
-		return
-	}
-
-	acceptedFixtureFiles, err := ioutil.ReadDir(acceptedFixturesPath)
-	if err != nil {
-		test.Failf(testName, "Failed to list accepted fixtures: %v", err)
-		return
-	}
-
-	errs := make([]error, 0)
-	for _, rejectedFixture := range rejectedFixtureFiles {
-		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", rejectedFixturesPath+"/"+rejectedFixture.Name(), kubeconfig); err == nil {
-			errs = append(errs, fmt.Errorf("%s accepted as not expected", rejectedFixture.Name()))
-		}
-	}
-
-	for _, acceptedFixture := range acceptedFixtureFiles {
-		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", acceptedFixturesPath+"/"+acceptedFixture.Name(), kubeconfig); err != nil {
-			errs = append(errs, fmt.Errorf("%s rejected as not expected", acceptedFixture.Name()))
-		}
-	}
-
-	if len(errs) > 0 {
-		failMessage := ""
-		for _, err := range errs {
-			failMessage += err.Error() + ". "
-		}
-		test.Failf(testName, failMessage)
-	}
-	test.Passf(testName, "All fixtures accepted or rejected as expected")
-}
-
-func TestGatekeeper(p *platform.Platform, test *console.TestResults) {
 	if p.Gatekeeper.IsDisabled() {
-		test.Skipf(GatekeeperNamespace, "Gatekeeper is not configured")
+		test.Skipf(Namespace, "Gatekeeper is not configured")
 		return
 	}
 
 	client, _ := p.GetClientset()
-	kommons.TestNamespace(client, GatekeeperNamespace, test)
+	kommons.TestNamespace(client, Namespace, test)
 	if p.E2E {
 		testE2EGatekeeper(p, test)
 	}
@@ -198,7 +87,7 @@ type AuditResourceViolation struct {
 }
 
 func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
-	testName := GatekeeperNamespace + "-e2e"
+	testName := Namespace + "-e2e"
 	if p.Gatekeeper.IsDisabled() {
 		test.Skipf(testName, "Gatekeeper is not configured")
 		return
@@ -216,13 +105,13 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.OPA.E2E.Fixtures, kubeconfig); err != nil {
+	if err := kubectl("apply -f %s/resources --kubeconfig %s", p.Gatekeeper.E2E.Fixtures, kubeconfig); err != nil {
 		test.Failf(testName, "Failed to setup namespaces: %v", err)
 		return
 	}
 	defer func() {
 		for _, path := range []string{"resources", "accepted", "rejected"} {
-			kubectl("delete -f %s/%s --force  &> /dev/null", p.OPA.E2E.Fixtures, path) //nolint errcheck
+			kubectl("delete -f %s/%s --force  &> /dev/null", p.Gatekeeper.E2E.Fixtures, path) //nolint errcheck
 		}
 	}()
 
@@ -292,7 +181,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 func findViolationUntil(p *platform.Platform, violation Violation, object *Fixture, timeout time.Time) error {
 	dynamicClient, err := p.GetDynamicClient()
 	if err != nil {
-		return errors.Wrap(err, "failed to get dynamic client")
+		return err
 	}
 	rm, _ := p.GetRestMapper()
 	gvk, err := rm.KindFor(schema.GroupVersionResource{

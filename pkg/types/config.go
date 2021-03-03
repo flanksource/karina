@@ -26,6 +26,7 @@ type PlatformConfig struct {
 	ECK           ECK            `yaml:"eck,omitempty" json:"eck,omitempty"`
 	Elasticsearch *Elasticsearch `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
 	EventRouter   EventRouter    `yaml:"eventrouter,omitempty" json:"eventrouter,omitempty"`
+	ExternalDNS   ExternalDNS    `yaml:"externalDns,omitempty" json:"externalDns,omitempty"`
 	Filebeat      []Filebeat     `yaml:"filebeat,omitempty" json:"filebeat,omitempty"`
 	Gatekeeper    Gatekeeper     `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
 	GitOperator   GitOperator    `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`
@@ -39,6 +40,7 @@ type PlatformConfig struct {
 	IstioOperator         IstioOperator       `yaml:"istioOperator,omitempty" json:"istioOperator,omitempty"`
 	Journalbeat           Journalbeat         `yaml:"journalbeat,omitempty" json:"journalbeat,omitempty"`
 	Keptn                 Keptn               `yaml:"keptn,omitempty" json:"keptn,omitempty"`
+	KarinaOperator        KarinaOperator      `yaml:"karinaOperator,omitempty" json:"karinaOperator,omitempty"`
 	Kind                  Kind                `yaml:"kind,omitempty" json:"kind,omitempty"`
 	Kiosk                 Kiosk               `yaml:"kiosk,omitempty" json:"kiosk,omitempty"`
 	Kpack                 Kpack               `yaml:"kpack,omitempty" json:"kpack,omitempty"`
@@ -46,7 +48,7 @@ type PlatformConfig struct {
 	Kubernetes            Kubernetes          `yaml:"kubernetes" json:"kubernetes,omitempty"`
 	KubeWebView           *KubeWebView        `yaml:"kubeWebView,omitempty" json:"kubeWebView,omitempty"`
 	Ldap                  *Ldap               `yaml:"ldap,omitempty" json:"ldap,omitempty"`
-	LocalPath             *Enabled            `yaml:"localPath,omitempty" json:"localPath,omitempty"`
+	LocalPath             Disabled            `yaml:"localPath,omitempty" json:"localPath,omitempty"`
 	LogsExporter          LogsExporter        `yaml:"logsExporter,omitempty" json:"logsExporter,omitempty"`
 	Master                VM                  `yaml:"master,omitempty" json:"master,omitempty"`
 	Minio                 Minio               `yaml:"minio,omitempty" json:"minio,omitempty"`
@@ -59,7 +61,6 @@ type PlatformConfig struct {
 	Nodes                 map[string]VM       `yaml:"workers,omitempty" json:"nodes,omitempty"`
 	NSX                   *NSX                `yaml:"nsx,omitempty" json:"nsx,omitempty"`
 	OAuth2Proxy           *OAuth2Proxy        `yaml:"oauth2Proxy,omitempty" json:"oauth2Proxy,omitempty"`
-	OPA                   *OPA                `yaml:"opa,omitempty" json:"opa,omitempty"`
 	Packetbeat            Packetbeat          `yaml:"packetbeat,omitempty" json:"packetbeat,omitempty"`
 
 	// A list of strategic merge patches that will be applied to all resources created, can either be a path to a file or an inline patch
@@ -96,6 +97,7 @@ type PlatformConfig struct {
 	BootstrapToken        string            `yaml:"-" json:"-"`
 	DryRun                bool              `yaml:"-" json:"-"`
 	Trace                 bool              `yaml:"-" json:"-"`
+	Prune                 bool              `yaml:"-" json:"-"`
 	JoinEndpoint          string            `yaml:"-" json:"-"`
 	Source                string            `yaml:"-" json:"-"`
 	ControlPlaneEndpoint  string            `yaml:"-" json:"-"`

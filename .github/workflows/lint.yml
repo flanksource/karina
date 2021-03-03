@@ -8,20 +8,6 @@ on:
       - main
   pull_request:
 jobs:
-  golangci:
-    name: lint
-    runs-on: ubuntu-latest
-    container:
-      image: flanksource/build-tools:v0.12.0
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.36
-      - name: filename check
-        run: go run test/linter/main.go
   docs:
     runs-on: ubuntu-latest
     container:

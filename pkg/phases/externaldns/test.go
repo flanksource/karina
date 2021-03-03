@@ -1,4 +1,4 @@
-package nsx
+package externaldns
 
 import (
 	"github.com/flanksource/commons/console"
@@ -7,9 +7,11 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.NSX == nil || p.NSX.Disabled {
+	if p.ExternalDNS.IsDisabled() {
 		return
 	}
+
 	client, _ := p.GetClientset()
-	kommons.TestNamespace(client, "nsx-system", test)
+
+	kommons.TestDeploy(client, Namespace, "external-dns", test)
 }

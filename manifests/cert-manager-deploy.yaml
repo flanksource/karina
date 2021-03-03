@@ -1,11 +1,3 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: cert-manager
-  labels:
-    apps.kubernetes.io/managed-by: karina
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -49,68 +41,68 @@ metadata:
     app.kubernetes.io/name: cainjector
   name: cert-manager-cainjector
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - get
-  - create
-  - update
-  - patch
-- apiGroups:
-  - admissionregistration.k8s.io
-  resources:
-  - validatingwebhookconfigurations
-  - mutatingwebhookconfigurations
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - apiregistration.k8s.io
-  resources:
-  - apiservices
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - auditregistration.k8s.io
-  resources:
-  - auditsinks
-  verbs:
-  - get
-  - list
-  - watch
-  - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - create
+      - update
+      - patch
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - validatingwebhookconfigurations
+      - mutatingwebhookconfigurations
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - apiregistration.k8s.io
+    resources:
+      - apiservices
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - auditregistration.k8s.io
+    resources:
+      - auditsinks
+    verbs:
+      - get
+      - list
+      - watch
+      - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -122,39 +114,39 @@ metadata:
     app.kubernetes.io/name: cert-manager
   name: cert-manager-controller-issuers
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - issuers
-  - issuers/status
-  verbs:
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - issuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - issuers
+      - issuers/status
+    verbs:
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - issuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -166,39 +158,39 @@ metadata:
     app.kubernetes.io/name: cert-manager
   name: cert-manager-controller-clusterissuers
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - clusterissuers
-  - clusterissuers/status
-  verbs:
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - clusterissuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - clusterissuers
+      - clusterissuers/status
+    verbs:
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - clusterissuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -210,61 +202,61 @@ metadata:
     app.kubernetes.io/name: cert-manager
   name: cert-manager-controller-certificates
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  - certificates/status
-  - certificaterequests
-  - certificaterequests/status
-  verbs:
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  - certificaterequests
-  - clusterissuers
-  - issuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates/finalizers
-  - certificaterequests/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+      - certificates/status
+      - certificaterequests
+      - certificaterequests/status
+    verbs:
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+      - certificaterequests
+      - clusterissuers
+      - issuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates/finalizers
+      - certificaterequests/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -276,59 +268,59 @@ metadata:
     app.kubernetes.io/name: cert-manager
   name: cert-manager-controller-orders
 rules:
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders
-  - orders/status
-  verbs:
-  - update
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders
-  - challenges
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - clusterissuers
-  - issuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges
-  verbs:
-  - create
-  - delete
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+      - orders/status
+    verbs:
+      - update
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+      - challenges
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - clusterissuers
+      - issuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+    verbs:
+      - create
+      - delete
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -340,87 +332,87 @@ metadata:
     app.kubernetes.io/name: cert-manager
   name: cert-manager-controller-challenges
 rules:
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges
-  - challenges/status
-  verbs:
-  - update
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - issuers
-  - clusterissuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - services
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - delete
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - delete
-  - update
-- apiGroups:
-  - route.openshift.io
-  resources:
-  - routes/custom-host
-  verbs:
-  - create
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+      - challenges/status
+    verbs:
+      - update
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - issuers
+      - clusterissuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+      - update
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes/custom-host
+    verbs:
+      - create
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -432,47 +424,47 @@ metadata:
     app.kubernetes.io/name: cert-manager
   name: cert-manager-controller-ingress-shim
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  - certificaterequests
-  verbs:
-  - create
-  - update
-  - delete
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  - certificaterequests
-  - issuers
-  - clusterissuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+      - certificaterequests
+    verbs:
+      - create
+      - update
+      - delete
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+      - certificaterequests
+      - issuers
+      - clusterissuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -487,16 +479,16 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
   name: cert-manager-view
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  - certificaterequests
-  - issuers
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+      - certificaterequests
+      - issuers
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -510,18 +502,18 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
   name: cert-manager-edit
 rules:
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificates
-  - certificaterequests
-  - issuers
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificates
+      - certificaterequests
+      - issuers
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - patch
+      - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -537,9 +529,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-cainjector
 subjects:
-- kind: ServiceAccount
-  name: cert-manager-cainjector
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager-cainjector
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -555,9 +547,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-issuers
 subjects:
-- kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -573,9 +565,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-clusterissuers
 subjects:
-- kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -591,9 +583,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-certificates
 subjects:
-- kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -609,9 +601,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-orders
 subjects:
-- kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -627,9 +619,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-challenges
 subjects:
-- kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -645,9 +637,9 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-ingress-shim
 subjects:
-- kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -660,23 +652,23 @@ metadata:
   name: cert-manager-cainjector:leaderelection
   namespace: kube-system
 rules:
-- apiGroups:
-  - ""
-  resourceNames:
-  - cert-manager-cainjector-leader-election
-  - cert-manager-cainjector-leader-election-core
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - create
+  - apiGroups:
+      - ""
+    resourceNames:
+      - cert-manager-cainjector-leader-election
+      - cert-manager-cainjector-leader-election-core
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -689,22 +681,22 @@ metadata:
   name: cert-manager:leaderelection
   namespace: kube-system
 rules:
-- apiGroups:
-  - ""
-  resourceNames:
-  - cert-manager-controller
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - create
+  - apiGroups:
+      - ""
+    resourceNames:
+      - cert-manager-controller
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -717,23 +709,23 @@ metadata:
   name: cert-manager-webhook:dynamic-serving
   namespace: cert-manager
 rules:
-- apiGroups:
-  - ""
-  resourceNames:
-  - cert-manager-webhook-ca
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
+  - apiGroups:
+      - ""
+    resourceNames:
+      - cert-manager-webhook-ca
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -750,9 +742,9 @@ roleRef:
   kind: Role
   name: cert-manager-cainjector:leaderelection
 subjects:
-- kind: ServiceAccount
-  name: cert-manager-cainjector
-  namespace: cert-manager
+  - kind: ServiceAccount
+    name: cert-manager-cainjector
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -769,10 +761,10 @@ roleRef:
   kind: Role
   name: cert-manager:leaderelection
 subjects:
-- apiGroup: ""
-  kind: ServiceAccount
-  name: cert-manager
-  namespace: cert-manager
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -789,10 +781,10 @@ roleRef:
   kind: Role
   name: cert-manager-webhook:dynamic-serving
 subjects:
-- apiGroup: ""
-  kind: ServiceAccount
-  name: cert-manager-webhook
-  namespace: cert-manager
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: cert-manager-webhook
+    namespace: cert-manager
 ---
 apiVersion: v1
 kind: Service
@@ -806,9 +798,9 @@ metadata:
   namespace: cert-manager
 spec:
   ports:
-  - port: 9402
-    protocol: TCP
-    targetPort: 9402
+    - port: 9402
+      protocol: TCP
+      targetPort: 9402
   selector:
     app.kubernetes.io/component: controller
     app.kubernetes.io/instance: cert-manager
@@ -827,9 +819,9 @@ metadata:
   namespace: cert-manager
 spec:
   ports:
-  - name: https
-    port: 443
-    targetPort: 10250
+    - name: https
+      port: 443
+      targetPort: 10250
   selector:
     app.kubernetes.io/component: webhook
     app.kubernetes.io/instance: cert-manager
@@ -862,18 +854,18 @@ spec:
         app.kubernetes.io/name: cainjector
     spec:
       containers:
-      - args:
-        - --v=2
-        - --leader-election-namespace=kube-system
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: quay.io/jetstack/cert-manager-cainjector:{{.certmanager.version}}
-        imagePullPolicy: IfNotPresent
-        name: cert-manager
-        resources: {}
+        - args:
+            - --v=2
+            - --leader-election-namespace=kube-system
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: quay.io/jetstack/cert-manager-cainjector:{{.certmanager.version}}
+          imagePullPolicy: IfNotPresent
+          name: cert-manager
+          resources: {}
       serviceAccountName: cert-manager-cainjector
 ---
 apiVersion: apps/v1
@@ -906,179 +898,31 @@ spec:
         app.kubernetes.io/name: cert-manager
     spec:
       containers:
-      - args:
-        - --v=2
-        - --cluster-resource-namespace=$(POD_NAMESPACE)
-        - --default-issuer-name=ingress-ca
-        - --default-issuer-kind=ClusterIssuer
-        - --default-issuer-group=cert-manager.io
-        - --leader-election-namespace=kube-system
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: quay.io/jetstack/cert-manager-controller:{{.certmanager.version}}
-        imagePullPolicy: IfNotPresent
-        name: cert-manager
-        ports:
-        - containerPort: 9402
-          protocol: TCP
-        resources: {}
+        - args:
+            - --v=2
+            - --cluster-resource-namespace=$(POD_NAMESPACE)
+            - --default-issuer-name=ingress-ca
+            - --default-issuer-kind=ClusterIssuer
+            - --default-issuer-group=cert-manager.io
+            - --leader-election-namespace=kube-system
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: quay.io/jetstack/cert-manager-controller:{{.certmanager.version}}
+          imagePullPolicy: IfNotPresent
+          name: cert-manager
+          ports:
+            - containerPort: 9402
+              protocol: TCP
+          resources: {}
       serviceAccountName: cert-manager
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: default-issuer
-  namespace: cert-manager
 spec:
   ca:
-    secretName: cert-manager-webhook-ca
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: webhook
-    app.kubernetes.io/component: webhook
-    app.kubernetes.io/instance: cert-manager
-    app.kubernetes.io/name: webhook
-  name: cert-manager-webhook
-  namespace: cert-manager
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: webhook
-      app.kubernetes.io/instance: cert-manager
-      app.kubernetes.io/name: webhook
-  template:
-    metadata:
-      labels:
-        app: webhook
-        app.kubernetes.io/component: webhook
-        app.kubernetes.io/instance: cert-manager
-        app.kubernetes.io/name: webhook
-    spec:
-      containers:
-      - args:
-        - --v=2
-        - --secure-port=10250
-        - --dynamic-serving-ca-secret-namespace=$(POD_NAMESPACE)
-        - --dynamic-serving-ca-secret-name=cert-manager-webhook-ca
-        - --dynamic-serving-dns-names=cert-manager-webhook,cert-manager-webhook.cert-manager,cert-manager-webhook.cert-manager.svc
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: quay.io/jetstack/cert-manager-webhook:{{.certmanager.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /livez
-            port: 6080
-            scheme: HTTP
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 1
-        name: cert-manager
-        ports:
-        - containerPort: 10250
-          name: https
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /healthz
-            port: 6080
-            scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          timeoutSeconds: 1
-        resources: {}
-      serviceAccountName: cert-manager-webhook
----
-apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
-metadata:
-  annotations:
-    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook-ca
-  labels:
-    app: webhook
-    app.kubernetes.io/component: webhook
-    app.kubernetes.io/instance: cert-manager
-    app.kubernetes.io/name: webhook
-  name: cert-manager-webhook
-webhooks:
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: cert-manager-webhook
-      namespace: cert-manager
-      path: /mutate
-  failurePolicy: Fail
-  name: webhook.cert-manager.io
-  rules:
-  - apiGroups:
-    - cert-manager.io
-    - acme.cert-manager.io
-    apiVersions:
-    - '*'
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - '*/*'
-  sideEffects: None
----
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  annotations:
-    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook-ca
-  labels:
-    app: webhook
-    app.kubernetes.io/component: webhook
-    app.kubernetes.io/instance: cert-manager
-    app.kubernetes.io/name: webhook
-  name: cert-manager-webhook
-webhooks:
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: cert-manager-webhook
-      namespace: cert-manager
-      path: /validate
-  failurePolicy: Fail
-  name: webhook.cert-manager.io
-  namespaceSelector:
-    matchExpressions:
-    - key: cert-manager.io/disable-validation
-      operator: NotIn
-      values:
-      - "true"
-    - key: name
-      operator: NotIn
-      values:
-      - cert-manager
-  rules:
-  - apiGroups:
-    - cert-manager.io
-    - acme.cert-manager.io
-    apiVersions:
-    - '*'
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - '*/*'
-  sideEffects: None
-
+    secretName: default-issuer-ca

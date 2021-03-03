@@ -38,3 +38,13 @@ make serve-docs
 Navigate to [http://localhost:8000](http://localhost:8000)
 
 Update the documentation sources located in the repository in `docs/` (and its subdirectories) and the mkdocs development server will live-reload the pages as soon as changed.
+
+## Common Issues
+
+* `make
+ go build -o ./.bin/karina -ldflags "-X \"main.version=v0.28.1-43-gbb64119-20210228002712\""  main.go
+ manifests/static.go:3:8: package embed is not in GOROOT 
+ pkg/platform/platform.go:8:2: package io/fs is not in GOROOT
+ make: *** [build] Error 1`
+ 
+ The version of go used to compile the application does not support the go embed directive.  Install Go version 1.16+ 

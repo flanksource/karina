@@ -38,6 +38,8 @@ type CertManager struct {
 
 	// Details of a vault server to use for signing ingress certificates
 	Vault *VaultClient `yaml:"vault,omitempty" json:"vault,omitempty"`
+	// Details of a Letsencrypt issuer to use for signing ingress certificates
+	Letsencrypt *LetsencryptIssuer `yaml:"letsencrypt,omitempty" json:"letsencrypt,omitempty"`
 }
 
 type VaultClient struct {
@@ -135,26 +137,6 @@ type Antrea struct {
 	Disabled `yaml:",inline" json:",inline"`
 	// +optional
 	IsCertReady bool `yaml:"isCertReady" json:"isCertReady"`
-}
-
-type OPA struct {
-	Disabled          bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	KubeMgmtVersion   string `yaml:"kubeMgmtVersion,omitempty" json:"kubeMgmtVersion,omitempty"`
-	Version           string `yaml:"version,omitempty" json:"version,omitempty"`
-	BundleURL         string `yaml:"bundleUrl,omitempty" json:"bundleUrl,omitempty"`
-	BundlePrefix      string `yaml:"bundlePrefix,omitempty" json:"bundlePrefix,omitempty"`
-	BundleServiceName string `yaml:"bundleServiceName,omitempty" json:"bundleServiceName,omitempty"`
-	LogFormat         string `yaml:"logFormat,omitempty" json:"logFormat,omitempty"`
-	SetDecisionLogs   bool   `yaml:"setDecisionLogs,omitempty" json:"setDecisionLogs,omitempty"`
-	// Policies is a path to directory containing .rego policy files
-	Policies string `yaml:"policies,omitempty" json:"policies,omitempty"`
-	// Log level for opa server, one of: `debug`,`info`,`error` (default: `error`)
-	LogLevel string `yaml:"logLevel,omitempty" json:"logLevel,omitempty"`
-	E2E      OPAE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
-}
-
-type OPAE2E struct {
-	Fixtures string `yaml:"fixtures,omitempty" json:"fixtures,omitempty"`
 }
 
 type Gatekeeper struct {
@@ -454,6 +436,7 @@ type DynamicDNS struct {
 	// A Dynamic DNS signature algorithm, one of: hmac-md5, hmac-sha1, hmac-256, hmac-512
 	Algorithm string `yaml:"algorithm,omitempty" json:"algorithm,omitempty"`
 	Zone      string `yaml:"zone,omitempty" json:"zone,omitempty"`
+	Region    string `yaml:"region,omitempty" json:"region,omitempty"`
 	AccessKey string `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
 	SecretKey string `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
 	// Type of DNS provider. Defaults to RFC 2136 Dynamic DNS. If using "route53" you
@@ -604,7 +587,17 @@ type GitOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 
+type ExternalDNS struct {
+	Disabled `yaml:",inline" json:",inline"`
+	Args     map[string]string `yaml:"args" json:"args"`
+}
+
 type TemplateOperator struct {
+	Disabled   `yaml:",inline" json:",inline"`
+	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
+}
+
+type KarinaOperator struct {
 	Disabled   `yaml:",inline" json:",inline"`
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }
@@ -1069,4 +1062,10 @@ type ConfigDirective struct {
 	FilePath   string             `yaml:"file,omitempty" json:"file,omitempty"`
 	SopsPath   string             `yaml:"sops,omitempty" json:"sops,omitempty"`
 	SecretPath v1.SecretReference `yaml:"secretRef,omitempty" json:"secretRef,omitempty"`
+}
+
+type LetsencryptIssuer struct {
+	Disabled `yaml:",inline" json:",inline"`
+	Email    string `yaml:"email,omitempty" json:"email,omitempty"`
+	URL      string `yaml:"url,omitempty" json:"url,omitempty"`
 }

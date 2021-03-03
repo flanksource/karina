@@ -6,6 +6,7 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
+	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
@@ -16,20 +17,41 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if len(p.GitOps) < 1 {
-		test.Skipf("gitops", "No GitOps config specified - skipping.")
-		return
-	}
+	testName := "gitops"
 	namespace := "gitops-e2e-test"
 	client, _ := p.GetClientset()
-
-	err := p.WaitForDeployment(namespace, "nginx", 150*time.Second)
-	if err != nil {
-		test.Failf("gitops", "Deployment 'nginx' not ready in namespace %s: %v", namespace, err)
+	fixture := types.GitOps{
+		Name:                "karina",
+		Namespace:           namespace,
+		HelmOperatorVersion: "1.2.0",
+		GitURL:              "https://github.com/flanksource/gitops-test.git",
+		SyncInterval:        "5s",
+		GitPollInterval:     "5s",
 	}
-	err = p.WaitForDeployment(namespace, "gitops-e2e-test-podinfo", 150*time.Second)
+
+	if err := p.CreateOrUpdateNamespace(namespace, nil, nil); err != nil {
+		test.Failf(testName, "failed to create namespace: %v", err)
+	}
+	defer func() {
+		client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}) // nolint: errcheck
+	}()
+
+	if err := p.Apply(namespace, NewFluxDeployment(&fixture)...); err != nil {
+		test.Failf(testName, "failed to deploy gitops: %v", err)
+		return
+	}
+
+	if err := p.WaitForDeployment(namespace, "flux-karina", 30*time.Second); err != nil {
+		test.Failf(testName, "failed to deploy flux: %v", err)
+	}
+
+	err := p.WaitForDeployment(namespace, "nginx", 120*time.Second)
 	if err != nil {
-		test.Failf("gitops", "Deployment 'gitops-e2e-test-podinfo' not ready in namespace %s: %v", namespace, err)
+		test.Failf(testName, "Deployment 'nginx' not ready in namespace %s: %v", namespace, err)
+	}
+	err = p.WaitForDeployment(namespace, "gitops-e2e-test-podinfo", 120*time.Second)
+	if err != nil {
+		test.Failf(testName, "Deployment 'gitops-e2e-test-podinfo' not ready in namespace %s: %v", namespace, err)
 	}
 
 	kommons.TestNamespace(client, namespace, test)

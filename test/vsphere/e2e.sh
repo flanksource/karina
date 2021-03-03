@@ -36,12 +36,12 @@ $BIN provision vsphere-cluster $PLATFORM_OPTIONS_FLAGS
 echo "::endgroup::"
 
 echo "::group::Deploying Base"
-$BIN deploy phases --crds --calico --base --stubs --dex $PLATFORM_OPTIONS_FLAGS
+$BIN deploy phases --bootstrap --stubs   $PLATFORM_OPTIONS_FLAGS
 echo "::endgroup::"
 
 echo "::group::Waiting for Base"
 # wait for the base deployment with stubs to come up healthy
-$BIN test phases --base --stubs --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
+$BIN test phases  --bootstrap --stubs   --wait 120 --progress=false $PLATFORM_OPTIONS_FLAGS
 echo "::endgroup::"
 
 echo "::group::Deploy All"

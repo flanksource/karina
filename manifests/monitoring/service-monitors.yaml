@@ -171,3 +171,21 @@ spec:
   selector:
     matchLabels:
       control-plane: logs-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    k8s-app: template-operator
+  name: template-operator
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 15s
+      port: prometheus
+  namespaceSelector:
+    matchNames:
+      - platform-system
+  selector:
+    matchLabels:
+      control-plane: template-operator

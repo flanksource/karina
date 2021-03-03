@@ -17,9 +17,9 @@ func Install(p *platform.Platform) error {
 		"platform-operator": f,
 		"prometheus":        f,
 		"sealed-secrets":    f,
+		"helm-operator":     f,
 		"antrea":            p.Antrea.IsDisabled,
 		"calico":            p.Calico.IsDisabled,
-		"helm-operator":     func() bool { return len(p.GitOps) == 0 },
 		"argocd-operator":   p.ArgocdOperator.IsDisabled,
 		"argo-rollouts":     p.ArgoRollouts.IsDisabled,
 		"eck":               p.ECK.IsDisabled,
@@ -34,6 +34,7 @@ func Install(p *platform.Platform) error {
 		"kiosk":             p.Kiosk.IsDisabled,
 		"istio":             p.IstioOperator.IsDisabled,
 		"logs-exporter":     p.LogsExporter.IsDisabled,
+		"karina-operator":   p.KarinaOperator.IsDisabled,
 	}
 
 	wg := sync.WaitGroup{}

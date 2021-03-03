@@ -4,7 +4,7 @@
 
 ```yaml
 templateOperator:
-  version: v0.1.9
+  version: v0.1.11
 ```
 
 Deploy using:

@@ -4,89 +4,198 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
+	"github.com/blang/semver/v4"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/karina/pkg/api/certmanager"
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	Namespace      = "cert-manager"
-	IngressCA      = "ingress-ca"
-	VaultTokenName = "vault-token"
+	Namespace       = "cert-manager"
+	IngressCA       = "ingress-ca"
+	DefaultIssuerCA = "default-issuer-ca"
+	VaultTokenName  = "vault-token"
+	Route53Name     = "route53-credentials"
+	SecretKeyName   = "AWS_SECRET_ACCESS_KEY"
+	WebhookService  = "cert-manager-webhook"
 )
 
 func PreInstall(platform *platform.Platform) error {
-	currentVer := platform.PlatformConfig.CertManager.Version
-
 	client, err := platform.Client.GetClientset()
 	if err != nil {
-		return fmt.Errorf("certmanager: Could not establish k8s client: %s", err)
+		return err
 	}
 
-	certmanagerDeployments := client.AppsV1().Deployments(Namespace)
-	deployment, err := certmanagerDeployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
+	deployments := client.AppsV1().Deployments(Namespace)
+	deployment, err := deployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
 	if err != nil {
 		// cert-manager is not installed, nothing todo
 		return nil
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if strings.HasSuffix(container.Image, currentVer) {
-			platform.Debugf("Current cert-manager version %s matches specified version %s", container.Image, currentVer)
+		currentVer := strings.TrimLeft(strings.Split(container.Image, ":")[1], "v")
+		v, _ := semver.Parse(currentVer)
+		preGA, _ := semver.ParseRange("<1.0.0")
+		if preGA(v) {
+			platform.Debugf("Upgrading cert-manager from %s -> %s, deleting existing deployment ", currentVer, platform.PlatformConfig.CertManager.Version)
+			break
+		} else {
 			return nil
 		}
-		platform.Debugf("Current cert-manager version %s does not match specified version %s, deleting deployments", container.Image, currentVer)
 	}
 
-	deploymentnames := []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"}
-	for _, deploymentname := range deploymentnames {
-		err = certmanagerDeployments.Delete(context.TODO(), deploymentname, metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("certmanager: error deleting %s: %s", deploymentname, err)
+	if err := platform.DeleteByKind(constants.ValidatingWebhookConfiguration, v1.NamespaceAll, WebhookService); err != nil {
+		return err
+	}
+	for _, name := range []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"} {
+		if err := deployments.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func Install(platform *platform.Platform) error {
+func Install(p *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it
 	// so it cannot be disabled
-	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
-		return fmt.Errorf("install: failed to create/update namespace: %v", err)
+	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
+		return err
 	}
 
-	if err := platform.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
-		return fmt.Errorf("failed to deploy cert-manager: %v", err)
-	}
-	if err := platform.ApplySpecs("", "cert-manager-monitor.yaml.raw"); err != nil {
-		return fmt.Errorf("failed to deploy cert-manager alerts: %v", err)
-	}
-
-	if !platform.ApplyDryRun {
-		// Make sure all webhook services are up an running before continuing
-		platform.WaitForNamespace(Namespace, 180*time.Second)
-
-		// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
-		// 1) Not polluting the audit log with unnecessary read requests to the CA Key
-		// 2) Allow running deployment with less secrets once the CA is deployed
-		if err := platform.WaitForResource("clusterissuer", v1.NamespaceAll, IngressCA, 10*time.Second); err == nil {
-			platform.Tracef("Ingress CA already configured, skipping")
-			return nil
+	if !p.HasSecret(Namespace, DefaultIssuerCA) {
+		if err := p.CreateOrUpdateSecret(DefaultIssuerCA, Namespace, p.NewSelfSigned("default-issuer").AsTLSSecret()); err != nil {
+			return err
 		}
 	}
 
+	if err := p.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
+		return fmt.Errorf("failed to deploy cert-manager: %v", err)
+	}
+	if err := p.ApplySpecs("", "cert-manager-monitor.yaml.raw"); err != nil {
+		return fmt.Errorf("failed to deploy cert-manager alerts: %v", err)
+	}
+
+	if p.DryRun {
+		return nil
+	}
+
+	if err := createIngressCA(p); err != nil {
+		return err
+	}
+
+	ca, err := p.CreateOrGetWebhookCertificate(Namespace, WebhookService)
+	if err != nil {
+		return err
+	}
+
+	if err := p.ApplySpecs("", "cert-manager-webhook.yaml"); err != nil {
+		return fmt.Errorf("failed to deploy cert-manager webhook: %v", err)
+	}
+
+	webhooks, err := p.CreateWebhookBuilder(Namespace, WebhookService, ca)
+	if err != nil {
+		return err
+	}
+
+	webhooks = webhooks.NewHook("webhook.cert-manager.io", "/validate").
+		WithoutNamespaceLabel("cert-manager.io/disable-validation", "true").
+		Match([]string{"cert-manager.io", "acme.cert-manager.io"}, []string{"*"}, []string{"*/*"}).
+		Add()
+
+	return p.Apply(Namespace, webhooks.Build())
+}
+
+func createIngressCA(p *platform.Platform) error {
+	if issuer, _ := p.GetByKind(certmanager.ClusterIssuerKind, v1.NamespaceAll, IngressCA); issuer != nil {
+		// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
+		// 1) Not polluting the audit log with unnecessary read requests to the CA Key
+		// 2) Allow running deployment with less secrets once the CA is deployed
+		p.Tracef("Ingress CA already configured, skipping")
+		return nil
+	}
 	var issuerConfig certmanager.IssuerConfig
-	if platform.CertManager.Vault == nil {
-		platform.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
-		ingress := platform.GetIngressCA()
+
+	if p.CertManager.Vault != nil {
+		// TODO(moshloop): delete previously imported CA
+		p.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
+		if err := p.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
+			"token": []byte(p.CertManager.Vault.Token),
+		}); err != nil {
+			return err
+		}
+		issuerConfig = certmanager.IssuerConfig{
+			CA: nil,
+			Vault: &certmanager.VaultIssuer{
+				Server:   p.CertManager.Vault.Address,
+				CABundle: p.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
+				Path:     p.CertManager.Vault.Path,
+				Auth: certmanager.VaultAuth{
+					TokenSecretRef: &certmanager.SecretKeySelector{
+						Key: "token",
+						LocalObjectReference: certmanager.LocalObjectReference{
+							Name: VaultTokenName,
+						},
+					},
+				},
+			},
+		}
+	} else if p.CertManager.Letsencrypt != nil {
+		if p.DNS.SecretKey != "" {
+			if err := p.CreateOrUpdateSecret(Route53Name, Namespace, map[string][]byte{
+				SecretKeyName: []byte(p.DNS.SecretKey),
+			}); err != nil {
+				return err
+			}
+		}
+		var solver certmanager.Solver
+		if p.DNS.Type == "route53" {
+			solver = certmanager.Solver{
+				DNS01: certmanager.DNS01{
+					Route53: certmanager.Route53{
+						Region:       p.DNS.Region,
+						HostedZoneID: p.DNS.Zone,
+						AccessKeyID:  p.DNS.AccessKey,
+						SecretAccessKeyRef: certmanager.SecretKeySelector{
+							LocalObjectReference: certmanager.LocalObjectReference{
+								Name: Route53Name,
+							},
+							Key: SecretKeyName,
+						},
+					},
+				},
+			}
+		} else {
+			solver = certmanager.Solver{
+				HTTP01: certmanager.HTTP01{
+					Type: "ingress",
+				},
+			}
+		}
+		var server string
+		if p.CertManager.Letsencrypt.URL == "" {
+			server = "https://acme-v02.api.letsencrypt.org/directory"
+		} else {
+			server = p.CertManager.Letsencrypt.URL
+		}
+		issuerConfig = certmanager.IssuerConfig{
+			Letsencrypt: &certmanager.LetsencryptIssuer{
+				Server:  server,
+				Email:   p.CertManager.Letsencrypt.Email,
+				Solvers: []certmanager.Solver{solver},
+			},
+		}
+	} else {
+		p.Infof("Importing Ingress CA as a Cert Manager ClusterIssuer: ingress-ca")
+		ingress := p.GetIngressCA()
 		switch ingress := ingress.(type) {
 		case *certs.Certificate:
-			if err := platform.CreateOrUpdateSecret(IngressCA, Namespace, ingress.AsTLSSecret()); err != nil {
+			if err := p.CreateOrUpdateSecret(IngressCA, Namespace, ingress.AsTLSSecret()); err != nil {
 				return err
 			}
 			issuerConfig = certmanager.IssuerConfig{
@@ -98,33 +207,9 @@ func Install(platform *platform.Platform) error {
 		default:
 			return fmt.Errorf("unknown cert type:%v", ingress)
 		}
-	} else {
-		// TODO(moshloop): delete previously imported CA
-		platform.Infof("Configuring Cert Manager ClusterIssuer to use Vault: ingress-ca")
-		if err := platform.CreateOrUpdateSecret(VaultTokenName, Namespace, map[string][]byte{
-			"token": []byte(platform.CertManager.Vault.Token),
-		}); err != nil {
-			return err
-		}
-		issuerConfig = certmanager.IssuerConfig{
-			CA: nil,
-			Vault: &certmanager.VaultIssuer{
-				Server:   platform.CertManager.Vault.Address,
-				CABundle: platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
-				Path:     platform.CertManager.Vault.Path,
-				Auth: certmanager.VaultAuth{
-					TokenSecretRef: &certmanager.SecretKeySelector{
-						Key: "token",
-						LocalObjectReference: certmanager.LocalObjectReference{
-							Name: VaultTokenName,
-						},
-					},
-				},
-			},
-		}
 	}
 
-	if err := platform.Apply(Namespace, &certmanager.ClusterIssuer{
+	return p.Apply(Namespace, &certmanager.ClusterIssuer{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterIssuer",
 			APIVersion: "cert-manager.io/v1",
@@ -136,9 +221,5 @@ func Install(platform *platform.Platform) error {
 		Spec: certmanager.IssuerSpec{
 			IssuerConfig: issuerConfig,
 		},
-	}); err != nil {
-		return fmt.Errorf("failed to deploy ClusterIssuer: %v", err)
-	}
-
-	return nil
+	})
 }
