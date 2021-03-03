@@ -82,8 +82,8 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 	}
 
 	if platform.PlatformConfig.Trace {
-		pretty.Println(platform.Master)
-		pretty.Println(platform.Nodes)
+		pretty.Println(platform.Master) // nolint: errcheck
+		pretty.Println(platform.Nodes)  // nolint: errcheck
 	}
 
 	if platform.CA == nil {
