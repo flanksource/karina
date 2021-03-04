@@ -32,15 +32,11 @@ func init() {
 			}
 
 			for _, node := range nodes.Items {
-				var annotations map[string]string
-				_, isMaster := node.Labels[constants.MasterNodeLabel]
-				if isMaster {
-					annotations = platform.Master.Annotations
-				} else {
-					if nodePoolName, ok := node.Labels[constants.NodePoolLabel]; ok {
-						if pool, ok := platform.Nodes[nodePoolName]; ok {
-							annotations = pool.Annotations
-						}
+				var annotations = platform.Master.Annotations
+
+				if nodePoolName, ok := node.Labels[constants.NodePoolLabel]; ok {
+					if pool, ok := platform.Nodes[nodePoolName]; ok {
+						annotations = pool.Annotations
 					}
 				}
 
