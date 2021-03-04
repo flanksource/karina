@@ -16,7 +16,8 @@ func NewCertificateForService(namespace string, name string) Certificate {
 			Kind:       CertificateKind,
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: namespace,
 		},
 		Spec: CertificateSpec{
 			DNSNames: []string{

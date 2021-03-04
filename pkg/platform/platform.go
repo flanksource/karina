@@ -584,34 +584,6 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...kommons.CRD) error
 	return nil
 }
 
-func (platform *Platform) ApplyText(namespace string, specs ...string) error {
-	kustomize, err := platform.GetKustomize()
-	if err != nil {
-		return err
-	}
-	for _, spec := range specs {
-		items, err := kustomize.Kustomize(namespace, []byte(spec))
-		if err != nil {
-			return err
-		}
-		if err := platform.Apply(namespace, items...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
-	if platform.DryRun {
-		return
-	}
-	client, err := platform.GetClientset()
-	if err != nil {
-		return
-	}
-	kommons.WaitForNamespace(client, ns, timeout)
-}
-
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 	if platform.TerminationProtection || !platform.Prune {
 		return nil
@@ -630,15 +602,13 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 			objects[i], objects[j] = objects[j], objects[i]
 		}
 
-		platform.Debugf("Deleting %s", console.Redf("%s", spec))
 		for _, object := range objects {
-			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
-				platform.Tracef("resources already deleted skipping, %v", err)
+			if err := platform.Get(object.GetNamespace(), object.GetName(), object); err != nil {
+				platform.Debugf("%s (deleted, skipping)", console.Redf("%s", spec))
 				return nil
 			}
 
-			platform.Tracef("Deleting %s/%s/%s", object.GetNamespace(), object.GetKind(), object.GetName())
-			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
+			if err := platform.DeleteUnstructured(namespace, object); err != nil {
 				return err
 			}
 		}
@@ -648,10 +618,10 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		platform.Debugf("Applying %s", console.Greenf("%s", spec))
+		platform.Debugf("[%s]", console.Greenf("%s", spec))
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
-			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
+			return errors.Wrapf(err, "failed to template manifests: %v", spec)
 		}
 
 		if err := platform.ApplyText(namespace, template); err != nil {
