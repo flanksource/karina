@@ -154,6 +154,7 @@ spec:
   ports:
     - name: https-webhook # optional
       port: 443
+      targetPort: 443
   selector:
     app: quack
 ---

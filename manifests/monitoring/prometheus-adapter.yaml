@@ -9,6 +9,7 @@ spec:
   service:
     name: prometheus-adapter
     namespace: monitoring
+    port: 443
   version: v1beta1
   versionPriority: 100
 ---
@@ -17,17 +18,17 @@ kind: ClusterRole
 metadata:
   name: prometheus-adapter
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - namespaces
-  - pods
-  - services
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - namespaces
+      - pods
+      - services
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -38,14 +39,14 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
   name: system:aggregated-metrics-reader
 rules:
-- apiGroups:
-  - metrics.k8s.io
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -56,9 +57,9 @@ roleRef:
   kind: ClusterRole
   name: prometheus-adapter
 subjects:
-- kind: ServiceAccount
-  name: prometheus-adapter
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: prometheus-adapter
+    namespace: monitoring
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -69,21 +70,21 @@ roleRef:
   kind: ClusterRole
   name: system:auth-delegator
 subjects:
-- kind: ServiceAccount
-  name: prometheus-adapter
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: prometheus-adapter
+    namespace: monitoring
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: resource-metrics-server-resources
 rules:
-- apiGroups:
-  - metrics.k8s.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - "*"
+    verbs:
+      - "*"
 ---
 apiVersion: v1
 data:
@@ -143,29 +144,29 @@ spec:
         name: prometheus-adapter
     spec:
       containers:
-      - args:
-        - --cert-dir=/var/run/serving-cert
-        - --config=/etc/adapter/config.yaml
-        - --logtostderr=true
-        - --metrics-relist-interval=1m
-        - --prometheus-url=http://prometheus-k8s.monitoring.svc:9090/
-        - --secure-port=6443
-        image: quay.io/coreos/k8s-prometheus-adapter-amd64:v0.8.2
-        imagePullPolicy: IfNotPresent
-        name: prometheus-adapter
-        ports:
-        - containerPort: 6443
-          protocol: TCP
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /tmp
-          name: tmpfs
-        - mountPath: /var/run/serving-cert
-          name: volume-serving-cert
-        - mountPath: /etc/adapter
-          name: config
+        - args:
+            - --cert-dir=/var/run/serving-cert
+            - --config=/etc/adapter/config.yaml
+            - --logtostderr=true
+            - --metrics-relist-interval=1m
+            - --prometheus-url=http://prometheus-k8s.monitoring.svc:9090/
+            - --secure-port=6443
+          image: quay.io/coreos/k8s-prometheus-adapter-amd64:v0.8.2
+          imagePullPolicy: IfNotPresent
+          name: prometheus-adapter
+          ports:
+            - containerPort: 6443
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmpfs
+            - mountPath: /var/run/serving-cert
+              name: volume-serving-cert
+            - mountPath: /etc/adapter
+              name: config
       dnsPolicy: ClusterFirst
       nodeSelector:
         kubernetes.io/os: linux
@@ -176,14 +177,14 @@ spec:
       serviceAccountName: prometheus-adapter
       terminationGracePeriodSeconds: 30
       volumes:
-      - emptyDir: {}
-        name: tmpfs
-      - emptyDir: {}
-        name: volume-serving-cert
-      - configMap:
-          defaultMode: 420
-          name: adapter-config
-        name: config
+        - emptyDir: {}
+          name: tmpfs
+        - emptyDir: {}
+          name: volume-serving-cert
+        - configMap:
+            defaultMode: 420
+            name: adapter-config
+          name: config
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -195,9 +196,9 @@ roleRef:
   kind: Role
   name: extension-apiserver-authentication-reader
 subjects:
-- kind: ServiceAccount
-  name: prometheus-adapter
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: prometheus-adapter
+    namespace: monitoring
 ---
 apiVersion: v1
 kind: Service
@@ -208,9 +209,9 @@ metadata:
   namespace: monitoring
 spec:
   ports:
-  - name: https
-    port: 443
-    targetPort: 6443
+    - name: https
+      port: 443
+      targetPort: 6443
   selector:
     name: prometheus-adapter
 ---
