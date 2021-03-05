@@ -62,14 +62,46 @@ func PreInstall(platform *platform.Platform) error {
 }
 
 func Install(p *platform.Platform) error {
-	// Cert manager is a core component and multiple other components depend on it
-	// so it cannot be disabled
+	// Cert manager is a core component and multiple other components depend on it so it cannot be disabled
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 
 	if !p.HasSecret(Namespace, DefaultIssuerCA) {
-		if err := p.CreateOrUpdateSecret(DefaultIssuerCA, Namespace, p.NewSelfSigned("default-issuer").AsTLSSecret()); err != nil {
+		ca := p.NewSelfSigned("default-issuer")
+		if err := p.Apply(Namespace, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: Namespace,
+				Name:      DefaultIssuerCA,
+				Annotations: map[string]string{
+					certmanager.AllowsInjectionFromSecretAnnotation: "true",
+				},
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			Data: ca.AsTLSSecret(),
+		}); err != nil {
+			return err
+		}
+		webhookCert := certs.NewCertificateBuilder(WebhookService).Certificate
+		if webhookCert, err := ca.SignCertificate(webhookCert, 10); err != nil {
+			return err
+		} else if err := p.Apply(Namespace, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: Namespace,
+				Name:      WebhookService,
+				Annotations: map[string]string{
+					certmanager.AllowsInjectionFromSecretAnnotation: "true",
+				},
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			Data: webhookCert.AsTLSSecret(),
+		}); err != nil {
 			return err
 		}
 	}

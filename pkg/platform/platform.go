@@ -867,6 +867,15 @@ func (platform *Platform) DeleteValidatingWebhook(namespace, service string) err
 	return nil
 }
 
+func (platform *Platform) allowInject(secret *v1.Secret) error {
+	if _, ok := secret.Annotations[certmanager.AllowsInjectionFromSecretAnnotation]; !ok {
+		return platform.Annotate(secret, map[string]string{
+			certmanager.AllowsInjectionFromSecretAnnotation: "true",
+		})
+	}
+	return nil
+}
+
 func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service string) ([]byte, error) {
 	// first create the certificate for the webhooks and wait for it to become ready
 	// to avoid any race conditions
@@ -875,15 +884,31 @@ func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service strin
 		return nil, err
 	}
 
-	if err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 180*time.Second); err != nil {
+	_secret, _ := platform.GetByKind("Secret", namespace, service)
+	secret, _ := kommons.AsSecret(_secret)
+
+	if secret != nil {
+		if err := platform.allowInject(secret); err != nil {
+			return nil, err
+		}
+		if crt, ok := secret.Data["tls.crt"]; ok {
+			return crt, nil
+		}
+	}
+
+	if _, err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 240*time.Second); err != nil {
 		return nil, err
 	}
 
-	secret := platform.GetSecret(namespace, service)
-	if secret == nil {
-		return nil, fmt.Errorf("could not find secret: %s", service)
+	if _secret, err := platform.WaitForResource("Secret", namespace, service, 30*time.Second); err != nil {
+		return nil, err
+	} else {
+		secret, _ := kommons.AsSecret(_secret)
+		if err := platform.allowInject(secret); err != nil {
+			return nil, err
+		}
+		return secret.Data["tls.crt"], nil
 	}
-	return (*secret)["tls.crt"], nil
 }
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {

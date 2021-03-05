@@ -18,6 +18,9 @@ func NewCertificateForService(namespace string, name string) Certificate {
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+			Annotations: map[string]string{
+				AllowsInjectionFromSecretAnnotation: "true",
+			},
 		},
 		Spec: CertificateSpec{
 			DNSNames: []string{
