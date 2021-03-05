@@ -40,7 +40,7 @@ subjects:
     apiGroup: rbac.authorization.k8s.io
 
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: opa-server

@@ -133,7 +133,7 @@ subjects:
 ---
 {{- if index . "thanos" }}
 {{- if not (index .thanos "disabled") }}
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: thanos-sidecar
