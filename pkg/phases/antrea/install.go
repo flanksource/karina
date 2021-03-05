@@ -2,6 +2,7 @@ package antrea
 
 import (
 	"github.com/flanksource/karina/pkg/platform"
+	"time"
 )
 
 const (
@@ -23,8 +24,8 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	if err := platform.WaitForDeployment(Namespace, Controller, 2*time.Minute); err != nil {
+	if err := p.WaitForDeployment(Namespace, Controller, 2*time.Minute); err != nil {
 		return err
 	}
-	return platform.WaitForDaemonSet(Namespace, DaemonSet, 2*time.Minute)
+	return p.WaitForDaemonSet(Namespace, DaemonSet, 2*time.Minute)
 }
