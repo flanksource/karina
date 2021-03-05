@@ -886,7 +886,7 @@ func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service strin
 
 	_secret, _ := platform.GetByKind("Secret", namespace, service)
 	secret, _ := kommons.AsSecret(_secret)
-
+	var err error
 	if secret != nil {
 		if err := platform.allowInject(secret); err != nil {
 			return nil, err
@@ -900,10 +900,10 @@ func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service strin
 		return nil, err
 	}
 
-	if _secret, err := platform.WaitForResource("Secret", namespace, service, 30*time.Second); err != nil {
+	if _secret, err = platform.WaitForResource("Secret", namespace, service, 30*time.Second); err != nil {
 		return nil, err
 	}
-	secret, _ := kommons.AsSecret(_secret)
+	secret, _ = kommons.AsSecret(_secret)
 	if err := platform.allowInject(secret); err != nil {
 		return nil, err
 	}
