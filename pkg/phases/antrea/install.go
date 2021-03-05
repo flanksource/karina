@@ -1,14 +1,15 @@
 package antrea
 
 import (
-	"github.com/flanksource/karina/pkg/platform"
 	"time"
+
+	"github.com/flanksource/karina/pkg/platform"
 )
 
 const (
 	Namespace  = "kube-system"
 	Controller = "antrea-controller"
-	DaemonSet  = "anrtea-agent"
+	DaemonSet  = "antrea-agent"
 )
 
 func Install(p *platform.Platform) error {
@@ -24,8 +25,8 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	if err := p.WaitForDeployment(Namespace, Controller, 2*time.Minute); err != nil {
+	if err := p.WaitForDeployment(Namespace, Controller, 10*time.Minute); err != nil {
 		return err
 	}
-	return p.WaitForDaemonSet(Namespace, DaemonSet, 2*time.Minute)
+	return p.WaitForDaemonSet(Namespace, DaemonSet, 10*time.Minute)
 }
