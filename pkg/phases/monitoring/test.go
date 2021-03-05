@@ -31,7 +31,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Skipf("monitoring", "monitoring is not configured")
 		return
 	}
-	p.WaitForNamespace("monitoring", 180*time.Second)
+	_ = p.WaitForNamespace("monitoring", 180*time.Second)
 	kommons.TestNamespace(client, "monitoring", test)
 }
 

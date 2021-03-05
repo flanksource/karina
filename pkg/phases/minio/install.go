@@ -23,7 +23,5 @@ func Install(platform *platform.Platform) error {
 		return nil
 	}
 
-	// Minio is a dependency for other components and needs to be up before proceeding
-	platform.WaitForNamespace(Namespace, 60*time.Second)
-	return nil
+	return platform.WaitForNamespace(Namespace, 60*time.Second)
 }

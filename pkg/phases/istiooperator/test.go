@@ -18,6 +18,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		test.Failf(Namespace, "Could not connect to Platform client: %v", err)
 		return
 	}
-	p.WaitForNamespace(Namespace, 60*time.Second)
+	_ = p.WaitForNamespace(Namespace, 60*time.Second)
 	kommons.TestNamespace(client, Namespace, test)
 }

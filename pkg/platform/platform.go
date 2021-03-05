@@ -902,13 +902,12 @@ func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service strin
 
 	if _secret, err := platform.WaitForResource("Secret", namespace, service, 30*time.Second); err != nil {
 		return nil, err
-	} else {
-		secret, _ := kommons.AsSecret(_secret)
-		if err := platform.allowInject(secret); err != nil {
-			return nil, err
-		}
-		return secret.Data["tls.crt"], nil
 	}
+	secret, _ := kommons.AsSecret(_secret)
+	if err := platform.allowInject(secret); err != nil {
+		return nil, err
+	}
+	return secret.Data["tls.crt"], nil
 }
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {
