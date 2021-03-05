@@ -6,7 +6,10 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 )
 
-const Namespace = "minio"
+const (
+	Namespace = "minio"
+	Name      = "minio"
+)
 
 func Install(platform *platform.Platform) error {
 	if platform.Minio.Replicas == 0 {
@@ -23,5 +26,5 @@ func Install(platform *platform.Platform) error {
 		return nil
 	}
 
-	return platform.WaitForNamespace(Namespace, 60*time.Second)
+	return platform.WaitForDeployment(Namespace, Name, 120*time.Second)
 }
