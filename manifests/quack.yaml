@@ -28,18 +28,15 @@ roleRef:
 subjects:
   - kind: User
     name: system:anonymous
+  - kind: ServiceAccount
+    name: quack
+    namespace: quack
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: quack:system:api-server-auth
+  name: quack:quack
 rules:
-  - apiGroups:
-      - "quack.pusher.com"
-    resources:
-      - admissionreviews
-    verbs:
-      - create
   - apiGroups:
       - ""
     resources:
@@ -50,11 +47,11 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: quack:system:api-server-auth
+  name: quack:system:auth-delegator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: quack:system:api-server-auth
+  name: system:auth-delegator
 subjects:
   - kind: ServiceAccount
     name: quack
@@ -63,11 +60,11 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: quack:system:auth-delegator
+  name: quack:quack
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: system:auth-delegator
+  name: quack:quack
 subjects:
   - kind: ServiceAccount
     name: quack
