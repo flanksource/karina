@@ -3,7 +3,7 @@ module github.com/flanksource/karina
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.33.18
+	github.com/aws/aws-sdk-go v1.34.30
 	github.com/blang/semver/v4 v4.0.0
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
@@ -18,15 +18,16 @@ require (
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.9
+	github.com/jetstack/cert-manager v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
-	github.com/kr/pretty v0.2.0
-	github.com/miekg/dns v1.1.22
+	github.com/kr/pretty v0.2.1
+	github.com/miekg/dns v1.1.31
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/olivere/elastic/v7 v7.0.13
 	github.com/onsi/gomega v1.10.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.5.0
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.10.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	github.com/vbauerster/mpb/v5 v5.0.3
