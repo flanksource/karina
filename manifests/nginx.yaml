@@ -179,7 +179,7 @@ spec:
         # schedule on dedicated node groups
         - key: node.kubernetes.io/group
           effect: NoSchedule
-          opertator: Exists
+          operator: Exists
       {{ if .kind }}
       {{ if not (eq ( conv.ToInt64 .kind.workerCount ) 0) }}
         - key: "node-role.kubernetes.io/master"
