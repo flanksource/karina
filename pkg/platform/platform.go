@@ -21,7 +21,7 @@ import (
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/karina/manifests"
 	"github.com/flanksource/karina/pkg/api"
-	"github.com/flanksource/karina/pkg/api/certmanager"
+	certmanagerutil "github.com/flanksource/karina/pkg/api/certmanager"
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
 	"github.com/flanksource/karina/pkg/constants"
@@ -31,6 +31,7 @@ import (
 	"github.com/flanksource/kommons/proxy"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
+	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -879,7 +880,7 @@ func (platform *Platform) allowInject(secret *v1.Secret) error {
 func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service string) ([]byte, error) {
 	// first create the certificate for the webhooks and wait for it to become ready
 	// to avoid any race conditions
-	cert := certmanager.NewCertificateForService(namespace, service)
+	cert := certmanagerutil.NewCertificateForService(namespace, service)
 	if err := platform.Apply(namespace, &cert); err != nil {
 		return nil, err
 	}

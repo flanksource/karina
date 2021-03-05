@@ -7,9 +7,11 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/flanksource/commons/certs"
-	"github.com/flanksource/karina/pkg/api/certmanager"
 	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
+	acmev1 "github.com/jetstack/cert-manager/pkg/apis/acme/v1"
+	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	ccmetav1 "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -66,6 +68,7 @@ func Install(p *platform.Platform) error {
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
+	_ = platform.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
 
 	if !p.HasSecret(Namespace, DefaultIssuerCA) {
 		ca := p.NewSelfSigned("default-issuer")
@@ -85,32 +88,29 @@ func Install(p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		webhookCert := certs.NewCertificateBuilder(WebhookService).Certificate
-		if webhookCert, err := ca.SignCertificate(webhookCert, 10); err != nil {
-			return err
-		} else if err := p.Apply(Namespace, &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: Namespace,
-				Name:      WebhookService,
-				Annotations: map[string]string{
-					certmanager.AllowsInjectionFromSecretAnnotation: "true",
-				},
-			},
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
-			Data: webhookCert.AsTLSSecret(),
-		}); err != nil {
-			return err
-		}
+		// webhookCert := certs.NewCertificateBuilder(WebhookService).Certificate
+		// if webhookCert, err := ca.SignCertificate(webhookCert, 10); err != nil {
+		// 	return err
+		// } else if err := p.Apply(Namespace, &v1.Secret{
+		// 	ObjectMeta: metav1.ObjectMeta{
+		// 		Namespace: Namespace,
+		// 		Name:      WebhookService,
+		// 		Annotations: map[string]string{
+		// 			certmanager.AllowsInjectionFromSecretAnnotation: "true",
+		// 		},
+		// 	},
+		// 	TypeMeta: metav1.TypeMeta{
+		// 		Kind:       "Secret",
+		// 		APIVersion: "v1",
+		// 	},
+		// 	Data: webhookCert.AsTLSSecret(),
+		// }); err != nil {
+		// 	return err
+		// }
 	}
 
-	if err := p.ApplySpecs("", "cert-manager-deploy.yaml"); err != nil {
+	if err := p.ApplySpecs("", "cert-manager-deploy.yaml", "cert-manager-monitor.yaml.raw"); err != nil {
 		return fmt.Errorf("failed to deploy cert-manager: %v", err)
-	}
-	if err := p.ApplySpecs("", "cert-manager-monitor.yaml.raw"); err != nil {
-		return fmt.Errorf("failed to deploy cert-manager alerts: %v", err)
 	}
 
 	if p.DryRun {
@@ -168,9 +168,9 @@ func createIngressCA(p *platform.Platform) error {
 				CABundle: p.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
 				Path:     p.CertManager.Vault.Path,
 				Auth: certmanager.VaultAuth{
-					TokenSecretRef: &certmanager.SecretKeySelector{
+					TokenSecretRef: &ccmetav1.SecretKeySelector{
 						Key: "token",
-						LocalObjectReference: certmanager.LocalObjectReference{
+						LocalObjectReference: ccmetav1.LocalObjectReference{
 							Name: VaultTokenName,
 						},
 					},
@@ -185,16 +185,16 @@ func createIngressCA(p *platform.Platform) error {
 				return err
 			}
 		}
-		var solver certmanager.Solver
+		var solver acmev1.ACMEChallengeSolver
 		if p.DNS.Type == "route53" {
-			solver = certmanager.Solver{
-				DNS01: certmanager.DNS01{
-					Route53: certmanager.Route53{
+			solver = acmev1.ACMEChallengeSolver{
+				DNS01: &acmev1.ACMEChallengeSolverDNS01{
+					Route53: &acmev1.ACMEIssuerDNS01ProviderRoute53{
 						Region:       p.DNS.Region,
 						HostedZoneID: p.DNS.Zone,
 						AccessKeyID:  p.DNS.AccessKey,
-						SecretAccessKeyRef: certmanager.SecretKeySelector{
-							LocalObjectReference: certmanager.LocalObjectReference{
+						SecretAccessKey: ccmetav1.SecretKeySelector{
+							LocalObjectReference: ccmetav1.LocalObjectReference{
 								Name: Route53Name,
 							},
 							Key: SecretKeyName,
@@ -203,9 +203,12 @@ func createIngressCA(p *platform.Platform) error {
 				},
 			}
 		} else {
-			solver = certmanager.Solver{
-				HTTP01: certmanager.HTTP01{
-					Type: "ingress",
+			solver = acmev1.ACMEChallengeSolver{
+				HTTP01: &acmev1.ACMEChallengeSolverHTTP01{
+					Ingress: &acmev1.ACMEChallengeSolverHTTP01Ingress{
+						Name: "ingress",
+					},
+					// Type:
 				},
 			}
 		}
@@ -216,10 +219,10 @@ func createIngressCA(p *platform.Platform) error {
 			server = p.CertManager.Letsencrypt.URL
 		}
 		issuerConfig = certmanager.IssuerConfig{
-			Letsencrypt: &certmanager.LetsencryptIssuer{
+			ACME: &acmev1.ACMEIssuer{
 				Server:  server,
 				Email:   p.CertManager.Letsencrypt.Email,
-				Solvers: []certmanager.Solver{solver},
+				Solvers: []acmev1.ACMEChallengeSolver{solver},
 			},
 		}
 	} else {
