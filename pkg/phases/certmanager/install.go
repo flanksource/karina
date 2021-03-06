@@ -68,7 +68,8 @@ func Install(p *platform.Platform) error {
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
-	_ = platform.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
+	//remove old mutating webhooks
+	_ = p.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
 
 	if !p.HasSecret(Namespace, DefaultIssuerCA) {
 		ca := p.NewSelfSigned("default-issuer")
