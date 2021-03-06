@@ -26,5 +26,5 @@ func Install(platform *platform.Platform) error {
 		return nil
 	}
 
-	return platform.WaitForDeployment(Namespace, Name, 120*time.Second)
+	return platform.WaitForStatefulSet(Namespace, Name, 120*time.Second)
 }
