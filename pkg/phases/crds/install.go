@@ -28,6 +28,7 @@ func Install(p *platform.Platform) error {
 		"postgres-db":       p.PostgresOperator.IsDisabled,
 		"postgres-operator": p.PostgresOperator.IsDisabled,
 		"rabbitmq":          p.RabbitmqOperator.IsDisabled,
+		"redis":             p.RedisOperator.IsDisabled,
 		"tekton":            p.Tekton.IsDisabled,
 		"velero":            p.Velero.IsDisabled,
 		"vpa":               p.VPA.IsDisabled,
