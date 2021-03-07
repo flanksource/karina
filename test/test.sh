@@ -14,6 +14,9 @@ MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/m
 
 export KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.18.6}
 export SUITE=${SUITE:-minimal}
+if [[ "$1" != "" ]]; then
+  export SUITE=$1
+fi
 export CLUSTER_NAME=kind-$SUITE-$KUBERNETES_VERSION
 
 if [[ "$CI" == "true" ]]; then
