@@ -1,8 +1,9 @@
 importConfigs:
   - minimal.yaml
-tekton:
-  version: v0.12.1
-  dashboardVersion: v0.6.1.5
+# quarantine tekton
+# tekton:
+#   version: v0.12.1
+#   dashboardVersion: v0.6.1.5
 argocdOperator:
   version: v0.0.15
 argoRollouts:
