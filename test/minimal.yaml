@@ -19,8 +19,6 @@ patches:
 domain: 127.0.0.1.nip.io
 dex:
   disabled: true
-ldap:
-  disabled: true
 kubernetes:
   version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:
