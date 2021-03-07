@@ -178,7 +178,7 @@ func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name s
 	platform.ResetMasterConnection()
 
 	// wait for a new connection to be healthy before continuing
-	if err := platform.WaitFor(); err != nil {
+	if err := platform.WaitForAPIServer(); err != nil {
 		return err
 	}
 	return nil
