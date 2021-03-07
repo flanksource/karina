@@ -16,7 +16,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		"api-gateway-nginx",
 		"api-service",
 		"bridge",
-
 		"eventbroker-go",
 		"lighthouse-service",
 		"mongodb-datastore",
