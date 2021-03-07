@@ -18,7 +18,6 @@ const (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.ArgoRollouts.IsDisabled() {
-		test.Skipf("argorollouts", "Argo Rollouts is disabled")
 		return
 	}
 	client, _ := p.GetClientset()

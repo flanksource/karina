@@ -28,7 +28,6 @@ const (
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.Monitoring == nil {
-		test.Skipf("monitoring", "monitoring is not configured")
 		return
 	}
 	_ = p.WaitForNamespace("monitoring", 180*time.Second)
@@ -38,7 +37,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 func TestThanos(p *platform.Platform, test *console.TestResults) {
 	testName := "thanos"
 	if p.Thanos == nil || p.Thanos.IsDisabled() {
-		test.Skipf(testName, "thanos is disabled")
 		return
 	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -109,7 +107,6 @@ func GetPrometheusClient(p *platform.Platform, service string) (v1.API, error) {
 func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	testName := "prometheus"
 	if p.Monitoring == nil || p.Monitoring.Disabled {
-		test.Skipf(testName, "monitoring is not configured or enabled")
 		return
 	}
 

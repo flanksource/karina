@@ -17,7 +17,6 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Elasticsearch == nil || p.Elasticsearch.Disabled {
-		test.Skipf("Elasticsearch", "elastichsearch is not installed or enabled")
 		return
 	}
 

@@ -8,7 +8,6 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Velero.IsDisabled() {
-		test.Skipf("velero", "Velero is disabled")
 		return
 	}
 	client, err := p.GetClientset()

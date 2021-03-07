@@ -9,7 +9,6 @@ import (
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.ECK.IsDisabled() {
-		test.Skipf("ECK", "ECK not configured")
 		return
 	}
 	kommons.TestNamespace(client, Namespace, test)

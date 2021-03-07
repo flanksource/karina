@@ -24,7 +24,6 @@ func NewArgoCDClusterConfig(name string) *argo.ArgoCD {
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.ArgocdOperator.IsDisabled() {
-		test.Skipf("argocd-operator", "ArgoCD Operator is disabled")
 		return
 	}
 	client, _ := p.GetClientset()

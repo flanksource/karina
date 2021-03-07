@@ -13,7 +13,6 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.RegistryCredentials == nil || p.RegistryCredentials.Disabled {
-		test.Skipf("registry-creds", "registry credentials not configured or disabled")
 		return
 	}
 	client, _ := p.GetClientset()

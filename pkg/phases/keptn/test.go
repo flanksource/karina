@@ -9,7 +9,6 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Keptn.IsDisabled() {
-		test.Skipf("keptn", "Keptn is disabled")
 		return
 	}
 	testName := "Keptn"
