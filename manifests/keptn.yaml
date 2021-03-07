@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-service
     app.kubernetes.io/part-of: keptn
   name: keptn-api-service
+  namespace: keptn
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -16,6 +17,7 @@ metadata:
     app.kubernetes.io/name: keptn-configuration-service
     app.kubernetes.io/part-of: keptn
   name: keptn-configuration-service
+  namespace: keptn
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -25,6 +27,7 @@ metadata:
     app.kubernetes.io/name: keptn-default
     app.kubernetes.io/part-of: keptn
   name: keptn-default
+  namespace: keptn
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -34,6 +37,7 @@ metadata:
     app.kubernetes.io/name: keptn-lighthouse-service
     app.kubernetes.io/part-of: keptn
   name: keptn-lighthouse-service
+  namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -43,6 +47,7 @@ metadata:
     app.kubernetes.io/name: keptn-configure-bridge
     app.kubernetes.io/part-of: keptn
   name: keptn-configure-bridge
+  namespace: keptn
 rules:
 - apiGroups:
   - ""
@@ -76,6 +81,7 @@ metadata:
     app.kubernetes.io/name: keptn-manage-configmaps
     app.kubernetes.io/part-of: keptn
   name: keptn-manage-configmaps
+  namespace: keptn
 rules:
 - apiGroups:
   - ""
@@ -94,6 +100,7 @@ metadata:
     app.kubernetes.io/name: keptn-manage-secrets
     app.kubernetes.io/part-of: keptn
   name: keptn-manage-secrets
+  namespace: keptn
 rules:
 - apiGroups:
   - ""
@@ -112,6 +119,7 @@ metadata:
     app.kubernetes.io/name: keptn-read-metadata
     app.kubernetes.io/part-of: keptn
   name: keptn-read-metadata
+  namespace: keptn
 rules:
 - apiGroups:
   - extensions
@@ -130,6 +138,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-service-configure-bridge
     app.kubernetes.io/part-of: keptn
   name: keptn-api-service-configure-bridge
+  namespace: keptn
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -137,6 +146,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: keptn-api-service
+  namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -146,6 +156,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-service-metadata
     app.kubernetes.io/part-of: keptn
   name: keptn-api-service-metadata
+  namespace: keptn
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -153,6 +164,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: keptn-api-service
+  namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -162,6 +174,7 @@ metadata:
     app.kubernetes.io/name: keptn-configuration-service-manage-secrets
     app.kubernetes.io/part-of: keptn
   name: keptn-configuration-service-manage-secrets
+  namespace: keptn
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -169,6 +182,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: keptn-configuration-service
+  namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -178,6 +192,7 @@ metadata:
     app.kubernetes.io/name: keptn-lighthouse-service
     app.kubernetes.io/part-of: keptn
   name: keptn-lighthouse-service
+  namespace: keptn
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -185,6 +200,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: keptn-lighthouse-service
+  namespace: keptn
 ---
 apiVersion: v1
 data:
@@ -346,6 +362,7 @@ metadata:
     app.kubernetes.io/name: api-nginx-config-cm
     app.kubernetes.io/part-of: keptn
   name: api-nginx-config
+  namespace: keptn
 ---
 apiVersion: v1
 data:
@@ -357,8 +374,12 @@ metadata:
     app.kubernetes.io/part-of: keptn
     chart: nats-0.4.2
   name: keptn-nats-cluster-config
+  namespace: keptn
 ---
 apiVersion: v1
+data:
+  BASIC_AUTH_PASSWORD: '{{- kget "secret/keptn/bridge-credentials" "BASIC_AUTH_PASSWORD" | default (random.AlphaNum 22) | base64.Encode -}}'
+  BASIC_AUTH_USERNAME: '{{- print "keptn" | base64.Encode -}}'
 kind: Secret
 metadata:
   labels:
@@ -366,12 +387,12 @@ metadata:
     app.kubernetes.io/name: bridge-credentials
     app.kubernetes.io/part-of: keptn
   name: bridge-credentials
-stringData:
-  BASIC_AUTH_PASSWORD: '{{- kget "secret/keptn/bridge-credentials" "BASIC_AUTH_PASSWORD" | default (random.AlphaNum 22) -}}'
-  BASIC_AUTH_USERNAME: keptn
+  namespace: keptn
 type: Opaque
 ---
 apiVersion: v1
+data:
+  keptn-api-token: '{{- kget "secret/keptn/keptn-api-token" "keptn-api-token" | default (random.AlphaNum 47) | base64.Encode -}}'
 kind: Secret
 metadata:
   labels:
@@ -379,8 +400,7 @@ metadata:
     app.kubernetes.io/name: keptn-api-token
     app.kubernetes.io/part-of: keptn
   name: keptn-api-token
-stringData:
-  keptn-api-token: '{{- kget "secret/keptn/keptn-api-token" "keptn-api-token" | default (random.AlphaNum 47) -}}'
+  namespace: keptn
 type: Opaque
 ---
 apiVersion: v1
@@ -391,6 +411,7 @@ metadata:
     app.kubernetes.io/name: api-gateway-nginx
     app.kubernetes.io/part-of: keptn
   name: api-gateway-nginx
+  namespace: keptn
 spec:
   ports:
   - name: http
@@ -410,6 +431,7 @@ metadata:
     app.kubernetes.io/name: api-service
     app.kubernetes.io/part-of: keptn
   name: api-service
+  namespace: keptn
 spec:
   ports:
   - name: http
@@ -428,6 +450,7 @@ metadata:
     app.kubernetes.io/name: bridge
     app.kubernetes.io/part-of: keptn
   name: bridge
+  namespace: keptn
 spec:
   ports:
   - port: 8080
@@ -445,6 +468,7 @@ metadata:
     app.kubernetes.io/name: configuration-service
     app.kubernetes.io/part-of: keptn
   name: configuration-service
+  namespace: keptn
 spec:
   ports:
   - port: 8080
@@ -462,6 +486,7 @@ metadata:
     app.kubernetes.io/name: eventbroker-go
     app.kubernetes.io/part-of: keptn
   name: event-broker
+  namespace: keptn
 spec:
   ports:
   - port: 80
@@ -479,6 +504,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     chart: nats-0.4.2
   name: keptn-nats-cluster
+  namespace: keptn
 spec:
   clusterIP: None
   ports:
@@ -506,6 +532,7 @@ metadata:
     app.kubernetes.io/name: lighthouse-service
     app.kubernetes.io/part-of: keptn
   name: lighthouse-service
+  namespace: keptn
 spec:
   ports:
   - port: 8080
@@ -522,6 +549,7 @@ metadata:
     app.kubernetes.io/name: mongodb-datastore
     app.kubernetes.io/part-of: keptn
   name: mongodb-datastore
+  namespace: keptn
 spec:
   ports:
   - port: 8080
@@ -538,6 +566,7 @@ metadata:
     app.kubernetes.io/name: remediation-service
     app.kubernetes.io/part-of: keptn
   name: remediation-service
+  namespace: keptn
 spec:
   ports:
   - port: 8080
@@ -555,6 +584,7 @@ metadata:
     app.kubernetes.io/name: shipyard-service
     app.kubernetes.io/part-of: keptn
   name: shipyard-service
+  namespace: keptn
 spec:
   ports:
   - port: 8080
@@ -572,6 +602,7 @@ metadata:
     app.kubernetes.io/name: configuration-volume
     app.kubernetes.io/part-of: keptn
   name: configuration-volume
+  namespace: keptn
 spec:
   accessModes:
   - ReadWriteOnce
@@ -588,6 +619,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 1.19.4-alpine
   name: api-gateway-nginx
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -652,6 +684,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: api-service
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -714,6 +747,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: bridge
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -774,6 +808,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: configuration-service
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -792,19 +827,22 @@ spec:
     spec:
       containers:
       - env:
-        - name: MONGO_DB_NAME
-          value: keptn
+        - name: PREFIX_PATH
+          value: ""
+        - name: MONGODB_HOST
+          value: mongodb:27017
         - name: MONGODB_USER
-          value: keptn
+          valueFrom:
+            secretKeyRef:
+              key: user
+              name: mongodb-credentials
         - name: MONGODB_PASSWORD
           valueFrom:
             secretKeyRef:
               key: password
-              name: mongodb-keptn-credentials
-        - name: MONGODB_HOST
-          value: mongodb-keptn:27017
-        - name: PREFIX_PATH
-          value: ""
+              name: mongodb-credentials
+        - name: MONGO_DB_NAME
+          value: keptn
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
@@ -872,6 +910,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: eventbroker-go
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -921,6 +960,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: lighthouse-service
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -1005,6 +1045,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: mongodb-datastore
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -1092,6 +1133,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: remediation-service
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -1172,6 +1214,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     app.kubernetes.io/version: 0.7.3
   name: shipyard-service
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -1247,6 +1290,7 @@ metadata:
     app.kubernetes.io/part-of: keptn
     chart: nats-0.4.2
   name: keptn-nats-cluster
+  namespace: keptn
 spec:
   replicas: 1
   selector:
@@ -1360,6 +1404,7 @@ metadata:
   labels:
     app.kubernetes.io/part-of: keptn
   name: keptn
+  namespace: keptn
 spec:
   database: keptn
   user: keptn
