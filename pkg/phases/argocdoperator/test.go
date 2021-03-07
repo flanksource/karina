@@ -33,30 +33,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 }
 
 func TestE2E(p *platform.Platform, test *console.TestResults) {
-	testName := "argocd-operator-e2e"
-	clusterName := "test-cluster"
-	namespace := "argocd-operator-e2e"
-	if err := p.CreateOrUpdateNamespace(namespace, nil, nil); err != nil {
-		test.Failf(testName, "failed to create namespace: %v", err)
-	}
-	defer func() {
-		_ = p.DeleteByKind("Namespace", "", namespace)
-	}()
-
-	// TODO: Temporarily only. We won't need this anymore once ArgoCD release a new version that incorporate this fix: https://github.com/argoproj-labs/argocd-operator/pull/224
-	// Deploying necessary RBAC Objects for ArgoCD Cluster to fully working
-	if err := p.ApplySpecs(namespace, "argocd-rbac.yaml"); err != nil {
-		test.Failf(testName, "Error creating RBAC Objects for ArgoCD Cluster: %v", err)
-		return
-	}
-
-	testCluster := NewArgoCDClusterConfig(clusterName)
-	err := p.Apply(Namespace, testCluster)
-	if err != nil {
-		test.Failf(testName, "Error creating ArgoCD Cluster %s: %v", clusterName, err)
-		return
-	}
-	test.Passf(testName, "Cluster %s deployed", clusterName)
+	testName := "argocd"
+	clusterName := "argocd"
 
 	// List of expected deployment to be deployed by ArgoCD Operator for ArgoCD Cluster
 	expectedDeploymentTypes := []string{
@@ -69,7 +47,6 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 
 	for _, deployTypeName := range expectedDeploymentTypes {
 		deploymentName := fmt.Sprintf("%s-%s", clusterName, deployTypeName)
-
 		err := p.WaitForDeployment(Namespace, deploymentName, 1*time.Minute)
 		if err != nil {
 			test.Failf(testName, "ArgoCD Cluster component %s is not healthy: %v", deploymentName, err)
