@@ -83,7 +83,6 @@ spec:
   selector:
     alertmanager: main
     app: alertmanager
-  sessionAffinity: ClientIP
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -134,7 +133,7 @@ subjects:
 ---
 {{- if index . "thanos" }}
 {{- if not (index .thanos "disabled") }}
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: thanos-sidecar
@@ -324,7 +323,6 @@ spec:
   selector:
     app: prometheus
     prometheus: k8s
-  sessionAffinity: ClientIP
 ---
 apiVersion: v1
 kind: ServiceAccount

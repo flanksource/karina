@@ -7,7 +7,6 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
-	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
 )
@@ -53,8 +52,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	if err != nil {
 		test.Failf(testName, "Deployment 'gitops-e2e-test-podinfo' not ready in namespace %s: %v", namespace, err)
 	}
-
-	kommons.TestNamespace(client, namespace, test)
 
 	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=nginx"})
 	if err != nil {

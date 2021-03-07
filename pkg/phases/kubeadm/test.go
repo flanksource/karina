@@ -19,7 +19,6 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 	pf := p.Kubernetes.AuditConfig.PolicyFile
 
 	if pf == "" {
-		tr.Skipf(testAuditName, "No audit policy specified.")
 		return
 	}
 
@@ -35,7 +34,6 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 		tr.Failf(testAuditName, "Failed to get api-server pod: %v", err)
 		return
 	}
-	tr.Infof(testAuditName, "api-server pod found")
 
 	if logFilePath, ok := p.Kubernetes.APIServerExtraArgs["audit-log-path"]; !ok {
 		tr.Failf(testAuditName, "No audit-log-path is specified!")
@@ -44,7 +42,7 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 		tr.Failf(testAuditName, "Empty audit-log-path is specified!")
 		return
 	} else if logFilePath == "-" {
-		tr.Skipf(testAuditName, "api-server is configured lo log to stdout, not verifying output")
+		// api-server is configured lo log to stdout, not verifying output
 		return
 	} else {
 		dir := filepath.Dir(logFilePath)
@@ -62,7 +60,6 @@ func TestEncryption(p *platform.Platform, tr *console.TestResults) {
 	tc := p.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile
 
 	if tc == "" {
-		tr.Skipf(testEncryptionName, "No encryption provider configuration specified.")
 		return
 	}
 

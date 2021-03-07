@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/console"
+	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/apacheds"
 	"github.com/flanksource/karina/pkg/phases/argocdoperator"
@@ -80,6 +81,7 @@ var Test = &cobra.Command{
 }
 
 func end(test *console.TestResults) {
+	logger.Infof("%s", test)
 	if junitPath != "" {
 		if suiteName == "" {
 			test.SuiteName(p.Name)
@@ -98,7 +100,6 @@ func end(test *console.TestResults) {
 type TestFn func(p *platform.Platform, test *console.TestResults)
 
 func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
-	p.Tracef("Testing %s", name)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

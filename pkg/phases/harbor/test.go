@@ -8,7 +8,6 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Harbor == nil || p.Harbor.Disabled {
-		test.Skipf("Harbor", "Harbor is not configured")
 		return
 	}
 	client, _ := p.GetClientset()

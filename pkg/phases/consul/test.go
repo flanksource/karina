@@ -23,7 +23,6 @@ var (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Vault == nil || p.Vault.Disabled {
-		test.Skipf("consul", "Consul is disabled")
 		return
 	}
 

@@ -65,7 +65,7 @@ data:
     log_level: "{{.harbor.logLevel}}"
     registry_config: "/etc/registry/config.yml"
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: registry-internal-certs

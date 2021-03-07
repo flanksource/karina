@@ -219,7 +219,7 @@ spec:
         # schedule on dedicated node groups
         - key: node.kubernetes.io/group
           effect: NoSchedule
-          opertator: Exists
+          operator: Exists
       containers:
         - name: journalbeat
           image: docker.elastic.co/beats/journalbeat:{{ .journalbeat.version }}

@@ -21,7 +21,6 @@ import (
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/karina/manifests"
 	"github.com/flanksource/karina/pkg/api"
-	"github.com/flanksource/karina/pkg/api/certmanager"
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
 	"github.com/flanksource/karina/pkg/constants"
@@ -31,6 +30,8 @@ import (
 	"github.com/flanksource/kommons/proxy"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
+	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	ccmetav1 "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -54,11 +55,12 @@ type Platform struct {
 	logFields map[string]interface{}
 	kommons.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
-	ctx            context.Context //nolint
-	kubeConfig     []byte
-	KubeConfigPath string
-	ca             certs.CertificateAuthority
-	ingressCA      certs.CertificateAuthority
+	ctx             context.Context //nolint
+	kubeConfig      []byte
+	KubeConfigPath  string
+	ca              certs.CertificateAuthority
+	ingressCA       certs.CertificateAuthority
+	defaultIssuerCA []byte
 	// Terminating is true if the cluster is in a terminating state
 	Terminating bool
 }
@@ -271,7 +273,7 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 }
 
 // WaitFor at least 1 master IP to be reachable
-func (platform *Platform) WaitFor() error {
+func (platform *Platform) WaitForAPIServer() error {
 	if platform.DryRun {
 		return nil
 	}
@@ -584,34 +586,6 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...kommons.CRD) error
 	return nil
 }
 
-func (platform *Platform) ApplyText(namespace string, specs ...string) error {
-	kustomize, err := platform.GetKustomize()
-	if err != nil {
-		return err
-	}
-	for _, spec := range specs {
-		items, err := kustomize.Kustomize(namespace, []byte(spec))
-		if err != nil {
-			return err
-		}
-		if err := platform.Apply(namespace, items...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (platform *Platform) WaitForNamespace(ns string, timeout time.Duration) {
-	if platform.DryRun {
-		return
-	}
-	client, err := platform.GetClientset()
-	if err != nil {
-		return
-	}
-	kommons.WaitForNamespace(client, ns, timeout)
-}
-
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 	if platform.TerminationProtection || !platform.Prune {
 		return nil
@@ -630,15 +604,13 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 			objects[i], objects[j] = objects[j], objects[i]
 		}
 
-		platform.Debugf("Deleting %s", console.Redf("%s", spec))
 		for _, object := range objects {
-			if err := platform.Get(object.GetNamespace(), object.GetName(), &object); err != nil {
-				platform.Tracef("resources already deleted skipping, %v", err)
+			if err := platform.Get(object.GetNamespace(), object.GetName(), object); err != nil {
+				platform.Debugf("%s (deleted, skipping)", console.Redf("%s", spec))
 				return nil
 			}
 
-			platform.Tracef("Deleting %s/%s/%s", object.GetNamespace(), object.GetKind(), object.GetName())
-			if err := platform.DeleteUnstructured(namespace, &object); err != nil {
+			if err := platform.DeleteUnstructured(namespace, object); err != nil {
 				return err
 			}
 		}
@@ -648,10 +620,10 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 
 func (platform *Platform) ApplySpecs(namespace string, specs ...string) error {
 	for _, spec := range specs {
-		platform.Debugf("Applying %s", console.Greenf("%s", spec))
+		platform.Debugf("[%s]", console.Greenf("%s", spec))
 		template, err := platform.Template(spec, "manifests")
 		if err != nil {
-			return fmt.Errorf("applySpecs: failed to template manifests: %v", err)
+			return errors.Wrapf(err, "failed to template manifests: %v", spec)
 		}
 
 		if err := platform.ApplyText(namespace, template); err != nil {
@@ -898,22 +870,75 @@ func (platform *Platform) DeleteValidatingWebhook(namespace, service string) err
 }
 
 func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service string) ([]byte, error) {
-	// first create the certificate for the webhooks and wait for it to become ready
-	// to avoid any race conditions
-	cert := certmanager.NewCertificateForService(namespace, service)
+	// first create the certificate for the webhooks
+	cert := NewCertificateForService(constants.DefaultIssuer, namespace, service)
 	if err := platform.Apply(namespace, &cert); err != nil {
 		return nil, err
 	}
 
-	if err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 180*time.Second); err != nil {
+	// wait for the cert to become ready to avoid any race conditions or pod pending loops
+	if _, err := platform.WaitFor(&cert, 240*time.Second); err != nil {
 		return nil, err
 	}
 
-	secret := platform.GetSecret(namespace, service)
-	if secret == nil {
-		return nil, fmt.Errorf("could not find secret: %s", service)
+	// we return the default-issuer CA which is more stable than the individual webhook cert.
+	return platform.GetDefaultIssuerCA()
+}
+
+func (platform *Platform) GetDefaultIssuerCA() ([]byte, error) {
+	if platform.defaultIssuerCA != nil {
+		return platform.defaultIssuerCA, nil
 	}
-	return (*secret)["tls.crt"], nil
+	ca, err := platform.GetSecretValue("cert-manager", constants.DefaultIssuerCA, "tls.crt")
+	if err != nil {
+		return nil, err
+	}
+	platform.defaultIssuerCA = ca
+	return ca, nil
+}
+
+func (platform *Platform) GetSecretValue(namespace, name, key string) ([]byte, error) {
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil, err
+	}
+	secret, err := client.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret.Data[key], nil
+}
+
+func NewCertificateForService(issuer, namespace string, name string) certmanager.Certificate {
+	return certmanager.Certificate{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cert-manager.io/v1",
+			Kind:       certmanager.CertificateKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Annotations: map[string]string{
+				certmanager.AllowsInjectionFromSecretAnnotation: "true",
+			},
+		},
+		Spec: certmanager.CertificateSpec{
+			DNSNames: []string{
+				name,
+				fmt.Sprintf("%s.%s.svc", name, namespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", name, namespace),
+			},
+			SecretName: name,
+			IssuerRef: ccmetav1.ObjectReference{
+				Kind: certmanager.ClusterIssuerKind,
+				Name: issuer,
+			},
+			PrivateKey: &certmanager.CertificatePrivateKey{
+				Algorithm: certmanager.RSAKeyAlgorithm,
+				Size:      2048,
+			},
+		},
+	}
 }
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {

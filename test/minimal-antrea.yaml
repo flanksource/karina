@@ -40,7 +40,7 @@ calico:
 antrea:
   version: v0.13.0
 kind:
-  workerCount: 2
+  workerCount: 1
 s3:
   endpoint: http://minio.minio.svc:9000
   access_key: minio

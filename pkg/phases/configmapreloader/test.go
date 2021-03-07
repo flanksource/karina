@@ -21,7 +21,6 @@ var watchTimeout = int64(60) // Wait for deployment to update only N seconds
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
 	if p.ConfigMapReloader.Disabled {
-		test.Skipf(testName, "configmap-reloader not configured")
 		return
 	}
 	if err := p.WaitForDeployment(constants.PlatformSystem, "reloader", 30*time.Second); err != nil {
@@ -37,10 +36,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 func e2eTest(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.ConfigMapReloader.Disabled {
-		test.Skipf(testName, "configmap-reloader not configured")
-		return
-	}
 	//cleanup from any failed run
 	cleanup(client)
 	//cleanup correctly after the end of the run

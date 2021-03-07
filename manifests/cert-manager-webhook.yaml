@@ -28,7 +28,7 @@ spec:
             - --v=2
             - --secure-port=10250
             - --dynamic-serving-ca-secret-namespace=$(POD_NAMESPACE)
-            - --dynamic-serving-ca-secret-name=cert-manager-webhook-ca
+            - --dynamic-serving-ca-secret-name=cert-manager-webhook
             - --dynamic-serving-dns-names=cert-manager-webhook,cert-manager-webhook.cert-manager,cert-manager-webhook.cert-manager.svc
           env:
             - name: POD_NAMESPACE
@@ -47,7 +47,7 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
-          name: cert-manager
+          name: cert-manager-webhook
           ports:
             - containerPort: 10250
               name: https

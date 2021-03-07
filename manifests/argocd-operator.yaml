@@ -4,12 +4,14 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: argocd-operator
+  namespace: argocd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
   name: argocd-operator
+  namespace: argocd
 rules:
   - apiGroups:
       - ""
@@ -24,7 +26,7 @@ rules:
       - services
       - services/finalizers
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - apps
     resources:
@@ -32,7 +34,7 @@ rules:
       - replicasets
       - statefulsets
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - apps
     resourceNames:
@@ -51,45 +53,46 @@ rules:
       - argocdexports/finalizers
       - argocdexports/status
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - autoscaling
     resources:
       - horizontalpodautoscalers
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - batch
     resources:
       - cronjobs
       - jobs
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - extensions
     resources:
       - ingresses
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - monitoring.coreos.com
     resources:
       - prometheuses
       - servicemonitors
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - route.openshift.io
     resources:
       - routes
       - routes/custom-host
     verbs:
-      - '*'
+      - "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: argocd-operator
+  namespace: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -97,11 +100,13 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: argocd-operator
+    namespace: argocd
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argocd-operator
+  namespace: argocd
 spec:
   replicas: 1
   selector:
@@ -131,3 +136,31 @@ spec:
           name: argocd-operator
           resources: {}
       serviceAccountName: argocd-operator
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ArgoCD
+metadata:
+  name: argocd
+  namespace: argocd
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: argocd-ing
+  namespace: argocd
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  tls:
+    - secretName: argocd-tls
+      hosts:
+        - argocd.{{.domain}}
+  rules:
+    - host: argocd.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: argocd-server
+              servicePort: 8080

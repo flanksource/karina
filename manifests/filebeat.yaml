@@ -29,7 +29,7 @@ spec:
         # schedule on dedicated node groups
         - key: node.kubernetes.io/group
           effect: NoSchedule
-          opertator: Exists
+          operator: Exists
       containers:
         - name: filebeat
           image: docker.elastic.co/beats/filebeat:{{ .version }}
@@ -137,7 +137,6 @@ data:
               - contains:
                   message: "Health check succeeded"
 
-                  message: "Sending probe request to CSI driver"
               - contains:
                   message: "csi.v1.Identity/Probe"
 

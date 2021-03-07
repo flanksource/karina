@@ -39,7 +39,8 @@ type CertManager struct {
 	// Details of a vault server to use for signing ingress certificates
 	Vault *VaultClient `yaml:"vault,omitempty" json:"vault,omitempty"`
 	// Details of a Letsencrypt issuer to use for signing ingress certificates
-	Letsencrypt *LetsencryptIssuer `yaml:"letsencrypt,omitempty" json:"letsencrypt,omitempty"`
+	Letsencrypt     *LetsencryptIssuer `yaml:"letsencrypt,omitempty" json:"letsencrypt,omitempty"`
+	DefaultIssuerCA string             `yaml:"-" json:"-"`
 }
 
 type VaultClient struct {

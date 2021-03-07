@@ -204,7 +204,7 @@ metadata:
     cert-manager.io/inject-ca-from-secret: elastic-webhook-server-cert
 webhooks:
   - clientConfig:
-      caBundle: Cg==
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: elastic-webhook-server
         namespace: elastic-system
@@ -222,7 +222,7 @@ webhooks:
         resources:
           - elasticsearches
   - clientConfig:
-      caBundle: Cg==
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: elastic-webhook-server
         namespace: elastic-system

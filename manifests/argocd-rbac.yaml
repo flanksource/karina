@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: argocd-application-controller
     app.kubernetes.io/part-of: argocd
   name: argocd-application-controller
+  namespace: argocd
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -16,6 +17,7 @@ metadata:
     app.kubernetes.io/name: argocd-dex-server
     app.kubernetes.io/part-of: argocd
   name: argocd-dex-server
+  namespace: argocd
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -25,6 +27,7 @@ metadata:
     app.kubernetes.io/name: argocd-redis-ha
     app.kubernetes.io/part-of: argocd
   name: argocd-redis-ha
+  namespace: argocd
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -34,6 +37,7 @@ metadata:
     app.kubernetes.io/name: argocd-server
     app.kubernetes.io/part-of: argocd
   name: argocd-server
+  namespace: argocd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -43,6 +47,7 @@ metadata:
     app.kubernetes.io/name: argocd-application-controller
     app.kubernetes.io/part-of: argocd
   name: argocd-application-controller
+  namespace: argocd
 rules:
   - apiGroups:
       - ""
@@ -55,7 +60,7 @@ rules:
       - configmaps
       - secrets
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - apps
     resources:
@@ -63,21 +68,21 @@ rules:
       - deployments
       - replicasets
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - batch
     resources:
       - CronJob
       - Job
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - argoproj.io
     resources:
       - applications
       - appprojects
     verbs:
-      - '*'
+      - "*"
   - apiGroups:
       - ""
     resources:
@@ -90,7 +95,7 @@ rules:
     resources:
       - routes
     verbs:
-      - '*'
+      - "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -100,6 +105,7 @@ metadata:
     app.kubernetes.io/name: argocd-dex-server
     app.kubernetes.io/part-of: argocd
   name: argocd-dex-server
+  namespace: argocd
 rules:
   - apiGroups:
       - ""
@@ -119,6 +125,7 @@ metadata:
     app.kubernetes.io/name: argocd-redis-ha
     app.kubernetes.io/part-of: argocd
   name: argocd-redis-ha
+  namespace: argocd
 rules:
   - apiGroups:
       - ""
@@ -135,6 +142,7 @@ metadata:
     app.kubernetes.io/name: argocd-server
     app.kubernetes.io/part-of: argocd
   name: argocd-server
+  namespace: argocd
 rules:
   - apiGroups:
       - ""
@@ -180,15 +188,15 @@ metadata:
   name: argocd-application-controller
 rules:
   - apiGroups:
-      - '*'
+      - "*"
     resources:
-      - '*'
+      - "*"
     verbs:
       - get
       - list
       - watch
   - nonResourceURLs:
-      - '*'
+      - "*"
     verbs:
       - get
       - list
@@ -203,9 +211,9 @@ metadata:
   name: argocd-server
 rules:
   - apiGroups:
-      - '*'
+      - "*"
     resources:
-      - '*'
+      - "*"
     verbs:
       - get
   - apiGroups:
@@ -222,7 +230,6 @@ rules:
     verbs:
       - get
 ---
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -231,6 +238,7 @@ metadata:
     app.kubernetes.io/name: argocd-application-controller
     app.kubernetes.io/part-of: argocd
   name: argocd-application-controller
+  namespace: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -238,6 +246,8 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: argocd-application-controller
+    namespace: argocd
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -247,6 +257,7 @@ metadata:
     app.kubernetes.io/name: argocd-dex-server
     app.kubernetes.io/part-of: argocd
   name: argocd-dex-server
+  namespace: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -254,6 +265,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: argocd-dex-server
+    namespace: argocd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -263,6 +275,7 @@ metadata:
     app.kubernetes.io/name: argocd-redis-ha
     app.kubernetes.io/part-of: argocd
   name: argocd-redis-ha
+  namespace: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -270,6 +283,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: argocd-redis-ha
+    namespace: argocd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -279,6 +293,7 @@ metadata:
     app.kubernetes.io/name: argocd-server
     app.kubernetes.io/part-of: argocd
   name: argocd-server
+  namespace: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -286,6 +301,8 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: argocd-server
+    namespace: argocd
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -298,7 +315,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: argocd-application-controller
+  name: cluster-admin
 subjects:
   - kind: ServiceAccount
     name: argocd-application-controller

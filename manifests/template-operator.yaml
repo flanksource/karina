@@ -11,32 +11,32 @@ metadata:
   name: template-operator-leader-election-role
   namespace: platform-system
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - configmaps/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -44,12 +44,12 @@ metadata:
   creationTimestamp: null
   name: template-operator-manager-role
 rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - '*'
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -61,9 +61,9 @@ roleRef:
   kind: Role
   name: template-operator-leader-election-role
 subjects:
-- kind: ServiceAccount
-  name: template-operator-manager
-  namespace: platform-system
+  - kind: ServiceAccount
+    name: template-operator-manager
+    namespace: platform-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -74,24 +74,23 @@ roleRef:
   kind: ClusterRole
   name: template-operator-manager-role
 subjects:
-- kind: ServiceAccount
-  name: template-operator-manager
-  namespace: platform-system
+  - kind: ServiceAccount
+    name: template-operator-manager
+    namespace: platform-system
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    prometheus.io/scrape: "true"
   labels:
     control-plane: template-operator
   name: template-operator-template-operator
   namespace: platform-system
 spec:
   ports:
-  - name: prometheus
-    port: 8080
-    protocol: TCP
+    - name: prometheus
+      targetPort: 8080
+      port: 8080
+      protocol: TCP
   selector:
     control-plane: template-operator
 ---
@@ -113,28 +112,28 @@ spec:
         control-plane: template-operator
     spec:
       containers:
-      - args:
-        - --metrics-addr=0.0.0.0:8080
-        - --enable-leader-election
-        - --sync-period={{ .templateOperator.syncPeriod | default "5m" }}
-        image: docker.io/flanksource/template-operator:{{.templateOperator.version}}
-        name: manager
-        resources:
-          limits:
-            cpu: 100m
-            memory: 130Mi
-          requests:
-            cpu: 100m
-            memory: 120Mi
-      - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=10
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
+        - args:
+            - --metrics-addr=0.0.0.0:8080
+            - --enable-leader-election
+            - --sync-period={{ .templateOperator.syncPeriod | default "5m" }}
+          image: docker.io/flanksource/template-operator:{{.templateOperator.version}}
+          name: manager
+          resources:
+            limits:
+              cpu: 100m
+              memory: 130Mi
+            requests:
+              cpu: 100m
+              memory: 120Mi
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=10
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
       serviceAccount: template-operator-manager
       terminationGracePeriodSeconds: 10

@@ -179,7 +179,7 @@ spec:
         # schedule on dedicated node groups
         - key: node.kubernetes.io/group
           effect: NoSchedule
-          opertator: Exists
+          operator: Exists
       {{ if .kind }}
       {{ if not (eq ( conv.ToInt64 .kind.workerCount ) 0) }}
         - key: "node-role.kubernetes.io/master"
@@ -226,12 +226,16 @@ spec:
           ports:
             - name: http
               containerPort: 80
+              hostPort: 80
             - name: https
               containerPort: 443
+              hostPort: 443
             - name: metrics
               containerPort: 10254
+              hostPort: 10254
             - name: webhook
               containerPort: 8443
+              hostPort: 8443
               protocol: TCP
           livenessProbe:
             failureThreshold: 3
