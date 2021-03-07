@@ -869,15 +869,6 @@ func (platform *Platform) DeleteValidatingWebhook(namespace, service string) err
 	return nil
 }
 
-func (platform *Platform) allowInject(secret *v1.Secret) error {
-	if _, ok := secret.Annotations[certmanager.AllowsInjectionFromSecretAnnotation]; !ok {
-		return platform.Annotate(secret, map[string]string{
-			certmanager.AllowsInjectionFromSecretAnnotation: "true",
-		})
-	}
-	return nil
-}
-
 func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service string) ([]byte, error) {
 	// first create the certificate for the webhooks
 	cert := NewCertificateForService(constants.DefaultIssuer, namespace, service)

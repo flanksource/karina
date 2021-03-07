@@ -20,6 +20,15 @@ import (
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
+	if platform.PlatformOperator.IsDisabled() {
+		return
+	}
+
+	if err := platform.WaitForDeployment(Namespace, WebhookService, 2*time.Minute); err != nil {
+		test.Failf("platform-operator", "platform-operator did not come up: %v", err)
+		return
+	}
+	test.Passf("platform-operator", "platform-operator is ready")
 	if !platform.E2E {
 		return
 	}
@@ -32,9 +41,6 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 }
 
 func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator.IsDisabled() {
-		return
-	}
 	testName := "platform-auto-delete"
 	namespace := fmt.Sprintf("platform-operator-e2e-auto-delete-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
@@ -64,9 +70,6 @@ func TestPlatformOperatorAutoDeleteNamespace(p *platform.Platform, test *console
 
 func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.TestResults) {
 	testName := "pod-annotator"
-	if p.PlatformOperator.IsDisabled() {
-		return
-	}
 	namespace := fmt.Sprintf("platform-operator-e2e-pod-annotations-%s", utils.RandomString(6))
 	client, _ := p.GetClientset()
 
@@ -132,9 +135,6 @@ func TestPlatformOperatorPodAnnotations(p *platform.Platform, test *console.Test
 }
 
 func TestPlatformOperatorClusterResourceQuota1(p *platform.Platform, test *console.TestResults) {
-	if p.PlatformOperator.IsDisabled() {
-		return
-	}
 	testName := "cluster-resource-quota"
 	namespace1 := fmt.Sprintf("platform-operator-e2e-resource-quota1-%s", utils.RandomString(6))
 	namespace2 := fmt.Sprintf("platform-operator-e2e-resource-quota2-%s", utils.RandomString(6))
