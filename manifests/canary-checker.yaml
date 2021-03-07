@@ -190,9 +190,11 @@ spec:
         - hostPath:
             path: /var/run/docker.sock
           name: dockersock
+          type: ""
         - name: containerdsock
           hostPath:
             path: /run/containerd/containerd.sock
+          type: ""
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
