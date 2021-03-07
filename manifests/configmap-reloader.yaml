@@ -4,7 +4,7 @@ kind: ClusterRole
 metadata:
   labels:
     app: reloader
-  name: reloader-roles
+  name: reloader-role
 rules:
   - apiGroups:
       - ""
