@@ -26,52 +26,23 @@ const (
 	WebhookService  = "cert-manager-webhook"
 )
 
-func PreInstall(platform *platform.Platform) error {
-	client, err := platform.Client.GetClientset()
+func PreInstall(p *platform.Platform) error {
+	client, err := p.Client.GetClientset()
 	if err != nil {
 		return err
 	}
 
-	deployments := client.AppsV1().Deployments(Namespace)
-	deployment, err := deployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
-	if err != nil {
-		// cert-manager is not installed, nothing todo
-		return nil
-	}
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		currentVer := strings.TrimLeft(strings.Split(container.Image, ":")[1], "v")
-		v, _ := semver.Parse(currentVer)
-		preGA, _ := semver.ParseRange("<1.0.0")
-		if preGA(v) {
-			platform.Debugf("Upgrading cert-manager from %s -> %s, deleting existing deployment ", currentVer, platform.PlatformConfig.CertManager.Version)
-			break
-		} else {
-			return nil
-		}
-	}
-
-	if err := platform.DeleteByKind(constants.ValidatingWebhookConfiguration, v1.NamespaceAll, WebhookService); err != nil {
-		return err
-	}
-	for _, name := range []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"} {
-		if err := deployments.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func Install(p *platform.Platform) error {
 	// Cert manager is a core component and multiple other components depend on it so it cannot be disabled
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
-	//remove old mutating webhooks
-	_ = p.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
 
-	if !p.HasSecret(Namespace, DefaultIssuerCA) {
+	// First generate or load he CA bundle for the default-issuer which is a dependency for
+	// creating CRD's with webhooks.
+
+	caBundle, _ := p.GetSecretValue(Namespace, DefaultIssuerCA, "tls.crt")
+
+	if caBundle == nil {
 		ca := p.NewSelfSigned("default-issuer")
 		if err := p.Apply(Namespace, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -89,26 +60,45 @@ func Install(p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
-		// webhookCert := certs.NewCertificateBuilder(WebhookService).Certificate
-		// if webhookCert, err := ca.SignCertificate(webhookCert, 10); err != nil {
-		// 	return err
-		// } else if err := p.Apply(Namespace, &v1.Secret{
-		// 	ObjectMeta: metav1.ObjectMeta{
-		// 		Namespace: Namespace,
-		// 		Name:      WebhookService,
-		// 		Annotations: map[string]string{
-		// 			certmanager.AllowsInjectionFromSecretAnnotation: "true",
-		// 		},
-		// 	},
-		// 	TypeMeta: metav1.TypeMeta{
-		// 		Kind:       "Secret",
-		// 		APIVersion: "v1",
-		// 	},
-		// 	Data: webhookCert.AsTLSSecret(),
-		// }); err != nil {
-		// 	return err
-		// }
+		p.CertManager.DefaultIssuerCA = string(ca.AsTLSSecret()["tls.crt"])
+	} else {
+		p.CertManager.DefaultIssuerCA = string(caBundle)
 	}
+
+	deployments := client.AppsV1().Deployments(Namespace)
+	deployment, err := deployments.Get(context.TODO(), "cert-manager", metav1.GetOptions{})
+	if err != nil {
+		// cert-manager is not installed, nothing todo
+		return nil
+	}
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		currentVer := strings.TrimLeft(strings.Split(container.Image, ":")[1], "v")
+		v, _ := semver.Parse(currentVer)
+		preGA, _ := semver.ParseRange("<1.0.0")
+		if preGA(v) {
+			p.Debugf("Upgrading cert-manager from %s -> %s, deleting existing deployment ", currentVer, p.PlatformConfig.CertManager.Version)
+			break
+		} else {
+			return nil
+		}
+	}
+
+	if err := p.DeleteByKind(constants.ValidatingWebhookConfiguration, v1.NamespaceAll, WebhookService); err != nil {
+		return err
+	}
+	for _, name := range []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"} {
+		if err := deployments.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func Install(p *platform.Platform) error {
+	//remove old mutating webhooks
+	_ = p.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
 
 	if err := p.ApplySpecs("", "cert-manager-deploy.yaml", "cert-manager-monitor.yaml.raw"); err != nil {
 		return fmt.Errorf("failed to deploy cert-manager: %v", err)

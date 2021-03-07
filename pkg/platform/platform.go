@@ -21,7 +21,6 @@ import (
 	"github.com/flanksource/commons/net"
 	"github.com/flanksource/karina/manifests"
 	"github.com/flanksource/karina/pkg/api"
-	certmanagerutil "github.com/flanksource/karina/pkg/api/certmanager"
 	"github.com/flanksource/karina/pkg/ca"
 	"github.com/flanksource/karina/pkg/client/dns"
 	"github.com/flanksource/karina/pkg/constants"
@@ -32,6 +31,7 @@ import (
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
 	pg "github.com/go-pg/pg/v9"
 	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	ccmetav1 "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -55,11 +55,12 @@ type Platform struct {
 	logFields map[string]interface{}
 	kommons.Client
 	//TODO: verify if ctx can be removed after refactoring has left it unused
-	ctx            context.Context //nolint
-	kubeConfig     []byte
-	KubeConfigPath string
-	ca             certs.CertificateAuthority
-	ingressCA      certs.CertificateAuthority
+	ctx             context.Context //nolint
+	kubeConfig      []byte
+	KubeConfigPath  string
+	ca              certs.CertificateAuthority
+	ingressCA       certs.CertificateAuthority
+	defaultIssuerCA []byte
 	// Terminating is true if the cluster is in a terminating state
 	Terminating bool
 }
@@ -272,7 +273,7 @@ func (platform *Platform) GetIngressCA() certs.CertificateAuthority {
 }
 
 // WaitFor at least 1 master IP to be reachable
-func (platform *Platform) WaitFor() error {
+func (platform *Platform) WaitForAPIServer() error {
 	if platform.DryRun {
 		return nil
 	}
@@ -878,37 +879,75 @@ func (platform *Platform) allowInject(secret *v1.Secret) error {
 }
 
 func (platform *Platform) CreateOrGetWebhookCertificate(namespace, service string) ([]byte, error) {
-	// first create the certificate for the webhooks and wait for it to become ready
-	// to avoid any race conditions
-	cert := certmanagerutil.NewCertificateForService(namespace, service)
+	// first create the certificate for the webhooks
+	cert := NewCertificateForService(constants.DefaultIssuer, namespace, service)
 	if err := platform.Apply(namespace, &cert); err != nil {
 		return nil, err
 	}
 
-	_secret, _ := platform.GetByKind("Secret", namespace, service)
-	secret, _ := kommons.AsSecret(_secret)
-	var err error
-	if secret != nil {
-		if err := platform.allowInject(secret); err != nil {
-			return nil, err
-		}
-		if crt, ok := secret.Data["tls.crt"]; ok {
-			return crt, nil
-		}
-	}
-
-	if _, err := platform.WaitForResource(certmanager.CertificateKind, namespace, service, 240*time.Second); err != nil {
+	// wait for the cert to become ready to avoid any race conditions or pod pending loops
+	if _, err := platform.WaitFor(&cert, 240*time.Second); err != nil {
 		return nil, err
 	}
 
-	if _secret, err = platform.WaitForResource("Secret", namespace, service, 30*time.Second); err != nil {
+	// we return the default-issuer CA which is more stable than the individual webhook cert.
+	return platform.GetDefaultIssuerCA()
+}
+
+func (platform *Platform) GetDefaultIssuerCA() ([]byte, error) {
+	if platform.defaultIssuerCA != nil {
+		return platform.defaultIssuerCA, nil
+	}
+	ca, err := platform.GetSecretValue("cert-manager", constants.DefaultIssuerCA, "tls.crt")
+	if err != nil {
 		return nil, err
 	}
-	secret, _ = kommons.AsSecret(_secret)
-	if err := platform.allowInject(secret); err != nil {
+	platform.defaultIssuerCA = ca
+	return ca, nil
+}
+
+func (platform *Platform) GetSecretValue(namespace, name, key string) ([]byte, error) {
+	client, err := platform.GetClientset()
+	if err != nil {
 		return nil, err
 	}
-	return secret.Data["tls.crt"], nil
+	secret, err := client.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret.Data[key], nil
+}
+
+func NewCertificateForService(issuer, namespace string, name string) certmanager.Certificate {
+	return certmanager.Certificate{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cert-manager.io/v1",
+			Kind:       certmanager.CertificateKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Annotations: map[string]string{
+				certmanager.AllowsInjectionFromSecretAnnotation: "true",
+			},
+		},
+		Spec: certmanager.CertificateSpec{
+			DNSNames: []string{
+				name,
+				fmt.Sprintf("%s.%s.svc", name, namespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", name, namespace),
+			},
+			SecretName: name,
+			IssuerRef: ccmetav1.ObjectReference{
+				Kind: certmanager.ClusterIssuerKind,
+				Name: issuer,
+			},
+			PrivateKey: &certmanager.CertificatePrivateKey{
+				Algorithm: certmanager.RSAKeyAlgorithm,
+				Size:      2048,
+			},
+		},
+	}
 }
 
 func (platform *Platform) DefaultNamespaceLabels() map[string]string {

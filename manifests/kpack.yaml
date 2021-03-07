@@ -384,6 +384,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: kpack-webhook
         namespace: kpack
@@ -399,6 +400,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: kpack-webhook
         namespace: kpack

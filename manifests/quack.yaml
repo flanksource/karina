@@ -26,7 +26,8 @@ roleRef:
   kind: ClusterRole
   name: quack:system:api-server-auth
 subjects:
-  - kind: User
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
     name: system:anonymous
   - kind: ServiceAccount
     name: quack
