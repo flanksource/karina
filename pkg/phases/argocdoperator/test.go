@@ -9,7 +9,6 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func NewArgoCDClusterConfig(name string) *argo.ArgoCD {
@@ -36,23 +35,29 @@ func Test(p *platform.Platform, test *console.TestResults) {
 func TestE2E(p *platform.Platform, test *console.TestResults) {
 	testName := "argocd-operator-e2e"
 	clusterName := "test-cluster"
+	namespace := "argocd-operator-e2e"
+	if err := p.CreateOrUpdateNamespace(namespace, nil, nil); err != nil {
+		test.Failf(testName, "failed to create namespace: %v", err)
+	}
+	defer func() {
+		_ = p.DeleteByKind("Namespace", "", namespace)
+	}()
+
+	// TODO: Temporarily only. We won't need this anymore once ArgoCD release a new version that incorporate this fix: https://github.com/argoproj-labs/argocd-operator/pull/224
+	// Deploying necessary RBAC Objects for ArgoCD Cluster to fully working
+	if err := p.ApplySpecs(namespace, "argocd-rbac.yaml"); err != nil {
+		test.Failf(testName, "Error creating RBAC Objects for ArgoCD Cluster: %v", err)
+		return
+	}
+
 	testCluster := NewArgoCDClusterConfig(clusterName)
 	err := p.Apply(Namespace, testCluster)
-	defer removeE2EArgoCluster(p, clusterName, test)
 	if err != nil {
 		test.Failf(testName, "Error creating ArgoCD Cluster %s: %v", clusterName, err)
 		return
 	}
 	test.Passf(testName, "Cluster %s deployed", clusterName)
 
-	// TODO: Temporarily only. We won't need this anymore once ArgoCD release a new version that incorporate this fix: https://github.com/argoproj-labs/argocd-operator/pull/224
-	// Deploying necessary RBAC Objects for ArgoCD Cluster to fully working
-	if err := p.ApplySpecs(Namespace, "argocd-rbac.yaml"); err != nil {
-		test.Failf(testName, "Error creating RBAC Objects for ArgoCD Cluster: %v", err)
-		return
-	}
-
-	test.Infof("Checking if ArgoCD cluster is healthy...")
 	// List of expected deployment to be deployed by ArgoCD Operator for ArgoCD Cluster
 	expectedDeploymentTypes := []string{
 		"application-controller",
@@ -72,25 +77,4 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 		}
 	}
 	test.Passf(testName, "ArgoCD Cluster is healthy")
-}
-
-func removeE2EArgoCluster(p *platform.Platform, clusterName string, test *console.TestResults) {
-	err := p.DeleteUnstructured(Namespace, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "argoproj.io/v1alpha1",
-			"kind":       "ArgoCD",
-			"metadata": map[string]interface{}{
-				"name": clusterName,
-			},
-		},
-	})
-	if err != nil {
-		test.Warnf("Failed to cleanup ArgoCD Test Cluster %s in namespace %s", clusterName, Namespace)
-	}
-
-	if err := p.DeleteSpecs("", "argocd-rbac.yaml"); err != nil {
-		test.Warnf("Failed to delete ArgoCD Cluster RBAC Objects: %v", err)
-	}
-
-	test.Infof("Finished cleanup ArgoCD Cluster: %s", clusterName)
 }

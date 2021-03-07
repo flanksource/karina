@@ -16,18 +16,23 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		"api-gateway-nginx",
 		"api-service",
 		"bridge",
-		"configuration-service",
+
 		"eventbroker-go",
 		"lighthouse-service",
 		"mongodb-datastore",
 		"remediation-service",
 		"shipyard-service",
 	}
+
+	// wait for up to 3 minutes for config service as it takes the longest
+	if err := p.WaitForDeployment(Namespace, "configuration-service", 3*time.Minute); err != nil {
+		test.Failf(testName, "ketpn/configuration-service is not healthy: %v", err)
+	}
+
+	// wait for (up to 3 minutes) + 30 seconds for everything else
 	for _, deployName := range expectedKeptnDeployments {
-		err := p.WaitForDeployment(Namespace, deployName, 1*time.Minute)
-		if err != nil {
+		if err := p.WaitForDeployment(Namespace, deployName, 30*time.Second); err != nil {
 			test.Failf(testName, "Keptn component %s (Deployment) is not healthy: %v", deployName, err)
-			return
 		}
 	}
 	expectedKeptnStatefulsets := []string{
@@ -35,10 +40,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 		"mongodb-keptn",
 	}
 	for _, statefulsetName := range expectedKeptnStatefulsets {
-		err := p.WaitForStatefulSet(Namespace, statefulsetName, 1*time.Minute)
-		if err != nil {
+		if err := p.WaitForStatefulSet(Namespace, statefulsetName, 30*time.Second); err != nil {
 			test.Failf(testName, "Keptn component %s (StatefulSet) is not healthy: %v", statefulsetName, err)
-			return
 		}
 	}
 	test.Passf(testName, "Keptn is healthy")
