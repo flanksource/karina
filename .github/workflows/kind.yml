@@ -120,7 +120,7 @@ jobs:
           ICON: "github"
           STATUS: ${{ steps.e2e.outcome }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COLOR: fromJSON('["red", "grees"]')[failure()]
+          COLOR: ${{ fromJSON('["red", "green"]')[failure()] }}
 
   upgrade:
     runs-on: ubuntu-20.04
@@ -187,7 +187,7 @@ jobs:
           ICON: "github"
           STATUS: ${{ steps.e2e.outcome }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COLOR: fromJSON('["red", "grees"]')[failure()]
+          COLOR: ${{ fromJSON('["red", "green"]')[failure()] }}
   selfhosted:
     runs-on: [self-hosted]
     if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
@@ -266,7 +266,7 @@ jobs:
           ICON: "github"
           STATUS: ${{ steps.e2e.outcome }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COLOR: fromJSON('["red", "grees"]')[failure()]
+          COLOR: ${{ fromJSON('["red", "green"]')[failure()] }}
   golangci:
     name: lint
     runs-on: ubuntu-20.04
