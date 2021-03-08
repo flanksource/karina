@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"encoding/json"
 	"github.com/blang/semver/v4"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/karina/pkg/constants"
@@ -17,13 +18,14 @@ import (
 )
 
 const (
-	Namespace       = "cert-manager"
-	IngressCA       = "ingress-ca"
-	DefaultIssuerCA = "default-issuer-ca"
-	VaultTokenName  = "vault-token"
-	Route53Name     = "route53-credentials"
-	SecretKeyName   = "AWS_SECRET_ACCESS_KEY"
-	WebhookService  = "cert-manager-webhook"
+	Namespace                 = "cert-manager"
+	IngressCA                 = "ingress-ca"
+	DefaultIssuerCA           = "default-issuer-ca"
+	VaultTokenName            = "vault-token"
+	Route53Name               = "route53-credentials"
+	LetsencryptPrivateKeyName = "letsencrypt-issuer-account-key"
+	SecretKeyName             = "AWS_SECRET_ACCESS_KEY"
+	WebhookService            = "cert-manager-webhook"
 )
 
 func PreInstall(p *platform.Platform) error {
@@ -169,6 +171,7 @@ func createIngressCA(p *platform.Platform) error {
 			},
 		}
 	} else if p.CertManager.Letsencrypt != nil {
+		p.Infof("Configuring Cert Manager ClusterIssuer to use Letsencrypt: ingress-ca")
 		if p.DNS.SecretKey != "" {
 			if err := p.CreateOrUpdateSecret(Route53Name, Namespace, map[string][]byte{
 				SecretKeyName: []byte(p.DNS.SecretKey),
@@ -188,7 +191,6 @@ func createIngressCA(p *platform.Platform) error {
 							LocalObjectReference: ccmetav1.LocalObjectReference{
 								Name: Route53Name,
 							},
-							Key: SecretKeyName,
 						},
 					},
 				},
@@ -230,6 +232,8 @@ func createIngressCA(p *platform.Platform) error {
 					SecretName: IngressCA,
 				},
 			}
+			j, _ := json.Marshal(issuerConfig)
+			fmt.Println(j)
 		default:
 			return fmt.Errorf("unknown cert type:%v", ingress)
 		}
