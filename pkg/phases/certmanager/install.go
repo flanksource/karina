@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"encoding/json"
 	"github.com/blang/semver/v4"
 	"github.com/flanksource/commons/certs"
 	"github.com/flanksource/karina/pkg/constants"
@@ -188,6 +187,7 @@ func createIngressCA(p *platform.Platform) error {
 						HostedZoneID: p.DNS.Zone,
 						AccessKeyID:  p.DNS.AccessKey,
 						SecretAccessKey: ccmetav1.SecretKeySelector{
+							Key: SecretKeyName,
 							LocalObjectReference: ccmetav1.LocalObjectReference{
 								Name: Route53Name,
 							},
@@ -201,7 +201,6 @@ func createIngressCA(p *platform.Platform) error {
 					Ingress: &acmev1.ACMEChallengeSolverHTTP01Ingress{
 						Name: "ingress",
 					},
-					// Type:
 				},
 			}
 		}
@@ -213,8 +212,13 @@ func createIngressCA(p *platform.Platform) error {
 		}
 		issuerConfig = certmanager.IssuerConfig{
 			ACME: &acmev1.ACMEIssuer{
-				Server:  server,
-				Email:   p.CertManager.Letsencrypt.Email,
+				Server: server,
+				Email:  p.CertManager.Letsencrypt.Email,
+				PrivateKey: ccmetav1.SecretKeySelector{
+					LocalObjectReference: ccmetav1.LocalObjectReference{
+						Name: LetsencryptPrivateKeyName,
+					},
+				},
 				Solvers: []acmev1.ACMEChallengeSolver{solver},
 			},
 		}
@@ -232,8 +236,6 @@ func createIngressCA(p *platform.Platform) error {
 					SecretName: IngressCA,
 				},
 			}
-			j, _ := json.Marshal(issuerConfig)
-			fmt.Println(j)
 		default:
 			return fmt.Errorf("unknown cert type:%v", ingress)
 		}
