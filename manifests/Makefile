@@ -1,6 +1,7 @@
 TARGET_CRD_FILES := $(patsubst upstream/%/crd,crd/%.yaml,$(wildcard upstream/**/crd))
 TARGET_MANIFEST_FILES := $(patsubst upstream/%/base,%.yaml,$(wildcard upstream/**/base))
 
+bin: bin/kustomize bin/yq bin/helm
 build: build-crds build-base
 build-crds: $(TARGET_CRD_FILES)
 build-base: $(TARGET_MANIFEST_FILES)
@@ -59,7 +60,7 @@ bin/yq:
 
 bin/helm:
 	@mkdir -p bin
-	@curl -sSLo - https://get.helm.sh/helm-v3.5.2-$(OS)-$(ARCH).tar.gz | tar xzf - -C bin/ --strip-components=1 '*/helm' && chmod +x bin/helm
+	@curl -sSLo - https://get.helm.sh/helm-v3.5.2-$(OS)-$(ARCH).tar.gz | tar xzf - -C bin/ --strip-components=1 && chmod +x bin/helm
 
 KUSTOMIZE = $(realpath ./bin/kustomize)
 YQ = $(realpath ./bin/yq)
