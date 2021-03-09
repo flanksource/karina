@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: percona-server-mongodb-operator
+spec:
+  template:
+    spec:
+      containers:
+        - name: percona-server-mongodb-operator
+          env:
+            - name: WATCH_NAMESPACE
+              value: "*"
+              valueFrom: null

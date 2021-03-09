@@ -1,3 +1,4 @@
+# All options for PerconaServerMongoDB can be seen here: https://www.percona.com/doc/kubernetes-operator-for-psmongodb/operator.html
 apiVersion: templating.flanksource.com/v1
 kind: Template
 metadata:
@@ -7,86 +8,39 @@ spec:
     apiVersion: db.flanksource.com/v1
     kind: MongoDB
   resources:
-    - apiVersion: v1
-      kind: Secret
-      metadata:
-        name: mongodb-{{ .metadata.name }}-credentials
-        namespace: '{{ .metadata.namespace }}'
-      type: Opaque
-      stringData:
-        password: '{{- kget (print "secret/" .metadata.namespace "/mongodb-" .metadata.name "-credentials") "password" | default (random.AlphaNum 16) -}}'
-        admin_password: '{{- kget (print "secret/" .metadata.namespace "/mongodb-" .metadata.name "-credentials") "admin_password" | default (random.AlphaNum 16) -}}'
-
-    - apiVersion: apps/v1
-      kind: StatefulSet
+    - apiVersion: psmdb.percona.com/v1-6-0
+      kind: PerconaServerMongoDB
       metadata:
         name: mongodb-{{ .metadata.name }}
         namespace: '{{ .metadata.namespace }}'
       spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app.kubernetes.io/name: mongodb
-            app.kubernetes.io/instance: '{{ .metadata.name }}'
-        template:
-          metadata:
-            labels:
-              app.kubernetes.io/name: mongodb
-              app.kubernetes.io/instance: '{{ .metadata.name }}'
-          spec:
-            securityContext:
-              fsGroup: 184
-            containers:
-              - image: docker.io/centos/mongodb-36-centos7:1
-                name: mongodb
-                env:
-                  - name: MONGODB_DATABASE
-                    value: '{{ .spec.database }}'
-                  - name: MONGODB_USER
-                    value: '{{ .spec.user }}'
-                  - name: MONGODB_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: mongodb-{{ .metadata.name }}-credentials
-                        key: password
-                  - name: MONGODB_ADMIN_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: mongodb-{{ .metadata.name }}-credentials
-                        key: admin_password
-                ports:
-                  - containerPort: 27017
+        crVersion: 1.6.0
+        image: percona/percona-server-mongodb:4.4.2-4
+        imagePullPolicy: IfNotPresent
+        allowUnsafeConfigurations: false
+        updateStrategy: SmartUpdate
+        upgradeOptions:
+          versionServiceEndpoint: https://check.percona.com
+          apply: recommended
+          schedule: "0 2 * * *"
+        secrets:
+          users: mongodb-{{ .metadata.name }}-secrets
+        pmm:
+          enabled: false
+        replsets:
+          - name: rs0
+            size: 3
+            podDisruptionBudget:
+              maxUnavailable: 1
+            resources:
+              limits:
+                cpu: '{{.spec.cpu | default "300m"}}'
+                memory: '{{.spec.memory | default "512Mi" }}'
+              requests:
+                cpu: '{{.spec.cpu | default "300m"}}'
+                memory: '{{.spec.memory | default "512Mi" }}'
+            volumeSpec:
+              persistentVolumeClaim:
                 resources:
                   requests:
-                    memory: '{{ .spec.memory | default "64Mi" }}'
-                    cpu: '{{ .spec.cpu | default "50m" }}'
-                  limits:
-                    memory: '{{ .spec.memory | default "300Mi" }}'
-                    cpu: '{{ .spec.cpu | default "100m" }}'
-                volumeMounts:
-                  - mountPath: /var/lib/mongodb/data
-                    name: "mongodata-{{ .metadata.name }}"
-            restartPolicy: Always
-        volumeClaimTemplates:
-        - metadata:
-            name: "mongodata-{{ .metadata.name }}"
-          spec:
-            accessModes:
-            - ReadWriteOnce
-            resources:
-              requests:
-                storage: '{{ .spec.storage.size | default "5Gi" }}'
-
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        name: "mongodb-{{ .metadata.name }}"
-        namespace: '{{ .metadata.namespace }}'
-      spec:
-        ports:
-        - name: "27017"
-          port: 27017
-          targetPort: 27017
-        selector:
-          app.kubernetes.io/name: mongodb
-          app.kubernetes.io/instance: '{{ .metadata.name }}'
+                    storage: '{{ .spec.storage.size | default "5Gi" }}'

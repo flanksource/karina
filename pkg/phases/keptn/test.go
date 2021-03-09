@@ -36,7 +36,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	expectedKeptnStatefulsets := []string{
 		"keptn-nats-cluster",
-		"mongodb-keptn",
+		"mongodb-keptn-rs0",
 	}
 	for _, statefulsetName := range expectedKeptnStatefulsets {
 		if err := p.WaitForStatefulSet(Namespace, statefulsetName, 30*time.Second); err != nil {

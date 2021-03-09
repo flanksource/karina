@@ -35,27 +35,14 @@ spec:
           type: object
         spec:
           properties:
-            database:
-              type: string
-            user:
-              type: string
-            backup:
-              properties:
-                bucket:
-                  type: string
-                schedule:
-                  type: string
-              type: object
             cpu:
               type: string
             memory:
               type: string
-            parameters:
-              additionalProperties:
-                type: string
-              type: object
             replicas:
-              type: integer
+              type: integer # TODO: not yet supported
+            antiAffinityTopologyKey:
+              type: string
             storage:
               properties:
                 size:

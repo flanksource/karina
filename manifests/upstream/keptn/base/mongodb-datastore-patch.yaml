@@ -9,14 +9,16 @@ spec:
         - name: mongodb-datastore
           env:
             - name: MONGODB_DATABASE
-              value: keptn
+              value: admin
             - name: MONGODB_USER
-              value: keptn
-              valueFrom: null
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-keptn-secrets
+                  key: MONGODB_USER_ADMIN_USER
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mongodb-keptn-credentials
-                  key: password
+                  name: mongodb-keptn-secrets
+                  key: MONGODB_USER_ADMIN_PASSWORD
             - name: MONGODB_HOST
-              value: mongodb-keptn:27017
+              value: mongodb+srv://mongodb-keptn-rs0.keptn.svc.cluster.local:27017

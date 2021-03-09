@@ -244,6 +244,10 @@ type ArgocdOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 
+type MongodbOperator struct {
+	Disabled `yaml:",inline" json:",inline"`
+}
+
 type ArgoRollouts struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
