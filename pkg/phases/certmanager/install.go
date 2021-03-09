@@ -17,13 +17,14 @@ import (
 )
 
 const (
-	Namespace       = "cert-manager"
-	IngressCA       = "ingress-ca"
-	DefaultIssuerCA = "default-issuer-ca"
-	VaultTokenName  = "vault-token"
-	Route53Name     = "route53-credentials"
-	SecretKeyName   = "AWS_SECRET_ACCESS_KEY"
-	WebhookService  = "cert-manager-webhook"
+	Namespace                 = "cert-manager"
+	IngressCA                 = "ingress-ca"
+	DefaultIssuerCA           = "default-issuer-ca"
+	VaultTokenName            = "vault-token"
+	Route53Name               = "route53-credentials"
+	LetsencryptPrivateKeyName = "letsencrypt-issuer-account-key"
+	SecretKeyName             = "AWS_SECRET_ACCESS_KEY"
+	WebhookService            = "cert-manager-webhook"
 )
 
 func PreInstall(p *platform.Platform) error {
@@ -169,6 +170,7 @@ func createIngressCA(p *platform.Platform) error {
 			},
 		}
 	} else if p.CertManager.Letsencrypt != nil {
+		p.Infof("Configuring Cert Manager ClusterIssuer to use Letsencrypt: ingress-ca")
 		if p.DNS.SecretKey != "" {
 			if err := p.CreateOrUpdateSecret(Route53Name, Namespace, map[string][]byte{
 				SecretKeyName: []byte(p.DNS.SecretKey),
@@ -185,10 +187,10 @@ func createIngressCA(p *platform.Platform) error {
 						HostedZoneID: p.DNS.Zone,
 						AccessKeyID:  p.DNS.AccessKey,
 						SecretAccessKey: ccmetav1.SecretKeySelector{
+							Key: SecretKeyName,
 							LocalObjectReference: ccmetav1.LocalObjectReference{
 								Name: Route53Name,
 							},
-							Key: SecretKeyName,
 						},
 					},
 				},
@@ -199,7 +201,6 @@ func createIngressCA(p *platform.Platform) error {
 					Ingress: &acmev1.ACMEChallengeSolverHTTP01Ingress{
 						Name: "ingress",
 					},
-					// Type:
 				},
 			}
 		}
@@ -211,8 +212,13 @@ func createIngressCA(p *platform.Platform) error {
 		}
 		issuerConfig = certmanager.IssuerConfig{
 			ACME: &acmev1.ACMEIssuer{
-				Server:  server,
-				Email:   p.CertManager.Letsencrypt.Email,
+				Server: server,
+				Email:  p.CertManager.Letsencrypt.Email,
+				PrivateKey: ccmetav1.SecretKeySelector{
+					LocalObjectReference: ccmetav1.LocalObjectReference{
+						Name: LetsencryptPrivateKeyName,
+					},
+				},
 				Solvers: []acmev1.ACMEChallengeSolver{solver},
 			},
 		}
