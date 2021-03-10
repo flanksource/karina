@@ -224,6 +224,7 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | disabled |  | bool |  |
 | elasticsearch |  | *[Connection](#connection) |  |
 | logstash |  | *[Connection](#connection) |  |
+| ssl | | map[string]interface | |
 
 ## FluentdOperator
 
