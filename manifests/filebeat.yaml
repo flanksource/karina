@@ -173,7 +173,7 @@ data:
 {{ else if .logstash }}
     output.logstash:
       hosts: ["${LOGSTASH_URL}"]
-      ssl.verification_mode: none
+      ssl.enabled: false
 {{ end }}
 ---
 {{end}}
