@@ -686,11 +686,12 @@ type ThanosE2E struct {
 
 type Filebeat struct {
 	Disabled      `yaml:",inline" json:",inline"`
-	Name          string      `yaml:"name" json:"name"`
-	Index         string      `yaml:"index" json:"index"`
-	Prefix        string      `yaml:"prefix" json:"prefix"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
-	Logstash      *Connection `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	Name          string                 `yaml:"name" json:"name"`
+	Index         string                 `yaml:"index" json:"index"`
+	Prefix        string                 `yaml:"prefix" json:"prefix"`
+	Elasticsearch *Connection            `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
+	Logstash      *Connection            `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	SSL           map[string]interface{} `yaml:"ssl,omitempty" json:"ssl,omitempty"`
 }
 
 type Journalbeat struct {
