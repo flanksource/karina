@@ -73,5 +73,5 @@ func init() {
 			os.Exit(1)
 		}
 	}
-	DNS.MarkFlagRequired("domain")
+	_ = DNS.MarkFlagRequired("domain")
 }
