@@ -40,7 +40,7 @@ func init() {
 
 	get := &cobra.Command{
 		Use:  "get",
-		Args: cobra.MinimumNArgs(0),
+		Args: cobra.MaximumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			dns := getPlatform(cmd).GetDNSClient()
 			list, err := dns.Get(domain)
@@ -67,4 +67,11 @@ func init() {
 	}
 	DNS.AddCommand(append, update, delete, get)
 	DNS.PersistentFlags().StringVar(&domain, "domain", "", "")
+	DNS.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		if domain == "" {
+			fmt.Println("Must specify a --domain")
+			os.Exit(1)
+		}
+	}
+	DNS.MarkFlagRequired("domain")
 }
