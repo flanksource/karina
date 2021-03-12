@@ -3,8 +3,10 @@ package postgres
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/flanksource/commons/utils"
+	"github.com/hako/durafmt"
 	minio "github.com/minio/minio-go/v6"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -24,10 +26,11 @@ type PostgresDB struct {
 	Superuser string
 	op        *api.OperatorConfiguration
 	client    *kommons.Client
+	s3        *minio.Client
 }
 
 func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
-	db := PostgresDB{client: client}
+	db := PostgresDB{client: client, s3: s3}
 
 	op := api.OperatorConfiguration{TypeMeta: metav1.TypeMeta{
 		Kind:       "operatorconfiguration",
@@ -48,7 +51,7 @@ func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, n
 }
 
 func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
-	db := PostgresDB{client: client}
+	db := PostgresDB{client: client, s3: s3}
 
 	_db := &api.Postgresql{TypeMeta: metav1.TypeMeta{
 		Kind:       "postgresql",
@@ -95,9 +98,40 @@ func (db *PostgresDB) ScheduleBackup(schedule string) error {
 	return db.client.Apply(db.Namespace, job)
 }
 
-func (db *PostgresDB) ListBackups() ([]string, error) {
-	var backups []string
-	return backups, nil
+func (db *PostgresDB) ListBackups(quiet bool, num int) error {
+	op := db.op.Configuration
+
+	objs := listObjects(db.s3, op.LogicalBackup.S3Bucket, db.Name)
+
+	if !quiet {
+		fmt.Printf("\nURL\tAGE\n")
+	}
+	for idx, o := range objs {
+		url := fmt.Sprintf("s3://%s/%s", op.LogicalBackup.S3Bucket, o.Key)
+		if quiet {
+			fmt.Println(url)
+		} else {
+			age := time.Now().Sub(o.LastModified)
+			ageStr := durafmt.Parse(age).LimitFirstN(1).String()
+			fmt.Printf("%s\t%s\n", url, ageStr)
+		}
+		if num > 0 && idx+1 >= num {
+			break
+		}
+	}
+
+	return nil
+}
+
+//TODO: avoid duplicate code
+func listObjects(client *minio.Client, bucket, path string) []minio.ObjectInfo {
+	var objects []minio.ObjectInfo
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+	for obj := range client.ListObjectsV2(bucket, path, true, doneCh) {
+		objects = append(objects, obj)
+	}
+	return objects
 }
 
 func (db *PostgresDB) Restore(backup string) error {

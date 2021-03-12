@@ -139,6 +139,27 @@ func init() {
 		},
 	}
 
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "List the backups",
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			quiet, _ := cmd.Flags().GetBool("quiet")
+			num, _ := cmd.Flags().GetInt("number")
+
+			db, err := getDB(cmd)
+			if err != nil {
+				log.Fatalf("error finding %s: %v", clusterName, err)
+			}
+			if err := db.ListBackups(quiet, num); err != nil {
+				log.Fatalf("Error listing backups %s\n", err)
+			}
+		},
+	}
+	list.Flags().BoolP("quiet", "q", false, "List only the path of the backup")
+	list.Flags().IntP("number", "n", 0, "Maximum number of backups to list")
+	backup.AddCommand(list)
+
 	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
 	DB.AddCommand(backup)
 
