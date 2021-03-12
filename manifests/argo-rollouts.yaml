@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: argo-rollouts
     app.kubernetes.io/part-of: argo-rollouts
   name: argo-rollouts
+  namespace: platform-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -255,6 +256,7 @@ metadata:
     app.kubernetes.io/name: argo-rollouts-metrics
     app.kubernetes.io/part-of: argo-rollouts
   name: argo-rollouts-metrics
+  namespace: platform-system
 spec:
   ports:
   - name: metrics
@@ -272,6 +274,7 @@ metadata:
     app.kubernetes.io/name: argo-rollouts
     app.kubernetes.io/part-of: argo-rollouts
   name: argo-rollouts
+  namespace: platform-system
 spec:
   selector:
     matchLabels:

@@ -35,6 +35,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/logsexporter"
 	"github.com/flanksource/karina/pkg/phases/minio"
+	"github.com/flanksource/karina/pkg/phases/mongodboperator"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nodelocaldns"
 	"github.com/flanksource/karina/pkg/phases/nsx"
@@ -82,6 +83,7 @@ var Phases = map[string]DeployFn{
 	"kube-resource-report": kuberesourcereport.Install,
 	"kube-web-view":        kubewebview.Install,
 	"logs-exporter":        logsexporter.Install,
+	"mongodb-operator":     mongodboperator.Deploy,
 	"monitoring":           monitoring.Install,
 	"opa":                  opa.Install,
 	"packetbeat":           packetbeat.Deploy,
