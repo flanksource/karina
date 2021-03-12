@@ -27,5 +27,13 @@ func Deploy(p *platform.Platform) error {
 		}
 	}
 
+	if p.Elasticsearch.Persistence == nil {
+		p.Elasticsearch.Persistence = &types.Persistence{
+			Enabled:      false,
+			StorageClass: "",
+			Capacity:     "",
+		}
+	}
+
 	return p.ApplySpecs(Namespace, "elasticsearch.yaml")
 }
