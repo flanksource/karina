@@ -9,10 +9,8 @@ spec:
         - name: configuration-service
           env:
             - name: MONGODB_USER
-              valueFrom:
-                secretKeyRef:
-                  key: user
-                  name: mongodb-keptn-credentials
+              value: keptn
+              valueFrom: null
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:

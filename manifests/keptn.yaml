@@ -828,10 +828,7 @@ spec:
       containers:
       - env:
         - name: MONGODB_USER
-          valueFrom:
-            secretKeyRef:
-              key: user
-              name: mongodb-keptn-credentials
+          value: keptn
         - name: MONGODB_PASSWORD
           valueFrom:
             secretKeyRef:
