@@ -36,6 +36,13 @@ func Install(p *platform.Platform) error {
 		p.KubeResourceReport = &types.KubeResourceReport{} // this sets p.KubeResourceReport.Disabled to false
 		p.KubeResourceReport.Disabled = true
 	}
+
+	if p.DryRun && !p.KubeResourceReport.Disabled {
+		return p.ApplySpecs(Namespace, "kube-resource-report.yaml")
+	} else if p.DryRun {
+		return nil
+	}
+
 	if p.KubeResourceReport.Disabled {
 		// remove the secret containing access information to external clusters
 		cs, err := p.GetClientset()
