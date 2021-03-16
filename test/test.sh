@@ -1,10 +1,10 @@
 #!/bin/bash
 if which karina; then
-  BIN=$(which karina)
+    BIN=$(which karina)
 else
-  BIN=./.bin/karina
-  chmod +x $BIN
-  mkdir -p .bin
+    BIN=./.bin/karina
+    chmod +x $BIN
+    mkdir -p .bin
 fi
 export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
@@ -15,38 +15,37 @@ MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/m
 export KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.18.6}
 export SUITE=${SUITE:-minimal}
 if [[ "$1" != "" ]]; then
-  export SUITE=$1
+    export SUITE=$1
 fi
 export CLUSTER_NAME=kind-$SUITE-$KUBERNETES_VERSION
 
 if [[ "$CI" == "true" ]]; then
-  kind delete cluster --name  $CLUSTER_NAME|| echo "No cluster present when starting"
+    kind delete cluster --name  $(kind get clusters) || echo "No cluster present when starting"
 fi
 export CONFIGURED_VALUE=$(openssl rand -base64 12)
 export PLATFORM_CONFIG=test/$SUITE.yaml
 echo "::endgroup::"
 
-
 function report() {
-  set +e
-  echo "::group::Uploading test results"
-  if [[ "$CI" == "true" ]]; then
-
-    if [[ -e test-results/results.xml ]]; then
-      wget -nv -nc -O build-tools \
-        https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
-        chmod +x build-tools
-
-      ./build-tools junit gh-workflow-commands test-results/results.xml
+    set +e
+    echo "::group::Uploading test results"
+    if [[ "$CI" == "true" ]]; then
+        
+        if [[ -e test-results/results.xml ]]; then
+            wget -nv -nc -O build-tools \
+            https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
+            chmod +x build-tools
+            
+            ./build-tools junit gh-workflow-commands test-results/results.xml
+        fi
+        mkdir -p artifacts
+        if $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true ; then
+            zip -r artifacts/snapshot.zip snapshot/*
+        fi
+    else
+        echo "Skipping test report when not running in CI"
     fi
-    mkdir -p artifacts
-    if $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true ; then
-      zip -r artifacts/snapshot.zip snapshot/*
-    fi
-  else
-    echo "Skipping test report when not running in CI"
-  fi
-  echo "::endgroup::"
+    echo "::endgroup::"
 }
 trap report EXIT
 
@@ -54,18 +53,18 @@ set -e
 echo "$(kubectl config current-context) != kind-$CLUSTER_NAME"
 
 if [[ "$(kubectl config current-context)" != "kind-$CLUSTER_NAME" ]] ; then
-  echo "::group::Provisioning"
-  if [[ ! -e .certs/root-ca.key ]]; then
-    $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
-    $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
-    $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
-  fi
-  if $BIN provision kind-cluster --trace -vv ; then
-    echo "::endgroup::"
-  else
-    echo "::endgroup::"
-    exit 1
-  fi
+    echo "::group::Provisioning"
+    if [[ ! -e .certs/root-ca.key ]]; then
+        $BIN ca generate --name root-ca --cert-path .certs/root-ca.crt --private-key-path .certs/root-ca.key --password foobar  --expiry 1
+        $BIN ca generate --name ingress-ca --cert-path .certs/ingress-ca.crt --private-key-path .certs/ingress-ca.key --password foobar  --expiry 1
+        $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1
+    fi
+    if $BIN provision kind-cluster --trace -vv ; then
+        echo "::endgroup::"
+    else
+        echo "::endgroup::"
+        exit 1
+    fi
 fi
 
 $BIN version
