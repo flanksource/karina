@@ -3,6 +3,7 @@ package types
 
 // +kubebuilder:skip
 type PlatformConfig struct {
+	AWS               AWS               `yaml:"aws,omitempty" json:"aws,omitempty"`
 	Antrea            Antrea            `yaml:"antrea,omitempty" json:"antrea,omitempty"`
 	ArgocdOperator    ArgocdOperator    `yaml:"argocdOperator,omitempty" json:"argocdOperator,omitempty"`
 	ArgoRollouts      ArgoRollouts      `yaml:"argoRollouts,omitempty" json:"argoRollouts,omitempty"`
@@ -28,6 +29,7 @@ type PlatformConfig struct {
 	EventRouter   EventRouter    `yaml:"eventrouter,omitempty" json:"eventrouter,omitempty"`
 	ExternalDNS   ExternalDNS    `yaml:"externalDns,omitempty" json:"externalDns,omitempty"`
 	Filebeat      []Filebeat     `yaml:"filebeat,omitempty" json:"filebeat,omitempty"`
+	GCP           GCP            `yaml:"gcp,omitempty" json:"gcp:omitempty"`
 	Gatekeeper    Gatekeeper     `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
 	GitOperator   GitOperator    `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`
 	GitOps        []GitOps       `yaml:"gitops,omitempty" json:"gitops,omitempty"`

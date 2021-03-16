@@ -27,7 +27,6 @@ func Deploy(p *platform.Platform) error {
 
 		return nil
 	}
-	p.Infof("Deploying harbor %s", p.Harbor.Version)
 
 	if p.Harbor.S3 == nil {
 		p.Harbor.S3 = &p.S3.S3Connection
@@ -103,7 +102,7 @@ func Deploy(p *platform.Platform) error {
 			}
 			p.Harbor.DB = db
 		} else {
-			p.Infof("Creating postgres database %s", dbCluster)
+			p.Debugf("Creating postgres database %s", dbCluster)
 		}
 	}
 

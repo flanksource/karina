@@ -9,7 +9,7 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.5.1
-	github.com/flanksource/kommons v0.4.3
+	github.com/flanksource/kommons v0.6.1
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/prometheus/common v0.10.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
-	github.com/thoas/go-funk v0.7.0 
+	github.com/thoas/go-funk v0.7.0
 	github.com/vbauerster/mpb/v5 v5.0.3
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.21.0

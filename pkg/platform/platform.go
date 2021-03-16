@@ -42,6 +42,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	clientcmdapi "k8s.io/client-go/tools/clientcmd"
+
 	// need to import auth package to registry custom auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -181,10 +183,29 @@ func (platform *Platform) ResetMasterConnection() {
 // GetAPIEndpoint returns an endpoint for reaching a master node that is reachable on 6443 or
 // an error otherwise
 func (platform *Platform) GetAPIEndpoint() (string, error) {
+	context := kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath)
+
+	if platform.Name == kommons.GetCurrentClusterNameFrom(platform.KubeConfigPath) {
+		platform.Tracef("Getting API Endpoint from: path=%s, context=%s", platform.KubeConfigPath, context)
+		data, err := ioutil.ReadFile(platform.KubeConfigPath)
+		if err != nil {
+			return "", err
+		}
+
+		c, err := clientcmdapi.NewClientConfigFromBytes(data)
+		if err != nil {
+			return "", err
+		}
+
+		cfg, _ := c.RawConfig()
+
+		return strings.TrimPrefix(cfg.Clusters[cfg.Contexts[cfg.CurrentContext].Cluster].Server, "https://"), nil
+	}
+
 	if platform.DNS.IsEnabled() {
 		ip := fmt.Sprintf("k8s-api.%s", platform.Domain)
 		if net.Ping(ip, 6443, 10) {
-			return ip, nil
+			return ip + ":6443", nil
 		}
 		platform.Warnf("DNS endpoint is not healthy, failing back to master IP")
 	}
@@ -200,7 +221,7 @@ func (platform *Platform) GetAPIEndpoint() (string, error) {
 
 	for _, master := range masters {
 		if net.Ping(master, 6443, 10) {
-			return master, nil
+			return master + ":6443", nil
 		}
 	}
 	return "", fmt.Errorf("none of the masters are up: %v", masters)

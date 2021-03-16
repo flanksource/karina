@@ -9,7 +9,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/order"
 	"github.com/flanksource/karina/pkg/platform"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/flanksource/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,7 +19,7 @@ var Images = &cobra.Command{
 	Short: "Commands for working with docker images",
 }
 
-func getImages(p *platform.Platform) ([]string, error) {
+func getImages(p *platform.Platform) []string {
 	images := []string{}
 	// in order to list all images we perform an dry-run deployment
 	// with an ApplyHook
@@ -50,10 +49,10 @@ func getImages(p *platform.Platform) ([]string, error) {
 
 	for name, fn := range order.Phases {
 		if err := fn(p); err != nil {
-			return nil, errors.Wrapf(err, "error deploying %s", name)
+			p.Warnf("Error during dry-run of %s: %v", name, err)
 		}
 	}
-	return images, nil
+	return images
 }
 
 func uniqueStrings(list []string) []string {
@@ -82,10 +81,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			outputFormat, _ := cmd.Flags().GetString("output")
 			p := getPlatform(cmd)
-			images, err := getImages(p)
-			if err != nil {
-				p.Fatalf("Failed to dry-run deploy : %v", err)
-			}
+			images := getImages(p)
 			if p.DockerRegistry != "" {
 				l := len(images)
 				for i := 0; i < l; i++ {
@@ -114,11 +110,8 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
 			if len(imagesToSync) == 0 {
-				images, err := getImages(p)
+				images := getImages(p)
 				imagesToSync = images
-				if err != nil {
-					p.Fatalf("Failed to dry-run deploy : %v", err)
-				}
 			}
 
 			imagesToSync = uniqueStrings(imagesToSync)

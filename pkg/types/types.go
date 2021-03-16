@@ -33,6 +33,19 @@ func (d Disabled) IsDisabled() bool {
 	return d.Version == ""
 }
 
+type AWS struct {
+	ServiceAccount string `yaml:"serviceAccount,omitempty" json:"serviceAccount,omitempty"`
+	Zone           string `yaml:"zone,omitempty" json:"zone,omitempty"`
+	AccessKey      string `yaml:"access_key,omitempty" json:"access_key,omitempty"`
+	SecretKey      string `yaml:"secret_key,omitempty" json:"secret_key,omitempty"`
+}
+
+type GCP struct {
+	Project        string `yaml:"project,omitempty" json:"project,omitempty"`
+	ServiceAccount string `yaml:"serviceAccount,omitempty" json:"serviceAccount,omitempty"`
+	Zone           string `yaml:"zone,omitempty" json:"zone,omitempty"`
+}
+
 type CertManager struct {
 	Version string `yaml:"version" json:"version"`
 
@@ -376,6 +389,7 @@ type Kubernetes struct {
 type Kind struct {
 	PortMappings map[string]int32 `yaml:"portMappings,omitempty" json:"portMappings,omitempty"`
 	WorkerCount  int              `yaml:"workerCount,omitempty" json:"workerCount,omitempty"`
+	Image        string           `yaml:"image,omitempty" json:"image,omitempty"`
 }
 
 // UnmarshalYAML is used to customize the YAML unmarshalling of

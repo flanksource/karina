@@ -195,7 +195,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.18.8
+          - v1.18.15
         suite:
           - minimal
           # - minimal-antrea
@@ -232,6 +232,7 @@ jobs:
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+          KIND_IMAGE: harbor.lab.flanksource/docker.io/kindest/node
         run: ./test/test.sh
       - name: Upload test results
         if: ${{ always() }}
@@ -249,7 +250,7 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: failure()
-        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+        run: .bin/kind export logs --name $(.bin/kind cluster get) artifacts/kind-logs
       - name: Upload Kind logs
         if: failure()
         uses: actions/upload-artifact@v2
@@ -257,15 +258,15 @@ jobs:
           if-no-files-found: ignore
           name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
-      - name: Update badge
-        uses: RubbaBoy/BYOB@v1.2.0
-        if: github.ref == 'refs/heads/master'
-        with:
-          NAME: ${{matrix.k8s}}-${{matrix.suite}}
-          ICON: "github"
-          STATUS: ${{ steps.e2e.outcome }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COLOR: ${{ fromJSON('["green","red"]')[ steps.e2e.outcome  == 'failure' ] }}
+      # - name: Update badge
+      #   uses: RubbaBoy/BYOB@v1.2.0
+      #   if: github.ref == 'refs/heads/master'
+      #   with:
+      #     NAME: ${{matrix.k8s}}-${{matrix.suite}}
+      #     ICON: "github"
+      #     STATUS: ${{ steps.e2e.outcome }}
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     COLOR: ${{ fromJSON('["green","red"]')[ steps.e2e.outcome  == 'failure' ] }}
   golangci:
     name: lint
     runs-on: ubuntu-20.04
