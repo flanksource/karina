@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/flanksource/commons/exec"
@@ -80,11 +81,16 @@ func KindCluster(p *platform.Platform) error {
 			Protocol:      kindapi.PortMappingProtocolTCP,
 		})
 	}
+	if p.Kind.Image == "" {
+		p.Kind.Image = fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version)
+	} else if !strings.Contains(p.Kind.Image, ":") {
+		p.Kind.Image = fmt.Sprintf("%s:%s", p.Kind.Image, p.Kubernetes.Version)
+	}
 
 	nodes := []kindapi.Node{
 		{
 			Role:                 "control-plane",
-			Image:                fmt.Sprintf("kindest/node:%s", p.Kubernetes.Version),
+			Image:                p.Kind.Image,
 			ExtraPortMappings:    portMappings,
 			KubeadmConfigPatches: kubeadmPatches,
 			ExtraMounts:          extraMounts,
