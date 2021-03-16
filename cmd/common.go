@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -164,7 +165,11 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 		Source: path,
 	}
 
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	reader := bytes.NewReader(data)
+	decoder := yaml.NewDecoder(reader)
+	decoder.KnownFields(true)
+
+	if err := decoder.Decode(&cfg); err != nil {
 		return errors.Wrap(err, "Failed to parse YAML")
 	}
 
