@@ -1,3 +1,4 @@
+namespace: platform-system
 bases:
   - github.com/argoproj/argo-rollouts/manifests/base?ref=v0.10.2
   - github.com/argoproj/argo-rollouts/manifests/role?ref=v0.10.2

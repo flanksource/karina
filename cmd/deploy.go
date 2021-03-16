@@ -87,7 +87,7 @@ func init() {
 			}
 
 			for name, fn := range phases {
-				p.Debugf("Deploying %s", name)
+				p.Tracef("Deploying %s", name)
 				if err := fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
 					failed = true

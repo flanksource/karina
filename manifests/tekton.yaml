@@ -418,6 +418,7 @@ spec:
   conversion:
     strategy: Webhook
     webhookClientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: tekton-pipelines-webhook
         namespace: tekton-pipelines
@@ -456,6 +457,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: tekton-pipelines-webhook
         namespace: tekton-pipelines
@@ -473,6 +475,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: tekton-pipelines-webhook
         namespace: tekton-pipelines
@@ -490,6 +493,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: tekton-pipelines-webhook
         namespace: tekton-pipelines

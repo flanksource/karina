@@ -529,7 +529,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-cainjector
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager-cainjector
     namespace: cert-manager
 ---
@@ -547,7 +548,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-issuers
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager
     namespace: cert-manager
 ---
@@ -565,7 +567,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-clusterissuers
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager
     namespace: cert-manager
 ---
@@ -583,7 +586,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-certificates
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager
     namespace: cert-manager
 ---
@@ -601,7 +605,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-orders
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager
     namespace: cert-manager
 ---
@@ -619,7 +624,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-challenges
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager
     namespace: cert-manager
 ---
@@ -637,7 +643,8 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-ingress-shim
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager
     namespace: cert-manager
 ---
@@ -713,6 +720,7 @@ rules:
       - ""
     resourceNames:
       - cert-manager-webhook-ca
+      - cert-manager-webhook
     resources:
       - secrets
     verbs:
@@ -742,7 +750,8 @@ roleRef:
   kind: Role
   name: cert-manager-cainjector:leaderelection
 subjects:
-  - kind: ServiceAccount
+  - apiGroup: ""
+    kind: ServiceAccount
     name: cert-manager-cainjector
     namespace: cert-manager
 ---
@@ -821,6 +830,7 @@ spec:
   ports:
     - name: https
       port: 443
+      protocol: TCP
       targetPort: 10250
   selector:
     app.kubernetes.io/component: webhook
@@ -864,7 +874,7 @@ spec:
                   fieldPath: metadata.namespace
           image: quay.io/jetstack/cert-manager-cainjector:{{.certmanager.version}}
           imagePullPolicy: IfNotPresent
-          name: cert-manager
+          name: cert-manager-cainjector
           resources: {}
       serviceAccountName: cert-manager-cainjector
 ---

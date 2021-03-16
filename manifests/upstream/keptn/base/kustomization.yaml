@@ -3,7 +3,7 @@ kind: Kustomization
 
 commonLabels:
   app.kubernetes.io/part-of: keptn
-
+namespace: keptn
 resources:
   # NATS (bundled with keptn helm chart)
   - ../helm/generated_templates/keptn/charts/control-plane/charts/nats/templates/configmap.yaml
@@ -29,10 +29,10 @@ patches:
       - op: remove
         path: /data
       - op: add
-        path: /stringData
+        path: /data
         value:
-          BASIC_AUTH_PASSWORD: '{{- kget "secret/keptn/bridge-credentials" "BASIC_AUTH_PASSWORD" | default (random.AlphaNum 22) -}}'
-          BASIC_AUTH_USERNAME: keptn
+          BASIC_AUTH_PASSWORD: '{{- kget "secret/keptn/bridge-credentials" "BASIC_AUTH_PASSWORD" | default (random.AlphaNum 22) | base64.Encode -}}'
+          BASIC_AUTH_USERNAME: '{{- print "keptn" | base64.Encode -}}'
   - target:
       kind: Secret
       name: keptn-api-token
@@ -40,9 +40,9 @@ patches:
       - op: remove
         path: /data
       - op: add
-        path: /stringData
+        path: /data
         value:
-          keptn-api-token: '{{- kget "secret/keptn/keptn-api-token" "keptn-api-token" | default (random.AlphaNum 47) -}}'
+          keptn-api-token: '{{- kget "secret/keptn/keptn-api-token" "keptn-api-token" | default (random.AlphaNum 47) | base64.Encode -}}'
 
 patchesStrategicMerge:
   - mongodb-datastore-patch.yaml

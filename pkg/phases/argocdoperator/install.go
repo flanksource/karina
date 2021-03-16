@@ -10,12 +10,12 @@ const (
 
 func Deploy(platform *platform.Platform) error {
 	if platform.ArgocdOperator.IsDisabled() {
-		return platform.DeleteSpecs("", "argocd-operator.yaml")
+		return platform.DeleteSpecs(Namespace, "argocd-operator.yaml", "argocd-rbac.yaml")
 	}
 
 	if err := platform.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}
 
-	return platform.ApplySpecs(Namespace, "argocd-operator.yaml")
+	return platform.ApplySpecs(Namespace, "argocd-operator.yaml", "argocd-rbac.yaml")
 }

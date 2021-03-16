@@ -40,7 +40,6 @@ type ClusterResponseMember struct {
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.PostgresOperator.IsDisabled() {
-		test.Skipf("postgres-operator", "Postgres operator is disabled")
 		return
 	}
 	client, _ := p.GetClientset()
@@ -52,10 +51,6 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 func TestE2E(p *platform.Platform, test *console.TestResults) {
 	testName := "postgres-operator-e2e"
-	if p.PostgresOperator.IsDisabled() {
-		test.Skipf(testName, "Postgres operator is disabled")
-		return
-	}
 	cluster1 := pgapi.NewClusterConfig(utils.RandomString(6), "test", "e2e_db")
 	cluster1.BackupSchedule = "*/1 * * * *"
 	cluster1Name := "postgres-" + cluster1.Name

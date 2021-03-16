@@ -454,12 +454,15 @@ spec:
         - name: lib-modules
           hostPath:
             path: /lib/modules
+            type: ""
         - name: var-run-calico
           hostPath:
             path: /var/run/calico
+            type: ""
         - name: var-lib-calico
           hostPath:
             path: /var/lib/calico
+            type: ""
         - name: xtables-lock
           hostPath:
             path: /run/xtables.lock
@@ -468,9 +471,11 @@ spec:
         - name: cni-bin-dir
           hostPath:
             path: /opt/cni/bin
+            type: ""
         - name: cni-net-dir
           hostPath:
             path: /etc/cni/net.d
+            type: ""
         # Used to create per-pod Unix Domain Sockets
         - name: policysync
           hostPath:
@@ -523,6 +528,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
         - name: calico-kube-controllers
+          imagePullPolicy: IfNotPresent
           image: docker.io/calico/kube-controllers:{{.calico.version | default "v3.8.2"}}
           env:
             # Choose which controllers to run.
@@ -531,10 +537,21 @@ spec:
             - name: DATASTORE_TYPE
               value: kubernetes
           readinessProbe:
+            failureThreshold: 3
+            timeoutSeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
             exec:
               command:
                 - /usr/bin/check-status
                 - -r
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
 
 ---
 apiVersion: v1

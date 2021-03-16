@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/flanksource/commons/logger"
+	"github.com/thoas/go-funk"
 )
 
 type Route53Client struct {
@@ -40,6 +41,10 @@ func getResourceRecords(records ...string) []*route53.ResourceRecord {
 	return out
 }
 
+func normalize(name string) string {
+	return strings.Replace(name, "\\052", "*", 1)
+}
+
 func (r53 *Route53Client) Append(domain string, records ...string) error {
 	existing, err := r53.Get(domain)
 	if err != nil {
@@ -53,7 +58,9 @@ func (r53 *Route53Client) Get(domain string) ([]string, error) {
 		domain += "."
 	}
 
+	a := "A"
 	output, err := r53.svc.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+		StartRecordType: &a,
 		HostedZoneId:    aws.String(r53.HostedZoneID),
 		StartRecordName: aws.String(domain),
 	})
@@ -63,7 +70,7 @@ func (r53 *Route53Client) Get(domain string) ([]string, error) {
 
 	var records []string
 	for _, set := range output.ResourceRecordSets {
-		if *set.Name != domain {
+		if normalize(*set.Name) != domain || *set.Type != a {
 			continue
 		}
 		for _, record := range set.ResourceRecords {
@@ -99,6 +106,11 @@ func (r53 *Route53Client) Update(domain string, records ...string) error {
 	_, err := r53.svc.ChangeResourceRecordSets(input)
 	return err
 }
+
 func (r53 *Route53Client) Delete(domain string, records ...string) error {
-	return nil
+	existing, err := r53.Get(domain)
+	if err != nil {
+		return fmt.Errorf("error getting existing records for domain %s, %v", domain, err)
+	}
+	return r53.Update(domain, funk.Subtract(existing, records).([]string)...)
 }

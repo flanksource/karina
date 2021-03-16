@@ -60,9 +60,6 @@ func Install(p *platform.Platform) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate kubeconfig for multi-cluster access: %v", err)
 	}
-	if p.PlatformConfig.Trace {
-		p.Infof("kubeconfig file is:\n%v", string(kubeConfig))
-	}
 	err = p.CreateOrUpdateSecret("kube-web-view-clusters", Namespace, map[string][]byte{
 		"config": kubeConfig,
 	})

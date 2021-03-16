@@ -39,7 +39,8 @@ type CertManager struct {
 	// Details of a vault server to use for signing ingress certificates
 	Vault *VaultClient `yaml:"vault,omitempty" json:"vault,omitempty"`
 	// Details of a Letsencrypt issuer to use for signing ingress certificates
-	Letsencrypt *LetsencryptIssuer `yaml:"letsencrypt,omitempty" json:"letsencrypt,omitempty"`
+	Letsencrypt     *LetsencryptIssuer `yaml:"letsencrypt,omitempty" json:"letsencrypt,omitempty"`
+	DefaultIssuerCA string             `yaml:"-" json:"-"`
 }
 
 type VaultClient struct {
@@ -685,11 +686,12 @@ type ThanosE2E struct {
 
 type Filebeat struct {
 	Disabled      `yaml:",inline" json:",inline"`
-	Name          string      `yaml:"name" json:"name"`
-	Index         string      `yaml:"index" json:"index"`
-	Prefix        string      `yaml:"prefix" json:"prefix"`
-	Elasticsearch *Connection `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
-	Logstash      *Connection `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	Name          string                 `yaml:"name" json:"name"`
+	Index         string                 `yaml:"index" json:"index"`
+	Prefix        string                 `yaml:"prefix" json:"prefix"`
+	Elasticsearch *Connection            `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
+	Logstash      *Connection            `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	SSL           map[string]interface{} `yaml:"ssl,omitempty" json:"ssl,omitempty"`
 }
 
 type Journalbeat struct {

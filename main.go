@@ -28,6 +28,7 @@ func main() {
 		cmd.APIDocs,
 		cmd.Apply,
 		cmd.Backup,
+		cmd.BurninController,
 		cmd.CA,
 		cmd.Cleanup,
 		cmd.CleanupJobs,

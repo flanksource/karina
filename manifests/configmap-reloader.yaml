@@ -5,7 +5,6 @@ metadata:
   labels:
     app: reloader
   name: reloader-role
-  namespace: default
 rules:
   - apiGroups:
       - ""
@@ -44,7 +43,6 @@ metadata:
   labels:
     app: reloader
   name: reloader-role-binding
-  namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

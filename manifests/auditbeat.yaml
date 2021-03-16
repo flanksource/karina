@@ -91,7 +91,7 @@ spec:
         # schedule on dedicated node groups
         - key: node.kubernetes.io/group
           effect: NoSchedule
-          opertator: Exists
+          operator: Exists
       terminationGracePeriodSeconds: 30
       hostPID: true # Required by auditd module
       dnsPolicy: ClusterFirstWithHostNet

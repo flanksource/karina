@@ -151,12 +151,15 @@ spec:
             privileged: true
           ports:
             - containerPort: 53
+              hostPort: 53
               name: dns
               protocol: UDP
             - containerPort: 53
+              hostPort: 53
               name: dns-tcp
               protocol: TCP
             - containerPort: 9253
+              hostPort: 9253
               name: metrics
               protocol: TCP
           livenessProbe:

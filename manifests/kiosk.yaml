@@ -100,7 +100,7 @@ spec:
     app: kiosk
 
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: kiosk
@@ -194,6 +194,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: kiosk
         namespace: platform-system
@@ -223,6 +224,7 @@ webhooks:
   - admissionReviewVersions:
       - v1beta1
     clientConfig:
+      caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
       service:
         name: kiosk
         namespace: platform-system

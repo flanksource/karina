@@ -118,7 +118,6 @@ spec:
 ---
 apiVersion: scheduling.k8s.io/v1
 description: This priority class should be used for canary pods only.
-globalDefault: false
 kind: PriorityClass
 metadata:
   name: canary-checker-priority
@@ -189,10 +188,12 @@ spec:
       volumes:
         - hostPath:
             path: /var/run/docker.sock
+            type: ""
           name: dockersock
         - name: containerdsock
           hostPath:
             path: /run/containerd/containerd.sock
+            type: ""
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -205,14 +206,6 @@ spec:
   endpoints:
     - interval: 30s
       targetPort: 8080
-  honorLabels: true
-  metricRelabelings:
-        - regex: pod
-          action: labeldrop
-        - regex: container
-          action: labeldrop
-        - regex: service
-          action: labeldrop
   namespaceSelector:
     matchNames:
       - platform-system

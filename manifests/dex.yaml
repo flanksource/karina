@@ -14,8 +14,8 @@ spec:
     metadata:
       labels:
         app: dex
-    annotations:
-      reload/all: "true" #restart on cm/secret change
+      annotations:
+        reload/all: "true" #restart on cm/secret change
     spec:
       serviceAccountName: dex
       containers:
@@ -32,6 +32,7 @@ spec:
           ports:
             - name: https
               containerPort: 443
+              protocol: "TCP"
           volumeMounts:
             - name: config
               mountPath: /etc/dex/cfg
@@ -52,13 +53,14 @@ spec:
         - name: config
           configMap:
             name: dex
+            defaultMode: 420
             items:
               - key: dex.cfg
                 path: config.yaml
         - name: tls
           secret:
             secretName: dex-tls
-
+            defaultMode: 420
 ---
 apiVersion: v1
 kind: Service

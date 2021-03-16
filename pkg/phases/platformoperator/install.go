@@ -50,16 +50,15 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	if err := platform.Apply(Namespace, webhooks.NewHook("clusterresourcequotas-validation-v1.platform.flanksource.com", "/validate-clusterresourcequota-platform-flanksource-com-v1").
+	return platform.Apply(Namespace, webhooks.
+		NewHook("clusterresourcequotas-validation-v1.platform.flanksource.com", "/validate-clusterresourcequota-platform-flanksource-com-v1").
 		MatchKinds("clusterresourcequotas").
-		Add().Build()); err != nil {
-		return err
-	}
-
-	return platform.Apply(Namespace, webhooks.NewHook("resourcequotas-validation-v1.platform.flanksource.com", "/validate-resourcequota-v1").
+		Add().
+		NewHook("resourcequotas-validation-v1.platform.flanksource.com", "/validate-resourcequota-v1").
 		MatchKinds("resourcequotas").
 		Fail().
-		Add().Build())
+		Add().
+		Build())
 }
 
 func deployOperator(platform *platform.Platform) error {

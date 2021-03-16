@@ -45,7 +45,6 @@ func (e Error) String() string {
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.Gatekeeper.IsDisabled() {
-		test.Skipf(Namespace, "Gatekeeper is not configured")
 		return
 	}
 
@@ -89,12 +88,10 @@ type AuditResourceViolation struct {
 func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 	testName := Namespace + "-e2e"
 	if p.Gatekeeper.IsDisabled() {
-		test.Skipf(testName, "Gatekeeper is not configured")
 		return
 	}
 
 	if p.Gatekeeper.E2E.Fixtures == "" {
-		test.Skipf(testName, "OPA fixtures path not configured under gatekeeper.e2e.fixtures")
 		return
 	}
 
@@ -161,7 +158,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 
 		for _, violation := range config.Violations {
 			timeout := time.Now().Add(120 * time.Second)
-			err = findViolationUntil(p, violation, object, timeout)
+			err = waitForViolation(p, violation, object, timeout)
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -178,7 +175,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 	test.Passf(testName, "All fixtures accepted or rejected as expected")
 }
 
-func findViolationUntil(p *platform.Platform, violation Violation, object *Fixture, timeout time.Time) error {
+func waitForViolation(p *platform.Platform, violation Violation, object *Fixture, timeout time.Time) error {
 	dynamicClient, err := p.GetDynamicClient()
 	if err != nil {
 		return err
@@ -205,15 +202,14 @@ func findViolationUntil(p *platform.Platform, violation Violation, object *Fixtu
 				violation.Kind, object.Kind, object.Metadata.Namespace, object.Metadata.Name)
 		}
 		found, err := findViolation(client, violation, object)
-		p.Debugf("violation: %s found=%t err=%v", violation.Name, found, err)
 		if err != nil {
-			return errors.Wrap(err, "failed to find violation")
+			continue
 		}
 
 		if found {
 			return nil
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 

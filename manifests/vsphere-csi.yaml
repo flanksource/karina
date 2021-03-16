@@ -261,7 +261,7 @@ spec:
             #- name: VSPHERE_CSI_CONFIG
             #  value: "/etc/cloud/csi-vsphere.conf" # here csi-vsphere.conf is the name of the file used for creating secret using "--from-file" flag
             - name: X_CSI_DEBUG
-              value: "true"
+              value: "false"
             - name: LOGGER_LEVEL
               value: "PRODUCTION" # Options: DEVELOPMENT, PRODUCTION
           securityContext:

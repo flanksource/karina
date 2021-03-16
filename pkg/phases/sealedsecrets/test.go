@@ -17,7 +17,6 @@ import (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	if p.SealedSecrets == nil || p.SealedSecrets.Disabled {
-		test.Skipf("sealed-secrets", "sealed-secrets not installed or disabled")
 		return
 	}
 	client, _ := p.GetClientset()

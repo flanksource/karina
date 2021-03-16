@@ -320,7 +320,7 @@ func createMaster(platform *platform.Platform) (types.Machine, error) {
 
 	// reset any cached connection details
 	platform.ResetMasterConnection()
-	if err := platform.WaitFor(); err != nil {
+	if err := platform.WaitForAPIServer(); err != nil {
 		return nil, fmt.Errorf("primary master failed to come up %s ", err)
 	}
 
