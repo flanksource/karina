@@ -102,12 +102,7 @@ func NewIngressClient(p *platform.Platform) (*IngressClient, error) {
 
 	harborURL := "https://" + harborIP
 
-	var base string
-	if strings.HasPrefix(p.Harbor.Version, "v1") {
-		base = "/api"
-	} else {
-		base = "/api/v2.0"
-	}
+	var base = "/api/v2.0"
 	client := &http.Client{Transport: tr}
 	return &IngressClient{
 		Logger: p.Logger,
