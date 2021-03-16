@@ -3,6 +3,7 @@ module github.com/flanksource/karina
 go 1.16
 
 require (
+	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48 // indirect
 	github.com/aws/aws-sdk-go v1.33.18
 	github.com/blang/semver/v4 v4.0.0
 	github.com/coreos/prometheus-operator v0.37.0

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/utils"
-	"github.com/hako/durafmt"
 	minio "github.com/minio/minio-go/v6"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -98,40 +97,26 @@ func (db *PostgresDB) ScheduleBackup(schedule string) error {
 	return db.client.Apply(db.Namespace, job)
 }
 
-func (db *PostgresDB) ListBackups(quiet bool, num int) error {
-	op := db.op.Configuration
-
-	objs := listObjects(db.s3, op.LogicalBackup.S3Bucket, db.Name)
-
-	if !quiet {
-		fmt.Printf("\nURL\tAGE\n")
-	}
-	for idx, o := range objs {
-		url := fmt.Sprintf("s3://%s/%s", op.LogicalBackup.S3Bucket, o.Key)
-		if quiet {
-			fmt.Println(url)
-		} else {
-			age := time.Now().Sub(o.LastModified)
-			ageStr := durafmt.Parse(age).LimitFirstN(1).String()
-			fmt.Printf("%s\t%s\n", url, ageStr)
-		}
-		if num > 0 && idx+1 >= num {
-			break
-		}
-	}
-
-	return nil
+type BackupItem struct {
+	URL          string
+	LastModified time.Time
+	Size         int64
 }
 
-//TODO: avoid duplicate code
-func listObjects(client *minio.Client, bucket, path string) []minio.ObjectInfo {
-	var objects []minio.ObjectInfo
+func (db *PostgresDB) ListBackups() ([]*BackupItem, error) {
+	op := db.op.Configuration
 	doneCh := make(chan struct{})
 	defer close(doneCh)
-	for obj := range client.ListObjectsV2(bucket, path, true, doneCh) {
-		objects = append(objects, obj)
+
+	list := make([]*BackupItem, 0)
+
+	for o := range db.s3.ListObjectsV2(op.LogicalBackup.S3Bucket, db.Name, true, doneCh) {
+		url := fmt.Sprintf("s3://%s/%s", op.LogicalBackup.S3Bucket, o.Key)
+		bi := &BackupItem{URL: url, LastModified: o.LastModified, Size: o.Size}
+		list = append(list, bi)
 	}
-	return objects
+
+	return list, nil
 }
 
 func (db *PostgresDB) Restore(backup string) error {
