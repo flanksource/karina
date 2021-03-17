@@ -1,0 +1,6 @@
+platformOperator:
+  version: v0.6.8
+  defaultRegistry: harbor.lab.flanksource.com
+dockerRegistry: harbor.lab.flanksource.com
+kind:
+  image: harbor.lab.flanksource.com/docker.io/kindest/node:v1.18.15
