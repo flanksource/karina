@@ -402,6 +402,58 @@ spec:
             severity: warning
     - name: kubernetes-resources
       rules:
+        - alert: NodeCPUOverSubscribedWarning
+          annotations:
+            description:
+              Node {{$labels.node}} max container CPU limit exceeds double capacity
+          expr: |
+            sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 2
+          for: 1m
+          labels:
+            severity: warning
+        - alert: NodeCPUOverSubscribedAlarm
+          annotations:
+            description:
+              Node {{$labels.node}} max container CPU limit exceeds triple capacity
+          expr: |
+            sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 3
+          for: 1m
+          labels:
+            severity: critical
+        - alert: NodeMemOverSubscribedWarning
+          annotations:
+            description:
+              Node {{$labels.node}} max container memory limit exceeds double capacity
+          expr: |
+            sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 2
+          for: 1m
+          labels:
+            severity: warning
+        - alert: NodeMemOverSubscribedAlarm
+          annotations:
+            description:
+              Node {{$labels.node}} max container memory limit exceeds triple capacity
+          expr: |
+            sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 3
+          for: 1m
+          labels:
+            severity: critical
+        - alert: NodeCPUUsage
+          annotations:
+            description:
+              Node {{$labels.instance}} CPU usage exceeds 85%
+          expr: |
+            instance:node_cpu:ratio > 0.85
+          labels:
+            severity: warning
+        - alert: NodeMemUsage
+          annotations:
+            description:
+              Node {{$labels.instance}} Memory usage exceeds 85%
+          expr: |
+            instance:node_memory_utilisation:ratio > 0.85
+          labels:
+            severity: warning
         - alert: KubeCPUOvercommit
           annotations:
             message:
@@ -560,6 +612,18 @@ spec:
           for: 15m
           labels:
             severity: warning
+    - name: PodResources
+      rules:
+        - alert: ExcessivePodSurge
+          annotations:
+            description:
+              Container {{$labels.namespace}}/{{$labels.pod}}:{{$labels.container}} has a surge ratio greater than 2
+          expr: |
+            kube_pod_container_resource_limits_cpu_cores{node!=""}  > 1 and kube_pod_container_resource_limits_cpu_cores{node!=""} > 2*kube_pod_container_resource_requests_cpu_cores{node!=""}
+          for: 1m
+          labels:
+            severity: warning
+
     - name: prometheus
       rules:
         - alert: PrometheusBadConfig
