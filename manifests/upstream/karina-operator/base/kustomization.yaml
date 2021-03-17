@@ -1,6 +1,5 @@
 bases:
   - github.com/flanksource/karina/config/operator/manager
 images:
-  - name: flanksource/karina-operator
-    newName: docker.io/flanksource/karina
+  - name: docker.io/flanksource/karina
     newTag: "{{.karinaOperator.version}}"

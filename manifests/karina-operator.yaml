@@ -116,7 +116,7 @@ spec:
         - --log-level=debug
         command:
         - /bin/karina
-        image: docker.io/flanksource/karina:latest
+        image: docker.io/flanksource/karina:{{.karinaOperator.version}}
         imagePullPolicy: IfNotPresent
         name: karina-operator
         resources:
