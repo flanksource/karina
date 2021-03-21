@@ -13,6 +13,8 @@ keptn:
 templateOperator:
   version: v0.1.10
   syncPeriod: 15s
+mongodbOperator:
+  version: v1.6.0
 gitops:
   - name: karina
     helmOperatorVersion: 1.2.0

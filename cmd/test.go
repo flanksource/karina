@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/mongodboperator"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/antrea"
@@ -191,6 +193,7 @@ func init() {
 		"kube-web-view":        kubewebview.TestKubeWebView,
 		"local-path":           localpath.Test,
 		"minio":                minio.Test,
+		"mongodb-operator":     mongodboperator.Test,
 		"monitoring":           monitoring.Test,
 		"nfs":                  nfs.Test,
 		"nginx":                nginx.Test,
