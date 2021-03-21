@@ -56,38 +56,11 @@ func TestE2E(p *platform.Platform, test *console.TestResults) {
 	}
 
 	test.Infof("Checking MongoDB Cluster's health...")
-	client, _ := p.GetClientByKind("PerconaServerMongoDB")
-	timeout := 3 * time.Minute
-	start := time.Now()
-	for {
-		time.Sleep(1 * time.Second)
-		item, err := client.Namespace(testNamespace).Get(context.TODO(), clusterName, metav1.GetOptions{})
-
-		if err != nil {
-			test.Debugf("Unable to get PerconaServerMongoDB/%s: %v", clusterName, err)
-			continue
-		}
-
-		status := item.Object["status"]
-		if status == nil {
-			// Continue waiting if the status field hasn't been populated yet
-			continue
-		}
-
-		state := item.Object["status"].(map[string]interface{})["state"]
-		if state == nil {
-			// Continue waiting if the status.ready field hasn't been populated yet
-			continue
-		} else if state == "ready" {
-			test.Passf(testName, "PerconaServerMongoDB/%s status.state has been updated to ready (by MongoDB Operator)", clusterName)
-			return
-		}
-
-		if start.Add(timeout).Before(time.Now()) {
-			test.Failf(testName, "PerconaServerMongoDB's status.state has been updated to ready (by MongoDB Operator). within allowed time. MongoDB Operator is not running?")
-			return
-		}
+	if _, err := p.WaitForResource("PerconaServerMongoDB", testNamespace, clusterName, 3*time.Minute); err != nil {
+		test.Failf(testName, "MongoDB Cluster %s is not ready within 3 minutes", clusterName)
+		return
 	}
+	test.Passf(testName, "MongoDB Cluster %s is ready within 3 minutes", clusterName)
 }
 
 func removeE2ETestResources(p *platform.Platform, test *console.TestResults) {
