@@ -98,7 +98,7 @@ spec:
       serviceAccountName: quack
       containers:
         - name: quack
-          image: quay.io/pusher/quack:v0.1.0
+          image: quay.io/pusher/quack:{{.quack.version | default "v0.3.4"}}
           imagePullPolicy: Always
           args:
             - --values-configmap=quack-config
