@@ -17,5 +17,5 @@ func Install(p *platform.Platform) error {
 		return err
 	}
 
-	return p.ApplySpecs(Namespace, "redis-operator.yaml")
+	return p.ApplySpecs(Namespace, "redis-operator.yaml", "template/redis-db.yaml.raw")
 }
