@@ -33,7 +33,7 @@ karina leverages a number of other standalone operators built by flanksource:
 * [kommons](https://github.com/flanksource/kommons) as high-level library wrapping client-go
 * [canary-checker](https://github.com/flanksource/canary-checker) for multi-cluster synthetic monitoring of pod scheduling, docker pulls, DNS, ICMP, LDAP, Postgres, HTTP, etc..
 * [template-operator](https://github.com/flanksource/template-operator) for building re-usable CRD's similar to crossplane's [XRD](https://crossplane.io/docs/v0.14/introduction/composition.html)
-* [platform-operator](https://github.com/flanksource/platform-operator) for multi-tenency support
+* [platform-operator](https://github.com/flanksource/platform-operator) for multi-tenancy support
 * [git-operator](https://github.com/flanksource/git-operator) for deploying GitOps tools like Flux and exposing REST interfaces onto of Git.
 
 <hr>
@@ -43,96 +43,6 @@ karina leverages a number of other standalone operators built by flanksource:
 * **Batteries Included** - Most components require just a version to enable and are pre-configured with ingress, LDAP and TLS (managed by cert-manager) due to a shared infrastructure model that includes information such as top-level wild card domain, LDAP/S3 connection details, etc.
 * **Escape Hatches** for when the defaults don't work for you, easily use kustomize patches to configure resource limits, labels, annotations and anything else on any object managed by karina.
 * **Integrated, but independent** - karina works best when used to provision a Kubernetes cluster and then deploy and test a production runtime, but each function can also be used independently, i.e you can run karina e2e tests in an environment that wasn't provisioned or deployed by karina.
-
-### Test Suite
-<table>
-  <tr>
-    <th></th>
-    <th>Minimal</th>
-    <th>Monitoring</th>
-    <th>Antrea</th>
-    <th>Platform</th>
-    <th>NoSQL</th>
-    <th>CI/CD</th>
-    <th>Security</th>
-    <th>Harbor</th>
-    <th>Postgres</th>
-    <th>Elastic</th>
-    <th>Managed</th>
-  </tr>
-  <tr>
-    <td>v1.16</td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.16.9-minimal"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.16.9-monitoring"></img></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>v1.17</td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.17.5-minimal"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.17.5-monitoring"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.17.5-minimal-antrea"></img></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>v1.18</td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-minimal"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-monitoring"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-minimal-antrea"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-platform"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-nosql"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-cicd"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-security"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-harbor2"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-postgres"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-elastic"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/v1.18.6-managed"></img></td>
-  </tr>
-  <tr>
-    <td>Upgrade</td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/upgrade-v1.18.6-minimal"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/upgrade-v1.17.5-monitoring"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/upgrade-v1.17.5-minimal-antrea"></img></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>Self-hosted</td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-minimal"></img></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-monitoring"></img></td>
-    <td></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-platform"></img></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td><img src="https://byob.yarr.is/flanksource/karina/selfhosted-v1.18.8-harbor2"></img></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-</table>
-
-
 
 ### Comparison
 
