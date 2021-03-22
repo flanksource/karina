@@ -49,29 +49,29 @@ metadata:
   name: keptn-configure-bridge
   namespace: keptn
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-  - delete
-  - deletecollection
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-- apiGroups:
-  - ""
-  resourceNames:
-  - bridge-credentials
-  resources:
-  - secrets
-  verbs:
-  - get
-  - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - delete
+      - deletecollection
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resourceNames:
+      - bridge-credentials
+    resources:
+      - secrets
+    verbs:
+      - get
+      - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -83,14 +83,14 @@ metadata:
   name: keptn-manage-configmaps
   namespace: keptn
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - create
-  - update
-  - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - update
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -102,14 +102,14 @@ metadata:
   name: keptn-manage-secrets
   namespace: keptn
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - get
-  - delete
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - get
+      - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -121,14 +121,14 @@ metadata:
   name: keptn-read-metadata
   namespace: keptn
 rules:
-- apiGroups:
-  - extensions
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - get
-  - list
+  - apiGroups:
+      - extensions
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -144,9 +144,9 @@ roleRef:
   kind: Role
   name: keptn-configure-bridge
 subjects:
-- kind: ServiceAccount
-  name: keptn-api-service
-  namespace: keptn
+  - kind: ServiceAccount
+    name: keptn-api-service
+    namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -162,9 +162,9 @@ roleRef:
   kind: Role
   name: keptn-read-metadata
 subjects:
-- kind: ServiceAccount
-  name: keptn-api-service
-  namespace: keptn
+  - kind: ServiceAccount
+    name: keptn-api-service
+    namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -180,9 +180,9 @@ roleRef:
   kind: Role
   name: keptn-manage-secrets
 subjects:
-- kind: ServiceAccount
-  name: keptn-configuration-service
-  namespace: keptn
+  - kind: ServiceAccount
+    name: keptn-configuration-service
+    namespace: keptn
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -198,9 +198,9 @@ roleRef:
   kind: Role
   name: keptn-manage-configmaps
 subjects:
-- kind: ServiceAccount
-  name: keptn-lighthouse-service
-  namespace: keptn
+  - kind: ServiceAccount
+    name: keptn-lighthouse-service
+    namespace: keptn
 ---
 apiVersion: v1
 data:
@@ -414,10 +414,10 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    targetPort: 8080
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
   selector:
     app.kubernetes.io/name: api-gateway-nginx
     app.kubernetes.io/part-of: keptn
@@ -434,10 +434,10 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - name: http
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app.kubernetes.io/name: api-service
     app.kubernetes.io/part-of: keptn
@@ -453,9 +453,9 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 3000
+    - port: 8080
+      protocol: TCP
+      targetPort: 3000
   selector:
     app.kubernetes.io/name: bridge
     app.kubernetes.io/part-of: keptn
@@ -471,9 +471,9 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app.kubernetes.io/name: configuration-service
     app.kubernetes.io/part-of: keptn
@@ -489,9 +489,9 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 8080
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
   selector:
     app.kubernetes.io/name: eventbroker-go
     app.kubernetes.io/part-of: keptn
@@ -508,18 +508,18 @@ metadata:
 spec:
   clusterIP: None
   ports:
-  - name: client
-    port: 4222
-  - name: cluster
-    port: 6222
-  - name: monitor
-    port: 8222
-  - name: metrics
-    port: 7777
-  - name: leafnodes
-    port: 7422
-  - name: gateways
-    port: 7522
+    - name: client
+      port: 4222
+    - name: cluster
+      port: 6222
+    - name: monitor
+      port: 8222
+    - name: metrics
+      port: 7777
+    - name: leafnodes
+      port: 7422
+    - name: gateways
+      port: 7522
   selector:
     app: keptn-nats-cluster
     app.kubernetes.io/part-of: keptn
@@ -535,8 +535,8 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
+    - port: 8080
+      protocol: TCP
   selector:
     app.kubernetes.io/name: lighthouse-service
     app.kubernetes.io/part-of: keptn
@@ -552,8 +552,8 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
+    - port: 8080
+      protocol: TCP
   selector:
     app.kubernetes.io/name: mongodb-datastore
     app.kubernetes.io/part-of: keptn
@@ -569,9 +569,9 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app.kubernetes.io/name: remediation-service
     app.kubernetes.io/part-of: keptn
@@ -587,8 +587,8 @@ metadata:
   namespace: keptn
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
+    - port: 8080
+      protocol: TCP
   selector:
     app.kubernetes.io/name: shipyard-service
     app.kubernetes.io/part-of: keptn
@@ -605,7 +605,7 @@ metadata:
   namespace: keptn
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   resources:
     requests:
       storage: 100Mi
@@ -635,45 +635,45 @@ spec:
         app.kubernetes.io/version: 1.19.4-alpine
     spec:
       containers:
-      - image: docker.io/nginxinc/nginx-unprivileged:1.19.4-alpine
-        livenessProbe:
-          httpGet:
-            path: /nginx-health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        name: api-gateway-nginx
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
-        volumeMounts:
-        - mountPath: /etc/nginx/nginx.conf
-          name: api-nginx-config
-          readOnly: true
-          subPath: nginx.conf
-        - mountPath: /etc/nginx/keptn-endpoints.conf
-          name: api-nginx-config
-          readOnly: true
-          subPath: keptn-endpoints.conf
-        - mountPath: /etc/nginx/keptn-endpoints-pre-0-7.conf
-          name: api-nginx-config
-          readOnly: true
-          subPath: keptn-endpoints-pre-0-7.conf
-        - mountPath: /etc/nginx/keptn-endpoints-pre-1-0.conf
-          name: api-nginx-config
-          readOnly: true
-          subPath: keptn-endpoints-pre-1-0.conf
+        - image: docker.io/nginxinc/nginx-unprivileged:1.19.4-alpine
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          name: api-gateway-nginx
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
+          volumeMounts:
+            - mountPath: /etc/nginx/nginx.conf
+              name: api-nginx-config
+              readOnly: true
+              subPath: nginx.conf
+            - mountPath: /etc/nginx/keptn-endpoints.conf
+              name: api-nginx-config
+              readOnly: true
+              subPath: keptn-endpoints.conf
+            - mountPath: /etc/nginx/keptn-endpoints-pre-0-7.conf
+              name: api-nginx-config
+              readOnly: true
+              subPath: keptn-endpoints-pre-0-7.conf
+            - mountPath: /etc/nginx/keptn-endpoints-pre-1-0.conf
+              name: api-nginx-config
+              readOnly: true
+              subPath: keptn-endpoints-pre-1-0.conf
       serviceAccountName: keptn-default
       volumes:
-      - configMap:
+        - configMap:
+            name: api-nginx-config
           name: api-nginx-config
-        name: api-nginx-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -700,42 +700,42 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: PREFIX_PATH
-          value: ""
-        - name: EVENTBROKER_URI
-          value: event-broker
-        - name: DATASTORE_URI
-          value: mongodb-datastore:8080
-        - name: CONFIGURATION_URI
-          value: configuration-service:8080
-        - name: SECRET_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: keptn-api-token
-              name: keptn-api-token
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: docker.io/keptn/api:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: api-service
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 256Mi
-          requests:
-            cpu: 50m
-            memory: 64Mi
+        - env:
+            - name: PREFIX_PATH
+              value: ""
+            - name: EVENTBROKER_URI
+              value: event-broker
+            - name: DATASTORE_URI
+              value: mongodb-datastore:8080
+            - name: CONFIGURATION_URI
+              value: configuration-service:8080
+            - name: SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: keptn-api-token
+                  name: keptn-api-token
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: docker.io/keptn/api:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: api-service
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
       serviceAccountName: keptn-api-service
 ---
 apiVersion: apps/v1
@@ -763,40 +763,40 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: API_URL
-          value: http://api-gateway-nginx/api
-        - name: API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: keptn-api-token
-              name: keptn-api-token
-        - name: CLI_DOWNLOAD_LINK
-          value: https://github.com/keptn/keptn/releases/tag/0.7.3
-        - name: INTEGRATIONS_PAGE_LINK
-          value: https://get.keptn.sh/integrations.html
-        - name: ENABLE_VERSION_CHECK
-          value: "true"
-        - name: SHOW_API_TOKEN
-          value: "true"
-        - name: KEPTN_INSTALLATION_TYPE
-          value: QUALITY_GATES,CONTINUOUS_OPERATIONS
-        envFrom:
-        - secretRef:
-            name: bridge-credentials
-            optional: true
-        image: docker.io/keptn/bridge2:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        name: bridge
-        ports:
-        - containerPort: 3000
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 64Mi
+        - env:
+            - name: API_URL
+              value: http://api-gateway-nginx/api
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: keptn-api-token
+                  name: keptn-api-token
+            - name: CLI_DOWNLOAD_LINK
+              value: https://github.com/keptn/keptn/releases/tag/0.7.3
+            - name: INTEGRATIONS_PAGE_LINK
+              value: https://get.keptn.sh/integrations.html
+            - name: ENABLE_VERSION_CHECK
+              value: "true"
+            - name: SHOW_API_TOKEN
+              value: "true"
+            - name: KEPTN_INSTALLATION_TYPE
+              value: QUALITY_GATES,CONTINUOUS_OPERATIONS
+          envFrom:
+            - secretRef:
+                name: bridge-credentials
+                optional: true
+          image: docker.io/keptn/bridge2:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          name: bridge
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
       serviceAccountName: keptn-default
 ---
 apiVersion: apps/v1
@@ -826,77 +826,80 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: MONGODB_USER
-          value: keptn
-        - name: MONGODB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mongodb-keptn-credentials
-        - name: PREFIX_PATH
-          value: ""
-        - name: MONGODB_HOST
-          value: mongodb:27017
-        - name: MONGO_DB_NAME
-          value: keptn
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: docker.io/keptn/configuration-service:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: configuration-service
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 64Mi
-        volumeMounts:
-        - mountPath: /data/config
-          name: configuration-volume
-      - env:
-        - name: PUBSUB_URL
-          value: nats://keptn-nats-cluster
-        - name: PUBSUB_TOPIC
-          value: sh.keptn.>
-        - name: PUBSUB_RECIPIENT
-          value: 127.0.0.1
-        - name: PUBSUB_RECIPIENT_PATH
-          value: /v1/event
-        image: docker.io/keptn/distributor:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: distributor
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
+        - env:
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: user
+                  name: mongodb-keptn-credentials
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: mongodb-keptn-credentials
+            - name: PREFIX_PATH
+              value: ""
+            - name: MONGODB_HOST
+              value: mongodb:27017
+            - name: MONGO_DB_NAME
+              value: keptn
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: docker.io/keptn/configuration-service:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: configuration-service
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          volumeMounts:
+            - mountPath: /data/config
+              name: configuration-volume
+        - env:
+            - name: PUBSUB_URL
+              value: nats://keptn-nats-cluster
+            - name: PUBSUB_TOPIC
+              value: sh.keptn.>
+            - name: PUBSUB_RECIPIENT
+              value: 127.0.0.1
+            - name: PUBSUB_RECIPIENT_PATH
+              value: /v1/event
+          image: docker.io/keptn/distributor:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: distributor
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
       serviceAccountName: keptn-configuration-service
       volumes:
-      - name: configuration-volume
-        persistentVolumeClaim:
-          claimName: configuration-volume
+        - name: configuration-volume
+          persistentVolumeClaim:
+            claimName: configuration-volume
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -923,29 +926,29 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: PUBSUB_URL
-          value: nats://keptn-nats-cluster
-        - name: PUBSUB_IMPL
-          value: nats
-        image: docker.io/keptn/eventbroker-go:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: eventbroker-go
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
+        - env:
+            - name: PUBSUB_URL
+              value: nats://keptn-nats-cluster
+            - name: PUBSUB_IMPL
+              value: nats
+          image: docker.io/keptn/eventbroker-go:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: eventbroker-go
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
       serviceAccountName: keptn-default
 ---
 apiVersion: apps/v1
@@ -973,62 +976,62 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: EVENTBROKER
-          value: http://event-broker/keptn
-        - name: CONFIGURATION_SERVICE
-          value: http://configuration-service:8080
-        - name: MONGODB_DATASTORE
-          value: mongodb-datastore:8080
-        - name: ENVIRONMENT
-          value: production
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: docker.io/keptn/lighthouse-service:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: lighthouse-service
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1024Mi
-          requests:
-            cpu: 50m
-            memory: 128Mi
-      - env:
-        - name: PUBSUB_URL
-          value: nats://keptn-nats-cluster
-        - name: PUBSUB_TOPIC
-          value: sh.keptn.>
-        - name: PUBSUB_RECIPIENT
-          value: 127.0.0.1
-        image: docker.io/keptn/distributor:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: distributor
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
+        - env:
+            - name: EVENTBROKER
+              value: http://event-broker/keptn
+            - name: CONFIGURATION_SERVICE
+              value: http://configuration-service:8080
+            - name: MONGODB_DATASTORE
+              value: mongodb-datastore:8080
+            - name: ENVIRONMENT
+              value: production
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: docker.io/keptn/lighthouse-service:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: lighthouse-service
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1024Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+        - env:
+            - name: PUBSUB_URL
+              value: nats://keptn-nats-cluster
+            - name: PUBSUB_TOPIC
+              value: sh.keptn.>
+            - name: PUBSUB_RECIPIENT
+              value: 127.0.0.1
+          image: docker.io/keptn/distributor:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: distributor
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
       serviceAccountName: keptn-lighthouse-service
 ---
 apiVersion: apps/v1
@@ -1058,67 +1061,67 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: MONGODB_DATABASE
-          value: keptn
-        - name: MONGODB_USER
-          value: keptn
-        - name: MONGODB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mongodb-keptn-credentials
-        - name: MONGODB_HOST
-          value: mongodb-keptn:27017
-        - name: PREFIX_PATH
-          value: ""
-        image: docker.io/keptn/mongodb-datastore:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: mongodb-datastore
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
-      - env:
-        - name: PUBSUB_IMPL
-          value: nats
-        - name: PUBSUB_URL
-          value: nats://keptn-nats-cluster
-        - name: PUBSUB_TOPIC
-          value: sh.keptn.>
-        - name: PUBSUB_RECIPIENT
-          value: 127.0.0.1
-        - name: PUBSUB_RECIPIENT_PATH
-          value: /event
-        image: docker.io/keptn/distributor:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: distributor
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
+        - env:
+            - name: MONGODB_DATABASE
+              value: keptn
+            - name: MONGODB_USER
+              value: keptn
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: mongodb-keptn-credentials
+            - name: MONGODB_HOST
+              value: mongodb-keptn:27017
+            - name: PREFIX_PATH
+              value: ""
+          image: docker.io/keptn/mongodb-datastore:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: mongodb-datastore
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
+        - env:
+            - name: PUBSUB_IMPL
+              value: nats
+            - name: PUBSUB_URL
+              value: nats://keptn-nats-cluster
+            - name: PUBSUB_TOPIC
+              value: sh.keptn.>
+            - name: PUBSUB_RECIPIENT
+              value: 127.0.0.1
+            - name: PUBSUB_RECIPIENT_PATH
+              value: /event
+          image: docker.io/keptn/distributor:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: distributor
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
       serviceAccountName: keptn-default
 ---
 apiVersion: apps/v1
@@ -1146,60 +1149,60 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: EVENTBROKER
-          value: http://event-broker/keptn
-        - name: CONFIGURATION_SERVICE
-          value: http://configuration-service:8080
-        - name: MONGODB_DATASTORE
-          value: http://mongodb-datastore:8080
-        - name: ENVIRONMENT
-          value: production
-        - name: WAIT_TIME_MINUTES
-          value: 10m
-        image: docker.io/keptn/remediation-service:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: remediation-service
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1024Mi
-          requests:
-            cpu: 50m
-            memory: 64Mi
-      - env:
-        - name: PUBSUB_URL
-          value: nats://keptn-nats-cluster
-        - name: PUBSUB_TOPIC
-          value: sh.keptn.>
-        - name: PUBSUB_RECIPIENT
-          value: 127.0.0.1
-        image: docker.io/keptn/distributor:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: distributor
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
+        - env:
+            - name: EVENTBROKER
+              value: http://event-broker/keptn
+            - name: CONFIGURATION_SERVICE
+              value: http://configuration-service:8080
+            - name: MONGODB_DATASTORE
+              value: http://mongodb-datastore:8080
+            - name: ENVIRONMENT
+              value: production
+            - name: WAIT_TIME_MINUTES
+              value: 10m
+          image: docker.io/keptn/remediation-service:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: remediation-service
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1024Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+        - env:
+            - name: PUBSUB_URL
+              value: nats://keptn-nats-cluster
+            - name: PUBSUB_TOPIC
+              value: sh.keptn.>
+            - name: PUBSUB_RECIPIENT
+              value: 127.0.0.1
+          image: docker.io/keptn/distributor:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: distributor
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
       serviceAccountName: keptn-default
 ---
 apiVersion: apps/v1
@@ -1227,56 +1230,56 @@ spec:
         app.kubernetes.io/version: 0.7.3
     spec:
       containers:
-      - env:
-        - name: CONFIGURATION_SERVICE
-          value: http://configuration-service:8080
-        - name: EVENTBROKER
-          value: http://event-broker/keptn
-        - name: API
-          value: ws://api-service:8080/websocket
-        image: docker.io/keptn/shipyard-service:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: shipyard-service
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
-      - env:
-        - name: PUBSUB_URL
-          value: nats://keptn-nats-cluster
-        - name: PUBSUB_TOPIC
-          value: sh.keptn.internal.event.project.create,sh.keptn.internal.event.project.delete,sh.keptn.internal.event.service.create,sh.keptn.internal.event.service.delete
-        - name: PUBSUB_RECIPIENT
-          value: 127.0.0.1
-        image: docker.io/keptn/distributor:{{.keptn.version}}
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 10999
-          initialDelaySeconds: 45
-          periodSeconds: 5
-        name: distributor
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 32Mi
+        - env:
+            - name: CONFIGURATION_SERVICE
+              value: http://configuration-service:8080
+            - name: EVENTBROKER
+              value: http://event-broker/keptn
+            - name: API
+              value: ws://api-service:8080/websocket
+          image: docker.io/keptn/shipyard-service:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: shipyard-service
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
+        - env:
+            - name: PUBSUB_URL
+              value: nats://keptn-nats-cluster
+            - name: PUBSUB_TOPIC
+              value: sh.keptn.internal.event.project.create,sh.keptn.internal.event.project.delete,sh.keptn.internal.event.service.create,sh.keptn.internal.event.service.delete
+            - name: PUBSUB_RECIPIENT
+              value: 127.0.0.1
+          image: docker.io/keptn/distributor:{{.keptn.version}}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10999
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          name: distributor
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
       serviceAccountName: keptn-default
 ---
 apiVersion: apps/v1
@@ -1303,97 +1306,97 @@ spec:
         chart: nats-0.4.2
     spec:
       containers:
-      - command:
-        - nats-server
-        - --config
-        - /etc/nats-config/nats.conf
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: CLUSTER_ADVERTISE
-          value: $(POD_NAME).keptn-nats-cluster.$(POD_NAMESPACE).svc
-        image: docker.io/nats:2.1.7-alpine3.11
-        imagePullPolicy: IfNotPresent
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8222
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-        name: nats
-        ports:
-        - containerPort: 4222
-          name: client
-        - containerPort: 7422
-          name: leafnodes
-        - containerPort: 7522
-          name: gateways
-        - containerPort: 6222
-          name: cluster
-        - containerPort: 8222
-          name: monitor
-        - containerPort: 7777
+        - command:
+            - nats-server
+            - --config
+            - /etc/nats-config/nats.conf
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLUSTER_ADVERTISE
+              value: $(POD_NAME).keptn-nats-cluster.$(POD_NAMESPACE).svc
+          image: docker.io/nats:2.1.7-alpine3.11
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8222
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          name: nats
+          ports:
+            - containerPort: 4222
+              name: client
+            - containerPort: 7422
+              name: leafnodes
+            - containerPort: 7522
+              name: gateways
+            - containerPort: 6222
+              name: cluster
+            - containerPort: 8222
+              name: monitor
+            - containerPort: 7777
+              name: metrics
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8222
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /etc/nats-config
+              name: config-volume
+            - mountPath: /var/run/nats
+              name: pid
+        - command:
+            - nats-server-config-reloader
+            - -pid
+            - /var/run/nats/nats.pid
+            - -config
+            - /etc/nats-config/nats.conf
+          image: docker.io/connecteverything/nats-server-config-reloader:0.6.0
+          imagePullPolicy: IfNotPresent
+          name: reloader
+          volumeMounts:
+            - mountPath: /etc/nats-config
+              name: config-volume
+            - mountPath: /var/run/nats
+              name: pid
+        - args:
+            - -connz
+            - -routez
+            - -subz
+            - -varz
+            - -prefix=nats
+            - -use_internal_server_id
+            - http://localhost:8222/
+          image: docker.io/synadia/prometheus-nats-exporter:0.5.0
+          imagePullPolicy: IfNotPresent
           name: metrics
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8222
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-        volumeMounts:
-        - mountPath: /etc/nats-config
-          name: config-volume
-        - mountPath: /var/run/nats
-          name: pid
-      - command:
-        - nats-server-config-reloader
-        - -pid
-        - /var/run/nats/nats.pid
-        - -config
-        - /etc/nats-config/nats.conf
-        image: docker.io/connecteverything/nats-server-config-reloader:0.6.0
-        imagePullPolicy: IfNotPresent
-        name: reloader
-        volumeMounts:
-        - mountPath: /etc/nats-config
-          name: config-volume
-        - mountPath: /var/run/nats
-          name: pid
-      - args:
-        - -connz
-        - -routez
-        - -subz
-        - -varz
-        - -prefix=nats
-        - -use_internal_server_id
-        - http://localhost:8222/
-        image: docker.io/synadia/prometheus-nats-exporter:0.5.0
-        imagePullPolicy: IfNotPresent
-        name: metrics
-        ports:
-        - containerPort: 7777
-          name: metrics
+          ports:
+            - containerPort: 7777
+              name: metrics
       shareProcessNamespace: true
       terminationGracePeriodSeconds: 60
       volumes:
-      - configMap:
-          name: keptn-nats-cluster-config
-        name: config-volume
-      - emptyDir: {}
-        name: pid
+        - configMap:
+            name: keptn-nats-cluster-config
+          name: config-volume
+        - emptyDir: {}
+          name: pid
 ---
 apiVersion: db.flanksource.com/v1
 kind: MongoDB
