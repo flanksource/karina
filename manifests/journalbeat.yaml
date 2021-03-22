@@ -15,7 +15,7 @@ data:
         seek: cursor
     setup.dashboards.enabled: false
     setup.kibana:
-      host: "{{ .packetbeat.kibana.url }}:{{ .packetbeat.kibana.port }}"
+      host: "{{ .journalbeat.kibana.url }}:{{ .journalbeat.kibana.port }}"
       username: "${ELASTIC_USERNAME}"
       password: "${ELASTIC_PASSWORD}"
       protocol: https
