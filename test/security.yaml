@@ -51,7 +51,6 @@ vault:
   region: us-east-1
   accessKey: !!env AWS_ACCESS_KEY_ID
   secretKey: !!env AWS_SECRET_ACCESS_KEY
-  pkiPath: "pki/sign/ingress"
   groupMappings:
     "admins":
       - admin
