@@ -19,7 +19,6 @@ const (
 func Test(p *platform.Platform, test *console.TestResults) {
 	testName := "mongodb-operator"
 	if p.MongodbOperator.IsDisabled() {
-		test.Skipf(testName, "MongoDB Operator is disabled")
 		return
 	}
 
