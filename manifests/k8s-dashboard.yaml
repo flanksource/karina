@@ -303,6 +303,15 @@ metadata:
   annotations:
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    {{ if index . "oauth2Proxy" }}
+    {{ if not (index .oauth2Proxy "disabled") }}
+    {{ if eq (len .ldap.userGroups) 0}}
+    platform.flanksource.com/restrict-to-groups: {{ .ldap.adminGroup }}
+    {{ else }}
+    platform.flanksource.com/restrict-to-groups: {{ .ldap.adminGroup }};{{ join .ldap.userGroups ";" }}
+    {{ end }}
+    {{ end }}
+    {{ end }}
 spec:
   tls:
     - secretName: dashboard-tls

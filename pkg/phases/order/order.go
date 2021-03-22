@@ -15,6 +15,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/csi/localpath"
 	"github.com/flanksource/karina/pkg/phases/csi/nfs"
 	"github.com/flanksource/karina/pkg/phases/csi/s3"
+	"github.com/flanksource/karina/pkg/phases/dashboard"
 	"github.com/flanksource/karina/pkg/phases/dex"
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
@@ -69,6 +70,7 @@ var Phases = map[string]DeployFn{
 	"elasticsearch":        elasticsearch.Deploy,
 	"eventrouter":          eventrouter.Deploy,
 	"externaldns":          externaldns.Install,
+	"dashboard":            dashboard.Install,
 	"filebeat":             filebeat.Deploy,
 	"git-operator":         gitoperator.Install,
 	"gitops":               flux.Install,
