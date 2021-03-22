@@ -98,8 +98,7 @@ spec:
       serviceAccountName: quack
       containers:
         - name: quack
-          image: quay.io/pusher/quack:{{.quack.version | default "v0.3.4"}}
-          imagePullPolicy: Always
+          image: quay.io/pusher/quack:{{.quack.version | default "v0.2.1"}}
           args:
             - --values-configmap=quack-config
             - --tls-cert-file=/etc/certs/tls.crt
