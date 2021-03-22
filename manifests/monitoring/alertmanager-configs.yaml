@@ -1,3 +1,4 @@
+# copy the alertmanager-config to all karina managed namespaces
 apiVersion: templating.flanksource.com/v1
 kind: Template
 metadata:
@@ -6,6 +7,39 @@ spec:
   source:
     apiVersion: monitoring.coreos.com/v1alpha1
     kind: AlertmanagerConfig
+    namespaceSelector:
+      matchLabels:
+        karina.flanksource.com/namespace-name: monitoring
+    labelSelector:
+      matchLabels:
+        alertmanagerConfig: main
+  copyToNamespaces:
+    namespaceSelector:
+      matchLabels:
+        apps.kubernetes.io/managed-by: karina
+    {{- if index .monitoring "alertmanager"}}
+    {{- if index .monitoring.alertmanager "configNamespaces"}}
+    namespaces:
+    {{- range $ns := .monitoring.alertmanager.configNamespaces }}
+      - {{ $ns }}
+    {{- end }}
+    {{- else }}
+    namespaces: []
+    {{- end }}
+    {{- else }}
+    namespaces: []
+    {{- end }}
+
+---
+# copy all secrets labeled alertmanagerConfig=main to all karina managed namespaces
+apiVersion: templating.flanksource.com/v1
+kind: Template
+metadata:
+  name: alertmanager-secrets
+spec:
+  source:
+    apiVersion: v1
+    kind: Secret
     namespaceSelector:
       matchLabels:
         karina.flanksource.com/namespace-name: monitoring

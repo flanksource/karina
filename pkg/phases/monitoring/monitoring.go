@@ -84,6 +84,13 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
+	if !p.HasSecret(Namespace, "alertmanager-relabeling") {
+		if err := p.CreateOrUpdateSecret("alertmanager-relabeling", Namespace, map[string][]byte{
+			"config.yaml": nil,
+		}); err != nil {
+			return nil
+		}
+	}
 	if err := p.CreateOrUpdateSecret(CaCertName, Namespace, map[string][]byte{
 		"ca.crt": p.GetIngressCA().GetPublicChain()[0].EncodedCertificate(),
 	}); err != nil {
@@ -179,12 +186,11 @@ func deployThanos(p *platform.Platform) error {
 	}
 
 	if p.Thanos.Mode == "client" {
-		p.Infof("Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod.")
+		//Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod
 	} else if p.Thanos.Mode == "observability" {
-		p.Infof("Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed.")
+		// Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed
 		thanosSpecs := []string{"thanos-querier.yaml", "thanos-store.yaml"}
 		for _, spec := range thanosSpecs {
-			p.Infof("Applying %s", spec)
 			if err := p.ApplySpecs("", "monitoring/observability/"+spec); err != nil {
 				return err
 			}

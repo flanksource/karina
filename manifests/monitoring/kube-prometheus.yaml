@@ -5,10 +5,8 @@ metadata:
     alertmanager: main
   name: main
   namespace: monitoring
-  annotations:
-    image: "quay.io/prometheus/alertmanager:{{.monitoring.alertmanager.version}}"
 spec:
-  baseImage: quay.io/prometheus/alertmanager
+  image: quay.io/prometheus/alertmanager:{{.monitoring.alertmanager.version}}
   nodeSelector:
     kubernetes.io/os: linux
   replicas: 3
@@ -200,13 +198,9 @@ spec:
   externalLabels:
     cluster: {{.name}}
   version: {{.monitoring.prometheus.version}}
-  {{ if (index .monitoring "alertmanager") }}
-  {{ if (index .monitoring.alertmanager "alertRelabelingConfig") }}
   additionalAlertRelabelConfigs:
-    name: {{ .monitoring.alertmanager.alertRelabelingConfig }}
+    name: alertmanager-relabeling
     key: config.yaml
-  {{ end }}
-  {{ end }}
   {{- if (index .monitoring "prometheus")  }}
   {{- if (index .monitoring.prometheus "persistence") }}
   storage:
