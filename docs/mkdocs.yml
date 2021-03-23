@@ -23,7 +23,7 @@ extra:
     version: v1.18.15
   support:
     email: email group(s) etc
-    channel: Slack, MS Teams, etc..
+    channel: Slack, MS Teams, etc...
   filebeat:
     prefix: co.elastic.logs
 
