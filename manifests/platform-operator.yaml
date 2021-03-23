@@ -223,8 +223,6 @@ spec:
             {{- range $k, $v := .platformOperator.args }}
             - --{{$k}}={{$v}}
             {{- end }}
-          command:
-            - /manager
           image: "docker.io/flanksource/platform-operator:{{ .platformOperator.version }}"
           imagePullPolicy: Always
           name: manager

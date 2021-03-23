@@ -112,15 +112,6 @@ jobs:
           if-no-files-found: ignore
           name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
-      - name: Update badge
-        uses: RubbaBoy/BYOB@v1.2.0
-        if: github.ref == 'refs/heads/master'
-        with:
-          NAME: ${{matrix.k8s}}-${{matrix.suite}}
-          ICON: "github"
-          STATUS: ${{ steps.e2e.outcome }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COLOR: ${{ fromJSON('["green","red"]')[ steps.e2e.outcome  == 'failure' ] }}
   upgrade:
     runs-on: ubuntu-20.04
     if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
@@ -178,15 +169,6 @@ jobs:
           if-no-files-found: ignore
           name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
-      - name: Update badge
-        uses: RubbaBoy/BYOB@v1.2.0
-        if: github.ref == 'refs/heads/master'
-        with:
-          NAME: ${{matrix.k8s}}-${{matrix.suite}}
-          ICON: "github"
-          STATUS: ${{ steps.e2e.outcome }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COLOR: ${{ fromJSON('["green","red"]')[ steps.e2e.outcome  == 'failure' ] }}
   selfhosted:
     runs-on: [self-hosted]
     if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
@@ -258,15 +240,6 @@ jobs:
           if-no-files-found: ignore
           name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
-      # - name: Update badge
-      #   uses: RubbaBoy/BYOB@v1.2.0
-      #   if: github.ref == 'refs/heads/master'
-      #   with:
-      #     NAME: ${{matrix.k8s}}-${{matrix.suite}}
-      #     ICON: "github"
-      #     STATUS: ${{ steps.e2e.outcome }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     COLOR: ${{ fromJSON('["green","red"]')[ steps.e2e.outcome  == 'failure' ] }}
   golangci:
     name: lint
     runs-on: ubuntu-20.04
