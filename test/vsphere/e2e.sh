@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "::group::Setup"
+source /dev/stdin < <( sops -d --input-type binary --output-type binary ./test/vsphere/e2e.sh )
 mkdir -p .bin
 mkdir -p .certs
 

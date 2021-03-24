@@ -1,0 +1,79 @@
+name: E2E vSphere
+
+on:
+  workflow_dispatch:
+  schedule:
+    # daily at 00h00 - https://crontab.guru/#0_0_*_*_*
+    # * is a special character in YAML so you have to quote this string
+    - cron: "0 0 * * *"
+jobs:
+  binary:
+    runs-on: ubuntu-20.04
+    container:
+      image: flanksource/build-tools:v0.12.0
+    steps:
+      # Get values for cache paths to be used in later steps
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+      - uses: actions/checkout@main
+      # Cache go build cache, used to speedup go test
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      # Cache go mod cache, used to speedup builds
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - run: make linux
+      - uses: actions/upload-artifact@v2
+        with:
+          name: karina
+          path: ./.bin/karina
+  test:
+    runs-on: vsphere-runner
+    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
+    needs: binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.16.9
+        suite:
+          - minimal
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/download-artifact@v2
+        with:
+          name: karina
+          path: ./.bin
+      - name: Run e2e minimal testing script
+        env:
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SAK }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KID }}
+        run: |
+          # Run the testing commands in subshell with decoded environment
+          ./test/vsphere/e2e.sh
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: vsphere-test-results-${{matrix.k8s}}-${{matrix.suite}}
+          path: test-results/
+      - name: Upload snapshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: vsphere-snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/snapshot.zip
