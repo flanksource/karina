@@ -1,11 +1,14 @@
 #!/bin/bash
-if which karina; then
-    BIN=$(which karina)
-else
+if test -f ./.bin/karina; then
     BIN=./.bin/karina
     chmod +x $BIN
-    mkdir -p .bin
+elif command -v karina; then
+    BIN=$(command -v karina)
+else
+    echo "No karina binary detected"
+    exit 127
 fi
+
 export KUBECONFIG=~/.kube/config
 REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
