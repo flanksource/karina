@@ -58,6 +58,13 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
           args: ["-log-level", "{{.harbor.logLevel}}"]
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
           env:
             - name: HTTP_PROXY
               value: ""
@@ -96,6 +103,13 @@ spec:
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
           env:
             - name: SCANNER_CLAIR_URL
               # To avoid a pod cannot reach itself via service IP when the clusters disable hairpin
