@@ -438,7 +438,6 @@ type CanaryChecker struct {
 
 type Dashboard struct {
 	Disabled `yaml:",inline" json:",inline"`
-	Version  string `yaml:"version,omitempty" json:"version,omitempty"`
 }
 
 type Dex struct {
