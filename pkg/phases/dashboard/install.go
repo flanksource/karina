@@ -10,7 +10,7 @@ const (
 )
 
 func Install(p *platform.Platform) error {
-	if p.Dashboard.Disabled {
+	if p.Dashboard.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "k8s-dashboard.yaml")
 	}
 
