@@ -42,6 +42,15 @@ spec:
             - "--set-xauthrequest=true"
             - "--set-authorization-header=true"
             - "--request-logging=true"
+            {{ if (index .oauth2Proxy "redis") }}
+            {{ if .oauth2Proxy.redis.enabled }}
+            - --redis-insecure-skip-tls-verify
+            - --redis-use-sentinel
+            - --redis-sentinel-connection-urls=redis://rfs-oauth2-proxy.ingress-nginx.svc.cluster.local:26379
+            - --redis-sentinel-master-name=mymaster
+            - --session-store-type=redis
+            {{ end }}
+            {{ end }}
           env:
             - name: OAUTH2_PROXY_COOKIE_SECRET
               valueFrom:
@@ -97,3 +106,20 @@ spec:
     - secretName: oauth2-tls
       hosts:
         - oauth2.{{.domain}}
+{{ if (index .oauth2Proxy "redis") }}
+{{ if .oauth2Proxy.redis.enabled }}
+---
+apiVersion: db.flanksource.com/v1
+kind: RedisDB
+metadata:
+  name: oauth2-proxy
+  namespace: ingress-nginx
+spec:
+  storage:
+    storageClass: {{.oauth2Proxy.redis.storageClass | default "local-path"}}
+  redis:
+    replicas: {{ .oauth2Proxy.redis.replicas | default 3 }}
+  sentinel:
+    replicas: {{ .oauth2Proxy.redis.sentinelReplicas | default 3}}
+{{ end }}
+{{ end }}

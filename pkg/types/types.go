@@ -333,6 +333,14 @@ type Nginx struct {
 type OAuth2Proxy struct {
 	Disabled bool   `yaml:"disabled" json:"disabled"`
 	Version  string `yaml:"version,omitempty" json:"version,omitempty"`
+	Redis    *Redis `yaml:"redis,omitempty" json:"redis,omitempty"`
+}
+
+type Redis struct {
+	Enabled          bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Replicas         int    `yaml:"replicas,omitempty" json:"replicas,omitempty"`
+	SentinelReplicas int    `yaml:"sentinelReplicas,omitempty" json:"sentinelReplicas,omitempty"`
+	StorageClass     string `yaml:"storageClass,omitempty" json:"storageClass:omitempty"`
 }
 
 type Ldap struct {
@@ -429,8 +437,7 @@ type CanaryChecker struct {
 }
 
 type Dashboard struct {
-	Enabled `yaml:",inline" json:",inline"`
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+	Disabled `yaml:",inline" json:",inline"`
 }
 
 type Dex struct {
