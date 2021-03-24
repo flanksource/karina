@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "::group::Setup"
 mkdir -p .bin
 mkdir -p .certs
 
