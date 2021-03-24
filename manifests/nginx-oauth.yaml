@@ -42,6 +42,7 @@ spec:
             - "--set-xauthrequest=true"
             - "--set-authorization-header=true"
             - "--request-logging=true"
+            {{ if (index . "oauth2Proxy") }}
             {{ if (index .oauth2Proxy "redis") }}
             {{ if .oauth2Proxy.redis.enabled }}
             - --redis-insecure-skip-tls-verify
@@ -49,6 +50,7 @@ spec:
             - --redis-sentinel-connection-urls=redis://rfs-oauth2-proxy.ingress-nginx.svc.cluster.local:26379
             - --redis-sentinel-master-name=mymaster
             - --session-store-type=redis
+            {{ end }}
             {{ end }}
             {{ end }}
           env:
@@ -106,6 +108,7 @@ spec:
     - secretName: oauth2-tls
       hosts:
         - oauth2.{{.domain}}
+{{ if (index . "oauth2Proxy") }}
 {{ if (index .oauth2Proxy "redis") }}
 {{ if .oauth2Proxy.redis.enabled }}
 ---
@@ -121,5 +124,6 @@ spec:
     replicas: {{ .oauth2Proxy.redis.replicas | default 3 }}
   sentinel:
     replicas: {{ .oauth2Proxy.redis.sentinelReplicas | default 3}}
+{{ end }}
 {{ end }}
 {{ end }}
