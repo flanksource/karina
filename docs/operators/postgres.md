@@ -1,3 +1,10 @@
+???+ asterix "Prerequisites"
+* [template-operator](/operators/template) is installed
+* [canary-checker](/admin-guide/canary-checker/) is installed
+* An S3 compatible object store is available to store logical backups of Postgres Cluster 
+
+## Deploy
+
 Postgres databases can be deployed using the Zalando [Postgres Operator](https://github.com/zalando/postgres-operator)
 
 `karina.yml`
@@ -9,6 +16,21 @@ templateOperator:
   version: v0.1.11
 canaryChecker:
   version: v0.15.1
+
+# Below are optional configurations:
+
+# S3 connection information (to store logical backups of all Postgres Clusters) 
+s3:
+  access_key: minio
+  secret_key: minio123
+  endpoint: http://minio.minio.svc:9000
+
+# Only applicable if you want to use MinIO as S3 Object Storage
+minio:
+  version: RELEASE.2020-09-02T18-19-50Z
+  access_key: minio
+  secret_key: minio123
+  replicas: 1
 ```
 
 Deploying using :

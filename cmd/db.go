@@ -32,7 +32,9 @@ func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 	if secret != "" {
 		db.Secret = secret
 	}
-	db.Superuser = superuser
+	if superuser != "" {
+		db.Superuser = superuser
+	}
 	return db, nil
 }
 
@@ -118,13 +120,18 @@ func init() {
 		Short: "Create a new database backup",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			listBackups, _ := cmd.Flags().GetBool("list")
 			schedule, _ := cmd.Flags().GetString("schedule")
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
 
-			if schedule != "" {
+			if listBackups {
+				s3Bucket, _ := cmd.Flags().GetString("bucket")
+				log.Infof("Querying for list of snapshot for %s", db)
+				db.ListBackups(s3Bucket)
+			} else if schedule != "" {
 				log.Infof("Creating backup schedule: %s: %s", schedule, db)
 				if err := db.ScheduleBackup(schedule); err != nil {
 					log.Fatalf("Failed to create backup schedule: %v", err)
@@ -139,11 +146,13 @@ func init() {
 		},
 	}
 
+	backup.Flags().Bool("list", false, "List all backup revisions")
+	backup.Flags().String("bucket", "", "List all backup revisions in a specific bucket")
 	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
 	DB.AddCommand(backup)
 
 	DB.PersistentFlags().StringVar(&clusterName, "name", "", "Name of the postgres cluster / service")
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")
 	DB.PersistentFlags().StringVar(&secret, "secret", "", "Name of the secret that contains the postgres user credentials")
-	DB.PersistentFlags().StringVar(&superuser, "superuser", "postgres", "Superuser user")
+	DB.PersistentFlags().StringVar(&superuser, "superuser", "", "Superuser user")
 }

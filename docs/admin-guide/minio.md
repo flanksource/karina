@@ -12,7 +12,7 @@ minio:
 :1: Deploy:
 
 ```bash
-karina deploy marina -c karina.yml
+karina deploy minio -c karina.yml
 ```
 
 :2: Access the UI: [:octicons-link-external-24: https://minio.%%{domain}%%](https://minio.%%{domain}%%)

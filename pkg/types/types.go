@@ -251,6 +251,7 @@ type PostgresOperator struct {
 	BackupSchedule string `yaml:"backupSchedule,omitempty" json:"backupSchedule,omitempty"`
 	SpiloImage     string `yaml:"spiloImage,omitempty" json:"spiloImage,omitempty"`
 	BackupImage    string `yaml:"backupImage,omitempty" json:"backupImage,omitempty"`
+	BackupPassword string `yaml:"backupPassword,omitempty" json:"backupPassword,omitempty"`
 }
 
 type ArgocdOperator struct {

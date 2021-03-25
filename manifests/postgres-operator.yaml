@@ -309,7 +309,11 @@ metadata:
 data:
   AWS_ACCESS_KEY_ID: "{{ .s3.access_key | base64.Encode }}"
   AWS_SECRET_ACCESS_KEY: "{{ .s3.secret_key | base64.Encode }}"
-  AWS_ENDPOINT: {{ .s3.endpoint | base64.Encode }}
-  AWS_ENDPOINT_URL: {{ (print "https://" .s3.endpoint) | base64.Encode }}
-  AWS_REGION: {{ .s3.region | base64.Encode }}
-  AWS_S3_FORCE_PATH_STYLE: {{ "true" | base64.Encode }}
+  AWS_ENDPOINT: "{{ .s3.endpoint | base64.Encode }}"
+  AWS_ENDPOINT_URL: '{{ hasPrefix .s3.endpoint "http" | ternary (print .s3.endpoint) (print "https://" .s3.endpoint) | base64.Encode }}'
+  AWS_REGION: "{{ .s3.region | base64.Encode }}"
+  AWS_S3_FORCE_PATH_STYLE: '{{ .s3.usePathStyle | default "true" | base64.Encode }}'
+  LOGICAL_BACKUP_S3_BUCKET: '{{ .postgresOperator.backupBucket | base64.Encode }}'
+  BACKUP_IMAGE: '{{ .postgresOperator.backupImage | base64.Encode }}'
+  # NOTE: BACKUP_PASSWORD CAN'T BE UPDATED ONCE RESTIC HAS BEEN INITIALIZED. YOU WON'T BE ABLE TO RESTORE BACKUP DATA IF YOU LOSE THE RESTIC PASSWORD
+  BACKUP_PASSWORD: '{{ or (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_PASSWORD") .postgresOperator.backupPassword | default (random.AlphaNum 22) | base64.Encode }}'
