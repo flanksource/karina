@@ -123,6 +123,19 @@ spec:
       volume:
         size: '{{ .spec.storage.size | default "20Gi" }}'
         storageClass: '{{ .spec.storage.storageClass | default "" }}'
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: backup-postgres-{{ .metadata.name }}-config
+      namespace: postgres-operator
+    data:
+      LOGICAL_BACKUP_S3_BUCKET: '{{ .spec.backup.bucket | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "LOGICAL_BACKUP_S3_BUCKET") }}'
+      BACKUP_RETENTION_KEEP_LAST: '{{ .spec.backup.retention.keepLast | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_RETENTION_KEEP_LAST") }}'
+      BACKUP_RETENTION_KEEP_HOURLY: '{{ .spec.backup.retention.keepHourly | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_RETENTION_KEEP_HOURLY") }}'
+      BACKUP_RETENTION_KEEP_DAILY: '{{ .spec.backup.retention.keepDaily | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_RETENTION_KEEP_DAILY") }}'
+      BACKUP_RETENTION_KEEP_WEEKLY: '{{ .spec.backup.retention.keepWeekly | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_RETENTION_KEEP_WEEKLY") }}'
+      BACKUP_RETENTION_KEEP_MONTHLY: '{{ .spec.backup.retention.keepMonthly | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_RETENTION_KEEP_MONTHLY") }}'
+      BACKUP_RETENTION_KEEP_YEARLY: '{{ .spec.backup.retention.keepYearly | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_RETENTION_KEEP_YEARLY") }}'
   - apiVersion: batch/v1beta1
     kind: CronJob
     metadata:

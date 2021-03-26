@@ -41,6 +41,21 @@ spec:
                   type: string
                 schedule:
                   type: string
+                retention:
+                  type: object
+                  properties:
+                    keepLast:
+                      type: integer
+                    keepHourly:
+                      type: integer
+                    keepDaily:
+                      type: integer
+                    keepWeekly:
+                      type: integer
+                    keepMonthly:
+                      type: integer
+                    keepYearly:
+                      type: integer
               type: object
             cpu:
               type: string

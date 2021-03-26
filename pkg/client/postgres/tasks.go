@@ -20,15 +20,16 @@ const OperatorConfig = "default"
 
 // nolint: golint
 type PostgresDB struct {
-	Name         string
-	Namespace    string
-	Secret       string
-	version      string
-	Superuser    string
-	backupBucket string
-	opClusterEnv *map[string][]byte
-	op           *api.OperatorConfiguration
-	client       *kommons.Client
+	Name            string
+	Namespace       string
+	Secret          string
+	version         string
+	Superuser       string
+	backupBucket    string
+	backupRetention *map[string][]byte
+	opClusterEnv    *map[string][]byte
+	op              *api.OperatorConfiguration
+	client          *kommons.Client
 }
 
 func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
@@ -43,9 +44,10 @@ func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, n
 		return nil, fmt.Errorf("could not get opconfig %v", err)
 	}
 
-	opClusterEnv := db.client.GetSecret("postgres-operator", "postgres-operator-cluster-environment")
+	opClusterEnv := db.client.GetSecret(Namespace, "postgres-operator-cluster-environment")
 
 	db.opClusterEnv = opClusterEnv
+	db.backupRetention = opClusterEnv // Backup retention should be part of postgres-operator-cluster-environment secret
 	db.backupBucket = string((*opClusterEnv)["LOGICAL_BACKUP_S3_BUCKET"])
 	db.op = &op
 	db.Name = name
@@ -59,7 +61,7 @@ func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, n
 func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
 	db := PostgresDB{client: client}
 
-	opClusterEnv := db.client.GetSecret("postgres-operator", "postgres-operator-cluster-environment")
+	opClusterEnv := db.client.GetSecret(Namespace, "postgres-operator-cluster-environment")
 
 	postgresDBName := strings.TrimPrefix(name, "postgres-")
 	postgresqlDB, err := client.GetByKind("PostgresqlDB", Namespace, postgresDBName)
@@ -68,14 +70,15 @@ func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*Post
 	}
 
 	defaultBackupBucket := string((*opClusterEnv)["LOGICAL_BACKUP_S3_BUCKET"])
+	var backupBucket string
 	if postgresqlDB == nil {
 		// could not find flanksource/PostgresqlDB, fallback to the default backup bucket
-		db.backupBucket = defaultBackupBucket
+		backupBucket = defaultBackupBucket
 	} else if bucket, _, _ := unstructured.NestedString(postgresqlDB.Object, "spec", "backup", "bucket"); bucket == "" {
 		// spec.backup.bucket is not defined in flanksource/PostgresqlDB, fallback to the default backup bucket
-		db.backupBucket = defaultBackupBucket
+		backupBucket = defaultBackupBucket
 	} else {
-		db.backupBucket = bucket
+		backupBucket = bucket
 	}
 
 	_db := &api.Postgresql{TypeMeta: metav1.TypeMeta{
@@ -95,7 +98,14 @@ func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*Post
 		return nil, fmt.Errorf("could not get opconfig %v", err)
 	}
 
-	db.opClusterEnv = db.client.GetSecret("postgres-operator", "postgres-operator-cluster-environment")
+	backupRetention := db.client.GetSecret(Namespace, fmt.Sprintf("backup-%s-config", name))
+	if backupRetention == nil {
+		return nil, fmt.Errorf("failed to get backup config of %s", name)
+	}
+
+	db.opClusterEnv = db.client.GetSecret(Namespace, "postgres-operator-cluster-environment")
+	db.backupRetention = backupRetention
+	db.backupBucket = backupBucket
 	db.op = &op
 	db.Name = name
 	db.Namespace = _db.Namespace
@@ -182,22 +192,29 @@ func (db *PostgresDB) Restore(backup string) error {
 func (db *PostgresDB) GenerateBackupJob() *kommons.DeploymentBuilder {
 	op := db.op.Configuration
 	opClusterEnv := *db.opClusterEnv
+	backupRetention := *db.backupRetention
 
 	var builder = kommons.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), string(opClusterEnv["BACKUP_IMAGE"]))
 	return builder.
 		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").
 		EnvVars(map[string]string{
-			"AWS_ACCESS_KEY_ID":     string(opClusterEnv["AWS_ACCESS_KEY_ID"]),
-			"AWS_SECRET_ACCESS_KEY": string(opClusterEnv["AWS_SECRET_ACCESS_KEY"]),
-			"AWS_DEFAULT_REGION":    string(opClusterEnv["AWS_DEFAULT_REGION"]),
-			"RESTIC_REPOSITORY":     fmt.Sprintf("s3:%s/%s", string(opClusterEnv["AWS_ENDPOINT_URL"]), db.backupBucket),
-			"RESTIC_PASSWORD":       string(opClusterEnv["BACKUP_PASSWORD"]),
-			"PGHOST":                db.Name,
-			"PGPORT":                "5432",
-			"PGSSLMODE":             "prefer",
-			"PGDATABASE":            "postgres",
-			"PGUSER":                db.Superuser,
-			"PG_VERSION":            db.version,
+			"AWS_ACCESS_KEY_ID":             string(opClusterEnv["AWS_ACCESS_KEY_ID"]),
+			"AWS_SECRET_ACCESS_KEY":         string(opClusterEnv["AWS_SECRET_ACCESS_KEY"]),
+			"AWS_DEFAULT_REGION":            string(opClusterEnv["AWS_DEFAULT_REGION"]),
+			"RESTIC_REPOSITORY":             fmt.Sprintf("s3:%s/%s", string(opClusterEnv["AWS_ENDPOINT_URL"]), db.backupBucket),
+			"RESTIC_PASSWORD":               string(opClusterEnv["BACKUP_PASSWORD"]),
+			"BACKUP_RETENTION_KEEP_LAST":    string(backupRetention["BACKUP_RETENTION_KEEP_LAST"]),
+			"BACKUP_RETENTION_KEEP_HOURLY":  string(backupRetention["BACKUP_RETENTION_KEEP_HOURLY"]),
+			"BACKUP_RETENTION_KEEP_DAILY":   string(backupRetention["BACKUP_RETENTION_KEEP_DAILY"]),
+			"BACKUP_RETENTION_KEEP_WEEKLY":  string(backupRetention["BACKUP_RETENTION_KEEP_WEEKLY"]),
+			"BACKUP_RETENTION_KEEP_MONTHLY": string(backupRetention["BACKUP_RETENTION_KEEP_MONTHLY"]),
+			"BACKUP_RETENTION_KEEP_YEARLY":  string(backupRetention["BACKUP_RETENTION_KEEP_YEARLY"]),
+			"PGHOST":                        db.Name,
+			"PGPORT":                        "5432",
+			"PGSSLMODE":                     "prefer",
+			"PGDATABASE":                    "postgres",
+			"PGUSER":                        db.Superuser,
+			"PG_VERSION":                    db.version,
 		}).
 		Labels(map[string]string{
 			op.Kubernetes.ClusterNameLabel: db.Name,

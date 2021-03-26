@@ -315,5 +315,14 @@ data:
   AWS_S3_FORCE_PATH_STYLE: '{{ .s3.usePathStyle | default "true" | base64.Encode }}'
   LOGICAL_BACKUP_S3_BUCKET: '{{ .postgresOperator.backupBucket | base64.Encode }}'
   BACKUP_IMAGE: '{{ .postgresOperator.backupImage | base64.Encode }}'
+
   # NOTE: BACKUP_PASSWORD CAN'T BE UPDATED ONCE RESTIC HAS BEEN INITIALIZED. YOU WON'T BE ABLE TO RESTORE BACKUP DATA IF YOU LOSE THE RESTIC PASSWORD
   BACKUP_PASSWORD: '{{ or (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_PASSWORD") .postgresOperator.backupPassword | default (random.AlphaNum 22) | base64.Encode }}'
+
+  # Backup Retention
+  BACKUP_RETENTION_KEEP_LAST: '{{ .postgresOperator.backupRetention.keepLast | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_HOURLY: '{{ .postgresOperator.backupRetention.keepHourly | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_DAILY: '{{ .postgresOperator.backupRetention.keepDaily | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_WEEKLY: '{{ .postgresOperator.backupRetention.keepWeekly | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_MONTHLY: '{{ .postgresOperator.backupRetention.keepMonthly | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_YEARLY: '{{ .postgresOperator.backupRetention.keepYearly | default "" | base64.Encode }}'

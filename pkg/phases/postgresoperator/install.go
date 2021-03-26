@@ -22,7 +22,7 @@ func Deploy(platform *platform.Platform) error {
 		platform.PostgresOperator.SpiloImage = "docker.io/flanksource/spilo:1.6-p2.flanksource"
 	}
 	if platform.PostgresOperator.BackupImage == "" {
-		platform.PostgresOperator.BackupImage = "docker.io/tobernguyen/postgres-backups:latest-3"
+		platform.PostgresOperator.BackupImage = "docker.io/tobernguyen/postgres-backups:latest-9"
 	}
 	if platform.PostgresOperator.BackupBucket == "" {
 		platform.PostgresOperator.BackupBucket = "postgres-backups-" + platform.Name
