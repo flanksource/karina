@@ -132,7 +132,9 @@ func init() {
 			if listBackups {
 				s3Bucket, _ := cmd.Flags().GetString("bucket")
 				log.Infof("Querying for list of snapshot for %s", db)
-				db.ListBackups(s3Bucket)
+				if err := db.ListBackups(s3Bucket); err != nil {
+					log.Fatalf("Failed to list backups: %v", err)
+				}
 			} else if schedule != "" {
 				log.Infof("Creating backup schedule: %s: %s", schedule, db)
 				if err := db.ScheduleBackup(schedule); err != nil {

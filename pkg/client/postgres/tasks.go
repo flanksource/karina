@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	log "github.com/flanksource/commons/logger"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/minio/minio-go/v6"
@@ -160,7 +162,7 @@ func (db *PostgresDB) ListBackups(s3Bucket string) error {
 
 	defer func() {
 		if err := db.client.DeleteByKind("Pod", db.Namespace, job.Name); err != nil {
-			fmt.Sprintf("Failed to clean up pod %s", job.Name)
+			log.Warnf("Failed to clean up pod %s", job.Name)
 		}
 	}()
 	if err := db.client.Apply(db.Namespace, job); err != nil {
