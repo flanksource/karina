@@ -278,7 +278,7 @@ spec:
       interval: 14400
       s3Bucket:
       - accessKey: $AWS_ACCESS_KEY_ID
-        bucket: '{{.spec.backup.bucket}}'
+        bucket: '{{ .spec.backup.bucket | default (kget "secret/postgres-operator/postgres-operator-cluster-environment" "LOGICAL_BACKUP_S3_BUCKET") }}'
         description: '{{.metadata.name}} (backup)'
         endpoint: $AWS_ENDPOINT
         maxAge: 86400

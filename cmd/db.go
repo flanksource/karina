@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
 	"github.com/flanksource/karina/pkg/client/postgres"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
@@ -100,16 +102,16 @@ func init() {
 	DB.AddCommand(clone)
 
 	DB.AddCommand(&cobra.Command{
-		Use:   "restore [backup path]",
+		Use:   "restore [backup bucket] <backup file path>",
 		Short: "Restore a database from backups",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
-			log.Infof("Restoring %s from %s", db, args[0])
-			if err := db.Restore(args[0]); err != nil {
+			log.Infof("Restoring %s from %s", db, strings.Join(args, " "))
+			if err := db.Restore(args...); err != nil {
 				log.Fatalf("Error Restore up db %s\n", err)
 			}
 		},

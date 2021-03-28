@@ -168,19 +168,34 @@ func (db *PostgresDB) ListBackups(s3Bucket string) error {
 	return db.client.StreamLogs(db.Namespace, job.Name)
 }
 
-func (db *PostgresDB) Restore(backup string) error {
-	if !strings.HasPrefix(backup, "s3://") {
-		backup = fmt.Sprintf("s3://%s/%s", db.op.Configuration.LogicalBackup.S3Bucket, backup)
+func (db *PostgresDB) Restore(args ...string) error {
+	opClusterEnv := *db.opClusterEnv
+
+	var backupPath string
+	var resticRepository string
+	if len(args) == 2 {
+		resticRepository = fmt.Sprintf("s3:%s/%s", string(opClusterEnv["AWS_ENDPOINT_URL"]), args[0])
+		backupPath = args[1]
+	} else {
+		backupPath = args[0]
 	}
-	job := db.GenerateBackupJob().
+
+	jobBuilder := db.GenerateBackupJob().
 		Command("/restore.sh").
 		EnvVars(map[string]string{
-			"PATH_TO_BACKUP":   backup,
+			"BACKUP_PATH":      backupPath,
 			"PSQL_BEFORE_HOOK": "",
 			"PSQL_AFTER_HOOK":  "",
-			"PGHOST":           db.Name,
 			"PSQL_OPTS":        "--echo-all",
-		}).AsOneShotJob()
+		})
+
+	if resticRepository != "" {
+		jobBuilder.EnvVars(map[string]string{
+			"RESTIC_REPOSITORY": resticRepository,
+		})
+	}
+
+	job := jobBuilder.AsOneShotJob()
 
 	if err := db.client.Apply(db.Namespace, job); err != nil {
 		return err
