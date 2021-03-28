@@ -127,13 +127,13 @@ karina db backup --name test1 --list
 This command will restore a given cluster from a previous logical backup
 
 ```bash
-karina db restore backup-file-name.sql --name test1
+karina db restore "/backup-file-path.sql" --name test1
 ```
 
 You can also restore a given cluster from a logical backup located in a different backup
 
 ```bash
-karina db restore bucket-name backup-file-name.sql --name test1
+karina db restore bucket-name "/backup-file-name.sql" --name test1
 ```
 
 See [karina db restore](../../../cli/karina_db_restore/) documentation for all command line arguments.

@@ -102,7 +102,7 @@ func init() {
 	DB.AddCommand(clone)
 
 	DB.AddCommand(&cobra.Command{
-		Use:   "restore [backup bucket] <backup file path>",
+		Use:   "restore [backup bucket] <backup path>",
 		Short: "Restore a database from backups",
 		Args:  cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {

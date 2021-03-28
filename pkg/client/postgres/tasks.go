@@ -153,8 +153,9 @@ func (db *PostgresDB) ListBackups(s3Bucket string) error {
 			"AWS_DEFAULT_REGION":    string(opClusterEnv["AWS_DEFAULT_REGION"]),
 			"RESTIC_REPOSITORY":     fmt.Sprintf("s3:%s/%s", string(opClusterEnv["AWS_ENDPOINT_URL"]), backupS3Bucket),
 			"RESTIC_PASSWORD":       string(opClusterEnv["BACKUP_PASSWORD"]),
+			"PGHOST":                db.Name,
 		}).
-		Command("restic", "snapshots", "--tag", db.Name).
+		Command("/list.sh").
 		AsOneShotJob()
 
 	defer func() {
