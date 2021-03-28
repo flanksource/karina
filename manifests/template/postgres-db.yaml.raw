@@ -153,98 +153,98 @@ spec:
                 cluster-name: postgres-{{.metadata.name}}
             spec:
               containers:
-                - env:
-                  - name: AWS_ACCESS_KEY_ID
-                    valueFrom:
-                      secretKeyRef:
-                        key: AWS_ACCESS_KEY_ID
-                        name: postgres-operator-cluster-environment
-                  - name: AWS_SECRET_ACCESS_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        key: AWS_SECRET_ACCESS_KEY
-                        name: postgres-operator-cluster-environment
-                  - name: AWS_ENDPOINT_URL
-                    valueFrom:
-                      secretKeyRef:
-                        key: AWS_ENDPOINT_URL
-                        name: postgres-operator-cluster-environment
-                  - name: AWS_DEFAULT_REGION
-                    valueFrom:
-                      secretKeyRef:
-                        key: AWS_REGION
-                        name: postgres-operator-cluster-environment
-                  - name: LOGICAL_BACKUP_S3_BUCKET
-                    valueFrom:
-                      secretKeyRef:
-                        key: LOGICAL_BACKUP_S3_BUCKET
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: RESTIC_REPOSITORY
-                    value: s3:$(AWS_ENDPOINT_URL)/$(LOGICAL_BACKUP_S3_BUCKET)
-                  - name: RESTIC_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_PASSWORD
-                        name: postgres-operator-cluster-environment
-                  - name: BACKUP_RETENTION_KEEP_LAST
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_RETENTION_KEEP_LAST
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: BACKUP_RETENTION_KEEP_HOURLY
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_RETENTION_KEEP_HOURLY
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: BACKUP_RETENTION_KEEP_DAILY
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_RETENTION_KEEP_DAILY
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: BACKUP_RETENTION_KEEP_WEEKLY
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_RETENTION_KEEP_WEEKLY
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: BACKUP_RETENTION_KEEP_MONTHLY
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_RETENTION_KEEP_MONTHLY
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: BACKUP_RETENTION_KEEP_YEARLY
-                    valueFrom:
-                      secretKeyRef:
-                        key: BACKUP_RETENTION_KEEP_YEARLY
-                        name: backup-postgres-{{ .metadata.name }}-config
-                  - name: PGPASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        key: password
-                        name: "postgres.postgres-{{.metadata.name}}.credentials"
-                  - name: PGHOST
-                    value: postgres-{{.metadata.name}}
-                  - name: PGPORT
-                    value: "5432"
-                  - name: PGSSLMODE
-                    value: prefer
-                  - name: PGDATABASE
-                    value: postgres
-                  - name: PGUSER
-                    value: postgres
-                  - name: PG_VERSION
-                    value: "12"
-                  image: '{{ kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_IMAGE" }}'
-                  imagePullPolicy: IfNotPresent
-                  name: backup-postgres-{{.metadata.name}}
-                  resources:
-                    limits:
-                      cpu: 500m
-                      memory: 512Mi
-                    requests:
-                      cpu: 10m
-                      memory: 128Mi
-                  terminationMessagePath: /dev/termination-log
-                  terminationMessagePolicy: File
+              - env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      key: AWS_ACCESS_KEY_ID
+                      name: postgres-operator-cluster-environment
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: AWS_SECRET_ACCESS_KEY
+                      name: postgres-operator-cluster-environment
+                - name: AWS_ENDPOINT_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: AWS_ENDPOINT_URL
+                      name: postgres-operator-cluster-environment
+                - name: AWS_DEFAULT_REGION
+                  valueFrom:
+                    secretKeyRef:
+                      key: AWS_REGION
+                      name: postgres-operator-cluster-environment
+                - name: LOGICAL_BACKUP_S3_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      key: LOGICAL_BACKUP_S3_BUCKET
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: RESTIC_REPOSITORY
+                  value: s3:$(AWS_ENDPOINT_URL)/$(LOGICAL_BACKUP_S3_BUCKET)
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_PASSWORD
+                      name: postgres-operator-cluster-environment
+                - name: BACKUP_RETENTION_KEEP_LAST
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_RETENTION_KEEP_LAST
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: BACKUP_RETENTION_KEEP_HOURLY
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_RETENTION_KEEP_HOURLY
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: BACKUP_RETENTION_KEEP_DAILY
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_RETENTION_KEEP_DAILY
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: BACKUP_RETENTION_KEEP_WEEKLY
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_RETENTION_KEEP_WEEKLY
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: BACKUP_RETENTION_KEEP_MONTHLY
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_RETENTION_KEEP_MONTHLY
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: BACKUP_RETENTION_KEEP_YEARLY
+                  valueFrom:
+                    secretKeyRef:
+                      key: BACKUP_RETENTION_KEEP_YEARLY
+                      name: backup-postgres-{{ .metadata.name }}-config
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: "postgres.postgres-{{.metadata.name}}.credentials"
+                - name: PGHOST
+                  value: postgres-{{.metadata.name}}
+                - name: PGPORT
+                  value: "5432"
+                - name: PGSSLMODE
+                  value: prefer
+                - name: PGDATABASE
+                  value: postgres
+                - name: PGUSER
+                  value: postgres
+                - name: PG_VERSION
+                  value: "12"
+                image: '{{ kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_IMAGE" }}'
+                imagePullPolicy: IfNotPresent
+                name: backup-postgres-{{.metadata.name}}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 512Mi
+                  requests:
+                    cpu: 10m
+                    memory: 128Mi
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
               dnsPolicy: ClusterFirst
               restartPolicy: Never
               schedulerName: default-scheduler
