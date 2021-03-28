@@ -78,10 +78,10 @@ spec:
       resources:
         limits:
           cpu: '{{.spec.resources.limits.cpu | default .spec.cpu | default "1000m"}}'
-          memory: '{{.spec.resources.limits.memory | default "512Mi"}}'
+          memory: '{{.spec.resources.limits.memory | default .spec.memory | default "512Mi"}}'
         requests:
-          cpu: '{{.spec.resources.requests.cpu | default .spec.cpu |  default "100m"}}'
-          memory: '{{.spec.resources.requests.memory | default .spec.memory  |   default "128Mi"}}'
+          cpu: '{{.spec.resources.requests.cpu | default .spec.cpu | default "100m"}}'
+          memory: '{{.spec.resources.requests.memory | default .spec.memory | default "128Mi"}}'
       serviceAnnotations: {}
       sidecars:
       - env:
