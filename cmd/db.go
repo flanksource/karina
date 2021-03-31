@@ -22,12 +22,8 @@ func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	var db *postgres.PostgresDB
-	if namespace == "postgres-operator" {
-		db, err = postgres.GetPostgresDB(&platform.Client, s3, clusterName)
-	} else {
-		db, err = postgres.GetGenericPostgresDB(&platform.Client, s3, namespace, clusterName, secret, "12")
-	}
+	db, err := postgres.GetPostgresDB(&platform.Client, s3, clusterName)
+
 	if err != nil {
 		return nil, err
 	}

@@ -210,7 +210,7 @@ func getWalArchivingEnvVars(config postgres.ClusterConfig, clusterName, backupBu
 }
 
 func getBackupBucket(p *platform.Platform) string {
-	backupBucket := p.PostgresOperator.BackupBucket
+	backupBucket := p.PostgresOperator.DefaultBackupBucket
 
 	if backupBucket == "" {
 		backupBucket = "postgres-backups-" + p.Name

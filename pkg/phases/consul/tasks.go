@@ -36,7 +36,7 @@ func NewBackupRestore(platform *platform.Platform, name, namespace string) *Back
 func (b *BackupRestore) Backup() error {
 	job := b.GenerateBackupJob().
 		Command("/scripts/backup.sh").
-		AsOneShotJob()
+		AsOneShotPod()
 
 	if err := b.Apply(b.Namespace, job); err != nil {
 		return err
@@ -69,7 +69,7 @@ func (b *BackupRestore) Restore(backup string) error {
 		EnvVars(map[string]string{
 			"RESTORE_URL":    backup,
 			"RESTORE_BUCKET": backupBucket,
-		}).AsOneShotJob()
+		}).AsOneShotPod()
 
 	if err := b.Apply(b.Namespace, job); err != nil {
 		return err

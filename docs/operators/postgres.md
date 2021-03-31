@@ -13,7 +13,7 @@ Postgres databases can be deployed using the Zalando [Postgres Operator](https:/
 postgresOperator:
   version: v1.3.4.flanksource.1
   backupPassword: passwordForResticBackup # Optional but can't be changed once the operator is deployed
-  backupRetention: # Optionally specify the retention of the backup, this can be overridden in db.flanksource.com/v1/PostgresqlDB CR, see example below
+  defaultBackupRetention: # Optionally specify the retention of the backup, this can be overridden in db.flanksource.com/v1/PostgresqlDB CR, see example below
     keepHourly: 24
     keepDaily: 7
     keepWeekly: 4
