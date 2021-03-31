@@ -64,11 +64,11 @@ func init() {
 			pvcclass, _ = cmd.Flags().GetString("class")
 
 			if pvcname == "" {
-				platform.Fatalf("Provide a name to create PVC!")
+				platform.Fatalf("Provide a name to resize PVC!")
 			}
 
 			if pvcsize == "" {
-				platform.Fatalf("Provide a size to create PVC!")
+				platform.Fatalf("Provide a size to resize PVC!")
 			}
 
 			clientset, err := platform.GetClientset()
@@ -86,6 +86,7 @@ func init() {
 			if err != nil && errors.IsNotFound(err) {
 				platform.Fatalf("failed to get PVC: %s", err)
 			} else {
+				//TODO: Fetch PVC details by name and make sure we resize the correct one.
 				platform.Infof("Found existing PVC %s/%s ==> %s\n", pvcnamespace, pvcname, existing.UID)
 				platform.Infof("Resizing PVC %s/%s (%s %s)\n", pvcnamespace, pvcname, pvcsize, pvcclass)
 				_, err = pvcs.Update(context.TODO(), &v1.PersistentVolumeClaim{
