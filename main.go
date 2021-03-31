@@ -52,6 +52,7 @@ func main() {
 		cmd.Operator,
 		cmd.Orphan,
 		cmd.Provision,
+		cmd.Pvc,
 		cmd.Render,
 		cmd.Report,
 		cmd.Rolling,
