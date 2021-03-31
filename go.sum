@@ -311,8 +311,8 @@ github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga
 github.com/fatih/structtag v1.1.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
 github.com/flanksource/commons v1.5.1 h1:yvOQYQ7PwZ+FasCpGR4ky4tmfi0AP8hN9d1nd6mgBXo=
 github.com/flanksource/commons v1.5.1/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ+fTILbP4YP0=
-github.com/flanksource/kommons v0.8.0 h1:sis7A68EZH+2ClUeEpUuaJtW0NPSp1NbbZJgpGIV+zM=
-github.com/flanksource/kommons v0.8.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
+github.com/flanksource/kommons v0.9.0 h1:N1bneyEaL5vIihFvi7vIliIGQFQxFKPJ3fbF0SwdXl4=
+github.com/flanksource/kommons v0.9.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1 h1:mPTWZTM0IkiuWmwLX5XJi8TJt5ELm54Qqqq1tMT6r5g=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1/go.mod h1:Dt9HKnY/C9WnF8slBm3h9KByogRSiVqARkp1HdSgWjA=
 github.com/flanksource/yaml v0.0.0-20200325175021-f76146a3718a h1:Q+lJrx9+38jAYnhDJXeapwUXd+j7hh5+sfC5xfnoF9g=
