@@ -121,7 +121,7 @@ See [karina db backup](../../../cli/karina_db_backup/) documentation for all com
 
 This command will list all backups of a given cluster
 ```bash
-karina db backup --name test1 --list
+karina db backup list --name test1
 ```
 
 This command will restore a given cluster from a previous logical backup

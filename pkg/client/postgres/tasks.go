@@ -1,7 +1,14 @@
 package postgres
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"sort"
+	"text/tabwriter"
+	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/minio/minio-go/v6"
 
@@ -13,7 +20,6 @@ import (
 )
 
 const Namespace = "postgres-operator"
-const OperatorConfig = "default"
 
 // nolint: golint
 type PostgresDB struct {
@@ -24,6 +30,14 @@ type PostgresDB struct {
 	Superuser    string
 	backupConfig *map[string][]byte
 	client       *kommons.Client
+}
+
+type ResticSnapshot struct {
+	Time    time.Time
+	Paths   []string
+	Tags    []string
+	ID      string
+	ShortID string `json:"short_id"`
 }
 
 func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
@@ -71,11 +85,11 @@ func (db *PostgresDB) Backup() error {
 		return err
 	}
 
-	jodPod, err := db.client.GetJobPod(Namespace, job.Name)
+	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
 	if err != nil {
 		return err
 	}
-	return db.client.StreamLogs(db.Namespace, jodPod)
+	return db.client.StreamLogs(db.Namespace, jobPod)
 }
 
 func (db *PostgresDB) ScheduleBackup(schedule string) error {
@@ -83,7 +97,7 @@ func (db *PostgresDB) ScheduleBackup(schedule string) error {
 	return db.client.Apply(db.Namespace, job)
 }
 
-func (db *PostgresDB) ListBackups(s3Bucket string) error {
+func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error {
 	backupConfig := *db.backupConfig
 
 	var backupS3Bucket string
@@ -104,18 +118,57 @@ func (db *PostgresDB) ListBackups(s3Bucket string) error {
 		EnvVars(map[string]string{
 			"RESTIC_REPOSITORY": "s3:$(AWS_ENDPOINT_URL)/$(BACKUP_S3_BUCKET)",
 		}).
-		Command("/list.sh").
+		Command("restic", "snapshots", "--json").
 		AsOneShotJob()
 
 	if err := db.client.Apply(db.Namespace, job); err != nil {
 		return err
 	}
 
-	jodPod, err := db.client.GetJobPod(Namespace, job.Name)
+	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
 	if err != nil {
 		return err
 	}
-	return db.client.StreamLogs(db.Namespace, jodPod)
+
+	err = db.client.WaitForPod(Namespace, jobPod, 30*time.Second, v1.PodSucceeded)
+	if err != nil {
+		return err
+	}
+
+	podLogs, err := db.client.GetPodLogs(Namespace, jobPod, "")
+	if err != nil {
+		return err
+	}
+	var resticSnapshots []ResticSnapshot
+	err = json.Unmarshal([]byte(podLogs), &resticSnapshots)
+	if err != nil {
+		return err
+	}
+
+	if limit > 0 {
+		resticSnapshots = resticSnapshots[:limit]
+	}
+
+	// Sort snapshots in Time descending order (newer backups first)
+	sort.Slice(resticSnapshots, func(i, j int) bool {
+		return resticSnapshots[i].Time.After(resticSnapshots[j].Time)
+	})
+
+	if quiet {
+		for i := 0; i < len(resticSnapshots); i++ {
+			fmt.Println(resticSnapshots[i].Paths[0])
+		}
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', 0)
+		defer w.Flush()
+		fmt.Fprintln(w, "BACKUP PATH\tTIME\tAGE")
+		for i := 0; i < len(resticSnapshots); i++ {
+			snapshot := resticSnapshots[i]
+			fmt.Fprintf(w, "%s\t%s\t%s\n", snapshot.Paths[0], snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), time.Since(snapshot.Time))
+		}
+	}
+
+	return nil
 }
 
 func (db *PostgresDB) Restore(args ...string) error {
@@ -152,11 +205,11 @@ func (db *PostgresDB) Restore(args ...string) error {
 		return err
 	}
 
-	jodPod, err := db.client.GetJobPod(Namespace, job.Name)
+	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
 	if err != nil {
 		return err
 	}
-	return db.client.StreamLogs(db.Namespace, jodPod)
+	return db.client.StreamLogs(db.Namespace, jobPod)
 }
 
 func (db *PostgresDB) GenerateBackupJob() *kommons.DeploymentBuilder {
