@@ -181,9 +181,9 @@ spec:
                 - name: PG_VERSION
                   value: "12"
                 envFrom:
-                - secretKeyRef:
+                - secretRef:
                     name: backup-postgres-{{ .metadata.name }}-config
-                image: '{{ kget (print "secret/postgres-operator/backup-postgres-" .metadata.name "-config") "BACKUP_SCHEDULE" }}'
+                image: '{{ kget (print "secret/postgres-operator/backup-postgres-" .metadata.name "-config") "BACKUP_IMAGE" }}'
                 imagePullPolicy: IfNotPresent
                 name: backup-postgres-{{.metadata.name}}
                 resources:
@@ -199,7 +199,7 @@ spec:
               restartPolicy: Never
               schedulerName: default-scheduler
               terminationGracePeriodSeconds: 30
-      schedule: '{{ kget (print "secret/postgres-operator/backup-postgres-" .metadata.name "-config") "BACKUP_IMAGE" }}'
+      schedule: '{{ kget (print "secret/postgres-operator/backup-postgres-" .metadata.name "-config") "BACKUP_SCHEDULE" }}'
       successfulJobsHistoryLimit: 3
       suspend: false
   - apiVersion: canaries.flanksource.com/v1
