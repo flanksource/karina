@@ -3,12 +3,14 @@ package postgres
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/flanksource/commons/text"
 	"os"
+	"regexp"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
+	"github.com/flanksource/commons/text"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/minio/minio-go/v6"
@@ -155,9 +157,13 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error 
 		return resticSnapshots[i].Time.After(resticSnapshots[j].Time)
 	})
 
+	sPrintBackupPath := func(snapshot ResticSnapshot) string {
+		return fmt.Sprintf("restic:s3:%s/%s%s", string(backupConfig["AWS_ENDPOINT_URL"]), backupS3Bucket, snapshot.Paths[0])
+	}
+
 	if quiet {
 		for i := 0; i < len(resticSnapshots); i++ {
-			fmt.Println(resticSnapshots[i].Paths[0])
+			fmt.Println(sPrintBackupPath(resticSnapshots[i]))
 		}
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', 0)
@@ -165,24 +171,22 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error 
 		fmt.Fprintln(w, "BACKUP PATH\tTIME\tAGE")
 		for i := 0; i < len(resticSnapshots); i++ {
 			snapshot := resticSnapshots[i]
-			fmt.Fprintf(w, "%s\t%s\t%s\n", snapshot.Paths[0], snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
+			fmt.Fprintf(w, "%s\t%s\t%s\n", sPrintBackupPath(snapshot), snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
 		}
 	}
 
 	return nil
 }
 
-func (db *PostgresDB) Restore(args ...string) error {
-	backupConfig := *db.backupConfig
-
-	var backupPath string
-	var resticRepository string
-	if len(args) == 2 {
-		resticRepository = fmt.Sprintf("s3:%s/%s", string(backupConfig["AWS_ENDPOINT_URL"]), args[0])
-		backupPath = args[1]
-	} else {
-		backupPath = args[0]
+func (db *PostgresDB) Restore(fullBackupPath string) error {
+	if !strings.HasPrefix(fullBackupPath, "restic:s3:") {
+		return fmt.Errorf("backup path format is not supported. It should start with \"restic:s3:\"")
 	}
+
+	re := regexp.MustCompile(`(s3:(s3.amazonaws.com|https?://[^/]+)/[^/]+)(/.+)`)
+	matches := re.FindStringSubmatch(fullBackupPath)
+	resticRepository := matches[1]
+	backupPath := matches[3]
 
 	jobBuilder := db.GenerateBackupJob().
 		Command("/restore.sh").

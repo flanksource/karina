@@ -98,16 +98,16 @@ func init() {
 	DB.AddCommand(clone)
 
 	DB.AddCommand(&cobra.Command{
-		Use:   "restore [backup bucket] <backup path>",
+		Use:   "restore <backup path>",
 		Short: "Restore a database from backups",
-		Args:  cobra.RangeArgs(1, 2),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
 			log.Infof("Restoring %s from %s", db, strings.Join(args, " "))
-			if err := db.Restore(args...); err != nil {
+			if err := db.Restore(args[0]); err != nil {
 				log.Fatalf("Error Restore up db %s\n", err)
 			}
 		},

@@ -310,7 +310,7 @@ data:
   AWS_ACCESS_KEY_ID: "{{ .s3.access_key | base64.Encode }}"
   AWS_SECRET_ACCESS_KEY: "{{ .s3.secret_key | base64.Encode }}"
   AWS_ENDPOINT: "{{ .s3.endpoint | base64.Encode }}"
-  AWS_ENDPOINT_URL: '{{ hasPrefix .s3.endpoint "http" | ternary (print .s3.endpoint) (print "https://" .s3.endpoint) | base64.Encode }}'
+  AWS_ENDPOINT_URL: '{{ if not .s3.endpoint }}{{ base64.Encode "s3.amazonaws.com" }}{{ else }}{{ hasPrefix .s3.endpoint "http" | ternary (print .s3.endpoint) (print "https://" .s3.endpoint) | base64.Encode }}{{ end }}'
   AWS_REGION: "{{ .s3.region | base64.Encode }}"
   AWS_S3_FORCE_PATH_STYLE: '{{ .s3.usePathStyle | default "true" | base64.Encode }}'
   BACKUP_IMAGE: '{{ .postgresOperator.backupImage | base64.Encode }}' # Default is set in Deploy phase
