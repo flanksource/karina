@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
 	"github.com/flanksource/karina/pkg/client/postgres"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
@@ -20,19 +22,17 @@ func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	var db *postgres.PostgresDB
-	if namespace == "postgres-operator" {
-		db, err = postgres.GetPostgresDB(&platform.Client, s3, clusterName)
-	} else {
-		db, err = postgres.GetGenericPostgresDB(&platform.Client, s3, namespace, clusterName, secret, "12")
-	}
+	db, err := postgres.GetPostgresDB(&platform.Client, s3, clusterName)
+
 	if err != nil {
 		return nil, err
 	}
 	if secret != "" {
 		db.Secret = secret
 	}
-	db.Superuser = superuser
+	if superuser != "" {
+		db.Superuser = superuser
+	}
 	return db, nil
 }
 
@@ -98,15 +98,15 @@ func init() {
 	DB.AddCommand(clone)
 
 	DB.AddCommand(&cobra.Command{
-		Use:   "restore [backup path]",
+		Use:   "restore <backup path>",
 		Short: "Restore a database from backups",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
-			log.Infof("Restoring %s from %s", db, args[0])
+			log.Infof("Restoring %s from %s", db, strings.Join(args, " "))
 			if err := db.Restore(args[0]); err != nil {
 				log.Fatalf("Error Restore up db %s\n", err)
 			}
@@ -139,11 +139,36 @@ func init() {
 		},
 	}
 
+	listBackup := &cobra.Command{
+		Use:   "list",
+		Short: "List all backup revisions",
+		Run: func(cmd *cobra.Command, args []string) {
+			db, err := getDB(cmd)
+			if err != nil {
+				log.Fatalf("error finding %s: %v", clusterName, err)
+			}
+
+			s3Bucket, _ := cmd.Flags().GetString("bucket")
+			quiet, _ := cmd.Flags().GetBool("quiet")
+			limit, _ := cmd.Flags().GetInt("number")
+			log.Infof("Querying for list of snapshot for %s", db)
+			if err := db.ListBackups(s3Bucket, limit, quiet); err != nil {
+				log.Fatalf("Failed to list backups: %v", err)
+			}
+		},
+	}
+
+	listBackup.Flags().String("bucket", "", "List all backup revisions in a specific bucket")
+	listBackup.Flags().BoolP("quiet", "q", false, "List only the path of the backup")
+	listBackup.Flags().IntP("number", "n", 0, "Maximum number of backups to list")
+	backup.AddCommand(listBackup)
+
+	backup.Flags().Bool("list", false, "List all backup revisions")
 	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
 	DB.AddCommand(backup)
 
 	DB.PersistentFlags().StringVar(&clusterName, "name", "", "Name of the postgres cluster / service")
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")
 	DB.PersistentFlags().StringVar(&secret, "secret", "", "Name of the secret that contains the postgres user credentials")
-	DB.PersistentFlags().StringVar(&superuser, "superuser", "postgres", "Superuser user")
+	DB.PersistentFlags().StringVar(&superuser, "superuser", "", "Superuser user")
 }

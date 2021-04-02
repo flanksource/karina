@@ -309,7 +309,23 @@ metadata:
 data:
   AWS_ACCESS_KEY_ID: "{{ .s3.access_key | base64.Encode }}"
   AWS_SECRET_ACCESS_KEY: "{{ .s3.secret_key | base64.Encode }}"
-  AWS_ENDPOINT: {{ .s3.endpoint | base64.Encode }}
-  AWS_ENDPOINT_URL: {{ (print "https://" .s3.endpoint) | base64.Encode }}
-  AWS_REGION: {{ .s3.region | base64.Encode }}
-  AWS_S3_FORCE_PATH_STYLE: {{ "true" | base64.Encode }}
+  AWS_ENDPOINT: "{{ .s3.endpoint | base64.Encode }}"
+  AWS_ENDPOINT_URL: '{{ if not .s3.endpoint }}{{ base64.Encode "s3.amazonaws.com" }}{{ else }}{{ hasPrefix .s3.endpoint "http" | ternary (print .s3.endpoint) (print "https://" .s3.endpoint) | base64.Encode }}{{ end }}'
+  AWS_REGION: "{{ .s3.region | base64.Encode }}"
+  AWS_S3_FORCE_PATH_STYLE: '{{ .s3.usePathStyle | default "true" | base64.Encode }}'
+  BACKUP_IMAGE: '{{ .postgresOperator.backupImage | base64.Encode }}' # Default is set in Deploy phase
+
+  # NOTE: BACKUP_PASSWORD CAN'T BE UPDATED ONCE RESTIC HAS BEEN INITIALIZED. YOU WON'T BE ABLE TO RESTORE BACKUP DATA IF YOU LOSE THE RESTIC PASSWORD
+  BACKUP_PASSWORD: '{{ or (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_PASSWORD") .postgresOperator.backupPassword | default (random.AlphaNum 22) | base64.Encode }}'
+
+  # Backup Retention
+  BACKUP_RETENTION_KEEP_LAST: '{{ .postgresOperator.defaultBackupRetention.keepLast | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_HOURLY: '{{ .postgresOperator.defaultBackupRetention.keepHourly | default "" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_DAILY: '{{ .postgresOperator.defaultBackupRetention.keepDaily | default "7" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_WEEKLY: '{{ .postgresOperator.defaultBackupRetention.keepWeekly | default "3" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_MONTHLY: '{{ .postgresOperator.defaultBackupRetention.keepMonthly | default "3" | base64.Encode }}'
+  BACKUP_RETENTION_KEEP_YEARLY: '{{ .postgresOperator.defaultBackupRetention.keepYearly | default "" | base64.Encode }}'
+
+  # Other default settings
+  BACKUP_SCHEDULE: '{{ .postgresOperator.defaultBackupSchedule | base64.Encode }}' # Default is set in Deploy phase
+  BACKUP_S3_BUCKET: '{{ .postgresOperator.defaultBackupBucket | base64.Encode }}' # Default is set in Deploy phase

@@ -1,3 +1,10 @@
+???+ asterix "Prerequisites"
+* [template-operator](/operators/template) is installed
+* [canary-checker](/admin-guide/canary-checker/) is installed
+* An S3 compatible object store is available to store logical backups of Postgres Cluster 
+
+## Deploy
+
 Postgres databases can be deployed using the Zalando [Postgres Operator](https://github.com/zalando/postgres-operator)
 
 `karina.yml`
@@ -5,10 +12,32 @@ Postgres databases can be deployed using the Zalando [Postgres Operator](https:/
 ```yaml
 postgresOperator:
   version: v1.3.4.flanksource.1
+  backupPassword: passwordForResticBackup # Optional but can't be changed once the operator is deployed
+  defaultBackupRetention: # Optionally specify the retention of the backup, this can be overridden in db.flanksource.com/v1/PostgresqlDB CR, see example below
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+    keepMonthly: 6
+    keepYearly: 1
 templateOperator:
   version: v0.1.11
 canaryChecker:
   version: v0.15.1
+
+## Below are optional configurations:
+
+# S3 connection information (to store logical backups of all Postgres Clusters) 
+s3:
+  access_key: minio
+  secret_key: minio123
+  endpoint: http://minio.minio.svc:9000
+
+# Only applicable if you want to use MinIO as S3 Object Storage
+minio:
+  version: RELEASE.2020-09-02T18-19-50Z
+  access_key: minio
+  secret_key: minio123
+  replicas: 1
 ```
 
 Deploying using :
@@ -19,7 +48,7 @@ karina deploy postgres-operator -c karina.yml
 
  A CRD called [PostgresqlDB](https://github.com/flanksource/karina/blob/master/manifests/template/postgres-db.yaml.raw) is used as a wrapper around the core zalando objects
 
-Once the operator is deployed you can create a new database
+Once the operator is deployed, you can create a new database
 
 `db.yml`
 
@@ -33,6 +62,12 @@ spec:
   backup:
     bucket: postgres-backups
     schedule: "0 */4 * * *"
+    retention: # Optionally specify the backup retention for this cluster, this will override the backup retention defined in operator configuration above
+      keepHourly: 10
+      keepDaily: 3
+      keepWeekly: 2
+      keepMonthly: 1
+      keepYearly: 1
   cpu: 4000m
   memory: 8Gi
   replicas: 3
@@ -84,10 +119,21 @@ See [karina db backup](../../../cli/karina_db_backup/) documentation for all com
 
 ### Restore
 
+This command will list all backups of a given cluster
+```bash
+karina db backup list --name test1
+```
+
 This command will restore a given cluster from a previous logical backup
 
 ```bash
-karina db restore http://path/to/backup --name test1
+karina db restore "/backup-file-path.sql" --name test1
+```
+
+You can also restore a given cluster from a logical backup located in a different backup
+
+```bash
+karina db restore bucket-name "/backup-file-name.sql" --name test1
 ```
 
 See [karina db restore](../../../cli/karina_db_restore/) documentation for all command line arguments.

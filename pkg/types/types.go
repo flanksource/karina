@@ -245,12 +245,23 @@ func (db DB) GetConnectionURL(name string) string {
 }
 
 type PostgresOperator struct {
-	Disabled       `yaml:",inline" json:",inline"`
-	DBVersion      string `yaml:"dbVersion,omitempty" json:"dbVersion,omitempty"`
-	BackupBucket   string `yaml:"backupBucket,omitempty" json:"backupBucket,omitempty"`
-	BackupSchedule string `yaml:"backupSchedule,omitempty" json:"backupSchedule,omitempty"`
-	SpiloImage     string `yaml:"spiloImage,omitempty" json:"spiloImage,omitempty"`
-	BackupImage    string `yaml:"backupImage,omitempty" json:"backupImage,omitempty"`
+	Disabled               `yaml:",inline" json:",inline"`
+	DBVersion              string                 `yaml:"dbVersion,omitempty" json:"dbVersion,omitempty"`
+	SpiloImage             string                 `yaml:"spiloImage,omitempty" json:"spiloImage,omitempty"`
+	BackupImage            string                 `yaml:"backupImage,omitempty" json:"backupImage,omitempty"`
+	BackupPassword         string                 `yaml:"backupPassword,omitempty" json:"backupPassword,omitempty"`
+	DefaultBackupBucket    string                 `yaml:"defaultBackupBucket,omitempty" json:"defaultBackupBucket,omitempty"`
+	DefaultBackupSchedule  string                 `yaml:"defaultBackupSchedule,omitempty" json:"defaultBackupSchedule,omitempty"`
+	DefaultBackupRetention DefaultBackupRetention `yaml:"defaultBackupRetention,omitempty" json:"defaultBackupRetention,omitempty"`
+}
+
+type DefaultBackupRetention struct {
+	KeepLast    int `yaml:"keepLast,omitempty" json:"keepLast,omitempty"`
+	KeepHourly  int `yaml:"keepHourly,omitempty" json:"keepHourly,omitempty"`
+	KeepDaily   int `yaml:"keepDaily,omitempty" json:"keepDaily,omitempty"`
+	KeepWeekly  int `yaml:"keepWeekly,omitempty" json:"keepWeekly,omitempty"`
+	KeepMonthly int `yaml:"keepMonthly,omitempty" json:"keepMonthly,omitempty"`
+	KeepYearly  int `yaml:"keepYearly,omitempty" json:"keepYearly,omitempty"`
 }
 
 type ArgocdOperator struct {

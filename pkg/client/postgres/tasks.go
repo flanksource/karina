@@ -1,11 +1,21 @@
 package postgres
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+	"sort"
 	"strings"
+	"text/tabwriter"
+	"time"
+
+	"github.com/flanksource/commons/text"
+	v1 "k8s.io/api/core/v1"
+
+	"github.com/minio/minio-go/v6"
 
 	"github.com/flanksource/commons/utils"
-	minio "github.com/minio/minio-go/v6"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api "github.com/flanksource/karina/pkg/api/postgres"
@@ -13,38 +23,24 @@ import (
 )
 
 const Namespace = "postgres-operator"
-const OperatorConfig = "default"
 
 // nolint: golint
 type PostgresDB struct {
-	Name      string
-	Namespace string
-	Secret    string
-	version   string
-	Superuser string
-	op        *api.OperatorConfiguration
-	client    *kommons.Client
+	Name         string
+	Namespace    string
+	Secret       string
+	version      string
+	Superuser    string
+	backupConfig *map[string][]byte
+	client       *kommons.Client
 }
 
-func GetGenericPostgresDB(client *kommons.Client, s3 *minio.Client, namespace, name, secret, version string) (*PostgresDB, error) {
-	db := PostgresDB{client: client}
-
-	op := api.OperatorConfiguration{TypeMeta: metav1.TypeMeta{
-		Kind:       "operatorconfiguration",
-		APIVersion: "acid.zalan.do/v1",
-	}}
-
-	if err := client.Get(Namespace, OperatorConfig, &op); err != nil {
-		return nil, fmt.Errorf("could not get opconfig %v", err)
-	}
-
-	db.op = &op
-	db.Name = name
-	db.Namespace = namespace
-	db.Secret = secret
-	db.version = version
-	db.Superuser = "postgres"
-	return &db, nil
+type ResticSnapshot struct {
+	Time    time.Time
+	Paths   []string
+	Tags    []string
+	ID      string
+	ShortID string `json:"short_id"`
 }
 
 func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
@@ -67,11 +63,16 @@ func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*Post
 		return nil, fmt.Errorf("could not get opconfig %v", err)
 	}
 
-	db.op = &op
+	backupConfig := db.client.GetSecret(Namespace, fmt.Sprintf("backup-%s-config", name))
+	if backupConfig == nil {
+		return nil, fmt.Errorf("failed to get backup config of %s", name)
+	}
+
 	db.Name = name
+	db.backupConfig = backupConfig
 	db.Namespace = _db.Namespace
 	db.version = _db.Spec.PgVersion
-	db.Superuser = db.op.Configuration.PostgresUsersConfiguration.SuperUsername
+	db.Superuser = op.Configuration.PostgresUsersConfiguration.SuperUsername
 	db.Secret = fmt.Sprintf("%s.%s.credentials", db.Superuser, name)
 	return &db, nil
 }
@@ -87,7 +88,11 @@ func (db *PostgresDB) Backup() error {
 		return err
 	}
 
-	return db.client.StreamLogs(db.Namespace, job.Name)
+	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
+	if err != nil {
+		return err
+	}
+	return db.client.StreamLogs(db.Namespace, jobPod)
 }
 
 func (db *PostgresDB) ScheduleBackup(schedule string) error {
@@ -95,61 +100,140 @@ func (db *PostgresDB) ScheduleBackup(schedule string) error {
 	return db.client.Apply(db.Namespace, job)
 }
 
-func (db *PostgresDB) ListBackups() ([]string, error) {
-	var backups []string
-	return backups, nil
-}
+func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error {
+	backupConfig := *db.backupConfig
 
-func (db *PostgresDB) Restore(backup string) error {
-	if !strings.HasPrefix(backup, "s3://") {
-		backup = fmt.Sprintf("s3://%s/%s", db.op.Configuration.LogicalBackup.S3Bucket, backup)
+	var backupS3Bucket string
+	if s3Bucket != "" {
+		backupS3Bucket = s3Bucket
+	} else {
+		backupS3Bucket = string(backupConfig["BACKUP_S3_BUCKET"])
 	}
-	job := db.GenerateBackupJob().
-		Command("/restore.sh").
+
+	job := kommons.
+		Deployment("list-backups-"+db.Name+"-"+utils.ShortTimestamp(), string(backupConfig["BACKUP_IMAGE"])).
+		EnvFromSecret(fmt.Sprintf("backup-%s-config", db.Name)).
+		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").
 		EnvVars(map[string]string{
-			"PATH_TO_BACKUP":   backup,
-			"PSQL_BEFORE_HOOK": "",
-			"PSQL_AFTER_HOOK":  "",
+			"BACKUP_S3_BUCKET": backupS3Bucket,
 			"PGHOST":           db.Name,
-			"PSQL_OPTS":        "--echo-all",
-		}).AsOneShotJob()
+		}).
+		EnvVars(map[string]string{
+			"RESTIC_REPOSITORY": "s3:$(AWS_ENDPOINT_URL)/$(BACKUP_S3_BUCKET)",
+		}).
+		Command("restic", "snapshots", "--json").
+		AsOneShotJob()
 
 	if err := db.client.Apply(db.Namespace, job); err != nil {
 		return err
 	}
 
-	return db.client.StreamLogs(db.Namespace, job.Name)
+	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
+	if err != nil {
+		return err
+	}
+
+	err = db.client.WaitForPod(Namespace, jobPod, 30*time.Second, v1.PodSucceeded)
+	if err != nil {
+		return err
+	}
+
+	podLogs, err := db.client.GetPodLogs(Namespace, jobPod, "")
+	if err != nil {
+		return err
+	}
+	var resticSnapshots []ResticSnapshot
+	err = json.Unmarshal([]byte(podLogs), &resticSnapshots)
+	if err != nil {
+		return err
+	}
+
+	if limit > 0 {
+		resticSnapshots = resticSnapshots[:limit]
+	}
+
+	// Sort snapshots in Time descending order (newer backups first)
+	sort.Slice(resticSnapshots, func(i, j int) bool {
+		return resticSnapshots[i].Time.After(resticSnapshots[j].Time)
+	})
+
+	sPrintBackupPath := func(snapshot ResticSnapshot) string {
+		return fmt.Sprintf("restic:s3:%s/%s%s", string(backupConfig["AWS_ENDPOINT_URL"]), backupS3Bucket, snapshot.Paths[0])
+	}
+
+	if quiet {
+		for i := 0; i < len(resticSnapshots); i++ {
+			fmt.Println(sPrintBackupPath(resticSnapshots[i]))
+		}
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', 0)
+		defer w.Flush()
+		fmt.Fprintln(w, "BACKUP PATH\tTIME\tAGE")
+		for i := 0; i < len(resticSnapshots); i++ {
+			snapshot := resticSnapshots[i]
+			fmt.Fprintf(w, "%s\t%s\t%s\n", sPrintBackupPath(snapshot), snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
+		}
+	}
+
+	return nil
+}
+
+func (db *PostgresDB) Restore(fullBackupPath string) error {
+	if !strings.HasPrefix(fullBackupPath, "restic:s3:") {
+		return fmt.Errorf("backup path format is not supported. It should start with \"restic:s3:\"")
+	}
+
+	re := regexp.MustCompile(`(s3:(s3.amazonaws.com|https?://[^/]+)/[^/]+)(/.+)`)
+	matches := re.FindStringSubmatch(fullBackupPath)
+	resticRepository := matches[1]
+	backupPath := matches[3]
+
+	jobBuilder := db.GenerateBackupJob().
+		Command("/restore.sh").
+		EnvVars(map[string]string{
+			"BACKUP_PATH":      backupPath,
+			"PSQL_BEFORE_HOOK": "",
+			"PSQL_AFTER_HOOK":  "",
+			"PSQL_OPTS":        "--echo-all",
+		})
+	jobBuilder.Name = "restore-" + db.Name + "-" + utils.ShortTimestamp()
+
+	if resticRepository != "" {
+		jobBuilder.EnvVars(map[string]string{
+			"RESTIC_REPOSITORY": resticRepository,
+		})
+	}
+
+	job := jobBuilder.AsOneShotJob()
+
+	if err := db.client.Apply(db.Namespace, job); err != nil {
+		return err
+	}
+
+	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
+	if err != nil {
+		return err
+	}
+	return db.client.StreamLogs(db.Namespace, jobPod)
 }
 
 func (db *PostgresDB) GenerateBackupJob() *kommons.DeploymentBuilder {
-	op := db.op.Configuration
+	backupConfig := *db.backupConfig
 
-	builder := kommons.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), op.LogicalBackup.DockerImage)
+	var builder = kommons.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), string(backupConfig["BACKUP_IMAGE"]))
 	return builder.
-		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
 		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").
+		EnvFromSecret(fmt.Sprintf("backup-%s-config", db.Name)).
 		EnvVars(map[string]string{
-			"SCOPE":                      db.Name,
-			"CLUSTER_NAME_LABEL":         op.Kubernetes.ClusterNameLabel,
-			"LOGICAL_BACKUP_S3_BUCKET":   op.LogicalBackup.S3Bucket,
-			"LOGICAL_BACKUP_S3_REGION":   op.LogicalBackup.S3Region,
-			"LOGICAL_BACKUP_S3_ENDPOINT": op.LogicalBackup.S3Endpoint,
-			"LOGICAL_BACKUP_S3_SSE":      op.LogicalBackup.S3SSE,
-			"PGHOST":                     db.Name,
-			"PG_VERSION":                 db.version,
-			"PGPORT":                     "5432",
-			"PGUSER":                     db.Superuser,
-			"AWS_ACCESS_KEY_ID":          op.LogicalBackup.S3AccessKeyID,
-			"AWS_SECRET_ACCESS_KEY":      op.LogicalBackup.S3SecretAccessKey,
-			"PGDATABASE":                 "postgres",
-			"PGSSLMODE":                  "prefer",
+			"PGHOST":            db.Name,
+			"PGPORT":            "5432",
+			"PGSSLMODE":         "prefer",
+			"PGDATABASE":        "postgres",
+			"PGUSER":            db.Superuser,
+			"PG_VERSION":        db.version,
+			"RESTIC_REPOSITORY": "s3:$(AWS_ENDPOINT_URL)/$(BACKUP_S3_BUCKET)",
 		}).
 		Labels(map[string]string{
-			op.Kubernetes.ClusterNameLabel: db.Name,
-			"application":                  "spilo-logical-backup",
-		}).
-		Annotations(op.Kubernetes.CustomPodAnnotations).
-		// Annotations(db.Spec.PodAnnotations).
-		ServiceAccount(op.Kubernetes.PodServiceAccountName).
-		Ports(8080, 5432, 8008)
+			"application": "postgres-logical-backup",
+		})
 }
