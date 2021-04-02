@@ -3,6 +3,7 @@ package postgres
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/flanksource/commons/text"
 	"os"
 	"sort"
 	"text/tabwriter"
@@ -164,7 +165,7 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error 
 		fmt.Fprintln(w, "BACKUP PATH\tTIME\tAGE")
 		for i := 0; i < len(resticSnapshots); i++ {
 			snapshot := resticSnapshots[i]
-			fmt.Fprintf(w, "%s\t%s\t%s\n", snapshot.Paths[0], snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), time.Since(snapshot.Time))
+			fmt.Fprintf(w, "%s\t%s\t%s\n", snapshot.Paths[0], snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
 		}
 	}
 
