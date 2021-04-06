@@ -1,30 +1,65 @@
 name: E2E
-
 on:
   push:
     branches:
       - master
-    paths-ignore:
-      - "docs/**"
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
-    paths-ignore:
-      - "docs/**"
 
 jobs:
+  gates:
+    # The gates job is intended to derive all necessary information for branching logic further down the graph.
+    runs-on: ubuntu-latest
+    outputs:
+      # See jobs.<job_id>.outputs reference for details on passing variables between jobs:
+      # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idoutputs
+      commitmsg: ${{ steps.getcommit.outputs.commitmsg }}
+      fileChangesToCoreArtifacts: ${{ steps.filter.outputs.fileChangesToCoreArtifacts }}
+    steps:
+    - uses: actions/checkout@main
+      with:
+        fetch-depth: 10
+    - name: get-commit-msg
+      id: getcommit
+      run: |
+        echo ::set-output name=commitmsg::$(git log --format=%B -n 1 ${{ github.event.after }})
+    - uses: dorny/paths-filter@v2
+      # Reference documentation for this action: https://github.com/dorny/paths-filter#examples 
+      id: filter
+      with:
+        # Here we test for file changes with the filter. While at present the "fileChangesToCoreArtifacts" variable
+        # is only testing for changes outside of the documentation, this does in principle give us fine-grained
+        # control should we wish to exclude other supporting folders from triggering the larger test runs.
+        # 
+        # Unfortunately, it is, at time of writing, not possible to do this work with Github Action's path
+        # exclusions logic, as there is no way to set a job to report as successful without running it, and
+        # the paths logic will skip the job altogether. This means that, without the control gained here,
+        # any job that we wish to set as "Required" in for merge checks must be run whether it's relevant 
+        # to the changes or not. See the following discussion: 
+        # https://github.community/t/feature-request-conditional-required-checks/16761/13
+        filters: |
+          fileChangesToCoreArtifacts:
+            - '!docs/**'
   binary:
     runs-on: ubuntu-20.04
+    needs: gates
     container:
       image: flanksource/build-tools:v0.12.0
+    env: 
+      FILE_CHANGES_TO_CORE_ARTIFACTS: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
     steps:
       # Get values for cache paths to be used in later steps
       - id: go-cache-paths
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         run: |
           echo "::set-output name=go-build::$(go env GOCACHE)"
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
       - uses: actions/checkout@main
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
       # Cache go build cache, used to speedup go test
       - name: Go Build Cache
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         uses: actions/cache@v2
         with:
           path: ${{ steps.go-cache-paths.outputs.go-build }}
@@ -32,20 +67,29 @@ jobs:
 
       # Cache go mod cache, used to speedup builds
       - name: Go Mod Cache
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         uses: actions/cache@v2
         with:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      - run: make linux
+      - name: Make linux
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        run: make linux
+
       - uses: actions/upload-artifact@v2
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         with:
           name: karina
           path: ./.bin/karina
   e2e:
     runs-on: ubuntu-20.04
-    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
-    needs: binary
+    if: "!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e')"
+    needs: 
+      - binary
+      - gates
+    env: 
+      FILE_CHANGES_TO_CORE_ARTIFACTS: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -76,11 +120,14 @@ jobs:
             suite: monitoring
     steps:
       - uses: actions/checkout@main
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
       - uses: actions/download-artifact@v2
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         with:
           name: karina
           path: ./.bin
       - name: Run e2e testing script
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         id: e2e
         env:
           GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
@@ -89,24 +136,24 @@ jobs:
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
         run: ./test/test.sh
       - name: Upload test results
-        if: ${{ always() }}
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && always() }}
         uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: test-results-${{matrix.k8s}}-${{matrix.suite}}
           path: test-results/
       - name: Upload snapshots
-        if: ${{ always() }}
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && always() }}
         uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
-        if: failure()
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
         run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
-        if: failure()
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
         uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
@@ -114,8 +161,10 @@ jobs:
           path: artifacts/kind-logs
   upgrade:
     runs-on: ubuntu-20.04
-    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
-    needs: binary
+    if: ${{ (!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e') && needs.gates.outputs.fileChangesToCoreArtifacts == 'true')}}
+    needs: 
+      - binary
+      - gates
     strategy:
       fail-fast: false
       matrix:
@@ -171,8 +220,10 @@ jobs:
           path: artifacts/kind-logs
   selfhosted:
     runs-on: [self-hosted]
-    if: "! contains(toJSON(github.event.commits.*.message), 'skip-e2e')"
-    needs: binary
+    if: ${{ (!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e') && needs.gates.outputs.fileChangesToCoreArtifacts == 'true')}}
+    needs: 
+      - binary
+      - gates
     strategy:
       fail-fast: false
       matrix:
@@ -243,6 +294,8 @@ jobs:
           path: artifacts/kind-logs
   golangci:
     name: lint
+    if: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
+    needs: gates
     runs-on: ubuntu-20.04
     container:
       image: flanksource/build-tools:v0.12.0
