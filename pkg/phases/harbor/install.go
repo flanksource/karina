@@ -2,7 +2,6 @@ package harbor
 
 import (
 	"fmt"
-	"strings"
 
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
@@ -15,7 +14,7 @@ const (
 	HaborRegistryUsername = "harbor_registry_user"
 )
 
-var manifests = []string{"core", "portal", "registry", "exporter", "redis", "jobservice", "chartmuseum", "clair"}
+var manifests = []string{"core", "portal", "registry", "exporter", "redis", "jobservice", "chartmuseum", "trivy"}
 
 func Deploy(p *platform.Platform) error {
 	if p.Harbor == nil || p.Harbor.Disabled {
@@ -117,10 +116,9 @@ func Deploy(p *platform.Platform) error {
 			return err
 		}
 
-		if err := p.CreateOrUpdateSecret("harbor-clair", Namespace, map[string][]byte{
-			"config.yaml": []byte(getClairConfig(p)),
-			"database":    []byte(p.Harbor.DB.GetConnectionURL("clair")),
-			"redis":       []byte("redis://harbor-redis:6379/4"),
+		if err := p.CreateOrUpdateSecret("harbor-trivy", Namespace, map[string][]byte{
+			"gitHubToken": []byte{},
+			"redisURL":    []byte("redis://harbor-redis:6379/4"),
 		}); err != nil {
 			return err
 		}
@@ -128,7 +126,6 @@ func Deploy(p *platform.Platform) error {
 		if err := p.CreateOrUpdateSecret("harbor-core", Namespace, map[string][]byte{
 			"HARBOR_ADMIN_PASSWORD":        []byte(p.Harbor.AdminPassword),
 			"POSTGRESQL_PASSWORD":          []byte(p.Harbor.DB.Password),
-			"CLAIR_DB_PASSWORD":            []byte(p.Harbor.DB.Password),
 			"REGISTRY_CREDENTIAL_PASSWORD": registryPassword,
 			"secretKey":                    []byte("not-a-secure-key"),
 			"secret":                       []byte(nonce),
@@ -190,25 +187,4 @@ func getHtPasswd(password string) ([]byte, error) {
 		return nil, err
 	}
 	return []byte(fmt.Sprintf("%s:%s", HaborRegistryUsername, string(passwordBytes))), nil
-}
-
-func getClairConfig(p *platform.Platform) string {
-	return strings.ReplaceAll(fmt.Sprintf(`
-clair:
-  database:
-    type: pgsql
-    options:
-      source: "%s"
-      # Number of elements kept in the cache
-      # Values unlikely to change (e.g. namespaces) are cached in order to save prevent needless roundtrips to the database.
-      cachesize: 16384
-  api:
-    # API server port
-    port: 6060
-    healthport: 6061
-    # Deadline before an API request will respond with a 503
-    timeout: 300s
-  updater:
-    interval: 12h
-	`, p.Harbor.DB.GetConnectionURL("clair")), "\t", "  ")
 }
