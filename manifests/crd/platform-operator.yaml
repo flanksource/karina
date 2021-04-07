@@ -2,6 +2,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: platform-system/platform-opertator
     controller-gen.kubebuilder.io/version: v0.2.4
   creationTimestamp: null
   name: clusterresourcequotas.platform.flanksource.com

@@ -15,6 +15,8 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook
   labels:
     app: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -25,7 +27,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
         service:
           name: cert-manager-webhook
           namespace: cert-manager
@@ -903,6 +904,8 @@ status:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook
   labels:
     app: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -913,7 +916,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
         service:
           name: cert-manager-webhook
           namespace: cert-manager
@@ -2752,6 +2754,8 @@ status:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook
   labels:
     app: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -2762,7 +2766,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
         service:
           name: cert-manager-webhook
           namespace: cert-manager
@@ -9488,6 +9491,8 @@ status:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook
   labels:
     app: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -9498,7 +9503,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
         service:
           name: cert-manager-webhook
           namespace: cert-manager
@@ -18340,6 +18344,8 @@ status:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook
   labels:
     app: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -18350,7 +18356,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
         service:
           name: cert-manager-webhook
           namespace: cert-manager
@@ -27188,6 +27193,8 @@ status:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook
   labels:
     app: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -27198,7 +27205,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: "{{.certmanager.defaultIssuerCa | base64.Encode }}"
         service:
           name: cert-manager-webhook
           namespace: cert-manager
