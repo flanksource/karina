@@ -77,11 +77,11 @@ spec:
             readOnlyRootFilesystem: true
           resources:
             limits:
-              cpu: 400m
+              cpu: 200m
               memory: 256Mi
             requests:
               cpu: 100m
-              memory: 64Mi
+              memory: 128Mi
           ports:
             - containerPort: 9107
               name: http

@@ -175,6 +175,13 @@ spec:
             initialDelaySeconds: 1
             periodSeconds: 10
           args: ["serve", "/etc/registry/config.yml"]
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
           env:
           - name: INTERNAL_TLS_ENABLED
             value: "true"
@@ -231,6 +238,13 @@ spec:
             initialDelaySeconds: 1
             periodSeconds: 10
           args: ["serve", "/etc/registry/config.yml"]
+          resources:
+            limits:
+              cpu: 200m
+              memory: 124Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
           envFrom:
             - secretRef:
                 name: "harbor-registry"

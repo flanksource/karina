@@ -110,6 +110,13 @@ spec:
               scheme: HTTPS
             initialDelaySeconds: 1
             periodSeconds: 10
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
           envFrom:
             - configMapRef:
                 name: "harbor-chartmuseum"

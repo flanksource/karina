@@ -44,7 +44,7 @@ spec:
     volumeClaimTemplate: {}
   resources:
     requests:
-      memory: 256Mi
+      memory: 100Mi
       cpu: 10m
   retention: 10h
 ---
@@ -196,3 +196,119 @@ spec:
             - $patch: delete
               mountPath: /var/lib/redis
   volumeClaimTemplates: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-clair
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: clair
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-exporter
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: harbor-exporter
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-chartmuseum
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: chartmuseum
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-core
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: core
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-jobservice
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: jobservice
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-portal
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: portal
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: harbor-redis
+  namespace: vault
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-registry
+  namespace: harbor
+spec:
+  template:
+    spec:
+      containers:
+        - name: registry
+          resources:
+            requests:
+              cpu: 10m
+        - name: registryctl
+          resources:
+            requests:
+              cpu: 10m
