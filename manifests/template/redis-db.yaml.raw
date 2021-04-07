@@ -12,6 +12,7 @@ spec:
       namespace: '{{.metadata.namespace}}'
     spec:
       redis:
+        image: docker.io/library/redis:{{ .spec.version | default "5.0-alpine" }}
         replicas: '{{.spec.redis.replicas | default "3"}}'
         resources:
           limits:
@@ -32,6 +33,7 @@ spec:
                   storage: '{{.spec.storage.size | default "1Gi"}}'
               storageClassName: '{{.spec.storage.storageClass | default ""}}'
       sentinel:
+        image: docker.io/library/redis:{{ .spec.version | default "5.0-alpine" }}
         replicas: '{{.spec.sentinel.replicas | default "3"}}'
         resources:
           limits:

@@ -65,6 +65,10 @@ crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
 	$(BUILD_CRD)
 
 .SECONDEXPANSION:
+template/%.yaml.raw: $$(wildcard upstream/$$*/template/*) bin/kustomize
+	$(BUILD_TEMPLATE)
+
+.SECONDEXPANSION:
 %.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/*.yaml) bin/kustomize
 	$(BUILD_HELM_CHART)
 	$(BUILD_BASE)
@@ -77,10 +81,6 @@ crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
 .SECONDEXPANSION:
 %.yaml.raw: bin/kustomize
 	$(BUILD_RESOURCE)
-
-.SECONDEXPANSION:
-template/%.yaml.raw: $$(wildcard upstream/$$*/template/*) bin/kustomize
-	$(BUILD_TEMPLATE)
 
 .PHONY: build build-upstream-helm-charts build-crds build-base build-templates
 
