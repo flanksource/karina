@@ -11,10 +11,6 @@ import (
 	"time"
 
 	"github.com/flanksource/commons/text"
-	v1 "k8s.io/api/core/v1"
-
-	"github.com/minio/minio-go/v6"
-
 	"github.com/flanksource/commons/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -43,7 +39,7 @@ type ResticSnapshot struct {
 	ShortID string `json:"short_id"`
 }
 
-func GetPostgresDB(client *kommons.Client, s3 *minio.Client, name string) (*PostgresDB, error) {
+func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
 	db := PostgresDB{client: client}
 
 	_db := &api.Postgresql{TypeMeta: metav1.TypeMeta{
@@ -100,7 +96,7 @@ func (db *PostgresDB) ScheduleBackup(schedule string) error {
 	return db.client.Apply(db.Namespace, job)
 }
 
-func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error {
+func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
 	backupConfig := *db.backupConfig
 
 	var backupS3Bucket string
@@ -125,27 +121,26 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error 
 		AsOneShotJob()
 
 	if err := db.client.Apply(db.Namespace, job); err != nil {
-		return err
+		return nil, err
+	}
+
+	if err := db.client.WaitForJob(Namespace, job.Name, 1*time.Minute); err != nil {
+		return nil, err
 	}
 
 	jobPod, err := db.client.GetJobPod(Namespace, job.Name)
 	if err != nil {
-		return err
-	}
-
-	err = db.client.WaitForPod(Namespace, jobPod, 30*time.Second, v1.PodSucceeded)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	podLogs, err := db.client.GetPodLogs(Namespace, jobPod, "")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var resticSnapshots []ResticSnapshot
 	err = json.Unmarshal([]byte(podLogs), &resticSnapshots)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if limit > 0 {
@@ -161,9 +156,12 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error 
 		return fmt.Sprintf("restic:s3:%s/%s%s", string(backupConfig["AWS_ENDPOINT_URL"]), backupS3Bucket, snapshot.Paths[0])
 	}
 
+	var backupPaths []string
 	if quiet {
 		for i := 0; i < len(resticSnapshots); i++ {
-			fmt.Println(sPrintBackupPath(resticSnapshots[i]))
+			backupPath := sPrintBackupPath(resticSnapshots[i])
+			backupPaths = append(backupPaths, backupPath)
+			fmt.Println(backupPath)
 		}
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', 0)
@@ -171,11 +169,13 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) error 
 		fmt.Fprintln(w, "BACKUP PATH\tTIME\tAGE")
 		for i := 0; i < len(resticSnapshots); i++ {
 			snapshot := resticSnapshots[i]
-			fmt.Fprintf(w, "%s\t%s\t%s\n", sPrintBackupPath(snapshot), snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
+			backupPath := sPrintBackupPath(snapshot)
+			backupPaths = append(backupPaths, backupPath)
+			fmt.Fprintf(w, "%s\t%s\t%s\n", backupPath, snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
 		}
 	}
 
-	return nil
+	return backupPaths, nil
 }
 
 func (db *PostgresDB) Restore(fullBackupPath string) error {

@@ -18,11 +18,7 @@ var clusterName, namespace, secret, superuser string
 
 func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
 	platform := getPlatform(cmd)
-	s3, err := platform.GetS3Client()
-	if err != nil {
-		return nil, err
-	}
-	db, err := postgres.GetPostgresDB(&platform.Client, s3, clusterName)
+	db, err := postgres.GetPostgresDB(&platform.Client, clusterName)
 
 	if err != nil {
 		return nil, err
@@ -152,7 +148,7 @@ func init() {
 			quiet, _ := cmd.Flags().GetBool("quiet")
 			limit, _ := cmd.Flags().GetInt("number")
 			log.Infof("Querying for list of snapshot for %s", db)
-			if err := db.ListBackups(s3Bucket, limit, quiet); err != nil {
+			if _, err := db.ListBackups(s3Bucket, limit, quiet); err != nil {
 				log.Fatalf("Failed to list backups: %v", err)
 			}
 		},
