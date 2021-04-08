@@ -175,7 +175,7 @@ type Harbor struct {
 	ChartPVC        string `yaml:"chartPVC,omitempty" json:"chartPVC,omitempty"`
 	ChartVersion    string `yaml:"chartVersion,omitempty" json:"chartVersion,omitempty"`
 	AdminPassword   string `yaml:"-" json:"-"`
-	ClairVersion    string `yaml:"clairVersion" json:"clairVersion,omitempty"`
+	TrivyVersion    string `yaml:"trivyVersion" json:"trivyVersion,omitempty"`
 	RegistryVersion string `yaml:"registryVersion" json:"registryVersion"`
 	// Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`)
 	LogLevel          string                   `yaml:"logLevel,omitempty" json:"logLevel,omitempty"`

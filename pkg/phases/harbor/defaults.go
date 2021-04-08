@@ -8,21 +8,7 @@ import (
 )
 
 var dbCluster = "harbor"
-var dbNames = []string{"registry", "clair", "notary_server", "notary_signer"}
-
-var clairVersions = map[string]string{
-	"latest": "2.1.1",
-	"v1.9.0": "2.0.9",
-	"v1.9.1": "2.0.9",
-	"v1.9.2": "2.0.9",
-	"v1.9.3": "2.1.0",
-	"v1.9.4": "2.1.0",
-	"v1.8.5": "2.0.8",
-	"v1.8.4": "2.0.8",
-	"v1.8.3": "2.0.8",
-	"v1.8.2": "2.0.8",
-	"v1.8.6": "2.1.0",
-}
+var dbNames = []string{"registry", "trivy", "notary_server", "notary_signer"}
 
 const Namespace = "harbor"
 
@@ -43,17 +29,8 @@ func Defaults(p *types.PlatformConfig) {
 
 	if !strings.HasPrefix(harbor.Version, "v1") {
 		// from v2 all images use the same version label
-		harbor.ClairVersion = harbor.Version
 		harbor.RegistryVersion = harbor.Version
 		harbor.ChartVersion = harbor.Version
-	}
-
-	if harbor.ClairVersion == "" {
-		if version, ok := clairVersions[harbor.Version]; ok {
-			harbor.ClairVersion = version
-		} else {
-			harbor.ClairVersion = clairVersions["latest"]
-		}
 	}
 
 	if harbor.RegistryVersion == "" {
