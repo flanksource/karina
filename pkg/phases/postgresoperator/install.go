@@ -40,5 +40,5 @@ func Deploy(platform *platform.Platform) error {
 		return err
 	}
 
-	return platform.ApplySpecs(Namespace, "postgres-operator.yaml", "postgres-exporter-config.yaml", "postgres-operator-config.yaml", "template/postgres-db.yaml.raw")
+	return platform.ApplySpecs(Namespace, "postgres-operator.yaml", "postgres-exporter-config.yaml", "postgres-operator-config.yaml", "template/postgresql-db.yaml.raw")
 }

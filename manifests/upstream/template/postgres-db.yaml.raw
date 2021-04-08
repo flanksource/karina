@@ -1,2 +1,0 @@
-resources:
-  - https://raw.githubusercontent.com/flanksource/template-operator-library/main/config/templates/postgresql-db.yaml

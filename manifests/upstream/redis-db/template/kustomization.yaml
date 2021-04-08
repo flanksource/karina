@@ -1,2 +1,2 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/template-operator-library/v0.1.0/config/templates/redis-db.yaml
+  - https://raw.githubusercontent.com/flanksource/template-operator-library/v0.1.2/config/templates/redis-db.yaml
