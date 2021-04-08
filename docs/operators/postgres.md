@@ -46,7 +46,7 @@ Deploying using :
 karina deploy postgres-operator -c karina.yml
 ```
 
- A CRD called [PostgresqlDB](https://github.com/flanksource/karina/blob/master/manifests/template/postgres-db.yaml.raw) is used as a wrapper around the core zalando objects
+ A CRD called [PostgresqlDB](https://github.com/flanksource/karina/blob/master/manifests/template/postgresql-db.yaml.raw) is used as a wrapper around the core zalando objects
 
 Once the operator is deployed, you can create a new database
 
