@@ -11,13 +11,14 @@ require (
 	github.com/flanksource/commons v1.5.2
 	github.com/flanksource/kommons v0.10.0
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
+	github.com/flanksource/template-operator-library v0.1.0
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
 	github.com/go-pg/pg/v9 v9.1.6
 	github.com/google/uuid v1.1.2
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
-	github.com/imdario/mergo v0.3.9
+	github.com/imdario/mergo v0.3.11
 	github.com/jetstack/cert-manager v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/kr/pretty v0.2.1
@@ -28,7 +29,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.10.0
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.7.1
 	github.com/spf13/cobra v1.1.1
 	github.com/thoas/go-funk v0.7.0
 	github.com/vbauerster/mpb/v5 v5.0.3
@@ -38,7 +39,7 @@ require (
 	go.mozilla.org/sops/v3 v3.6.1
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gopkg.in/flanksource/yaml.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.20.4
@@ -53,6 +54,8 @@ require (
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v14.2.0+incompatible
+	github.com/flanksource/kommons => github.com/tobernguyen/kommons v0.3.5-0.20210409051250-d6121dbc87ce
+	github.com/flanksource/template-operator-library => github.com/tobernguyen/template-operator-library v0.1.1-0.20210408061816-57964c040f68
 	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
