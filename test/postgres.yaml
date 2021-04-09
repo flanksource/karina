@@ -1,4 +1,26 @@
 importConfigs:
   - minimal.yaml
+templateOperator:
+  version: v0.1.10
+  syncPeriod: 15s
+canaryChecker:
+  version: v0.15.1
+minio:
+  version: RELEASE.2020-09-02T18-19-50Z
+  access_key: minio
+  secret_key: minio123
+  replicas: 1
+s3:
+  access_key: minio
+  secret_key: minio123
+  endpoint: http://minio.minio.svc:9000
+  skipTLSVerify: true
+  usePathStyle: true
 postgresOperator:
   version: v1.3.4.flanksource.1
+  defaultBackupBucket: cicd-pg-backup
+  backupPassword: password123456
+  defaultBackupRetention:
+    keepLast: 5
+    keepHourly: 2
+    keepDaily: 1

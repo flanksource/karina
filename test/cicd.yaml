@@ -12,17 +12,7 @@ keptn:
   version: v0.7.3
 templateOperator:
   version: v0.1.10
-  syncPeriod: 5s
-postgresOperator:
-  version: v1.3.4.flanksource.1
-  defaultBackupBucket: cicd-pg-backup
-  backupPassword: password123456
-  defaultBackupRetention:
-    keepLast: 5
-    keepHourly: 2
-    keepDaily: 1
-canaryChecker:
-  version: v0.15.1
+  syncPeriod: 15s
 mongodbOperator:
   version: v1.6.0
 gitops:
@@ -35,16 +25,7 @@ gitops:
     gitPollInterval: 30s
     syncInterval: 30s
 minio:
-  version: RELEASE.2020-09-02T18-19-50Z
-  access_key: minio
-  secret_key: minio123
-  replicas: 1
-s3:
-  access_key: minio
-  secret_key: minio123
-  endpoint: http://minio.minio.svc:9000
-  skipTLSVerify: true
-  usePathStyle: true
+  disabled: true
 configmapReloader:
   disabled: true
 test:
