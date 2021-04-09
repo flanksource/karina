@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	v1 "github.com/flanksource/kommons/api/v1"
+
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
@@ -48,6 +50,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	kommons.TestNamespace(client, Namespace, test)
 	if p.E2E {
 		TestLogicalBackupE2E(p, test)
+		TestCloneDBFromWAL(p, test)
 	}
 }
 
@@ -162,6 +165,9 @@ func newPostgresqlDBCluster(namespace, name string) *postgresdbv1.PostgresqlDB {
 			},
 			Replicas: 1,
 		},
+		Status: postgresdbv1.PostgresqlDBStatus{
+			Conditions: []v1.Condition{},
+		},
 	}
 }
 
@@ -184,8 +190,7 @@ func removeLogicalBackupE2ECluster(p *platform.Platform, test *console.TestResul
 	test.Infof("Deleted %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, Namespace)
 }
 
-// TODO: Fix this failing e2e test
-func XTestCloneDBFromWAL(p *platform.Platform, test *console.TestResults) {
+func TestCloneDBFromWAL(p *platform.Platform, test *console.TestResults) {
 	testName := "postgres-operator-e2e"
 	cluster1 := pgapi.NewClusterConfig(utils.RandomString(6), "test", "e2e_db")
 	cluster1.BackupSchedule = "*/1 * * * *"
