@@ -1,24 +1,27 @@
 ???+ asterix "Prerequisites"
-     [karina](/admin-guide/#installing-karina) is installed
+     [karina](/admin-guide/#installing-karina) is installed  
+     [docker]([/admin-guide/#installing-karina](https://www.docker.com/get-started)) is installed  
+     [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) is installed
 
+## :1: Generate CAs
 
-
-## :1: Generate CA's
+Generate CA for kubernetes api-server authentication:
 
 ```shell
-# generate CA for kubernetes api-server authentication
 karina ca generate --name root-ca \
   --cert-path .certs/root-ca.crt \
   --private-key-path .certs/root-ca.key \
   --password foobar --expiry 10
+```
 
-# generate ingressCA for ingress certificates
+Generate ingressCA for ingress certificates:
+
+```shell
 karina ca generate --name ingress-ca \
   --cert-path .certs/ingress-ca.crt \
   --private-key-path .certs/ingress-ca.key \
   --password foobar  --expiry 10
 ```
-
 
 ## :2: Create karina.yml
 
