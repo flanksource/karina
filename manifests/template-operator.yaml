@@ -121,11 +121,11 @@ spec:
         name: manager
         resources:
           limits:
-            cpu: 100m
-            memory: 130Mi
+            cpu: 150m
+            memory: 200Mi
           requests:
             cpu: 100m
-            memory: 120Mi
+            memory: 150Mi
       - args:
         - --secure-listen-address=0.0.0.0:8443
         - --upstream=http://127.0.0.1:8080/
