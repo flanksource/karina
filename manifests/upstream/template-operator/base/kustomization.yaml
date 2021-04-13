@@ -20,3 +20,10 @@ patchesStrategicMerge:
                 - --metrics-addr=0.0.0.0:8080
                 - --enable-leader-election
                 - "--sync-period={{ .templateOperator.syncPeriod | default \"5m\" }}"
+              resources:
+                limits:
+                  cpu: 150m
+                  memory: 200Mi
+                requests:
+                  cpu: 100m
+                  memory: 150Mi
