@@ -58,7 +58,7 @@ test:
     - opa
     - gitops
 platformOperator:
-  version: v0.4.3-alpha1
+  version: v0.6.14
   whitelistedPodAnnotations:
     # used by filebeat
     - com.flanksource.infra.logs/enabled

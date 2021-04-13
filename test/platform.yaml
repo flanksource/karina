@@ -27,7 +27,7 @@ registryCredentials:
     account: 745897381572
     region: us-east-1
 platformOperator:
-  version: v0.5.1
+  version: v0.6.14
   enableClusterResourceQuota: true
   whitelistedPodAnnotations:
     # used by filebeat

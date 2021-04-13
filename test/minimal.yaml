@@ -35,7 +35,7 @@ templateOperator:
 podSubnet: 10.200.0.0/16
 serviceSubnet: 10.201.0.0/16
 platformOperator:
-  version: v0.4.5
+  version: v0.6.14
 calico:
   version: v3.8.2
 s3:

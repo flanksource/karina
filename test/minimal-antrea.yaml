@@ -34,7 +34,7 @@ versions:
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 platformOperator:
-  version: v0.4.5
+  version: v0.6.14
 calico:
   disabled: true
 antrea:
