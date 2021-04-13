@@ -1,0 +1,38 @@
+resources:
+  - https://raw.githubusercontent.com/flanksource/platform-operator/v0.6.14/config/deploy/base.yml
+images:
+  - name: docker.io/flanksource/platform-operator
+    newName: docker.io/flanksource/platform-operator
+    newTag: "{{.platformOperator.version}}"
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: platform-operator
+      namespace: platform-system
+      annotations:
+        reload/all: "true"
+    spec:
+      replicas: 2
+      template:
+        metadata:
+          annotations:
+            reload/all: "true"
+            com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: Reconciling
+            com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: Nothing to update
+            com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
+            com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: Successfully Reconciled
+        spec:
+          containers:
+            - name: manager
+              args:
+                - --enable-leader-election
+                - TEMPLATE_MARK
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 384Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi

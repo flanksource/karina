@@ -1,0 +1,2 @@
+resources:
+  - https://raw.githubusercontent.com/flanksource/platform-operator/v0.6.14/config/deploy/crd.yml
