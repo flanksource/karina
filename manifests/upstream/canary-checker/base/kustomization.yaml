@@ -1,0 +1,56 @@
+resources:
+  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.19.0/config/deploy/base.yaml
+images:
+  - name: flanksource/canary-checker
+    newName: docker.io/flanksource/canary-checker
+    newTag: "{{.canaryChecker.version}}"
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: canary-checker
+      namespace: platform-system
+    spec:
+      template:
+        metadata:
+          annotations:
+            com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: patching
+            com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: "[pod/canary] request completed with 503, expected [200 201 202], retrying"
+            com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
+            com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: Successfully Reconciled
+        spec:
+          containers:
+            - name: canary-checker
+              args:
+                - operator
+                - -v
+                - --httpPort
+                - "8080"
+                - TEMPLATE_MARK
+              livenessProbe: null
+              readinessProbe: null
+              ports:
+                - name: metrics
+                  containerPort: 8080
+              volumeMounts:
+                - mountPath: /var/run/docker.sock
+                  name: dockersock
+                - mountPath: /run/containerd/containerd.sock
+                  name: containerdsock
+          volumes:
+            - hostPath:
+                path: /var/run/docker.sock
+                type: ""
+              name: dockersock
+            - name: containerdsock
+              hostPath:
+                path: /run/containerd/containerd.sock
+                type: ""
+    #           resources:
+    #             limits:
+    #               cpu: 150m
+    #               memory: 200Mi
+    #             requests:
+    #               cpu: 100m
+    #               memory: 150Mi
