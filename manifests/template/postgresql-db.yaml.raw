@@ -101,7 +101,7 @@ spec:
               name: postgres.postgres-{{.metadata.name}}.credentials
         - name: PG_EXPORTER_EXTEND_QUERY_PATH
           value: /opt/extra-queries/queries.yaml
-        image: docker.io/bitnami/postgres-exporter:0.8.0
+        image: docker.io/flanksource/postgres-exporter:0.9.0-flanksource
         name: exporter
         ports:
         - containerPort: 9187
