@@ -3,7 +3,7 @@ resources:
 images:
   - name: flanksource/canary-checker
     newName: docker.io/flanksource/canary-checker
-    newTag: "{{.canaryChecker.version}}"
+    newTag: '{{.canaryChecker.version | default "v0.19.0" }}'
 patchesStrategicMerge:
   - |-
     apiVersion: apps/v1
