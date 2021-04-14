@@ -69,7 +69,12 @@ endef
 .PHONY: platform-operator.yaml
 platform-operator.yaml:
 	$(call BUILD_BASE,platform-operator)
-	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$k, \$$v := .platformOperator.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' platform-operator.yaml
+	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$k, $$v := .platformOperator.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' platform-operator.yaml
+
+.PHONY: canary-checker.yaml
+canary-checker.yaml:
+	$(call BUILD_BASE,canary-checker)
+	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$server := .canaryChecker.aggregateServers }}\n        - --aggregateServers\n        - {{$$server}}\n        {{- end }}/' canary-checker.yaml
 
 .SECONDEXPANSION:
 crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
