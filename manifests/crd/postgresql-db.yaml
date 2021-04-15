@@ -51,6 +51,12 @@ spec:
                   schedule:
                     type: string
                 type: object
+              cpu:
+                description: Deprecated
+                type: string
+              memory:
+                description: Deprecated
+                type: string
               parameters:
                 additionalProperties:
                   type: string
