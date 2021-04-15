@@ -50,6 +50,15 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
+	if !platform.PlatformOperator.EnableClusterResourceQuota {
+		return platform.DeleteByKind("ValidatingWebhookConfiguration", "", WebhookService)
+	}
+
+	webhooks, err = platform.CreateWebhookBuilder(Namespace, WebhookService, ca)
+	if err != nil {
+		return err
+	}
+
 	return platform.Apply(Namespace, webhooks.
 		NewHook("clusterresourcequotas-validation-v1.platform.flanksource.com", "/validate-clusterresourcequota-platform-flanksource-com-v1").
 		MatchKinds("clusterresourcequotas").
