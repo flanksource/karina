@@ -30,7 +30,7 @@ func main() {
 		cmd.Backup,
 		cmd.BurninController,
 		cmd.CA,
-		cmd.Cleanup,
+		cmd.Terminate,
 		cmd.CleanupJobs,
 		cmd.Config,
 		cmd.Conformance,
