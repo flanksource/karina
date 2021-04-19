@@ -107,6 +107,7 @@ jobs:
           - managed
           - nosql
           - cicd
+          - kpack
         include:
           - k8s: v1.17.5
             suite: minimal

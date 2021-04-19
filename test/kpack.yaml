@@ -1,0 +1,4 @@
+importConfigs:
+  - minimal.yaml
+kpack:
+  version: 0.2.2
