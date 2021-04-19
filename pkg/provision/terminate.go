@@ -184,8 +184,8 @@ func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name s
 	return nil
 }
 
-// Cleanup stops and deletes all VM's for a cluster;
-func Cleanup(platform *platform.Platform) error {
+// Terminate stops and deletes all VM's for a cluster;
+func Terminate(platform *platform.Platform) error {
 	if platform.TerminationProtection {
 		return fmt.Errorf("termination Protection Enabled, use -e terminationProtection=false to disable")
 	}
