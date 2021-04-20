@@ -26,7 +26,7 @@ require (
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/olivere/elastic/v7 v7.0.13
 	github.com/onsi/gomega v1.10.1
-	github.com/pivotal/kpack v0.2.2 // indirect
+	github.com/pivotal/kpack v0.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.10.0
