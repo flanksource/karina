@@ -24,3 +24,11 @@ postgresOperator:
     keepLast: 5
     keepHourly: 2
     keepDaily: 1
+thanos:
+  version: v0.13.0
+  mode: client
+  bucket: thanos
+monitoring:
+  prometheus:
+    persistence:
+      capacity: 10Gi

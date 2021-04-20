@@ -1,0 +1,59 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: postgres
+  namespace: postgres-operator
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      application: spilo
+  namespaceSelector:
+    matchNames:
+      - postgres-operator
+  podMetricsEndpoints:
+    - targetPort: 9187
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-postgres-rules
+  namespace: postgres-operator
+spec:
+  groups:
+  - name: postgres.rules
+    rules:
+      - alert: PostgresFailedReplicaSlot
+        annotations:
+          description:
+            A Postgres replica slot in spilo master {{$labels.pod}} is not in active state
+          summary: Replication slot not replicating
+        expr: |
+          pg_replication_slot_status_out{active="false"} > 0
+        for: 5m
+        labels:
+          severity: critical
+      - alert: PostgresLagWarn
+        annotations:
+          description:
+            Postgres replica {{$labels.pod}} experiencing high WAL lag
+          summary: High replication lag
+        expr: |
+          pg_replication_lag > 300
+        for: 5m
+        labels:
+          severity: warning
+      - alert: PostgresLagCritical
+        annotations:
+          description:
+            Postgres replica {{$labels.pod}} experiencing critical WAL lag
+          summary: Critical replication lag
+        expr: |
+          pg_replication_lag > 3600
+        for: 5m
+        labels:
+          severity: critical
