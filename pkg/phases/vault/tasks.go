@@ -90,12 +90,6 @@ func Init(p *platform.Platform) error {
 		}
 	}
 
-	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
-	for path, config := range p.Vault.ExtraConfig {
-		if _, err := client.Logical().Write(path, config.Value()); err != nil {
-			return fmt.Errorf("error writing to %s: %v", path, err)
-		}
-	}
 	return nil
 }
 
@@ -128,11 +122,6 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		return fmt.Errorf("unknown CA type %v", ingress)
 	}
 
-	for role, config := range p.Vault.Roles {
-		if _, err := client.Logical().Write("pki/roles/"+role, config.Value()); err != nil {
-			return err
-		}
-	}
 
 	return nil
 }

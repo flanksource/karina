@@ -136,7 +136,7 @@ metadata:
   name: build-init-image
   namespace: kpack
 data:
-  image: gcr.io/cf-build-service-public/kpack/build-init@sha256:94cdd9223310c2bbc6b9f10d17f754337d782f32ac1cd7de58d3e78746d5ab7c
+  image: gcr.io/cf-build-service-public/kpack/build-init:{{.kpack.imageVersions.buildInit}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -144,7 +144,7 @@ metadata:
   name: build-init-windows-image
   namespace: kpack
 data:
-  image: gcr.io/cf-build-service-public/kpack/build-init-windows@sha256:69e9e14949a130049ae1684bccbf734cb132bc98796801775161843e316bb127
+  image: gcr.io/cf-build-service-public/kpack/build-init-windows:{{.kpack.imageVersions.buildInitWindows}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -152,7 +152,7 @@ metadata:
   name: rebase-image
   namespace: kpack
 data:
-  image: gcr.io/cf-build-service-public/kpack/rebase@sha256:97f9f9c1f25b720401f18ad21a7f92ddb4ff80882333702586ac8f7d619c3e02
+  image: gcr.io/cf-build-service-public/kpack/rebase:{{.kpack.imageVersions.rebase}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -160,7 +160,7 @@ metadata:
   name: lifecycle-image
   namespace: kpack
 data:
-  image: gcr.io/cf-build-service-public/kpack/lifecycle@sha256:fb7e0916ea429697630743b34e858c3555ddfbb5940683754dfccd3bfa446e0a
+  image: gcr.io/cf-build-service-public/kpack/lifecycle:{{.kpack.imageVersions.lifecycle}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -168,7 +168,7 @@ metadata:
   name: completion-image
   namespace: kpack
 data:
-  image: gcr.io/cf-build-service-public/kpack/completion@sha256:7b8b829ee21f6009ea9b580cad86fb2f74f28d2aa34676d4a130fb62b9fc9893
+  image: gcr.io/cf-build-service-public/kpack/completion:{{.kpack.imageVersions.completion}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -176,7 +176,7 @@ metadata:
   name: completion-windows-image
   namespace: kpack
 data:
-  image: gcr.io/cf-build-service-public/kpack/completion-windows@sha256:4752610e600b8f2930a31a277944a8cfb7a361b352ce3b171198519537c79db9
+  image: gcr.io/cf-build-service-public/kpack/completion-windows:{{.kpack.imageVersions.completionWindows}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -199,7 +199,7 @@ spec:
         kubernetes.io/os: linux
       containers:
       - name: controller
-        image: gcr.io/cf-build-service-public/kpack/controller@sha256:ec256da7e29eeecdd0821f499e754080672db8f0bc521b2fa1f13f6a75a04835
+        image: gcr.io/cf-build-service-public/kpack/controller:{{.kpack.imageVersions.controller}}
         env:
         - name: CONFIG_LOGGING_NAME
           value: config-logging
@@ -523,7 +523,7 @@ spec:
         kubernetes.io/os: linux
       containers:
       - name: webhook
-        image: gcr.io/cf-build-service-public/kpack/webhook@sha256:ab9708d6be3f348fb89dda510525ee15f87716424a8c933f8620f074fd49b73a
+        image: gcr.io/cf-build-service-public/kpack/webhook:{{.kpack.imageVersions.webhook}}
         ports:
         - name: https-webhook
           containerPort: 8443

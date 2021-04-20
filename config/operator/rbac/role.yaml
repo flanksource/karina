@@ -1,13 +1,14 @@
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: karina-operator
+  name: karina
 rules:
-  - apiGroups:
-      - "*"
-    resources:
-      - "*"
-    verbs:
-      - "*"
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'

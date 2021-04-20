@@ -8,5 +8,5 @@ roleRef:
   name: template-operator-leader-election
 subjects:
   - kind: ServiceAccount
-    name: karina-operator
+    name: karina
     namespace: system

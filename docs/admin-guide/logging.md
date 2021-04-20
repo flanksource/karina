@@ -21,7 +21,7 @@ filebeat:
 ```
 
 ```shell
-karina deploy filebeat -c karina.yaml
+karina deploy filebeat -c karina.yml
 ```
 
 ## Pipelines
@@ -74,7 +74,7 @@ filebeat:
       password: ...
 ```
 ```shell
-karina deploy filebeat -c karina.yaml
+karina deploy filebeat -c karina.yml
 ```
 :2: Create the namespaces using the `co.elastic.logs` pipeline
 ```yaml
@@ -123,7 +123,7 @@ journalbeat:
     scheme: https
 ```
 ```shell
-karina deploy journalbeat -c karina.yaml
+karina deploy journalbeat -c karina.yml
 ```
 
 ## auditbeat
@@ -141,7 +141,7 @@ auditbeat:
     scheme: http
 ```
 ```shell
-karina deploy auditbeat -c karina.yaml
+karina deploy auditbeat -c karina.yml
 ```
 
 ## packetbeat
@@ -164,5 +164,5 @@ packetbeat:
     scheme: https
 ```
 ```shell
-karina deploy packetbeat -c karina.yaml
+karina deploy packetbeat -c karina.yml
 ```

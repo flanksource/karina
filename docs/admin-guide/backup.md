@@ -13,7 +13,7 @@ velero:
 ```
 Deploy using:
 ```bash
-karina deploy velero -c karina.yaml
+karina deploy velero -c karina.yml
 ```
 
 #### To run a backup of the cluster objects

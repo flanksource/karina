@@ -110,8 +110,8 @@ See the [Configuration Reference](config.md) for details of available configurat
 Provision the cluster with:
 
 ```bash
-karina provision vsphere-cluster -c karina.yaml
-karina deploy phases --crd --base --calico -c karina.yaml
+karina provision vsphere-cluster -c karina.yml
+karina deploy phases --crd --base --calico -c karina.yml
 ```
 
 ## :4: Access the cluster
@@ -119,7 +119,7 @@ karina deploy phases --crd --base --calico -c karina.yaml
 Export a kubeconfig:
 
 ```bash
-karina kubeconfig admin -c karina.yaml > kubeconfig.yaml
+karina kubeconfig admin -c karina.yml > kubeconfig.yaml
 export KUBECONFIG=$PWD/kubeconfig.yaml
 ```
 
@@ -133,12 +133,12 @@ kubectl get nodes
 
 
 ```bash
-karina test all --e2e -c karina.yaml
+karina test all --e2e -c karina.yml
 ```
 
 ## :6: Tear down the cluster
 
 
 ```bash
-karina terminate -c karina.yaml
+karina terminate -c karina.yml
 ```

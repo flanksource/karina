@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/flanksource/karina/pkg/api/calico"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	"github.com/jinzhu/copier"
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
@@ -456,7 +454,18 @@ type Dex struct {
 }
 
 type Kpack struct {
-	Disabled `yaml:",inline" json:",inline"`
+	Disabled      bool          `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	ImageVersions ImageVersions `yaml:"imageVersions,omitempty" json:"imageVersions,omitempty"`
+}
+type ImageVersions struct {
+	BuildInit         string `yaml:"buildInit,omitempty" json:"buildInit,omitempty"`
+	BuildInitWindows  string `yaml:"buildInitWindows,omitempty" json:"buildInitWindows,omitempty"`
+	Rebase            string `yaml:"rebase,omitempty" json:"rebase,omitempty"`
+	Lifecycle         string `yaml:"lifecycle,omitempty" json:"lifecycle,omitempty"`
+	Completion        string `yaml:"completion,omitempty" json:"completion,omitempty"`
+	CompletionWindows string `yaml:"completionWindows,omitempty" json:"completionWindows,omitempty"`
+	Controller        string `yaml:"controller,omitempty" json:"controller,omitempty"`
+	Webhook           string `yaml:"webhook,omitempty" json:"webhook,omitempty"`
 }
 
 type DynamicDNS struct {
@@ -722,12 +731,12 @@ type ThanosE2E struct {
 
 type Filebeat struct {
 	Disabled      `yaml:",inline" json:",inline"`
-	Name          string                 `yaml:"name" json:"name"`
-	Index         string                 `yaml:"index" json:"index"`
-	Prefix        string                 `yaml:"prefix" json:"prefix"`
-	Elasticsearch *Connection            `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
-	Logstash      *Connection            `yaml:"logstash,omitempty" json:"logstash,omitempty"`
-	SSL           map[string]interface{} `yaml:"ssl,omitempty" json:"ssl,omitempty"`
+	Name          string            `yaml:"name" json:"name"`
+	Index         string            `yaml:"index" json:"index"`
+	Prefix        string            `yaml:"prefix" json:"prefix"`
+	Elasticsearch *Connection       `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
+	Logstash      *Connection       `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	SSL           map[string]string `yaml:"ssl,omitempty" json:"ssl,omitempty"`
 }
 
 type Journalbeat struct {
@@ -774,16 +783,12 @@ type Consul struct {
 type Vault struct {
 	Version string `yaml:"version" json:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
-	Token string `yaml:"token,omitempty" json:"token,omitempty"`
-	// A map of PKI secret roles to create/update See [pki](https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role)
-	Roles         map[string]Values      `yaml:"roles,omitempty" json:"roles,omitempty"`
+	Token         string                 `yaml:"token,omitempty" json:"token,omitempty"`
 	Policies      map[string]VaultPolicy `yaml:"policies,omitempty" json:"policies,omitempty"`
 	GroupMappings map[string][]string    `yaml:"groupMappings,omitempty" json:"groupMappings,omitempty"`
-	// ExtraConfig is an escape hatch that allows writing to arbitrary vault paths
-	ExtraConfig map[string]Values `yaml:"config,omitempty" json:"extraConfig,omitempty"`
-	Disabled    bool              `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	AccessKey   string            `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
-	SecretKey   string            `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
+	Disabled      bool                   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	AccessKey     string                 `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
+	SecretKey     string                 `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
 	// The AWS KMS ARN Id to use to unseal vault
 	KmsKeyID string `yaml:"kmsKeyId,omitempty" json:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty" json:"region,omitempty"`
@@ -1029,71 +1034,6 @@ func (p PlatformConfig) GetVMCount() int {
 func (p *PlatformConfig) String() string {
 	data, _ := yaml.Marshal(p)
 	return string(data)
-}
-
-// +kubebuilder:object:generate=false
-type Values struct {
-	inner map[string]interface{}
-}
-
-func (v *Values) Value() map[string]interface{} {
-	return v.inner
-}
-
-// UnmarshalYAML is used to customize the YAML unmarshalling of Values
-func (v *Values) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawValues map[string]interface{}
-	raw := rawValues{}
-
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
-
-	values := Values{inner: raw}
-	*v = values
-	return nil
-}
-
-// UnmarshalYAML is used to customize the JSON unmarshalling of Values
-func (v *Values) UnmarshalJSON(unmarshal func(interface{}) error) error {
-	type rawValues map[string]interface{}
-	raw := rawValues{}
-
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
-
-	values := Values{inner: raw}
-	*v = values
-	return nil
-}
-
-// MarshalYAML for Values
-func (v *Values) MarshalYAML() (interface{}, error) {
-	return yaml.Marshal(v.inner)
-}
-
-// MarshalJSON for Values
-func (v *Values) MarshalJSON() (interface{}, error) {
-	return json.Marshal(v.inner)
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (v *Values) DeepCopyInto(out *Values) {
-	*out = *v
-	newInner := map[string]interface{}{}
-	_ = copier.Copy(newInner, v.inner)
-	out.inner = newInner
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new Values
-func (v *Values) DeepCopy() *Values {
-	if v == nil {
-		return nil
-	}
-	out := new(Values)
-	v.DeepCopyInto(out)
-	return out
 }
 
 type ConfigDirective struct {

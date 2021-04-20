@@ -1,0 +1,9 @@
+name: temp-kind-cluster
+kind:
+  image: rossgeorgiev/kind-node-arm64:v1.20.0
+kubernetes:
+  version: v1.20.0
+dex:
+  disabled: true
+dns:
+  disabled: true

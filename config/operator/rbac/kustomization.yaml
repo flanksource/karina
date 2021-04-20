@@ -1,3 +1,4 @@
+namespace: platform-system
 resources:
   - service_account.yaml
   - role.yaml

@@ -1,6 +1,10 @@
 // +kubebuilder:object:generate=true
 package types
 
+import (
+	"encoding/json"
+)
+
 // +kubebuilder:skip
 type PlatformConfig struct {
 	AWS               AWS               `yaml:"aws,omitempty" json:"aws,omitempty"`
@@ -19,11 +23,11 @@ type PlatformConfig struct {
 	Consul    string    `yaml:"consul" json:"consul,omitempty"`
 	Dashboard Dashboard `yaml:"dashboard,omitempty" json:"dashboard,omitempty"`
 	// Semistructured data to be reused using YAML anchors
-	Data           map[string]interface{} `yaml:"data,omitempty" json:"data,omitempty"`
-	Datacenter     string                 `yaml:"datacenter" json:"datacenter,omitempty"`
-	Dex            Dex                    `yaml:"dex,omitempty" json:"dex,omitempty"`
-	DNS            DynamicDNS             `yaml:"dns,omitempty" json:"dns,omitempty"`
-	DockerRegistry string                 `yaml:"dockerRegistry,omitempty" json:"dockerRegistry,omitempty"`
+	Data           map[string]json.RawMessage `yaml:"data,omitempty" json:"data,omitempty"`
+	Datacenter     string                     `yaml:"datacenter" json:"datacenter,omitempty"`
+	Dex            Dex                        `yaml:"dex,omitempty" json:"dex,omitempty"`
+	DNS            DynamicDNS                 `yaml:"dns,omitempty" json:"dns,omitempty"`
+	DockerRegistry string                     `yaml:"dockerRegistry,omitempty" json:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
 	Domain        string         `yaml:"domain" json:"domain,omitempty"`
 	ECK           ECK            `yaml:"eck,omitempty" json:"eck,omitempty"`

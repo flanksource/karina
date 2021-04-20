@@ -21,7 +21,6 @@ limitations under the License.
 package types
 
 import (
-	"encoding/json"
 	"github.com/flanksource/karina/pkg/api/calico"
 )
 
@@ -1699,17 +1698,8 @@ func (in *PlatformConfig) DeepCopyInto(out *PlatformConfig) {
 	out.Dashboard = in.Dashboard
 	if in.Data != nil {
 		in, out := &in.Data, &out.Data
-		*out = make(map[string]json.RawMessage, len(*in))
+		*out = make(map[string]interface{}, len(*in))
 		for key, val := range *in {
-			var outVal []byte
-			if val == nil {
-				(*out)[key] = nil
-			} else {
-				in, out := &val, &outVal
-				*out = make(json.RawMessage, len(*in))
-				copy(*out, *in)
-			}
-			(*out)[key] = outVal
 		}
 	}
 	out.Dex = in.Dex
