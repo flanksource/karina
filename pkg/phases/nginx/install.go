@@ -15,12 +15,16 @@ const (
 )
 
 var Defaults = map[string]string{
-	"client-body-buffer-size": "16M",
-	"proxy-body-size":         "32M",
-	"disable-access-log":      "true",
-	"client-body-timeout":     "600",
-	"proxy-read-timeout":      "600",
-	"proxy-write-timeout":     "600",
+	"client-body-buffer-size":   "16M",
+	"proxy-body-size":           "32M",
+	"disable-access-log":        "true",
+	"client-body-timeout":       "600",
+	"proxy-read-timeout":        "600",
+	"proxy-write-timeout":       "600",
+	"proxy_buffer_size":         "128k",
+	"proxy_buffers":             "4 256k",
+	"proxy_busy_buffers_size":   "256k",
+	"client_header_buffer_size": "32k",
 }
 
 func Install(platform *platform.Platform) error {
