@@ -1,5 +1,4 @@
-importConfigs:
-  - minimal.yaml
+name: kind
 kpack:
   imageVersions:
     buildInit: "latest"
