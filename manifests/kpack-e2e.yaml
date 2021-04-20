@@ -24,7 +24,7 @@ metadata:
   name: test-builder
 spec:
   serviceAccount: default
-  tag: ttl.sh/test-builder-for-kpack:1h
+  tag: ttl.sh/test-builder-for-kpack:10m
   stack:
     name: base
     kind: ClusterStack
@@ -42,7 +42,7 @@ kind: Image
 metadata:
   name: test-image
 spec:
-  tag: ttl.sh/test-image-for-kpack:1h
+  tag: ttl.sh/test-image-for-kpack:10m
   serviceAccount: default
   builder:
     name: test-builder
