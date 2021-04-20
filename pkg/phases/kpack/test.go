@@ -29,7 +29,7 @@ func TestE2EKpack(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	// Wait for Builder status to be true -> wait for 5 mintues
-	for i := 1; i < 5; i++ {
+	for i := 0; i < 5; i++ {
 	output, ok := exec.SafeExec(fmt.Sprintf("kubectl get builder test-builder -n %s", Namespace))
 	if !ok{
 		test.Failf(testName, "Failed to check builder status")
@@ -39,11 +39,11 @@ func TestE2EKpack(p *platform.Platform, test *console.TestResults) {
 	if contains {
 		continue
 	}
-	time.Sleep(5*time.Minute)
+	time.Sleep(time.Minute)
 	}
 
 	// Wait for Image status to be True -> wait for 10 minutes
-	for i := 1; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		output, ok := exec.SafeExec(fmt.Sprintf("kubectl get image test-image -n %s", Namespace))
 		if !ok {
 			test.Failf(testName, "Failed to check image status")
@@ -54,5 +54,7 @@ func TestE2EKpack(p *platform.Platform, test *console.TestResults) {
 			test.Passf(testName, "image is ready")
 			return
 		}
+		time.Sleep(time.Minute)
 	}
+	test.Failf(testName, "timeout waiting for image to be ready")
 }
