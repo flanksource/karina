@@ -42,7 +42,7 @@ kind: Image
 metadata:
   name: test-image
 spec:
-  tag: ttl.sh/test-image-for-kpack/test-image
+  tag: ttl.sh/test-image-for-kpack:1h
   serviceAccount: default
   builder:
     name: test-builder
