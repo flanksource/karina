@@ -788,10 +788,12 @@ type Consul struct {
 type Vault struct {
 	Version string `yaml:"version" json:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
-	Token     string `yaml:"token,omitempty" json:"token,omitempty"`
-	Disabled  bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	AccessKey string `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
-	SecretKey string `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
+	Token         string                 `yaml:"token,omitempty" json:"token,omitempty"`
+	Policies      map[string]VaultPolicy `yaml:"policies,omitempty" json:"policies,omitempty"`
+	GroupMappings map[string][]string    `yaml:"groupMappings,omitempty" json:"groupMappings,omitempty"`
+	Disabled      bool                   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	AccessKey     string                 `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
+	SecretKey     string                 `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
 	// The AWS KMS ARN Id to use to unseal vault
 	KmsKeyID string `yaml:"kmsKeyId,omitempty" json:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty" json:"region,omitempty"`
