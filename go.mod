@@ -55,7 +55,7 @@ require (
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v14.2.0+incompatible
 	github.com/flanksource/kommons => github.com/tobernguyen/kommons v0.3.5-0.20210409051250-d6121dbc87ce
-	github.com/flanksource/template-operator-library => github.com/tobernguyen/template-operator-library v0.1.1-0.20210408061816-57964c040f68
+	github.com/flanksource/template-operator-library => github.com/tobernguyen/template-operator-library v0.1.1-0.20210421074316-1ccb09858741
 	github.com/go-check/check v1.0.0-20180628173108-788fd7840127 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115

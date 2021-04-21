@@ -1,2 +1,2 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/template-operator-library/v0.1.3/config/crd/db/db.flanksource.com_postgresqldbs.yaml
+  - https://raw.githubusercontent.com/tobernguyen/template-operator-library/285a95a7d1be6dd35d2a2443106274642725a997/config/crd/db/db.flanksource.com_postgresqldbs.yaml

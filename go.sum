@@ -1031,8 +1031,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 h1:LnC5Kc
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tobernguyen/kommons v0.3.5-0.20210409051250-d6121dbc87ce h1:uf+g9k1rw0mE0ZiLugEExzhvofdVfwS5wgK9yexKEMw=
 github.com/tobernguyen/kommons v0.3.5-0.20210409051250-d6121dbc87ce/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
-github.com/tobernguyen/template-operator-library v0.1.1-0.20210408061816-57964c040f68 h1:UP6J9WxDzqCB4AlXBx3+mynRomPWLkT/aj4CO8IumeU=
-github.com/tobernguyen/template-operator-library v0.1.1-0.20210408061816-57964c040f68/go.mod h1:0GLzxzhAscZTqfLnpBG+VOP7ldLLMNaSsrXwim83k1E=
+github.com/tobernguyen/template-operator-library v0.1.1-0.20210421074316-1ccb09858741 h1:w48wbDoFkLu/HaA0SkoWmD5VA3n7V0jePaNnjlkWv38=
+github.com/tobernguyen/template-operator-library v0.1.1-0.20210421074316-1ccb09858741/go.mod h1:lo+6i2+nJx4KPa4WHPbxjvuOP1e7vD6HjSHjRvm0OFs=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/uber/jaeger-client-go v2.20.1+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-lib v2.2.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
