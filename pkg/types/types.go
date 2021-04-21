@@ -473,6 +473,13 @@ type ImageVersions struct {
 	Webhook           string `yaml:"webhook,omitempty" json:"webhook,omitempty"`
 }
 
+func (k Kpack) IsDisabled() bool {
+	if k.Disabled {
+		return true
+	}
+	return k.ImageVersions == ImageVersions{}
+}
+
 type DynamicDNS struct {
 	Disabled bool `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	// Set to true if you want DNS records added to k8s-api and "*" for every new

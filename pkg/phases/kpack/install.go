@@ -12,7 +12,6 @@ func Deploy(p *platform.Platform) error {
 	if p.Kpack.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "kpack.yaml")
 	}
-
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
 		return err
 	}

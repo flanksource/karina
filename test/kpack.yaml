@@ -1,0 +1,12 @@
+importConfigs:
+  - minimal.yaml
+kpack:
+  imageVersions:
+    buildInit: "latest"
+    buildInitWindows: "latest"
+    rebase: "latest"
+    lifecycle: "latest"
+    completion: "latest"
+    completionWindows: "latest"
+    controller: "latest"
+    webhook: "latest"
