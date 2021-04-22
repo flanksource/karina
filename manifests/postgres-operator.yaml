@@ -269,7 +269,7 @@ spec:
       serviceAccountName: postgres-operator
       containers:
         - name: postgres-operator
-          image: flanksource/postgres-operator:{{.postgresOperator.version}}
+          image: docker.io/flanksource/postgres-operator:{{.postgresOperator.version | default "na" }}
           imagePullPolicy: IfNotPresent
           resources:
             requests:

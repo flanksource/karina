@@ -27,11 +27,9 @@ spec:
   groups:
   - name: postgres.rules
     rules:
-      - alert: PostgresFailedReplicaSlot
+      - alert: PostgresFailedReplica
         annotations:
-          description:
-            A Postgres replica slot in spilo master {{$labels.pod}} is not in active state
-          summary: Replication slot not replicating
+          message: Postgres replica {{$labels.pod}} has stopped replicating
         expr: |
           pg_replication_slot_status_out{active="false"} > 0
         for: 5m
@@ -39,19 +37,15 @@ spec:
           severity: critical
       - alert: PostgresLagWarn
         annotations:
-          description:
-            Postgres replica {{$labels.pod}} experiencing high WAL lag
-          summary: High replication lag
+          message: Postgres replica {{$labels.pod}} WAL is lagging by {{$value | humanizeDuration}}
         expr: |
-          pg_replication_lag > 300
+          pg_replication_lag > 300 and pg_replication_lag < 3600
         for: 5m
         labels:
           severity: warning
       - alert: PostgresLagCritical
         annotations:
-          description:
-            Postgres replica {{$labels.pod}} experiencing critical WAL lag
-          summary: Critical replication lag
+          message:  Postgres replica {{$labels.pod}} WAL is lagging by {{$value | humanizeDuration}}
         expr: |
           pg_replication_lag > 3600
         for: 5m
