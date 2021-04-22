@@ -1,2 +1,2 @@
 resources:
-  - https://raw.githubusercontent.com/tobernguyen/template-operator-library/5c51efc03808b7286265fd96059997da1f4c1426/config/templates/postgresql-db.yaml
+  - https://raw.githubusercontent.com/tobernguyen/template-operator-library/v0.1.5/config/templates/postgresql-db.yaml

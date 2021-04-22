@@ -171,6 +171,7 @@ func newPostgresqlDBCluster(namespace, name string) *postgresdbv2.PostgresqlDB {
 	}
 }
 
+// TODO: replace with platform.WaitForResource
 func waitForPgClusterToReady(p *platform.Platform, namespace, postgresqlClusterName string, timeout time.Duration) error {
 	start := time.Now()
 	db := &pgapi.Postgresql{}
