@@ -154,5 +154,60 @@ kubectl port-forward  po postgres-{DB-NAME}-0 5432 -n postgres-operator
 
 3. Connect to the database via `localhost:5432`
 
+### Disaster recovery
 
+In the event that the patroni cluster fails completely, the following steps can be followed to reset the cluster state and recover from backup:
 
+Scale down the cluster:
+
+```shell script
+kubectl scale statefulset broken-cluster --replicas=0
+```
+
+Delete the existing persistent volume claims:
+
+```shell script
+# get list of pvcs
+kubectl get pvc | grep broken-cluster
+# run the delete command for each
+kubectl delete pvc pgdata-broken-cluster-0
+```
+
+Create new persistent volume claims:
+
+```shell script
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pgdata-broken-cluster-0
+  namespace: postgres-operator
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: vsan
+  volumeMode: Filesystem
+EOF
+```
+
+Scale the replicas back up
+
+```shell script
+kubectl scale statefulset broken-cluster --replicas=n
+```
+
+at this point, if both pods report in the logs that `leader: none`, delete all the endpoints related to the cluster:
+
+```shell script
+kubectl get endpoints | grep broken-cluster
+```
+
+Once the cluster reports a leader and replicas, a database restore can be run (See [karina db restore](../../../cli/karina_db_restore/))
+
+## Useful utilities
+
+`pg_ctl stop` should be used to stop the postgres server if required.  This can only be done after `sv stop patroni` has been run.
+`pg_resetwal` can be used recover from corrupted/missing WAL files
