@@ -476,6 +476,13 @@ webhooks:
     service:
       name: kpack-webhook
       namespace: kpack
+  objectSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - kpack-controller
+          - kpack-webhook
   failurePolicy: Fail
   sideEffects: None
   name: defaults.webhook.kpack.io
@@ -491,6 +498,13 @@ webhooks:
     service:
       name: kpack-webhook
       namespace: kpack
+  objectSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - kpack-controller
+          - kpack-webhook
   failurePolicy: Fail
   sideEffects: None
   name: validation.webhook.kpack.io
