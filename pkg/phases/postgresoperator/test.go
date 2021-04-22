@@ -71,7 +71,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	cluster1ZalandoPsqlName := fmt.Sprintf("postgres-%s", cluster1.Name)
-	if _, err := p.WaitForResource("postgresql", Namespace, cluster1ZalandoPsqlName, 3*time.Minute); err != nil {
+	if err := waitForPgClusterToReady(p, Namespace, cluster1ZalandoPsqlName, 3*time.Minute); err != nil {
 		test.Failf("postgres cluster %s failed to start: %s", cluster1ZalandoPsqlName, err)
 		return
 	}
@@ -103,7 +103,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	cluster2ZalandoPsqlName := fmt.Sprintf("postgres-%s", cluster2.Name)
-	if _, err := p.WaitForResource("postgresql", Namespace, cluster2ZalandoPsqlName, 3*time.Minute); err != nil {
+	if err := waitForPgClusterToReady(p, Namespace, cluster2ZalandoPsqlName, 3*time.Minute); err != nil {
 		test.Failf("postgres cluster %s failed to start: %s", cluster2ZalandoPsqlName, err)
 		return
 	}
@@ -168,6 +168,21 @@ func newPostgresqlDBCluster(namespace, name string) *postgresdbv2.PostgresqlDB {
 		Status: postgresdbv2.PostgresqlDBStatus{
 			Conditions: []v1.Condition{},
 		},
+	}
+}
+
+func waitForPgClusterToReady(p *platform.Platform, namespace, postgresqlClusterName string, timeout time.Duration) error {
+	start := time.Now()
+	db := &pgapi.Postgresql{}
+	for {
+		_ = p.Get(namespace, postgresqlClusterName, db)
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for db %s to be ready, current state: %s", db.Name, db.Status.PostgresClusterStatus)
+		}
+		if db.Status.PostgresClusterStatus == pgapi.ClusterStatusRunning {
+			return nil
+		}
+		time.Sleep(2 * time.Second)
 	}
 }
 
