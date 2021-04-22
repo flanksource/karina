@@ -15,6 +15,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 	client, _ := p.GetClientset()
 	kommons.TestNamespace(client, Namespace, test)
+	kommons.TestDeploy(client, Namespace, "kpack-controller", test) // Check if kpack-controller is running
+	kommons.TestDeploy(client, Namespace, "kpack-webhook", test)    // Check if kpack-webhook is running
 	if p.E2E {
 		TestE2EKpack(p, test)
 	}

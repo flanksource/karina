@@ -2,11 +2,11 @@ importConfigs:
   - minimal.yaml
 kpack:
   imageVersions:
-    buildInit: "latest"
-    buildInitWindows: "latest"
-    rebase: "latest"
-    lifecycle: "latest"
-    completion: "latest"
-    completionWindows: "latest"
-    controller: "latest"
-    webhook: "latest"
+    buildInit: "b3.20210421.182329"
+    buildInitWindows: "b67.20210421.182334"
+    rebase: "b3.20210421.182329"
+    lifecycle: "20210408193616"
+    completion: "b3.20210421.182331"
+    completionWindows: "b66.20210421.182327"
+    controller: "b3.20210421.182338"
+    webhook: "b3.20210421.182328"
