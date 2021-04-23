@@ -171,7 +171,7 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]str
 			snapshot := resticSnapshots[i]
 			backupPath := sPrintBackupPath(snapshot)
 			backupPaths = append(backupPaths, backupPath)
-			fmt.Fprintf(w, "%s\t%s\t%s\n", backupPath, snapshot.Time.Format("2006-01-01 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
+			fmt.Fprintf(w, "%s\t%s\t%s\n", backupPath, snapshot.Time.Format("2006-01-02 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Time)))
 		}
 	}
 
