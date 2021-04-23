@@ -902,7 +902,7 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                      imageVersions:
+                      image:
                         properties:
                           buildInit:
                             type: string

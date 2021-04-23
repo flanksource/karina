@@ -223,8 +223,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/build-init:{{.kpack.imageVersions.buildInit | default "na"}}
+  image: gcr.io/cf-build-service-public/kpack/build-init:{{.kpack.image.buildInit}}
 kind: ConfigMap
 metadata:
   name: build-init-image
@@ -232,8 +231,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/build-init-windows:{{.kpack.imageVersions.buildInitWindows  | default "na"}}
+  image: gcr.io/cf-build-service-public/kpack/build-init-windows:{{.kpack.image.buildInitWindows}}
 kind: ConfigMap
 metadata:
   name: build-init-windows-image
@@ -241,8 +239,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/completion:{{.kpack.imageVersions.completion | default "na"}}
+  image: gcr.io/cf-build-service-public/kpack/completion:{{.kpack.image.completion}}
 kind: ConfigMap
 metadata:
   name: completion-image
@@ -250,8 +247,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/completion-windows:{{.kpack.imageVersions.completionWindows | default "na"}}
+  image: gcr.io/cf-build-service-public/kpack/completion-windows:{{.kpack.image.completionWindows}}
 kind: ConfigMap
 metadata:
   name: completion-windows-image
@@ -259,8 +255,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/lifecycle:{{.kpack.imageVersions.lifecycle | default "na"}}
+  image: gcr.io/cf-build-service-public/kpack/lifecycle:{{.kpack.image.lifecycle}}
 kind: ConfigMap
 metadata:
   name: lifecycle-image
@@ -268,8 +263,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/rebase:{{.kpack.imageVersions.rebase  | default "na"}}
+  image: gcr.io/cf-build-service-public/kpack/rebase:{{.kpack.image.rebase}}
 kind: ConfigMap
 metadata:
   name: rebase-image
@@ -351,8 +345,7 @@ spec:
             configMapKeyRef:
               key: image
               name: lifecycle-image
-        image: gcr.io/cf-build-service-public/kpack/controller:{{.kpack.imageVersions.controller
-          | default "na"}}
+        image: gcr.io/cf-build-service-public/kpack/controller:{{.kpack.image.controller}}
         name: controller
         resources:
           limits:
@@ -394,8 +387,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: gcr.io/cf-build-service-public/kpack/webhook:{{.kpack.imageVersions.webhook
-          | default "na"}}
+        image: gcr.io/cf-build-service-public/kpack/webhook:{{.kpack.image.webhook}}
         name: webhook
         ports:
         - containerPort: 8443

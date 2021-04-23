@@ -1,7 +1,7 @@
 importConfigs:
   - minimal.yaml
 kpack:
-  imageVersions:
+  image:
     buildInit: "b3.20210421.182329"
     buildInitWindows: "b67.20210421.182334"
     rebase: "b3.20210421.182329"

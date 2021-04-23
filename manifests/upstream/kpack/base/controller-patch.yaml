@@ -5,8 +5,7 @@ metadata:
   name:  build-init-image
   namespace: kpack
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/build-init:{{.kpack.imageVersions.buildInit | default "na"}}
+  image: 'gcr.io/cf-build-service-public/kpack/build-init:{{.kpack.image.buildInit}}'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -14,8 +13,7 @@ metadata:
   name:  build-init-windows-image
   namespace: kpack
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/build-init-windows:{{.kpack.imageVersions.buildInitWindows  | default "na"}}
+  image: 'gcr.io/cf-build-service-public/kpack/build-init-windows:{{.kpack.image.buildInitWindows}}'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -23,8 +21,7 @@ metadata:
   name:  rebase-image
   namespace: kpack
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/rebase:{{.kpack.imageVersions.rebase  | default "na"}}
+  image: 'gcr.io/cf-build-service-public/kpack/rebase:{{.kpack.image.rebase}}'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -32,8 +29,7 @@ metadata:
   name:  lifecycle-image
   namespace: kpack
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/lifecycle:{{.kpack.imageVersions.lifecycle | default "na"}}
+  image: 'gcr.io/cf-build-service-public/kpack/lifecycle:{{.kpack.image.lifecycle}}'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -41,8 +37,7 @@ metadata:
   name:  completion-image
   namespace: kpack
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/completion:{{.kpack.imageVersions.completion | default "na"}}
+  image: 'gcr.io/cf-build-service-public/kpack/completion:{{.kpack.image.completion}}'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -50,8 +45,7 @@ metadata:
   name:  completion-windows-image
   namespace: kpack
 data:
-  image: |
-    gcr.io/cf-build-service-public/kpack/completion-windows:{{.kpack.imageVersions.completionWindows | default "na"}}
+  image: 'gcr.io/cf-build-service-public/kpack/completion-windows:{{.kpack.image.completionWindows}}'
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -74,5 +68,4 @@ spec:
         kubernetes.io/os: linux
       containers:
         - name: controller
-          image: |
-            gcr.io/cf-build-service-public/kpack/controller:{{.kpack.imageVersions.controller | default "na"}}
+          image: 'gcr.io/cf-build-service-public/kpack/controller:{{.kpack.image.controller}}'

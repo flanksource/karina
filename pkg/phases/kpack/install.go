@@ -10,6 +10,7 @@ const (
 
 func Deploy(p *platform.Platform) error {
 	if p.Kpack.IsDisabled() {
+		p.Kpack.SetDefaultImageValues()
 		return p.DeleteSpecs(Namespace, "kpack.yaml")
 	}
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
