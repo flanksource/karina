@@ -22,6 +22,7 @@ apiVersion: kpack.io/v1alpha1
 kind: Builder
 metadata:
   name: test-builder
+  namespace: kpack
 spec:
   serviceAccount: default
   tag: ttl.sh/test-builder-for-kpack:10m
@@ -41,12 +42,14 @@ apiVersion: kpack.io/v1alpha1
 kind: Image
 metadata:
   name: test-image
+  namespace: kpack
 spec:
   tag: ttl.sh/test-image-for-kpack:10m
   serviceAccount: default
   builder:
     name: test-builder
     kind: Builder
+    namespace: kpack
   source:
     git:
       url: https://github.com/spring-projects/spring-petclinic

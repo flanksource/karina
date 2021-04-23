@@ -5,7 +5,7 @@ kpack:
     buildInit: "b3.20210421.182329"
     buildInitWindows: "b67.20210421.182334"
     rebase: "b3.20210421.182329"
-    lifecycle: "20210408193616"
+    lifecycle: "20210129195635"
     completion: "b3.20210421.182331"
     completionWindows: "b66.20210421.182327"
     controller: "b3.20210421.182338"
