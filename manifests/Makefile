@@ -4,7 +4,7 @@ TARGET_FILES :=$(patsubst upstream/%,%, $(wildcard upstream/*.yaml) $(wildcard u
 TARGET_TEMPLATE_FILES := $(patsubst upstream/%/template,template/%.yaml.raw,$(wildcard upstream/**/template))
 
 build: build-crds build-base build-templates
-bin: kustomize bin/yq bin/helm
+bin: bin/kustomize bin/yq bin/helm
 build-crds: $(TARGET_CRD_FILES)
 build-base: $(TARGET_DIRS) $(TARGET_FILES)
 build-templates: $(TARGET_TEMPLATE_FILES)
@@ -77,31 +77,35 @@ canary-checker.yaml:
 	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$server := .canaryChecker.aggregateServers }}\n        - --aggregateServers\n        - {{$$server}}\n        {{- end }}/' canary-checker.yaml
 
 .SECONDEXPANSION:
-crd/%.yaml: $$(wildcard upstream/$$*/crd/*) kustomize
+crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
 	$(call BUILD_CRD,$*)
 
 .SECONDEXPANSION:
-template/%.yaml.raw: $$(wildcard upstream/$$*/template/*) kustomize
+template/%.yaml.raw: $$(wildcard upstream/$$*/template/*) bin/kustomize
 	$(call BUILD_TEMPLATE,$*)
 
 .SECONDEXPANSION:
-%.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/*.yaml) kustomize
+%.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/*.yaml) bin/kustomize
 	$(call BUILD_HELM_CHART,$*)
 	$(call BUILD_BASE,$*)
 	$(call BUILD_RESOURCE,$*)
 
 .SECONDEXPANSION:
-%.yaml:  kustomize
+%.yaml:  bin/kustomize
 	$(call BUILD_RESOURCE,$*)
 
 .SECONDEXPANSION:
-%.yaml.raw: kustomize
+%.yaml.raw: bin/kustomize
 	$(call BUILD_RESOURCE,$*)
 
 .PHONY: build build-upstream-helm-charts build-crds build-base build-templates
 
 OS   = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH = $(shell uname -m | sed 's/x86_64/amd64/')
+
+bin/kustomize:
+	@mkdir -p bin
+	@curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v4.0.3/kustomize_v4.0.3_$(OS)_$(ARCH).tar.gz | tar xzf - -C bin/ && chmod +x bin/kustomize
 
 bin/yq:
 	@mkdir -p bin
@@ -111,21 +115,6 @@ bin/helm:
 	@mkdir -p bin
 	@curl -sSLo - https://get.helm.sh/helm-v3.5.2-$(OS)-$(ARCH).tar.gz | tar xzf - -C bin/ --strip-components=1 && chmod +x bin/helm
 
-# find or download kustomize if necessary
-kustomize:
-ifeq (, $(shell which kustomize))
-	@{ \
-	set -e ;\
-	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/kustomize/kustomize/v4@v4.1.2 ;\
-	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
-	}
-KUSTOMIZE=$(GOBIN)/kustomize
-else
-KUSTOMIZE=$(shell which kustomize)
-endif
-
+KUSTOMIZE = $(realpath ./bin/kustomize)
 YQ = $(realpath ./bin/yq)
 HELM = $(realpath ./bin/helm)

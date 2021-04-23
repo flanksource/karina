@@ -51,32 +51,5 @@ vault:
   region: us-east-1
   accessKey: !!env AWS_ACCESS_KEY_ID
   secretKey: !!env AWS_SECRET_ACCESS_KEY
-  groupMappings:
-    "admins":
-      - admin
-      - signer
-  policies:
-    admin:
-      "auth/*":
-        capabilities:
-          - read
-          - create
-          - update
-          - sudo
-          - list
-          - delete
-      "sys/*":
-        capabilities:
-          - read
-          - create
-          - update
-          - sudo
-          - list
-          - delete
-    signer:
-      "pki/sign/ingress":
-        capabilities: ["update"]
-      "pki/*":
-        capabilities: ["list", "read"]
   consul:
     bucket: "karina-consul-backups"
