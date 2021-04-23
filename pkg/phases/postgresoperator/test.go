@@ -50,7 +50,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	kommons.TestNamespace(client, Namespace, test)
 	if p.E2E {
 		TestLogicalBackupE2E(p, test)
-		TestCloneDBFromWAL(p, test)
+		// TODO: re-enable this test
+		// TestCloneDBFromWAL(p, test)
 	}
 }
 
