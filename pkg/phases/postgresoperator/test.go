@@ -14,7 +14,7 @@ import (
 	pgclient "github.com/flanksource/karina/pkg/client/postgres"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
-	postgresdbv1 "github.com/flanksource/template-operator-library/api/db/v1"
+	postgresdbv2 "github.com/flanksource/template-operator-library/api/db/v2"
 	"github.com/go-pg/pg/v9/orm"
 	"github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
@@ -71,7 +71,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	cluster1ZalandoPsqlName := fmt.Sprintf("postgres-%s", cluster1.Name)
-	if _, err := p.WaitForResource("postgresql", Namespace, cluster1ZalandoPsqlName, 3*time.Minute); err != nil {
+	if err := waitForPgClusterToReady(p, Namespace, cluster1ZalandoPsqlName, 3*time.Minute); err != nil {
 		test.Failf("postgres cluster %s failed to start: %s", cluster1ZalandoPsqlName, err)
 		return
 	}
@@ -103,7 +103,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	cluster2ZalandoPsqlName := fmt.Sprintf("postgres-%s", cluster2.Name)
-	if _, err := p.WaitForResource("postgresql", Namespace, cluster2ZalandoPsqlName, 3*time.Minute); err != nil {
+	if err := waitForPgClusterToReady(p, Namespace, cluster2ZalandoPsqlName, 3*time.Minute); err != nil {
 		test.Failf("postgres cluster %s failed to start: %s", cluster2ZalandoPsqlName, err)
 		return
 	}
@@ -143,35 +143,51 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 	test.Passf(testName, "verified test fixtures is in %s after the restore", cluster2ZalandoPsqlName)
 }
 
-func newPostgresqlDBCluster(namespace, name string) *postgresdbv1.PostgresqlDB {
-	return &postgresdbv1.PostgresqlDB{
+func newPostgresqlDBCluster(namespace, name string) *postgresdbv2.PostgresqlDB {
+	return &postgresdbv2.PostgresqlDB{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PostgresqlDB",
-			APIVersion: "db.flanksource.com/v1",
+			APIVersion: "db.flanksource.com/v2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("e2e-test-%s-%s", utils.RandomString(6), name),
 			Namespace: namespace,
 		},
-		Spec: postgresdbv1.PostgresqlDBSpec{
-			Storage: postgresdbv1.Storage{
+		Spec: postgresdbv2.PostgresqlDBSpec{
+			Storage: postgresdbv2.Storage{
 				Size: "500Mi",
 			},
-			Backup: postgresdbv1.PostgresqlBackup{
+			Backup: postgresdbv2.PostgresqlBackup{
 				Bucket: fmt.Sprintf("logical-backup-test-%s", utils.RandomString(6)),
-				Retention: postgresdbv1.BackupRetention{
+				Retention: postgresdbv2.BackupRetention{
 					KeepLast: 5,
 				},
 			},
 			Replicas: 1,
 		},
-		Status: postgresdbv1.PostgresqlDBStatus{
+		Status: postgresdbv2.PostgresqlDBStatus{
 			Conditions: []v1.Condition{},
 		},
 	}
 }
 
-func removeLogicalBackupE2ECluster(p *platform.Platform, test *console.TestResults, db *postgresdbv1.PostgresqlDB) {
+// TODO: replace with platform.WaitForResource
+func waitForPgClusterToReady(p *platform.Platform, namespace, postgresqlClusterName string, timeout time.Duration) error {
+	start := time.Now()
+	db := &pgapi.Postgresql{}
+	for {
+		_ = p.Get(namespace, postgresqlClusterName, db)
+		if start.Add(timeout).Before(time.Now()) {
+			return fmt.Errorf("timeout exceeded waiting for db %s to be ready, current state: %s", db.Name, db.Status.PostgresClusterStatus)
+		}
+		if db.Status.PostgresClusterStatus == pgapi.ClusterStatusRunning {
+			return nil
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
+
+func removeLogicalBackupE2ECluster(p *platform.Platform, test *console.TestResults, db *postgresdbv2.PostgresqlDB) {
 	client, _, _, err := p.GetDynamicClientFor(Namespace, db)
 	if err != nil {
 		test.Errorf("Failed to get dynamic client: %v", err)

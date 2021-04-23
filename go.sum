@@ -312,8 +312,13 @@ github.com/fatih/structtag v1.1.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4
 github.com/flanksource/commons v1.5.1/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ+fTILbP4YP0=
 github.com/flanksource/commons v1.5.2 h1:lHAvotmHlr3QzN3r03i2Tm0Q+lZZ/ICm7qa0Bwz/bII=
 github.com/flanksource/commons v1.5.2/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ+fTILbP4YP0=
+github.com/flanksource/kommons v0.10.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
+github.com/flanksource/kommons v0.11.1 h1:Al2dFakb/Y2X4o+fii3RD/YtcHvmZOXDZuzziqhF3sk=
+github.com/flanksource/kommons v0.11.1/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1 h1:mPTWZTM0IkiuWmwLX5XJi8TJt5ELm54Qqqq1tMT6r5g=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1/go.mod h1:Dt9HKnY/C9WnF8slBm3h9KByogRSiVqARkp1HdSgWjA=
+github.com/flanksource/template-operator-library v0.1.5 h1:9HDGM0mJTh81lR6mLDPmVtFM+FnnBfgLLQaJnlWmEk4=
+github.com/flanksource/template-operator-library v0.1.5/go.mod h1:lo+6i2+nJx4KPa4WHPbxjvuOP1e7vD6HjSHjRvm0OFs=
 github.com/flanksource/yaml v0.0.0-20200325175021-f76146a3718a h1:Q+lJrx9+38jAYnhDJXeapwUXd+j7hh5+sfC5xfnoF9g=
 github.com/flanksource/yaml v0.0.0-20200325175021-f76146a3718a/go.mod h1:9oTOzfyVuHLV9JRt2ZbzdrX2GpYKQk/+mPPXZIYSH6o=
 github.com/flosch/pongo2 v0.0.0-20181225140029-79872a7b2769 h1:XToLChWPMXLomJ2InnkrmUkddaXfevrmomMTFL+MaKU=
@@ -1029,10 +1034,6 @@ github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhV
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 h1:LnC5Kc/wtumK+WB441p7ynQJzVuNRJiqddSIE3IlSEQ=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/tobernguyen/kommons v0.3.5-0.20210409051250-d6121dbc87ce h1:uf+g9k1rw0mE0ZiLugEExzhvofdVfwS5wgK9yexKEMw=
-github.com/tobernguyen/kommons v0.3.5-0.20210409051250-d6121dbc87ce/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
-github.com/tobernguyen/template-operator-library v0.1.1-0.20210408061816-57964c040f68 h1:UP6J9WxDzqCB4AlXBx3+mynRomPWLkT/aj4CO8IumeU=
-github.com/tobernguyen/template-operator-library v0.1.1-0.20210408061816-57964c040f68/go.mod h1:0GLzxzhAscZTqfLnpBG+VOP7ldLLMNaSsrXwim83k1E=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/uber/jaeger-client-go v2.20.1+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-lib v2.2.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
