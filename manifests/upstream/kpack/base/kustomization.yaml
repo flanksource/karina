@@ -1,0 +1,9 @@
+resources:
+  - https://raw.githubusercontent.com/pivotal/kpack/master/config/controllerrole.yaml
+  - https://raw.githubusercontent.com/pivotal/kpack/master/config/controller.yaml
+  - https://raw.githubusercontent.com/pivotal/kpack/master/config/webhook.yaml
+  - https://raw.githubusercontent.com/pivotal/kpack/master/config/webhookrole.yaml
+  - https://raw.githubusercontent.com/pivotal/kpack/master/config/service.yaml
+patchesStrategicMerge:
+  - controller-patch.yaml
+  - webhook-patch.yaml

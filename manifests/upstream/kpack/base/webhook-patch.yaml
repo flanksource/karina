@@ -1,0 +1,80 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: defaults.webhook.kpack.io
+webhooks:
+  - admissionReviewVersions:
+      - v1beta1
+    clientConfig:
+      service:
+        name: kpack-webhook
+        namespace: kpack
+    rules:
+      - apiGroups:
+          - 'kpack.io'
+        apiVersions:
+          - '*'
+        operations:
+          - CREATE
+          - UPDATE
+          - DELETE
+          - CONNECT
+        resources:
+          - '*'
+        scope: '*'
+    failurePolicy: Fail
+    sideEffects: None
+    name: defaults.webhook.kpack.io
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validation.webhook.kpack.io
+webhooks:
+  - admissionReviewVersions:
+      - v1beta1
+    clientConfig:
+      service:
+        name: kpack-webhook
+        namespace: kpack
+    rules:
+      - apiGroups:
+          - 'kpack.io'
+        apiVersions:
+          - '*'
+        operations:
+          - CREATE
+          - UPDATE
+          - DELETE
+          - CONNECT
+        resources:
+          - '*'
+        scope: '*'
+    failurePolicy: Fail
+    sideEffects: None
+    name: validation.webhook.kpack.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kpack-webhook
+  namespace: kpack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kpack-webhook
+  template:
+    metadata:
+      labels:
+        app: kpack-webhook
+        role: webhook
+        version: 0.2.2
+    spec:
+      serviceAccountName: webhook
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: webhook
+          image: |
+            gcr.io/cf-build-service-public/kpack/webhook:{{.kpack.imageVersions.webhook | default "na"}}
