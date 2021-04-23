@@ -313,8 +313,8 @@ github.com/flanksource/commons v1.5.1/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ
 github.com/flanksource/commons v1.5.2 h1:lHAvotmHlr3QzN3r03i2Tm0Q+lZZ/ICm7qa0Bwz/bII=
 github.com/flanksource/commons v1.5.2/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ+fTILbP4YP0=
 github.com/flanksource/kommons v0.10.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
-github.com/flanksource/kommons v0.11.0 h1:OhbBlD0MOC5HuwyCzoBFWDiUvgYpnc2yWHcGGuxS5zc=
-github.com/flanksource/kommons v0.11.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
+github.com/flanksource/kommons v0.11.1 h1:Al2dFakb/Y2X4o+fii3RD/YtcHvmZOXDZuzziqhF3sk=
+github.com/flanksource/kommons v0.11.1/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1 h1:mPTWZTM0IkiuWmwLX5XJi8TJt5ELm54Qqqq1tMT6r5g=
 github.com/flanksource/konfigadm v0.6.0-2-g9751ff1/go.mod h1:Dt9HKnY/C9WnF8slBm3h9KByogRSiVqARkp1HdSgWjA=
 github.com/flanksource/template-operator-library v0.1.5 h1:9HDGM0mJTh81lR6mLDPmVtFM+FnnBfgLLQaJnlWmEk4=
