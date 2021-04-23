@@ -51,7 +51,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	if p.E2E {
 		TestLogicalBackupE2E(p, test)
 		// TODO: re-enable this test
-		// TestCloneDBFromWAL(p, test)
+		// t pugitTestCloneDBFromWAL(p, test)
 	}
 }
 
@@ -91,7 +91,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := p.WaitForJob(Namespace, jobName, 3*time.Minute); err != nil {
+	if err := p.WaitForJob(Namespace, jobName, 5*time.Minute); err != nil {
 		test.Failf(testName, "failed to create a logical backup of pg cluster %s: %v", cluster1ZalandoPsqlName, err)
 		return
 	}
@@ -104,7 +104,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	cluster2ZalandoPsqlName := fmt.Sprintf("postgres-%s", cluster2.Name)
-	if err := waitForPgClusterToReady(p, Namespace, cluster2ZalandoPsqlName, 3*time.Minute); err != nil {
+	if err := waitForPgClusterToReady(p, Namespace, cluster2ZalandoPsqlName, 5*time.Minute); err != nil {
 		test.Failf("postgres cluster %s failed to start: %s", cluster2ZalandoPsqlName, err)
 		return
 	}
