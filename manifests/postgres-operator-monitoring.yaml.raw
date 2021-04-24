@@ -1,21 +1,4 @@
 apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: postgres
-  namespace: postgres-operator
-spec:
-  jobLabel: app.kubernetes.io/name
-  selector:
-    matchLabels:
-      application: spilo
-  namespaceSelector:
-    matchNames:
-      - postgres-operator
-  podMetricsEndpoints:
-    - targetPort: 9187
-      interval: 15s
----
-apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
@@ -49,5 +32,12 @@ spec:
         expr: |
           pg_replication_lag > 3600
         for: 5m
+        labels:
+          severity: critical
+      - alert: PostgresInstanceDown
+        expr: pg_up == 0
+        annotations:
+          message: Postgres instance {{$labels.pod}} is down
+        for: 2m
         labels:
           severity: critical
