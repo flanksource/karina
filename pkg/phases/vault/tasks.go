@@ -82,20 +82,7 @@ func Init(p *platform.Platform) error {
 		return err
 	}
 	p.Infof("Token: %s", secret.Auth.ClientToken)
-	for name, policy := range p.Vault.Policies {
-		if _, err := client.Logical().Write("sys/policy/"+name, map[string]interface{}{
-			"policy": policy.String(),
-		}); err != nil {
-			return err
-		}
-	}
 
-	// ExtraConfig is an escape hatch that allows writing to arbritrary vault paths
-	for path, config := range p.Vault.ExtraConfig {
-		if _, err := client.Logical().Write(path, config.Value()); err != nil {
-			return fmt.Errorf("error writing to %s: %v", path, err)
-		}
-	}
 	return nil
 }
 
@@ -128,12 +115,6 @@ func configurePKI(client *api.Client, p *platform.Platform) error {
 		return fmt.Errorf("unknown CA type %v", ingress)
 	}
 
-	for role, config := range p.Vault.Roles {
-		if _, err := client.Logical().Write("pki/roles/"+role, config.Value()); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -151,7 +132,7 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 		}
 	}
 
-	if _, err := client.Logical().Write("auth/ldap/config", map[string]interface{}{
+	return client.Logical().Write("auth/ldap/config", map[string]interface{}{
 		"url":          p.Ldap.GetConnectionURL(),
 		"binddn":       p.Ldap.Username,
 		"bindpass":     p.Ldap.Password,
@@ -162,17 +143,5 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 		"userattr":     "cn",
 		"insecure_tls": "true",
 		"starttls":     "true",
-	}); err != nil {
-		return err
-	}
-
-	for group, policies := range p.Vault.GroupMappings {
-		if _, err := client.Logical().Write("auth/ldap/groups/"+group, map[string]interface{}{
-			"policies": strings.Join(policies, ","),
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	})
 }

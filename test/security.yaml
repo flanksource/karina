@@ -51,47 +51,5 @@ vault:
   region: us-east-1
   accessKey: !!env AWS_ACCESS_KEY_ID
   secretKey: !!env AWS_SECRET_ACCESS_KEY
-  groupMappings:
-    "admins":
-      - admin
-      - signer
-  policies:
-    admin:
-      "auth/*":
-        capabilities:
-          - read
-          - create
-          - update
-          - sudo
-          - list
-          - delete
-      "sys/*":
-        capabilities:
-          - read
-          - create
-          - update
-          - sudo
-          - list
-          - delete
-    signer:
-      "pki/sign/ingress":
-        capabilities: ["update"]
-      "pki/*":
-        capabilities: ["list", "read"]
-  roles:
-    ingress:
-      max_ttl: 2160h
-      ttl: 2160h
-      key_type: rsa
-      key_bits: 2048
-      ou: "OU"
-      organization: org
-      locality: locality
-      province: gauteng
-      generate_lease: true
-      require_cn: false
-      allow_subdomains: true
-      allowed_domains:
-        - 127.0.0.1.nip.io
   consul:
     bucket: "karina-consul-backups"
