@@ -722,12 +722,12 @@ type ThanosE2E struct {
 
 type Filebeat struct {
 	Disabled      `yaml:",inline" json:",inline"`
-	Name          string                 `yaml:"name" json:"name"`
-	Index         string                 `yaml:"index" json:"index"`
-	Prefix        string                 `yaml:"prefix" json:"prefix"`
-	Elasticsearch *Connection            `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
-	Logstash      *Connection            `yaml:"logstash,omitempty" json:"logstash,omitempty"`
-	SSL           map[string]interface{} `yaml:"ssl,omitempty" json:"ssl,omitempty"`
+	Name          string            `yaml:"name" json:"name"`
+	Index         string            `yaml:"index" json:"index"`
+	Prefix        string            `yaml:"prefix" json:"prefix"`
+	Elasticsearch *Connection       `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
+	Logstash      *Connection       `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	SSL           map[string]string `yaml:"ssl,omitempty" json:"ssl,omitempty"`
 }
 
 type Journalbeat struct {
@@ -774,16 +774,10 @@ type Consul struct {
 type Vault struct {
 	Version string `yaml:"version" json:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
-	Token string `yaml:"token,omitempty" json:"token,omitempty"`
-	// A map of PKI secret roles to create/update See [pki](https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role)
-	Roles         map[string]Values      `yaml:"roles,omitempty" json:"roles,omitempty"`
-	Policies      map[string]VaultPolicy `yaml:"policies,omitempty" json:"policies,omitempty"`
-	GroupMappings map[string][]string    `yaml:"groupMappings,omitempty" json:"groupMappings,omitempty"`
-	// ExtraConfig is an escape hatch that allows writing to arbitrary vault paths
-	ExtraConfig map[string]Values `yaml:"config,omitempty" json:"extraConfig,omitempty"`
-	Disabled    bool              `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	AccessKey   string            `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
-	SecretKey   string            `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
+	Token     string `yaml:"token,omitempty" json:"token,omitempty"`
+	Disabled  bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	AccessKey string `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
+	SecretKey string `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
 	// The AWS KMS ARN Id to use to unseal vault
 	KmsKeyID string `yaml:"kmsKeyId,omitempty" json:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty" json:"region,omitempty"`
