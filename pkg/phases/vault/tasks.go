@@ -132,7 +132,7 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 		}
 	}
 
-	return client.Logical().Write("auth/ldap/config", map[string]interface{}{
+	_, err = client.Logical().Write("auth/ldap/config", map[string]interface{}{
 		"url":          p.Ldap.GetConnectionURL(),
 		"binddn":       p.Ldap.Username,
 		"bindpass":     p.Ldap.Password,
@@ -144,4 +144,5 @@ func configureLdap(client *api.Client, p *platform.Platform) error {
 		"insecure_tls": "true",
 		"starttls":     "true",
 	})
+	return err
 }

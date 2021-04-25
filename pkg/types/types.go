@@ -457,6 +457,11 @@ type Kpack struct {
 	Disabled      bool          `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	ImageVersions ImageVersions `yaml:"imageVersions,omitempty" json:"imageVersions,omitempty"`
 }
+
+func (kpack Kpack) IsDisabled() bool {
+	return kpack.Disabled || kpack.ImageVersions.Controller == ""
+}
+
 type ImageVersions struct {
 	BuildInit         string `yaml:"buildInit,omitempty" json:"buildInit,omitempty"`
 	BuildInitWindows  string `yaml:"buildInitWindows,omitempty" json:"buildInitWindows,omitempty"`
