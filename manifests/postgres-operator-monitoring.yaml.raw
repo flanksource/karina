@@ -39,7 +39,7 @@ spec:
         annotations:
           message: Postgres replica {{$labels.pod}} WAL is lagging by {{$value | humanizeDuration}}
         expr: |
-          pg_replication_lag > 300 and pg_replication_lag < 3600
+          pg_replication_delay_log_delay > 300 and pg_replication_delay_log_delay < 3600
         for: 5m
         labels:
           severity: warning
@@ -47,7 +47,14 @@ spec:
         annotations:
           message:  Postgres replica {{$labels.pod}} WAL is lagging by {{$value | humanizeDuration}}
         expr: |
-          pg_replication_lag > 3600
+          pg_replication_delay_log_delay > 3600
         for: 5m
+        labels:
+          severity: critical
+      - alert: PostgresInstanceDown
+        expr: pg_up == 0
+        annotations:
+          message: Postgres instance {{$labels.pod}} is down
+        for: 2m
         labels:
           severity: critical
