@@ -19,7 +19,8 @@ type PlatformConfig struct {
 	Consul    string    `yaml:"consul" json:"consul,omitempty"`
 	Dashboard Dashboard `yaml:"dashboard,omitempty" json:"dashboard,omitempty"`
 	// Semistructured data to be reused using YAML anchors
-	Data           map[string]interface{} `yaml:"data,omitempty" json:"data,omitempty"`
+	// +kubebuilder:validation:Type=object
+	Data           map[string]interface{} `yaml:"data,omitempty" json:"-"`
 	Datacenter     string                 `yaml:"datacenter" json:"datacenter,omitempty"`
 	Dex            Dex                    `yaml:"dex,omitempty" json:"dex,omitempty"`
 	DNS            DynamicDNS             `yaml:"dns,omitempty" json:"dns,omitempty"`
