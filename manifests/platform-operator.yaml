@@ -235,7 +235,7 @@ spec:
         {{- end }}
         command:
         - /manager
-        image: docker.io/flanksource/platform-operator:{{ .platformOperator.version|default "na" }}
+        image: docker.io/flanksource/platform-operator:{{ .platformOperator.version | default "na" }}
         imagePullPolicy: Always
         name: manager
         ports:

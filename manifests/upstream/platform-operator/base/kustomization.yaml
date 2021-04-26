@@ -3,7 +3,7 @@ resources:
 images:
   - name: docker.io/flanksource/platform-operator
     newName: docker.io/flanksource/platform-operator
-    newTag: "{{.platformOperator.version}}"
+    newTag: '{{ .platformOperator.version | default "na" }}'
 patchesStrategicMerge:
   - |-
     apiVersion: apps/v1

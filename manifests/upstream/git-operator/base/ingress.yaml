@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: platform-system
+  labels:
+    control-plane: git-operator
+  name: git-operator
+spec:
+  selector:
+    control-plane: git-operator
+  ports:
+    - port: 8888
+      targetPort: 8888
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: git-operator-ing
+  namespace: platform-system
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - secretName: git-operator-tls
+      hosts:
+        - git-operator.{{.domain}}
+  rules:
+    - host: git-operator.{{.domain}}
+      http:
+        paths:
+          - backend:
+              serviceName: git-operator
+              servicePort: 8888
