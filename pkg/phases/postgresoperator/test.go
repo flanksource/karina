@@ -9,13 +9,11 @@ import (
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
-	pgapi "github.com/flanksource/karina/pkg/api/postgres"
 	pgclient "github.com/flanksource/karina/pkg/client/postgres"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
 	postgresdbv2 "github.com/flanksource/template-operator-library/api/db/v2"
 	"github.com/go-pg/pg/v9/orm"
-	"github.com/minio/minio-go/v6"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -172,18 +170,19 @@ func newPostgresqlDBCluster(namespace, name string) *postgresdbv2.PostgresqlDB {
 
 // TODO: replace with platform.WaitForResource
 func waitForPgClusterToReady(p *platform.Platform, namespace, postgresqlClusterName string, timeout time.Duration) error {
-	start := time.Now()
-	db := &pgapi.Postgresql{}
-	for {
-		_ = p.Get(namespace, postgresqlClusterName, db)
-		if start.Add(timeout).Before(time.Now()) {
-			return fmt.Errorf("timeout exceeded waiting for db %s to be ready, current state: %s", db.Name, db.Status.PostgresClusterStatus)
-		}
-		if db.Status.PostgresClusterStatus == pgapi.ClusterStatusRunning {
-			return nil
-		}
-		time.Sleep(2 * time.Second)
-	}
+	return p.WaitForResource("PostgresqlDB", namespace, postgresqlClusterName, timeout)
+	// start := time.Now()
+	// db := &pgapi.Postgresql{}
+	// for {
+	// 	_ = p.Get(namespace, postgresqlClusterName, db)
+	// 	if start.Add(timeout).Before(time.Now()) {
+	// 		return fmt.Errorf("timeout exceeded waiting for db %s to be ready, current state: %s", db.Name, db.Status.PostgresClusterStatus)
+	// 	}
+	// 	if db.Status.PostgresClusterStatus == pgapi.ClusterStatusRunning {
+	// 		return nil
+	// 	}
+	// 	time.Sleep(2 * time.Second)
+	// }
 }
 
 func removeLogicalBackupE2ECluster(p *platform.Platform, test *console.TestResults, db *postgresdbv2.PostgresqlDB) {
@@ -311,15 +310,15 @@ func testFixturesArePresent(p *platform.Platform, clusterName string, timeout ti
 	}
 }
 
-func listObjects(client *minio.Client, bucket, path string) []minio.ObjectInfo {
-	var objects []minio.ObjectInfo
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-	for obj := range client.ListObjectsV2(bucket, path, true, doneCh) {
-		objects = append(objects, obj)
-	}
-	return objects
-}
+// func listObjects(client *minio.Client, bucket, path string) []minio.ObjectInfo {
+// 	var objects []minio.ObjectInfo
+// 	doneCh := make(chan struct{})
+// 	defer close(doneCh)
+// 	for obj := range client.ListObjectsV2(bucket, path, true, doneCh) {
+// 		objects = append(objects, obj)
+// 	}
+// 	return objects
+// }
 
 // func waitForWalBackup(p *platform.Platform, clusterName string, timeout time.Duration, timestamp time.Time, test *console.TestResults) error {
 // 	client, err := p.GetS3Client()
@@ -388,24 +387,24 @@ func listObjects(client *minio.Client, bucket, path string) []minio.ObjectInfo {
 // 	return nil
 // }
 
-func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *console.TestResults) {
-	clusterName := "postgres-" + config.Name
-	db := pgapi.NewPostgresql(clusterName)
+// func removeE2ECluster(p *platform.Platform, config pgapi.ClusterConfig, test *console.TestResults) {
+// 	clusterName := "postgres-" + config.Name
+// 	db := pgapi.NewPostgresql(clusterName)
 
-	pgClient, _, _, err := p.GetDynamicClientFor(Namespace, db)
-	if err != nil {
-		test.Errorf("Failed to get dynamic client: %v", err)
-		return
-	}
+// 	pgClient, _, _, err := p.GetDynamicClientFor(Namespace, db)
+// 	if err != nil {
+// 		test.Errorf("Failed to get dynamic client: %v", err)
+// 		return
+// 	}
 
-	_, err = pgClient.Get(context.TODO(), clusterName, metav1.GetOptions{})
-	if kerrors.IsNotFound(err) {
-		return
-	}
+// 	_, err = pgClient.Get(context.TODO(), clusterName, metav1.GetOptions{})
+// 	if kerrors.IsNotFound(err) {
+// 		return
+// 	}
 
-	if err := pgClient.Delete(context.TODO(), clusterName, metav1.DeleteOptions{}); err != nil {
-		test.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
-		return
-	}
-	test.Infof("Deleted pg cluster: %s", clusterName)
-}
+// 	if err := pgClient.Delete(context.TODO(), clusterName, metav1.DeleteOptions{}); err != nil {
+// 		test.Warnf("Failed to delete resource %s/%s/%s in namespace %s", db.APIVersion, db.Kind, db.Name, config.Namespace)
+// 		return
+// 	}
+// 	test.Infof("Deleted pg cluster: %s", clusterName)
+// }
