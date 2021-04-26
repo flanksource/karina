@@ -72,7 +72,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	cluster1ZalandoPsqlName := fmt.Sprintf("postgres-%s", cluster1.Name)
-	if err := waitForPgClusterToReady(p, Namespace, cluster1ZalandoPsqlName, 3*time.Minute); err != nil {
+	if err := waitForPgClusterToReady(p, Namespace, cluster1ZalandoPsqlName, 5*time.Minute); err != nil {
 		test.Failf("postgres cluster %s failed to start: %s", cluster1ZalandoPsqlName, err)
 		return
 	}
@@ -137,7 +137,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	test.Passf(testName, "restore logical backup \"%s\" of %s to %s successfully", backupPathToRestore, cluster1ZalandoPsqlName, cluster2ZalandoPsqlName)
-	if err := testFixturesArePresent(p, cluster2ZalandoPsqlName, 3*time.Minute, test); err != nil {
+	if err := testFixturesArePresent(p, cluster2ZalandoPsqlName, 5*time.Minute, test); err != nil {
 		test.Failf(testName, "failed to find test fixtures data in PG Cluster %s: %v", cluster2ZalandoPsqlName, err)
 		return
 	}
