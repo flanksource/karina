@@ -54,3 +54,13 @@ patchesStrategicMerge:
     #             requests:
     #               cpu: 100m
     #               memory: 150Mi
+  - |-
+    apiVersion: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    metadata:
+      name: canary-checker-monitor
+      namespace: platform-system
+    spec:
+      endpoints:
+      - interval: 30s
+        targetPort: 8080

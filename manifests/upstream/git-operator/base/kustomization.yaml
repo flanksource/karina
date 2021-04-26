@@ -1,0 +1,21 @@
+resources:
+  - https://raw.githubusercontent.com/flanksource/git-operator/v0.2.0/config/deploy/base.yml
+  - ingress.yaml
+images:
+  - name: flanksource/git-operator
+    newName: docker.io/flanksource/git-operator
+    newTag: '{{ .gitOperator.version | default "na" }}'
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: git-operator
+      namespace: platform-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: git-operator
+              ports:
+                - containerPort: 8888
