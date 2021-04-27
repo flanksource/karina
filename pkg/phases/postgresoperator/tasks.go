@@ -1,16 +1,13 @@
 package postgresoperator
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/flanksource/karina/pkg/api/postgres"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
-	"github.com/flanksource/kommons/proxy"
 	"github.com/pkg/errors"
 
 	pv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -231,38 +228,6 @@ func doUntil(fn func() bool) bool {
 		}
 		time.Sleep(5 * time.Second)
 	}
-}
-
-func GetPatroniClient(p *platform.Platform, namespace, clusterName string) (*http.Client, error) {
-	client, _ := p.GetClientset()
-	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
-	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
-	}
-
-	if len(pods.Items) != 1 {
-		return nil, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
-	}
-
-	dialer, err := p.GetProxyDialer(proxy.Proxy{
-		Namespace:    namespace,
-		Kind:         "pods",
-		ResourceName: pods.Items[0].Name,
-		Port:         8008,
-	})
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get proxy dialer")
-	}
-
-	tr := &http.Transport{
-		DialContext: dialer.DialContext,
-	}
-
-	httpClient := &http.Client{Transport: tr}
-
-	return httpClient, nil
 }
 
 func createExporterServiceMonitor(p *platform.Platform, clusterName, ns string, port int32) error {

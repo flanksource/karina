@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	pgapi "github.com/flanksource/karina/pkg/api/postgres"
@@ -135,6 +136,32 @@ func init() {
 		},
 	}
 
+	query := &cobra.Command{
+		Use:   "query",
+		Args:  cobra.ExactArgs(1),
+		Short: "Run SQL against a database",
+		Run: func(cmd *cobra.Command, args []string) {
+			db, err := getDB(cmd)
+			if err != nil {
+				log.Fatalf("error finding %s: %v", clusterName, err)
+			}
+			database, _ := cmd.Flags().GetString("database")
+			psql, err := db.OpenDB(database)
+			if err != nil {
+				log.Fatalf("cannot connect to db: %v", err)
+			}
+
+			var results []interface{}
+			_, err = psql.Query(&results, args[0])
+			if err != nil {
+				log.Fatalf("failed to execute query %s", err)
+			}
+			fmt.Printf("%v\n", results)
+		},
+	}
+
+	query.Flags().String("database", "postgres", "Name of postgres database")
+
 	listBackup := &cobra.Command{
 		Use:   "list",
 		Short: "List all backup revisions",
@@ -161,7 +188,7 @@ func init() {
 
 	backup.Flags().Bool("list", false, "List all backup revisions")
 	backup.Flags().String("schedule", "", "A cron schedule to backup on a reoccuring basis")
-	DB.AddCommand(backup)
+	DB.AddCommand(backup, query)
 
 	DB.PersistentFlags().StringVar(&clusterName, "name", "", "Name of the postgres cluster / service")
 	DB.PersistentFlags().StringVar(&namespace, "namespace", "postgres-operator", "")

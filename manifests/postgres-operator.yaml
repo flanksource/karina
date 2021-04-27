@@ -3,7 +3,6 @@ kind: ServiceAccount
 metadata:
   name: postgres-operator
   namespace: postgres-operator
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -188,6 +187,16 @@ rules:
       - privileged
     verbs:
       - use
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - update
+      - patch
+      - get
+      - delete
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -313,7 +322,7 @@ data:
   AWS_ENDPOINT_URL: '{{ if not .s3.endpoint }}{{ base64.Encode "s3.amazonaws.com" }}{{ else }}{{ hasPrefix .s3.endpoint "http" | ternary (print .s3.endpoint) (print "https://" .s3.endpoint) | base64.Encode }}{{ end }}'
   AWS_REGION: "{{ .s3.region | base64.Encode }}"
   AWS_S3_FORCE_PATH_STYLE: '{{ .s3.usePathStyle | default "true" | base64.Encode }}'
-  BACKUP_IMAGE: '{{ .postgresOperator.backupImage | base64.Encode }}' # Default is set in Deploy phase
+  BACKUP_IMAGE: "{{ .postgresOperator.backupImage | base64.Encode }}" # Default is set in Deploy phase
 
   # NOTE: BACKUP_PASSWORD CAN'T BE UPDATED ONCE RESTIC HAS BEEN INITIALIZED. YOU WON'T BE ABLE TO RESTORE BACKUP DATA IF YOU LOSE THE RESTIC PASSWORD
   BACKUP_PASSWORD: '{{ or (kget "secret/postgres-operator/postgres-operator-cluster-environment" "BACKUP_PASSWORD") .postgresOperator.backupPassword | default (random.AlphaNum 22) | base64.Encode }}'
@@ -327,5 +336,5 @@ data:
   BACKUP_RETENTION_KEEP_YEARLY: '{{ .postgresOperator.defaultBackupRetention.keepYearly | default "" | base64.Encode }}'
 
   # Other default settings
-  BACKUP_SCHEDULE: '{{ .postgresOperator.defaultBackupSchedule | base64.Encode }}' # Default is set in Deploy phase
-  BACKUP_S3_BUCKET: '{{ .postgresOperator.defaultBackupBucket | base64.Encode }}' # Default is set in Deploy phase
+  BACKUP_SCHEDULE: "{{ .postgresOperator.defaultBackupSchedule | base64.Encode }}" # Default is set in Deploy phase
+  BACKUP_S3_BUCKET: "{{ .postgresOperator.defaultBackupBucket | base64.Encode }}" # Default is set in Deploy phase

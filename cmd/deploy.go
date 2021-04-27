@@ -5,6 +5,7 @@ import (
 
 	log "github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/phases/order"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +32,7 @@ func init() {
 					continue
 				}
 				if err := phases[name](p); err != nil {
-					log.Errorf("Failed to deploy %s: %v", name, err)
+					log.Errorf("Failed to deploy %s: %v", name, errors.WithStack(err))
 					failed = true
 				}
 				// remove the phase from the map so it isn't run again
@@ -44,7 +45,7 @@ func init() {
 				}
 
 				if err := fn(p); err != nil {
-					log.Errorf("Failed to deploy %s: %v", name, err)
+					log.Errorf("Failed to deploy %s: %v", name, errors.WithStack(err))
 					failed = true
 				}
 			}

@@ -12,6 +12,9 @@ import (
 
 	"github.com/flanksource/commons/text"
 	"github.com/flanksource/commons/utils"
+	"github.com/flanksource/kommons/proxy"
+	"github.com/go-pg/pg/v9"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api "github.com/flanksource/karina/pkg/api/postgres"
@@ -24,19 +27,11 @@ const Namespace = "postgres-operator"
 type PostgresDB struct {
 	Name         string
 	Namespace    string
+	Superuser    string
 	Secret       string
 	version      string
-	Superuser    string
 	backupConfig *map[string][]byte
 	client       *kommons.Client
-}
-
-type ResticSnapshot struct {
-	Time    time.Time
-	Paths   []string
-	Tags    []string
-	ID      string
-	ShortID string `json:"short_id"`
 }
 
 func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
@@ -46,6 +41,8 @@ func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
 		Kind:       "postgresql",
 		APIVersion: "acid.zalan.do",
 	}}
+
+	name = clusterName(name)
 
 	if err := client.Get(Namespace, name, _db); err != nil {
 		return nil, fmt.Errorf("could not get db %v", err)
@@ -69,12 +66,78 @@ func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
 	db.Namespace = _db.Namespace
 	db.version = _db.Spec.PgVersion
 	db.Superuser = op.Configuration.PostgresUsersConfiguration.SuperUsername
+	if db.Superuser == "" {
+		db.Superuser = "postgres"
+	}
 	db.Secret = fmt.Sprintf("%s.%s.credentials", db.Superuser, name)
 	return &db, nil
 }
 
+func clusterName(name string) string {
+	if !strings.HasPrefix(name, "postgres-") {
+		return "postgres-" + name
+	}
+	return name
+}
+
+func (db *PostgresDB) GetClusterName() string {
+	return clusterName(db.Name)
+}
+
+func (db *PostgresDB) OpenDB(database string) (*pg.DB, error) {
+	name := db.GetClusterName()
+	pod, err := db.client.WaitForPodByLabel(db.Namespace, fmt.Sprintf("cluster-name=%s,spilo-role=master", name), 30*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	secretName := fmt.Sprintf("postgres.%s.credentials", name)
+	secret := db.client.GetSecret("postgres-operator", secretName)
+	if secret == nil {
+		return nil, fmt.Errorf("%s not found", secretName)
+	}
+	db.client.Debugf("[%s] connecting with %s", pod.Name, string((*secret)["username"]))
+
+	dialer, err := db.client.GetProxyDialer(proxy.Proxy{
+		Namespace:    db.Namespace,
+		Kind:         "pods",
+		ResourceName: pod.Name,
+		Port:         5432,
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get proxy dialer")
+	}
+
+	pgdb := pg.Connect(&pg.Options{
+		User:     string((*secret)["username"]),
+		Password: string((*secret)["password"]),
+		Dialer:   dialer.DialContext,
+		Database: database,
+	})
+	return pgdb, nil
+}
+
+func (db *PostgresDB) WithConnection(database string, fn func(*pg.DB) error) error {
+	pgdb, err := db.OpenDB(database)
+	if err != nil {
+		return err
+	}
+	defer pgdb.Close()
+	return fn(pgdb)
+}
+
 func (db *PostgresDB) String() string {
 	return fmt.Sprintf("%s/%s[version=%s, secret=%s]", db.Namespace, db.Name, db.version, db.Secret)
+}
+
+func (db *PostgresDB) WaitFor(timeout time.Duration) error {
+	_, err := db.client.WaitForResource("postgresql", db.Namespace, db.Name, timeout)
+	return err
+}
+
+func (db *PostgresDB) Terminate() error {
+	return db.client.DeleteByKind("postgresql", db.Namespace, db.Name)
 }
 
 func (db *PostgresDB) Backup() error {
@@ -94,6 +157,15 @@ func (db *PostgresDB) Backup() error {
 func (db *PostgresDB) ScheduleBackup(schedule string) error {
 	job := db.GenerateBackupJob().AsCronJob(schedule)
 	return db.client.Apply(db.Namespace, job)
+}
+
+func (db *PostgresDB) TriggerBackup(timeout time.Duration) error {
+	backupCronJobName := fmt.Sprintf("backup-%s", db.GetClusterName())
+	jobName, err := db.client.TriggerCronJobManually(db.Namespace, backupCronJobName)
+	if err != nil {
+		return errors.Wrap(err, "failed to trigger cronjob")
+	}
+	return db.client.WaitForJob(db.Namespace, jobName, timeout)
 }
 
 func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
@@ -182,6 +254,8 @@ func (db *PostgresDB) Restore(fullBackupPath string) error {
 	if !strings.HasPrefix(fullBackupPath, "restic:s3:") {
 		return fmt.Errorf("backup path format is not supported. It should start with \"restic:s3:\"")
 	}
+
+	db.client.Infof("[%s] restoring from backup %s", db.Name, fullBackupPath)
 
 	re := regexp.MustCompile(`(s3:(s3.amazonaws.com|https?://[^/]+)/[^/]+)(/.+)`)
 	matches := re.FindStringSubmatch(fullBackupPath)

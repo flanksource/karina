@@ -1,6 +1,7 @@
 package postgresoperator
 
 import (
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 )
 
@@ -36,7 +37,7 @@ func Deploy(platform *platform.Platform) error {
 		platform.PostgresOperator.DefaultBackupSchedule = "30 0 * * *"
 	}
 
-	if err := platform.CreateOrUpdateNamespace("postgres-operator", nil, nil); err != nil {
+	if err := platform.CreateOrUpdateNamespace("postgres-operator", nil, constants.QuackEnabled); err != nil {
 		return err
 	}
 
