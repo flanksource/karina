@@ -126,7 +126,7 @@ func newDB(p *platform.Platform, namespace, name string) (*pgclient.PostgresDB, 
 	if err := p.Apply(cluster.Namespace, cluster); err != nil {
 		return nil, errors.Wrap(err, "error creating db")
 	}
-	if _, err := p.WaitFor(cluster, 1*time.Minute); err != nil {
+	if _, err := p.WaitFor(cluster, 5*time.Minute); err != nil {
 		return nil, errors.Wrap(err, "failed waiting for postgres to come up")
 	}
 	return pgclient.GetPostgresDB(&p.Client, cluster.Name)
