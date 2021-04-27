@@ -4,16 +4,6 @@ kind: ServiceAccount
 metadata:
   labels:
     app.kubernetes.io/component: control-plane
-    app.kubernetes.io/name: keptn-api-service
-    app.kubernetes.io/part-of: keptn
-  name: keptn-api-service
-  namespace: keptn
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    app.kubernetes.io/component: control-plane
     app.kubernetes.io/name: keptn-configuration-service
     app.kubernetes.io/part-of: keptn
   name: keptn-configuration-service
@@ -1405,3 +1395,14 @@ metadata:
 spec:
   database: keptn
   user: keptn
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: control-plane
+    app.kubernetes.io/name: keptn-api-service
+    app.kubernetes.io/part-of: keptn
+  name: keptn-api-service
+  namespace: keptn
+---
