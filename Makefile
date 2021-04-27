@@ -74,6 +74,7 @@ deploy-docs:
 .PHONY: lint
 lint: build
 	golangci-lint run --verbose --print-resources-usage
+	go run test/linter/main.go
 
 # Generate code
 generate: controller-gen
