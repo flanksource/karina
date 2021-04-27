@@ -52,7 +52,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	if !p.PlatformConfig.Trace {
-		defer db1.Terminate()
+		defer db1.Terminate() //nolint: errcheck
 	}
 
 	if err := db1.WithConnection("postgres", insertTestFixtures); err != nil {
@@ -71,7 +71,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 	if !p.PlatformConfig.Trace {
-		defer db2.Terminate()
+		defer db2.Terminate() //nolint: errcheck
 	}
 
 	backupPaths, err := db1.ListBackups("", 1, true)
@@ -129,11 +129,7 @@ func newDB(p *platform.Platform, namespace, name string) (*pgclient.PostgresDB, 
 	if _, err := p.WaitFor(cluster, 1*time.Minute); err != nil {
 		return nil, errors.Wrap(err, "failed waiting for postgres to come up")
 	}
-	if db, err := pgclient.GetPostgresDB(&p.Client, cluster.Name); err != nil {
-		return nil, errors.Wrap(err, "failed to create pg client")
-	} else {
-		return db, nil
-	}
+	return pgclient.GetPostgresDB(&p.Client, cluster.Name)
 }
 
 func insertTestFixtures(pgdb *pg.DB) error {
@@ -159,8 +155,6 @@ func testFixturesArePresent(pgdb *pg.DB) error {
 			return errors.Wrap(err, "failed to list links")
 		} else if len(links) != 2 {
 			return fmt.Errorf("expected 2 links got %d", len(links))
-		} else {
-			return nil
 		}
 		time.Sleep(5 * time.Second)
 		if time.Now().After(deadline) {
