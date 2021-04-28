@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: platform-operator
+
+# Tip: You can generate resources file list by running "kustomize edit add resource ../helm/generated_templates/strimzi-kafka-operator/templates/*.yaml"
+resources:
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/010-ServiceAccount-strimzi-cluster-operator.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/020-ClusterRole-strimzi-cluster-operator-role.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/020-RoleBinding-strimzi-cluster-operator.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/021-ClusterRole-strimzi-cluster-operator-role.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/021-ClusterRoleBinding-strimzi-cluster-operator.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/030-ClusterRole-strimzi-kafka-broker.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/030-ClusterRoleBinding-strimzi-cluster-operator-kafka-broker-delegation.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/031-ClusterRole-strimzi-entity-operator.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/031-RoleBinding-strimzi-cluster-operator-entity-operator-delegation.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/032-ClusterRole-strimzi-topic-operator.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/032-RoleBinding-strimzi-cluster-operator-topic-operator-delegation.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/033-ClusterRole-strimzi-kafka-client.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/033-ClusterRoleBinding-strimzi-cluster-operator-kafka-client-delegation.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/050-ConfigMap-strimzi-cluster-operator.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/templates/060-Deployment-strimzi-cluster-operator.yaml

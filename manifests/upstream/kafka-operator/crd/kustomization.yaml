@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Tip: You can update resources by running "kustomize edit add resource ../helm/generated_templates/strimzi-kafka-operator/crds/*.yaml"
+resources:
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/040-Crd-kafka.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/041-Crd-kafkaconnect.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/042-Crd-kafkaconnects2i.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/043-Crd-kafkatopic.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/044-Crd-kafkauser.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/045-Crd-kafkamirrormaker.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/046-Crd-kafkabridge.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/047-Crd-kafkaconnector.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/048-Crd-kafkamirrormaker2.yaml
+  - ../helm/generated_templates/strimzi-kafka-operator/crds/049-Crd-kafkarebalance.yaml
