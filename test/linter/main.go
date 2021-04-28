@@ -23,7 +23,8 @@ var allowedDuplicateKeys = []string{"CustomResourceDefinition-servicemonitors.mo
 var ignoreManifestsSubPaths = []string{"manifests/upstream/(.*)"}
 var (
 	config = &Config{}
-	keys   = make([]string, 10, 500)
+	// keys map consist of key as <kind>-<name>-<namespace> and value as the manifest file name
+	keys = make(map[string]string)
 )
 
 type Config struct {
@@ -90,16 +91,20 @@ func generateUniqueKeys(manifest string) error {
 	for i := range manifestData {
 		if manifestData[i].Object["metadata"].(map[string]interface{})["namespace"] != nil {
 			value := fmt.Sprintf("%v-%v-%v", manifestData[i].Object["kind"].(string), manifestData[i].Object["metadata"].(map[string]interface{})["name"].(string), manifestData[i].Object["metadata"].(map[string]interface{})["namespace"].(string))
-			if !contains(allowedDuplicateKeys, value) && contains(keys, value) {
-				return errors.Errorf("error %v already present in the manifests", value)
+			if !contains(allowedDuplicateKeys, value) {
+				if file, ok := keys[value]; ok {
+					return errors.Errorf("error: key %v from %v already present in %v", value, manifest, file)
+				}
 			}
-			keys = append(keys, value)
+			keys[value] = manifest
 		} else {
 			value := fmt.Sprintf("%v-%v", manifestData[i].Object["kind"].(string), manifestData[i].Object["metadata"].(map[string]interface{})["name"].(string))
-			if !contains(allowedDuplicateKeys, value) && contains(keys, value) {
-				return errors.Errorf("error %v already present in the manifests", value)
+			if !contains(allowedDuplicateKeys, value) {
+				if file, ok := keys[value]; ok {
+					return errors.Errorf("error: key %v from %v already present in %v", value, manifest, file)
+				}
 			}
-			keys = append(keys, value)
+			keys[value] = manifest
 		}
 	}
 	return nil
