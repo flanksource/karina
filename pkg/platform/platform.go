@@ -785,6 +785,9 @@ func (platform *Platform) GetS3Client() (*minio.Client, error) {
 }
 
 func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {
+	if !strings.HasPrefix("postgres-", clusterName) {
+		clusterName = "postgres-" + clusterName
+	}
 	client, _ := platform.GetClientset()
 	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
 	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), opts)

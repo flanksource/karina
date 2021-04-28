@@ -186,7 +186,7 @@ func (s *SnapshotFetcher) queueFetchSpecs(namespace v1.Namespace) {
 			return
 		}
 		ketall := s.GetBinaryWithKubeConfig("ketall")
-		if err := ketall(fmt.Sprintf("-n %s -o yaml --exclude=events,endpoints,secrets > %s/specs.yaml", namespace.Name, path)); err != nil {
+		if err := ketall(fmt.Sprintf("-n %s -o yaml --exclude=events,endpoints,endpointslices,secrets > %s/specs.yaml", namespace.Name, path)); err != nil {
 			s.Errorf("failed to ketall specs for namespace %s: %v", namespace.Name, err)
 		}
 		<-s.ch

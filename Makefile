@@ -15,8 +15,8 @@ endif
 
 # Image URL to use all building/pushing image targets
 IMG ?= flanksource/karina:latest
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true"
+# Produce CRDs with v1
+CRD_OPTIONS ?= "crd:crdVersions=v1"
 
 .PHONY: help
 help:
@@ -95,7 +95,7 @@ deploy: manifests
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) webhook paths="./pkg/api/operator/..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager paths="./pkg/operator/..." output:rbac:artifacts:config=config/operator/rbac
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=karina paths="./pkg/operator/..." output:rbac:artifacts:config=config/operator/rbac
 
 # find or download controller-gen
 # download controller-gen if necessary

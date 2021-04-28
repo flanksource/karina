@@ -422,7 +422,7 @@ spec:
       rules:
         - alert: NodeCPUOverSubscribedWarning
           annotations:
-            description: Node {{$labels.node}} max container CPU limit exceeds double capacity
+            description: Node {{$labels.node}} CPU limits oversubscribed more than 2x
           expr: |
             sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 2
           for: 1m
@@ -430,7 +430,7 @@ spec:
             severity: warning
         - alert: NodeCPUOverSubscribedAlarm
           annotations:
-            description: Node {{$labels.node}} max container CPU limit exceeds triple capacity
+            description: Node {{$labels.node}} CPU limits oversubscribed more than 3x
           expr: |
             sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 3
           for: 1m
@@ -438,7 +438,7 @@ spec:
             severity: critical
         - alert: NodeMemOverSubscribedWarning
           annotations:
-            description: Node {{$labels.node}} max container memory limit exceeds double capacity
+            description: Node {{$labels.node}} Memory limits oversubscribed more than 2x
           expr: |
             sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 2
           for: 1m
@@ -446,7 +446,7 @@ spec:
             severity: warning
         - alert: NodeMemOverSubscribedAlarm
           annotations:
-            description: Node {{$labels.node}} max container memory limit exceeds triple capacity
+            description: Node {{$labels.node}} Memory limits oversubscribed more than 3x
           expr: |
             sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 3
           for: 1m
@@ -626,9 +626,9 @@ spec:
             severity: warning
     - name: PodResources
       rules:
-        - alert: ExcessivePodSurge
+        - alert: ExcessivePodCPURatio
           annotations:
-            description: Container {{$labels.namespace}}/{{$labels.pod}}:{{$labels.container}} has a surge ratio greater than 2
+            description: Container {{$labels.namespace}}/{{$labels.pod}}:{{$labels.container}} has a CPU request to limit ratio greater than 2
           expr: |
             kube_pod_container_resource_limits_cpu_cores{node!=""}  > 1 and kube_pod_container_resource_limits_cpu_cores{node!=""} > 2*kube_pod_container_resource_requests_cpu_cores{node!=""}
           for: 1m

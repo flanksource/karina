@@ -1,0 +1,43 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: canary-checker-rules
+  namespace: platform-system
+spec:
+  groups:
+    - name: canary-severity
+      rules:
+        - alert: PostgresHeartbeatDown
+          annotations:
+            message: Postgres {{ $labels.exported_endpoint }} is down
+          expr: canary_check{type="postgres"} > 0
+          for: 5m
+          labels:
+            severity: page
+
+        - alert: CanaryPodFailed
+          expr: canary_check{type="pod"} > 0
+          for: 15m
+          labels:
+            severity: page
+          annotations:
+            message: Failed to schedule and serve a pod for 15m
+
+        - alert: CanaryImagePullFailed
+          expr: canary_check{type=~"containerdPull|dockerPull"} > 0
+          for: 5m
+          labels:
+            severity: page
+          annotations:
+            message: Failed to pull canary docker image
+
+        - alert: CanaryFailed
+          expr: canary_check{type!~"pod|postgres|containerdPull|dockerPull"} > 0
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            message: Canary {{ $labels.type }}/{{ $labels.exported_endpoint }} failing

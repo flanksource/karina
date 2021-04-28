@@ -17,10 +17,14 @@ s3:
   skipTLSVerify: true
   usePathStyle: true
 postgresOperator:
-  version: v1.3.4.flanksource.1
+  version: v1.6.2
   defaultBackupBucket: cicd-pg-backup
   backupPassword: password123456
   defaultBackupRetention:
     keepLast: 5
     keepHourly: 2
     keepDaily: 1
+monitoring:
+  prometheus:
+    persistence:
+      capacity: 10Gi

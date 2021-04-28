@@ -1,0 +1,60 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: postgres
+  namespace: postgres-operator
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      application: spilo
+  namespaceSelector:
+    matchNames:
+      - postgres-operator
+  podMetricsEndpoints:
+    - targetPort: 9187
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-postgres-rules
+  namespace: postgres-operator
+spec:
+  groups:
+  - name: postgres.rules
+    rules:
+      - alert: PostgresFailedReplica
+        annotations:
+          message: Postgres replica {{$labels.pod}} has stopped replicating
+        expr: |
+          pg_replication_slot_status_out{active="false"} > 0
+        for: 5m
+        labels:
+          severity: critical
+      - alert: PostgresLagWarn
+        annotations:
+          message: Postgres replica {{$labels.pod}} WAL is lagging by {{$value | humanizeDuration}}
+        expr: |
+          pg_replication_delay_log_delay > 300 and pg_replication_delay_log_delay < 3600
+        for: 5m
+        labels:
+          severity: warning
+      - alert: PostgresLagCritical
+        annotations:
+          message:  Postgres replica {{$labels.pod}} WAL is lagging by {{$value | humanizeDuration}}
+        expr: |
+          pg_replication_delay_log_delay > 3600
+        for: 5m
+        labels:
+          severity: critical
+      - alert: PostgresInstanceDown
+        expr: pg_up == 0
+        annotations:
+          message: Postgres instance {{$labels.pod}} is down
+        for: 2m
+        labels:
+          severity: critical

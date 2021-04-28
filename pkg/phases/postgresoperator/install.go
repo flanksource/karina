@@ -1,6 +1,7 @@
 package postgresoperator
 
 import (
+	"github.com/flanksource/karina/pkg/constants"
 	"github.com/flanksource/karina/pkg/platform"
 )
 
@@ -16,7 +17,7 @@ func Deploy(platform *platform.Platform) error {
 		return nil
 	}
 	if platform.PostgresOperator.Version == "" {
-		platform.PostgresOperator.Version = "v1.3.4.flanksource.2"
+		platform.PostgresOperator.Version = "v1.6.2"
 	}
 	if platform.PostgresOperator.SpiloImage == "" {
 		platform.PostgresOperator.SpiloImage = "docker.io/flanksource/spilo:1.6-p2.flanksource"
@@ -36,9 +37,9 @@ func Deploy(platform *platform.Platform) error {
 		platform.PostgresOperator.DefaultBackupSchedule = "30 0 * * *"
 	}
 
-	if err := platform.CreateOrUpdateNamespace("postgres-operator", nil, nil); err != nil {
+	if err := platform.CreateOrUpdateNamespace("postgres-operator", nil, constants.QuackEnabled); err != nil {
 		return err
 	}
 
-	return platform.ApplySpecs(Namespace, "postgres-operator.yaml", "postgres-exporter-config.yaml", "postgres-operator-config.yaml", "template/postgresql-db.yaml.raw")
+	return platform.ApplySpecs(Namespace, "postgres-operator.yaml", "postgres-operator-monitoring.yaml.raw", "postgres-exporter-config.yaml", "postgres-operator-config.yaml", "template/postgresql-db.yaml.raw")
 }

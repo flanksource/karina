@@ -37,6 +37,18 @@ echo "::endgroup::"
 
 function report() {
     set +e
+    (
+    set -x; cd "$(mktemp -d)" &&
+    OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+    ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+    curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
+    tar zxvf krew.tar.gz &&
+    KREW=./krew-"${OS}_${ARCH}" &&
+    "$KREW" install krew
+    )
+    export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+    kubectl krew install resource-snapshot
+    kubectl resource-snapshot
     echo "::group::Uploading test results"
     if [[ "$CI" == "true" ]]; then
 
@@ -44,7 +56,7 @@ function report() {
             wget -nv -nc -O build-tools \
             https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
             chmod +x build-tools
-            
+
             ./build-tools junit gh-workflow-commands test-results/results.xml
         fi
         mkdir -p artifacts

@@ -68,6 +68,7 @@ rules:
   - events
   verbs:
   - create
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -227,7 +228,7 @@ metadata:
 spec:
   endpoints:
   - interval: 30s
-    targetPort: 8080
+    port: metrics
   jobLabel: canary-checker
   namespaceSelector:
     matchNames:

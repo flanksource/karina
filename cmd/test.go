@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -105,7 +106,12 @@ func queue(name string, fn TestFn, wg *sync.WaitGroup, ch chan int) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		localTest := &console.TestResults{Writer: &stdout}
+		var writer io.Writer
+		writer = &stdout
+		if !showProgress {
+			writer = os.Stdout
+		}
+		localTest := &console.TestResults{Writer: writer}
 		var bar console.Progress
 		if showProgress {
 			bar = console.NewTerminalProgress(name, localTest, progress)

@@ -27,7 +27,6 @@ var specs = []string{
 	"service-monitors.yaml",
 	"namespace-rules.yaml.raw",
 	"kubernetes-rules.yaml.raw",
-	"postgres-rules.yaml.raw",
 }
 
 var unmanagedSpecs = []string{
@@ -179,9 +178,6 @@ func deployThanos(p *platform.Platform) error {
 	}
 
 	if err := p.ApplySpecs("", "monitoring/thanos-config.yaml"); err != nil {
-		return err
-	}
-	if err := p.ApplySpecs("", "monitoring/thanos-sidecar.yaml"); err != nil {
 		return err
 	}
 

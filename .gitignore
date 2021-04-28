@@ -35,3 +35,5 @@ __debug_bin
 .scratchpad
 .pid
 karina.iml
+docs/site/
+docs/build/
