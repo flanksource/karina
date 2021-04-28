@@ -20,15 +20,7 @@ const (
 )
 
 var allowedDuplicateKeys = []string{"CustomResourceDefinition-servicemonitors.monitoring.coreos.com"}
-var ignoreManifestsSubPaths = []string{
-	"manifests/gatekeeper/(.*)",
-	"manifests/harbor/(.*)",
-	"manifests/monitoring/(.*)",
-	"manifests/nginx/(.*)",
-	"manifests/template/(.*)",
-	"manifests/test/(.*)",
-	"manifests/upstream/(.*)",
-}
+var ignoreManifestsSubPaths = []string{"manifests/upstream/(.*)"}
 var (
 	config = &Config{}
 	keys   = make([]string, 10, 500)
