@@ -4,3 +4,33 @@ platformOperator:
 dockerRegistry: harbor.lab.flanksource.com
 kind:
   image: harbor.lab.flanksource.com/docker.io/kindest/node:v1.18.15
+patches:
+  - |-
+     apiVersion: apps/v1
+     kind: Deployment
+     metadata:
+       name: calico-kube-controllers
+       namespace: kube-system
+     spec:
+       template:
+         spec:
+           containers:
+             - name: calico-kube-controllers
+               image: harbor.lab.flanksource.com/docker.io/calico/kube-controllers:{{.calico.version | default "v3.8.2"}}
+  - |-
+     kind: DaemonSet
+     apiVersion: apps/v1
+     metadata:
+       name: calico-node
+       namespace: kube-system
+     spec:
+       template:
+         spec:
+           initContainers:
+             - name: install-cni
+               image: harbor.lab.flanksource.com/docker.io/calico/cni:{{.calico.version | default "v3.8.2"}}
+             - name: flexvol-driver
+               image: harbor.lab.flanksource.com/docker.io/calico/pod2daemon-flexvol:{{.calico.version | default "v3.8.2"}}
+           containers:
+             - name: calico-node
+               image: harbor.lab.flanksource.com/docker.io/calico/node:{{.calico.version | default "v3.8.2"}}
