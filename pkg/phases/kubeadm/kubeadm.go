@@ -162,7 +162,7 @@ func GetFilesToMountForSecondary(platform *platform.Platform) (map[string]string
 
 func getKubeletArgs(cfg *platform.Platform) map[string]string {
 	args := cfg.Kubernetes.KubeletExtraArgs
-	if cfg.Vsphere != nil && cfg.Vsphere.CPIVersion != "" {
+	if cfg.Vsphere != nil && !cfg.Vsphere.IsDisabled() && cfg.Vsphere.CPIVersion != "" {
 		if args == nil {
 			args = make(map[string]string)
 		}

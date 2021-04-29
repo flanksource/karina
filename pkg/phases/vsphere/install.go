@@ -12,6 +12,9 @@ func Install(platform *platform.Platform) error {
 	if platform.Vsphere == nil {
 		return nil
 	}
+	if platform.Vsphere.IsDisabled() {
+		return nil
+	}
 	v := platform.Vsphere
 	if err := platform.CreateOrUpdateSecret("vsphere-secrets", Namespace, platform.Vsphere.GetSecret()); err != nil {
 		platform.Errorf("Failed to create vsphere secrets: %s", err)

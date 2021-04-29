@@ -10,6 +10,10 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	if platform.Vsphere == nil {
 		return
 	}
+
+	if platform.Vsphere.IsDisabled() {
+		return
+	}
 	client, _ := platform.GetClientset()
 
 	if platform.Vsphere.CPIVersion != "" {

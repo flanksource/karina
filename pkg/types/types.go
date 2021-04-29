@@ -953,6 +953,7 @@ type PlatformOperator struct {
 }
 
 type Vsphere struct {
+	Disabled `yaml:",inline" json:",inline"`
 	// GOVC_USER
 	Username string `yaml:"username,omitempty" json:"username,omitempty"`
 	// GOVC_PASS
