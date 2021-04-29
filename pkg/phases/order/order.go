@@ -141,7 +141,7 @@ var PhasesExtra = map[string]DeployFn{
 	"quack":              quack.Install,
 	"template-operator":  templateoperator.Install,
 	"vsphere":            vsphere.Install,
-	"cloud-controller":   Cloud,
+	"cloud":              Cloud,
 	"stubs":              Stubs,
 }
 
