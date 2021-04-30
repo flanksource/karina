@@ -95,6 +95,7 @@ jobs:
       matrix:
         k8s:
           - v1.18.6
+          - v1.20.2
         suite:
           - minimal
           - minimal-antrea
