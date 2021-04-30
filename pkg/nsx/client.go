@@ -253,7 +253,7 @@ func (group *NSGroup) List() ([]string, error) {
 	return nil, nil
 }
 
-func (c *NSXClient) CreateOrUpdateNSGroup(name string, targetType string, tags map[string]string) (*NSGroup, error) {
+func (c *NSXClient) CreateOrUpdateNSGroup(name string, id string, targetType string, tags map[string]string) (*NSGroup, error) {
 	ctx := c.api.Context
 	var criteria []manager.NsGroupTagExpression
 	for k, v := range tags {
@@ -266,8 +266,8 @@ func (c *NSXClient) CreateOrUpdateNSGroup(name string, targetType string, tags m
 	}
 
 	// nolint: bodyclose
-	_, resp, err := c.api.GroupingObjectsApi.ReadNSGroup(ctx, name, map[string]interface{}{})
-	if err != nil || resp != nil && resp.StatusCode == http.StatusNotFound {
+	group, resp, err := c.api.GroupingObjectsApi.ReadNSGroup(ctx, id, map[string]interface{}{})
+	if err != nil || resp != nil && resp.StatusCode == http.StatusNotFound || id == "" {
 		// nolint: bodyclose
 		group, resp, err := c.api.GroupingObjectsApi.CreateNSGroup(c.api.Context, manager.NsGroup{
 			Id:                 name,
@@ -284,7 +284,7 @@ func (c *NSXClient) CreateOrUpdateNSGroup(name string, targetType string, tags m
 		}, nil
 	}
 	// nolint: bodyclose
-	group, resp, err := c.api.GroupingObjectsApi.UpdateNSGroup(ctx, name, manager.NsGroup{
+	group, resp, err = c.api.GroupingObjectsApi.UpdateNSGroup(ctx, group.Id, manager.NsGroup{
 		Id:                 name,
 		ResourceType:       "NSGroupTagExpression",
 		MembershipCriteria: criteria,
@@ -444,7 +444,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		return "", false, fmt.Errorf("failed to link T1 (%s) to T0 (%s): %s", t1.Id, t0Port.Id, errorString(resp, err))
 	}
 
-	group, err := c.CreateOrUpdateNSGroup(opts.Name, "LogicalPort", opts.MemberTags)
+	group, err := c.CreateOrUpdateNSGroup(opts.Name, "", "LogicalPort", opts.MemberTags)
 	if err != nil {
 		return "", false, err
 	}
@@ -547,17 +547,17 @@ func (c *NSXClient) updateLoadBalancerPool(lb *loadbalancer.LbVirtualServer, opt
 	ctx := c.api.Context
 	api := c.api.ServicesApi
 
-	group, err := c.CreateOrUpdateNSGroup(opts.Name, "LogicalPort", opts.MemberTags)
-	if err != nil {
-		return errors.Wrap(err, "failed to update NS Group")
-	}
-
 	pool, resp, err := api.ReadLoadBalancerPool(ctx, lb.PoolId)
 	if resp != nil && resp.Body != nil {
 		resp.Body.Close()
 	}
 	if err != nil {
 		return errors.Wrap(err, "failed to read load balancer pool")
+	}
+
+	group, err := c.CreateOrUpdateNSGroup(opts.Name, pool.MemberGroup.GroupingObject.TargetId, "LogicalPort", opts.MemberTags)
+	if err != nil {
+		return errors.Wrap(err, "failed to update NS Group")
 	}
 
 	var monitorID, originalMonitorID string
