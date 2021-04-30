@@ -76,7 +76,7 @@ spec:
     name: logs
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: logs-ing
@@ -99,7 +99,7 @@ spec:
               servicePort: 9200
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: kibana-ing

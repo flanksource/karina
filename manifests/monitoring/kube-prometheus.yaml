@@ -403,7 +403,7 @@ spec:
 {{- end}}
 {{- end}}
 {{- end}}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: prometheus
@@ -423,7 +423,7 @@ spec:
               serviceName: prometheus-k8s
               servicePort: 9090
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana
@@ -443,7 +443,7 @@ spec:
               serviceName: grafana-service
               servicePort: 3000
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: alertmanager
