@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package platformoperator
+package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -25,25 +25,22 @@ import (
 
 // ClusterResourceQuotaSpec defines the desired state of ClusterResourceQuota
 type ClusterResourceQuotaSpec struct {
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Quota sets aggregate quota restrictions enforced across all namespaces
-	Quota corev1.ResourceQuotaSpec `json:"quota,omitempty"`
+	MatchLabels              map[string]string `json:"matchLabels"`
+	corev1.ResourceQuotaSpec `json:",inline"`
 }
 
 // ClusterResourceQuotaStatus defines the observed state of ClusterResourceQuota
 type ClusterResourceQuotaStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
 
 	// Total defines the actual enforced quota and its current usage across all namespaces
 	Total corev1.ResourceQuotaStatus `json:"total,omitempty"`
 
 	// Slices the quota used per namespace
-	Namespaces ResourceQuotasStatusByNamespace `json:"namespaces"`
+	Namespaces ResourceQuotasStatusByNamespace `json:"namespaces,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Cluster,path=clusterresourcequotas
 
 // ClusterResourceQuota is the Schema for the clusterresourcequotas API
 type ClusterResourceQuota struct {

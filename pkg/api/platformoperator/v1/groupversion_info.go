@@ -17,7 +17,7 @@ limitations under the License.
 // Package v1 contains API Schema definitions for the platform v1 API group
 // +kubebuilder:object:generate=true
 // +groupName=platform.flanksource.com
-package platformoperator
+package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
