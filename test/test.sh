@@ -14,7 +14,8 @@ REPO=$(basename $(git remote get-url origin | sed 's/\.git//'))
 GITHUB_OWNER=$(basename $(dirname $(git remote get-url origin | sed 's/\.git//')))
 GITHUB_OWNER=${GITHUB_OWNER##*:}
 MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
-
+OS="$(uname | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')"
 export KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.18.6}
 export SUITE=${SUITE:-minimal}
 if [[ "$1" != "" ]]; then
@@ -36,20 +37,21 @@ fi
 echo "::endgroup::"
 
 function report() {
-    set +e
-    (
-    set -x; cd "$(mktemp -d)" &&
-    OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-    ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
-    curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
-    tar zxvf krew.tar.gz &&
-    KREW=./krew-"${OS}_${ARCH}" &&
-    "$KREW" install krew
-    )
-    export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-    kubectl krew install resource-snapshot
-    kubectl resource-snapshot
     echo "::group::Uploading test results"
+    set +e
+    KREW=./krew-"${OS}_${ARCH}"
+    export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+    if ! kubectl krew version 2&1>/dev/null; then
+        cd "$(mktemp -d)"
+        curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz"
+        tar zxvf krew.tar.gz
+        "$KREW" install krew
+    fi
+    if ! kubectl resource-snapshot -v 2&1>/dev/null; then
+        kubectl krew install resource-snapshot
+    fi
+    kubectl resource-snapshot
+
     if [[ "$CI" == "true" ]]; then
 
         if [[ -e test-results/results.xml ]]; then
@@ -100,7 +102,7 @@ $BIN test phases --bootstrap --stubs   --wait 120 --progress=false --fail-on-err
 echo "::endgroup::"
 
 echo "::group::Deploy All"
-$BIN deploy all -v $CONFIG_FILES || (echo "::error::Error while deploying" && exit 1)
+$BIN deploy all --exclude crds  --prune=false -v $CONFIG_FILES || (echo "::error::Error while deploying" && exit 1)
 echo "::endgroup::"
 
 echo "::group::Test Dry Run"
