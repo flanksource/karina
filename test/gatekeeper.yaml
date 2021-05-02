@@ -11,3 +11,7 @@ test:
     - dex
     - audit
     - encryption
+    - platform-operator
+    - gitops
+    - quack
+    - configmap-reloader
