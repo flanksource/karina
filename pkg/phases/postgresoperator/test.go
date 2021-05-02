@@ -1,10 +1,12 @@
 package postgresoperator
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	v1 "github.com/flanksource/kommons/api/v1"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
 	"github.com/flanksource/commons/console"
@@ -13,8 +15,6 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
 	postgresdbv2 "github.com/flanksource/template-operator-library/api/db/v2"
-	"github.com/go-pg/pg/v9"
-	"github.com/go-pg/pg/v9/orm"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,6 +54,14 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 	if !p.PlatformConfig.Trace {
 		defer db1.Terminate() //nolint: errcheck
 	}
+	db2, err := newDB(p, Namespace, "cluster2")
+	if err != nil {
+		test.Failf(testName, "error creating %v", err)
+		return
+	}
+	if !p.PlatformConfig.Trace {
+		defer db2.Terminate() //nolint: errcheck
+	}
 
 	if err := db1.WithConnection("postgres", insertTestFixtures); err != nil {
 		test.Failf(testName, "failed to insert fixtures into PG Cluster %s: %v", db1.Name, err)
@@ -63,15 +71,6 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 	if err := db1.TriggerBackup(5 * time.Minute); err != nil {
 		test.Failf(testName, "failed to trigger backup %s: %v", db1.Name, err)
 		return
-	}
-
-	db2, err := newDB(p, Namespace, "cluster2")
-	if err != nil {
-		test.Failf(testName, "error creating %v", err)
-		return
-	}
-	if !p.PlatformConfig.Trace {
-		defer db2.Terminate() //nolint: errcheck
 	}
 
 	backupPaths, err := db1.ListBackups("", 1, true)
@@ -84,7 +83,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	if err := db2.Restore(backupPaths[0]); err != nil {
+	if err := db2.Restore(backupPaths[0], false); err != nil {
 		test.Failf("failed to restore backup %s to Postgresql Cluster %s: %v", backupPaths[0], db2.Name, err)
 		return
 	}
@@ -132,33 +131,23 @@ func newDB(p *platform.Platform, namespace, name string) (*pgclient.PostgresDB, 
 	return pgclient.GetPostgresDB(&p.Client, cluster.Name)
 }
 
-func insertTestFixtures(pgdb *pg.DB) error {
-	err := pgdb.CreateTable(&Link{}, &orm.CreateTableOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to create table links: %v", err)
-	}
-
-	links := []interface{}{
-		&Link{URL: "http://flanksource.com"},
-		&Link{URL: "http://kubernetes.io"},
-	}
-	return pgdb.Insert(links...)
+func insertTestFixtures(pg *pgx.Conn) error {
+	_, err := pg.Exec(context.TODO(), `
+	CREATE TABLE links ( name VARCHAR(50) );
+	INSERT INTO links VALUES('a');
+	INSERT INTO links VALUES('b');
+	`)
+	return err
 }
 
-func testFixturesArePresent(pgdb *pg.DB) error {
-	deadline := time.Now().Add(1 * time.Minute)
+func testFixturesArePresent(pg *pgx.Conn) error {
 
-	for {
-		var links []Link
-		err := pgdb.Model(&links).Select()
-		if err != nil {
-			return errors.Wrap(err, "failed to list links")
-		} else if len(links) != 2 {
-			return fmt.Errorf("expected 2 links got %d", len(links))
-		}
-		time.Sleep(5 * time.Second)
-		if time.Now().After(deadline) {
-			return fmt.Errorf("could not find any links in database postgres, deadline exceeded")
-		}
+	count := 0
+	err := pg.QueryRow(context.Background(), "SELECT count(*) from links").Scan(&count)
+	if err != nil {
+		return errors.Wrap(err, "failed to list links")
+	} else if count != 2 {
+		return fmt.Errorf("expected 2 rows, got %d", count)
 	}
+	return nil
 }
