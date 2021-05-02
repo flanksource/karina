@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -99,12 +100,13 @@ func init() {
 		Short: "Restore a database from backups",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			platform := getPlatform(cmd)
 			db, err := getDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
 			log.Infof("Restoring %s from %s", db, strings.Join(args, " "))
-			if err := db.Restore(args[0]); err != nil {
+			if err := db.Restore(args[0], platform.PlatformConfig.Trace); err != nil {
 				log.Fatalf("Error Restore up db %s\n", err)
 			}
 		},
@@ -146,15 +148,27 @@ func init() {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
 			database, _ := cmd.Flags().GetString("database")
-			psql, err := db.OpenDB(database)
+			pg, err := db.OpenDB(database)
 			if err != nil {
 				log.Fatalf("cannot connect to db: %v", err)
 			}
 
-			var results []interface{}
-			_, err = psql.Query(&results, args[0])
+			var results []map[string]interface{}
+
+			rows, err := pg.Query(context.Background(), args[0])
 			if err != nil {
 				log.Fatalf("failed to execute query %s", err)
+			}
+			for rows.Next() {
+				row := make(map[string]interface{})
+				values, err := rows.Values()
+				if err != nil {
+					log.Fatalf("failed to get rows %s", err)
+				}
+				for i, field := range rows.FieldDescriptions() {
+					row[string(field.Name)] = values[i]
+				}
+				results = append(results, row)
 			}
 			fmt.Printf("%v\n", results)
 		},

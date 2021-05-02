@@ -29,7 +29,6 @@ import (
 	"github.com/flanksource/kommons/ktemplate"
 	"github.com/flanksource/kommons/proxy"
 	konfigadm "github.com/flanksource/konfigadm/pkg/types"
-	pg "github.com/go-pg/pg/v9"
 	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	ccmetav1 "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	minio "github.com/minio/minio-go/v6"
@@ -782,48 +781,6 @@ func (platform *Platform) GetS3ClientFor(conn types.S3Connection) (*minio.Client
 
 func (platform *Platform) GetS3Client() (*minio.Client, error) {
 	return platform.GetS3ClientFor(platform.S3.S3Connection)
-}
-
-func (platform *Platform) OpenDB(namespace, clusterName, databaseName string) (*pg.DB, error) {
-	if !strings.HasPrefix("postgres-", clusterName) {
-		clusterName = "postgres-" + clusterName
-	}
-	client, _ := platform.GetClientset()
-	opts := metav1.ListOptions{LabelSelector: fmt.Sprintf("cluster-name=%s,spilo-role=master", clusterName)}
-	pods, err := client.CoreV1().Pods(namespace).List(context.TODO(), opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get master pod for cluster %s: %v", clusterName, err)
-	}
-
-	if len(pods.Items) != 1 {
-		return nil, fmt.Errorf("expected 1 pod for spilo-role=master got %d", len(pods.Items))
-	}
-
-	secretName := fmt.Sprintf("app.%s.credentials", clusterName)
-	secret := platform.GetSecret("postgres-operator", secretName)
-	if secret == nil {
-		return nil, fmt.Errorf("%s not found", secretName)
-	}
-
-	dialer, err := platform.GetProxyDialer(proxy.Proxy{
-		Namespace:    namespace,
-		Kind:         "pods",
-		ResourceName: pods.Items[0].Name,
-		Port:         5432,
-	})
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get proxy dialer")
-	}
-
-	pgdb := pg.Connect(&pg.Options{
-		User:     string((*secret)["username"]),
-		Password: string((*secret)["password"]),
-		Dialer:   dialer.DialContext,
-		Database: databaseName,
-	})
-
-	return pgdb, nil
 }
 
 func (platform *Platform) CreateOrUpdateNamespace(name string, labels map[string]string, annotations map[string]string) error {

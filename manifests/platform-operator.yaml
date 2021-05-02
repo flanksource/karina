@@ -107,6 +107,7 @@ rules:
   resources:
   - namespaces
   verbs:
+  - delete
   - get
   - list
   - watch

@@ -37,6 +37,11 @@ fi
 echo "::endgroup::"
 
 function report() {
+
+    if [[ "$CI" != "true" ]]; then
+        echo "Skipping test report when not running in CI"
+        return
+    fi
     echo "::group::Uploading test results"
     set +e
     KREW=./krew-"${OS}_${ARCH}"
@@ -52,22 +57,18 @@ function report() {
     fi
     kubectl resource-snapshot
 
-    if [[ "$CI" == "true" ]]; then
+    if [[ -e test-results/results.xml ]]; then
+        wget -nv -nc -O build-tools \
+        https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
+        chmod +x build-tools
 
-        if [[ -e test-results/results.xml ]]; then
-            wget -nv -nc -O build-tools \
-            https://github.com/flanksource/build-tools/releases/latest/download/build-tools && \
-            chmod +x build-tools
-
-            ./build-tools junit gh-workflow-commands test-results/results.xml
-        fi
-        mkdir -p artifacts
-        if $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $CONFIG_FILES ; then
-            zip -r artifacts/snapshot.zip snapshot/*
-        fi
-    else
-        echo "Skipping test report when not running in CI"
+        ./build-tools junit gh-workflow-commands test-results/results.xml
     fi
+    mkdir -p artifacts
+    if $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $CONFIG_FILES ; then
+        zip -r artifacts/snapshot.zip snapshot/*
+    fi
+
     echo "::endgroup::"
 }
 trap report EXIT
