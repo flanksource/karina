@@ -1,11 +1,5 @@
 importConfigs:
   - minimal.yaml
-gatekeeper:
-  version: "v3.3.0"
-  constraints: test/opa/constraints
-  auditInterval: 10
-  e2e:
-    fixtures: test/opa/gatekeeper-fixtures
 velero:
   bucket: karina-velero
 configmapReloader:
@@ -27,7 +21,7 @@ registryCredentials:
     account: 745897381572
     region: us-east-1
 platformOperator:
-  version: v0.6.14
+  version: v0.7.0
   enableClusterResourceQuota: true
   whitelistedPodAnnotations:
     # used by filebeat
@@ -36,22 +30,13 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
-kubeWebView:
-  version: 20.6.0
-  viewLogs: true
-  viewSecrets: true
-kubeResourceReport:
-  updateInterval: 1
-  additionalClusterCost: 10.0
 canaryChecker:
-  version: v0.11.4
+  version: v0.19.0
 test:
   exclude:
     - dex
     - audit
     - encryption
-# kiosk:
-#   version: 0.1.21
 istioOperator:
   disabled: False
   version: 1.8.2

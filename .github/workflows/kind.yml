@@ -17,36 +17,36 @@ jobs:
       commitmsg: ${{ steps.getcommit.outputs.commitmsg }}
       fileChangesToCoreArtifacts: ${{ steps.filter.outputs.fileChangesToCoreArtifacts }}
     steps:
-    - uses: actions/checkout@main
-      with:
-        fetch-depth: 10
-    - name: get-commit-msg
-      id: getcommit
-      run: |
-        echo ::set-output name=commitmsg::$(git log --format=%B -n 1 ${{ github.event.after }})
-    - uses: dorny/paths-filter@v2
-      # Reference documentation for this action: https://github.com/dorny/paths-filter#examples 
-      id: filter
-      with:
-        # Here we test for file changes with the filter. While at present the "fileChangesToCoreArtifacts" variable
-        # is only testing for changes outside of the documentation, this does in principle give us fine-grained
-        # control should we wish to exclude other supporting folders from triggering the larger test runs.
-        # 
-        # Unfortunately, it is, at time of writing, not possible to do this work with Github Action's path
-        # exclusions logic, as there is no way to set a job to report as successful without running it, and
-        # the paths logic will skip the job altogether. This means that, without the control gained here,
-        # any job that we wish to set as "Required" in for merge checks must be run whether it's relevant 
-        # to the changes or not. See the following discussion: 
-        # https://github.community/t/feature-request-conditional-required-checks/16761/13
-        filters: |
-          fileChangesToCoreArtifacts:
-            - '!docs/**'
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 10
+      - name: get-commit-msg
+        id: getcommit
+        run: |
+          echo ::set-output name=commitmsg::$(git log --format=%B -n 1 ${{ github.event.after }})
+      - uses: dorny/paths-filter@v2
+        # Reference documentation for this action: https://github.com/dorny/paths-filter#examples
+        id: filter
+        with:
+          # Here we test for file changes with the filter. While at present the "fileChangesToCoreArtifacts" variable
+          # is only testing for changes outside of the documentation, this does in principle give us fine-grained
+          # control should we wish to exclude other supporting folders from triggering the larger test runs.
+          #
+          # Unfortunately, it is, at time of writing, not possible to do this work with Github Action's path
+          # exclusions logic, as there is no way to set a job to report as successful without running it, and
+          # the paths logic will skip the job altogether. This means that, without the control gained here,
+          # any job that we wish to set as "Required" in for merge checks must be run whether it's relevant
+          # to the changes or not. See the following discussion:
+          # https://github.community/t/feature-request-conditional-required-checks/16761/13
+          filters: |
+            fileChangesToCoreArtifacts:
+              - '!docs/**'
   binary:
     runs-on: ubuntu-20.04
     needs: gates
     container:
       image: flanksource/build-tools:v0.12.0
-    env: 
+    env:
       FILE_CHANGES_TO_CORE_ARTIFACTS: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
     steps:
       # Get values for cache paths to be used in later steps
@@ -85,10 +85,10 @@ jobs:
   e2e:
     runs-on: ubuntu-20.04
     if: "!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e')"
-    needs: 
+    needs:
       - binary
       - gates
-    env: 
+    env:
       FILE_CHANGES_TO_CORE_ARTIFACTS: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
     strategy:
       fail-fast: false
@@ -104,6 +104,7 @@ jobs:
           - elastic
           - security
           - platform
+          - gatekeeeper
           - managed
           - nosql
           - cicd
@@ -162,7 +163,7 @@ jobs:
   upgrade:
     runs-on: ubuntu-20.04
     if: ${{ (!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e') && needs.gates.outputs.fileChangesToCoreArtifacts == 'true')}}
-    needs: 
+    needs:
       - binary
       - gates
     strategy:
@@ -221,7 +222,7 @@ jobs:
   selfhosted:
     runs-on: [self-hosted]
     if: ${{ (!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e') && needs.gates.outputs.fileChangesToCoreArtifacts == 'true')}}
-    needs: 
+    needs:
       - binary
       - gates
     strategy:
