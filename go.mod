@@ -9,16 +9,16 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.5.2
-	github.com/flanksource/kommons v0.11.2
+	github.com/flanksource/kommons v0.11.4
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/flanksource/template-operator-library v0.1.5
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
-	github.com/go-pg/pg/v9 v9.1.6
 	github.com/google/uuid v1.1.2
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.11
+	github.com/jackc/pgx/v4 v4.11.0
 	github.com/jetstack/cert-manager v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/kr/pretty v0.2.1
@@ -38,7 +38,7 @@ require (
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
 	go.mozilla.org/sops/v3 v3.6.1
 	go.uber.org/zap v1.15.0
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gopkg.in/flanksource/yaml.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.3.0

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,7 +14,8 @@ import (
 	"github.com/flanksource/commons/text"
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/kommons/proxy"
-	"github.com/go-pg/pg/v9"
+	"github.com/jackc/pgx/v4"
+
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -84,7 +86,7 @@ func (db *PostgresDB) GetClusterName() string {
 	return clusterName(db.Name)
 }
 
-func (db *PostgresDB) OpenDB(database string) (*pg.DB, error) {
+func (db *PostgresDB) OpenDB(database string) (*pgx.Conn, error) {
 	name := db.GetClusterName()
 	pod, err := db.client.WaitForPodByLabel(db.Namespace, fmt.Sprintf("cluster-name=%s,spilo-role=master", name), 30*time.Second)
 	if err != nil {
@@ -109,21 +111,27 @@ func (db *PostgresDB) OpenDB(database string) (*pg.DB, error) {
 		return nil, errors.Wrap(err, "failed to get proxy dialer")
 	}
 
-	pgdb := pg.Connect(&pg.Options{
-		User:     string((*secret)["username"]),
-		Password: string((*secret)["password"]),
-		Dialer:   dialer.DialContext,
-		Database: database,
-	})
-	return pgdb, nil
+	cfg, err := pgx.ParseConfig("")
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.Host = "127.0.0.1"
+	cfg.Port = 5432
+	cfg.Database = database
+	cfg.User = string((*secret)["username"])
+	cfg.Password = string((*secret)["password"])
+	cfg.DialFunc = dialer.DialContext
+
+	return pgx.ConnectConfig(context.Background(), cfg)
 }
 
-func (db *PostgresDB) WithConnection(database string, fn func(*pg.DB) error) error {
+func (db *PostgresDB) WithConnection(database string, fn func(*pgx.Conn) error) error {
 	pgdb, err := db.OpenDB(database)
 	if err != nil {
 		return err
 	}
-	defer pgdb.Close()
+	defer pgdb.Close(context.Background())
 	return fn(pgdb)
 }
 
@@ -250,7 +258,9 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]str
 	return backupPaths, nil
 }
 
-func (db *PostgresDB) Restore(fullBackupPath string) error {
+// Restore executes a job to retrieve the logical backup specified and then applies it to the database
+// if trace is true, restore commands are printed to stdout
+func (db *PostgresDB) Restore(fullBackupPath string, trace bool) error {
 	if !strings.HasPrefix(fullBackupPath, "restic:s3:") {
 		return fmt.Errorf("backup path format is not supported. It should start with \"restic:s3:\"")
 	}
@@ -261,14 +271,17 @@ func (db *PostgresDB) Restore(fullBackupPath string) error {
 	matches := re.FindStringSubmatch(fullBackupPath)
 	resticRepository := matches[1]
 	backupPath := matches[3]
-
+	psqlOpts := ""
+	if trace {
+		psqlOpts = "--echo-all"
+	}
 	jobBuilder := db.GenerateBackupJob().
 		Command("/restore.sh").
 		EnvVars(map[string]string{
 			"BACKUP_PATH":      backupPath,
 			"PSQL_BEFORE_HOOK": "",
 			"PSQL_AFTER_HOOK":  "",
-			"PSQL_OPTS":        "--echo-all",
+			"PSQL_OPTS":        psqlOpts,
 		})
 	jobBuilder.Name = "restore-" + db.Name + "-" + utils.ShortTimestamp()
 
