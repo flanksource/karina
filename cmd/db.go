@@ -158,7 +158,6 @@ func init() {
 			rows, err := pg.Query(context.Background(), args[0])
 			if err != nil {
 				log.Fatalf("failed to execute query %s", err)
-
 			}
 			for rows.Next() {
 				row := make(map[string]interface{})

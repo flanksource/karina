@@ -141,7 +141,6 @@ func insertTestFixtures(pg *pgx.Conn) error {
 }
 
 func testFixturesArePresent(pg *pgx.Conn) error {
-
 	count := 0
 	err := pg.QueryRow(context.Background(), "SELECT count(*) from links").Scan(&count)
 	if err != nil {
