@@ -107,10 +107,8 @@ rules:
   resources:
   - namespaces
   verbs:
-  - delete
   - get
   - list
-  - watch
 - apiGroups:
   - ""
   resources:
@@ -147,6 +145,7 @@ rules:
   - update
 - apiGroups:
   - extensions
+  - networking.k8s.io
   resources:
   - ingresses
   verbs:
