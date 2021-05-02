@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var deployExclude []string
 var Deploy = &cobra.Command{
 	Use: "deploy",
 }
@@ -80,14 +81,27 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			p := getPlatform(cmd)
 			phases := order.GetPhases()
+			all := order.GetAllPhases()
 			// we track the failure status, and continue on failure to allow degraded operations
 			failed := false
 
-			if err := order.Bootstrap(p); err != nil {
-				p.Fatalf("Failed bootstrapping: %v", err)
+			for _, phase := range order.BootstrapPhases {
+				if sliceContains(deployExclude, phase) {
+					p.Tracef("Skipping excluded phase %s", phase)
+					continue
+				}
+				p.Tracef("Deploying %s", phase)
+				if err := all[phase](p); err != nil {
+					log.Errorf("Failed to deploy %s: %v", phase, err)
+					failed = true
+				}
 			}
 
 			for name, fn := range phases {
+				if sliceContains(deployExclude, name) {
+					p.Tracef("Skipping excluded phase %s", name)
+					continue
+				}
 				p.Tracef("Deploying %s", name)
 				if err := fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
@@ -100,5 +114,15 @@ func init() {
 		},
 	}
 
+	all.Flags().StringSliceVar(&deployExclude, "exclude", []string{}, "A list of phases to exclude from deployment")
 	Deploy.AddCommand(all)
+}
+
+func sliceContains(slice []string, s string) bool {
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

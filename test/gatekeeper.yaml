@@ -1,0 +1,17 @@
+importConfigs:
+  - minimal.yaml
+gatekeeper:
+  version: "v3.3.0"
+  constraints: test/opa/constraints
+  auditInterval: 10
+  e2e:
+    fixtures: test/opa/gatekeeper-fixtures
+test:
+  exclude:
+    - dex
+    - audit
+    - encryption
+    - platform-operator
+    - gitops
+    - quack
+    - configmap-reloader
