@@ -104,7 +104,7 @@ jobs:
           - elastic
           - security
           - platform
-          - gatekeeeper
+          - gatekeeper
           - managed
           - nosql
           - cicd

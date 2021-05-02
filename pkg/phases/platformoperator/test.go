@@ -8,8 +8,6 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/utils"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	v1 "k8s.io/api/core/v1"
@@ -184,7 +182,7 @@ func TestPlatformOperatorClusterResourceQuota(p *platform.Platform, test *consol
 		test.Failf(testName, "Expected resource-quota above cluster resource quota to be denied")
 		return
 	}
-	test.Passf(testName, "cluster resource quotas work as execpted")
+	test.Passf(testName, "cluster resource quotas work as expected")
 }
 
 // nolint: unparam
@@ -220,27 +218,4 @@ func newClusterResourceQuota(name, cpu, memory string, matchBy map[string]string
 		},
 	}
 	return crq
-}
-
-func removeResourceQuota(p *platform.Platform, test *console.TestResults, rqs ...*v1.ResourceQuota) {
-	client, _ := p.GetClientset()
-	for _, rq := range rqs {
-		if err := client.CoreV1().ResourceQuotas(rq.Namespace).Delete(context.TODO(), rq.Name, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
-			test.Errorf("failed to delete resource quota %s in namespace %s: %v", rq.Name, rq.Namespace, err)
-		}
-	}
-}
-
-func doUntil(fn func() bool) bool {
-	start := time.Now()
-
-	for {
-		if fn() {
-			return true
-		}
-		if time.Now().After(start.Add(5 * time.Minute)) {
-			return false
-		}
-		time.Sleep(5 * time.Second)
-	}
 }
