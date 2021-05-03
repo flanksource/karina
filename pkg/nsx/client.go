@@ -283,12 +283,11 @@ func (c *NSXClient) CreateOrUpdateNSGroup(name string, id string, targetType str
 			Id:     group.Id,
 		}, nil
 	}
+	c.Logger.Infof("Updating NSGroup id=%s name=%s", group.Id, group.DisplayName)
+	group.ResourceType = "NSGroupTagExpression"
+	group.MembershipCriteria = criteria
 	// nolint: bodyclose
-	group, resp, err = c.api.GroupingObjectsApi.UpdateNSGroup(ctx, group.Id, manager.NsGroup{
-		Id:                 name,
-		ResourceType:       "NSGroupTagExpression",
-		MembershipCriteria: criteria,
-	})
+	group, resp, err = c.api.GroupingObjectsApi.UpdateNSGroup(ctx, group.Id, group)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create/update NSGroup %s: %s", name, errorString(resp, err))
 	}
