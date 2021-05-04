@@ -16,12 +16,12 @@ type PlatformConfig struct {
 	ConfigFrom        []ConfigDirective `yaml:"configFrom,omitempty" json:"configFrom,omitempty"`
 	ConfigMapReloader ConfigMapReloader `yaml:"configmapReloader,omitempty" json:"configmapReloader,omitempty"`
 	// The endpoint for an externally hosted consul cluster  that is used for master discovery
-	Consul    string    `yaml:"consul" json:"consul,omitempty"`
-	Dashboard Dashboard `yaml:"dashboard,omitempty" json:"dashboard,omitempty"`
-	Datacenter     string                     `yaml:"datacenter" json:"datacenter,omitempty"`
-	Dex            Dex                        `yaml:"dex,omitempty" json:"dex,omitempty"`
-	DNS            DynamicDNS                 `yaml:"dns,omitempty" json:"dns,omitempty"`
-	DockerRegistry string                     `yaml:"dockerRegistry,omitempty" json:"dockerRegistry,omitempty"`
+	Consul         string     `yaml:"consul" json:"consul,omitempty"`
+	Dashboard      Dashboard  `yaml:"dashboard,omitempty" json:"dashboard,omitempty"`
+	Datacenter     string     `yaml:"datacenter" json:"datacenter,omitempty"`
+	Dex            Dex        `yaml:"dex,omitempty" json:"dex,omitempty"`
+	DNS            DynamicDNS `yaml:"dns,omitempty" json:"dns,omitempty"`
+	DockerRegistry string     `yaml:"dockerRegistry,omitempty" json:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
 	Domain        string         `yaml:"domain" json:"domain,omitempty"`
 	ECK           ECK            `yaml:"eck,omitempty" json:"eck,omitempty"`
