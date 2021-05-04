@@ -93,6 +93,10 @@ fi
 
 $BIN version
 
+# Install genuinetools/reg
+sudo curl -fSL "https://github.com/genuinetools/reg/releases/download/v0.16.1/reg-linux-amd64" -o "/usr/local/bin/reg"
+sudo chmod a+x "/usr/local/bin/reg"
+
 echo "::group::Deploying Base"
 $BIN deploy phases --bootstrap --stubs -v --prune=false $CONFIG_FILES
 echo "::endgroup::"

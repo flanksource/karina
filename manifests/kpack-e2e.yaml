@@ -25,7 +25,7 @@ metadata:
   namespace: kpack
 spec:
   serviceAccount: default
-  tag: ttl.sh/test-builder-for-kpack:10m
+  tag: ttl.sh/test-builder-for-kpack-{{ random.String 7 `[a-z]` }}:15m
   stack:
     name: base
     kind: ClusterStack
@@ -44,7 +44,7 @@ metadata:
   name: test-image
   namespace: kpack
 spec:
-  tag: ttl.sh/test-image-for-kpack:10m
+  tag: ttl.sh/test-image-for-kpack-{{ random.String 7 `[a-z]` }}:15m
   serviceAccount: default
   builder:
     name: test-builder
