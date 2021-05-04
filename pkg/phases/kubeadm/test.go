@@ -43,16 +43,17 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 	} else if logFilePath == "-" {
 		// api-server is configured lo log to stdout, not verifying output
 		return
-	} else {
-		// Fails with kubernetes 1.20 due to api server pod missing `du` binary
-		// dir := filepath.Dir(logFilePath)
-		// stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
-		// if err != nil || stderr != "" {
-		// 	tr.Failf(testAuditName, "Failed to get file size statistics: %v\n%v", err, stderr)
-		// } else {
-		// 	tr.Passf(testAuditName, "api-server pod log size is: %v", stdout)
-		// }
 	}
+	// else {
+	// Fails with kubernetes 1.20 due to api server pod missing `du` binary
+	// dir := filepath.Dir(logFilePath)
+	// stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
+	// if err != nil || stderr != "" {
+	// 	tr.Failf(testAuditName, "Failed to get file size statistics: %v\n%v", err, stderr)
+	// } else {
+	// 	tr.Passf(testAuditName, "api-server pod log size is: %v", stdout)
+	// }
+	//}
 }
 
 // Test k8s encryption provider functionality.
