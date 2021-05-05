@@ -107,9 +107,9 @@ $BIN deploy all --exclude crds  --prune=false -v $CONFIG_FILES || (echo "::error
 echo "::endgroup::"
 
 echo "::group::Test Dry Run"
-# wait for up to 4 minutes, rerunning tests if they fail
+# wait for up to 8 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
-$BIN test all -v --wait 300 --progress=false --fail-on-error=false $CONFIG_FILES
+$BIN test all -v --wait 480 --progress=false --fail-on-error=false $CONFIG_FILES
 echo "::endgroup::"
 
 echo "::group::Final Test Run"

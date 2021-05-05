@@ -2,7 +2,6 @@ package kubeadm
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/flanksource/commons/console"
@@ -29,11 +28,11 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 		return
 	}
 
-	pod, err := p.Client.GetFirstPodByLabelSelector("kube-system", "component=kube-apiserver")
-	if err != nil {
-		tr.Failf(testAuditName, "Failed to get api-server pod: %v", err)
-		return
-	}
+	// pod, err := p.Client.GetFirstPodByLabelSelector("kube-system", "component=kube-apiserver")
+	// if err != nil {
+	// 	tr.Failf(testAuditName, "Failed to get api-server pod: %v", err)
+	// 	return
+	// }
 
 	if logFilePath, ok := p.Kubernetes.APIServerExtraArgs["audit-log-path"]; !ok {
 		tr.Failf(testAuditName, "No audit-log-path is specified!")
@@ -44,15 +43,17 @@ func TestAudit(p *platform.Platform, tr *console.TestResults) {
 	} else if logFilePath == "-" {
 		// api-server is configured lo log to stdout, not verifying output
 		return
-	} else {
-		dir := filepath.Dir(logFilePath)
-		stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
-		if err != nil || stderr != "" {
-			tr.Failf(testAuditName, "Failed to get file size statistics: %v\n%v", err, stderr)
-		} else {
-			tr.Passf(testAuditName, "api-server pod log size is: %v", stdout)
-		}
 	}
+	// else {
+	// Fails with kubernetes 1.20 due to api server pod missing `du` binary
+	// dir := filepath.Dir(logFilePath)
+	// stdout, stderr, err := p.ExecutePodf("kube-system", pod.Name, "kube-apiserver", "/usr/bin/du", "-s", dir)
+	// if err != nil || stderr != "" {
+	// 	tr.Failf(testAuditName, "Failed to get file size statistics: %v\n%v", err, stderr)
+	// } else {
+	// 	tr.Passf(testAuditName, "api-server pod log size is: %v", stdout)
+	// }
+	//}
 }
 
 // Test k8s encryption provider functionality.
@@ -95,8 +96,7 @@ func TestEncryption(p *platform.Platform, tr *console.TestResults) {
 		" --endpoints https://127.0.0.1:2379"+
 		" --cacert /etc/kubernetes/pki/etcd/ca.crt"+
 		" --cert /etc/kubernetes/pki/etcd/peer.crt"+
-		" --key /etc/kubernetes/pki/etcd/peer.key"+
-		"| tr -sc '[[:print:]]' '#'", ns, secretName)
+		" --key /etc/kubernetes/pki/etcd/peer.key", ns, secretName)
 	tr.Debugf("verificationCommand: %v", verificationCommand)
 	stdout, stderr, err := p.ExecutePodf("kube-system", etcdPod.Name, "etcd",
 		"/bin/sh", "-c", verificationCommand)
@@ -104,7 +104,7 @@ func TestEncryption(p *platform.Platform, tr *console.TestResults) {
 		tr.Failf(testEncryptionName, "Failed to verify secret: %v\n%v", err, stderr)
 		return
 	}
-	if strings.Contains(stdout, "k8s:enc:aescbc:v1") {
+	if strings.HasPrefix(stdout, "k8s:enc:aescbc:v1:") {
 		tr.Passf(testEncryptionName, "ETCD reports key %v is encrypted", strings.ReplaceAll(stdout, "\n", ""))
 	}
 	s := p.Client.GetSecret(ns, secretName)
