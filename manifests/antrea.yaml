@@ -837,21 +837,6 @@ kind: APIService
 metadata:
   labels:
     app: antrea
-  name: v1alpha1.stats.antrea.tanzu.vmware.com
-spec:
-  group: stats.antrea.tanzu.vmware.com
-  groupPriorityMinimum: 100
-  service:
-    name: antrea
-    namespace: kube-system
-  version: v1alpha1
-  versionPriority: 100
----
-apiVersion: apiregistration.k8s.io/v1
-kind: APIService
-metadata:
-  labels:
-    app: antrea
   name: v1beta1.controlplane.antrea.tanzu.vmware.com
 spec:
   group: controlplane.antrea.tanzu.vmware.com
