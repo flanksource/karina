@@ -38,7 +38,7 @@ platformOperator:
 calico:
   disabled: true
 antrea:
-  version: v0.13.0
+  version: v1.0.1
 kind:
   workerCount: 1
 s3:
