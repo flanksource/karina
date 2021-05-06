@@ -39,16 +39,13 @@ spec:
             - name: tls
               mountPath: /ssl
           env:
-            - name: AD_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: ldap-account
-                  key: AD_USERNAME
-            - name: AD_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: ldap-account
-                  key: AD_PASSWORD
+          envFrom:
+            - secretRef:
+              name: google-account
+              optional: true
+            - secretRef:
+              name: ldap-account
+              optional: true
       volumes:
         - name: config
           configMap:

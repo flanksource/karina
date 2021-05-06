@@ -37,11 +37,20 @@ func Install(platform *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update configmap: %v", err)
 	}
 
-	if err := platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
-		"AD_PASSWORD": []byte(platform.Ldap.Password),
-		"AD_USERNAME": []byte(platform.Ldap.Username),
-	}); err != nil {
-		return fmt.Errorf("install: failed to create/update secret: %v", err)
+	if platform.Dex.Google.ClientID != "" {
+		if err := platform.CreateOrUpdateSecret("google-account", Namespace, map[string][]byte{
+			"GOOGLE_CLIENT_ID":     []byte(platform.Dex.Google.ClientID),
+			"GOOGLE_CLIENT_SECRET": []byte(platform.Dex.Google.ClientSecret),
+		}); err != nil {
+			return fmt.Errorf("install: failed to create/update secret: %v", err)
+		}
+	} else {
+		if err := platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
+			"AD_PASSWORD": []byte(platform.Ldap.Password),
+			"AD_USERNAME": []byte(platform.Ldap.Username),
+		}); err != nil {
+			return fmt.Errorf("install: failed to create/update secret: %v", err)
+		}
 	}
 
 	return platform.ApplySpecs(Namespace, "dex.yaml")
