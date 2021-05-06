@@ -454,15 +454,11 @@ type Dex struct {
 }
 
 type Kpack struct {
-	Disabled      bool          `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	ImageVersions ImageVersions `yaml:"imageVersions,omitempty" json:"imageVersions,omitempty"`
+	Disabled bool  `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	Image    Image `yaml:"image,omitempty" json:"image,omitempty"`
 }
 
-func (kpack Kpack) IsDisabled() bool {
-	return kpack.Disabled || kpack.ImageVersions.Controller == ""
-}
-
-type ImageVersions struct {
+type Image struct {
 	BuildInit         string `yaml:"buildInit,omitempty" json:"buildInit,omitempty"`
 	BuildInitWindows  string `yaml:"buildInitWindows,omitempty" json:"buildInitWindows,omitempty"`
 	Rebase            string `yaml:"rebase,omitempty" json:"rebase,omitempty"`
@@ -471,6 +467,40 @@ type ImageVersions struct {
 	CompletionWindows string `yaml:"completionWindows,omitempty" json:"completionWindows,omitempty"`
 	Controller        string `yaml:"controller,omitempty" json:"controller,omitempty"`
 	Webhook           string `yaml:"webhook,omitempty" json:"webhook,omitempty"`
+}
+
+func (k Kpack) IsDisabled() bool {
+	if k.Disabled {
+		return true
+	}
+	return k.Image == Image{}
+}
+
+func (k Kpack) SetDefaultImageValues() {
+	if k.Image.BuildInit == "" {
+		k.Image.BuildInit = "na"
+	}
+	if k.Image.BuildInitWindows == "" {
+		k.Image.BuildInitWindows = "na"
+	}
+	if k.Image.Completion == "" {
+		k.Image.Completion = "na"
+	}
+	if k.Image.CompletionWindows == "" {
+		k.Image.CompletionWindows = "na"
+	}
+	if k.Image.Rebase == "" {
+		k.Image.Rebase = "na"
+	}
+	if k.Image.Lifecycle == "" {
+		k.Image.Lifecycle = "na"
+	}
+	if k.Image.Controller == "" {
+		k.Image.Controller = "na"
+	}
+	if k.Image.Webhook == "" {
+		k.Image.Webhook = "na"
+	}
 }
 
 type DynamicDNS struct {
@@ -788,10 +818,12 @@ type Consul struct {
 type Vault struct {
 	Version string `yaml:"version" json:"version"`
 	// A VAULT_TOKEN to use when authenticating with Vault
-	Token     string `yaml:"token,omitempty" json:"token,omitempty"`
-	Disabled  bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	AccessKey string `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
-	SecretKey string `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
+	Token         string                 `yaml:"token,omitempty" json:"token,omitempty"`
+	Policies      map[string]VaultPolicy `yaml:"policies,omitempty" json:"policies,omitempty"`
+	GroupMappings map[string][]string    `yaml:"groupMappings,omitempty" json:"groupMappings,omitempty"`
+	Disabled      bool                   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	AccessKey     string                 `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
+	SecretKey     string                 `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
 	// The AWS KMS ARN Id to use to unseal vault
 	KmsKeyID string `yaml:"kmsKeyId,omitempty" json:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty" json:"region,omitempty"`

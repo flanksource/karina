@@ -35,6 +35,7 @@ func Install(p *platform.Platform) error {
 		"velero":            p.Velero.IsDisabled,
 		"vpa":               p.VPA.IsDisabled,
 		"kiosk":             p.Kiosk.IsDisabled,
+		"kpack":             p.Kpack.IsDisabled,
 		"istio":             p.IstioOperator.IsDisabled,
 		"logs-exporter":     p.LogsExporter.IsDisabled,
 		"karina-operator":   p.KarinaOperator.IsDisabled,

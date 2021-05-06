@@ -902,7 +902,7 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                      imageVersions:
+                      image:
                         properties:
                           buildInit:
                             type: string
@@ -2348,9 +2348,38 @@ spec:
                         type: object
                       disabled:
                         type: boolean
+                      groupMappings:
+                        additionalProperties:
+                          items:
+                            type: string
+                          type: array
+                        type: object
                       kmsKeyId:
                         description: The AWS KMS ARN Id to use to unseal vault
                         type: string
+                      policies:
+                        additionalProperties:
+                          additionalProperties:
+                            properties:
+                              allowed_parameters:
+                                additionalProperties:
+                                  items:
+                                    type: string
+                                  type: array
+                                type: object
+                              capabilities:
+                                items:
+                                  type: string
+                                type: array
+                              denied_parameters:
+                                additionalProperties:
+                                  items:
+                                    type: string
+                                  type: array
+                                type: object
+                            type: object
+                          type: object
+                        type: object
                       region:
                         type: string
                       secretKey:
