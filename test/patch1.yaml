@@ -241,7 +241,7 @@ spec:
   template:
     spec:
       containers:
-        - name: harbor-exporter
+        - name: exporter
           resources:
             requests:
               cpu: 10m

@@ -40,6 +40,11 @@ data:
   LOG_LEVEL: "info"
   CONFIG_PATH: "/etc/core/app.conf"
   SYNC_REGISTRY: "false"
+  METRIC_ENABLE: "true"
+  METRIC_PATH: "/metrics"
+  METRIC_PORT: "9090"
+  METRIC_NAMESPACE: harbor
+  METRIC_SUBSYSTEM: core
   CHART_CACHE_DRIVER: "redis"
   _REDIS_URL: "harbor-redis:6379,100,"
   _REDIS_URL_REG: "redis://harbor-redis:6379/2"
@@ -58,10 +63,14 @@ metadata:
   namespace: harbor
   labels:
     app: "harbor"
+    component: core
 spec:
   ports:
     - port: 443
       targetPort: 8443
+      name: web
+    - name: metrics
+      port: 9090
   selector:
     app: "harbor"
     component: core
@@ -181,6 +190,9 @@ spec:
                   key: secret
           ports:
             - containerPort: 8443
+              name: web
+            - containerPort: 9090
+              name: metrics
           volumeMounts:
             - name: config
               mountPath: /etc/core/app.conf
@@ -281,3 +293,26 @@ spec:
               serviceName: harbor-core
               servicePort: 443
       host: "harbor.{{ .domain}}"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: "harbor"
+    component: core
+  name: harbor-core
+  namespace: harbor
+spec:
+  jobLabel: harbor-core
+  namespaceSelector:
+    matchNames:
+      - harbor
+  endpoints:
+    - port: metrics
+      interval: 10s
+      honorLabels: true
+      path: /metrics
+  selector:
+    matchLabels:
+      app: "harbor"
+      component: core

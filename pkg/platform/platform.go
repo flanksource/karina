@@ -721,7 +721,10 @@ func (platform *Platform) GetOrCreateBucketFor(conn types.S3Connection, name str
 }
 
 func (platform *Platform) GetProxyTransport(endpoint string) (*http.Transport, error) {
-	client, _ := platform.GetClientset()
+	client, err := platform.GetClientset()
+	if err != nil {
+		return nil, err
+	}
 	name := strings.Split(endpoint, ".")[0]
 	ns := strings.Split(endpoint, ".")[1]
 	svc, err := client.CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})

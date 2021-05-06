@@ -158,6 +158,13 @@ func Deploy(p *platform.Platform) error {
 		}); err != nil {
 			return err
 		}
+		exporterSecret := map[string][]byte{
+			"HARBOR_ADMIN_PASSWORD":    []byte(p.Harbor.AdminPassword),
+			"HARBOR_DATABASE_PASSWORD": []byte(p.Harbor.DB.Password),
+		}
+		if err := p.CreateOrUpdateSecret("harbor-exporter", Namespace, exporterSecret); err != nil {
+			return err
+		}
 	}
 
 	for _, spec := range manifests {
