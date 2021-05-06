@@ -33,7 +33,7 @@ data:
   CFG_EXPIRATION: "5"
   ADMIRAL_URL: "NA"
   WITH_TRIVY: "true"
-  TRIVY_ADAPTER_URL: "http://harbor-trivy.harbor.svc.cluster.local.:8080"
+  TRIVY_ADAPTER_URL: "https://harbor-trivy.harbor.svc.cluster.local.:8080"
   REGISTRY_STORAGE_PROVIDER_NAME: "s3"
   WITH_CHARTMUSEUM: "true"
   CHART_REPOSITORY_URL: "https://harbor-chartmuseum.harbor.svc.cluster.local."

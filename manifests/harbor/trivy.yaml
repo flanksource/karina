@@ -15,6 +15,20 @@ spec:
     app: "harbor"
     component: trivy
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: trivy-internal-certs
+  namespace: harbor
+spec:
+  secretName: trivy-internal-certs
+  dnsNames:
+    - harbor-trivy
+    - harbor-trivy.harbor.svc.cluster.local.
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -79,6 +93,10 @@ spec:
               value: "false"
             - name: SCANNER_API_SERVER_ADDR
               value: ":8080"
+            - name: SCANNER_API_SERVER_TLS_KEY
+              value: /etc/harbor/ssl/trivy/tls.key
+            - name: SCANNER_API_SERVER_TLS_CERTIFICATE
+              value: /etc/harbor/ssl/trivy/tls.crt
             - name: "SCANNER_REDIS_URL"
               valueFrom:
                 secretKeyRef:
@@ -102,9 +120,11 @@ spec:
             mountPath: /home/scanner/.cache
             subPath: 
             readOnly: false
+          - name: trivy-internal-certs
+            mountPath: /etc/harbor/ssl/trivy
           livenessProbe:
             httpGet:
-              scheme: HTTP
+              scheme: HTTPS
               path: /probe/healthy
               port: api-server
             initialDelaySeconds: 5
@@ -113,7 +133,7 @@ spec:
             failureThreshold: 10
           readinessProbe:
             httpGet:
-              scheme: HTTP
+              scheme: HTTPS
               path: /probe/ready
               port: api-server
             initialDelaySeconds: 5
@@ -127,6 +147,10 @@ spec:
             requests:
               cpu: 200m
               memory: 512Mi
+      volumes:
+        - name: trivy-internal-certs
+          secret:
+            secretName: trivy-internal-certs
   volumeClaimTemplates:
   - metadata:
       name: data
