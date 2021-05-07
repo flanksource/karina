@@ -216,7 +216,7 @@ spec:
           annotations:
             description: |
               Namespace {{ $labels.count_namespace }} on node {{ $labels.count_node }} generating logs at double the weekly average rate:
-              {{ printf "elastic_documents_by_namespace_cluster_node{count_namespace='%s', count_node='%s'} .Labels.count_namespace .Labels.count_node" | query | first | value }} > {{ printf "sum_over_time(average:elastic_documents_by_namespace_cluster_node:1d{count_namespace='%s', count_node='%s'}[7d])/count_over_time(average:elastic_documents_by_namespace_cluster_node:1d{count_namespace='%s', count_node='%s'}[7d]) .Labels.count_namespace .Labels.count_node" | query | first | value }}
+              {{ printf "elastic_documents_by_namespace_cluster_node{count_namespace='%s', count_node='%s'} Labels.count_namespace Labels.count_node" | query | first | value }} > {{ printf "sum_over_time(average:elastic_documents_by_namespace_cluster_node:1d{count_namespace='%s', count_node='%s'}[7d])/count_over_time(average:elastic_documents_by_namespace_cluster_node:1d{count_namespace='%s', count_node='%s'}[7d]) Labels.count_namespace Labels.count_node Labels.count_namespace Labels.count_node" | query | first | value }}
           expr: |
             elastic_documents_by_namespace_cluster_node > 2 * (sum_over_time(average:elastic_documents_by_namespace_cluster_node:1d[7d])/count_over_time(average:elastic_documents_by_namespace_cluster_node:1d[7d]))
           for: 10m
