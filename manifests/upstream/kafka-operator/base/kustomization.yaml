@@ -1,6 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: platform-operator
+namespace: kafka-operator
 
 # Tip: You can generate resources file list by running "kustomize edit add resource ../helm/generated_templates/strimzi-kafka-operator/templates/*.yaml"
 resources:
@@ -19,3 +19,7 @@ resources:
   - ../helm/generated_templates/strimzi-kafka-operator/templates/033-ClusterRoleBinding-strimzi-cluster-operator-kafka-client-delegation.yaml
   - ../helm/generated_templates/strimzi-kafka-operator/templates/050-ConfigMap-strimzi-cluster-operator.yaml
   - ../helm/generated_templates/strimzi-kafka-operator/templates/060-Deployment-strimzi-cluster-operator.yaml
+
+images:
+  - name: quay.io/strimzi/operator
+    newTag: "{{ .kafkaOperator.version }}"

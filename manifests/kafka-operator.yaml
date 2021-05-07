@@ -9,7 +9,7 @@ metadata:
     heritage: Helm
     release: RELEASE-NAME
   name: strimzi-cluster-operator
-  namespace: platform-operator
+  namespace: kafka-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -368,7 +368,7 @@ metadata:
     heritage: Helm
     release: RELEASE-NAME
   name: strimzi-cluster-operator
-  namespace: platform-operator
+  namespace: kafka-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -376,7 +376,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: strimzi-cluster-operator
-  namespace: platform-system
+  namespace: kafka-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -388,7 +388,7 @@ metadata:
     heritage: Helm
     release: RELEASE-NAME
   name: strimzi-cluster-operator-entity-operator-delegation
-  namespace: platform-operator
+  namespace: kafka-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -396,7 +396,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: strimzi-cluster-operator
-  namespace: platform-system
+  namespace: kafka-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -408,7 +408,7 @@ metadata:
     heritage: Helm
     release: RELEASE-NAME
   name: strimzi-cluster-operator-topic-operator-delegation
-  namespace: platform-operator
+  namespace: kafka-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -416,7 +416,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: strimzi-cluster-operator
-  namespace: platform-system
+  namespace: kafka-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -435,7 +435,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: strimzi-cluster-operator
-  namespace: platform-system
+  namespace: kafka-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -454,7 +454,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: strimzi-cluster-operator
-  namespace: platform-system
+  namespace: kafka-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -473,7 +473,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: strimzi-cluster-operator
-  namespace: platform-system
+  namespace: kafka-operator
 ---
 apiVersion: v1
 data:
@@ -510,7 +510,7 @@ metadata:
   labels:
     app: strimzi
   name: strimzi-cluster-operator
-  namespace: platform-operator
+  namespace: kafka-operator
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -522,7 +522,7 @@ metadata:
     heritage: Helm
     release: RELEASE-NAME
   name: strimzi-cluster-operator
-  namespace: platform-operator
+  namespace: kafka-operator
 spec:
   replicas: 1
   selector:
@@ -608,7 +608,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: quay.io/strimzi/operator:0.22.1
+        image: quay.io/strimzi/operator:{{ .kafkaOperator.version }}
         livenessProbe:
           httpGet:
             path: /healthy

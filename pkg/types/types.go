@@ -270,6 +270,10 @@ type MongodbOperator struct {
 	Disabled `yaml:",inline" json:",inline"`
 }
 
+type KafkaOperator struct {
+	Disabled `yaml:",inline" json:",inline"`
+}
+
 type ArgoRollouts struct {
 	Disabled `yaml:",inline" json:",inline"`
 }

@@ -1,4 +1,4 @@
 repo: https://strimzi.io/charts
 chart_name: strimzi-kafka-operator
 version: 0.22.1
-namespace: platform-system
+namespace: kafka-operator

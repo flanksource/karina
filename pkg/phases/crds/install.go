@@ -39,6 +39,7 @@ func Install(p *platform.Platform) error {
 		"istio":             p.IstioOperator.IsDisabled,
 		"logs-exporter":     p.LogsExporter.IsDisabled,
 		"karina-operator":   p.KarinaOperator.IsDisabled,
+		"kafka-operator":    p.KafkaOperator.IsDisabled,
 	}
 
 	wg := sync.WaitGroup{}

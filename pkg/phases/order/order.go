@@ -28,6 +28,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/journalbeat"
+	"github.com/flanksource/karina/pkg/phases/kafkaoperator"
 	"github.com/flanksource/karina/pkg/phases/karinaoperator"
 	"github.com/flanksource/karina/pkg/phases/keptn"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
@@ -82,6 +83,7 @@ var Phases = map[string]DeployFn{
 	"karina-operator":      karinaoperator.Install,
 	"kpack":                kpack.Deploy,
 	"platform":             Platform,
+	"kafka-operator":       kafkaoperator.Deploy,
 	"kube-resource-report": kuberesourcereport.Install,
 	"kube-web-view":        kubewebview.Install,
 	"logs-exporter":        logsexporter.Install,

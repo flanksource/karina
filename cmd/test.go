@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/kafkaoperator"
+
 	"github.com/flanksource/karina/pkg/phases/mongodboperator"
 
 	"github.com/flanksource/commons/console"
@@ -191,6 +193,7 @@ func init() {
 		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
 		"istio-operator":       istiooperator.Test,
+		"kafka-operator":       kafkaoperator.Test,
 		"keptn":                keptn.Test,
 		"karina-operator":      karinaoperator.Test,
 		"kiosk":                kiosk.Test,
