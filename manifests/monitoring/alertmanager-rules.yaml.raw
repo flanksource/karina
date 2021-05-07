@@ -975,3 +975,13 @@ spec:
           for: 5m
           labels:
             severity: warning
+    - name: sealed-secrets
+      rules:
+        - alert: SecretUnsealError
+          annotations:
+            message: A sealed secret in {{ $labels.namespace }} namespace cannot unseal correctly
+          expr: |
+            increase(sealed_secrets_controller_unseal_errors_total[1d]) > 1
+          for: 1m
+          labels:
+            severity: warning

@@ -40,7 +40,7 @@ ldap:
 oauth2Proxy:
   version: "v6.1.1"
 sealedSecrets:
-  version: "v0.10.0"
+  version: "v0.15.0"
   certificate:
     cert: .certs/sealed-secrets-crt.pem
     privateKey: .certs/sealed-secrets-key.pem
