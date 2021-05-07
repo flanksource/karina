@@ -82,6 +82,10 @@ lint: build
 	golangci-lint run --verbose --print-resources-usage
 	go run test/linter/main.go
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./pkg/api/operator/..."

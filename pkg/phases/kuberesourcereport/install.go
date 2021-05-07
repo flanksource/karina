@@ -89,7 +89,7 @@ func Install(p *platform.Platform) error {
 		p.Infof("Reading custom cost label: %v, %.3f", label, value)
 		if !strings.Contains(label, ",") {
 			//kube-resource-report does not like spaces
-			newRow := fmt.Sprintf("%v,%v,%.3f\n", DefaultRegion, label, value) // nolint: govet, staticcheck
+			newRow := fmt.Sprintf("%v,%v,%d\n", DefaultRegion, label, value) // nolint: govet, staticcheck
 			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		} else {
@@ -98,7 +98,7 @@ func Install(p *platform.Platform) error {
 			label := split[1]
 			//split string contains the , so not added again
 			//kube-resource-report does not like spaces
-			newRow := fmt.Sprintf("%v%v,%.3f\n", region, label, value) // nolint: govet, staticcheck
+			newRow := fmt.Sprintf("%v%v,%d\n", region, label, value) // nolint: govet, staticcheck
 			customCostGeneratedData = customCostGeneratedData + newRow
 			p.Debugf("Adding custom cost label: %v", newRow)
 		}

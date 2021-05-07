@@ -47,10 +47,8 @@ func getImages(p *platform.Platform) []string {
 		}
 	}
 
-	phases := order.GetAllPhases()
-
-	for name, fn := range phases {
-		if err := fn(p); err != nil {
+	for name, deployMap := range order.GetPhases() {
+		if err := deployMap.Fn(p); err != nil {
 			p.Warnf("Error during dry-run of %s: %v", name, err)
 		}
 	}

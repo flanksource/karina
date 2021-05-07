@@ -1,0 +1,11 @@
+name: Tests:Fast
+on:
+  push:
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    container:
+      image:  golang:1.16-buster
+    steps:
+      - uses: actions/checkout@master
+      - run: go test ./...

@@ -28,24 +28,24 @@ func init() {
 			failed := false
 			// first deploy strictly ordered phases, these phases are often dependencies for other phases
 			for _, name := range order.PhaseOrder {
-				flag, _ := cmd.Flags().GetBool(name)
+				flag, _ := cmd.Flags().GetBool(string(name))
 				if !flag {
 					continue
 				}
-				if err := phases[name](p); err != nil {
+				if err := phases[name].Fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, errors.WithStack(err))
 					failed = true
 				}
 				// remove the phase from the map so it isn't run again
 				delete(phases, name)
 			}
-			for name, fn := range phases {
-				flag, _ := cmd.Flags().GetBool(name)
+			for name, deployMap := range phases {
+				flag, _ := cmd.Flags().GetBool(string(name))
 				if !flag {
 					continue
 				}
 
-				if err := fn(p); err != nil {
+				if err := deployMap.Fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, errors.WithStack(err))
 					failed = true
 				}
@@ -58,17 +58,15 @@ func init() {
 
 	Deploy.AddCommand(PhasesCmd)
 
-	for name, fn := range order.GetAllPhases() {
-		_name := name
-		_fn := fn
-		PhasesCmd.Flags().Bool(name, false, "Deploy "+name)
+	for name, deployMap := range order.GetAllPhases() {
+		PhasesCmd.Flags().Bool(string(name), false, "Deploy "+string(name))
 		Deploy.AddCommand(&cobra.Command{
-			Use:  name,
+			Use:  string(name),
 			Args: cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
 				p := getPlatform(cmd)
-				if err := _fn(p); err != nil {
-					log.Fatalf("Failed to deploy %s: %v", _name, err)
+				if err := deployMap.Fn(p); err != nil {
+					log.Fatalf("Failed to deploy %s: %v", name, err)
 				}
 			},
 		})
@@ -86,24 +84,20 @@ func init() {
 			failed := false
 
 			for _, phase := range order.BootstrapPhases {
-				if sliceContains(deployExclude, phase) {
+				if sliceContains(deployExclude, string(phase)) {
 					p.Tracef("Skipping excluded phase %s", phase)
 					continue
 				}
 				p.Tracef("Deploying %s", phase)
-				if err := all[phase](p); err != nil {
+				if err := all[phase].Fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", phase, err)
 					failed = true
 				}
 			}
 
-			for name, fn := range phases {
-				if sliceContains(deployExclude, name) {
-					p.Tracef("Skipping excluded phase %s", name)
-					continue
-				}
+			for name, deployMap := range phases {
 				p.Tracef("Deploying %s", name)
-				if err := fn(p); err != nil {
+				if err := deployMap.Fn(p); err != nil {
 					log.Errorf("Failed to deploy %s: %v", name, err)
 					failed = true
 				}

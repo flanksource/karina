@@ -262,18 +262,18 @@ func fieldRequired(field *ast.Field) bool {
 func fieldType(typ ast.Expr) string {
 	switch typ.(type) { // nolint: gosimple
 	case *ast.Ident:
-		return toLink(typ.(*ast.Ident).Name)
+		return toLink(typ.(*ast.Ident).Name) // nolint: gosimple
 	case *ast.StarExpr:
-		return "*" + toLink(fieldType(typ.(*ast.StarExpr).X))
+		return "*" + toLink(fieldType(typ.(*ast.StarExpr).X)) // nolint: gosimple
 	case *ast.SelectorExpr:
 		e := typ.(*ast.SelectorExpr)
 		pkg := e.X.(*ast.Ident)
 		t := e.Sel
 		return toLink(pkg.Name + "." + t.Name)
 	case *ast.ArrayType:
-		return "[]" + toLink(fieldType(typ.(*ast.ArrayType).Elt))
+		return "[]" + toLink(fieldType(typ.(*ast.ArrayType).Elt)) // nolint: gosimple
 	case *ast.MapType:
-		mapType := typ.(*ast.MapType)
+		mapType := typ.(*ast.MapType) // nolint: gosimple
 		return "map[" + toLink(fieldType(mapType.Key)) + "]" + toLink(fieldType(mapType.Value))
 	default:
 		return ""

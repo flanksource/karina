@@ -118,5 +118,6 @@ type PlatformConfig struct {
 	// E2E is true if end to end tests are being run
 	E2E bool `yaml:"-" json:"-"`
 	// If the platform should use in cluster config
-	InClusterConfig bool `yaml:"-" json:"-"`
+	InClusterConfig bool            `yaml:"-" json:"-"`
+	Hooks           map[string]Hook `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 }

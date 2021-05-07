@@ -62,49 +62,123 @@ import (
 
 type DeployFn func(p *platform.Platform) error
 
-var Phases = map[string]DeployFn{
-	"argo-rollouts":        argorollouts.Deploy,
-	"argocd-operator":      argocdoperator.Deploy,
-	"auditbeat":            auditbeat.Deploy,
-	"canary":               canary.Deploy,
-	"eck":                  eck.Deploy,
-	"elasticsearch":        elasticsearch.Deploy,
-	"eventrouter":          eventrouter.Deploy,
-	"externaldns":          externaldns.Install,
-	"dashboard":            dashboard.Install,
-	"filebeat":             filebeat.Deploy,
-	"flux":                 flux.InstallV2,
-	"git-operator":         gitoperator.Install,
-	"gitops":               flux.Install,
-	"harbor":               harbor.Deploy,
-	"istio-operator":       istiooperator.Install,
-	"journalbeat":          journalbeat.Deploy,
-	"keptn":                keptn.Deploy,
-	"kiosk":                kiosk.Deploy,
-	"konfig-manager":       konfigmanager.Deploy,
-	"karina-operator":      karinaoperator.Install,
-	"kpack":                kpack.Deploy,
-	"platform":             Platform,
-	"kube-resource-report": kuberesourcereport.Install,
-	"kube-web-view":        kubewebview.Install,
-	"logs-exporter":        logsexporter.Install,
-	"mongodb-operator":     mongodboperator.Deploy,
-	"monitoring":           monitoring.Install,
-	"opa":                  opa.Install,
-	"packetbeat":           packetbeat.Deploy,
-	"rabbitmq-operator":    rabbitmqoperator.Install,
-	"redis-operator":       redisoperator.Install,
-	"registry-creds":       registrycreds.Install,
-	"s3-upload-cleaner":    s3uploadcleaner.Deploy,
-	"sealed-secrets":       sealedsecrets.Install,
-	"tekton":               tekton.Install,
-	"velero":               velero.Install,
-	"vault":                vault.Deploy,
+type Cmd string
+
+const (
+	Apacheds           Cmd = "apacheds"
+	Antrea             Cmd = "antrea"
+	ArgoRollouts       Cmd = "argo-rollouts"
+	ArgoOperator       Cmd = "argo-operator"
+	Auditbeat          Cmd = "auditbeat"
+	Base               Cmd = "base"
+	BootstrapCmd       Cmd = "bootstrap"
+	Calico             Cmd = "calico"
+	Canary             Cmd = "canary"
+	CertManager        Cmd = "cert-manager"
+	Cni                Cmd = "cni"
+	CloudController    Cmd = "cloud-controller"
+	ConfigmapReloader  Cmd = "configmap-reloader"
+	Crds               Cmd = "crds"
+	Csi                Cmd = "csi"
+	Dashboard          Cmd = "dashboard"
+	Dex                Cmd = "dex"
+	Eck                Cmd = "eck"
+	Elasticsearch      Cmd = "elasticsearch"
+	Eventrouter        Cmd = "eventrouter"
+	Externaldns        Cmd = "externaldns"
+	Filebeat           Cmd = "filebeat"
+	Flux               Cmd = "flux"
+	GitOperator        Cmd = "git-operator"
+	Gitops             Cmd = "gitops"
+	Harbor             Cmd = "harbor"
+	Ingress            Cmd = "ingress"
+	IstioOperator      Cmd = "istio-operator"
+	Journalbeat        Cmd = "journalbeat"
+	Keptn              Cmd = "keptn"
+	Kiosk              Cmd = "kiosk"
+	KarinaOperator     Cmd = "karina-operator"
+	KonfigManager      Cmd = "konfig-manager"
+	Kpack              Cmd = "kpack"
+	PlatformCmd        Cmd = "platform"
+	PlatformOperator   Cmd = "platform-operator"
+	KubeResourceReport Cmd = "kube-resource-report"
+	KubeWebView        Cmd = "kube-web-view"
+	LogsExporter       Cmd = "logs-exporter"
+	Minio              Cmd = "minio"
+	MongodbOperator    Cmd = "mongodb-operator"
+	Monitoring         Cmd = "monitoring"
+	NodeLocalDNS       Cmd = "node-local-dns"
+	Nsx                Cmd = "nsx"
+	Opa                Cmd = "opa"
+	Packetbeat         Cmd = "packetbeat"
+	PostgresOperator   Cmd = "postgres-operator"
+	Pre                Cmd = "pre"
+	Quack              Cmd = "quack"
+	RabbitmqOperator   Cmd = "rabbitmq-operator"
+	RedisOperator      Cmd = "redis-operator"
+	RegistryCreds      Cmd = "registry-creds"
+	S3UploadCleaner    Cmd = "s3-upload-cleaner"
+	SealedSecrets      Cmd = "sealed-secrets"
+	StubsCmd           Cmd = "stubs"
+	Tekton             Cmd = "tekton"
+	TemplateOperator   Cmd = "template-operator"
+	Vault              Cmd = "vault"
+	Velero             Cmd = "velero"
+	Vsphere            Cmd = "vsphere"
+)
+
+type Phase struct {
+	Fn   DeployFn
+	Name Cmd
 }
 
-var PhaseOrder = []string{"bootstrap", "crds", "cni", "csi", "cloud", "platform"}
+func makePhase(df DeployFn, name Cmd) Phase {
+	return Phase{Fn: df, Name: name}
+}
+
+var Phases = map[Cmd]Phase{
+	ArgoRollouts:       makePhase(argorollouts.Deploy, ArgoRollouts),
+	ArgoOperator:       makePhase(argocdoperator.Deploy, ArgoOperator),
+	Auditbeat:          makePhase(auditbeat.Deploy, Auditbeat),
+	Canary:             makePhase(canary.Deploy, Canary),
+	Eck:                makePhase(eck.Deploy, Eck),
+	Elasticsearch:      makePhase(elasticsearch.Deploy, Elasticsearch),
+	Eventrouter:        makePhase(eventrouter.Deploy, Eventrouter),
+	Externaldns:        makePhase(externaldns.Install, Externaldns),
+	Dashboard:          makePhase(dashboard.Install, Dashboard),
+	Filebeat:           makePhase(filebeat.Deploy, Filebeat),
+	Flux:               makePhase(flux.InstallV2, Flux),
+	GitOperator:        makePhase(gitoperator.Install, GitOperator),
+	Gitops:             makePhase(flux.Install, Gitops),
+	Harbor:             makePhase(harbor.Deploy, Harbor),
+	IstioOperator:      makePhase(istiooperator.Install, IstioOperator),
+	Journalbeat:        makePhase(journalbeat.Deploy, Journalbeat),
+	Keptn:              makePhase(keptn.Deploy, Keptn),
+	Kiosk:              makePhase(kiosk.Deploy, Kiosk),
+	KarinaOperator:     makePhase(karinaoperator.Install, KarinaOperator),
+	KonfigManager:      makePhase(konfigmanager.Deploy, KonfigManager),
+	Kpack:              makePhase(kpack.Deploy, Kpack),
+	PlatformCmd:        makePhase(Platform, PlatformCmd),
+	KubeResourceReport: makePhase(kuberesourcereport.Install, KubeResourceReport),
+	KubeWebView:        makePhase(kubewebview.Install, KubeWebView),
+	LogsExporter:       makePhase(logsexporter.Install, LogsExporter),
+	MongodbOperator:    makePhase(mongodboperator.Deploy, MongodbOperator),
+	Monitoring:         makePhase(monitoring.Install, Monitoring),
+	Opa:                makePhase(opa.Install, Opa),
+	Packetbeat:         makePhase(packetbeat.Deploy, Packetbeat),
+	RabbitmqOperator:   makePhase(rabbitmqoperator.Install, RabbitmqOperator),
+	RedisOperator:      makePhase(redisoperator.Install, RedisOperator),
+	RegistryCreds:      makePhase(registrycreds.Install, RegistryCreds),
+	S3UploadCleaner:    makePhase(s3uploadcleaner.Deploy, S3UploadCleaner),
+	SealedSecrets:      makePhase(sealedsecrets.Install, SealedSecrets),
+	Tekton:             makePhase(tekton.Install, Tekton),
+	Vault:              makePhase(vault.Deploy, Vault),
+	Velero:             makePhase(velero.Install, Velero),
+}
+
+var PhaseOrder = []Cmd{BootstrapCmd, Crds, Cni, Csi, CloudController, PlatformCmd}
 var Bootstrap = compose(pre.Install, crds.Install, CNI, CSI, base.Install, Cloud, certmanager.Install, ingress.Install, quack.Install, minio.Install, templateoperator.Install, postgresoperator.Deploy, dex.Install)
-var BootstrapPhases = []string{"pre", "crds", "cni", "csi", "base", "cloud-controller", "cert-manager", "ingress", "quack", "minio", "template-operator", "postgres-operator", "dex"}
+var BootstrapPhases = []Cmd{Pre, Crds, Cni, Csi, Base, CloudController, CertManager, Ingress, Quack, Minio, TemplateOperator, PostgresOperator, Dex}
 var CSI = compose(localpath.Install, s3.Install, nfs.Install)
 var CNI = compose(calico.Install, antrea.Install, nsx.Install, nodelocaldns.Install)
 var Cloud = compose(vsphere.Install)
@@ -122,48 +196,47 @@ func compose(fns ...DeployFn) DeployFn {
 	}
 }
 
-var PhasesExtra = map[string]DeployFn{
-	"apacheds":           apacheds.Install,
-	"antrea":             antrea.Install,
-	"base":               base.Install,
-	"bootstrap":          Bootstrap,
-	"calico":             calico.Install,
-	"cert-manager":       certmanager.Install,
-	"cni":                CNI,
-	"configmap-reloader": configmapreloader.Deploy,
-	"crds":               crds.Install,
-	"csi":                CSI,
-	"dex":                dex.Install,
-	"ingress":            ingress.Install,
-	"kiosk":              kiosk.Deploy,
-	"minio":              minio.Install,
-	"node-local-dns":     nodelocaldns.Install,
-	"nsx":                nsx.Install,
-	"postgres-operator":  postgresoperator.Deploy,
-	"platform-operator":  platformoperator.Install,
-	"pre":                pre.Install,
-	"quack":              quack.Install,
-	"template-operator":  templateoperator.Install,
-	"vsphere":            vsphere.Install,
-	"cloud":              Cloud,
-	"stubs":              Stubs,
+var PhasesExtra = map[Cmd]Phase{
+	Apacheds:          makePhase(apacheds.Install, Apacheds),
+	Antrea:            makePhase(antrea.Install, Antrea),
+	Base:              makePhase(base.Install, Base),
+	BootstrapCmd:      makePhase(Bootstrap, BootstrapCmd),
+	Calico:            makePhase(calico.Install, Calico),
+	CertManager:       makePhase(certmanager.Install, CertManager),
+	Cni:               makePhase(CNI, Cni),
+	ConfigmapReloader: makePhase(configmapreloader.Deploy, ConfigmapReloader),
+	Crds:              makePhase(crds.Install, Crds),
+	Csi:               makePhase(CSI, Csi),
+	Dex:               makePhase(dex.Install, Dex),
+	Ingress:           makePhase(ingress.Install, Ingress),
+	Kiosk:             makePhase(kiosk.Deploy, Kiosk),
+	Minio:             makePhase(minio.Install, Minio),
+	NodeLocalDNS:      makePhase(nodelocaldns.Install, NodeLocalDNS),
+	Nsx:               makePhase(nsx.Install, Nsx),
+	PostgresOperator:  makePhase(postgresoperator.Deploy, PostgresOperator),
+	PlatformOperator:  makePhase(platformoperator.Install, PlatformOperator),
+	Pre:               makePhase(pre.Install, Pre),
+	Quack:             makePhase(quack.Install, Quack),
+	TemplateOperator:  makePhase(templateoperator.Install, TemplateOperator),
+	Vsphere:           makePhase(vsphere.Install, Vsphere),
+	CloudController:   makePhase(Cloud, CloudController),
+	StubsCmd:          makePhase(Stubs, StubsCmd),
 }
 
-func GetAllPhases() map[string]DeployFn {
-	res := map[string]DeployFn{}
-	for k, v := range Phases {
-		res[k] = v
-	}
-	for k, v := range PhasesExtra {
-		res[k] = v
+func mergePhases(phaseMaps ...map[Cmd]Phase) map[Cmd]Phase {
+	res := map[Cmd]Phase{}
+	for _, phaseMap := range phaseMaps {
+		for k, v := range phaseMap {
+			res[k] = v
+		}
 	}
 	return res
 }
 
-func GetPhases() map[string]DeployFn {
-	res := map[string]DeployFn{}
-	for k, v := range Phases {
-		res[k] = v
-	}
-	return res
+func GetAllPhases() map[Cmd]Phase {
+	return mergePhases(Phases, PhasesExtra)
+}
+
+func GetPhases() map[Cmd]Phase {
+	return mergePhases(Phases)
 }

@@ -391,6 +391,11 @@ type Kubernetes struct {
 	Managed bool `yaml:"managed,omitempty" json:"managed,omitempty"`
 }
 
+type Hook struct {
+	Before kommons.EnvVar `yaml:"before,omitempty" json:"before,omitempty"`
+	After  kommons.EnvVar `yaml:"after,omitempty" json:"after,omitempty"`
+}
+
 type Kind struct {
 	// Skip attempting to mount local files into the docker daemon
 	RemoteDocker bool             `yaml:"remoteDocker" json:"remoteDocker"`
