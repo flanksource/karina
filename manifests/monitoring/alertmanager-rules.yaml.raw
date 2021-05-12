@@ -565,7 +565,7 @@ spec:
               /
             kubelet_volume_stats_capacity_bytes{job="kubelet"}
               < 0.20
-          for: 1m
+          for: 24h
           labels:
             severity: warning
         - alert: KubePersistentVolumeFullInFourDays
