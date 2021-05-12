@@ -21,3 +21,36 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: actions/setup-node@v2
       - run: make build-api-docs build-docs
+  golangci:
+    name: lint
+    runs-on: ubuntu-20.04
+    container:
+      image: flanksource/build-tools:v0.12.0
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        # Get values for cache paths to be used in later steps
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+      - uses: actions/checkout@main
+      # Cache go build cache, used to speedup go test
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      # Cache go mod cache, used to speedup builds
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.36
+      - name: filename and manifests check
+        run: go run test/linter/main.go
