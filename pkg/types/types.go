@@ -451,6 +451,13 @@ type Dashboard struct {
 
 type Dex struct {
 	Disabled `yaml:",inline" json:",inline"`
+	Google   GoogleOIDC `yaml:"google,omitempty" json:"google,omitempty"`
+}
+
+type GoogleOIDC struct {
+	ClientID      string   `yaml:"clientID,omitempty" json:"clientID,omitempty"`
+	ClientSecret  string   `yaml:"clientSecret,omitempty" json:"clientSecret,omitempty"`
+	HostedDomains []string `yaml:"hostedDomains,omitempty" json:"hostedDomains,omitempty"`
 }
 
 type Kpack struct {
