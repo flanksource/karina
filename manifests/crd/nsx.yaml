@@ -1,0 +1,246 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: nsxerrors.nsx.vmware.com
+spec:
+  group: nsx.vmware.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+      - name: Messages
+        type: string
+        description: NSX error messages. Messages are sorted by timestamp on which the error occurs.
+        jsonPath: .spec.message
+      - name: ErrorObjectID
+        type: string
+        description: The identifier of the k8s object which has the errors.
+        jsonPath: .spec.error-object-id
+      - name: ErrorObjectType
+        type: string
+        description: The type of the k8s object which has the errors.
+        jsonPath: .spec.error-object-type
+      - name: ErrorObjectName
+        type: string
+        description: The name of the k8s object which has the errors.
+        jsonPath: .spec.error-object-name
+      - name: ErrorObjectNamespace
+        type: string
+        description: The namespace of the k8s object if it is namespaced. None by default
+        jsonPath: .spec.error-object-ns
+
+  scope: Cluster
+  names:
+    plural: nsxerrors
+    singular: nsxerror
+    kind: NSXError
+    shortNames:
+    - ne
+
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: loadbalancers.vmware.com
+spec:
+  group: vmware.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+
+  scope: Namespaced
+  names:
+    plural: loadbalancers
+    singular: loadbalancer
+    kind: LoadBalancer
+    shortNames:
+    - lb
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: nsxlbmonitors.vmware.com
+spec:
+  group: vmware.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+
+  scope: Namespaced
+  names:
+    plural: nsxlbmonitors
+    singular: nsxlbmonitor
+    kind: NSXLoadBalancerMonitor
+    shortNames:
+    - lbm
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: nsxlocks.nsx.vmware.com
+spec:
+  group: nsx.vmware.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+
+  scope: Cluster
+  names:
+    plural: nsxlocks
+    singular: nsxlock
+    kind: NSXLock
+    shortNames:
+    - nsxlo
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ncpconfigs.nsx.vmware.com
+spec:
+  group: nsx.vmware.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+
+  scope: Cluster
+  names:
+    plural: ncpconfigs
+    singular: ncpconfig
+    kind: NCPConfig
+    shortNames:
+    - ncpcfg
+
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: network-attachment-definitions.k8s.cni.cncf.io
+spec:
+  group: k8s.cni.cncf.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+
+  scope: Namespaced
+  names:
+    plural: network-attachment-definitions
+    singular: network-attachment-definition
+    kind: NetworkAttachmentDefinition
+    shortNames:
+    - net-attach-def
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: ncpinstalls.operator.nsx.vmware.com
+spec:
+  group: operator.nsx.vmware.com
+  names:
+    kind: NcpInstall
+    listKind: NcpInstallList
+    plural: ncpinstalls
+    singular: ncpinstall
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: NcpInstall is the Schema for the ncpinstalls API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: NcpInstallSpec defines the desired state of NcpInstall
+          type: object
+          properties:
+            ncpReplicas:
+              description: the replica numbers of nsx-ncp deployment
+              type: integer
+              format: int32
+              minimum: 1
+            addNodeTag:
+              description: Tag node logical switch port with node name and cluster when set to true, skip tagging when set to false
+              type: boolean
+        status:
+          description: NcpInstallStatus defines the observed state of NcpInstall
+          type: object
+          properties:
+            conditions:
+              description: conditions is a list of conditions and their status
+              type: array
+              items:
+                description: It is just the standard condition fields
+                type: object
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transit from one status to another
+                    type: string
+                    format: date-time
+                  type:
+                    description: Type of condition
+                    type: string
+                  status:
+                    description: Status of condition, one of 'True', 'False', 'Unknown'
+                    type: string
+                  reason:
+                    description: Brief reason for the condition
+                    type: string
+                  message:
+                    description: Human readable message indicating details
+                    type: string
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true

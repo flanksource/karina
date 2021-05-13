@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nsx-ncp-operator
+  namespace: nsx-system-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nsx-ncp-operator
+  namespace: nsx-system-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nsx-ncp-operator
+  template:
+    metadata:
+      labels:
+        name: nsx-ncp-operator
+    spec:
+      hostNetwork: true
+      serviceAccountName: nsx-ncp-operator
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        key: node.kubernetes.io/not-ready
+      - effect: NoSchedule
+        key: node.kubernetes.io/network-unavailable
+      volumes:
+      - hostPath: {path: /etc/os-release}
+        name: host-os-release
+      containers:
+        - name: nsx-ncp-operator
+          image: {{ .nsx.operatorImage }}
+          command: ["/bin/bash", "-c", "nsx-ncp-operator --zap-time-encoding=iso8601 --metrics-bind-address=:8050"]
+          volumeMounts:
+          - {mountPath: /host/etc/os-release, name: host-os-release}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "nsx-ncp-operator"
+            - name: NCP_IMAGE
+              value: "{{ .nsx.image }}"
+            - name: WATCH_NAMESPACE
+              value: "nsx-system-operator"
+---
+apiVersion: operator.nsx.vmware.com/v1
+kind: NcpInstall
+metadata:
+  name: ncp-install
+  namespace: nsx-system-operator
+spec:
+  ncpReplicas: 1
+  addNodeTag: false
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nsx-ncp-operator
+subjects:
+- kind: ServiceAccount
+  name: nsx-ncp-operator
+  namespace: nsx-system-operator
+roleRef:
+  kind: ClusterRole
+  name: nsx-ncp-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nsx-ncp-operator
+rules:
+- apiGroups: ['']
+  resources: [pods, pods/log, pods/exec, configmaps, namespaces, serviceaccounts, secrets, nodes/status]
+  verbs: [create, get, list, patch, delete, update, watch, deletecollection]
+- apiGroups: [apps]
+  resources: [deployments, daemonsets]
+  verbs: [create, get, list, patch, delete, update, watch]
+- apiGroups: [rbac.authorization.k8s.io]
+  resources: [clusterroles, clusterrolebindings, roles, rolebindings]
+  verbs: [create, get, list, patch, update, watch, delete]
+- apiGroups: [operator.nsx.vmware.com]
+  resources: [ncpinstalls, ncpinstalls/status]
+  verbs: [get, list, watch, patch, update]
+# Required by nsx-node-agent
+- apiGroups: ['']
+  resources: [endpoints, services]
+  verbs: [get, list, watch]
+# Required by nsx-ncp
+- apiGroups: ['', extensions, networking.k8s.io]
+  resources: [namespaces, ingresses, services, pods, networkpolicies, routes]
+  verbs: [get, watch, list, update, patch]
+- apiGroups: [nsx.vmware.com]
+  resources: [nsxerrors, nsxlocks, ncpconfigs]
+  verbs: [create, get, list, patch, delete, update]
+- apiGroups: ['', extensions, networking.k8s.io]
+  resources: [ingresses/status, services/status, routes/status]
+  verbs: [replace, update, patch]
+- apiGroups: [k8s.cni.cncf.io]
+  resources: [network-attachment-definitions]
+  verbs: [get, list, watch]
+- apiGroups: [apiextensions.k8s.io]
+  resources: [customresourcedefinitions]
+  verbs: [create, get, list, patch, update, watch, delete]
+- apiGroups: ['', extensions, networking.k8s.io]
+  resources: [deployments, endpoints, ingressclasses, nodes, pods/log, replicationcontrollers, secrets]
+  verbs: [get, list, watch]
+- apiGroups: [vmware.com]
+  resources: [loadbalancers, loadbalancers/status, nsxlbmonitors, nsxlbmonitors/status, virtualnetworkinterfaces, virtualnetworkinterfaces/status, virtualnetworks, virtualnetworks/status]
+  verbs: [create, get, list, patch, update, watch, delete]
+- apiGroups: [policy]
+  resources: [podsecuritypolicies]
+  verbs: [create, get, list, patch, update, watch, delete, use]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nsx-ncp-operator-config
+  namespace: nsx-system-operator
+data:
+  ncp.ini: |+
+    [DEFAULT]
+    debug = {{ ternary "True" "False" .nsx.debug }}
+
+    [coe]
+    adaptor = kubernetes
+    cluster = {{ .nsx.coe.cluster }}
+    loglevel = {{ .nsx.coe.loglevel | default "INFO" }}
+    enable_snat = {{ ternary "True" "False" .nsx.coe.enable_snat }}
+
+    [nsx_v3]
+    nsx_api_user = {{ .nsx.nsx_v3.nsx_api_user }}
+    nsx_api_password = {{ .nsx.nsx_v3.nsx_api_password }}
+    policy_nsxapi = {{ ternary "True" "False" .nsx.nsx_v3.policy_nsxapi }}
+    top_firewall_section_marker = {{ .nsx.nsx_v3.top_firewall_section_marker }}
+    bottom_firewall_section_marker = {{ .nsx.nsx_v3.bottom_firewall_section_marker }}
+    use_native_loadbalancer = {{ ternary "True" "False" .nsx.nsx_v3.use_native_loadbalancer }}
+    insecure = {{ ternary "True" "False" .nsx.nsx_v3.insecure }}
+    subnet_prefix = {{ .nsx.nsx_v3.subnet_prefix | default "24" }}
+    service_size = {{ .nsx.nsx_v3.service_size | default "SMALL"}}
+    top_tier_router = {{ .nsx.nsx_v3.top_tier_router }}
+    overlay_tz = {{ .nsx.nsx_v3.overlay_tz }}
+    container_ip_blocks = {{ join .nsx.nsx_v3.container_ip_blocks "," }}
+    nsx_api_managers = {{ join .nsx.nsx_v3.nsx_api_managers "," }}
+    [ha]
+
+    [k8s]
+    client_token_file = /var/run/secrets/kubernetes.io/serviceaccount/token
+    ca_file = /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    loglevel = {{ .nsx.nsx_k8s.loglevel | default "INFO" }}
+
+    [nsx_node_agent]
+    ovs_bridge = {{ .nsx.nsx_node_agent.ovs_bridge }}
+    ovs_uplink_port = {{ .nsx.nsx_node_agent.ovs_uplink_port }}
+    loglevel = {{ .nsx.nsx_node_agent.log_level | default "INFO" }}
+    nsxrpc_loglevel = {{ .nsx.nsx_node_agent.log_level | default "INFO" }}

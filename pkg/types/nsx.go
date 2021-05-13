@@ -6,6 +6,7 @@ type NSX struct {
 	Disabled           bool   `structs:"-" yaml:"disabled" json:"disabled,omitempty"`
 	CNIDisabled        bool   `structs:"-" yaml:"cniDisabled" json:"cniDisabled,omitempty"`
 	Image              string `structs:"image" yaml:"image" json:"image"`
+	OperatorImage      string `structs:"-" yaml:"operatorImage" json:"operatorImage"`
 	Version            string `structs:"-" yaml:"version" json:"version"`
 	// If set to true, the logging level will be set to DEBUG instead of the
 	// default INFO level.
