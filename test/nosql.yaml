@@ -4,3 +4,9 @@ rabbitmqOperator:
   version: 0.48.0
 redisOperator:
   version: v1.0.0
+templateOperator:
+  version: v0.1.14
+mongodbOperator:
+  version: v1.6.0
+kafkaOperator:
+  version: v0.22.1

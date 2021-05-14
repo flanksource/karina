@@ -12,7 +12,6 @@ keptn:
   version: v0.7.3
 templateOperator:
   version: v0.1.14
-  syncPeriod: 15s
 mongodbOperator:
   version: v1.6.0
 gitops:
@@ -34,3 +33,5 @@ test:
     - audit
     - encryption
     - platform-operator
+    - template-operator
+    - mongodb-operator
