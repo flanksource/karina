@@ -9,7 +9,7 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.5.3
-	github.com/flanksource/kommons v0.12.0
+	github.com/flanksource/kommons v0.14.0
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/flanksource/template-operator-library v0.1.5
 	github.com/go-logr/logr v0.3.0

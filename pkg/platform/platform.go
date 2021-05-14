@@ -560,12 +560,7 @@ func (platform *Platform) Template(file string, pkg string) (string, error) {
 }
 
 func (platform *Platform) TemplateText(raw string) (string, error) {
-	clientset, err := platform.GetClientset()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get clientset")
-	}
-	fn := ktemplate.NewFunctions(clientset)
-
+	fn := ktemplate.NewFunctions(&platform.Client)
 	return fn.Template(raw, platform.PlatformConfig)
 }
 
