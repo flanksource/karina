@@ -67,7 +67,11 @@ spec:
 
 	kafkaObj := &unstructured.Unstructured{}
 	dec := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	_, _, _ = dec.Decode([]byte(kafkaManifest), nil, kafkaObj)
+	_, _, err := dec.Decode([]byte(kafkaManifest), nil, kafkaObj)
+	if err != nil {
+		test.Failf(testName, "Failed to parse Kafka CR: %v", err)
+		return
+	}
 
 	defer func() {
 		err := p.DeleteUnstructured(Namespace, kafkaObj)
@@ -75,7 +79,7 @@ spec:
 			test.Warnf("Failed to delete Kafka Cluster %s: %v", clusterName, err)
 		}
 	}()
-	err := p.ApplyUnstructured(Namespace, kafkaObj)
+	err = p.ApplyUnstructured(Namespace, kafkaObj)
 	if err != nil {
 		test.Failf(testName, "Failed to create Kafka Cluster %s: %v", clusterName, err)
 		return
