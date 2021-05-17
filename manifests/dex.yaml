@@ -38,7 +38,6 @@ spec:
               mountPath: /etc/dex/cfg
             - name: tls
               mountPath: /ssl
-          env:
           envFrom:
             - secretRef:
               name: google-account
