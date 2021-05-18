@@ -38,14 +38,13 @@ spec:
               mountPath: /etc/dex/cfg
             - name: tls
               mountPath: /ssl
-          env:
           envFrom:
             - secretRef:
-              name: google-account
-              optional: true
+                name: google-account
+                optional: true
             - secretRef:
-              name: ldap-account
-              optional: true
+                name: ldap-account
+                optional: true
       volumes:
         - name: config
           configMap:
