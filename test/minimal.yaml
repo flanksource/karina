@@ -2,7 +2,6 @@
 # the kubeconfig cluster name needs to match this name
 name: !!template kind-{{ getenv "SUITE" }}-{{ getenv "KUBERNETES_VERSION" }}
 patches:
-  - ./test/patch1.yaml
   - ./test/templatePatch.yaml
   - |-
     # This ConfigMap is used to verify template

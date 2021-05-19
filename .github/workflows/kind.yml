@@ -126,6 +126,7 @@ jobs:
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+          ADDITIONAL_CONFIG: -c test/hosted-tests.yaml
         run: ./test/test.sh
       - name: Upload test results
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && always() }}

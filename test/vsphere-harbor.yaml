@@ -4,3 +4,49 @@ platformOperator:
 dockerRegistry: harbor.lab.flanksource.com
 kind:
   image: harbor.lab.flanksource.com/docker.io/kindest/node:v1.18.15
+patches:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: calico-kube-controllers
+      namespace: kube-system
+      labels:
+        k8s-app: calico-kube-controllers
+    spec:
+      template:
+        spec:
+          containers:
+            - name: calico-kube-controllers
+              image: harbor.lab.flanksource.com/docker.io/calico/kube-controllers:v3.8.2
+  - |-
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      name: calico-node
+      namespace: kube-system
+    spec:
+      template:
+        spec:
+          initContainers:
+            - name: install-cni
+              image: harbor.lab.flanksource.com/docker.io/calico/cni:v3.8.2
+            - name: flexvol-driver
+              image: harbor.lab.flanksource.com/docker.io/calico/pod2daemon-flexvol:v3.8.2
+          containers:
+            - name: calico-node
+              image: harbor.lab.flanksource.com/docker.io/calico/node:v3.8.2
+  - |-
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      name: minio
+      namespace: minio
+      labels:
+        app: minio
+    spec:
+      template:
+        spec:
+          containers:
+            - name: minio
+              image: harbor.lab.flanksource.com/docker.io/minio/minio:RELEASE.2020-03-06T22-23-56Z
