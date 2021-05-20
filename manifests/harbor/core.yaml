@@ -46,7 +46,7 @@ data:
   METRIC_NAMESPACE: harbor
   METRIC_SUBSYSTEM: core
   CHART_CACHE_DRIVER: "redis"
-  _REDIS_URL: "harbor-redis:6379,100,"
+  _REDIS_URL_CORE: "redis://harbor-redis:6379/0"
   _REDIS_URL_REG: "redis://harbor-redis:6379/2"
   PORTAL_URL: "https://harbor-portal.harbor.svc.cluster.local."
   REGISTRYCTL_URL: "https://harbor-registry.harbor.svc.cluster.local.:8443"
