@@ -72,6 +72,7 @@ var Phases = map[string]DeployFn{
 	"externaldns":          externaldns.Install,
 	"dashboard":            dashboard.Install,
 	"filebeat":             filebeat.Deploy,
+	"flux":                 flux.InstallV2,
 	"git-operator":         gitoperator.Install,
 	"gitops":               flux.Install,
 	"harbor":               harbor.Deploy,
