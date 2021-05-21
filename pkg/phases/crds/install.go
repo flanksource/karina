@@ -40,6 +40,7 @@ func Install(p *platform.Platform) error {
 		"istio":             p.IstioOperator.IsDisabled,
 		"logs-exporter":     p.LogsExporter.IsDisabled,
 		"karina-operator":   p.KarinaOperator.IsDisabled,
+		"flux":              func() bool { return !p.Flux.Enabled },
 	}
 
 	wg := sync.WaitGroup{}
