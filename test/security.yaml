@@ -9,9 +9,9 @@ test:
     - gitops
 kubernetes:
   auditing:
-    policyFile: ./test/fixtures/audit-policy.yaml
+    policyFile: ./fixtures/audit-policy.yaml
   encryption:
-    encryptionProviderConfigFile: ./test/fixtures/encryption-config.yaml
+    encryptionProviderConfigFile: ./fixtures/encryption-config.yaml
   apiServerExtraArgs:
     "audit-log-path": /var/log/audit/cluster-audit.log
     "audit-log-maxsize": 1024
@@ -42,8 +42,8 @@ oauth2Proxy:
 sealedSecrets:
   version: "v0.15.0"
   certificate:
-    cert: .certs/sealed-secrets-crt.pem
-    privateKey: .certs/sealed-secrets-key.pem
+    cert: ../.certs/sealed-secrets-crt.pem
+    privateKey: ../.certs/sealed-secrets-key.pem
     password: foobar
 vault:
   version: 1.3.2
