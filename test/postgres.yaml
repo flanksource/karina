@@ -25,6 +25,7 @@ postgresOperator:
     keepHourly: 2
     keepDaily: 1
 monitoring:
+  disabled: false
   prometheus:
     persistence:
       capacity: 10Gi

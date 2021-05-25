@@ -27,7 +27,7 @@ const (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.Monitoring == nil {
+	if p.Monitoring.IsDisabled() {
 		return
 	}
 	_ = p.WaitForNamespace("monitoring", 180*time.Second)
@@ -106,7 +106,7 @@ func GetPrometheusClient(p *platform.Platform, service string) (v1.API, error) {
 
 func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	testName := "prometheus"
-	if p.Monitoring == nil || p.Monitoring.Disabled {
+	if p.Monitoring.IsDisabled() {
 		return
 	}
 
