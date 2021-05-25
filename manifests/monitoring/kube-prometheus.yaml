@@ -327,6 +327,10 @@ spec:
   dashboardLabelSelector:
     - matchExpressions:
         - { key: app, operator: In, values: [grafana] }
+  deployment:
+    envFrom:
+      - secretRef:
+          name: grafana-env
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
@@ -360,6 +364,14 @@ spec:
         timeInterval: "5s"
     {{ end }}
     {{ end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-env
+  namespace: monitoring
+stringData:
+  GF_INSTALL_PLUGINS: grafana-piechart-panel 1.6.1
 ---
 {{- if index . "filebeat" }}
 {{- if index . "elasticsearch" }}
