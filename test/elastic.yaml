@@ -66,3 +66,11 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
+hooks:
+  elastic:
+#    before:
+#      value: "../eck.yml"
+    before:
+      value: !!template '{{file.Read  "../eck.yml" }}'
+    after:
+      value: "no"
