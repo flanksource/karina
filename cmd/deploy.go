@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/flanksource/karina/pkg/phases/hooks"
+	"github.com/flanksource/karina/pkg/platform"
 	"os"
 
 	log "github.com/flanksource/commons/logger"
@@ -12,6 +14,22 @@ import (
 var deployExclude []string
 var Deploy = &cobra.Command{
 	Use: "deploy",
+}
+
+func deployPhase(p *platform.Platform, phase string, fn order.DeployFn) bool {
+	if err := hooks.ApplyBeforeHook(p, phase); err != nil {
+		log.Errorf("Failed to deploy before hook %s: %v", phase, errors.WithStack(err))
+		return false
+	}
+	if err := fn(p); err != nil {
+		log.Errorf("Failed to deploy %s: %v", phase, errors.WithStack(err))
+		return false
+	}
+	if err := hooks.ApplyAfterHook(p, phase); err != nil {
+		log.Errorf("Failed to deploy after hook %s: %v", phase, errors.WithStack(err))
+		return false
+	}
+	return true
 }
 
 func init() {
@@ -32,8 +50,7 @@ func init() {
 				if !flag {
 					continue
 				}
-				if err := phases[name].Fn(p); err != nil {
-					log.Errorf("Failed to deploy %s: %v", name, errors.WithStack(err))
+				if success := deployPhase(p, string(name), phases[name].Fn); !success {
 					failed = true
 				}
 				// remove the phase from the map so it isn't run again
@@ -44,9 +61,7 @@ func init() {
 				if !flag {
 					continue
 				}
-
-				if err := deployMap.Fn(p); err != nil {
-					log.Errorf("Failed to deploy %s: %v", name, errors.WithStack(err))
+				if success := deployPhase(p, string(name), deployMap.Fn); !success {
 					failed = true
 				}
 			}
@@ -65,9 +80,7 @@ func init() {
 			Args: cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
 				p := getPlatform(cmd)
-				if err := deployMap.Fn(p); err != nil {
-					log.Fatalf("Failed to deploy %s: %v", name, err)
-				}
+				_ = deployPhase(p, string(name), deployMap.Fn)
 			},
 		})
 	}
@@ -89,16 +102,14 @@ func init() {
 					continue
 				}
 				p.Tracef("Deploying %s", phase)
-				if err := all[phase].Fn(p); err != nil {
-					log.Errorf("Failed to deploy %s: %v", phase, err)
+				if success := deployPhase(p, string(phase), all[phase].Fn); !success {
 					failed = true
 				}
 			}
 
 			for name, deployMap := range phases {
 				p.Tracef("Deploying %s", name)
-				if err := deployMap.Fn(p); err != nil {
-					log.Errorf("Failed to deploy %s: %v", name, err)
+				if success := deployPhase(p, string(name), deployMap.Fn); !success {
 					failed = true
 				}
 			}
