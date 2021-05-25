@@ -339,10 +339,6 @@
       {
         "allFormat": "",
         "allValue": "",
-        "current": {
-          "text": "thanos",
-          "value": "thanos"
-        },
         "datasource": null,
         "hide": 0,
         "includeAll": false,

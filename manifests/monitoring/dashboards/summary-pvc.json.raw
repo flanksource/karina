@@ -575,10 +575,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "text": "prometheus",
-          "value": "prometheus"
-        },
         "hide": 0,
         "includeAll": false,
         "label": null,
@@ -590,6 +586,29 @@
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
+      },
+      {
+        "allFormat": "",
+        "allValue": "",
+        "current": {
+          "text": "",
+          "value": null
+        },
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "multiFormat": "",
+        "name": "Filter",
+        "options": null,
+        "query": "",
+        "refresh": false,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "adhoc"
       }
     ]
   },

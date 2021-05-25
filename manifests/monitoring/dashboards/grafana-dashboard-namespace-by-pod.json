@@ -1141,10 +1141,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "text": "prometheus",
-          "value": "prometheus"
-        },
         "hide": 0,
         "includeAll": false,
         "label": null,
