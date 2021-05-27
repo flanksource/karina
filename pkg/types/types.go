@@ -679,6 +679,18 @@ type IstioOperator struct {
 	XDisabled `yaml:",inline" json:",inline"`
 }
 
+type LocalPath struct {
+	XDisabled `yaml:",inline" json:",inline"`
+}
+
+type NamespaceConfigurator struct {
+	XEnabled `yaml:",inline" json:",inline"`
+}
+
+type Quack struct {
+	XEnabled `yaml:",inline" json:",inline"`
+}
+
 type GitOps struct {
 	// The name of the gitops deployment, defaults to namespace name
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`

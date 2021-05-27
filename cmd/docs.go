@@ -51,6 +51,11 @@ var (
 	selfLinks = map[string]string{}
 )
 
+var excludedTypes = []string{
+	"XEnabled",
+	"XDisabled",
+}
+
 func printAPIDocs(paths []string) {
 	types := ParseDocumentationFrom(paths)
 	for _, t := range types {
@@ -127,7 +132,22 @@ func ParseDocumentationFrom(srcs []string) []KubeTypes {
 		}
 	}
 
-	return docForTypes
+	docWithoutExcludedTypes := []KubeTypes{}
+	for _, t := range docForTypes {
+		found := false
+		for _, et := range excludedTypes {
+			if strings.HasPrefix(t[0].Name, et) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			docWithoutExcludedTypes = append(docWithoutExcludedTypes, t)
+		}
+	}
+
+	return docWithoutExcludedTypes
 }
 
 func astFrom(filePath string) *doc.Package {

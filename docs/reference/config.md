@@ -1,21 +1,4 @@
 
-## XDisabled
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| disabled |  | Boolean | Yes |
-| version |  | string | Yes |
-
-## XEnabled
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| disabled |  | Boolean | Yes |
-
 ## PlatformConfig
 
 
@@ -67,14 +50,14 @@
 | kubernetes |  | [Kubernetes](#kubernetes) | Yes |
 | kubeWebView |  | *[KubeWebView](#kubewebview) |  |
 | ldap |  | *[Ldap](#ldap) |  |
-| localPath |  | [XDisabled](#xdisabled) |  |
+| localPath |  | [LocalPath](#localpath) |  |
 | logsExporter |  | [LogsExporter](#logsexporter) |  |
 | master |  | [VM](#vm) |  |
 | minio |  | [Minio](#minio) |  |
 | mongodbOperator |  | [MongodbOperator](#mongodboperator) |  |
 | monitoring |  | [Monitoring](#monitoring) |  |
 | name |  | string | Yes |
-| namespaceConfigurator |  | *[XEnabled](#xenabled) |  |
+| namespaceConfigurator |  | *[NamespaceConfigurator](#namespaceconfigurator) |  |
 | nfs |  | *[NFS](#nfs) |  |
 | nginx |  | *[Nginx](#nginx) |  |
 | nodeLocalDNS |  | [NodeLocalDNS](#nodelocaldns) |  |
@@ -87,7 +70,7 @@
 | podSubnet |  | string | Yes |
 | policies |  | []string |  |
 | postgresOperator |  | [PostgresOperator](#postgresoperator) |  |
-| quack |  | *[XEnabled](#xenabled) |  |
+| quack |  | *[Quack](#quack) |  |
 | rabbitmqOperator |  | [RabbitmqOperator](#rabbitmqoperator) |  |
 | redisOperator |  | [RedisOperator](#redisoperator) |  |
 | registryCredentials |  | *[RegistryCredentials](#registrycredentials) |  |
@@ -742,6 +725,15 @@ Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resour
 | ports |  | []string | Yes |
 | monitorPort |  | *[MonitorPort](#monitorport) |  |
 
+## LocalPath
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | Boolean | Yes |
+| version |  | string | Yes |
+
 ## LogsExporter
 
 
@@ -832,6 +824,14 @@ Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resour
 | ----- | ----------- | ------ | -------- |
 | host |  | string |  |
 | path |  | string |  |
+
+## NamespaceConfigurator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | Boolean | Yes |
 
 ## Nginx
 
@@ -925,6 +925,14 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 | version |  | string |  |
 | disabled |  | bool |  |
 | persistence |  | [Persistence](#persistence) |  |
+
+## Quack
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | Boolean | Yes |
 
 ## RabbitmqOperator
 
