@@ -89,7 +89,7 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 					return false
 				}
 				if p.TemplateOperator.IsDisabled() {
-					test.Failf("base", "Expected templateOperator.Disabled to equal true got %s", p.TemplateOperator.Disabled)
+					test.Failf("base", "Expected templateOperator.Disabled to equal true got %t", p.TemplateOperator.IsDisabled())
 					return false
 				}
 				return true
@@ -110,7 +110,7 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 					test.Failf("base", "Expected templateOperator.Version to equal v2.3.4 got %s", p.TemplateOperator.Version)
 					return false
 				}
-				if p.TemplateOperator.IsDisabled() != false {
+				if p.TemplateOperator.IsDisabled() {
 					test.Failf("base", "Expected templateOperator.IsDisabled to equal false got %t", p.TemplateOperator.IsDisabled())
 					return false
 				}
@@ -132,8 +132,8 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 					test.Failf("base", "Expected templateOperator.Version to equal %s got %s", templateOperatorVersion, p.TemplateOperator.Version)
 					return false
 				}
-				if p.TemplateOperator.IsDisabled() != false {
-					test.Failf("base", "Expected templateOperator.Disabled to equal false got %s", p.TemplateOperator.IsDisabled())
+				if p.TemplateOperator.IsDisabled() {
+					test.Failf("base", "Expected templateOperator.Disabled to equal false got %t", p.TemplateOperator.IsDisabled())
 					return false
 				}
 				return true

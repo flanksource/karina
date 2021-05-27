@@ -27,6 +27,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const inlineMarker = "-inline"
+
 var APIDocs = &cobra.Command{
 	Use:   "api",
 	Short: "Generate docs ",
@@ -113,10 +115,10 @@ func ParseDocumentationFrom(srcs []string) []KubeTypes {
 				for _, field := range structType.Fields.List {
 					typeString := fieldType(field.Type)
 					fieldMandatory := fieldRequired(field)
-					if n := fieldName(field); n != "-" && n != "-inline" {
+					if n := fieldName(field); n != "-" && n != inlineMarker {
 						fieldDoc := fmtRawDoc(field.Doc.Text())
 						ks = append(ks, Pair{n, fieldDoc, typeString, fieldMandatory})
-					} else if n == "-inline" {
+					} else if n == inlineMarker {
 						inlineFieldType := fieldInlineType(field.Type)
 						inlineField, ok := typesMap[inlineFieldType]
 						if ok {
@@ -232,7 +234,7 @@ func fieldName(field *ast.Field) string {
 	if field.Tag != nil {
 		jsonTag = reflect.StructTag(field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("yaml") // Delete first and last quotation
 		if strings.Contains(jsonTag, "inline") {
-			return "-inline"
+			return inlineMarker
 		}
 	}
 

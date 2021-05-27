@@ -20,6 +20,7 @@ limitations under the License.
 
 package types
 
+// nolint: goimports
 import (
 	"encoding/json"
 	"github.com/flanksource/karina/pkg/api/calico"
