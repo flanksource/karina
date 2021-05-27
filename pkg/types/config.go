@@ -59,14 +59,14 @@ type PlatformConfig struct {
 	Kubernetes            Kubernetes           `yaml:"kubernetes" json:"kubernetes,omitempty"`
 	KubeWebView           *KubeWebView         `yaml:"kubeWebView,omitempty" json:"kubeWebView,omitempty"`
 	Ldap                  *Ldap                `yaml:"ldap,omitempty" json:"ldap,omitempty"`
-	LocalPath             Disabled             `yaml:"localPath,omitempty" json:"localPath,omitempty"`
+	LocalPath             XDisabled            `yaml:"localPath,omitempty" json:"localPath,omitempty"`
 	LogsExporter          LogsExporter         `yaml:"logsExporter,omitempty" json:"logsExporter,omitempty"`
 	Master                VM                   `yaml:"master,omitempty" json:"master,omitempty"`
 	Minio                 Minio                `yaml:"minio,omitempty" json:"minio,omitempty"`
 	MongodbOperator       MongodbOperator      `yaml:"mongodbOperator,omitempty" json:"mongodbOperator,omitempty"`
 	Monitoring            Monitoring           `yaml:"monitoring,omitempty" json:"monitoring,omitempty"`
 	Name                  string               `yaml:"name" json:"name,omitempty"`
-	NamespaceConfigurator *Enabled             `yaml:"namespaceConfigurator,omitempty" json:"namespaceConfigurator,omitempty"`
+	NamespaceConfigurator *XEnabled            `yaml:"namespaceConfigurator,omitempty" json:"namespaceConfigurator,omitempty"`
 	NFS                   *NFS                 `yaml:"nfs,omitempty" json:"nfs,omitempty"`
 	Nginx                 *Nginx               `yaml:"nginx,omitempty" json:"nginx,omitempty"`
 	NodeLocalDNS          NodeLocalDNS         `yaml:"nodeLocalDNS,omitempty" json:"nodeLocalDNS,omitempty"`

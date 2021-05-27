@@ -1,67 +1,165 @@
 
+## XDisabled
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## XEnabled
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | bool | Yes |
+
 ## PlatformConfig
 
 
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
+| aws |  | [AWS](#aws) |  |
+| antrea |  | [Antrea](#antrea) |  |
+| argocdOperator |  | [ArgocdOperator](#argocdoperator) |  |
+| argoRollouts |  | [ArgoRollouts](#argorollouts) |  |
+| auditbeat |  | [Auditbeat](#auditbeat) |  |
 | brand |  | [Brand](#brand) |  |
-| version |  | string | Yes |
-| velero |  | *[Velero](#velero) |  |
 | ca |  | *[CA](#ca) | Yes |
 | calico |  | [Calico](#calico) |  |
+| canaryChecker |  | *[CanaryChecker](#canarychecker) |  |
 | certmanager |  | [CertManager](#certmanager) |  |
-| consul | The endpoint for an externally hosted consul cluster that is used for master discovery | string | Yes |
+| configFrom |  | [][ConfigDirective](#configdirective) |  |
+| configmapReloader |  | [ConfigMapReloader](#configmapreloader) |  |
+| consul | The endpoint for an externally hosted consul cluster  that is used for master discovery | string | Yes |
 | dashboard |  | [Dashboard](#dashboard) |  |
+| data | Semistructured data to be reused using YAML anchors | map[string]json.RawMessage |  |
 | datacenter |  | string | Yes |
-| dns |  | *[DynamicDNS](#dynamicdns) |  |
+| dex |  | [Dex](#dex) |  |
+| dns |  | [DynamicDNS](#dynamicdns) |  |
 | dockerRegistry |  | string |  |
 | domain | The wildcard domain that cluster will be available at | string | Yes |
-| eventRouter |  | *[Enabled](#enabled) |  |
+| eck |  | [ECK](#eck) |  |
+| elasticsearch |  | *[Elasticsearch](#elasticsearch) |  |
+| eventrouter |  | [EventRouter](#eventrouter) |  |
+| externalDns |  | [ExternalDNS](#externaldns) |  |
+| filebeat |  | [][Filebeat](#filebeat) |  |
+| gcp |  | [GCP](#gcp) |  |
+| gatekeeper |  | [Gatekeeper](#gatekeeper) |  |
+| gitOperator |  | [GitOperator](#gitoperator) |  |
+| gitops |  | [][GitOps](#gitops) |  |
 | harbor |  | *[Harbor](#harbor) |  |
 | hostPrefix | A prefix to be added to VM hostnames. | string | Yes |
-| importConfigs (Deprecated) | Paths to additional config files to be merged into this config.  Please use configFrom: []file instead | []string |  |
-| configFrom | List of objects containing karina config | [][ImportDirective](#importdirective) |  |
+| importConfigs | Deprecated, use configFrom instead | []string |  |
+| importSecrets |  | []v1.SecretReference |  |
 | ingressCA |  | *[CA](#ca) | Yes |
-| gitops |  | [][GitOps](#gitops) |  |
+| istioOperator |  | [IstioOperator](#istiooperator) |  |
+| journalbeat |  | [Journalbeat](#journalbeat) |  |
+| keptn |  | [Keptn](#keptn) |  |
+| karinaOperator |  | [KarinaOperator](#karinaoperator) |  |
+| kind |  | [Kind](#kind) |  |
+| kiosk |  | [Kiosk](#kiosk) |  |
+| kpack |  | [Kpack](#kpack) |  |
+| kubeResourceReport |  | *[KubeResourceReport](#kuberesourcereport) |  |
 | kubernetes |  | [Kubernetes](#kubernetes) | Yes |
+| kubeWebView |  | *[KubeWebView](#kubewebview) |  |
 | ldap |  | *[Ldap](#ldap) |  |
-| localPath |  | *[Enabled](#enabled) |  |
+| localPath |  | [XDisabled](#xdisabled) |  |
+| logsExporter |  | [LogsExporter](#logsexporter) |  |
 | master |  | [VM](#vm) |  |
-| monitoring |  | *[Monitoring](#monitoring) |  |
+| minio |  | [Minio](#minio) |  |
+| mongodbOperator |  | [MongodbOperator](#mongodboperator) |  |
+| monitoring |  | [Monitoring](#monitoring) |  |
 | name |  | string | Yes |
-| namespaceConfigurator |  | *[Enabled](#enabled) |  |
+| namespaceConfigurator |  | *[XEnabled](#xenabled) |  |
 | nfs |  | *[NFS](#nfs) |  |
-| workers |  | map[string][VM](#vm) |  |
+| nginx |  | *[Nginx](#nginx) |  |
 | nodeLocalDNS |  | [NodeLocalDNS](#nodelocaldns) |  |
+| workers |  | map[string][VM](#vm) |  |
 | nsx |  | *[NSX](#nsx) |  |
 | oauth2Proxy |  | *[OAuth2Proxy](#oauth2proxy) |  |
-| opa |  | *[OPA](#opa) |  |
-| postgresOperator |  | *[PostgresOperator](#postgresoperator) |  |
+| packetbeat |  | [Packetbeat](#packetbeat) |  |
+| patches | A list of strategic merge patches that will be applied to all resources created, can either be a path to a file or an inline patch | []string |  |
+| platformOperator |  | [PlatformOperator](#platformoperator) |  |
 | podSubnet |  | string | Yes |
 | policies |  | []string |  |
-| patches | A list of strategic merge patches that will be applied to all resources created | []string |  |
-| quack |  | *[Enabled](#enabled) |  |
+| postgresOperator |  | [PostgresOperator](#postgresoperator) |  |
+| quack |  | *[XEnabled](#xenabled) |  |
+| rabbitmqOperator |  | [RabbitmqOperator](#rabbitmqoperator) |  |
+| redisOperator |  | [RedisOperator](#redisoperator) |  |
 | registryCredentials |  | *[RegistryCredentials](#registrycredentials) |  |
 | resources |  | map[string]string |  |
 | s3 |  | [S3](#s3) |  |
+| s3uploadCleaner |  | *[S3UploadCleaner](#s3uploadcleaner) |  |
 | sealedSecrets |  | *[SealedSecrets](#sealedsecrets) |  |
 | serviceSubnet |  | string | Yes |
 | smtp |  | [SMTP](#smtp) |  |
 | specs |  | []string |  |
-| trustedCA |  | string |  |
-| versions |  | map[string]string |  |
-| platformOperator |  | *[Enabled](#enabled) |  |
-| nginx |  | *[Nginx](#nginx) |  |
-| minio |  | *[Enabled](#enabled) |  |
-| fluentd |  | *[FluentdOperator](#fluentdoperator) |  |
-| eck |  | *[ECK](#eck) |  |
+| tekton |  | [Tekton](#tekton) |  |
+| templateOperator |  | [TemplateOperator](#templateoperator) |  |
+| terminationProtection | If true, terminate operations will return an error. Used to  protect stateful clusters | bool |  |
+| test |  | [Test](#test) |  |
 | thanos |  | *[Thanos](#thanos) |  |
-| filebeat |  | *[Filebeat](#filebeat) |  |
+| trustedCA |  | string |  |
 | vault |  | *[Vault](#vault) |  |
-| configmapReloader |  | [ConfigMapReloader](#configmapreloader) |  |
-| elasticsearch |  | *[Elasticsearch](#elasticsearch) |  |
-| terminationProtection | If true, terminate operations will return an error. Used to protect stateful clusters | bool |  |
+| velero |  | [Velero](#velero) |  |
+| version |  | string | Yes |
+| versions |  | map[string]string | Yes |
+| vpa |  | [VPA](#vpa) |  |
+| vsphere |  | *[Vsphere](#vsphere) |  |
+
+## AWS
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| serviceAccount |  | string |  |
+| zone |  | string |  |
+| access_key |  | string |  |
+| secret_key |  | string |  |
+
+## AlertManager
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| version |  | string |  |
+| disabled |  | bool |  |
+| configNamespaces |  | []string | Yes |
+| alertRelabelingConfig |  | string | Yes |
+
+## Antrea
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| isCertReady |  | bool | Yes |
+
+## ArgoRollouts
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## ArgocdOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
 
 ## AuditConfig
 
@@ -70,6 +168,16 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | policyFile |  | string |  |
+
+## Auditbeat
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| kibana |  | *[Connection](#connection) |  |
 
 ## Brand
 
@@ -97,14 +205,24 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
 | ipip |  | calico.IPIPMode | Yes |
 | vxlan |  | calico.VXLANMode | Yes |
-| version |  | string |  |
 | log |  | string |  |
 | bgpPeers |  | []calico.BGPPeer |  |
 | bgpConfig |  | calico.BGPConfiguration |  |
 | ipPools |  | []calico.IPPool |  |
+
+## CanaryChecker
+
+Canary-checker allows for the deployment and configuration of the canary-checker
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | bool | Yes |
+| version |  | string | Yes |
+| aggregateServers |  | []string | Yes |
 
 ## CertManager
 
@@ -114,6 +232,17 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | ----- | ----------- | ------ | -------- |
 | version |  | string | Yes |
 | vault | Details of a vault server to use for signing ingress certificates | *[VaultClient](#vaultclient) |  |
+| letsencrypt | Details of a Letsencrypt issuer to use for signing ingress certificates | *[LetsencryptIssuer](#letsencryptissuer) |  |
+
+## ConfigDirective
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| file |  | string |  |
+| sops |  | string |  |
+| secretRef |  | v1.SecretReference |  |
 
 ## ConfigMapReloader
 
@@ -166,8 +295,31 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| Enabled |  | [Enabled](#enabled) |  |
-| accessRestricted |  | [LdapAccessConfig](#ldapaccessconfig) |  |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## DefaultBackupRetention
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| keepLast |  | int |  |
+| keepHourly |  | int |  |
+| keepDaily |  | int |  |
+| keepWeekly |  | int |  |
+| keepMonthly |  | int |  |
+| keepYearly |  | int |  |
+
+## Dex
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| google |  | [GoogleOIDC](#googleoidc) |  |
 
 ## DynamicDNS
 
@@ -176,14 +328,16 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | disabled |  | bool |  |
-| nameserver |  | string |  |
-| key |  | string |  |
-| keyName |  | string |  |
-| algorithm |  | string |  |
+| updateHosts | Set to true if you want DNS records added to k8s-api and \"*\" for every new worker and master created. | bool |  |
+| nameserver | Nameserver and port for dynamic DNS updates | string |  |
+| key | Dynamic DNS key secret | string |  |
+| keyName | Dynamic DNS key name | string |  |
+| algorithm | A Dynamic DNS signature algorithm, one of: hmac-md5, hmac-sha1, hmac-256, hmac-512 | string |  |
 | zone |  | string |  |
+| region |  | string |  |
 | accessKey |  | string |  |
 | secretKey |  | string |  |
-| type |  | string |  |
+| type | Type of DNS provider. Defaults to RFC 2136 Dynamic DNS. If using \"route53\" you must specify accessKey, secretKey and zone | string |  |
 
 ## ECK
 
@@ -191,7 +345,7 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
+| disabled |  | string | Yes |
 | version |  | string | Yes |
 
 ## Elasticsearch
@@ -206,13 +360,32 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | persistence |  | *[Persistence](#persistence) |  |
 | disabled |  | bool |  |
 
-## Enabled
+## EncryptionConfig
+
+Specifies Cluster Encryption Provider Config, primarily by specifying the Encryption Provider Config File supplied to the cluster API Server.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| encryptionProviderConfigFile |  | string |  |
+
+## EventRouter
 
 
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool | Yes |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## ExternalDNS
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| args |  | map[string]string | Yes |
 
 ## Filebeat
 
@@ -220,22 +393,55 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
 | version |  | string | Yes |
-| disabled |  | bool |  |
+| name |  | string | Yes |
+| index |  | string | Yes |
+| prefix |  | string | Yes |
 | elasticsearch |  | *[Connection](#connection) |  |
 | logstash |  | *[Connection](#connection) |  |
-| ssl | | map[string]interface | |
+| ssl |  | map[string]string |  |
 
-## FluentdOperator
+## GCP
 
 
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
+| project |  | string |  |
+| serviceAccount |  | string |  |
+| zone |  | string |  |
+
+## Gatekeeper
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
 | version |  | string | Yes |
-| elasticsearch |  | [Connection](#connection) |  |
-| disableDefaultConfig |  | bool | Yes |
+| templates | Templates is a path to directory containing gatekeeper templates | string |  |
+| constraints | Templates is a path to directory containing gatekeeper constraints | string |  |
+| auditInterval |  | int |  |
+| whitelistNamespaces |  | []string |  |
+| e2e |  | [GatekeeperE2E](#gatekeepere2e) |  |
+
+## GatekeeperE2E
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| fixtures |  | string |  |
+
+## GitOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
 
 ## GitOps
 
@@ -254,8 +460,19 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | gitKey | The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: `flux-$name-git-deploy`) | string |  |
 | knownHosts | The contents of the known_hosts file to mount into Flux and helm-operator | string |  |
 | sshConfig | The contents of the ~/.ssh/config file to mount into Flux and helm-operator | string |  |
-| fluxVersion | The version to use for flux (default: 1.9.0 ) | string |  |
+| fluxVersion | The version to use for flux (default: 1.20.0 ) | string |  |
+| helmOperatorVersion | The version to use for helm operator (default: 1.20.0 ) | string |  |
 | args | a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list | map[string]string |  |
+
+## GoogleOIDC
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| clientID |  | string |  |
+| clientSecret |  | string |  |
+| hostedDomains |  | []string |  |
 
 ## Grafana
 
@@ -274,8 +491,10 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | ----- | ----------- | ------ | -------- |
 | disabled |  | bool |  |
 | version |  | string |  |
+| registryPVC |  | string |  |
+| chartPVC |  | string |  |
 | chartVersion |  | string |  |
-| clairVersion |  | string | Yes |
+| trivyVersion |  | string | Yes |
 | registryVersion |  | string | Yes |
 | logLevel | Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`) | string |  |
 | db |  | *[DB](#db) |  |
@@ -283,6 +502,8 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | projects |  | map[string][HarborProject](#harborproject) |  |
 | settings |  | *[HarborSettings](#harborsettings) |  |
 | replicas |  | int |  |
+| s3 |  | *[S3Connection](#s3connection) |  |
+| s3DisableRedirect |  | bool | Yes |
 | bucket | S3 bucket for the docker registry to use | string | Yes |
 
 ## HarborProject
@@ -336,13 +557,122 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | oidc_verify_cert |  | string |  |
 | robot_token_duration |  | int |  |
 
-## ImportDirective
+## Image
+
+
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| file | Path to normal karina config| string | |
-| sops | Path to [sops](https://github.com/mozilla/sops) encrypted karina config.  Must be encrypted as type `yaml` | string | |
-| secretRef | Reference to k8s secret containing karina config | *[v1.SecretReference](https://pkg.go.dev/k8s.io/api/core/v1@v0.19.3#SecretReference) | |
+| buildInit |  | string |  |
+| buildInitWindows |  | string |  |
+| rebase |  | string |  |
+| lifecycle |  | string |  |
+| completion |  | string |  |
+| completionWindows |  | string |  |
+| controller |  | string |  |
+| webhook |  | string |  |
+
+## IstioOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## Journalbeat
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| kibana |  | *[Connection](#connection) |  |
+
+## KarinaOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| syncPeriod |  | string |  |
+
+## Karma
+
+Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| version |  | string |  |
+| alertManagers |  | map[string]string | Yes |
+
+## Keptn
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## Kind
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| portMappings |  | map[string]int32 |  |
+| workerCount |  | int |  |
+| image |  | string |  |
+
+## Kiosk
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## Kpack
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | bool |  |
+| image |  | [Image](#image) |  |
+
+## KubeResourceReport
+
+Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled | Disable kube-resource-report | bool |  |
+| version | Specify version to use (see [releases](https://github.com/hjacobs/kube-resource-report/releases)) | string |  |
+| updateInterval | update interval in minutes | int |  |
+| additionalClusterCost | add a fixed extra cost per cluster | int32 |  |
+| costs | specify costs inline | map[string]int32 |  |
+| costsfile | specify a CSV file with custom costs for nodes with rows in the form: columns: region,instance-type,monthly-price-usd to apply this add labels to cluster nodes: region is defined via the node label \"failure-domain.beta.kubernetes.io/region\" instance-type is defined via the node label \"beta.kubernetes.io/instance-type\" | string |  |
+| extraClusters | a map of extra clusters that kube-resource report will report on. in the form: clusterName: cluster API endpoint e.g.:\n extraClusters:\n   k8s-reports2: \"https://10.100.2.69:6443\"\nthe CA for the current cluster needs to be trusted by the given external cluster. | ExternalClusters |  |
+| teamlabels | A comma separated list of labels applied to k8s objects to identify team ownership. These are reported on in the *Teams* tab of the report. Multiple labels may be specified. Default value is \"team,owner\". | string |  |
+
+## KubeWebView
+
+Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | bool |  |
+| version |  | string |  |
+| viewLogs |  | bool |  |
+| viewSecrets |  | bool |  |
+| extraClusters | a map of extra clusters that kube-resource report will report on. in the form: clusterName: cluster API endpoint e.g.:\n extraClusters:\n   k8s-reports2: \"https://10.100.2.69:6443\"\nthe CA for the current cluster needs to be trusted by the given external cluster. | ExternalClusters |  |
 
 ## Kubernetes
 
@@ -358,6 +688,9 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | etcdExtraArgs | Configure additional etcd [flags](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md) | map[string]string |  |
 | masterIP |  | string |  |
 | auditing | Configure Kubernetes auditing | [AuditConfig](#auditconfig) |  |
+| encryption | EncryptionConfig is used to specify the encryption configuration file. | [EncryptionConfig](#encryptionconfig) |  |
+| containerRuntime | Configure container runtime: docker/containerd | string | Yes |
+| managed | True for a managed cluster where the user does not have access to the control plane | bool |  |
 
 ## Ldap
 
@@ -376,17 +709,8 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | groupDN |  | string |  |
 | groupObjectClass | GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS | string |  |
 | groupNameAttr | GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS | string |  |
+| userGroups |  | []string | Yes |
 | e2e |  | [LdapE2E](#ldape2e) |  |
-
-## LdapAccessConfig
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| enabled |  | bool |  |
-| groups |  | []string |  |
-| snippet |  | string |  |
 
 ## LdapE2E
 
@@ -398,6 +722,36 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | username | Username to be used for OIDC integration tests | string |  |
 | password | Password to be used for or OIDC integration tests | string |  |
 
+## LetsencryptIssuer
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| email |  | string |  |
+| url |  | string |  |
+
+## LoadBalancerConfig
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| ports |  | []string | Yes |
+| monitorPort |  | *[MonitorPort](#monitorport) |  |
+
+## LogsExporter
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| syncPeriod |  | string | Yes |
+
 ## Memory
 
 
@@ -407,18 +761,54 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 | requests |  | string |  |
 | limits |  | string |  |
 
+## Minio
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| replicas |  | int |  |
+| access_key |  | string |  |
+| secret_key |  | string |  |
+| kmsMasterKey |  | string |  |
+| persistence |  | [Persistence](#persistence) |  |
+
+## MongodbOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## MonitorPort
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| port |  | string | Yes |
+| timeout |  | int64 | Yes |
+| interval |  | int64 | Yes |
+| riseCount |  | int64 | Yes |
+| fallCount |  | int64 | Yes |
+
 ## Monitoring
 
 
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
+| disabled |  | Boolean |  |
 | alert_email |  | string |  |
 | version |  | string |  |
 | prometheus |  | [Prometheus](#prometheus) |  |
+| karma |  | [Karma](#karma) |  |
 | grafana |  | [Grafana](#grafana) |  |
-| alertMmanager |  | string |  |
+| alertmanager |  | [AlertManager](#alertmanager) |  |
 | kubeStateMetrics |  | string |  |
 | kubeRbacProxy |  | string |  |
 | nodeExporter |  | string |  |
@@ -451,9 +841,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 | ----- | ----------- | ------ | -------- |
 | disabled |  | bool | Yes |
 | version | The version of the nginx controller to deploy (default: `0.25.1.flanksource.1`) | string | Yes |
-| disableAccessLog | Disable access logs | bool |  |
-| requestBodyBuffer | Size of request body buffer (default: `16M`) | string |  |
-| requestBodyMax | Max size of request body (default: `32M`) | string |  |
+| config | Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) for a full list of options | map[string]string |  |
 
 ## NodeLocalDNS
 
@@ -473,36 +861,19 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | disabled |  | bool | Yes |
-| cookieSecret |  | string |  |
 | version |  | string |  |
-| oidcGroup |  | string |  |
+| redis |  | *[Redis](#redis) |  |
 
-## OPA
+## Packetbeat
 
 
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
-| namespaceWhitelist |  | []string |  |
-| kubeMgmtVersion |  | string |  |
-| version |  | string |  |
-| bundleUrl |  | string |  |
-| bundlePrefix |  | string |  |
-| bundleServiceName |  | string |  |
-| logFormat |  | string |  |
-| setDecisionLogs |  | bool |  |
-| policies | Policies is a path to directory containing .rego policy files | string |  |
-| logLevel | Log level for opa server, one of: `debug`,`info`,`error` (default: `error`) | string |  |
-| e2e |  | [OPAE2E](#opae2e) |  |
-
-## OPAE2E
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| fixtures |  | string |  |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| elasticsearch |  | *[Connection](#connection) |  |
+| kibana |  | *[Connection](#connection) |  |
 
 ## Persistence
 
@@ -510,9 +881,24 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| enabled | Enable persistence for Prometheus | bool |  |
+| enabled | Enable persistence for Prometheus | bool | Yes |
 | storageClass | Storage class to use. If not set default one will be used | string |  |
 | capacity | Capacity. Required if persistence is enabled | string |  |
+
+## PlatformOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| enableClusterResourceQuota |  | bool | Yes |
+| defaultImagePullSecret |  | string |  |
+| registryWhitelist |  | []string |  |
+| defaultRegistry |  | string |  |
+| whitelistedPodAnnotations |  | []string |  |
+| args |  | map[string]string |  |
 
 ## PostgresOperator
 
@@ -520,13 +906,15 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
+| disabled |  | string | Yes |
 | version |  | string | Yes |
 | dbVersion |  | string |  |
-| backupBucket |  | string |  |
-| backupSchedule |  | string |  |
 | spiloImage |  | string |  |
 | backupImage |  | string |  |
+| backupPassword |  | string |  |
+| defaultBackupBucket |  | string |  |
+| defaultBackupSchedule |  | string |  |
+| defaultBackupRetention |  | [DefaultBackupRetention](#defaultbackupretention) |  |
 
 ## Prometheus
 
@@ -537,6 +925,35 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 | version |  | string |  |
 | disabled |  | bool |  |
 | persistence |  | [Persistence](#persistence) |  |
+
+## RabbitmqOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+
+## Redis
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| enabled |  | bool |  |
+| replicas |  | int |  |
+| sentinelReplicas |  | int |  |
+| storageClass |  | string |  |
+
+## RedisOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
 
 ## RegistryCredentials
 
@@ -604,17 +1021,23 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
+| csiVolumes |  | bool |  |
+| kmsMasterKey | Provide a KMS Master Key | string |  |
+| e2e |  | [S3E2E](#s3e2e) |  |
+
+## S3Connection
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
 | access_key |  | string |  |
 | secret_key |  | string |  |
 | bucket |  | string |  |
 | region |  | string |  |
 | endpoint | The endpoint at which the S3-like object storage will be available from inside the cluster e.g. if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000` | string |  |
-| externalEndpoint | The endpoint at which S3 is accessible outside the cluster, When deploying locally on kind specify: *minio.127.0.0.1.nip.io* | string |  |
-| csiVolumes | Whether to enable the *s3* storage class that creates persistent volumes FUSE mounted to S3 buckets | bool |  |
-| kmsMasterKey | Provide a KMS Master Key | string |  |
 | usePathStyle | UsePathStyle http://s3host/bucket instead of http://bucket.s3host | bool | Yes |
 | skipTLSVerify | Skip TLS verify when connecting to S3 | bool | Yes |
-| e2e |  | [S3E2E](#s3e2e) |  |
 
 ## S3E2E
 
@@ -623,6 +1046,18 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | minio |  | bool |  |
+
+## S3UploadCleaner
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | bool | Yes |
+| version |  | string | Yes |
+| endpoint |  | string | Yes |
+| bucket |  | string | Yes |
+| schedule |  | string | Yes |
 
 ## SMTP
 
@@ -642,9 +1077,40 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| Enabled |  | [Enabled](#enabled) |  |
+| disabled |  | bool | Yes |
 | version |  | string |  |
-| certificate |  | *certs.Certificate |  |
+| certificate |  | *[CA](#ca) |  |
+
+## Tekton
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| dashboardVersion |  | string |  |
+| eventsVersion |  | string |  |
+| persistence |  | [Persistence](#persistence) |  |
+| featureFlags |  | map[string]string |  |
+
+## TemplateOperator
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
+| syncPeriod |  | string |  |
+
+## Test
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| exclude | A list of tests to exclude from testings | []string |  |
 
 ## Thanos
 
@@ -652,9 +1118,10 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool | Yes |
+| disabled |  | string | Yes |
 | version |  | string | Yes |
-| mode | Must be either `client` or `obeservability`. | string |  |
+| retention | Retention of long-term storage, defaults to 180d | string |  |
+| mode | Must be either `client` or `observability`. | string |  |
 | bucket | Bucket to store metrics. Must be the same across all environments | string |  |
 | clientSidecars | Only for observability mode. List of client sidecars in `<hostname>:<port>`` format | []string |  |
 | enableCompactor | Only for observability mode. Disable compactor singleton if there are multiple observability clusters | bool |  |
@@ -677,6 +1144,7 @@ VM captures the specifications of a virtual machine
 | name |  | string |  |
 | prefix |  | string |  |
 | count | Number of VM's to provision | int | Yes |
+| contentLibrary |  | string | Yes |
 | template |  | string | Yes |
 | cluster |  | string |  |
 | folder |  | string |  |
@@ -689,6 +1157,18 @@ VM captures the specifications of a virtual machine
 | tags | Tags to be applied to the VM | map[string]string |  |
 | commands |  | []string |  |
 | konfigadm | A path to a konfigadm specification used for configuring the VM on creation. | string |  |
+| annotations |  | map[string]string |  |
+| kubeletExtraArgs |  | map[string]string |  |
+| loadBalancerConfig |  | [LoadBalancerConfig](#loadbalancerconfig) |  |
+
+## VPA
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| disabled |  | string | Yes |
+| version |  | string | Yes |
 
 ## Vault
 
@@ -698,10 +1178,8 @@ VM captures the specifications of a virtual machine
 | ----- | ----------- | ------ | -------- |
 | version |  | string | Yes |
 | token | A VAULT_TOKEN to use when authenticating with Vault | string |  |
-| roles | A map of PKI secret roles to create/update See [pki](https://www.vaultproject.io/api-docs/secret/pki/#createupdate-role) | map[string]map[string] |  |
 | policies |  | map[string]VaultPolicy |  |
 | groupMappings |  | map[string][]string |  |
-| config | ExtraConfig is an escape hatch that allows writing to arbritrary vault paths | map[string]map[string] |  |
 | disabled |  | bool |  |
 | accessKey |  | string |  |
 | secretKey |  | string |  |
@@ -715,7 +1193,7 @@ VM captures the specifications of a virtual machine
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| address | The address of a remote Vault server to use for signinig | string | Yes |
+| address | The address of a remote Vault server to use for signing | string | Yes |
 | path | The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca | string | Yes |
 | token | A VAULT_TOKEN to use when authenticating with Vault | string | Yes |
 
@@ -735,21 +1213,32 @@ VM captures the specifications of a virtual machine
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool |  |
+| disabled |  | string | Yes |
 | version |  | string | Yes |
 | schedule |  | string |  |
 | bucket |  | string |  |
 | volumes |  | bool | Yes |
+| config |  | map[string]string |  |
 
-## Versions
+## Vsphere
 
 
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| kubernetes |  | string |  |
-| containerRuntime |  | string |  |
-| dependencies |  | map[string]string |  |
+| username | GOVC_USER | string |  |
+| password | GOVC_PASS | string |  |
+| datacenter | GOVC_DATACENTER | string |  |
+| datastoreUrl | e.g. ds:///vmfs/volumes/vsan:<id>/ | string |  |
+| datastore | GOVC_DATASTORE | string |  |
+| network | GOVC_NETWORK | string |  |
+| cluster | Cluster for VM placement via DRS (GOVC_CLUSTER) | string |  |
+| resourcePool | GOVC_RESOURCE_POOL | string |  |
+| folder | \n Inventory folder (GOVC_FOLDER) | string |  |
+| hostname | GOVC_FQDN | string |  |
+| csiVersion | Version of the vSphere CSI Driver | string |  |
+| cpiVersion | Version of the vSphere External Cloud Provider | string |  |
+| verify | Skip verification of server certificate | bool | Yes |
 
 ## NSX
 
@@ -760,7 +1249,8 @@ VM captures the specifications of a virtual machine
 | loadbalancer_ip_pool |  | string |  |
 | tier0 |  | string |  |
 | disabled |  | bool | Yes |
-| Image |  | string | Yes |
+| cniDisabled |  | bool | Yes |
+| image |  | string | Yes |
 | version |  | string | Yes |
 | debug | If set to true, the logging level will be set to DEBUG instead of the default INFO level. | *bool |  |
 | use_stderr | If set to true, log output to standard error. | *bool |  |

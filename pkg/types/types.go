@@ -12,25 +12,6 @@ import (
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
 
-type XEnabled struct {
-	// +optional
-	Disabled bool `yaml:"disabled" json:"disabled"`
-}
-
-type XDisabled struct {
-	// +optional
-	Disabled string `yaml:"disabled" json:"disabled"`
-	// +optional
-	Version string `yaml:"version" json:"version"`
-}
-
-func (d XDisabled) IsDisabled() bool {
-	if d.Disabled == "true" {
-		return true
-	}
-	return d.Version == ""
-}
-
 type AWS struct {
 	ServiceAccount string `yaml:"serviceAccount,omitempty" json:"serviceAccount,omitempty"`
 	Zone           string `yaml:"zone,omitempty" json:"zone,omitempty"`
@@ -537,7 +518,7 @@ func (dns DynamicDNS) IsEnabled() bool {
 }
 
 type Monitoring struct {
-	Disabled           bool          `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	Disabled           Boolean       `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	AlertEmail         string        `yaml:"alert_email,omitempty" json:"alert_email,omitempty"`
 	Version            string        `yaml:"version,omitempty" json:"version,omitempty"`
 	Prometheus         Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
@@ -553,7 +534,7 @@ type Monitoring struct {
 }
 
 func (m Monitoring) IsDisabled() bool {
-	return m.Disabled
+	return bool(m.Disabled)
 }
 
 // ExternalClusters is a map of clusterName: clusterApiEndpoints

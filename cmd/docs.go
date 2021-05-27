@@ -95,6 +95,8 @@ type KubeTypes []Pair
 func ParseDocumentationFrom(srcs []string) []KubeTypes {
 	var docForTypes []KubeTypes
 
+	typesMap := map[string]KubeTypes{}
+
 	for _, src := range srcs {
 		pkg := astFrom(src)
 
@@ -106,11 +108,20 @@ func ParseDocumentationFrom(srcs []string) []KubeTypes {
 				for _, field := range structType.Fields.List {
 					typeString := fieldType(field.Type)
 					fieldMandatory := fieldRequired(field)
-					if n := fieldName(field); n != "-" {
+					if n := fieldName(field); n != "-" && n != "-inline" {
 						fieldDoc := fmtRawDoc(field.Doc.Text())
 						ks = append(ks, Pair{n, fieldDoc, typeString, fieldMandatory})
+					} else if n == "-inline" {
+						inlineFieldType := fieldInlineType(field.Type)
+						inlineField, ok := typesMap[inlineFieldType]
+						if ok {
+							for i := 1; i < len(inlineField); i++ {
+								ks = append(ks, inlineField[i])
+							}
+						}
 					}
 				}
+				typesMap[kubType.Name] = ks
 				docForTypes = append(docForTypes, ks)
 			}
 		}
@@ -201,7 +212,7 @@ func fieldName(field *ast.Field) string {
 	if field.Tag != nil {
 		jsonTag = reflect.StructTag(field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("yaml") // Delete first and last quotation
 		if strings.Contains(jsonTag, "inline") {
-			return "-"
+			return "-inline"
 		}
 	}
 
@@ -242,6 +253,20 @@ func fieldType(typ ast.Expr) string {
 	case *ast.MapType:
 		mapType := typ.(*ast.MapType)
 		return "map[" + toLink(fieldType(mapType.Key)) + "]" + toLink(fieldType(mapType.Value))
+	default:
+		return ""
+	}
+}
+
+func fieldInlineType(typ ast.Expr) string {
+	switch typ.(type) { // nolint: gosimple
+	case *ast.Ident:
+		return typ.(*ast.Ident).Name
+	case *ast.SelectorExpr:
+		e := typ.(*ast.SelectorExpr)
+		pkg := e.X.(*ast.Ident)
+		t := e.Sel
+		return pkg.Name + "." + t.Name
 	default:
 		return ""
 	}
