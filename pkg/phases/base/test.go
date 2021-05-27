@@ -26,7 +26,10 @@ func Test(platform *platform.Platform, test *console.TestResults) {
 	}
 
 	kommons.TestNamespace(client, "kube-system", test)
-	TestImportSecrets(platform, test)
+
+	if platform.E2E {
+		TestImportSecrets(platform, test)
+	}
 }
 
 type testSecretsFn func(*console.TestResults, *platform.Platform) bool
@@ -37,9 +40,10 @@ type testSecret struct {
 }
 
 type testSecretsFixture struct {
-	Name       string
-	Secrets    []testSecret
-	ValidateFn testSecretsFn
+	Name           string
+	Secrets        []testSecret
+	PlatformConfig *types.PlatformConfig
+	ValidateFn     testSecretsFn
 }
 
 func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
@@ -62,6 +66,10 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 	defer func() {
 		clientset.CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{}) // nolint: errcheck
 	}()
+
+	templateOperatorVersion := p.TemplateOperator.Version
+	platformWithMonitoringEnabled := newPlatformWithMonitoring(p, false)
+	platformWithMonitoringDisabled := newPlatformWithMonitoring(p, true)
 
 	fixtures := []testSecretsFixture{
 		{
@@ -102,8 +110,8 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 					test.Failf("base", "Expected templateOperator.Version to equal v2.3.4 got %s", p.TemplateOperator.Version)
 					return false
 				}
-				if p.TemplateOperator.Disabled != "false" {
-					test.Failf("base", "Expected templateOperator.Disabled to equal false got %s", p.TemplateOperator.Disabled)
+				if p.TemplateOperator.IsDisabled() != false {
+					test.Failf("base", "Expected templateOperator.IsDisabled to equal false got %t", p.TemplateOperator.IsDisabled())
 					return false
 				}
 				return true
@@ -120,12 +128,50 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 				},
 			},
 			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
-				if p.TemplateOperator.Version != "v0.1.11" {
-					test.Failf("base", "Expected templateOperator.Version to equal v0.1.11 got %s", p.TemplateOperator.Version)
+				if p.TemplateOperator.Version != templateOperatorVersion {
+					test.Failf("base", "Expected templateOperator.Version to equal %s got %s", templateOperatorVersion, p.TemplateOperator.Version)
 					return false
 				}
-				if p.TemplateOperator.Disabled != "false" {
-					test.Failf("base", "Expected templateOperator.Disabled to equal false got %s", p.TemplateOperator.Disabled)
+				if p.TemplateOperator.IsDisabled() != false {
+					test.Failf("base", "Expected templateOperator.Disabled to equal false got %s", p.TemplateOperator.IsDisabled())
+					return false
+				}
+				return true
+			},
+		},
+		{
+			Name: "TestDisabledOnMonitoring",
+			Secrets: []testSecret{
+				{
+					Name: "config-tmonitoring-1",
+					Data: map[string]string{
+						"monitoring.disabled": "false",
+					},
+				},
+			},
+			PlatformConfig: platformWithMonitoringDisabled,
+			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
+				if !p.Monitoring.Disabled {
+					test.Failf("base", "Expected monitoring to be disabled got %t", p.Monitoring.Disabled)
+					return false
+				}
+				return true
+			},
+		},
+		{
+			Name: "TestDisabledOnMonitoringFalse",
+			Secrets: []testSecret{
+				{
+					Name: "config-tmonitoring-2",
+					Data: map[string]string{
+						"monitoring.disabled": "true",
+					},
+				},
+			},
+			PlatformConfig: platformWithMonitoringEnabled,
+			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
+				if p.Monitoring.Disabled {
+					test.Failf("base", "Expected monitoring to not be disabled got %t", p.Monitoring.Disabled)
 					return false
 				}
 				return true
@@ -226,15 +272,21 @@ minio:
 			secrets = append(secrets, v1.SecretReference{Name: s.Name, Namespace: ns})
 		}
 
-		testImportSecrets(p, test, fixture.Name, secrets, fixture.ValidateFn)
+		testImportSecrets(p, fixture.PlatformConfig, test, fixture.Name, secrets, fixture.ValidateFn)
 	}
 }
 
-func testImportSecrets(p *platform.Platform, test *console.TestResults, name string, secrets []v1.SecretReference, validateFn testSecretsFn) {
-	newPlatformConfig, err := clonePlatform(p)
-	if err != nil {
-		test.Failf("base", "failed to clone platform: %v", err)
-		return
+func testImportSecrets(p *platform.Platform, pp *types.PlatformConfig, test *console.TestResults, name string, secrets []v1.SecretReference, validateFn testSecretsFn) {
+	var newPlatformConfig *types.PlatformConfig
+	var err error
+	if pp != nil {
+		newPlatformConfig = pp
+	} else {
+		newPlatformConfig, err = clonePlatform(p)
+		if err != nil {
+			test.Failf("base", "failed to clone platform: %v", err)
+			return
+		}
 	}
 	newPlatformConfig.ImportSecrets = secrets
 	newP := &platform.Platform{
@@ -251,6 +303,14 @@ func testImportSecrets(p *platform.Platform, test *console.TestResults, name str
 	if ok := validateFn(test, newP); ok {
 		test.Passf("base", "Imported secret for test %s successfully", name)
 	}
+}
+
+func newPlatformWithMonitoring(p *platform.Platform, disabled bool) *types.PlatformConfig {
+	newP, _ := clonePlatform(p)
+	if newP.Monitoring == nil {
+		newP.Monitoring = &types.Monitoring{Disabled: disabled}
+	}
+	return newP
 }
 
 func clonePlatform(platform *platform.Platform) (*types.PlatformConfig, error) {
