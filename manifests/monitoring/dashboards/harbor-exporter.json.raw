@@ -264,7 +264,29 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+       {
+        "hide": 0,
+        "label": null,
+        "name": "datasource",
+        "options": [
+
+        ],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",

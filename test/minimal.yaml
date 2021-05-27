@@ -58,6 +58,8 @@ ingressCA:
   cert: .certs/ingress-ca.crt
   privateKey: .certs/ingress-ca.key
   password: foobar
+monitoring:
+  disabled: true
 test:
   exclude:
     - configmap-reloader

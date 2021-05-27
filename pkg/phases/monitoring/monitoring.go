@@ -46,10 +46,9 @@ var monitoringNamespaceLabels = map[string]string{
 }
 
 func Install(p *platform.Platform) error {
-	if p.Monitoring == nil || p.Monitoring.Disabled {
+	if p.Monitoring.IsDisabled() {
 		// setup default values so that all resources are rendered
 		// so that we know what to try and delete
-		p.Monitoring = &types.Monitoring{}
 		p.Thanos = &types.Thanos{Mode: "observability"}
 		p.Thanos.Version = "deleted"
 		for _, spec := range append(specs, cleanup...) {

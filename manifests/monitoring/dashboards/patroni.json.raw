@@ -4833,6 +4833,19 @@
   "templating": {
     "list": [
       {
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": null,
         "current": {
           "selected": true,
@@ -4949,6 +4962,15 @@
         "refresh": 2,
         "skipUrlSync": false,
         "type": "interval"
+      },
+      {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },

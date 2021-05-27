@@ -1458,12 +1458,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "tags": [],
-          "text": "thanos",
-          "value": "thanos"
-        },
         "hide": 0,
         "includeAll": false,
         "label": null,
@@ -1475,6 +1469,15 @@
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
+      },
+      {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },

@@ -350,13 +350,9 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "text": "default",
-          "value": "default"
-        },
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
-        "label": "Prometheus datasource",
+        "label": null,
         "multi": false,
         "name": "datasource",
         "options": [],

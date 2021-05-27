@@ -1224,6 +1224,15 @@
         "type": "datasource"
       },
       {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
+      },
+      {
         "allValue": ".*",
         "current": {},
         "datasource": "$datasource",

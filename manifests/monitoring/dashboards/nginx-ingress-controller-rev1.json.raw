@@ -1283,10 +1283,6 @@
       {
         "allFormat": "",
         "allValue": "",
-        "current": {
-          "text": "prometheus",
-          "value": "prometheus"
-        },
         "datasource": null,
         "hide": 0,
         "includeAll": false,

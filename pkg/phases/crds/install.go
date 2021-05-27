@@ -23,6 +23,7 @@ func Install(p *platform.Platform) error {
 		"argocd-operator":   p.ArgocdOperator.IsDisabled,
 		"argo-rollouts":     p.ArgoRollouts.IsDisabled,
 		"eck":               p.ECK.IsDisabled,
+		"grafana-operator":  p.Monitoring.IsDisabled,
 		"mongo-db":          p.Keptn.IsDisabled, // TODO: Make this depends on MongoDB Operator instead of Keptn once MongoDB Operator is implemented: https://github.com/flanksource/karina/issues/658
 		"mongodb-operator":  p.MongodbOperator.IsDisabled,
 		"gatekeeper":        p.Gatekeeper.IsDisabled,

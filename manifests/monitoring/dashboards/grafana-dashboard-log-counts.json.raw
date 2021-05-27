@@ -721,10 +721,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-            "text": "Prometheus",
-            "value": "Prometheus"
-        },
         "hide": 0,
         "label": null,
         "name": "datasource",
@@ -735,6 +731,15 @@
         "refresh": 1,
         "regex": "",
         "type": "datasource"
+      },
+        {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },

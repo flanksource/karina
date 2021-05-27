@@ -833,10 +833,6 @@
     "templating": {
         "list": [
             {
-                "current": {
-                    "text": "Prometheus",
-                    "value": "Prometheus"
-                },
                 "hide": 0,
                 "label": null,
                 "name": "datasource",

@@ -1829,11 +1829,6 @@
       {
         "allFormat": "",
         "allValue": "",
-        "current": {
-          "tags": [],
-          "text": "thanos",
-          "value": "thanos"
-        },
         "datasource": null,
         "hide": 0,
         "includeAll": false,
@@ -1848,6 +1843,15 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "datasource"
+      },
+      {
+        "datasource": "$datasource",
+        "filters": [],
+        "hide": 0,
+        "label": "Filter",
+        "name": "filter",
+        "skipUrlSync": false,
+        "type": "adhoc"
       },
       {
         "allFormat": "",

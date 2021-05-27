@@ -552,6 +552,10 @@ type Monitoring struct {
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
+func (m Monitoring) IsDisabled() bool {
+	return m.Disabled
+}
+
 // ExternalClusters is a map of clusterName: clusterApiEndpoints
 // with convenience methods.
 type ExternalClusters map[string]string
