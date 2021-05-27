@@ -5,7 +5,7 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## XEnabled
@@ -14,7 +14,7 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool | Yes |
+| disabled |  | Boolean | Yes |
 
 ## PlatformConfig
 
@@ -139,7 +139,7 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | isCertReady |  | bool | Yes |
 
@@ -149,7 +149,7 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## ArgocdOperator
@@ -158,7 +158,7 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## AuditConfig
@@ -175,7 +175,7 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | kibana |  | *[Connection](#connection) |  |
 
@@ -205,7 +205,7 @@ AuditConfig is used to specify the audit policy file. If a policy file is specif
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | ipip |  | calico.IPIPMode | Yes |
 | vxlan |  | calico.VXLANMode | Yes |
@@ -220,7 +220,7 @@ Canary-checker allows for the deployment and configuration of the canary-checker
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | aggregateServers |  | []string | Yes |
 
@@ -295,7 +295,7 @@ Canary-checker allows for the deployment and configuration of the canary-checker
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## DefaultBackupRetention
@@ -317,7 +317,7 @@ Canary-checker allows for the deployment and configuration of the canary-checker
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | google |  | [GoogleOIDC](#googleoidc) |  |
 
@@ -345,7 +345,7 @@ Canary-checker allows for the deployment and configuration of the canary-checker
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## Elasticsearch
@@ -374,7 +374,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## ExternalDNS
@@ -383,7 +383,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | args |  | map[string]string | Yes |
 
@@ -393,7 +393,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | name |  | string | Yes |
 | index |  | string | Yes |
@@ -418,7 +418,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | templates | Templates is a path to directory containing gatekeeper templates | string |  |
 | constraints | Templates is a path to directory containing gatekeeper constraints | string |  |
@@ -440,7 +440,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## GitOps
@@ -578,7 +578,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## Journalbeat
@@ -587,7 +587,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | kibana |  | *[Connection](#connection) |  |
 
@@ -597,7 +597,7 @@ Specifies Cluster Encryption Provider Config, primarily by specifying the Encryp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | syncPeriod |  | string |  |
 
@@ -616,7 +616,7 @@ Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Das
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## Kind
@@ -635,7 +635,7 @@ Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Das
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## Kpack
@@ -728,7 +728,7 @@ Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resour
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | email |  | string |  |
 | url |  | string |  |
@@ -748,7 +748,7 @@ Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resour
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | syncPeriod |  | string | Yes |
 
@@ -767,7 +767,7 @@ Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resour
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | replicas |  | int |  |
 | access_key |  | string |  |
@@ -781,7 +781,7 @@ Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resour
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## MonitorPort
@@ -870,7 +870,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | elasticsearch |  | *[Connection](#connection) |  |
 | kibana |  | *[Connection](#connection) |  |
@@ -891,7 +891,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | enableClusterResourceQuota |  | bool | Yes |
 | defaultImagePullSecret |  | string |  |
@@ -906,7 +906,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | dbVersion |  | string |  |
 | spiloImage |  | string |  |
@@ -932,7 +932,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## Redis
@@ -952,7 +952,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## RegistryCredentials
@@ -1053,7 +1053,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | endpoint |  | string | Yes |
 | bucket |  | string | Yes |
@@ -1077,7 +1077,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | bool | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string |  |
 | certificate |  | *[CA](#ca) |  |
 
@@ -1087,7 +1087,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | dashboardVersion |  | string |  |
 | eventsVersion |  | string |  |
@@ -1100,7 +1100,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | syncPeriod |  | string |  |
 
@@ -1118,7 +1118,7 @@ Configures the Nginx Ingress Controller, the controller Docker image is forked f
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | retention | Retention of long-term storage, defaults to 180d | string |  |
 | mode | Must be either `client` or `observability`. | string |  |
@@ -1167,7 +1167,7 @@ VM captures the specifications of a virtual machine
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 
 ## Vault
@@ -1213,7 +1213,7 @@ VM captures the specifications of a virtual machine
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| disabled |  | string | Yes |
+| disabled |  | Boolean | Yes |
 | version |  | string | Yes |
 | schedule |  | string |  |
 | bucket |  | string |  |

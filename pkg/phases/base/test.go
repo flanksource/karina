@@ -88,7 +88,7 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 					test.Failf("base", "Expected templateOperator.Version to equal v2.3.4 got %s", p.TemplateOperator.Version)
 					return false
 				}
-				if p.TemplateOperator.Disabled != "true" {
+				if p.TemplateOperator.IsDisabled() {
 					test.Failf("base", "Expected templateOperator.Disabled to equal true got %s", p.TemplateOperator.Disabled)
 					return false
 				}
@@ -221,7 +221,7 @@ minio:
 					Data: map[string]string{
 						"minio.yaml": `
 minio:
-  disabled: true,
+  disabled: true
   version: v1.2.3.4
   access_key: foo
   secret_key: bar
