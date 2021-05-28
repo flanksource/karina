@@ -17,7 +17,9 @@ const (
 var Defaults = map[string]string{
 	"client-body-buffer-size":   "16M",
 	"proxy-body-size":           "32M",
-	"disable-access-log":        "true",
+	"disable-access-log":        "false",
+	"access-log-path":           "/var/logs/nginx/access.log",
+	"error-log-path":            "/var/log/nginx/error.log",
 	"client-body-timeout":       "600",
 	"proxy-read-timeout":        "600",
 	"proxy-write-timeout":       "600",
