@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/flanksource/commons/files"
 
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/commons/is"
@@ -24,6 +27,41 @@ import (
 	sops "go.mozilla.org/sops/v3/decrypt"
 	yaml "gopkg.in/flanksource/yaml.v3"
 )
+
+type configMerger struct {
+	ReadFunction func(path string) ([]byte, error)
+}
+
+func (c configMerger) MergeConfigs(base *types.PlatformConfig, paths []string) error {
+	startWD, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	for _, path := range paths {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		dir := filepath.Dir(absPath)
+		err = os.Chdir(dir)
+		if err != nil {
+			return err
+		}
+		data, err := c.ReadFunction(absPath)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to read config file %s", absPath)
+		}
+		err = mergeConfigBytes(base, data, absPath)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to merge config file %s", absPath)
+		}
+		err = os.Chdir(startWD)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func getPlatform(cmd *cobra.Command) *platform.Platform {
 	platform := platform.Platform{
@@ -71,9 +109,14 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	base := types.PlatformConfig{
 		Source: paths[0],
 	}
-
-	if err := mergeConfigs(&base, paths); err != nil {
+	cm := configMerger{
+		ReadFunction: func(path string) ([]byte, error) { return ioutil.ReadFile(path) },
+	}
+	if err := cm.MergeConfigs(&base, paths); err != nil {
 		log.Fatalf("Failed to merge configs: %v", err)
+	}
+	if err := os.Chdir(filepath.Dir(base.Source)); err != nil {
+		log.Fatalf("Could not enter config folder")
 	}
 
 	defaultConfig := types.DefaultPlatformConfig()
@@ -131,34 +174,6 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 	return base
 }
 
-func mergeConfigs(base *types.PlatformConfig, paths []string) error {
-	for _, path := range paths {
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return errors.Wrapf(err, "Failed to read config file %s", path)
-		}
-		err = mergeConfigBytes(base, data, path)
-		if err != nil {
-			return errors.Wrapf(err, "Failed to merge config file %s", path)
-		}
-	}
-	return nil
-}
-
-func mergeSopsConfigs(base *types.PlatformConfig, paths []string) error {
-	for _, path := range paths {
-		data, err := sops.File(path, "yaml")
-		if err != nil {
-			return errors.Wrapf(err, "Failed to read secure config file %s", path)
-		}
-		err = mergeConfigBytes(base, data, path)
-		if err != nil {
-			return errors.Wrapf(err, "Failed to merge secure config file %s", path)
-		}
-	}
-	return nil
-}
-
 func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) error {
 	logger.Debugf("Merging %s", path)
 	cfg := types.PlatformConfig{
@@ -171,6 +186,38 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 
 	if err := decoder.Decode(&cfg); err != nil {
 		return errors.Wrap(err, "Failed to parse YAML")
+	}
+
+	for k := range cfg.Patches {
+		if files.IsValidPathType(cfg.Patches[k], "yaml", "yml", "json") {
+			absPath, err := filepath.Abs(cfg.Patches[k])
+			if err != nil {
+				return err
+			}
+			cfg.Patches[k] = absPath
+		}
+	}
+	pathList := []*string{
+		&cfg.TrustedCA,
+		&cfg.Gatekeeper.Templates, &cfg.Gatekeeper.Constraints,
+		&cfg.Kubernetes.AuditConfig.PolicyFile, &cfg.Kubernetes.EncryptionConfig.EncryptionProviderConfigFile,
+	}
+	if cfg.IngressCA != nil {
+		pathList = append(pathList, &cfg.IngressCA.Cert, &cfg.IngressCA.PrivateKey)
+	}
+	if cfg.CA != nil {
+		pathList = append(pathList, &cfg.CA.Cert, &cfg.CA.PrivateKey)
+	}
+	if cfg.SealedSecrets != nil {
+		if cfg.SealedSecrets.Certificate != nil {
+			pathList = append(pathList, &cfg.SealedSecrets.Certificate.Cert, &cfg.SealedSecrets.Certificate.PrivateKey)
+		}
+	}
+
+	for _, field := range pathList {
+		if err := MakeAbsolute(field); err != nil {
+			return err
+		}
 	}
 
 	for node, vm := range cfg.Nodes {
@@ -186,9 +233,15 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 		return errors.Wrapf(err, "Failed to merge in %s", path)
 	}
 
+	tcm := configMerger{
+		ReadFunction: func(path string) ([]byte, error) { return ioutil.ReadFile(path) },
+	}
+	scm := configMerger{
+		ReadFunction: func(path string) ([]byte, error) { return sops.File(path, "yaml") },
+	}
 	for _, config := range cfg.ImportConfigs {
 		fullPath := filepath.Dir(path) + "/" + config
-		if err := mergeConfigs(base, []string{fullPath}); err != nil {
+		if err := tcm.MergeConfigs(base, []string{fullPath}); err != nil {
 			return err
 		}
 	}
@@ -196,18 +249,31 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 	for _, config := range cfg.ConfigFrom {
 		if config.FilePath != "" {
 			fullPath := filepath.Dir(path) + "/" + config.FilePath
-			if err := mergeConfigs(base, []string{fullPath}); err != nil {
+			if err := tcm.MergeConfigs(base, []string{fullPath}); err != nil {
 				return err
 			}
 		}
 		if config.SopsPath != "" {
 			fullPath := filepath.Dir(path) + "/" + config.SopsPath
-			if err := mergeSopsConfigs(base, []string{fullPath}); err != nil {
+			if err := scm.MergeConfigs(base, []string{fullPath}); err != nil {
 				return err
 			}
 		}
 	}
 
+	return nil
+}
+
+func MakeAbsolute(path *string) error {
+	if path != nil {
+		if *path != "" {
+			absPath, err := filepath.Abs(*path)
+			if err != nil {
+				return err
+			}
+			*path = absPath
+		}
+	}
 	return nil
 }
 

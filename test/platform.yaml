@@ -7,8 +7,8 @@ configmapReloader:
 sealedSecrets:
   version: "v0.10.0"
   certificate:
-    cert: .certs/sealed-secrets-crt.pem
-    privateKey: .certs/sealed-secrets-key.pem
+    cert: ../.certs/sealed-secrets-crt.pem
+    privateKey: ../.certs/sealed-secrets-key.pem
     password: foobar
 registryCredentials:
   disabled: true # quarantine registry creds

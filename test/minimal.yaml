@@ -2,8 +2,8 @@
 # the kubeconfig cluster name needs to match this name
 name: !!template kind-{{ getenv "SUITE" }}-{{ getenv "KUBERNETES_VERSION" }}
 patches:
-  - ./test/patch1.yaml
-  - ./test/templatePatch.yaml
+  - ./patch1.yaml
+  - ./templatePatch.yaml
   - |-
     # This ConfigMap is used to verify template
     # value injection
@@ -51,12 +51,12 @@ minio:
   secret_key: minio123
   replicas: 1
 ca:
-  cert: .certs/root-ca.crt
-  privateKey: .certs/root-ca.key
+  cert: ../.certs/root-ca.crt
+  privateKey: ../.certs/root-ca.key
   password: foobar
 ingressCA:
-  cert: .certs/ingress-ca.crt
-  privateKey: .certs/ingress-ca.key
+  cert: ../.certs/ingress-ca.crt
+  privateKey: ../.certs/ingress-ca.key
   password: foobar
 monitoring:
   disabled: true

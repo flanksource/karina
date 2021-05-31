@@ -325,6 +325,8 @@ github.com/fatih/structtag v1.1.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4
 github.com/flanksource/commons v1.5.1/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ+fTILbP4YP0=
 github.com/flanksource/commons v1.5.3 h1:OnPP1ymy3lQXJhawVZNFH1w7d7U07/AZpoQ65yJijpw=
 github.com/flanksource/commons v1.5.3/go.mod h1:boFAup9GmLcnz0fWQnPV5WVFcHYA7U0aWEA14ww/T/4=
+github.com/flanksource/commons v1.5.5 h1:u4QhogFcdcIddjS2h/V2c8K3e30Octo9gte5XxFWn3Y=
+github.com/flanksource/commons v1.5.5/go.mod h1:boFAup9GmLcnz0fWQnPV5WVFcHYA7U0aWEA14ww/T/4=
 github.com/flanksource/kommons v0.10.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
 github.com/flanksource/kommons v0.12.0 h1:l5evUKL7YJhZYdYn6gn3E5NziMuuha4MeKhm33uJKO8=
 github.com/flanksource/kommons v0.12.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=

@@ -2,10 +2,10 @@ importConfigs:
   - minimal.yaml
 gatekeeper:
   version: "v3.3.0"
-  constraints: test/opa/constraints
+  constraints: opa/constraints
   auditInterval: 10
   e2e:
-    fixtures: test/opa/gatekeeper-fixtures
+    fixtures: opa/gatekeeper-fixtures
 test:
   exclude:
     - dex
