@@ -102,6 +102,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Disable reload/all in tests
+  annotations: null
   name: opa
   namespace: opa
 spec:
@@ -119,6 +121,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Disable reload/all in tests
+  annotations: null
   name: gatekeeper-controller-manager
   namespace: gatekeeper-system
 spec:
@@ -135,6 +139,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Disable reload/all in tests
+  annotations: null
   name: gatekeeper-audit
   namespace: gatekeeper-system
 spec:
@@ -152,6 +158,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Disable reload/all in tests
+  annotations: null
   name: quack
   namespace: quack
 spec:
@@ -169,6 +177,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Disable reload/all in tests
+  annotations: null
   name: platform-operator
   namespace: platform-system
 spec:
@@ -184,6 +194,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Disable reload/all in tests
+  annotations: null
   name: canary-checker
   namespace: platform-system
 spec:
