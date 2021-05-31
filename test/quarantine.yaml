@@ -1,0 +1,15 @@
+importConfigs:
+  - minimal.yaml
+argocdOperator:
+  version: v0.0.15
+argoRollouts:
+  version: v0.10.2
+tekton:
+  version: v0.12.1
+  dashboardVersion: v0.6.1.5
+test:
+  exclude:
+    - dex
+    - audit
+    - encryption
+    - platform-operator
