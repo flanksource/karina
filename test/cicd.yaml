@@ -28,6 +28,8 @@ minio:
   disabled: true
 configmapReloader:
   disabled: true
+flux:
+  enabled: true
 test:
   exclude:
     - dex
