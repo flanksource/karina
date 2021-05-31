@@ -392,6 +392,17 @@ spec:
                     properties:
                       disabled:
                         type: boolean
+                      google:
+                        properties:
+                          clientID:
+                            type: string
+                          clientSecret:
+                            type: string
+                          hostedDomains:
+                            items:
+                              type: string
+                            type: array
+                        type: object
                       version:
                         type: string
                     type: object
@@ -823,6 +834,21 @@ spec:
                     items:
                       type: string
                     type: array
+                  importSecrets:
+                    items:
+                      description: SecretReference represents a Secret Reference.
+                        It has enough information to retrieve secret in any namespace
+                      properties:
+                        name:
+                          description: Name is unique within a namespace to reference
+                            a secret resource.
+                          type: string
+                        namespace:
+                          description: Namespace defines the space within which the
+                            secret name must be unique.
+                          type: string
+                      type: object
+                    type: array
                   ingressCA:
                     properties:
                       cert:
@@ -1100,8 +1126,6 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                      version:
-                        type: string
                     type: object
                   logsExporter:
                     properties:
@@ -2467,6 +2491,7 @@ spec:
                     type: object
                 required:
                 - gcp:omitempty
+                - localPath
                 type: object
               dryRun:
                 type: boolean

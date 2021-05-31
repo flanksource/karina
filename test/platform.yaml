@@ -37,6 +37,7 @@ test:
     - dex
     - audit
     - encryption
+    - monitoring
 istioOperator:
   disabled: False
   version: 1.8.2
