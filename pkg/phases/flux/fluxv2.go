@@ -17,13 +17,5 @@ func InstallV2(p *platform.Platform) error {
 		return fmt.Errorf("install: failed to create/update namespace: %v", err)
 	}
 
-	data := map[string][]byte{
-		"username": []byte(p.Flux.GitUsername),
-		"password": []byte(p.Flux.GitPassword),
-	}
-	if err := p.CreateOrUpdateSecret("flux-git-credentials", Namespace, data); err != nil {
-		return fmt.Errorf("install: failed to create/update secret: %v", err)
-	}
-
 	return p.ApplySpecs(Namespace, "flux-v2.yaml")
 }
