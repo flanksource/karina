@@ -7,7 +7,7 @@ import (
 const Namespace = "local-path-storage"
 
 func Install(platform *platform.Platform) error {
-	if platform.LocalPath.IsDisabled() {
+	if platform.LocalPath.Disabled {
 		return platform.DeleteSpecs(Namespace, "local-path.yaml")
 	}
 

@@ -41,7 +41,7 @@ spec:
                   antrea:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       isCertReady:
                         type: boolean
                       version:
@@ -50,21 +50,21 @@ spec:
                   argoRollouts:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
                   argocdOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
                   auditbeat:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       kibana:
                         properties:
                           password:
@@ -213,7 +213,7 @@ spec:
                           type: object
                         type: array
                       disabled:
-                        type: string
+                        type: boolean
                       ipPools:
                         items:
                           description: IPPool contains information about a IPPool
@@ -305,7 +305,7 @@ spec:
                           ingress certificates
                         properties:
                           disabled:
-                            type: string
+                            type: boolean
                           email:
                             type: string
                           url:
@@ -377,7 +377,7 @@ spec:
                   dashboard:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -391,7 +391,7 @@ spec:
                   dex:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       google:
                         properties:
                           clientID:
@@ -450,7 +450,7 @@ spec:
                   eck:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -490,7 +490,7 @@ spec:
                   eventrouter:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -501,7 +501,7 @@ spec:
                           type: string
                         type: object
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     required:
@@ -511,7 +511,7 @@ spec:
                     items:
                       properties:
                         disabled:
-                          type: string
+                          type: boolean
                         elasticsearch:
                           properties:
                             password:
@@ -573,7 +573,7 @@ spec:
                           constraints
                         type: string
                       disabled:
-                        type: string
+                        type: boolean
                       e2e:
                         properties:
                           fixtures:
@@ -602,7 +602,7 @@ spec:
                   gitOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -861,14 +861,14 @@ spec:
                   istioOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
                   journalbeat:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       kibana:
                         properties:
                           password:
@@ -892,7 +892,7 @@ spec:
                   karinaOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       syncPeriod:
                         type: string
                       version:
@@ -901,7 +901,7 @@ spec:
                   keptn:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -920,7 +920,7 @@ spec:
                   kiosk:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -1125,14 +1125,12 @@ spec:
                   localPath:
                     properties:
                       disabled:
-                        type: string
-                      version:
-                        type: string
+                        type: boolean
                     type: object
                   logsExporter:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       syncPeriod:
                         type: string
                       version:
@@ -1236,7 +1234,7 @@ spec:
                       access_key:
                         type: string
                       disabled:
-                        type: string
+                        type: boolean
                       kmsMasterKey:
                         type: string
                       persistence:
@@ -1264,7 +1262,7 @@ spec:
                   mongodbOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -1992,7 +1990,7 @@ spec:
                   packetbeat:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       elasticsearch:
                         properties:
                           password:
@@ -2048,7 +2046,7 @@ spec:
                       defaultRegistry:
                         type: string
                       disabled:
-                        type: string
+                        type: boolean
                       enableClusterResourceQuota:
                         type: boolean
                       registryWhitelist:
@@ -2096,7 +2094,7 @@ spec:
                       defaultBackupSchedule:
                         type: string
                       disabled:
-                        type: string
+                        type: boolean
                       spiloImage:
                         type: string
                       version:
@@ -2110,14 +2108,14 @@ spec:
                   rabbitmqOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
                   redisOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -2273,7 +2271,7 @@ spec:
                       dashboardVersion:
                         type: string
                       disabled:
-                        type: string
+                        type: boolean
                       eventsVersion:
                         type: string
                       featureFlags:
@@ -2301,7 +2299,7 @@ spec:
                   templateOperator:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       syncPeriod:
                         type: string
                       version:
@@ -2332,7 +2330,7 @@ spec:
                           type: string
                         type: array
                       disabled:
-                        type: string
+                        type: boolean
                       e2e:
                         properties:
                           server:
@@ -2428,7 +2426,7 @@ spec:
                           type: string
                         type: object
                       disabled:
-                        type: string
+                        type: boolean
                       schedule:
                         type: string
                       version:
@@ -2445,7 +2443,7 @@ spec:
                   vpa:
                     properties:
                       disabled:
-                        type: string
+                        type: boolean
                       version:
                         type: string
                     type: object
@@ -2493,6 +2491,7 @@ spec:
                     type: object
                 required:
                 - gcp:omitempty
+                - localPath
                 type: object
               dryRun:
                 type: boolean

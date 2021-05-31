@@ -680,7 +680,7 @@ type IstioOperator struct {
 }
 
 type LocalPath struct {
-	XDisabled `yaml:",inline" json:",inline"`
+	XEnabled `yaml:",inline" json:",inline"`
 }
 
 type NamespaceConfigurator struct {
