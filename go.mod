@@ -8,8 +8,8 @@ require (
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
 	github.com/fatih/structs v1.1.0
-	github.com/flanksource/commons v1.5.5
-	github.com/flanksource/kommons v0.12.0
+	github.com/flanksource/commons v1.5.6
+	github.com/flanksource/kommons v0.17.1
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
 	github.com/flanksource/template-operator-library v0.1.5
 	github.com/go-logr/logr v0.3.0
@@ -25,7 +25,7 @@ require (
 	github.com/miekg/dns v1.1.31
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/olivere/elastic/v7 v7.0.13
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.10.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.10.0
@@ -46,8 +46,8 @@ require (
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.17.2
-	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
-	sigs.k8s.io/controller-runtime v0.6.3
+	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
+	sigs.k8s.io/controller-runtime v0.8.3
 	sigs.k8s.io/kind v0.10.0
 	sigs.k8s.io/yaml v1.2.0
 )
