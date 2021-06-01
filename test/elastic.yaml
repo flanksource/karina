@@ -11,6 +11,14 @@ filebeat:
       password: elastic
       port: 9200
       scheme: https
+# Commented out until single-pass elastic is implemented, else filebeat will crashloop due to missing kibana instance
+#    kibana:
+#      url: logs-kb-http.eck.svc.cluster.local
+#      user: elastic
+#      password: elastic
+#      port: 5601
+#      scheme: https
+
 journalbeat:
   version: 7.10.2
   # elasticsearch:

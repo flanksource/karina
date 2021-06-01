@@ -40,6 +40,9 @@ spec:
             - secretRef:
                 name: logstash-{{ .name }}
                 optional: true
+            - secretRef:
+                name: kibana-{{ .name }}
+                optional: true
           args: ["-c", "/etc/filebeat.yml", "-e"]
           env:
             - name: NODE_NAME
@@ -112,6 +115,20 @@ data:
              paths:
                - /var/log/containers/*${data.kubernetes.container.id}.log
            {{ end }}
+
+    {{ if .kibana }}
+    setup.dashboards.enabled: true
+    setup.kibana:
+      host: '${KIBANA_URL}'
+      protocol: {{ .kibana.scheme | default "https" }}
+      username: '${KIBANA_USERNAME}'
+      password: '${KIBANA_PASSWORD}'
+      port: {{ .kibana.port | default "5601" }}
+      ssl.verification_mode: none
+      ssl.supported_protocols:
+        - TLSv1.2
+        - TLSv1.3
+    {{ end }}
 
     processors:
       - add_cloud_metadata:

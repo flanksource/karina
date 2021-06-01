@@ -41,6 +41,18 @@ func Deploy(p *platform.Platform) error {
 				return errors.Wrap(err, "Failed to create secret logstash")
 			}
 		}
+
+		if f.Kibana != nil {
+			secretName := fmt.Sprintf("kibana-%s", f.Name)
+			err := p.GetOrCreateSecret(secretName, constants.PlatformSystem, map[string][]byte{
+				"KIBANA_URL":      []byte(f.Kibana.GetURL()),
+				"KIBANA_USERNAME": []byte(f.Kibana.User),
+				"KIBANA_PASSWORD": []byte(f.Kibana.Password),
+			})
+			if err != nil {
+				return errors.Wrap(err, "Failed to create secret logstash")
+			}
+		}
 	}
 
 	return p.ApplySpecs(constants.PlatformSystem, "filebeat.yaml")
