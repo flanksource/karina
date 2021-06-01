@@ -7,12 +7,18 @@ import (
 	"github.com/flanksource/commons/console"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
+	"github.com/flanksource/kommons"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Import kubernetes oidc auth plugin
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
+	if p.Flux.Enabled {
+		client, _ := p.GetClientset()
+		kommons.TestNamespace(client, Namespace, test)
+	}
+
 	if !p.E2E {
 		return
 	}
