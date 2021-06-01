@@ -128,6 +128,9 @@ metadata:
 spec:
   replicas: 1
   template:
+    metadata:
+      annotations:
+        $patch: delete
     spec:
       containers:
         - name: manager
@@ -146,6 +149,9 @@ metadata:
 spec:
   replicas: 1
   template:
+    metadata:
+      annotations:
+        $patch: delete
     spec:
       containers:
         - name: manager
@@ -159,12 +165,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   # Disable reload/all in tests
-  annotations: null
+  annotations:
+    $patch: delete
   name: quack
   namespace: quack
 spec:
   replicas: 1
   template:
+    metadata:
+      annotations:
+        $patch: delete
     spec:
       containers:
         - name: quack
@@ -184,6 +194,9 @@ metadata:
 spec:
   replicas: 1
   template:
+    metadata:
+      annotations:
+        $patch: delete
     spec:
       containers:
         - name: manager
@@ -200,6 +213,9 @@ metadata:
   namespace: platform-system
 spec:
   template:
+    metadata:
+      annotations:
+        $patch: delete
     spec:
       containers:
         - name: canary-checker
