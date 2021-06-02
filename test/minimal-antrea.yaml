@@ -26,11 +26,15 @@ kubernetes:
   kubeletExtraArgs:
     node-labels: "ingress-ready=true"
     authorization-mode: "AlwaysAllow"
+  apiServerExtraArgs:
+    "service-node-port-range": "80-33000"
   containerRuntime: containerd
 versions:
   sonobuoy: 0.16.4
   ketall: v1.3.0
   apacheds: 0.7.0
+nginx:
+  disableHostNetwork: true
 podSubnet: 100.200.0.0/16
 serviceSubnet: 100.100.0.0/16
 platformOperator:

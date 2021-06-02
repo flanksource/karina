@@ -174,7 +174,9 @@ spec:
         - name: scripts
           configMap:
             name: lua-scripts
+      {{ if not (.nginx.disableHostNetwork) }}
       hostNetwork: true
+      {{ end }}
       tolerations:
         # schedule on dedicated node groups
         - key: node.kubernetes.io/group

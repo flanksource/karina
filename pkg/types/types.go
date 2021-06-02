@@ -314,7 +314,8 @@ type NFS struct {
 type Nginx struct {
 	Disabled bool `yaml:"disabled" json:"disabled"`
 	// The version of the nginx controller to deploy (default: `0.25.1.flanksource.1`)
-	Version string `yaml:"version" json:"version"`
+	Version            string `yaml:"version" json:"version"`
+	DisableHostNetwork bool   `yaml:"disableHostNetwork" json:"disableHostNetwork"`
 
 	// Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) for a full list of options
 	Config map[string]string `yaml:"config,omitempty" json:"config,omitempty"`
