@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/flanksource/karina/pkg/ca"
+	"github.com/flanksource/karina/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +30,26 @@ var generateCA = &cobra.Command{
 	},
 }
 
+var decrypt = &cobra.Command{
+	Use:   "decrypt",
+	Short: "Decrypt a password protected private key",
+	Args:  cobra.MinimumNArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		privateKeyPath, _ := cmd.Flags().GetString("key")
+		password, _ := cmd.Flags().GetString("password")
+		certPath, _ := cmd.Flags().GetString("cert")
+		cert, err := ca.ReadCA(&types.CA{
+			Cert:       certPath,
+			PrivateKey: privateKeyPath,
+			Password:   password,
+		})
+		if err != nil {
+			log.Fatalf("Failed to decrypt key %s", err)
+		}
+		fmt.Println(string(cert.EncodedPrivateKey()))
+	},
+}
+
 var validateCA = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate CA certificates",
@@ -42,7 +65,7 @@ var validateCA = &cobra.Command{
 }
 
 func init() {
-	CA.AddCommand(generateCA, validateCA)
+	CA.AddCommand(generateCA, validateCA, decrypt)
 	generateCA.Flags().String("name", "", "certificate name")
 	generateCA.Flags().String("cert-path", "", "path to certificate file")
 	generateCA.Flags().String("private-key-path", "", "path to private key file")
@@ -51,4 +74,7 @@ func init() {
 	validateCA.Flags().String("cert-path", "", "path to certificate file")
 	validateCA.Flags().String("private-key-path", "", "path to private key file")
 	validateCA.Flags().String("password", "", "certificate password")
+	decrypt.Flags().String("key", "", "path to private key file")
+	decrypt.Flags().String("password", "", "certificate password")
+	decrypt.Flags().String("cert", "", "path to certificate file")
 }

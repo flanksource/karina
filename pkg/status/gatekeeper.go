@@ -53,6 +53,7 @@ func Violations(platform *platform.Platform) error {
 			if err != nil {
 				return errors.Wrapf(err, "Could not retrieve %v objects", ct.Name)
 			}
+
 			for _, constraint := range constraintsList.Items {
 				name, _, err := unstructured.NestedString(constraint.Object, "metadata", "name")
 				if err != nil {
@@ -84,8 +85,8 @@ func Violations(platform *platform.Platform) error {
 				} else {
 					_, _ = fmt.Fprintf(w, "%s\t", atime)
 				}
+				_, _ = fmt.Fprint(w, "\n")
 			}
-			_, _ = fmt.Fprint(w, "\n")
 		}
 	}
 
