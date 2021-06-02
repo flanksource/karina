@@ -22,18 +22,16 @@ func ReadCA(ca *types.CA) (*certs.Certificate, error) {
 
 	if strings.HasPrefix(ca.PrivateKey, "-----BEGIN RSA PRIVATE KEY-----") {
 		privateKey = ca.PrivateKey
-	} else {
+	} else if is.File(ca.PrivateKey) {
 		privateKey = files.SafeRead(ca.PrivateKey)
+	} else {
+		privateKey = ca.PrivateKey
 	}
 
 	if cert == "" {
 		return nil, fmt.Errorf("unable to read certificate %s", ca.Cert)
 	}
-	if is.File(ca.PrivateKey) {
-		privateKey = files.SafeRead(ca.PrivateKey)
-	} else {
-		privateKey = ca.PrivateKey
-	}
+
 	if privateKey == "" {
 		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
 	}
