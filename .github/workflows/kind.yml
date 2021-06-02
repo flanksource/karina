@@ -110,6 +110,7 @@ jobs:
           - nosql
           - cicd
           - kpack
+          - quarantine
     steps:
       - uses: actions/checkout@main
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}

@@ -37,6 +37,7 @@ type PlatformConfig struct {
 	EventRouter   EventRouter    `yaml:"eventrouter,omitempty" json:"eventrouter,omitempty"`
 	ExternalDNS   ExternalDNS    `yaml:"externalDns,omitempty" json:"externalDns,omitempty"`
 	Filebeat      []Filebeat     `yaml:"filebeat,omitempty" json:"filebeat,omitempty"`
+	Flux          Flux           `yaml:"flux,omitempty" json:"flux,omitempty"`
 	GCP           GCP            `yaml:"gcp,omitempty" json:"gcp:omitempty"`
 	Gatekeeper    Gatekeeper     `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
 	GitOperator   GitOperator    `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`

@@ -736,6 +736,14 @@ type GitOps struct {
 	Args map[string]string `yaml:"args,omitempty" json:"args,omitempty"`
 }
 
+type Flux struct {
+	Enabled                        bool   `yaml:"enabled" json:"enabled"`
+	SourceControllerVersion        string `yaml:"sourceControllerVersion,omitempty" json:"sourceControllerVersion,omitempty"`
+	NotificationsControllerVersion string `yaml:"notificationsControllerVersion,omitempty" json:"notificationsControllerVersion,omitempty"`
+	KustomizeControllerVersion     string `yaml:"kustomizeControllerVersion,omitempty" json:"kustomizeControllerVersion,omitempty"`
+	HelmControllerVersion          string `yaml:"helmControllerVersion,omitempty" json:"helmControllerVersion,omitempty"`
+}
+
 type Velero struct {
 	XDisabled `yaml:",inline" json:",inline"`
 	Schedule  string            `yaml:"schedule,omitempty" json:"schedule,omitempty"`

@@ -57,8 +57,7 @@ func NewKarinaConfigReconciler(k8s client.Client, log logr.Logger, scheme *runti
 	return reconciler
 }
 
-func (r *KarinaConfigReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *KarinaConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.log.WithValues("KarinaConfig", req.NamespacedName)
 
 	karinaConfig := &karinav1.KarinaConfig{}
