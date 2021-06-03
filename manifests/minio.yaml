@@ -110,6 +110,10 @@ spec:
                   key: secretkey
             - name: MINIO_API_READY_DEADLINE
               value: "5s"
+            {{ if .minio.kmsMasterKey }}
+            - name: MINIO_KMS_MASTER_KEY
+              value: "{{.minio.kmsMasterKey}}"
+            {{ end }}
           livenessProbe:
             httpGet:
               path: /minio/health/live
