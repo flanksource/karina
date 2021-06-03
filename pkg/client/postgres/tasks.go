@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -17,10 +18,14 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api "github.com/flanksource/karina/pkg/api/postgres"
+	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
+	dbv2 "github.com/flanksource/template-operator-library/api/db/v2"
 )
 
 const Namespace = "postgres-operator"
@@ -36,7 +41,25 @@ type PostgresDB struct {
 	client       *kommons.Client
 }
 
-func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
+type PostgresqlDB struct {
+	*PostgresDB
+	Restic       bool
+	BackupBucket string
+	platform     *platform.Platform
+}
+
+type s3Backup struct {
+	Name string
+	Date time.Time
+}
+
+type s3Backups []s3Backup
+
+func (a s3Backups) Len() int           { return len(a) }
+func (a s3Backups) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a s3Backups) Less(i, j int) bool { return a[i].Date.Before(a[j].Date) }
+
+func GetPostgresDB(client *kommons.Client, name string, resticEnabled bool) (*PostgresDB, error) {
 	db := PostgresDB{client: client}
 
 	_db := &api.Postgresql{TypeMeta: metav1.TypeMeta{
@@ -58,13 +81,15 @@ func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
 		return nil, fmt.Errorf("could not get opconfig %v", err)
 	}
 
-	backupConfig := db.client.GetSecret(Namespace, fmt.Sprintf("backup-%s-config", name))
-	if backupConfig == nil {
-		return nil, fmt.Errorf("failed to get backup config of %s", name)
+	if resticEnabled {
+		backupConfig := db.client.GetSecret(Namespace, fmt.Sprintf("backup-%s-config", name))
+		if backupConfig == nil {
+			return nil, fmt.Errorf("failed to get backup config of %s", name)
+		}
+		db.backupConfig = backupConfig
 	}
 
 	db.Name = name
-	db.backupConfig = backupConfig
 	db.Namespace = _db.Namespace
 	db.version = _db.Spec.PgVersion
 	db.Superuser = op.Configuration.PostgresUsersConfiguration.SuperUsername
@@ -72,6 +97,33 @@ func GetPostgresDB(client *kommons.Client, name string) (*PostgresDB, error) {
 		db.Superuser = "postgres"
 	}
 	db.Secret = fmt.Sprintf("%s.%s.credentials", db.Superuser, name)
+	return &db, nil
+}
+
+func GetPostgresqlDB(p *platform.Platform, name string) (*PostgresqlDB, error) {
+	client := &p.Client
+	_db := &dbv2.PostgresqlDB{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "PostgresqlDB",
+			APIVersion: "db.flanksource.com/v2",
+		},
+	}
+
+	if err := client.Get(Namespace, name, _db); err != nil {
+		return nil, fmt.Errorf("could not get db %v", err)
+	}
+
+	resticEnabled := _db.Spec.Backup.Restic
+	postgresDB, err := GetPostgresDB(client, name, resticEnabled)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get postgres db")
+	}
+
+	db := PostgresqlDB{PostgresDB: postgresDB, platform: p}
+
+	db.Restic = resticEnabled
+	db.BackupBucket = _db.Spec.Backup.Bucket
+
 	return &db, nil
 }
 
@@ -148,7 +200,7 @@ func (db *PostgresDB) Terminate() error {
 	return db.client.DeleteByKind("postgresql", db.Namespace, db.Name)
 }
 
-func (db *PostgresDB) Backup() error {
+func (db *PostgresqlDB) Backup() error {
 	job := db.GenerateBackupJob().AsOneShotJob()
 
 	if err := db.client.Apply(db.Namespace, job); err != nil {
@@ -162,11 +214,6 @@ func (db *PostgresDB) Backup() error {
 	return db.client.StreamLogs(db.Namespace, jobPod)
 }
 
-func (db *PostgresDB) ScheduleBackup(schedule string) error {
-	job := db.GenerateBackupJob().AsCronJob(schedule)
-	return db.client.Apply(db.Namespace, job)
-}
-
 func (db *PostgresDB) TriggerBackup(timeout time.Duration) error {
 	backupCronJobName := fmt.Sprintf("backup-%s", db.GetClusterName())
 	jobName, err := db.client.TriggerCronJobManually(db.Namespace, backupCronJobName)
@@ -176,7 +223,81 @@ func (db *PostgresDB) TriggerBackup(timeout time.Duration) error {
 	return db.client.WaitForJob(db.Namespace, jobName, timeout)
 }
 
-func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
+func (db *PostgresqlDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
+	if db.Restic {
+		return db.ListResticBackups(s3Bucket, limit, quiet)
+	}
+
+	return db.ListS3Backups(s3Bucket, limit, quiet)
+}
+
+func (db *PostgresqlDB) ListS3Backups(s3Bucket string, limit int, quiet bool) ([]string, error) {
+	if s3Bucket == "" {
+		return nil, errors.Errorf("s3_bucket should not be empty")
+	}
+
+	mc, err := db.platform.GetS3Client()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get s3 client")
+	}
+	ok, err := mc.BucketExists(s3Bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to query if bucket %s exists", s3Bucket)
+	} else if !ok {
+		return nil, errors.Errorf("bucket %s does not exist", s3Bucket)
+	}
+
+	prefix := fmt.Sprintf("%s/", clusterName(db.Name))
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+	obj := mc.ListObjectsV2(s3Bucket, prefix, false, doneCh)
+
+	results := s3Backups{}
+
+	for o := range obj {
+		date, err := getBackupDate(o.Key)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse backup date")
+		}
+		results = append(results, s3Backup{Name: o.Key, Date: *date})
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Date.After(results[j].Date)
+	})
+
+	count := len(results)
+	if limit < count {
+		count = limit
+	}
+
+	sPrintS3BackupPath := func(snapshot s3Backup) string {
+		return fmt.Sprintf("s3:%s/%s", s3Bucket, snapshot.Name)
+	}
+
+	var backupPaths []string
+	if quiet {
+		for i := 0; i < count; i++ {
+			backupPath := sPrintS3BackupPath(results[i])
+			backupPaths = append(backupPaths, backupPath)
+			fmt.Println(backupPath)
+		}
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 3, 2, 3, ' ', 0)
+		defer w.Flush()
+		fmt.Fprintln(w, "BACKUP PATH\tTIME\tAGE")
+		for i := 0; i < count; i++ {
+			snapshot := results[i]
+			backupPath := sPrintS3BackupPath(snapshot)
+			backupPaths = append(backupPaths, backupPath)
+			fmt.Fprintf(w, "%s\t%s\t%s\n", backupPath, snapshot.Date.Format("2006-01-02 15:04:05 -07 MST"), text.HumanizeDuration(time.Since(snapshot.Date)))
+		}
+	}
+
+	return backupPaths, nil
+}
+
+func (db *PostgresqlDB) ListResticBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
 	backupConfig := *db.backupConfig
 
 	var backupS3Bucket string
@@ -260,7 +381,7 @@ func (db *PostgresDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]str
 
 // Restore executes a job to retrieve the logical backup specified and then applies it to the database
 // if trace is true, restore commands are printed to stdout
-func (db *PostgresDB) Restore(fullBackupPath string, trace bool) error {
+func (db *PostgresqlDB) Restore(fullBackupPath string, trace bool) error {
 	if !strings.HasPrefix(fullBackupPath, "restic:s3:") {
 		return fmt.Errorf("backup path format is not supported. It should start with \"restic:s3:\"")
 	}
@@ -304,7 +425,53 @@ func (db *PostgresDB) Restore(fullBackupPath string, trace bool) error {
 	return db.client.StreamLogs(db.Namespace, jobPod)
 }
 
-func (db *PostgresDB) GenerateBackupJob() *kommons.DeploymentBuilder {
+func (db *PostgresqlDB) GenerateBackupJob() *kommons.DeploymentBuilder {
+	if db.Restic {
+		return db.generateResticBackupJob()
+	}
+
+	return db.generateS3BackupJob()
+}
+
+func (db *PostgresqlDB) generateS3BackupJob() *kommons.DeploymentBuilder {
+	backupImage := "docker.io/flanksource/postgres-backups:0.1.5"
+	operatorSecret := "postgres-operator-cluster-environment"
+	var builder = kommons.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), backupImage)
+
+	return builder.
+		EnvVarFromSecret("PGPASSWORD", db.Secret, "password").
+		EnvVarFromSecret("AWS_SECRET_ACCESS_KEY", operatorSecret, "AWS_SECRET_ACCESS_KEY").
+		EnvVarFromSecret("AWS_ACCESS_KEY_ID", operatorSecret, "AWS_ACCESS_KEY_ID").
+		EnvVarFromSecret("LOGICAL_BACKUP_S3_ENDPOINT", operatorSecret, "AWS_ENDPOINT_URL").
+		EnvVarFromSecret("AWS_S3_FORCE_PATH_STYLE", operatorSecret, "AWS_S3_FORCE_PATH_STYLE").
+		EnvVarFromSecret("LOGICAL_BACKUP_S3_REGION", operatorSecret, "AWS_REGION").
+		EnvVarFromField("POD_NAMESPACE", "metadata.namespace").
+		EnvVars(map[string]string{
+			"PGHOST":                   db.Name,
+			"PGPORT":                   "5432",
+			"SCOPE":                    clusterName(db.Name),
+			"PGSSLMODE":                "prefer",
+			"PGDATABASE":               "postgres",
+			"LOGICAL_BACKUP_S3_BUCKET": db.BackupBucket,
+			"LOGICAL_BACKUP_S3_SSE":    "AES256",
+			"PG_VERSION":               "12",
+			"PGUSER":                   "postgres",
+			"CLUSTER_NAME_LABEL":       "cluster-name",
+		}).
+		Resources(v1.ResourceRequirements{
+			Limits: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("500m"),
+				v1.ResourceMemory: resource.MustParse("512Mi"),
+			},
+			Requests: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("10m"),
+				v1.ResourceMemory: resource.MustParse("128Mi"),
+			},
+		}).
+		ServiceAccount("postgres-pod")
+}
+
+func (db *PostgresDB) generateResticBackupJob() *kommons.DeploymentBuilder {
 	backupConfig := *db.backupConfig
 
 	var builder = kommons.Deployment("backup-"+db.Name+"-"+utils.ShortTimestamp(), string(backupConfig["BACKUP_IMAGE"]))
@@ -323,4 +490,17 @@ func (db *PostgresDB) GenerateBackupJob() *kommons.DeploymentBuilder {
 		Labels(map[string]string{
 			"application": "postgres-logical-backup",
 		})
+}
+
+func getBackupDate(key string) (*time.Time, error) {
+	filename := filepath.Base(key)
+	if !strings.HasSuffix(filename, ".sql.gz") {
+		return nil, errors.Errorf("expected filename %s to have .sql.gz extension")
+	}
+
+	date, err := time.Parse("2006-01-02.150405.sql.gz", filename)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse date %s", filename)
+	}
+	return &date, nil
 }

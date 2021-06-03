@@ -95,7 +95,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 	test.Passf(testName, "Tested E2E Backup and restore successfully")
 }
 
-func newDB(p *platform.Platform, namespace, name string) (*pgclient.PostgresDB, error) {
+func newDB(p *platform.Platform, namespace, name string) (*pgclient.PostgresqlDB, error) {
 	cluster := &postgresdbv2.PostgresqlDB{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PostgresqlDB",
@@ -128,7 +128,7 @@ func newDB(p *platform.Platform, namespace, name string) (*pgclient.PostgresDB, 
 	if _, err := p.WaitFor(cluster, 5*time.Minute); err != nil {
 		return nil, errors.Wrap(err, "failed waiting for postgres to come up")
 	}
-	return pgclient.GetPostgresDB(&p.Client, cluster.Name)
+	return pgclient.GetPostgresqlDB(p, cluster.Name)
 }
 
 func insertTestFixtures(pg *pgx.Conn) error {
