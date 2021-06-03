@@ -522,7 +522,7 @@ func (db *PostgresDB) generateResticBackupJob() *kommons.DeploymentBuilder {
 func getBackupDate(key string) (*time.Time, error) {
 	filename := filepath.Base(key)
 	if !strings.HasSuffix(filename, ".sql.gz") {
-		return nil, errors.Errorf("expected filename %s to have .sql.gz extension")
+		return nil, errors.Errorf("expected filename %s to have .sql.gz extension", filename)
 	}
 
 	date, err := time.Parse("2006-01-02.150405.sql.gz", filename)

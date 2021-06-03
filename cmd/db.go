@@ -18,23 +18,7 @@ var DB = &cobra.Command{
 
 var clusterName, namespace, secret, superuser string
 
-func getDB(cmd *cobra.Command) (*postgres.PostgresDB, error) {
-	platform := getPlatform(cmd)
-	db, err := postgres.GetPostgresDB(&platform.Client, clusterName, true)
-
-	if err != nil {
-		return nil, err
-	}
-	if secret != "" {
-		db.Secret = secret
-	}
-	if superuser != "" {
-		db.Superuser = superuser
-	}
-	return db, nil
-}
-
-func getPostgresqlDb(cmd *cobra.Command) (*postgres.PostgresqlDB, error) {
+func getPostgresqlDB(cmd *cobra.Command) (*postgres.PostgresqlDB, error) {
 	platform := getPlatform(cmd)
 	db, err := postgres.GetPostgresqlDB(platform, clusterName)
 
@@ -117,7 +101,7 @@ func init() {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
-			db, err := getPostgresqlDb(cmd)
+			db, err := getPostgresqlDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
@@ -133,7 +117,7 @@ func init() {
 		Short: "Create a new database backup",
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			db, err := getPostgresqlDb(cmd)
+			db, err := getPostgresqlDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
@@ -151,7 +135,7 @@ func init() {
 		Args:  cobra.ExactArgs(1),
 		Short: "Run SQL against a database",
 		Run: func(cmd *cobra.Command, args []string) {
-			db, err := getPostgresqlDb(cmd)
+			db, err := getPostgresqlDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
@@ -188,7 +172,7 @@ func init() {
 		Use:   "list",
 		Short: "List all backup revisions",
 		Run: func(cmd *cobra.Command, args []string) {
-			db, err := getPostgresqlDb(cmd)
+			db, err := getPostgresqlDB(cmd)
 			if err != nil {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
