@@ -217,18 +217,16 @@ func (db *PostgresDB) TriggerBackup(timeout time.Duration) error {
 	return db.client.WaitForJob(db.Namespace, jobName, timeout)
 }
 
-func (db *PostgresqlDB) ListBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
+func (db *PostgresqlDB) ListBackups(limit int, quiet bool) ([]string, error) {
 	if db.Restic {
-		return db.ListResticBackups(s3Bucket, limit, quiet)
+		return db.ListResticBackups(limit, quiet)
 	}
 
-	return db.ListS3Backups(s3Bucket, limit, quiet)
+	return db.ListS3Backups(limit, quiet)
 }
 
-func (db *PostgresqlDB) ListS3Backups(s3Bucket string, limit int, quiet bool) ([]string, error) {
-	if s3Bucket == "" {
-		return nil, errors.Errorf("s3_bucket should not be empty")
-	}
+func (db *PostgresqlDB) ListS3Backups(limit int, quiet bool) ([]string, error) {
+	s3Bucket := db.BackupBucket
 
 	mc, err := db.platform.GetS3Client()
 	if err != nil {
@@ -291,8 +289,9 @@ func (db *PostgresqlDB) ListS3Backups(s3Bucket string, limit int, quiet bool) ([
 	return backupPaths, nil
 }
 
-func (db *PostgresqlDB) ListResticBackups(s3Bucket string, limit int, quiet bool) ([]string, error) {
+func (db *PostgresqlDB) ListResticBackups(limit int, quiet bool) ([]string, error) {
 	backupConfig := *db.backupConfig
+	s3Bucket := db.BackupBucket
 
 	var backupS3Bucket string
 	if s3Bucket != "" {
@@ -338,7 +337,7 @@ func (db *PostgresqlDB) ListResticBackups(s3Bucket string, limit int, quiet bool
 		return nil, err
 	}
 
-	if limit > 0 {
+	if limit > 0 && limit < len(resticSnapshots) {
 		resticSnapshots = resticSnapshots[:limit]
 	}
 
@@ -385,7 +384,7 @@ func (db *PostgresqlDB) Restore(fullBackupPath string, trace bool) error {
 
 func (db *PostgresqlDB) RestoreS3(backup string, trace bool) error {
 	if !strings.HasPrefix(backup, "s3://") {
-		backup = fmt.Sprintf("s3://%s/%s", db.BackupBucket, backup)
+		backup = fmt.Sprintf("s3://%s/%s/%s", db.BackupBucket, db.Name, backup)
 	}
 	job := db.GenerateBackupJob().
 		Command("/restore.sh").

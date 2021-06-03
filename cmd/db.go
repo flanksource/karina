@@ -193,17 +193,15 @@ func init() {
 				log.Fatalf("error finding %s: %v", clusterName, err)
 			}
 
-			s3Bucket, _ := cmd.Flags().GetString("bucket")
 			quiet, _ := cmd.Flags().GetBool("quiet")
 			limit, _ := cmd.Flags().GetInt("number")
 			log.Infof("Querying for list of snapshot for %s", db)
-			if _, err := db.ListBackups(s3Bucket, limit, quiet); err != nil {
+			if _, err := db.ListBackups(limit, quiet); err != nil {
 				log.Fatalf("Failed to list backups: %v", err)
 			}
 		},
 	}
 
-	listBackup.Flags().String("bucket", "", "List all backup revisions in a specific bucket")
 	listBackup.Flags().BoolP("quiet", "q", false, "List only the path of the backup")
 	listBackup.Flags().IntP("number", "n", 0, "Maximum number of backups to list")
 	backup.AddCommand(listBackup)

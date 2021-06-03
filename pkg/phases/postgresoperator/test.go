@@ -73,7 +73,7 @@ func TestLogicalBackupE2E(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	backupPaths, err := db1.ListBackups("", 1, true)
+	backupPaths, err := db1.ListBackups(1, true)
 	if err != nil {
 		test.Failf("failed to get list of backups for Postgresql Cluster %s: %v", db1.Name, err)
 		return
