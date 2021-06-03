@@ -635,11 +635,15 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		}
 
 		for _, object := range objects {
-			if err := platform.Get(object.GetNamespace(), object.GetName(), object); err != nil {
-				platform.Debugf("%s (deleted, skipping)", console.Redf("%s", spec))
-				return nil
+			if platform.IsCoreType(object) {
+				if err := platform.Get(object.GetNamespace(), object.GetName(), object); err != nil {
+					platform.Debugf("%s (deleted, skipping)", console.Redf("%s", spec))
+					return nil
+				}
 			}
+		}
 
+		for _, object := range objects {
 			if err := platform.DeleteUnstructured(namespace, object); err != nil {
 				return err
 			}
