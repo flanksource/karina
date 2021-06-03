@@ -8,7 +8,12 @@ filebeat:
     elasticsearch:
       url: logs-es-http.eck.svc.cluster.local
       user: elastic
-      password: elastic
+      password:
+        value: elastic
+#        valueFrom:
+#          secretKeyRef:
+#            name: logs-es-elastic-user
+#            key: elastic
       port: 9200
       scheme: https
 journalbeat:
@@ -39,7 +44,8 @@ packetbeat:
   kibana:
     url: kibana.127.0.0.1.nip.io
     user: elastic
-    password: elastic
+    password:
+      value: elastic
     port: 443
     scheme: https
 eventrouter:

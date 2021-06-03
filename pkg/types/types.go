@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/flanksource/kommons"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/flanksource/karina/pkg/api/calico"
@@ -993,12 +995,12 @@ func (v Vsphere) GetSecret() map[string][]byte {
 }
 
 type Connection struct {
-	URL      string `yaml:"url" json:"url"`
-	User     string `yaml:"user,omitempty" json:"user,omitempty"`
-	Password string `yaml:"password,omitempty" json:"password,omitempty"`
-	Port     string `yaml:"port,omitempty" json:"port,omitempty"`
-	Scheme   string `yaml:"scheme,omitempty" json:"scheme,omitempty"`
-	Verify   string `yaml:"verify,omitempty" json:"verify,omitempty"`
+	URL      string         `yaml:"url" json:"url"`
+	User     string         `yaml:"user,omitempty" json:"user,omitempty"`
+	Password kommons.EnvVar `yaml:"password,omitempty" json:"password,omitempty"`
+	Port     string         `yaml:"port,omitempty" json:"port,omitempty"`
+	Scheme   string         `yaml:"scheme,omitempty" json:"scheme,omitempty"`
+	Verify   string         `yaml:"verify,omitempty" json:"verify,omitempty"`
 }
 
 // AuditConfig is used to specify the audit policy file.
