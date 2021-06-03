@@ -53,12 +53,6 @@ type s3Backup struct {
 	Date time.Time
 }
 
-type s3Backups []s3Backup
-
-func (a s3Backups) Len() int           { return len(a) }
-func (a s3Backups) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a s3Backups) Less(i, j int) bool { return a[i].Date.Before(a[j].Date) }
-
 func GetPostgresDB(client *kommons.Client, name string, resticEnabled bool) (*PostgresDB, error) {
 	db := PostgresDB{client: client}
 
@@ -252,7 +246,7 @@ func (db *PostgresqlDB) ListS3Backups(s3Bucket string, limit int, quiet bool) ([
 	defer close(doneCh)
 	obj := mc.ListObjectsV2(s3Bucket, prefix, false, doneCh)
 
-	results := s3Backups{}
+	results := []s3Backup{}
 
 	for o := range obj {
 		date, err := getBackupDate(o.Key)
@@ -272,7 +266,7 @@ func (db *PostgresqlDB) ListS3Backups(s3Bucket string, limit int, quiet bool) ([
 	}
 
 	sPrintS3BackupPath := func(snapshot s3Backup) string {
-		return fmt.Sprintf("s3:%s/%s", s3Bucket, snapshot.Name)
+		return fmt.Sprintf("s3://%s/%s", s3Bucket, snapshot.Name)
 	}
 
 	var backupPaths []string
@@ -383,9 +377,43 @@ func (db *PostgresqlDB) ListResticBackups(s3Bucket string, limit int, quiet bool
 // if trace is true, restore commands are printed to stdout
 func (db *PostgresqlDB) Restore(fullBackupPath string, trace bool) error {
 	if !strings.HasPrefix(fullBackupPath, "restic:s3:") {
-		return fmt.Errorf("backup path format is not supported. It should start with \"restic:s3:\"")
+		return db.RestoreS3(fullBackupPath, trace)
 	}
 
+	return db.RestoreRestic(fullBackupPath, trace)
+}
+
+func (db *PostgresqlDB) RestoreS3(backup string, trace bool) error {
+	if !strings.HasPrefix(backup, "s3://") {
+		backup = fmt.Sprintf("s3://%s/%s", db.BackupBucket, backup)
+	}
+	job := db.GenerateBackupJob().
+		Command("/restore.sh").
+		EnvVars(map[string]string{
+			"PATH_TO_BACKUP":   backup,
+			"PSQL_BEFORE_HOOK": "",
+			"PSQL_AFTER_HOOK":  "",
+			"PGHOST":           db.Name,
+			"PSQL_OPTS":        "--echo-all",
+		}).AsOneShotJob()
+
+	if err := db.client.Apply(db.Namespace, job); err != nil {
+		return err
+	}
+
+	if err := db.client.WaitForJob(db.Namespace, job.Name, 1*time.Minute); err != nil {
+		return err
+	}
+
+	jobPod, err := db.client.GetJobPod(db.Namespace, job.Name)
+	if err != nil {
+		return err
+	}
+
+	return db.client.StreamLogs(db.Namespace, jobPod)
+}
+
+func (db *PostgresqlDB) RestoreRestic(fullBackupPath string, trace bool) error {
 	db.client.Infof("[%s] restoring from backup %s", db.Name, fullBackupPath)
 
 	re := regexp.MustCompile(`(s3:(s3.amazonaws.com|https?://[^/]+)/[^/]+)(/.+)`)
