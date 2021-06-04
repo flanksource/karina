@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	elastic "github.com/olivere/elastic/v7"
@@ -86,9 +88,17 @@ func ExportLogs(p *platform.Platform, filebeatName string, query Query) error {
 	}
 
 	p.Infof("Exporting logs from %s@%s", filebeat.Elasticsearch.User, filebeat.Elasticsearch.GetURL())
-
+	var password string
+	var err error
+	_, password, err = p.GetEnvValue(filebeat.Elasticsearch.Password, "eck")
+	if err != nil {
+		_, password, err = p.GetEnvValue(filebeat.Elasticsearch.Password, metav1.NamespaceAll)
+		if err != nil {
+			return fmt.Errorf("unable to retrieve elasticsearch password for %s", filebeatName)
+		}
+	}
 	es, err := elastic.NewSimpleClient(
-		elastic.SetBasicAuth(filebeat.Elasticsearch.User, filebeat.Elasticsearch.Password),
+		elastic.SetBasicAuth(filebeat.Elasticsearch.User, password),
 		elastic.SetURL(filebeat.Elasticsearch.GetURL()),
 	)
 	if err != nil {
