@@ -17,7 +17,7 @@ const (
 var Defaults = map[string]string{
 	"client-body-buffer-size":   "16M",
 	"proxy-body-size":           "32M",
-	"disable-access-log":        "true",
+	"disable-access-log":        "false",
 	"client-body-timeout":       "600",
 	"proxy-read-timeout":        "600",
 	"proxy-write-timeout":       "600",

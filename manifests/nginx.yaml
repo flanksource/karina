@@ -154,6 +154,9 @@ spec:
       labels:
         app: ingress-nginx
       annotations:
+        com.flanksource.infra.logs/module: nginx
+        com.flanksource.infra.logs/fileset.stdout: access
+        com.flanksource.infra.logs/fileset.stderr: error
         com.flanksource.infra.logs/enabled: "true"
         com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: while SSL handshaking to upstream
         com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: failed to query the DNS server for

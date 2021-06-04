@@ -786,6 +786,7 @@ type Filebeat struct {
 	Prefix        string            `yaml:"prefix" json:"prefix"`
 	Elasticsearch *Connection       `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
 	Logstash      *Connection       `yaml:"logstash,omitempty" json:"logstash,omitempty"`
+	Kibana        *Connection       `yaml:"kibana,omitempty" json:"kibana,omitempty"`
 	SSL           map[string]string `yaml:"ssl,omitempty" json:"ssl,omitempty"`
 }
 
