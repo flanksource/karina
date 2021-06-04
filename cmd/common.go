@@ -247,7 +247,7 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 
 func MakeAbsolute(path *string) error {
 	if path != nil {
-		if *path != "" {
+		if *path != "" && is.File(*path) {
 			absPath, err := filepath.Abs(*path)
 			if err != nil {
 				return err

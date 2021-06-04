@@ -64,10 +64,15 @@ func Deploy(p *platform.Platform) error {
 
 		if f.Kibana != nil {
 			secretName := fmt.Sprintf("kibana-%s", f.Name)
-			err := p.GetOrCreateSecret(secretName, constants.PlatformSystem, map[string][]byte{
+			_, password, err := p.GetEnvValue(f.Kibana.Password, "eck")
+			if err != nil {
+				return err
+			}
+
+			err = p.GetOrCreateSecret(secretName, constants.PlatformSystem, map[string][]byte{
 				"KIBANA_URL":      []byte(f.Kibana.GetURL()),
 				"KIBANA_USERNAME": []byte(f.Kibana.User),
-				"KIBANA_PASSWORD": []byte(f.Kibana.Password),
+				"KIBANA_PASSWORD": []byte(password),
 			})
 			if err != nil {
 				return errors.Wrap(err, "Failed to create secret logstash")
