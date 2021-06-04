@@ -11,7 +11,7 @@ require (
 	github.com/flanksource/commons v1.5.6
 	github.com/flanksource/kommons v0.17.1
 	github.com/flanksource/konfigadm v0.6.0-2-g9751ff1
-	github.com/flanksource/template-operator-library v0.1.5
+	github.com/flanksource/template-operator-library v0.1.6
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
 	github.com/google/uuid v1.1.2
