@@ -40,7 +40,7 @@ spec:
             - name: web
               containerPort: 9091
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   labels:
@@ -54,9 +54,11 @@ spec:
     - host: pushgateway.{{.domain}}
       http:
         paths:
-          - backend:
-              serviceName: pushgateway
-              servicePort: 9091
+          - defaultBackend:
+              service:
+                name: pushgateway
+                port:
+                  number: 9091
   tls:
     - secretName: pushgateway-tls
       hosts:

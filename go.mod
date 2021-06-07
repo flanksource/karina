@@ -59,4 +59,5 @@ replace (
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190829150108-63fe5bdad115
 	gopkg.in/hairyhenderson/yaml.v2 => github.com/maxaudron/yaml v0.0.0-20190411130442-27c13492fe3c
 	k8s.io/client-go => k8s.io/client-go v0.20.4
+	github.com/flanksource/commons => /home/toni/code/flanksource/commons
 )

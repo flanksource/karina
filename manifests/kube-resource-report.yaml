@@ -170,7 +170,7 @@ spec:
       protocol: TCP
       targetPort: 80
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   labels:
@@ -184,9 +184,11 @@ spec:
     - host: kube-resource-report.{{.domain}}
       http:
         paths:
-          - backend:
-              serviceName: kube-resource-report
-              servicePort: 80
+          - defaultBackend:
+              service:
+                name:  kube-resource-report
+                port:
+                  number: 80
   tls:
     - secretName: kube-resource-report-tls
       hosts:

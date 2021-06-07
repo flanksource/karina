@@ -144,7 +144,7 @@ metadata:
   name: argocd
   namespace: argocd
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: argocd-ing
@@ -161,6 +161,8 @@ spec:
     - host: argocd.{{.domain}}
       http:
         paths:
-          - backend:
-              serviceName: argocd-server
-              servicePort: 8080
+          - defaultBackend:
+              service:
+                name: argocd-server
+                port:
+                  number: 8080

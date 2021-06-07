@@ -291,7 +291,7 @@ spec:
       serviceAccountName: git-operator
       terminationGracePeriodSeconds: 10
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -303,9 +303,11 @@ spec:
   - host: git-operator.{{.domain}}
     http:
       paths:
-      - backend:
-          serviceName: git-operator
-          servicePort: 8888
+      - defaultBackend:
+          service:
+            name: git-operator
+            port:
+              number: 8888
   tls:
   - hosts:
     - git-operator.{{.domain}}
