@@ -252,6 +252,9 @@ func (platform *Platform) GetKubeConfigBytes() ([]byte, error) {
 		return nil, errors.WithMessage(err, "failed to discover any healthy external endpoints")
 	}
 
+	if platform.SkipDecrypt {
+		return nil, fmt.Errorf("failed to find a healthy endpoint and --skip-decrypt prevents generating a new kubeconfig")
+	}
 	platform.Debugf("Generating a new kubeconfig for %s", ip)
 	kubeConfig, err := kommons.CreateKubeConfig(platform.Name, platform.GetCA(), ip, "system:masters", "admin", 24*7*time.Hour)
 	if err != nil {

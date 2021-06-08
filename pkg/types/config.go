@@ -108,6 +108,7 @@ type PlatformConfig struct {
 	Vsphere               *Vsphere          `yaml:"vsphere,omitempty" json:"vsphere,omitempty"`
 	BootstrapToken        string            `yaml:"-" json:"-"`
 	DryRun                bool              `yaml:"-" json:"-"`
+	SkipDecrypt           bool              `yaml:"-" json:"-"`
 	Trace                 bool              `yaml:"-" json:"-"`
 	Prune                 bool              `yaml:"-" json:"-"`
 	JoinEndpoint          string            `yaml:"-" json:"-"`

@@ -83,19 +83,27 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 	trace, _ := cmd.Flags().GetBool("trace")
 	e2e, _ := cmd.Flags().GetBool("e2e")
 	inCluster, _ := cmd.Flags().GetBool("in-cluster")
-
+	skipDecryption, _ := cmd.Flags().GetBool("skip-decrypt")
 	prune, _ := cmd.Flags().GetBool("prune")
 
-	config := NewConfig(paths, extras)
-	config.E2E = e2e
-	config.Trace = trace
-	config.DryRun = dryRun
-	config.InClusterConfig = inCluster
-	config.Prune = prune
-	return config
+	base := types.PlatformConfig{
+		E2E:             e2e,
+		Trace:           trace,
+		DryRun:          dryRun,
+		SkipDecrypt:     skipDecryption,
+		InClusterConfig: inCluster,
+		Prune:           prune,
+	}
+
+	return NewConfigFromBase(base, paths, extras)
 }
 
+// Deprecated: use  NewConfigFromBase instead
 func NewConfig(paths []string, extras []string) types.PlatformConfig {
+	return NewConfigFromBase(types.PlatformConfig{}, paths, extras)
+}
+
+func NewConfigFromBase(base types.PlatformConfig, paths []string, extras []string) types.PlatformConfig {
 	splitPaths := []string{}
 	for _, path := range paths {
 		splitPaths = append(splitPaths, strings.Split(path, ",")...)
@@ -105,14 +113,12 @@ func NewConfig(paths []string, extras []string) types.PlatformConfig {
 		log.Fatalf("Must specify at least 1 config")
 	}
 	paths = splitPaths
-	base := types.PlatformConfig{
-		Source: paths[0],
-	}
+	base.Source = paths[0]
 	cm := configMerger{
 		ReadFunction: func(path string) ([]byte, error) { return ioutil.ReadFile(path) },
 	}
 	if err := cm.MergeConfigs(&base, paths); err != nil {
-		log.Fatalf("Failed to merge configs: %v", err)
+		log.Fatalf(err.Error())
 	}
 	if err := os.Chdir(filepath.Dir(base.Source)); err != nil {
 		log.Fatalf("Could not enter config folder")
@@ -218,8 +224,15 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 		ReadFunction: func(path string) ([]byte, error) { return ioutil.ReadFile(path) },
 	}
 	scm := configMerger{
-		ReadFunction: func(path string) ([]byte, error) { return sops.File(path, "yaml") },
+		ReadFunction: func(path string) ([]byte, error) {
+			data, err := sops.File(path, "yaml")
+			if err != nil {
+				return nil, errors.WithMessage(err, "SOPS decryption failed, to skip use --skip-decrypt")
+			}
+			return data, nil
+		},
 	}
+
 	for _, config := range cfg.ImportConfigs {
 		fullPath := filepath.Dir(path) + "/" + config
 		if err := tcm.MergeConfigs(base, []string{fullPath}); err != nil {
@@ -234,11 +247,14 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 				return err
 			}
 		}
-		if config.SopsPath != "" {
+
+		if config.SopsPath != "" && !base.SkipDecrypt {
 			fullPath := filepath.Dir(path) + "/" + config.SopsPath
 			if err := scm.MergeConfigs(base, []string{fullPath}); err != nil {
 				return err
 			}
+		} else if config.SopsPath != "" && base.SkipDecrypt {
+			logger.Infof("Skipping decryption of sops file: %s", config.SopsPath)
 		}
 	}
 
