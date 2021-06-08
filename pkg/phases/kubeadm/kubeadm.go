@@ -107,15 +107,17 @@ func NewClusterConfig(cfg *platform.Platform) api.ClusterConfiguration {
 }
 
 func GetFilesToMountForPrimary(platform *platform.Platform) (map[string]string, error) {
-	// the primary or first control plane node gets everything subsequent nodes do
+	if platform.Kind.RemoteDocker {
+		return nil, nil
+	}
 
+	// the primary or first control plane node gets everything subsequent nodes do
 	files, err := GetFilesToMountForSecondary(platform)
 	if err != nil {
 		return nil, err
 	}
 
 	// plus the initial certificates for bootstrapping, subsequent control plane nodes download them from a secret
-
 	if platform.CA == nil {
 		return nil, fmt.Errorf(noCAErrorText)
 	}
@@ -138,6 +140,10 @@ func GetFilesToMountForPrimary(platform *platform.Platform) (map[string]string, 
 }
 
 func GetFilesToMountForSecondary(platform *platform.Platform) (map[string]string, error) {
+	if platform.Kind.RemoteDocker {
+		return nil, nil
+	}
+
 	var files = make(map[string]string)
 	files["/etc/ssl/certs/openid-ca.pem"] = string(platform.GetIngressCA().GetPublicChain()[0].EncodedCertificate())
 

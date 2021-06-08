@@ -136,6 +136,9 @@ func Install(p *platform.Platform) error {
 }
 
 func createIngressCA(p *platform.Platform) error {
+	if p.SkipDecrypt {
+		return nil
+	}
 	if issuer, _ := p.GetByKind(certmanager.ClusterIssuerKind, v1.NamespaceAll, IngressCA); issuer != nil {
 		// We only deploy the ingress-ca once, and then forget about it, this is for 2 reasons:
 		// 1) Not polluting the audit log with unnecessary read requests to the CA Key

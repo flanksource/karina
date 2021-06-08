@@ -2,9 +2,7 @@
 default: build
 NAME:=karina
 
-ifeq ($(VERSION),)
-VERSION=$(shell git describe --tags  --long)-$(shell date +"%Y%m%d%H%M%S")
-endif
+VERSION_TAG=$(VERSION)-$(shell date +"%Y%m%d%H%M%S")
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -29,13 +27,21 @@ release: linux darwin compress
 build:
 	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
 
+
 .PHONY: linux
 linux:
-	GOOS=linux go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)_linux-amd64
+	cp .bin/$(NAME)_linux-amd64 .bin/$(NAME)
+	GOOS=linux GOARCH=arm64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)_linux-arm64
 
 .PHONY: darwin
 darwin:
-	GOOS=darwin go build -o ./.bin/$(NAME)_osx -ldflags "-X \"main.version=$(VERSION)\""  main.go
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\""  -o .bin/$(NAME)_darwin-amd64
+	GOOS=darwin GOARCH=arm64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)_darwin-arm64
+
+.PHONY: windows
+windows:
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\""  -o .bin/$(NAME).exe
 
 .PHONY: compress
 compress:

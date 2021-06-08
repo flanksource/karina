@@ -3,19 +3,25 @@ on:
   workflow_dispatch: {}
 jobs:
   binary:
+    needs: semantic-release
     runs-on: ubuntu-latest
+    env:
+      VERSION: v${{ needs.semantic-release.outputs.release-version }}
     container:
-      image: flanksource/build-tools:v0.12.0
+      image: flanksource/build-tools:v0.13.6
     steps:
       - uses: actions/checkout@v2
       - run: make release
-      - uses: actions/upload-artifact@v2
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: karina
-          path: ./.bin/*
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./.bin/*
+          tag: v${{ needs.semantic-release.outputs.release-version }}
+          overwrite: true
+          file_glob: true
 
   semantic-release:
-    needs: binary
     runs-on: ubuntu-latest
     outputs:
       release-version: ${{ steps.semantic.outputs.release-version }}
