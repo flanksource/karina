@@ -36,7 +36,7 @@ func ReadCA(ca *types.CA) (*certs.Certificate, error) {
 		return nil, fmt.Errorf("unable to read private key %s", ca.PrivateKey)
 	}
 
-	if privateKey == "" {
+	if ca.Password == "" {
 		return certs.DecodeCertificate([]byte(cert), []byte(privateKey))
 	}
 	return certs.DecryptCertificate([]byte(cert), []byte(privateKey), []byte(ca.Password))
