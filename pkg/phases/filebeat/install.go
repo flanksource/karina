@@ -49,7 +49,7 @@ func Deploy(p *platform.Platform) error {
 			if err != nil {
 				_, password, err = p.GetEnvValue(f.Logstash.Password, metav1.NamespaceAll)
 				if err != nil {
-					return fmt.Errorf("unable to retrieve elasticsearch password for %s", f.Name)
+					return fmt.Errorf("unable to retrieve logstash password for %s", f.Name)
 				}
 			}
 			err = p.GetOrCreateSecret(secretName, constants.PlatformSystem, map[string][]byte{
@@ -64,10 +64,19 @@ func Deploy(p *platform.Platform) error {
 
 		if f.Kibana != nil {
 			secretName := fmt.Sprintf("kibana-%s", f.Name)
-			err := p.GetOrCreateSecret(secretName, constants.PlatformSystem, map[string][]byte{
+			var password string
+			var err error
+			_, password, err = p.GetEnvValue(f.Kibana.Password, "eck")
+			if err != nil {
+				_, password, err = p.GetEnvValue(f.Kibana.Password, metav1.NamespaceAll)
+				if err != nil {
+					return fmt.Errorf("unable to retrieve kibana password for %s", f.Name)
+				}
+			}
+			err = p.GetOrCreateSecret(secretName, constants.PlatformSystem, map[string][]byte{
 				"KIBANA_URL":      []byte(f.Kibana.GetURL()),
 				"KIBANA_USERNAME": []byte(f.Kibana.User),
-				"KIBANA_PASSWORD": []byte(f.Kibana.Password),
+				"KIBANA_PASSWORD": []byte(password),
 			})
 			if err != nil {
 				return errors.Wrap(err, "Failed to create secret logstash")
