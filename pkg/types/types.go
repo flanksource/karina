@@ -392,6 +392,8 @@ type Kubernetes struct {
 }
 
 type Kind struct {
+	// Skip attempting to mount local files into the docker daemon
+	RemoteDocker bool             `yaml:"remoteDocker" json:"remoteDocker"`
 	PortMappings map[string]int32 `yaml:"portMappings,omitempty" json:"portMappings,omitempty"`
 	WorkerCount  int              `yaml:"workerCount,omitempty" json:"workerCount,omitempty"`
 	Image        string           `yaml:"image,omitempty" json:"image,omitempty"`
