@@ -2,6 +2,15 @@ name: Create Release
 on:
   workflow_dispatch: {}
 jobs:
+  test:
+    needs: semantic-release
+    runs-on: ubuntu-latest
+    container:
+      image: flanksource/build-tools:v0.13.6
+    steps:
+      - uses: actions/checkout@v2
+      - run: make build
+
   binary:
     needs: semantic-release
     runs-on: ubuntu-latest
@@ -28,11 +37,6 @@ jobs:
       new-release-published: ${{ steps.semantic.outputs.new-release-published }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-        with:
-          name: karina
-          path: ./.bin
-      - run: ls -R ./.bin
       - uses: codfish/semantic-release-action@v1
         id: semantic
         env:
