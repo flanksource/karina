@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/flanksource/commons/files"
 
 	"github.com/flanksource/commons/console"
@@ -60,6 +62,19 @@ func (c configMerger) MergeConfigs(base *types.PlatformConfig, paths []string) e
 		}
 	}
 	return nil
+}
+
+func GetTestPlatform(config *rest.Config, platformConfig types.PlatformConfig) *platform.Platform {
+	platform := &platform.Platform{
+		PlatformConfig: platformConfig,
+	}
+	if err := platform.Init(); err != nil {
+		return nil
+	}
+	platform.Client.GetRESTConfig = func() (*rest.Config, error) {
+		return config, nil
+	}
+	return platform
 }
 
 func getPlatform(cmd *cobra.Command) *platform.Platform {

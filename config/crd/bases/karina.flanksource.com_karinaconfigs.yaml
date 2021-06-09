@@ -415,7 +415,7 @@ spec:
                     type: object
                   data:
                     additionalProperties:
-                      type: Any
+                      type: object
                     description: Semistructured data to be reused using YAML anchors
                     type: object
                   datacenter:

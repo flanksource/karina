@@ -10,6 +10,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flanksource/commons v1.5.6
 	github.com/flanksource/kommons v0.19.0
+	github.com/flanksource/kommons/testenv v0.0.0-20210628131214-7dac6b472d63
 	github.com/flanksource/konfigadm v0.11.0
 	github.com/flanksource/template-operator-library v0.1.6
 	github.com/go-logr/logr v0.3.0

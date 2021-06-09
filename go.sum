@@ -329,6 +329,8 @@ github.com/flanksource/commons v1.5.6/go.mod h1:boFAup9GmLcnz0fWQnPV5WVFcHYA7U0a
 github.com/flanksource/kommons v0.10.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
 github.com/flanksource/kommons v0.19.0 h1:YN+LRCZdBiqg0PTIEnqkCq9Tx/LRh0ym0+++WWfU63A=
 github.com/flanksource/kommons v0.19.0/go.mod h1:evSkgfTHXqgOwWeM4XPhj43J7xGJcTxHfhJYQchJDp8=
+github.com/flanksource/kommons/testenv v0.0.0-20210628131214-7dac6b472d63 h1:CaOBvQGZuKth0NM4+ycDw8JNlyktwBkkSSJlkCySBnc=
+github.com/flanksource/kommons/testenv v0.0.0-20210628131214-7dac6b472d63/go.mod h1:7i/mBygQV7cZ9jmGnV0NYqcmLVBLwR2XSziN/8mjYmw=
 github.com/flanksource/konfigadm v0.11.0 h1:8x1SKKuuYQwXEpIbX9lapHxEbgwNNleyyGwNTjx+QqQ=
 github.com/flanksource/konfigadm v0.11.0/go.mod h1:YoEk15YFXh7LQTcqx1UPPC88jzgikKSoiIj0Jt96GYI=
 github.com/flanksource/template-operator-library v0.1.6 h1:E8diSjJb2tXNIuuHSETqz1o6nUVtQjWAAFOiI4LaGxs=

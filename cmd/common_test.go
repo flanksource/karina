@@ -6,6 +6,9 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/flanksource/kommons/testenv"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/flanksource/karina/cmd"
 	"github.com/flanksource/karina/pkg/types"
 	. "github.com/onsi/gomega"
@@ -74,4 +77,42 @@ func newFixture(paths []string, t *testing.T) (*types.PlatformConfig, *WithT) {
 
 	cfg := cmd.NewConfig(fullPaths, []string{})
 	return &cfg, g
+}
+
+func Test_getTestPlatform(t *testing.T) {
+	type args struct {
+		version string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		//Only ever have one case here, otherwise test will fail with multiple api servers trying to start
+		{"1.19.2 Env", args{version: "1.19.2"}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config, bindir, err := testenv.StartTestEnv(tt.args.version)
+			if err != nil {
+				t.Fatalf("Could not start test environment: %v", err)
+			}
+			defer os.RemoveAll(bindir)
+			platform := cmd.GetTestPlatform(config, types.PlatformConfig{})
+			if platform == nil {
+				t.Fatalf("Test platform not created correctly")
+			}
+			if err = platform.CreateOrUpdateNamespace("test", map[string]string{}, map[string]string{}); err != nil {
+				t.Fatalf("Could not create test namespace: %v", err)
+			}
+			namespace, err := platform.GetByKind("namespace", metav1.NamespaceAll, "test")
+			if err != nil {
+				t.Fatalf("Could not retrieve test namespace: %v", err)
+			}
+			if namespace.GetName() != "test" {
+				t.Fatalf("Test namespace not retrieved correctly")
+			}
+		})
+	}
 }
