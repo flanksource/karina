@@ -39,9 +39,6 @@ data:
     processors:
       - add_cloud_metadata:
       - add_kubernetes_metadata:
-          in_cluster: false
-          host: ${HOSTNAME}
-          kube_config: /etc/kubernetes/kubelet.conf
           default_indexers.enabled: false
           default_matchers.enabled: false
           indexers:
@@ -110,9 +107,6 @@ spec:
               subPath: packetbeat.yml
             - name: data
               mountPath: /usr/share/packetbeat/data
-            - name: kubelet-conf
-              mountPath: /etc/kubernetes/kubelet.conf
-              readOnly: true
             - name: kubelet-pki
               mountPath: /var/lib/kubelet/pki/
               readOnly: true
@@ -123,10 +117,6 @@ spec:
             name: packetbeat-config
         - name: data
           emptyDir: {}
-        - name: kubelet-conf
-          hostPath:
-            path: /etc/kubernetes/kubelet.conf
-            type: File
         - name: kubelet-pki
           hostPath:
             path: /var/lib/kubelet/pki/
