@@ -11,7 +11,7 @@ const (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.CanaryChecker == nil || p.CanaryChecker.Disabled {
+	if p.KonfigManager.IsDisabled() {
 		return
 	}
 
