@@ -251,9 +251,3 @@ spec:
       targetPort: 9443
   selector:
     control-plane: elastic-operator
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: elastic-webhook-server-cert
-  namespace: elastic-system
