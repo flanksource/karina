@@ -16,8 +16,6 @@ gitops:
     gitPath: .
     gitPollInterval: 30s
     syncInterval: 30s
-konfigManager:
-  version: v0.2.1
 minio:
   disabled: true
 configmapReloader:

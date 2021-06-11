@@ -110,6 +110,7 @@ jobs:
           - nosql
           - cicd
           - kpack
+          - konfig-manager
           - quarantine
     steps:
       - uses: actions/checkout@main
