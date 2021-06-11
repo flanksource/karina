@@ -68,7 +68,39 @@ spec:
                       kibana:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -515,7 +547,39 @@ spec:
                         elasticsearch:
                           properties:
                             password:
-                              type: string
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              required:
+                              - name
+                              type: object
                             port:
                               type: string
                             scheme:
@@ -531,10 +595,91 @@ spec:
                           type: object
                         index:
                           type: string
+                        kibana:
+                          properties:
+                            password:
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              required:
+                              - name
+                              type: object
+                            port:
+                              type: string
+                            scheme:
+                              type: string
+                            url:
+                              type: string
+                            user:
+                              type: string
+                            verify:
+                              type: string
+                          required:
+                          - url
+                          type: object
                         logstash:
                           properties:
                             password:
-                              type: string
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              required:
+                              - name
+                              type: object
                             port:
                               type: string
                             scheme:
@@ -564,6 +709,21 @@ spec:
                       - prefix
                       type: object
                     type: array
+                  flux:
+                    properties:
+                      enabled:
+                        type: boolean
+                      helmControllerVersion:
+                        type: string
+                      kustomizeControllerVersion:
+                        type: string
+                      notificationsControllerVersion:
+                        type: string
+                      sourceControllerVersion:
+                        type: string
+                    required:
+                    - enabled
+                    type: object
                   gatekeeper:
                     properties:
                       auditInterval:
@@ -872,7 +1032,39 @@ spec:
                       kibana:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -914,13 +1106,28 @@ spec:
                           format: int32
                           type: integer
                         type: object
+                      remoteDocker:
+                        description: Skip attempting to mount local files into the
+                          docker daemon
+                        type: boolean
                       workerCount:
                         type: integer
+                    required:
+                    - remoteDocker
                     type: object
                   kiosk:
                     properties:
                       disabled:
                         type: boolean
+                      version:
+                        type: string
+                    type: object
+                  konfigManager:
+                    properties:
+                      disabled:
+                        type: boolean
+                      syncPeriod:
+                        type: string
                       version:
                         type: string
                     type: object
@@ -1379,6 +1586,8 @@ spec:
                         description: Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
                           for a full list of options
                         type: object
+                      disableHostNetwork:
+                        type: boolean
                       disabled:
                         type: boolean
                       version:
@@ -1386,6 +1595,7 @@ spec:
                           (default: `0.25.1.flanksource.1`)'
                         type: string
                     required:
+                    - disableHostNetwork
                     - disabled
                     - version
                     type: object
@@ -1994,7 +2204,39 @@ spec:
                       elasticsearch:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -2011,7 +2253,39 @@ spec:
                       kibana:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:

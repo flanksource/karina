@@ -31,6 +31,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/karinaoperator"
 	"github.com/flanksource/karina/pkg/phases/keptn"
 	"github.com/flanksource/karina/pkg/phases/kiosk"
+	"github.com/flanksource/karina/pkg/phases/konfigmanager"
 	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
 	"github.com/flanksource/karina/pkg/phases/kubewebview"
@@ -80,6 +81,7 @@ var Phases = map[string]DeployFn{
 	"journalbeat":          journalbeat.Deploy,
 	"keptn":                keptn.Deploy,
 	"kiosk":                kiosk.Deploy,
+	"konfig-manager":       konfigmanager.Deploy,
 	"karina-operator":      karinaoperator.Install,
 	"kpack":                kpack.Deploy,
 	"platform":             Platform,

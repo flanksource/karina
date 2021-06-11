@@ -20,10 +20,14 @@ spec:
         description: KarinaConfig is the Schema for the KarinaConfigs API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -62,7 +66,39 @@ spec:
                       kibana:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -111,13 +147,20 @@ spec:
                   calico:
                     properties:
                       bgpConfig:
-                        description: BGPConfiguration contains the configuration for any BGP routing.
+                        description: BGPConfiguration contains the configuration for
+                          any BGP routing.
                         properties:
                           apiVersion:
-                            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                            description: 'APIVersion defines the versioned schema
+                              of this representation of an object. Servers should
+                              convert recognized schemas to the latest internal value,
+                              and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                             type: string
                           kind:
-                            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                            description: 'Kind is a string value representing the
+                              REST resource this object represents. Servers may infer
+                              this from the endpoint the client submits requests to.
+                              Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                             type: string
                           metadata:
                             description: Standard object's metadata.
@@ -126,25 +169,37 @@ spec:
                             description: Specification of the BGPConfiguration.
                             properties:
                               asNumber:
-                                description: 'ASNumber is the default AS number used by a node. [Default: 64512]'
+                                description: 'ASNumber is the default AS number used
+                                  by a node. [Default: 64512]'
                                 type: string
                               logSeverityScreen:
-                                description: 'LogSeverityScreen is the log severity above which logs are sent to the stdout. [Default: INFO]'
+                                description: 'LogSeverityScreen is the log severity
+                                  above which logs are sent to the stdout. [Default:
+                                  INFO]'
                                 type: string
                               nodeToNodeMeshEnabled:
-                                description: 'NodeToNodeMeshEnabled sets whether full node to node BGP mesh is enabled. [Default: true]'
+                                description: 'NodeToNodeMeshEnabled sets whether full
+                                  node to node BGP mesh is enabled. [Default: true]'
                                 type: boolean
                             type: object
                         type: object
                       bgpPeers:
                         items:
-                          description: BGPPeer contains information about a BGPPeer resource that is a peer of a Calico compute node.
+                          description: BGPPeer contains information about a BGPPeer
+                            resource that is a peer of a Calico compute node.
                           properties:
                             apiVersion:
-                              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                              description: 'APIVersion defines the versioned schema
+                                of this representation of an object. Servers should
+                                convert recognized schemas to the latest internal
+                                value, and may reject unrecognized values. More info:
+                                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                               type: string
                             kind:
-                              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              description: 'Kind is a string value representing the
+                                REST resource this object represents. Servers may
+                                infer this from the endpoint the client submits requests
+                                to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                               type: string
                             metadata:
                               description: Standard object's metadata.
@@ -156,16 +211,30 @@ spec:
                                   description: The AS Number of the peer.
                                   type: string
                                 node:
-                                  description: The node name identifying the Calico node instance that is peering with this peer. If this is not set, this represents a global peer, i.e. a peer that peers with every node in the deployment.
+                                  description: The node name identifying the Calico
+                                    node instance that is peering with this peer.
+                                    If this is not set, this represents a global peer,
+                                    i.e. a peer that peers with every node in the
+                                    deployment.
                                   type: string
                                 nodeSelector:
-                                  description: Selector for the nodes that should have this peering.  When this is set, the Node field must be empty.
+                                  description: Selector for the nodes that should
+                                    have this peering.  When this is set, the Node
+                                    field must be empty.
                                   type: string
                                 peerIP:
                                   description: The IP address of the peer.
                                   type: string
                                 peerSelector:
-                                  description: Selector for the remote nodes to peer with.  When this is set, the PeerIP and ASNumber fields must be empty.  For each peering between the local node and selected remote nodes, we configure an IPv4 peering if both ends have NodeBGPSpec.IPv4Address specified, and an IPv6 peering if both ends have NodeBGPSpec.IPv6Address specified.  The remote AS number comes from the remote node’s NodeBGPSpec.ASNumber, or the global default if that is not set.
+                                  description: Selector for the remote nodes to peer
+                                    with.  When this is set, the PeerIP and ASNumber
+                                    fields must be empty.  For each peering between
+                                    the local node and selected remote nodes, we configure
+                                    an IPv4 peering if both ends have NodeBGPSpec.IPv4Address
+                                    specified, and an IPv6 peering if both ends have
+                                    NodeBGPSpec.IPv6Address specified.  The remote
+                                    AS number comes from the remote node’s NodeBGPSpec.ASNumber,
+                                    or the global default if that is not set.
                                   type: string
                               required:
                               - asNumber
@@ -177,13 +246,21 @@ spec:
                         type: boolean
                       ipPools:
                         items:
-                          description: IPPool contains information about a IPPool resource.
+                          description: IPPool contains information about a IPPool
+                            resource.
                           properties:
                             apiVersion:
-                              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                              description: 'APIVersion defines the versioned schema
+                                of this representation of an object. Servers should
+                                convert recognized schemas to the latest internal
+                                value, and may reject unrecognized values. More info:
+                                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                               type: string
                             kind:
-                              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              description: 'Kind is a string value representing the
+                                REST resource this object represents. Servers may
+                                infer this from the endpoint the client submits requests
+                                to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                               type: string
                             metadata:
                               description: Standard object's metadata.
@@ -192,25 +269,37 @@ spec:
                               description: Specification of the IPPool.
                               properties:
                                 blockSize:
-                                  description: The block size to use for IP address assignments from this pool. Defaults to 26 for IPv4 and 112 for IPv6.
+                                  description: The block size to use for IP address
+                                    assignments from this pool. Defaults to 26 for
+                                    IPv4 and 112 for IPv6.
                                   type: integer
                                 cidr:
                                   description: The pool CIDR.
                                   type: string
                                 disabled:
-                                  description: When disabled is true, Calico IPAM will not assign addresses from this pool.
+                                  description: When disabled is true, Calico IPAM
+                                    will not assign addresses from this pool.
                                   type: boolean
                                 ipipMode:
-                                  description: Contains configuration for IPIP tunneling for this pool. If not specified, then this is defaulted to "Never" (i.e. IPIP tunelling is disabled).
+                                  description: Contains configuration for IPIP tunneling
+                                    for this pool. If not specified, then this is
+                                    defaulted to "Never" (i.e. IPIP tunelling is disabled).
                                   type: string
                                 natOutgoing:
-                                  description: When nat-outgoing is true, packets sent from Calico networked containers in this pool to destinations outside of this pool will be masqueraded.
+                                  description: When nat-outgoing is true, packets
+                                    sent from Calico networked containers in this
+                                    pool to destinations outside of this pool will
+                                    be masqueraded.
                                   type: boolean
                                 nodeSelector:
-                                  description: Allows IPPool to allocate for a specific node by label selector.
+                                  description: Allows IPPool to allocate for a specific
+                                    node by label selector.
                                   type: string
                                 vxlanMode:
-                                  description: Contains configuration for VXLAN tunneling for this pool. If not specified, then this is defaulted to "Never" (i.e. VXLAN tunelling is disabled).
+                                  description: Contains configuration for VXLAN tunneling
+                                    for this pool. If not specified, then this is
+                                    defaulted to "Never" (i.e. VXLAN tunelling is
+                                    disabled).
                                   type: string
                               required:
                               - cidr
@@ -227,7 +316,8 @@ spec:
                         type: string
                     type: object
                   canaryChecker:
-                    description: Canary-checker allows for the deployment and configuration of the canary-checker
+                    description: Canary-checker allows for the deployment and configuration
+                      of the canary-checker
                     properties:
                       aggregateServers:
                         items:
@@ -241,7 +331,8 @@ spec:
                   certmanager:
                     properties:
                       letsencrypt:
-                        description: Details of a Letsencrypt issuer to use for signing ingress certificates
+                        description: Details of a Letsencrypt issuer to use for signing
+                          ingress certificates
                         properties:
                           disabled:
                             type: boolean
@@ -253,16 +344,20 @@ spec:
                             type: string
                         type: object
                       vault:
-                        description: Details of a vault server to use for signing ingress certificates
+                        description: Details of a vault server to use for signing
+                          ingress certificates
                         properties:
                           address:
-                            description: The address of a remote Vault server to use for signing
+                            description: The address of a remote Vault server to use
+                              for signing
                             type: string
                           path:
-                            description: The path to the PKI Role to use for signing ingress certificates e.g. /pki/role/ingress-ca
+                            description: The path to the PKI Role to use for signing
+                              ingress certificates e.g. /pki/role/ingress-ca
                             type: string
                           token:
-                            description: A VAULT_TOKEN to use when authenticating with Vault
+                            description: A VAULT_TOKEN to use when authenticating
+                              with Vault
                             type: string
                         required:
                         - address
@@ -280,13 +375,16 @@ spec:
                         file:
                           type: string
                         secretRef:
-                          description: SecretReference represents a Secret Reference. It has enough information to retrieve secret in any namespace
+                          description: SecretReference represents a Secret Reference.
+                            It has enough information to retrieve secret in any namespace
                           properties:
                             name:
-                              description: Name is unique within a namespace to reference a secret resource.
+                              description: Name is unique within a namespace to reference
+                                a secret resource.
                               type: string
                             namespace:
-                              description: Namespace defines the space within which the secret name must be unique.
+                              description: Namespace defines the space within which
+                                the secret name must be unique.
                               type: string
                           type: object
                         sops:
@@ -303,7 +401,8 @@ spec:
                     - version
                     type: object
                   consul:
-                    description: The endpoint for an externally hosted consul cluster  that is used for master discovery
+                    description: The endpoint for an externally hosted consul cluster  that
+                      is used for master discovery
                     type: string
                   dashboard:
                     properties:
@@ -342,7 +441,8 @@ spec:
                       accessKey:
                         type: string
                       algorithm:
-                        description: 'A Dynamic DNS signature algorithm, one of: hmac-md5, hmac-sha1, hmac-256, hmac-512'
+                        description: 'A Dynamic DNS signature algorithm, one of: hmac-md5,
+                          hmac-sha1, hmac-256, hmac-512'
                         type: string
                       disabled:
                         type: boolean
@@ -360,10 +460,13 @@ spec:
                       secretKey:
                         type: string
                       type:
-                        description: Type of DNS provider. Defaults to RFC 2136 Dynamic DNS. If using "route53" you must specify accessKey, secretKey and zone
+                        description: Type of DNS provider. Defaults to RFC 2136 Dynamic
+                          DNS. If using "route53" you must specify accessKey, secretKey
+                          and zone
                         type: string
                       updateHosts:
-                        description: Set to true if you want DNS records added to k8s-api and "*" for every new worker and master created.
+                        description: Set to true if you want DNS records added to
+                          k8s-api and "*" for every new worker and master created.
                         type: boolean
                       zone:
                         type: string
@@ -371,7 +474,8 @@ spec:
                   dockerRegistry:
                     type: string
                   domain:
-                    description: The wildcard domain that cluster will be available at
+                    description: The wildcard domain that cluster will be available
+                      at
                     type: string
                   eck:
                     properties:
@@ -400,7 +504,8 @@ spec:
                             description: Enable persistence for Prometheus
                             type: boolean
                           storageClass:
-                            description: Storage class to use. If not set default one will be used
+                            description: Storage class to use. If not set default
+                              one will be used
                             type: string
                         required:
                         - enabled
@@ -440,7 +545,39 @@ spec:
                         elasticsearch:
                           properties:
                             password:
-                              type: string
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              required:
+                              - name
+                              type: object
                             port:
                               type: string
                             scheme:
@@ -456,10 +593,91 @@ spec:
                           type: object
                         index:
                           type: string
+                        kibana:
+                          properties:
+                            password:
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              required:
+                              - name
+                              type: object
+                            port:
+                              type: string
+                            scheme:
+                              type: string
+                            url:
+                              type: string
+                            user:
+                              type: string
+                            verify:
+                              type: string
+                          required:
+                          - url
+                          type: object
                         logstash:
                           properties:
                             password:
-                              type: string
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              required:
+                              - name
+                              type: object
                             port:
                               type: string
                             scheme:
@@ -489,12 +707,28 @@ spec:
                       - prefix
                       type: object
                     type: array
+                  flux:
+                    properties:
+                      enabled:
+                        type: boolean
+                      helmControllerVersion:
+                        type: string
+                      kustomizeControllerVersion:
+                        type: string
+                      notificationsControllerVersion:
+                        type: string
+                      sourceControllerVersion:
+                        type: string
+                    required:
+                    - enabled
+                    type: object
                   gatekeeper:
                     properties:
                       auditInterval:
                         type: integer
                       constraints:
-                        description: Templates is a path to directory containing gatekeeper constraints
+                        description: Templates is a path to directory containing gatekeeper
+                          constraints
                         type: string
                       disabled:
                         type: boolean
@@ -504,7 +738,8 @@ spec:
                             type: string
                         type: object
                       templates:
-                        description: Templates is a path to directory containing gatekeeper templates
+                        description: Templates is a path to directory containing gatekeeper
+                          templates
                         type: string
                       version:
                         type: string
@@ -535,46 +770,61 @@ spec:
                         args:
                           additionalProperties:
                             type: string
-                          description: a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list
+                          description: a map of args to pass to flux without -- prepended.
+                            See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/)
+                            for a full list
                           type: object
                         disableScanning:
-                          description: 'Do not scan container image registries to fill in the registry cache, implies `--git-read-only` (default: true)'
+                          description: 'Do not scan container image registries to
+                            fill in the registry cache, implies `--git-read-only`
+                            (default: true)'
                           type: boolean
                         fluxVersion:
-                          description: 'The version to use for flux (default: 1.20.0 )'
+                          description: 'The version to use for flux (default: 1.20.0
+                            )'
                           type: string
                         gitBranch:
                           description: 'The git branch to use (default: `master`)'
                           type: string
                         gitKey:
-                          description: 'The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: `flux-$name-git-deploy`)'
+                          description: 'The Kubernetes secret to use for cloning,
+                            if it does not exist it will be generated (default: `flux-$name-git-deploy`)'
                           type: string
                         gitPath:
-                          description: 'The path with in the git repository to look for YAML in (default: `.`)'
+                          description: 'The path with in the git repository to look
+                            for YAML in (default: `.`)'
                           type: string
                         gitPollInterval:
-                          description: 'The frequency with which to fetch the git repository (default: `5m0s`)'
+                          description: 'The frequency with which to fetch the git
+                            repository (default: `5m0s`)'
                           type: string
                         gitUrl:
                           description: The URL to git repository to clone
                           type: string
                         helmOperatorVersion:
-                          description: 'The version to use for helm operator (default: 1.20.0 )'
+                          description: 'The version to use for helm operator (default:
+                            1.20.0 )'
                           type: string
                         knownHosts:
-                          description: The contents of the known_hosts file to mount into Flux and helm-operator
+                          description: The contents of the known_hosts file to mount
+                            into Flux and helm-operator
                           type: string
                         name:
-                          description: The name of the gitops deployment, defaults to namespace name
+                          description: The name of the gitops deployment, defaults
+                            to namespace name
                           type: string
                         namespace:
-                          description: The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
+                          description: The namespace to deploy the GitOps operator
+                            into, if empty then it will be deployed cluster-wide into
+                            kube-system
                           type: string
                         sshConfig:
-                          description: The contents of the ~/.ssh/config file to mount into Flux and helm-operator
+                          description: The contents of the ~/.ssh/config file to mount
+                            into Flux and helm-operator
                           type: string
                         syncInterval:
-                          description: 'The frequency with which to sync the manifests in the repository to the cluster (default: `5m0s`)'
+                          description: 'The frequency with which to sync the manifests
+                            in the repository to the cluster (default: `5m0s`)'
                           type: string
                       type: object
                     type: array
@@ -606,7 +856,8 @@ spec:
                       disabled:
                         type: boolean
                       logLevel:
-                        description: 'Logging level for various components, valid options are `info`,`warn`,`debug` (default: `warn`)'
+                        description: 'Logging level for various components, valid
+                          options are `info`,`warn`,`debug` (default: `warn`)'
                         type: string
                       projects:
                         additionalProperties:
@@ -632,7 +883,9 @@ spec:
                           bucket:
                             type: string
                           endpoint:
-                            description: 'The endpoint at which the S3-like object storage will be available from inside the cluster e.g. if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000`'
+                            description: 'The endpoint at which the S3-like object
+                              storage will be available from inside the cluster e.g.
+                              if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000`'
                             type: string
                           region:
                             type: string
@@ -642,7 +895,8 @@ spec:
                             description: Skip TLS verify when connecting to S3
                             type: boolean
                           usePathStyle:
-                            description: UsePathStyle http://s3host/bucket instead of http://bucket.s3host
+                            description: UsePathStyle http://s3host/bucket instead
+                              of http://bucket.s3host
                             type: boolean
                         type: object
                       s3DisableRedirect:
@@ -740,13 +994,16 @@ spec:
                     type: array
                   importSecrets:
                     items:
-                      description: SecretReference represents a Secret Reference. It has enough information to retrieve secret in any namespace
+                      description: SecretReference represents a Secret Reference.
+                        It has enough information to retrieve secret in any namespace
                       properties:
                         name:
-                          description: Name is unique within a namespace to reference a secret resource.
+                          description: Name is unique within a namespace to reference
+                            a secret resource.
                           type: string
                         namespace:
-                          description: Namespace defines the space within which the secret name must be unique.
+                          description: Namespace defines the space within which the
+                            secret name must be unique.
                           type: string
                       type: object
                     type: array
@@ -773,7 +1030,39 @@ spec:
                       kibana:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -815,13 +1104,28 @@ spec:
                           format: int32
                           type: integer
                         type: object
+                      remoteDocker:
+                        description: Skip attempting to mount local files into the
+                          docker daemon
+                        type: boolean
                       workerCount:
                         type: integer
+                    required:
+                    - remoteDocker
                     type: object
                   kiosk:
                     properties:
                       disabled:
                         type: boolean
+                      version:
+                        type: string
+                    type: object
+                  konfigManager:
+                    properties:
+                      disabled:
+                        type: boolean
+                      syncPeriod:
+                        type: string
                       version:
                         type: string
                     type: object
@@ -863,7 +1167,11 @@ spec:
                         description: specify costs inline
                         type: object
                       costsFile:
-                        description: 'specify a CSV file with custom costs for nodes with rows in the form: columns: region,instance-type,monthly-price-usd to apply this add labels to cluster nodes: region is defined via the node label "failure-domain.beta.kubernetes.io/region" instance-type is defined via the node label "beta.kubernetes.io/instance-type"'
+                        description: 'specify a CSV file with custom costs for nodes
+                          with rows in the form: columns: region,instance-type,monthly-price-usd
+                          to apply this add labels to cluster nodes: region is defined
+                          via the node label "failure-domain.beta.kubernetes.io/region"
+                          instance-type is defined via the node label "beta.kubernetes.io/instance-type"'
                         type: string
                       disabled:
                         description: Disable kube-resource-report
@@ -871,10 +1179,17 @@ spec:
                       extraClusters:
                         additionalProperties:
                           type: string
-                        description: 'a map of extra clusters that kube-resource report will report on. in the form: clusterName: cluster API endpoint e.g.:  extraClusters:    k8s-reports2: "https://10.100.2.69:6443" the CA for the current cluster needs to be trusted by the given external cluster.'
+                        description: 'a map of extra clusters that kube-resource report
+                          will report on. in the form: clusterName: cluster API endpoint
+                          e.g.:  extraClusters:    k8s-reports2: "https://10.100.2.69:6443"
+                          the CA for the current cluster needs to be trusted by the
+                          given external cluster.'
                         type: object
                       teamLabels:
-                        description: A comma separated list of labels applied to k8s objects to identify team ownership. These are reported on in the *Teams* tab of the report. Multiple labels may be specified. Default value is "team,owner".
+                        description: A comma separated list of labels applied to k8s
+                          objects to identify team ownership. These are reported on
+                          in the *Teams* tab of the report. Multiple labels may be
+                          specified. Default value is "team,owner".
                         type: string
                       updateInterval:
                         description: update interval in minutes
@@ -884,14 +1199,19 @@ spec:
                         type: string
                     type: object
                   kubeWebView:
-                    description: Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
+                    description: Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view)
+                      resource viewer
                     properties:
                       disabled:
                         type: boolean
                       extraClusters:
                         additionalProperties:
                           type: string
-                        description: 'a map of extra clusters that kube-resource report will report on. in the form: clusterName: cluster API endpoint e.g.:  extraClusters:    k8s-reports2: "https://10.100.2.69:6443" the CA for the current cluster needs to be trusted by the given external cluster.'
+                        description: 'a map of extra clusters that kube-resource report
+                          will report on. in the form: clusterName: cluster API endpoint
+                          e.g.:  extraClusters:    k8s-reports2: "https://10.100.2.69:6443"
+                          the CA for the current cluster needs to be trusted by the
+                          given external cluster.'
                         type: object
                       version:
                         type: string
@@ -919,10 +1239,12 @@ spec:
                       controllerExtraArgs:
                         additionalProperties:
                           type: string
-                        description: Configure additional kube-controller-manager [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/)
+                        description: Configure additional kube-controller-manager
+                          [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/)
                         type: object
                       encryption:
-                        description: EncryptionConfig is used to specify the encryption configuration file.
+                        description: EncryptionConfig is used to specify the encryption
+                          configuration file.
                         properties:
                           encryptionProviderConfigFile:
                             type: string
@@ -938,7 +1260,8 @@ spec:
                         description: Configure additional kubelet [flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/)
                         type: object
                       managed:
-                        description: True for a managed cluster where the user does not have access to the control plane
+                        description: True for a managed cluster where the user does
+                          not have access to the control plane
                         type: boolean
                       masterIP:
                         type: string
@@ -967,19 +1290,25 @@ spec:
                             description: Ff true, deploy a mock LDAP server for testing
                             type: boolean
                           password:
-                            description: Password to be used for or OIDC integration tests
+                            description: Password to be used for or OIDC integration
+                              tests
                             type: string
                           username:
-                            description: Username to be used for OIDC integration tests
+                            description: Username to be used for OIDC integration
+                              tests
                             type: string
                         type: object
                       groupDN:
                         type: string
                       groupNameAttr:
-                        description: GroupNameAttr is the attribute used for returning group name in OAuth tokens. Default is `name` in ActiveDirectory and `DN` in Apache DS
+                        description: GroupNameAttr is the attribute used for returning
+                          group name in OAuth tokens. Default is `name` in ActiveDirectory
+                          and `DN` in Apache DS
                         type: string
                       groupObjectClass:
-                        description: GroupObjectClass is used for searching user groups in LDAP. Default is `group` for Active Directory and `groupOfNames` for Apache DS
+                        description: GroupObjectClass is used for searching user groups
+                          in LDAP. Default is `group` for Active Directory and `groupOfNames`
+                          for Apache DS
                         type: string
                       host:
                         type: string
@@ -1043,7 +1372,8 @@ spec:
                       folder:
                         type: string
                       konfigadm:
-                        description: A path to a konfigadm specification used for configuring the VM on creation.
+                        description: A path to a konfigadm specification used for
+                          configuring the VM on creation.
                         type: string
                       kubeletExtraArgs:
                         additionalProperties:
@@ -1121,7 +1451,8 @@ spec:
                             description: Enable persistence for Prometheus
                             type: boolean
                           storageClass:
-                            description: Storage class to use. If not set default one will be used
+                            description: Storage class to use. If not set default
+                              one will be used
                             type: string
                         required:
                         - enabled
@@ -1167,7 +1498,9 @@ spec:
                       e2e:
                         properties:
                           minAlertLevel:
-                            description: MinAlertLevel is the minimum alert level for which E2E tests should fail. can be can be one of critical, warning, info
+                            description: MinAlertLevel is the minimum alert level
+                              for which E2E tests should fail. can be can be one of
+                              critical, warning, info
                             type: string
                         type: object
                       grafana:
@@ -1178,7 +1511,8 @@ spec:
                             type: string
                         type: object
                       karma:
-                        description: Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
+                        description: Configuration for [Karma](https://github.com/prymitive/karma/releases)
+                          Alert Dashboard
                         properties:
                           alertManagers:
                             additionalProperties:
@@ -1202,13 +1536,15 @@ spec:
                           persistence:
                             properties:
                               capacity:
-                                description: Capacity. Required if persistence is enabled
+                                description: Capacity. Required if persistence is
+                                  enabled
                                 type: string
                               enabled:
                                 description: Enable persistence for Prometheus
                                 type: boolean
                               storageClass:
-                                description: Storage class to use. If not set default one will be used
+                                description: Storage class to use. If not set default
+                                  one will be used
                                 type: string
                             required:
                             - enabled
@@ -1236,19 +1572,28 @@ spec:
                         type: string
                     type: object
                   nginx:
-                    description: Configures the Nginx Ingress Controller, the controller Docker image is forked from upstream to include more LUA packages for OAuth. <br> To configure global settings not available below, override the <b>ingress-nginx/nginx-configuration</b> configmap with settings from [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
+                    description: Configures the Nginx Ingress Controller, the controller
+                      Docker image is forked from upstream to include more LUA packages
+                      for OAuth. <br> To configure global settings not available below,
+                      override the <b>ingress-nginx/nginx-configuration</b> configmap
+                      with settings from [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
                     properties:
                       config:
                         additionalProperties:
                           type: string
-                        description: Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) for a full list of options
+                        description: Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
+                          for a full list of options
                         type: object
+                      disableHostNetwork:
+                        type: boolean
                       disabled:
                         type: boolean
                       version:
-                        description: 'The version of the nginx controller to deploy (default: `0.25.1.flanksource.1`)'
+                        description: 'The version of the nginx controller to deploy
+                          (default: `0.25.1.flanksource.1`)'
                         type: string
                     required:
+                    - disableHostNetwork
                     - disabled
                     - version
                     type: object
@@ -1293,7 +1638,8 @@ spec:
                         folder:
                           type: string
                         konfigadm:
-                          description: A path to a konfigadm specification used for configuring the VM on creation.
+                          description: A path to a konfigadm specification used for
+                            configuring the VM on creation.
                           type: string
                         kubeletExtraArgs:
                           additionalProperties:
@@ -1368,26 +1714,34 @@ spec:
                             description: Specify cluster for adaptor.
                             type: string
                           connect_retry_timeout:
-                            description: The time in seconds for NCP/nsx_node_agent to recover the connection to NSX manager/container orchestrator adaptor/Hyperbus before exiting. If the value is 0, NCP/nsx_node_agent wont exit automatically when the connection check fails
+                            description: The time in seconds for NCP/nsx_node_agent
+                              to recover the connection to NSX manager/container orchestrator
+                              adaptor/Hyperbus before exiting. If the value is 0,
+                              NCP/nsx_node_agent wont exit automatically when the
+                              connection check fails
                             type: integer
                           enable_snat:
                             description: Enable SNAT for all projects in this cluster
                             type: boolean
                           loglevel:
-                            description: 'Log level for NCP operations Choices: NOTSET DEBUG INFO WARNING ERROR CRITICAL'
+                            description: 'Log level for NCP operations Choices: NOTSET
+                              DEBUG INFO WARNING ERROR CRITICAL'
                             type: string
                           node_type:
-                            description: 'The type of container host node Choices: HOSTVM BAREMETAL CLOUD WCP_WORKER'
+                            description: 'The type of container host node Choices:
+                              HOSTVM BAREMETAL CLOUD WCP_WORKER'
                             type: string
                           nsxlib_loglevel:
-                            description: 'Log level for NSX API client operations Choices: NOTSET DEBUG INFO WARNING ERROR CRITICAL'
+                            description: 'Log level for NSX API client operations
+                              Choices: NOTSET DEBUG INFO WARNING ERROR CRITICAL'
                             type: string
                           profiling:
                             description: Option to enable profiling
                             type: boolean
                         type: object
                       debug:
-                        description: If set to true, the logging level will be set to DEBUG instead of the default INFO level.
+                        description: If set to true, the logging level will be set
+                          to DEBUG instead of the default INFO level.
                         type: boolean
                       disabled:
                         type: boolean
@@ -1396,16 +1750,19 @@ spec:
                       loadBalancerIPPool:
                         type: string
                       log_dir:
-                        description: The base directory used for relative log_file paths.
+                        description: The base directory used for relative log_file
+                          paths.
                         type: string
                       log_file:
                         description: Name of log file to send logging output to.
                         type: string
                       log_rotation_backup_count:
-                        description: Total number of compressed backup files to store. Defaults to 5.
+                        description: Total number of compressed backup files to store.
+                          Defaults to 5.
                         type: integer
                       log_rotation_file_max_mb:
-                        description: max MB for each compressed file. Defaults to 100 MB. log_rotation_file_max_mb = 100
+                        description: max MB for each compressed file. Defaults to
+                          100 MB. log_rotation_file_max_mb = 100
                         type: integer
                       nsx_cli_path:
                         description: Specify the directory where nsx-cli is installed
@@ -1413,13 +1770,26 @@ spec:
                       nsx_ha:
                         properties:
                           heartbeat_period:
-                            description: Time in seconds between heartbeats for elected leader. Once an NCP instance is elected master, it will periodically confirm liveness based on this value.
+                            description: Time in seconds between heartbeats for elected
+                              leader. Once an NCP instance is elected master, it will
+                              periodically confirm liveness based on this value.
                             type: integer
                           master_timeout:
-                            description: Time duration in seconds of mastership timeout. NCP instance will remain master for this duration after elected. Note that the heartbeat period plus the update timeout must not be greater than this period. This is done to ensure that the master instance will either confirm liveness or fail before the timeout.
+                            description: Time duration in seconds of mastership timeout.
+                              NCP instance will remain master for this duration after
+                              elected. Note that the heartbeat period plus the update
+                              timeout must not be greater than this period. This is
+                              done to ensure that the master instance will either
+                              confirm liveness or fail before the timeout.
                             type: integer
                           update_timeout:
-                            description: Timeout duration in seconds for update to election resource. The default value is calculated by subtracting heartbeat period from master timeout. If the update request does not complete before the timeout it will be aborted. Used for master heartbeats to ensure that the update fstructs:shes or is aborted before the master timeout occurs.
+                            description: Timeout duration in seconds for update to
+                              election resource. The default value is calculated by
+                              subtracting heartbeat period from master timeout. If
+                              the update request does not complete before the timeout
+                              it will be aborted. Used for master heartbeats to ensure
+                              that the update fstructs:shes or is aborted before the
+                              master timeout occurs.
                             type: integer
                         type: object
                       nsx_k8s:
@@ -1431,24 +1801,38 @@ spec:
                             description: Kubernetes API server port.
                             type: string
                           baseline_policy_type:
-                            description: 'Option to set the type of baseline cluster policy. ALLOW_CLUSTER creates an explicit baseline policy to allow any pod to communicate any other pod within the cluster. ALLOW_NAMESPACE creates an explicit baseline policy to allow pods within the same namespace to communicate with each other. By default, no baseline rule will be created and the cluster will assume the default behavior as specified by the backend. Choices: <None> allow_cluster allow_namespace'
+                            description: 'Option to set the type of baseline cluster
+                              policy. ALLOW_CLUSTER creates an explicit baseline policy
+                              to allow any pod to communicate any other pod within
+                              the cluster. ALLOW_NAMESPACE creates an explicit baseline
+                              policy to allow pods within the same namespace to communicate
+                              with each other. By default, no baseline rule will be
+                              created and the cluster will assume the default behavior
+                              as specified by the backend. Choices: <None> allow_cluster
+                              allow_namespace'
                             type: string
                           ca_file:
-                            description: Specify a CA bundle file to use in verifying the k8s API server certificate.
+                            description: Specify a CA bundle file to use in verifying
+                              the k8s API server certificate.
                             type: string
                           client_cert_file:
-                            description: Full path of the client certificate file to use for authenticating with the k8s API server. It must be specified together with "client_private_key_file".
+                            description: Full path of the client certificate file
+                              to use for authenticating with the k8s API server. It
+                              must be specified together with "client_private_key_file".
                             type: string
                           client_private_key_file:
                             type: string
                           client_token_file:
-                            description: Full path of the Token file to use for authenticating with the k8s API server.
+                            description: Full path of the Token file to use for authenticating
+                              with the k8s API server.
                             type: string
                           enable_nsx_netif_crd:
-                            description: Set this to True to enable NCP to create segment port for VM through NsxNetworkInterface CRD.
+                            description: Set this to True to enable NCP to create
+                              segment port for VM through NsxNetworkInterface CRD.
                             type: boolean
                           http_and_https_ingress_ip:
-                            description: 'User specified IP address for HTTP and HTTPS ingresses nolint: golint, stylecheck'
+                            description: 'User specified IP address for HTTP and HTTPS
+                              ingresses nolint: golint, stylecheck'
                             type: string
                           http_ingress_port:
                             type: integer
@@ -1456,171 +1840,277 @@ spec:
                             description: The default HTTPS ingress port
                             type: integer
                           ingress_mode:
-                            description: 'Specify whether ingress controllers are expected to be deployed in hostnework mode or as regular pods externally accessed via NAT Choices: hostnetwork nat'
+                            description: 'Specify whether ingress controllers are
+                              expected to be deployed in hostnework mode or as regular
+                              pods externally accessed via NAT Choices: hostnetwork
+                              nat'
                             type: string
                           loglevel:
-                            description: 'Log level for the kubernetes adaptor Choices: NOTSET DEBUG INFO WARNING ERROR CRITICAL'
+                            description: 'Log level for the kubernetes adaptor Choices:
+                              NOTSET DEBUG INFO WARNING ERROR CRITICAL'
                             type: string
                           resource_watcher_thread_pool_size:
-                            description: Specify thread pool size to process resource events
+                            description: Specify thread pool size to process resource
+                              events
                             type: integer
                         type: object
                       nsx_node_agent:
                         properties:
                           config_retry_timeout:
-                            description: The time in seconds for nsx_node_agent to wait CIF config from HyperBus before returning to CNI
+                            description: The time in seconds for nsx_node_agent to
+                              wait CIF config from HyperBus before returning to CNI
                             type: integer
                           config_reuse_backoff_time:
-                            description: The time in seconds for nsx_node_agent to backoff before re-using an existing cached CIF to serve CNI request. Must be less than config_retry_timeout.
+                            description: The time in seconds for nsx_node_agent to
+                              backoff before re-using an existing cached CIF to serve
+                              CNI request. Must be less than config_retry_timeout.
                             type: integer
                           log_level:
-                            description: 'The log level of NSX RPC library Choices: NOTSET DEBUG INFO WARNING ERROR CRITICAL'
+                            description: 'The log level of NSX RPC library Choices:
+                              NOTSET DEBUG INFO WARNING ERROR CRITICAL'
                             type: string
                           ovs_bridge:
                             description: OVS bridge name
                             type: string
                           ovs_uplink_port:
-                            description: The OVS uplink OpenFlow port where to apply the NAT rules to.
+                            description: The OVS uplink OpenFlow port where to apply
+                              the NAT rules to.
                             type: string
                         type: object
                       nsx_python_logging_path:
-                        description: Specify the directory where nsx-python-logging is installed
+                        description: Specify the directory where nsx-python-logging
+                          is installed
                         type: string
                       nsx_v3:
                         properties:
                           alloc_vlan_tag:
-                            description: Allocate vlan ID for container interface or not. Set it to False for cloud mode.
+                            description: Allocate vlan ID for container interface
+                              or not. Set it to False for cloud mode.
                             type: string
                           bottom_firewall_section_marker:
-                            description: Name or UUID of the firewall section that will be used to create firewall sections above this mark section
+                            description: Name or UUID of the firewall section that
+                              will be used to create firewall sections above this
+                              mark section
                             type: string
                           ca_file:
-                            description: Specify one or a list of CA bundle files to use in verifying the NSX Manager server certificate. This option is ignored if "insecure" is set to True. If "insecure" is set to False and ca_file is unset, the system root CAs will be used to verify the server certificate.
+                            description: Specify one or a list of CA bundle files
+                              to use in verifying the NSX Manager server certificate.
+                              This option is ignored if "insecure" is set to True.
+                              If "insecure" is set to False and ca_file is unset,
+                              the system root CAs will be used to verify the server
+                              certificate.
                             items:
                               type: string
                             type: array
                           cluster_unavailable_retry:
-                            description: If True, skip fatal errors when no endpoint in the NSX management cluster is available to serve a request, and retry the request instead
+                            description: If True, skip fatal errors when no endpoint
+                              in the NSX management cluster is available to serve
+                              a request, and retry the request instead
                             type: boolean
                           concurrent_connections:
-                            description: Maximum concurrent connections to each NSX manager.
+                            description: Maximum concurrent connections to each NSX
+                              manager.
                             type: integer
                           conn_idlt_timeout:
-                            description: The amount of time in seconds to wait before ensuring connectivity to the NSX manager if no manager connection has been used.
+                            description: The amount of time in seconds to wait before
+                              ensuring connectivity to the NSX manager if no manager
+                              connection has been used.
                             type: integer
                           container_ip_blocks:
-                            description: 'Name or UUID of the container ip blocks that will be used for creating subnets. If name, it must be unique. If policy_nsxapi is enabled, it also support automatically creating the IP blocks. The definition is a comma separated list: CIDR,CIDR,... Mixing different formats (e.g. UUID,CIDR) is not supported.'
+                            description: 'Name or UUID of the container ip blocks
+                              that will be used for creating subnets. If name, it
+                              must be unique. If policy_nsxapi is enabled, it also
+                              support automatically creating the IP blocks. The definition
+                              is a comma separated list: CIDR,CIDR,... Mixing different
+                              formats (e.g. UUID,CIDR) is not supported.'
                             items:
                               type: string
                             type: array
                           default_ingress_class_nsx:
-                            description: Option to use native load balancer or not when ingress class annotation is missing. Only effective if use_native_loadbalancer is set to true
+                            description: Option to use native load balancer or not
+                              when ingress class annotation is missing. Only effective
+                              if use_native_loadbalancer is set to true
                             type: boolean
                           dns_servers:
-                            description: If this value is not empty, NCP will append it to nameserver list
+                            description: If this value is not empty, NCP will append
+                              it to nameserver list
                             items:
                               type: string
                             type: array
                           edge_cluster:
-                            description: Edge cluster ID needed when creating Tier1 router for loadbalancer service. Information could be retrieved from Tier0 router
+                            description: Edge cluster ID needed when creating Tier1
+                              router for loadbalancer service. Information could be
+                              retrieved from Tier0 router
                             type: string
                           election_profile:
-                            description: Name or UUID of the spoof guard switching profile that will be used by NCP for leader election
+                            description: Name or UUID of the spoof guard switching
+                              profile that will be used by NCP for leader election
                             type: string
                           enable_nsx_err_crd:
-                            description: Set this to True to enable NCP to report errors through NSXError CRD.
+                            description: Set this to True to enable NCP to report
+                              errors through NSXError CRD.
                             type: boolean
                           external_ip_pools:
-                            description: 'Name or UUID of the external ip pools that will be used for allocating IP addresses which will be used for translating container IPs via SNAT rules. If policy_nsxapi is enabled, it also support automatically creating the ip pools. The definition is a comma separated list: CIDR,IP_1-IP_2,... Mixing different formats (e.g. UUID, CIDR&IP_Range) is not supported.'
+                            description: 'Name or UUID of the external ip pools that
+                              will be used for allocating IP addresses which will
+                              be used for translating container IPs via SNAT rules.
+                              If policy_nsxapi is enabled, it also support automatically
+                              creating the ip pools. The definition is a comma separated
+                              list: CIDR,IP_1-IP_2,... Mixing different formats (e.g.
+                              UUID, CIDR&IP_Range) is not supported.'
                             items:
                               type: string
                             type: array
                           external_ip_pools_lb:
-                            description: Name or UUID of the external ip pools that will be used only for allocating IP addresses for Ingress controller and LB service
+                            description: Name or UUID of the external ip pools that
+                              will be used only for allocating IP addresses for Ingress
+                              controller and LB service
                             items:
                               type: string
                             type: array
                           http_read_timeout:
-                            description: The time in seconds before aborting a HTTP read response from a NSX manager.
+                            description: The time in seconds before aborting a HTTP
+                              read response from a NSX manager.
                             type: integer
                           http_retries:
                             description: Maximum number of times to retry a HTTP connection.
                             type: integer
                           http_timeout:
-                            description: The time in seconds before aborting a HTTP connection to a NSX manager.
+                            description: The time in seconds before aborting a HTTP
+                              connection to a NSX manager.
                             type: integer
                           insecure:
-                            description: If true, the NSX Manager server certificate is not verified. If false the CA bundle specified via "ca_file" will be used or if unset the default system root CAs will be used.
+                            description: If true, the NSX Manager server certificate
+                              is not verified. If false the CA bundle specified via
+                              "ca_file" will be used or if unset the default system
+                              root CAs will be used.
                             type: boolean
                           l_4_lb_auto_scaling:
-                            description: Option to auto scale layer 4 load balancer or not. If set to True, NCP will create additional LB when necessary upon K8s Service of type LB creation/update.
+                            description: Option to auto scale layer 4 load balancer
+                              or not. If set to True, NCP will create additional LB
+                              when necessary upon K8s Service of type LB creation/update.
                             type: boolean
                           l4_persistence:
-                            description: Option to set load balancer persistence option. If source_ip is selected, source IP persistence will be offered for ingress traffic through L4 load balancer
+                            description: Option to set load balancer persistence option.
+                              If source_ip is selected, source IP persistence will
+                              be offered for ingress traffic through L4 load balancer
                             type: string
                           l7_persistence:
-                            description: 'Option to set load balancer persistence option. If cookie is selected, cookie persistence will be offered.If source_ip is selected, source IP persistence will be offered for ingress traffic through L7 load balancer Choices: <None> cookie source_ip'
+                            description: 'Option to set load balancer persistence
+                              option. If cookie is selected, cookie persistence will
+                              be offered.If source_ip is selected, source IP persistence
+                              will be offered for ingress traffic through L7 load
+                              balancer Choices: <None> cookie source_ip'
                             type: string
                           l7_persistence_timeout:
-                            description: An integer for LoadBalancer side timeout value in seconds on layer 7 persistence profile, if the profile exists.
+                            description: An integer for LoadBalancer side timeout
+                              value in seconds on layer 7 persistence profile, if
+                              the profile exists.
                             type: integer
                           lb_default_cert_path:
-                            description: Path to the default certificate file for HTTPS load balancing. Must be specified along with lb_priv_key_path option
+                            description: Path to the default certificate file for
+                              HTTPS load balancing. Must be specified along with lb_priv_key_path
+                              option
                             type: string
                           lb_priv_key_path:
-                            description: Path to the private key file for default certificate for HTTPS load balancing. Must be specified along with lb_default_cert_path option
+                            description: Path to the private key file for default
+                              certificate for HTTPS load balancing. Must be specified
+                              along with lb_default_cert_path option
                             type: string
                           log_dropped_traffic:
-                            description: Indicates whether distributed firewall DENY rules are logged.
+                            description: Indicates whether distributed firewall DENY
+                              rules are logged.
                             type: boolean
                           ls_replication_mode:
-                            description: 'Replication mode of container logical switch, set SOURCE for cloud as it only supports head replication mode Choices: MTEP SOURCE'
+                            description: 'Replication mode of container logical switch,
+                              set SOURCE for cloud as it only supports head replication
+                              mode Choices: MTEP SOURCE'
                             type: string
                           max_allowed_virtual_servers:
-                            description: Maximum number of virtual servers allowed to create in cluster for LoadBalancer type of services.
+                            description: Maximum number of virtual servers allowed
+                              to create in cluster for LoadBalancer type of services.
                             type: integer
                           no_snat_ip_blocks:
-                            description: Name or UUID of the container ip blocks that will be used for creating subnets for no-SNAT projects. If specified, no-SNAT projects will use these ip blocks ONLY. Otherwise they will use container_ip_blocks
+                            description: Name or UUID of the container ip blocks that
+                              will be used for creating subnets for no-SNAT projects.
+                              If specified, no-SNAT projects will use these ip blocks
+                              ONLY. Otherwise they will use container_ip_blocks
                             items:
                               type: string
                             type: array
                           nsx_api_cert_file:
-                            description: Path to NSX client certificate file. If specified, the nsx_api_user and nsx_api_password options will be ignored. Must be specified along with nsx_api_private_key_file option
+                            description: Path to NSX client certificate file. If specified,
+                              the nsx_api_user and nsx_api_password options will be
+                              ignored. Must be specified along with nsx_api_private_key_file
+                              option
                             type: string
                           nsx_api_managers:
-                            description: 'IP address of one or more NSX managers separated by commas. The IP address should be of the form: [<scheme>://]<ip_adress>[:<port>] If scheme is not provided https is used. If port is not provided port 80 is used for http and port 443 for https.'
+                            description: 'IP address of one or more NSX managers separated
+                              by commas. The IP address should be of the form: [<scheme>://]<ip_adress>[:<port>]
+                              If scheme is not provided https is used. If port is
+                              not provided port 80 is used for http and port 443 for
+                              https.'
                             items:
                               type: string
                             type: array
                           nsx_api_password:
                             type: string
                           nsx_api_private_key_file:
-                            description: Path to NSX client private key file. If specified, the nsx_api_user and nsx_api_password options will be ignored. Must be specified along with nsx_api_cert_file option
+                            description: Path to NSX client private key file. If specified,
+                              the nsx_api_user and nsx_api_password options will be
+                              ignored. Must be specified along with nsx_api_cert_file
+                              option
                             type: string
                           nsx_api_user:
                             type: string
                           overlay_tz:
-                            description: Name or UUID of the NSX overlay transport zone that will be used for creating logical switches for container networking. It must refer to an already existing resource on NSX and every transport node where VMs hosting containers are deployed must be enabled on this transport zone
+                            description: Name or UUID of the NSX overlay transport
+                              zone that will be used for creating logical switches
+                              for container networking. It must refer to an already
+                              existing resource on NSX and every transport node where
+                              VMs hosting containers are deployed must be enabled
+                              on this transport zone
                             type: string
                           policy_nsxapi:
                             type: boolean
                           pool_algorithm:
-                            description: 'Option to set load balancing algorithm in load balancer pool object. Choices: ROUND_ROBIN LEAST_CONNECTION IP_HASH WEIGHTED_ROUND_ROBIN'
+                            description: 'Option to set load balancing algorithm in
+                              load balancer pool object. Choices: ROUND_ROBIN LEAST_CONNECTION
+                              IP_HASH WEIGHTED_ROUND_ROBIN'
                             type: string
                           redirects:
-                            description: Number of times a HTTP redirect should be followed.
+                            description: Number of times a HTTP redirect should be
+                              followed.
                             type: integer
                           retries:
-                            description: Maximum number of times to retry API requests upon stale revision errors.
+                            description: Maximum number of times to retry API requests
+                              upon stale revision errors.
                             type: integer
                           search_node_tag_on:
-                            description: 'The resource which NCP will search tag ''node_name'' on, to get parent VIF or transport node uuid for container LSP API context field. For HOSTVM mode, it will search tag on LSP. For BM mode, it will search tag on LSP then search TN. For CLOUD mode, it will search tag on VM. For WCP_WORKER mode, it will search TN by hostname. Choices: tag_on_lsp tag_on_tn tag_on_vm hostname_on_tn search_node_tag_on = tag_on_lsp'
+                            description: 'The resource which NCP will search tag ''node_name''
+                              on, to get parent VIF or transport node uuid for container
+                              LSP API context field. For HOSTVM mode, it will search
+                              tag on LSP. For BM mode, it will search tag on LSP then
+                              search TN. For CLOUD mode, it will search tag on VM.
+                              For WCP_WORKER mode, it will search TN by hostname.
+                              Choices: tag_on_lsp tag_on_tn tag_on_vm hostname_on_tn
+                              search_node_tag_on = tag_on_lsp'
                             type: string
                           service_size:
-                            description: 'Option to set load balancer service size. MEDIUM Edge VM (4 vCPU, 8GB) only supports SMALL LB. LARGE Edge VM (8 vCPU, 16GB) only supports MEDIUM and SMALL LB. Bare Metal Edge (IvyBridge, 2 socket, 128GB) supports LARGE, MEDIUM and SMALL LB Choices: SMALL MEDIUM LARGE'
+                            description: 'Option to set load balancer service size.
+                              MEDIUM Edge VM (4 vCPU, 8GB) only supports SMALL LB.
+                              LARGE Edge VM (8 vCPU, 16GB) only supports MEDIUM and
+                              SMALL LB. Bare Metal Edge (IvyBridge, 2 socket, 128GB)
+                              supports LARGE, MEDIUM and SMALL LB Choices: SMALL MEDIUM
+                              LARGE'
                             type: string
                           snat_secondary_ips:
-                            description: SNAT IP to secondary IPs mapping. In the cloud case, SNAT rules are created using the PCG public or link local IPs, local IPs which will be translated to PCG secondary IPs for on-prem traffic. The secondary IPs might be used by admstructs:strator to configure on-prem firewall or other physical network services.
+                            description: SNAT IP to secondary IPs mapping. In the
+                              cloud case, SNAT rules are created using the PCG public
+                              or link local IPs, local IPs which will be translated
+                              to PCG secondary IPs for on-prem traffic. The secondary
+                              IPs might be used by admstructs:strator to configure
+                              on-prem firewall or other physical network services.
                             items:
                               type: string
                             type: array
@@ -1628,22 +2118,45 @@ spec:
                             description: Subnet prefix of IP block.
                             type: integer
                           top_firewall_section_marker:
-                            description: Name or UUID of the firewall section that will be used to create firewall sections below this mark section
+                            description: Name or UUID of the firewall section that
+                              will be used to create firewall sections below this
+                              mark section
                             type: string
                           top_tier_router:
-                            description: Name or UUID of the top-tier router for the container cluster network, which could be either tier0 or tier1. When policy_nsxapi is enabled, single_tier_topology is True and tier0_gateway is defined, top_tier_router value can be empty and a tier1 gateway is automatically created for the cluster
+                            description: Name or UUID of the top-tier router for the
+                              container cluster network, which could be either tier0
+                              or tier1. When policy_nsxapi is enabled, single_tier_topology
+                              is True and tier0_gateway is defined, top_tier_router
+                              value can be empty and a tier1 gateway is automatically
+                              created for the cluster
                             type: string
                           use_native_loadbalancer:
                             description: Option to use native load balancer or not
                             type: boolean
                           vif_app_id_type:
-                            description: 'Determines which kind of information to be used as VIF app_id. Defaults to pod_resource_key. In WCP mode, pod_uid is used. Choices: pod_resource_key pod_uid'
+                            description: 'Determines which kind of information to
+                              be used as VIF app_id. Defaults to pod_resource_key.
+                              In WCP mode, pod_uid is used. Choices: pod_resource_key
+                              pod_uid'
                             type: string
                           vif_check_interval:
-                            description: The interval to check VIF for node. It is a workaroud for bug 2006790. Old orphan LSP may not be removed on MP, so NCP will retrieve parent VIF back once in a while. NCP will use the last created LSP from the list
+                            description: The interval to check VIF for node. It is
+                              a workaroud for bug 2006790. Old orphan LSP may not
+                              be removed on MP, so NCP will retrieve parent VIF back
+                              once in a while. NCP will use the last created LSP from
+                              the list
                             type: integer
                           x_forwarded_for:
-                            description: 'Enable X_forward_for for ingress. Available values are INSERT or REPLACE. When this config is set, if x_forwarded_for is missing, LB will add x_forwarded_for in the request header with value client ip. When x_forwarded_for is present and its set to REPLACE, LB will replace x_forwarded_for in the header to client_ip. When x_forwarded_for is present and its set to INSERT, LB will append client_ip to x_forwarded_for in the header. If not wanting to use x_forwarded_for, remove this config Choices: <None> INSERT REPLACE'
+                            description: 'Enable X_forward_for for ingress. Available
+                              values are INSERT or REPLACE. When this config is set,
+                              if x_forwarded_for is missing, LB will add x_forwarded_for
+                              in the request header with value client ip. When x_forwarded_for
+                              is present and its set to REPLACE, LB will replace x_forwarded_for
+                              in the header to client_ip. When x_forwarded_for is
+                              present and its set to INSERT, LB will append client_ip
+                              to x_forwarded_for in the header. If not wanting to
+                              use x_forwarded_for, remove this config Choices: <None>
+                              INSERT REPLACE'
                             type: string
                         type: object
                       tier0:
@@ -1689,7 +2202,39 @@ spec:
                       elasticsearch:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -1706,7 +2251,39 @@ spec:
                       kibana:
                         properties:
                           password:
-                            type: string
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                              valueFrom:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  secretKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
                           port:
                             type: string
                           scheme:
@@ -1724,7 +2301,9 @@ spec:
                         type: string
                     type: object
                   patches:
-                    description: A list of strategic merge patches that will be applied to all resources created, can either be a path to a file or an inline patch
+                    description: A list of strategic merge patches that will be applied
+                      to all resources created, can either be a path to a file or
+                      an inline patch
                     items:
                       type: string
                     type: array
@@ -1887,7 +2466,9 @@ spec:
                             type: boolean
                         type: object
                       endpoint:
-                        description: 'The endpoint at which the S3-like object storage will be available from inside the cluster e.g. if minio is deployed inside the cluster, specify: `http://minio.minio.svc:9000`'
+                        description: 'The endpoint at which the S3-like object storage
+                          will be available from inside the cluster e.g. if minio
+                          is deployed inside the cluster, specify: `http://minio.minio.svc:9000`'
                         type: string
                       kmsMasterKey:
                         description: Provide a KMS Master Key
@@ -1900,7 +2481,8 @@ spec:
                         description: Skip TLS verify when connecting to S3
                         type: boolean
                       usePathStyle:
-                        description: UsePathStyle http://s3host/bucket instead of http://bucket.s3host
+                        description: UsePathStyle http://s3host/bucket instead of
+                          http://bucket.s3host
                         type: boolean
                     type: object
                   s3UploadCleaner:
@@ -1977,7 +2559,8 @@ spec:
                             description: Enable persistence for Prometheus
                             type: boolean
                           storageClass:
-                            description: Storage class to use. If not set default one will be used
+                            description: Storage class to use. If not set default
+                              one will be used
                             type: string
                         required:
                         - enabled
@@ -1995,7 +2578,8 @@ spec:
                         type: string
                     type: object
                   terminationProtection:
-                    description: If true, terminate operations will return an error. Used to  protect stateful clusters
+                    description: If true, terminate operations will return an error.
+                      Used to  protect stateful clusters
                     type: boolean
                   test:
                     properties:
@@ -2008,10 +2592,12 @@ spec:
                   thanos:
                     properties:
                       bucket:
-                        description: Bucket to store metrics. Must be the same across all environments
+                        description: Bucket to store metrics. Must be the same across
+                          all environments
                         type: string
                       clientSidecars:
-                        description: Only for observability mode. List of client sidecars in `<hostname>:<port>`` format
+                        description: Only for observability mode. List of client sidecars
+                          in `<hostname>:<port>`` format
                         items:
                           type: string
                         type: array
@@ -2023,7 +2609,8 @@ spec:
                             type: string
                         type: object
                       enableCompactor:
-                        description: Only for observability mode. Disable compactor singleton if there are multiple observability clusters
+                        description: Only for observability mode. Disable compactor
+                          singleton if there are multiple observability clusters
                         type: boolean
                       mode:
                         description: Must be either `client` or `observability`.
@@ -2094,7 +2681,8 @@ spec:
                       secretKey:
                         type: string
                       token:
-                        description: A VAULT_TOKEN to use when authenticating with Vault
+                        description: A VAULT_TOKEN to use when authenticating with
+                          Vault
                         type: string
                       version:
                         type: string
@@ -2191,10 +2779,12 @@ spec:
                           description: The key to select.
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
                           type: string
                         optional:
-                          description: Specify whether the ConfigMap or its key must be defined
+                          description: Specify whether the ConfigMap or its key must
+                            be defined
                           type: boolean
                       required:
                       - key
@@ -2203,13 +2793,16 @@ spec:
                       description: Selects a key of a secret in the pod's namespace
                       properties:
                         key:
-                          description: The key of the secret to select from.  Must be a valid secret key.
+                          description: The key of the secret to select from.  Must
+                            be a valid secret key.
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
                           type: string
                         optional:
-                          description: Specify whether the Secret or its key must be defined
+                          description: Specify whether the Secret or its key must
+                            be defined
                           type: boolean
                       required:
                       - key
@@ -2221,7 +2814,8 @@ spec:
                           type: string
                       type: object
                     tmpFile:
-                      description: Write the content of secret/configmap/template to a file and set field to file name
+                      description: Write the content of secret/configmap/template
+                        to a file and set field to file name
                       type: boolean
                   type: object
                 type: object
@@ -2243,7 +2837,8 @@ spec:
               podName:
                 type: string
               podStatus:
-                description: PodPhase is a label for the condition of a pod at the current time.
+                description: PodPhase is a label for the condition of a pod at the
+                  current time.
                 type: string
               secretName:
                 type: string

@@ -55,6 +55,7 @@ type PlatformConfig struct {
 	KarinaOperator        KarinaOperator         `yaml:"karinaOperator,omitempty" json:"karinaOperator,omitempty"`
 	Kind                  Kind                   `yaml:"kind,omitempty" json:"kind,omitempty"`
 	Kiosk                 Kiosk                  `yaml:"kiosk,omitempty" json:"kiosk,omitempty"`
+	KonfigManager         KonfigManager          `yaml:"konfigManager,omitempty" json:"konfigManager,omitempty"`
 	Kpack                 Kpack                  `yaml:"kpack,omitempty" json:"kpack,omitempty"`
 	KubeResourceReport    *KubeResourceReport    `yaml:"kubeResourceReport,omitempty" json:"kubeResourceReport,omitempty"`
 	Kubernetes            Kubernetes             `yaml:"kubernetes" json:"kubernetes,omitempty"`

@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/konfigmanager"
+
 	"github.com/flanksource/karina/pkg/phases/mongodboperator"
 
 	"github.com/flanksource/commons/console"
@@ -194,6 +196,7 @@ func init() {
 		"keptn":                keptn.Test,
 		"karina-operator":      karinaoperator.Test,
 		"kiosk":                kiosk.Test,
+		"konfig-manager":       konfigmanager.Test,
 		"kpack":                kpack.Test,
 		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
 		"kube-web-view":        kubewebview.TestKubeWebView,
