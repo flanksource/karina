@@ -1,0 +1,4 @@
+importConfigs:
+  - minimal.yaml
+konfigManager:
+  version: v0.2.1

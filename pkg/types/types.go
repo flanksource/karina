@@ -675,6 +675,11 @@ type TemplateOperator struct {
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }
 
+type KonfigManager struct {
+	XDisabled  `yaml:",inline" json:",inline"`
+	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
+}
+
 type KarinaOperator struct {
 	XDisabled  `yaml:",inline" json:",inline"`
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
