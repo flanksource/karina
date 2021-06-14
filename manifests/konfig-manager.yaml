@@ -199,7 +199,7 @@ spec:
         - --sync-period={{ .konfigManager.syncPeriod | default "10m" }}
         command:
         - /bin/konfig-manager
-        image: docker.io/flanksource/konfig-manager:{{.konfigManager.version| deafult "na" }}
+        image: docker.io/flanksource/konfig-manager:{{.konfigManager.version | default "na" }}
         livenessProbe:
           httpGet:
             path: /healthz

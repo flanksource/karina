@@ -4,7 +4,7 @@ namespace: platform-system
 images:
   - name: controller
     newName: docker.io/flanksource/konfig-manager
-    newTag: '{{.konfigManager.version| deafult "na" }}'
+    newTag: '{{.konfigManager.version | default "na" }}'
 resources:
   # rbac files
   - https://raw.githubusercontent.com/flanksource/konfig-manager/main/config/rbac/service_account.yaml
