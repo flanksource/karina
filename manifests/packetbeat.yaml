@@ -86,6 +86,7 @@ spec:
           operator: Exists
       terminationGracePeriodSeconds: 30
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: packetbeat
           image: docker.elastic.co/beats/packetbeat:{{ .packetbeat.version | default "none" }}
