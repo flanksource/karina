@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
+	version = ""
+	commit  = ""
+	date    = ""
 )
 
 func main() {
@@ -64,10 +64,12 @@ func main() {
 		cmd.Upgrade,
 		cmd.Vault,
 	)
-
 	if len(commit) > 8 {
-		version = fmt.Sprintf("%v, commit %v, built at %v", version, commit[0:8], date)
+		version = fmt.Sprintf("%v-%v-%v", commit[0:8], version, date)
+	} else {
+		version = fmt.Sprintf("%v-%v", version, date)
 	}
+
 	root.AddCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Print the version of karina",
