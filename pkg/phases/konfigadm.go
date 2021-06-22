@@ -89,11 +89,21 @@ func CreateSecondaryMaster(platform *platform.Platform) (*konfigadm.Config, erro
 
 // CreateWorker creates a konfigadm config for a worker in node group nodegroup
 func CreateWorker(nodegroup string, platform *platform.Platform) (*konfigadm.Config, error) {
+	if nodegroup == "" {
+		nodegroup = "default"
+		if platform.Nodes == nil {
+			platform.Nodes = make(map[string]types.VM)
+		}
+
+		if _, ok := platform.Nodes[nodegroup]; !ok {
+			platform.Nodes[nodegroup] = types.VM{}
+		}
+	}
 	if platform.Nodes == nil {
-		return nil, fmt.Errorf("CreateWorker failed to create worker - nil Nodes supplied")
+		return nil, fmt.Errorf("must specify 'nodes' in karina config")
 	}
 	if _, ok := platform.Nodes[nodegroup]; !ok {
-		return nil, fmt.Errorf("CreateWorker failed to create worker - supplied nodegroup not found")
+		return nil, fmt.Errorf("node group %s not found", nodegroup)
 	}
 
 	node := platform.Nodes[nodegroup]
