@@ -92,7 +92,7 @@ spec:
     - host: dex.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: dex
                 port:

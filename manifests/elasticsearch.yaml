@@ -78,7 +78,7 @@ spec:
     - host: logs.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: logs-es-http
                 port:
@@ -113,7 +113,7 @@ spec:
     - host: kibana.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: logs-kb-http
                 port:

@@ -100,7 +100,7 @@ spec:
     - host: oauth2.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name:  oauth2-proxy
                 port:

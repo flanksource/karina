@@ -28,7 +28,7 @@ spec:
     - host: git-operator.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: git-operator
                 port:

@@ -125,7 +125,7 @@ spec:
     - host: kube-web-view.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: kube-web-view
                 port:

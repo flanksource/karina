@@ -8,7 +8,7 @@ spec:
   - host: signin.acmecorp.com
     http:
       paths:
-      - defaultBackend:
+      - backend:
           service:
             name: nginx
             port:

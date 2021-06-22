@@ -153,7 +153,7 @@ spec:
     - host: "thanos-sidecar.{{.domain}}"
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: thanos-sidecar
                 port:
@@ -433,7 +433,7 @@ spec:
     - host: prometheus.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name:  prometheus-k8s
                 port:
@@ -455,7 +455,7 @@ spec:
     - host: grafana.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: grafana-service
                 port:
@@ -477,7 +477,7 @@ spec:
     - host: alertmanager.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: alertmanager-main
                 port:

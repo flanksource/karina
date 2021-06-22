@@ -184,7 +184,7 @@ spec:
     - host: kube-resource-report.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name:  kube-resource-report
                 port:

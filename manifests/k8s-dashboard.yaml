@@ -321,7 +321,7 @@ spec:
     - host: dashboard.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: kubernetes-dashboard
                 port:

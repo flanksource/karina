@@ -133,7 +133,7 @@ spec:
     - host: karma.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: karma
                 port:

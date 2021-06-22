@@ -19,7 +19,7 @@ spec:
     - host: kibana.{{.Domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: logs-kb-http
                 port:

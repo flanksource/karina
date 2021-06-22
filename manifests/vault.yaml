@@ -530,7 +530,7 @@ spec:
     - host: "vault.{{.domain}}"
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: "vault-ui"
                 port:
@@ -556,7 +556,7 @@ spec:
     - host: "vault-consul.{{.domain}}"
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: "consul-server"
                 port:

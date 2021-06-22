@@ -1439,7 +1439,7 @@ spec:
     - host: tekton.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: tekton-dashboard
                 port:

@@ -54,7 +54,7 @@ spec:
     - host: pushgateway.{{.domain}}
       http:
         paths:
-          - defaultBackend:
+          - backend:
               service:
                 name: pushgateway
                 port:
