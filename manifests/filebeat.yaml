@@ -8,6 +8,8 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: filebeat-{{ .name }}
+    annotations:
+      reload/all: "true"
 spec:
   selector:
     matchLabels:
@@ -137,7 +139,7 @@ data:
           default_matchers.enabled: false
           matchers:
             - logs_path:
-                logs_path: /var/log/containers/
+                logs_path: /var/log/containers/*-${data.kubernetes.container.id}.log
 
       - add_docker_metadata:
       - drop_event:
@@ -153,10 +155,8 @@ data:
                   message: GET /healthz
               - contains:
                   message: "Health check succeeded"
-
               - contains:
                   message: "csi.v1.Identity/Probe"
-
       - drop_fields:
           fields:
             - ecs.version
