@@ -108,7 +108,7 @@ func main() {
 	root.PersistentFlags().StringP("kubeconfig", "", "", "Specify a kubeconfig to use, if empty a new kubeconfig is generated from master CA's at runtime")
 	root.PersistentFlags().CountP("loglevel", "v", "Increase logging level")
 	root.PersistentFlags().Bool("prune", true, "Delete previously enabled resources")
-	root.PersistentFlags().Bool("skip-decrypt", false, "Skip any phases and decryption")
+	root.PersistentFlags().Bool("skip-decrypt", false, "Skip any phases requiring decryption")
 	root.PersistentFlags().Bool("dry-run", false, "Don't apply any changes, print what would have been done")
 	root.PersistentFlags().Bool("trace", false, "Print out generated specs and configs")
 	root.PersistentFlags().Bool("in-cluster", false, "Use in cluster kubernetes config")

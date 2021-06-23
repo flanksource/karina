@@ -28,8 +28,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 13,
-  "iteration": 1590084815249,
+  "id": 19,
+  "iteration": 1623742032794,
   "links": [],
   "panels": [
     {
@@ -45,6 +45,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "percentunit",
       "gauge": {
         "maxValue": 1,
@@ -77,7 +81,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -131,6 +134,10 @@
       "decimals": 1,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "bytes",
       "gauge": {
         "maxValue": 100,
@@ -163,7 +170,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -211,6 +217,12 @@
       "datasource": "$datasource",
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -239,9 +251,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -305,6 +318,12 @@
       "datasource": "$datasource",
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -333,9 +352,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -399,6 +419,12 @@
       "datasource": "$datasource",
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -427,9 +453,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -519,6 +546,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "percentunit",
       "gauge": {
         "maxValue": 100,
@@ -551,7 +582,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "null as zero",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -606,6 +636,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "percentunit",
       "gauge": {
         "maxValue": 100,
@@ -638,7 +672,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "null as zero",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -690,6 +723,10 @@
       "decimals": 2,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "percentunit",
       "gauge": {
         "maxValue": 1,
@@ -722,7 +759,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -776,6 +812,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -808,7 +848,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -856,6 +895,12 @@
       "datasource": "$datasource",
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 0,
       "fillGradient": 0,
       "gridPos": {
@@ -885,9 +930,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -950,7 +996,13 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${datasource}",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 0,
       "fillGradient": 0,
       "gridPos": {
@@ -976,9 +1028,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -988,7 +1041,9 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(ALERTS) by (cluster  ) > 0",
+          "exemplar": true,
+          "expr": "sum(ALERTS) by (cluster,severity  ) > 0",
+          "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
         }
@@ -997,7 +1052,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Alert by Cluster",
+      "title": "Alerts",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1014,6 +1069,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:186",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1022,6 +1078,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:187",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1048,6 +1105,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "percentunit",
       "gauge": {
         "maxValue": 100,
@@ -1080,7 +1141,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "null as zero",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1135,6 +1195,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "percentunit",
       "gauge": {
         "maxValue": 100,
@@ -1167,7 +1231,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "null as zero",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1222,6 +1285,10 @@
       "decimals": 0,
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "none",
       "gauge": {
         "maxValue": 10,
@@ -1254,7 +1321,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1310,6 +1376,12 @@
       "datasource": "$datasource",
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 3,
       "fillGradient": 0,
       "gridPos": {
@@ -1338,9 +1410,10 @@
       "linewidth": 2,
       "nullPointMode": "null as zero",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1407,13 +1480,19 @@
     },
     {
       "aliasColors": {},
-      "bars": false,
+      "bars": true,
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
       "description": "Latency in microseconds for a single pod to go from pending to running. Broken down by podname.",
       "editable": false,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -1445,9 +1524,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1458,8 +1538,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(kubelet_pod_start_latency_microseconds_sum[5m]) / rate(kubelet_pod_start_latency_microseconds_count[5m]) ",
+          "exemplar": true,
+          "expr": "rate(kubelet_pod_start_duration_seconds_sum[5m]) / rate(kubelet_pod_start_duration_seconds_count[5m]) ",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 1,
           "legendFormat": "{{node}}",
           "refId": "A"
@@ -1487,11 +1569,13 @@
       },
       "yaxes": [
         {
-          "format": "µs",
+          "$$hashKey": "object:134",
+          "format": "s",
           "logBase": 1,
           "show": true
         },
         {
+          "$$hashKey": "object:135",
           "format": "short",
           "logBase": 1,
           "show": true
@@ -1505,6 +1589,49 @@
     {
       "cacheTimeout": null,
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [
+            {
+              "id": 0,
+              "op": "=",
+              "text": "N/A",
+              "type": 1,
+              "value": "null"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 0.3
+              },
+              {
+                "color": "yellow",
+                "value": 0.4
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 3,
         "w": 2,
@@ -1515,59 +1642,20 @@
       "links": [],
       "options": {
         "colorMode": "value",
-        "fieldOptions": {
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
           "calcs": [
             "lastNotNull"
           ],
-          "defaults": {
-            "decimals": 0,
-            "mappings": [
-              {
-                "id": 0,
-                "op": "=",
-                "text": "N/A",
-                "type": 1,
-                "value": "null"
-              }
-            ],
-            "max": 1,
-            "min": 0,
-            "nullValueMode": "connected",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "#299c46",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 0
-                },
-                {
-                  "color": "red",
-                  "value": 0.3
-                },
-                {
-                  "color": "yellow",
-                  "value": 0.4
-                },
-                {
-                  "color": "green",
-                  "value": 0.5
-                }
-              ]
-            },
-            "unit": "percentunit"
-          },
-          "overrides": [],
+          "fields": "",
           "values": false
         },
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto"
+        "text": {},
+        "textMode": "auto"
       },
-      "pluginVersion": "6.6.2",
+      "pluginVersion": "7.5.7",
       "targets": [
         {
           "expr": "min(node_filesystem_avail_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}/node_filesystem_size_bytes{mountpoint!~\".*(serviceaccount|proc|sys).*\", device!=\"overlay\"}) ",
@@ -1586,6 +1674,31 @@
     },
     {
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.9
+              },
+              {
+                "color": "green",
+                "value": 0.95
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 3,
         "w": 3,
@@ -1595,40 +1708,20 @@
       "id": 34,
       "options": {
         "colorMode": "value",
-        "fieldOptions": {
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
           "calcs": [
             "mean"
           ],
-          "defaults": {
-            "decimals": 0,
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "red",
-                  "value": null
-                },
-                {
-                  "color": "orange",
-                  "value": 0.9
-                },
-                {
-                  "color": "green",
-                  "value": 0.95
-                }
-              ]
-            },
-            "unit": "percentunit"
-          },
-          "overrides": [],
+          "fields": "",
           "values": false
         },
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto"
+        "text": {},
+        "textMode": "auto"
       },
-      "pluginVersion": "6.6.2",
+      "pluginVersion": "7.5.7",
       "targets": [
         {
           "expr": "sum(rate(nginx_ingress_controller_requests{ingress=~\"harbor.*\",status!~\"[4-5].*\"}[2m])) / sum(rate(nginx_ingress_controller_requests{ingress=~\"harbor.*\"}[2m]))",
@@ -1652,6 +1745,10 @@
         "#C4162A"
       ],
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -1688,7 +1785,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "pluginVersion": "6.4.3",
       "postfix": "",
       "postfixFontSize": "50%",
@@ -1732,7 +1828,8 @@
       "valueName": "current"
     }
   ],
-  "schemaVersion": 22,
+  "refresh": false,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [
     "main"
@@ -1743,6 +1840,8 @@
         "allFormat": "",
         "allValue": "",
         "datasource": null,
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "",
@@ -1759,6 +1858,8 @@
       },
       {
         "datasource": "$datasource",
+        "description": null,
+        "error": null,
         "filters": [],
         "hide": 0,
         "label": null,
@@ -1769,7 +1870,7 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -1790,5 +1891,5 @@
   "timezone": "",
   "title": "Main Dashboard",
   "uid": "NVr_xXXZk",
-  "version": 5
+  "version": 6
 }
