@@ -25,7 +25,7 @@ release: linux darwin compress
 
 .PHONY: build
 build:
-	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
+	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION_TAG)\""  main.go
 
 
 .PHONY: linux
