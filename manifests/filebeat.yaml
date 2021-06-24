@@ -8,8 +8,8 @@ metadata:
   namespace: platform-system
   labels:
     k8s-app: filebeat-{{ .name }}
-    annotations:
-      reload/all: "true"
+  annotations:
+    reload/all: "true"
 spec:
   selector:
     matchLabels:
