@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@main
         with:
           fetch-depth: 10
+          all_tags: true
       - name: get-commit-msg
         id: getcommit
         run: |
