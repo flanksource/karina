@@ -55,7 +55,9 @@ jobs:
         run: |
           echo "::set-output name=go-build::$(go env GOCACHE)"
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
       # Cache go build cache, used to speedup go test
       - name: Go Build Cache
@@ -113,8 +115,10 @@ jobs:
           - konfig-manager
           - quarantine
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v2
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v2
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         with:
@@ -168,7 +172,9 @@ jobs:
         suite:
           - minimal
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v2
         with:
           name: karina
@@ -229,7 +235,9 @@ jobs:
           # - nosql
           # - cicd
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v2
         with:
           name: karina
