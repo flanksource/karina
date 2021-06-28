@@ -68,6 +68,7 @@ rules:
   - events
   verbs:
   - create
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -197,6 +198,25 @@ spec:
           type: ""
         name: containerdsock
 ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: canary-checker
+  name: canary-checker-monitor
+  namespace: platform-system
+spec:
+  endpoints:
+  - interval: 30s
+    targetPort: 8080
+  jobLabel: canary-checker
+  namespaceSelector:
+    matchNames:
+    - platform-system
+  selector:
+    matchLabels:
+      control-plane: canary-checker
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -218,22 +238,3 @@ spec:
   - hosts:
     - canaries.{{.domain}}
     secretName: canary-tls
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  labels:
-    control-plane: canary-checker
-  name: canary-checker-monitor
-  namespace: platform-system
-spec:
-  endpoints:
-  - interval: 30s
-    targetPort: 8080
-  jobLabel: canary-checker
-  namespaceSelector:
-    matchNames:
-    - platform-system
-  selector:
-    matchLabels:
-      control-plane: canary-checker

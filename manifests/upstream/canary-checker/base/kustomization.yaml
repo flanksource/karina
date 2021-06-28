@@ -1,5 +1,5 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.19.1/config/deploy/base.yaml
+  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.20.0/config/deploy/base.yaml
 images:
   - name: flanksource/canary-checker
     newName: docker.io/flanksource/canary-checker
