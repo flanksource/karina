@@ -271,33 +271,45 @@ spec:
           - path: /
             pathType: ImplementationSpecific
             backend:
-              serviceName: harbor-portal
-              servicePort: 443
+              service:
+                name: harbor-portal
+                port:
+                  number: 443
           - path: /api/
             pathType: ImplementationSpecific
             backend:
-              serviceName: harbor-core
-              servicePort: 443
+              service:
+                name: harbor-core
+                port:
+                  number: 443
           - path: /service/
             pathType: ImplementationSpecific
             backend:
-              serviceName: harbor-core
-              servicePort: 443
+              service:
+                name: harbor-core
+                port:
+                  number: 443
           - path: /v2/
             pathType: ImplementationSpecific
             backend:
-              serviceName: harbor-core
-              servicePort: 443
+              service:
+                name: harbor-core
+                port:
+                  number: 443
           - path: /chartrepo/
             pathType: ImplementationSpecific
             backend:
-              serviceName: harbor-core
-              servicePort: 443
+              service:
+                name: harbor-core
+                port:
+                  number: 443
           - path: /c/
             pathType: ImplementationSpecific
             backend:
-              serviceName: harbor-core
-              servicePort: 443
+              service:
+                name: harbor-core
+                port:
+                  number: 443
       host: "harbor.{{ .domain}}"
 ---
 apiVersion: monitoring.coreos.com/v1
