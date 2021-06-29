@@ -106,6 +106,7 @@ spec:
                 port:
                   number: 4180
             path: /oauth2
+            pathType: ImplementationSpecific
   tls:
     - secretName: oauth2-tls
       hosts:

@@ -158,6 +158,7 @@ spec:
                 name: thanos-sidecar
                 port:
                   number: 10901
+            pathType: ImplementationSpecific
 {{- end }}
 {{- end }}
 
@@ -438,6 +439,7 @@ spec:
                 name:  prometheus-k8s
                 port:
                   number: 9090
+            pathType: ImplementationSpecific
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -460,6 +462,7 @@ spec:
                 name: grafana-service
                 port:
                   number: 3000
+            pathType: ImplementationSpecific
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -482,3 +485,4 @@ spec:
                 name: alertmanager-main
                 port:
                   number: 9093
+            pathType: ImplementationSpecific

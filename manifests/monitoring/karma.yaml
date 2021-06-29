@@ -138,6 +138,7 @@ spec:
                 name: karma
                 port:
                   number: 8080
+            pathType: ImplementationSpecific
   tls:
     - secretName: karma-tls
       hosts:

@@ -130,6 +130,7 @@ spec:
                 name: kube-web-view
                 port:
                   number: 80
+            pathType: ImplementationSpecific
   tls:
     - secretName: kube-web-view-tls
       hosts:

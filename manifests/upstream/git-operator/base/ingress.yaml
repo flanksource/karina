@@ -33,3 +33,4 @@ spec:
                 name: git-operator
                 port:
                   number: 8888
+            pathType: ImplementationSpecific

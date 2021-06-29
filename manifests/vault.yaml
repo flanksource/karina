@@ -535,6 +535,7 @@ spec:
                 name: "vault-ui"
                 port:
                   number: 8200
+            pathType: ImplementationSpecific
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -561,3 +562,4 @@ spec:
                 name: "consul-server"
                 port:
                   number: 8500
+            pathType: ImplementationSpecific

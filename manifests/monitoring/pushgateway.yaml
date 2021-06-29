@@ -59,6 +59,7 @@ spec:
                 name: pushgateway
                 port:
                   number: 9091
+            pathType: ImplementationSpecific
   tls:
     - secretName: pushgateway-tls
       hosts:

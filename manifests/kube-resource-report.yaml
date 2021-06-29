@@ -189,6 +189,7 @@ spec:
                 name:  kube-resource-report
                 port:
                   number: 80
+            pathType: ImplementationSpecific
   tls:
     - secretName: kube-resource-report-tls
       hosts:

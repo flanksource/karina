@@ -43,3 +43,4 @@ spec:
                 name: nginx
                 port:
                   number: 80
+            pathType: ImplementationSpecific

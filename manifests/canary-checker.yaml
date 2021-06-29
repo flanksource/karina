@@ -234,6 +234,7 @@ spec:
             name: canary-checker
             port:
               number: 8080
+        pathType: ImplementationSpecific
   tls:
   - hosts:
     - canaries.{{.domain}}
