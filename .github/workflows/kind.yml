@@ -94,7 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.18.19
+          - v1.19.11
           - v1.20.7
         suite:
           - minimal
@@ -164,7 +164,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.18.19
+          - v1.19.11
         suite:
           - minimal
     steps:
@@ -216,7 +216,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.18.19
+          - v1.19.11
         suite:
           - minimal
           # - minimal-antrea
