@@ -38,8 +38,14 @@ func ApplyHook(p *platform.Platform, name string, phase string) error {
 		return nil
 	}
 	if phase == "before" {
+		if (hook.Before == kommons.EnvVar{}) {
+			return nil
+		}
 		return ApplyEnvVar(p, hook.Before)
-	} else if phase == "after" {
+	} else if phase == "after"{
+		if (hook.After == kommons.EnvVar{}){
+			return nil
+		}
 		return ApplyEnvVar(p, hook.After)
 	} else {
 		return errors.New(fmt.Sprintf("hook %v invalid.  Must be 'before' or 'after'", phase))

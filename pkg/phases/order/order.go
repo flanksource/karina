@@ -141,7 +141,6 @@ var Phases = map[Cmd]Phase{
 	ArgoOperator:       makePhase(argocdoperator.Deploy, ArgoOperator),
 	Auditbeat:          makePhase(auditbeat.Deploy, Auditbeat),
 	Canary:             makePhase(canary.Deploy, Canary),
-	Eck:                makePhase(eck.Deploy, Eck),
 	Elasticsearch:      makePhase(elasticsearch.Deploy, Elasticsearch),
 	Eventrouter:        makePhase(eventrouter.Deploy, Eventrouter),
 	Externaldns:        makePhase(externaldns.Install, Externaldns),
@@ -176,9 +175,9 @@ var Phases = map[Cmd]Phase{
 	Velero:             makePhase(velero.Install, Velero),
 }
 
-var PhaseOrder = []Cmd{BootstrapCmd, Crds, Cni, Csi, CloudController, PlatformCmd}
-var Bootstrap = compose(pre.Install, crds.Install, CNI, CSI, base.Install, Cloud, certmanager.Install, ingress.Install, quack.Install, minio.Install, templateoperator.Install, postgresoperator.Deploy, dex.Install)
-var BootstrapPhases = []Cmd{Pre, Crds, Cni, Csi, Base, CloudController, CertManager, Ingress, Quack, Minio, TemplateOperator, PostgresOperator, Dex}
+var PhaseOrder = []Cmd{BootstrapCmd, Crds, Cni, Csi, CloudController, PlatformCmd, Eck}
+var Bootstrap = compose(pre.Install, crds.Install, CNI, CSI, base.Install, Cloud, certmanager.Install, ingress.Install, quack.Install, minio.Install, templateoperator.Install, postgresoperator.Deploy, dex.Install, eck.Deploy)
+var BootstrapPhases = []Cmd{Pre, Crds, Cni, Csi, Base, CloudController, CertManager, Ingress, Quack, Minio, TemplateOperator, PostgresOperator, Dex, Eck}
 var CSI = compose(localpath.Install, s3.Install, nfs.Install)
 var CNI = compose(calico.Install, antrea.Install, nsx.Install, nodelocaldns.Install)
 var Cloud = compose(vsphere.Install)
@@ -208,6 +207,7 @@ var PhasesExtra = map[Cmd]Phase{
 	Crds:              makePhase(crds.Install, Crds),
 	Csi:               makePhase(CSI, Csi),
 	Dex:               makePhase(dex.Install, Dex),
+	Eck:                makePhase(eck.Deploy, Eck),
 	Ingress:           makePhase(ingress.Install, Ingress),
 	Kiosk:             makePhase(kiosk.Deploy, Kiosk),
 	Minio:             makePhase(minio.Install, Minio),

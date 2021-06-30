@@ -166,7 +166,7 @@ func init() {
 	}
 
 	aliases := map[string][]string{
-		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "quack", "minio", "template-operator", "postgres-operator"},
+		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "quack", "minio", "template-operator", "postgres-operator", "eck"},
 		"cni":       []string{"calico", "antrea", "nsx"},
 		"csi":       []string{"s3", "nfs", "local-path"},
 		"cloud":     []string{"vsphere"},
