@@ -172,7 +172,6 @@ spec:
                 description: Resources is a list of new resources to create for each source object found Must specify at least resources or patches or both
                 items:
                   type: object
-                  x-kubernetes-embedded-resource: true
                   x-kubernetes-preserve-unknown-fields: true
                 type: array
               source:
