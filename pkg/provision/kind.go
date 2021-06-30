@@ -167,6 +167,10 @@ func KindCluster(p *platform.Platform) error {
 		return err
 	}
 
+	if err := updateKubeProxy(p); err != nil {
+		return errors.Wrap(err, "failed to update kube proxy config")
+	}
+
 	if err := createEtcdCertificateSecret(p); err != nil {
 		return errors.Wrap(err, "failed to create etcd-certs secret")
 	}
@@ -257,6 +261,45 @@ func createKubeAdmPatches(platform *platform.Platform) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// On newer kernels we need to update conntrack.maxPerCore to set to 0
+// https://github.com/kubernetes-sigs/kind/issues/2240
+func updateKubeProxy(p *platform.Platform) error {
+	clientset, err := p.GetClientset()
+	if err != nil {
+		return errors.Wrap(err, "failed to get clientset")
+	}
+
+	cm, err := clientset.CoreV1().ConfigMaps("kube-system").Get(context.TODO(), "kube-proxy", metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "failed to get configmap kube-system/kube-proxy")
+	}
+
+	config := map[string]interface{}{}
+	if err := yaml.Unmarshal([]byte(cm.Data["config.conf"]), &config); err != nil {
+		return errors.Wrap(err, "failed to unmarshal config.conf")
+	}
+
+	config["conntrack"] = map[string]interface{}{
+		"maxPerCore":            0,
+		"min":                   nil,
+		"tcpCloseWaitTimeout":   nil,
+		"tcpEstablishedTimeout": nil,
+	}
+
+	ymlConfig, err := yaml.Marshal(&config)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal config back to yaml")
+	}
+
+	cm.Data["config.conf"] = string(ymlConfig)
+
+	if _, err := clientset.CoreV1().ConfigMaps("kube-system").Update(context.TODO(), cm, metav1.UpdateOptions{}); err != nil {
+		return errors.Wrap(err, "failed to update configmap kube-system/kube-proxy")
+	}
+
+	return nil
 }
 
 func kindWorkerNodesConfig(p *platform.Platform, master kindapi.Node) []kindapi.Node {
