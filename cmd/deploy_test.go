@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/flanksource/karina/pkg/phases/order"
-	"github.com/flanksource/karina/pkg/types"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/flanksource/karina/pkg/phases/order"
+	"github.com/flanksource/karina/pkg/types"
 
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/kommons"
@@ -92,8 +93,8 @@ func Test1(t *testing.T) {
 func Test_deployPhase(t *testing.T) {
 	type args struct {
 		plaformConfig types.PlatformConfig
-		phase string
-		fn    order.DeployFn
+		phase         string
+		fn            order.DeployFn
 	}
 	tests := []struct {
 		name string
@@ -103,10 +104,9 @@ func Test_deployPhase(t *testing.T) {
 		{
 			name: "basic",
 			args: args{
-				plaformConfig: types.PlatformConfig{
-				},
-				phase: "crds",
-				fn: order.PhasesExtra[order.Crds].Fn,
+				plaformConfig: types.PlatformConfig{},
+				phase:         "crds",
+				fn:            order.PhasesExtra[order.Crds].Fn,
 			},
 			want: true,
 		},
@@ -129,7 +129,7 @@ func Test_deployPhase(t *testing.T) {
 					},
 				},
 				phase: "crds",
-				fn: order.PhasesExtra[order.Crds].Fn,
+				fn:    order.PhasesExtra[order.Crds].Fn,
 			},
 			want: true,
 		},
@@ -152,7 +152,7 @@ func Test_deployPhase(t *testing.T) {
 					},
 				},
 				phase: "crds",
-				fn: order.PhasesExtra[order.Crds].Fn,
+				fn:    order.PhasesExtra[order.Crds].Fn,
 			},
 			want: true,
 		},
@@ -184,7 +184,7 @@ func Test_deployPhase(t *testing.T) {
 					},
 				},
 				phase: "crds",
-				fn: order.PhasesExtra[order.Crds].Fn,
+				fn:    order.PhasesExtra[order.Crds].Fn,
 			},
 			want: true,
 		},
@@ -199,7 +199,7 @@ func Test_deployPhase(t *testing.T) {
 		if p == nil {
 			t.Fatalf("Could not create test platform")
 		}
-		
+
 		t.Run(tt.name, func(t *testing.T) {
 			if got := deployPhase(p, tt.args.phase, tt.args.fn); got != tt.want {
 				t.Errorf("deployPhase() = %v, want %v", got, tt.want)

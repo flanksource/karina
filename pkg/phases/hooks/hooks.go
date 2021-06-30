@@ -1,13 +1,13 @@
 package hooks
 
 import (
-	"errors"
 	"fmt"
+	"io/ioutil"
+	"strings"
+
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/kommons"
-	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 )
 
 func ApplyEnvVar(p *platform.Platform, envVar kommons.EnvVar) error {
@@ -42,15 +42,14 @@ func ApplyHook(p *platform.Platform, name string, phase string) error {
 			return nil
 		}
 		return ApplyEnvVar(p, hook.Before)
-	} else if phase == "after"{
-		if (hook.After == kommons.EnvVar{}){
+	} else if phase == "after" {
+		if (hook.After == kommons.EnvVar{}) {
 			return nil
 		}
 		return ApplyEnvVar(p, hook.After)
 	} else {
-		return errors.New(fmt.Sprintf("hook %v invalid.  Must be 'before' or 'after'", phase))
+		return fmt.Errorf("hook %v invalid.  Must be 'before' or 'after'", phase)
 	}
-	return nil
 }
 
 func ApplyBeforeHook(p *platform.Platform, name string) error {

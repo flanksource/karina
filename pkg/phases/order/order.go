@@ -207,7 +207,7 @@ var PhasesExtra = map[Cmd]Phase{
 	Crds:              makePhase(crds.Install, Crds),
 	Csi:               makePhase(CSI, Csi),
 	Dex:               makePhase(dex.Install, Dex),
-	Eck:                makePhase(eck.Deploy, Eck),
+	Eck:               makePhase(eck.Deploy, Eck),
 	Ingress:           makePhase(ingress.Install, Ingress),
 	Kiosk:             makePhase(kiosk.Deploy, Kiosk),
 	Minio:             makePhase(minio.Install, Minio),
