@@ -919,9 +919,6 @@ func NewCertificateForService(issuer, namespace string, name string) certmanager
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Annotations: map[string]string{
-				certmanager.AllowsInjectionFromSecretAnnotation: "true",
-			},
 		},
 		Spec: certmanager.CertificateSpec{
 			DNSNames: []string{
