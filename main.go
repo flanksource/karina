@@ -31,7 +31,7 @@ func main() {
 		cmd.BurninController,
 		cmd.CA,
 		cmd.Terminate,
-		cmd.CleanupJobs,
+		cmd.Cleanup,
 		cmd.Config,
 		cmd.Conformance,
 		cmd.Consul,
