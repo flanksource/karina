@@ -32,6 +32,7 @@ require (
 	github.com/prometheus/common v0.10.0
 	github.com/sirupsen/logrus v1.7.1
 	github.com/spf13/cobra v1.1.1
+	github.com/stretchr/testify v1.6.1
 	github.com/thoas/go-funk v0.7.0
 	github.com/vbauerster/mpb/v5 v5.0.3
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d

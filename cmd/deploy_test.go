@@ -2,12 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/flanksource/karina/pkg/phases/order"
+	"github.com/flanksource/karina/pkg/types"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/kommons"
+	"github.com/flanksource/kommons/testenv"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,8 +39,8 @@ func Test1(t *testing.T) {
 	os.Setenv("TEST_ASSET_KUBE_APISERVER", "/tmp/kubebuilder/bin/kube-apiserver")
 	os.Setenv("TEST_ASSET_ETCD", "/tmp/kubebuilder/bin/etcd")
 	os.Setenv("TEST_ASSET_KUBECTL", "/tmp/kubebuilder/bin/kubectl")
-	os.Setenv("KUBEBUILDER_CONTROLPLANE_START_TIMEOUT", "5m")
-	os.Setenv("KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT", "5m")
+	os.Setenv("KUBEBUILDER_CONTROLPLANE_START_TIMEOUT", "1m")
+	os.Setenv("KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT", "1m")
 
 	var testEnv = &envtest.Environment{
 		CRDDirectoryPaths:  []string{filepath.Join("..", "config", "crd", "bases")},
@@ -82,6 +85,125 @@ func Test1(t *testing.T) {
 			}
 			assert.Equal(t, value, 1, "Output")
 			_ = testEnv.Stop()
+		})
+	}
+}
+
+func Test_deployPhase(t *testing.T) {
+	type args struct {
+		plaformConfig types.PlatformConfig
+		phase string
+		fn    order.DeployFn
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "basic",
+			args: args{
+				plaformConfig: types.PlatformConfig{
+				},
+				phase: "crds",
+				fn: order.PhasesExtra[order.Crds].Fn,
+			},
+			want: true,
+		},
+		{
+			name: "pre",
+			args: args{
+				plaformConfig: types.PlatformConfig{
+					Hooks: map[string]types.Hook{
+						"crds": types.Hook{
+							Before: kommons.EnvVar{
+								Value: string([]byte(`{
+								    "kind": "Namespace",
+								    "apiVersion": "v1",
+								    "metadata": {
+								        "name": "test"
+								    }
+								}`)),
+							},
+						},
+					},
+				},
+				phase: "crds",
+				fn: order.PhasesExtra[order.Crds].Fn,
+			},
+			want: true,
+		},
+		{
+			name: "post",
+			args: args{
+				plaformConfig: types.PlatformConfig{
+					Hooks: map[string]types.Hook{
+						"crds": types.Hook{
+							After: kommons.EnvVar{
+								Value: string([]byte(`{
+								    "kind": "Namespace",
+								    "apiVersion": "v1",
+								    "metadata": {
+								        "name": "test"
+								    }
+								}`)),
+							},
+						},
+					},
+				},
+				phase: "crds",
+				fn: order.PhasesExtra[order.Crds].Fn,
+			},
+			want: true,
+		},
+		{
+			name: "both",
+			args: args{
+				plaformConfig: types.PlatformConfig{
+					Hooks: map[string]types.Hook{
+						"crds": types.Hook{
+							Before: kommons.EnvVar{
+								Value: string([]byte(`{
+								    "kind": "Namespace",
+								    "apiVersion": "v1",
+								    "metadata": {
+								        "name": "testbefore"
+								    }
+								}`)),
+							},
+							After: kommons.EnvVar{
+								Value: string([]byte(`{
+								    "kind": "Namespace",
+								    "apiVersion": "v1",
+								    "metadata": {
+								        "name": "testafter"
+								    }
+								}`)),
+							},
+						},
+					},
+				},
+				phase: "crds",
+				fn: order.PhasesExtra[order.Crds].Fn,
+			},
+			want: true,
+		},
+	}
+	config, bin, err := testenv.StartTestEnv("1.19.2")
+	if err != nil {
+		t.Fatalf("Could not start test environment: %v", err)
+	}
+	defer os.RemoveAll(bin)
+	for _, tt := range tests {
+		p := GetTestPlatform(config, tt.args.plaformConfig)
+		if p == nil {
+			t.Fatalf("Could not create test platform")
+		}
+		
+		t.Run(tt.name, func(t *testing.T) {
+			if got := deployPhase(p, tt.args.phase, tt.args.fn); got != tt.want {
+				t.Errorf("deployPhase() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
