@@ -2,7 +2,11 @@
 default: build
 NAME:=karina
 
-VERSION_TAG=$(VERSION)-$(shell date +"%Y%m%d%H%M%S")
+ifeq ($(VERSION),)
+  VERSION_TAG=$(shell git describe --abbrev=0 --tags --exact-match 2>/dev/null || git describe --abbrev=0 --all)-$(shell date +"%Y%m%d%H%M%S")
+else
+  VERSION_TAG=$(VERSION)-$(shell date +"%Y%m%d%H%M%S")
+endif
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -25,7 +29,7 @@ release: linux darwin compress
 
 .PHONY: build
 build:
-	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION)\""  main.go
+	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION_TAG)\""  main.go
 
 
 .PHONY: linux
