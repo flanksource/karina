@@ -1,3 +1,20 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: elastic-webhook-server-cert
+  namespace: elastic-system
+  annotations:
+    cert-manager.io/allow-direct-injection: "true"
+spec:
+  secretName: elastic-webhook-server-cert
+  dnsNames:
+    - elastic-webhook-server
+    - elastic-webhook-server.svc
+  issuerRef:
+    name: default-issuer
+    kind: ClusterIssuer
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
