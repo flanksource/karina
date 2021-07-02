@@ -56,6 +56,18 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - patch
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -350,7 +362,7 @@ spec:
         resources:
           limits:
             cpu: 100m
-            memory: 400Mi
+            memory: 500Mi
           requests:
             cpu: 20m
             memory: 100Mi
