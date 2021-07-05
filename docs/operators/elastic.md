@@ -76,7 +76,7 @@ spec:
     name: logs
 
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: logs-ing
@@ -95,11 +95,13 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: logs-es-http
-              servicePort: 9200
+              service:
+                name: logs-es-http
+                port: 
+                  number: 9200
 
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: kibana-ing
@@ -117,8 +119,10 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: logs-kb-http
-              servicePort: 5601
+              service:
+                name: logs-kb-http
+                port:
+                  number: 5601
 
 ```
 

@@ -511,7 +511,7 @@ spec:
                     "sleep 5 && kill -SIGTERM $(pidof vault)",
                   ]
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vault
@@ -531,11 +531,14 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: "vault-ui"
-              servicePort: 8200
+              service:
+                name: "vault-ui"
+                port:
+                  number: 8200
+            pathType: ImplementationSpecific
 
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: consul
@@ -555,5 +558,8 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: "consul-server"
-              servicePort: 8500
+              service:
+                name: "consul-server"
+                port:
+                  number: 8500
+            pathType: ImplementationSpecific

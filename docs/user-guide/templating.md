@@ -4,7 +4,7 @@ Create the ingress as usual and use `{{.Domain}}` where you would normally use t
 
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: kibana-ing
@@ -20,8 +20,10 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: logs-kb-http
-              servicePort: 5601
+              service:
+                name: logs-kb-http
+                port:
+                  number: 5601
 ```
 
 

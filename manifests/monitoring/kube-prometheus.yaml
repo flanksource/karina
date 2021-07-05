@@ -136,7 +136,7 @@ spec:
       nodePort: 31901
   type: NodePort
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: thanos-sidecar
@@ -154,8 +154,11 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: thanos-sidecar
-              servicePort: 10901
+              service:
+                name: thanos-sidecar
+                port:
+                  number: 10901
+            pathType: ImplementationSpecific
 {{- end }}
 {{- end }}
 
@@ -415,7 +418,7 @@ spec:
 {{- end}}
 {{- end}}
 {{- end}}
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: prometheus
@@ -432,10 +435,13 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: prometheus-k8s
-              servicePort: 9090
+              service:
+                name:  prometheus-k8s
+                port:
+                  number: 9090
+            pathType: ImplementationSpecific
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana
@@ -452,10 +458,13 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: grafana-service
-              servicePort: 3000
+              service:
+                name: grafana-service
+                port:
+                  number: 3000
+            pathType: ImplementationSpecific
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: alertmanager
@@ -472,5 +481,8 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: alertmanager-main
-              servicePort: 9093
+              service:
+                name: alertmanager-main
+                port:
+                  number: 9093
+            pathType: ImplementationSpecific

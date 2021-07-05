@@ -73,7 +73,7 @@ spec:
     app: dex
 
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: dex-ing
@@ -93,9 +93,11 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: dex
-              servicePort: 443
-
+              service:
+                name: dex
+                port:
+                  number: 443
+        pathType: ImplementationSpecific
 ---
 apiVersion: v1
 kind: ServiceAccount

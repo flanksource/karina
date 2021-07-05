@@ -88,7 +88,7 @@ spec:
   selector:
     k8s-app: oauth2-proxy
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: oauth2-proxy
@@ -101,9 +101,12 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: oauth2-proxy
-              servicePort: 4180
+              service:
+                name:  oauth2-proxy
+                port:
+                  number: 4180
             path: /oauth2
+            pathType: ImplementationSpecific
   tls:
     - secretName: oauth2-tls
       hosts:

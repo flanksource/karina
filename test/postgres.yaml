@@ -4,7 +4,7 @@ templateOperator:
   version: v0.1.14
   syncPeriod: 15s
 canaryChecker:
-  version: v0.15.1
+  version: v0.20.0
 minio:
   version: RELEASE.2020-09-02T18-19-50Z
   access_key: minio

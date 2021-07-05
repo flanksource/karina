@@ -28,7 +28,7 @@ metadata:
     registry-whitelist: "nginx,grafana,prom,k8s.gcr.io"
   name: opa-test-staging
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sample-ingress
@@ -39,5 +39,8 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: nginx
-              servicePort: 80
+              service:
+                name: nginx
+                port:
+                  number: 80
+            pathType: ImplementationSpecific

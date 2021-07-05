@@ -119,7 +119,7 @@ spec:
           configMap:
             name: karma
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   labels:
@@ -134,8 +134,11 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: karma
-              servicePort: 8080
+              service:
+                name: karma
+                port:
+                  number: 8080
+            pathType: ImplementationSpecific
   tls:
     - secretName: karma-tls
       hosts:

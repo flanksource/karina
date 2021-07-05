@@ -2,7 +2,7 @@
 : ${FETCH_REF:=1}
 mkdir -p .bin .ref
 REFERENCE_VERSION=${REFERENCE_VERSION:-v0.24.1}
-KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.18.6}
+KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.19.11}
 SUITE=${SUITE:-minimal}
 if test -f ./.bin/karina; then
     BIN=./.bin/karina
