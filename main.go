@@ -55,6 +55,7 @@ func main() {
 		cmd.Render,
 		cmd.Report,
 		cmd.Rolling,
+		cmd.Seal,
 		cmd.Snapshot,
 		cmd.Status,
 		cmd.Test,
