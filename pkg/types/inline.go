@@ -7,6 +7,10 @@ type XEnabled struct {
 	Disabled Boolean `yaml:"disabled" json:"disabled"`
 }
 
+func (d *XEnabled) IsDisabled() bool {
+	return bool(d.Disabled)
+}
+
 type XDisabled struct {
 	// +optional
 	Disabled Boolean `yaml:"disabled" json:"disabled"`

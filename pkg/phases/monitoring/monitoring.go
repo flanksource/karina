@@ -145,7 +145,16 @@ func deployDashboards(p *platform.Platform, rootPath string) error {
 	if err != nil {
 		return fmt.Errorf("unable to find dashboards: %v", err)
 	}
+	cd := conditionalDashboards(p)
 	for name := range dashboards {
+		fn, found := cd[name]
+		if found && fn() {
+			p.Debugf("Deleting deployment of Grafana Dashboard %s", name)
+			if err := p.DeleteByKind("GrafanaDashboard", Namespace, name); err != nil {
+				p.Errorf("failed to delete GrafanaDashboard %s", name)
+			}
+			continue
+		}
 		if err := DeployDashboard(p, name, rootPath+"/"+name); err != nil {
 			return err
 		}
@@ -212,4 +221,14 @@ func deployThanos(p *platform.Platform) error {
 	}
 
 	return nil
+}
+
+func conditionalDashboards(p *platform.Platform) map[string]func() bool {
+	var cd = map[string]func() bool{
+		"canary-checker.json.raw":               p.CanaryChecker.IsDisabled,
+		"grafana-dashboard-log-counts.json.raw": p.LogsExporter.IsDisabled,
+		"harbor-exporter.json.raw":              func() bool { return p.Harbor.Disabled },
+		"patroni.json.raw":                      p.PostgresOperator.IsDisabled,
+	}
+	return cd
 }
