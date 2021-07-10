@@ -97,7 +97,7 @@ spec:
                 name: dex
                 port:
                   number: 443
-        pathType: ImplementationSpecific
+            pathType: ImplementationSpecific
 ---
 apiVersion: v1
 kind: ServiceAccount
