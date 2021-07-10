@@ -1,18 +1,25 @@
 package monitoring
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
+	prometheusv1 "github.com/flanksource/karina/pkg/api/prometheus/v1"
+	v1 "github.com/flanksource/karina/pkg/api/prometheus/v1"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
-	Namespace  = "monitoring"
-	Prometheus = "prometheus-k8s"
-	Thanos     = "thanos"
-	CaCertName = "thanos-ca-cert"
+	Namespace        = "monitoring"
+	Prometheus       = "prometheus-k8s"
+	Thanos           = "thanos"
+	CaCertName       = "thanos-ca-cert"
+	alertRulesSuffix = "-rules.yaml.raw"
 )
 
 var specs = []string{
@@ -100,15 +107,27 @@ func Install(p *platform.Platform) error {
 	}
 
 	for _, spec := range specs {
-		if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
-			return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
+		if strings.HasSuffix(spec, alertRulesSuffix) {
+			if err := deployAlertRules(p, "monitoring/"+spec); err != nil {
+				return fmt.Errorf("install: failed to deploy alert rules %s: %v", spec, err)
+			}
+		} else {
+			if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
+				return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
+			}
 		}
 	}
 
 	if !p.Kubernetes.Managed {
 		for _, spec := range unmanagedSpecs {
-			if err := p.ApplySpecs("", "monitoring/unmanaged/"+spec); err != nil {
-				return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
+			if strings.HasSuffix(spec, alertRulesSuffix) {
+				if err := deployAlertRules(p, "monitoring/unmanaged/"+spec); err != nil {
+					return fmt.Errorf("install: failed to deploy alert rules %s: %v", spec, err)
+				}
+			} else {
+				if err := p.ApplySpecs("", "monitoring/unmanaged/"+spec); err != nil {
+					return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
+				}
 			}
 		}
 	}
@@ -165,6 +184,78 @@ func DeployDashboard(p *platform.Platform, name, file string) error {
 	}
 
 	return nil
+}
+
+func deployAlertRules(p *platform.Platform, spec string) error {
+	template, err := p.Template(spec, "manifests")
+	if err != nil {
+		return errors.Wrapf(err, "failed to template manifests: %v", spec)
+	}
+
+	items, err := kommons.GetUnstructuredObjects([]byte(template))
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
+		obj := item
+
+		if item.GetKind() == "PrometheusRule" {
+			jsonObj := kommons.ToJson(item)
+			prometheusRule := &prometheusv1.PrometheusRule{}
+			if err := json.Unmarshal([]byte(jsonObj), prometheusRule); err != nil {
+				return errors.Wrap(err, "failed to unmarshal prometheus rule")
+			}
+
+			updatedRule := filterPrometheusRules(p, prometheusRule)
+			o, err := kommons.ToUnstructured(&unstructured.Unstructured{}, updatedRule)
+			if err != nil {
+				return errors.Wrap(err, "failed to convert prometheus rule to unstructured")
+			}
+			obj = o
+		}
+
+		if err := p.ApplyUnstructured("", obj); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func filterPrometheusRules(p *platform.Platform, rule *prometheusv1.PrometheusRule) *prometheusv1.PrometheusRule {
+	newRule := rule.DeepCopy()
+
+	excludedRules := map[string]bool{}
+	for _, rule := range p.Monitoring.ExcludeAlerts {
+		excludedRules[rule] = true
+	}
+
+	ruleGroups := []prometheusv1.RuleGroup{}
+
+	for _, group := range newRule.Spec.Groups {
+		rules := []v1.Rule{}
+		for _, rule := range group.Rules {
+			if rule.Alert != "" {
+				_, found := excludedRules[rule.Alert]
+				if found {
+					p.Debugf("excluding alert rule %s", rule.Alert)
+				} else {
+					rules = append(rules, rule)
+				}
+			} else {
+				rules = append(rules, rule)
+			}
+		}
+		if len(rules) > 0 {
+			group.Rules = rules
+			ruleGroups = append(ruleGroups, group)
+		}
+	}
+
+	newRule.Spec.Groups = ruleGroups
+
+	return newRule
 }
 
 func deployThanos(p *platform.Platform) error {
