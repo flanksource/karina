@@ -536,6 +536,7 @@ type Monitoring struct {
 	AddonResizer       string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
 	PrometheusOperator string        `yaml:"prometheus_operator,omitempty" json:"prometheus_operator,omitempty"`
 	PushGateway        PushGateWay   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
+	ExcludeAlerts      []string      `yaml:"excludeAlerts,omitempty" json:"excludeAlerts,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
