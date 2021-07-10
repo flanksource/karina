@@ -64,3 +64,23 @@ spec:
     - secretName: pushgateway-tls
       hosts:
         - pushgateway.{{.domain}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pushgateway
+  namespace: monitoring
+  labels:
+    app: pushgateway
+spec:
+  endpoints:
+  - port: http
+    interval: 30s
+    scrapeTimeout: 5s
+    path: /metrics
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      k8s-app: pushgateway
