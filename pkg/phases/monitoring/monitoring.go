@@ -6,6 +6,7 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -122,6 +123,12 @@ func Install(p *platform.Platform) error {
 		err = deployDashboards(p, "monitoring/dashboards/unmanaged")
 		if err != nil {
 			return err
+		}
+	}
+
+	if p.Monitoring.PushGateway {
+		if err := p.ApplySpecs(Namespace, "monitoring/pushgateway.yaml"); err != nil {
+			return errors.Wrap(err, "install: failed to deploy push gateway")
 		}
 	}
 

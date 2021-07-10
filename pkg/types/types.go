@@ -535,6 +535,7 @@ type Monitoring struct {
 	NodeExporter       string        `yaml:"nodeExporter,omitempty" json:"nodeExporter,omitempty"`
 	AddonResizer       string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
 	PrometheusOperator string        `yaml:"prometheus_operator,omitempty" json:"prometheus_operator,omitempty"`
+	PushGateway        bool          `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
