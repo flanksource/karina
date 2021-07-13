@@ -62,6 +62,7 @@ func main() {
 		cmd.TerminateNodes,
 		cmd.TerminateOrphans,
 		cmd.Undelete,
+		cmd.Unseal,
 		cmd.Upgrade,
 		cmd.Vault,
 	)
