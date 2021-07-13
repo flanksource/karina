@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -22,11 +22,10 @@ func getFlagFilePath(name string, cmd *cobra.Command) string {
 	if value == "" || err != nil {
 		return ""
 	}
-	filePath, err := os.Getwd()
+	filePath, err := filepath.Abs(value)
 	if err == nil {
-		filePath = fmt.Sprintf("%s/%s", filePath, value)
-	} else {
-		filePath = value
+		log.Warningf("Unable to get absolute path for %s: %v", value, err)
+		return ""
 	}
 	return fmt.Sprintf("--%s %s", name, filePath)
 }
@@ -37,15 +36,13 @@ func getFlagFilePathSlice(name string, cmd *cobra.Command) string {
 		return ""
 	}
 	result := ""
-	filePath, err := os.Getwd()
-	if err == nil {
-		filePath = fmt.Sprintf("%s/", filePath)
-	} else {
-		filePath = ""
-	}
 	for _, value := range argList {
-		value = fmt.Sprintf("--%s %s/%s", name, filePath, value)
-		result = fmt.Sprintf("%s %s", result, value)
+		filePath, err := filepath.Abs(value)
+		if err == nil {
+			log.Warningf("Unable to get absolute path for %s: %v", value, err)
+		} else {
+			result = fmt.Sprintf("%s --%s %s", result, name, filePath)
+		}
 	}
 	return fmt.Sprintf("--%s %s", name, result)
 }
@@ -93,10 +90,9 @@ var Seal = &cobra.Command{
 }
 
 func init() {
-	Seal.Flags().StringP("format", "o", "json", "Output format for sealed secret. Either json or yaml")
+	Seal.Flags().StringP("format", "o", "yaml", "Output format for sealed secret. Either json or yaml")
 	Seal.Flags().StringP("sealed-secret-file", "w", "", "Sealed-secret (output) file")
 	Seal.Flags().Bool("fetch-cert", false, "Write certificate to stdout. Useful for later use with --cert")
-	Seal.Flags().Bool("allow-empty-data", false, "Allow empty data in the secret object")
 	Seal.Flags().Bool("validate", false, "Validate that the sealed secret can be decrypted")
 	Seal.Flags().String("merge-into", "", "Merge items from secret into an existing sealed secret file, updating the file in-place instead of writing to stdout.")
 	Seal.Flags().Bool("raw", false, "Encrypt a raw value passed via the --from-* flags instead of the whole secret object")
