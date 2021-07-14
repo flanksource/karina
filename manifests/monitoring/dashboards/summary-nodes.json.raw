@@ -435,7 +435,7 @@
         "multi": false,
         "multiFormat": "",
         "name": "Filter",
-        "options": null,
+        "options": [],
         "query": "",
         "refresh": false,
         "regex": "",
