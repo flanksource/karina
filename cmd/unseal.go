@@ -80,13 +80,13 @@ var Unseal = &cobra.Command{
 		flags := []string{
 			"--recovery-unseal",
 			getFlagString("format", cmd),
-			getFlagBool("allow-empty-data", cmd),
 			fmt.Sprintf("--recovery-private-key %s", filePath),
 		}
 		if !p.SealedSecrets.Disabled && p.SealedSecrets.Certificate != nil {
-			if p.SealedSecrets.Certificate.Cert != "" {
-				flags = append(flags, "--cert", p.SealedSecrets.Certificate.Cert)
+			if p.SealedSecrets.Certificate.Cert == "" {
+				log.Fatalf("Sealed-secrets certificate not provided in config")
 			}
+			flags = append(flags, "--cert", p.SealedSecrets.Certificate.Cert)
 		}
 		isOffline, _ := cmd.Flags().GetBool("offline")
 		var secret corev1.Secret
@@ -109,6 +109,7 @@ var Unseal = &cobra.Command{
 			log.Fatalf("Unable to get marshal secret to JSON: %v", err)
 		}
 		err = ioutil.WriteFile(privateKeyFile, file, 0600)
+		defer os.Remove(privateKeyFile)
 		if err != nil {
 			log.Fatalf("Unable to write sealed-secrets-key to disk: %v", err)
 		}
@@ -116,10 +117,8 @@ var Unseal = &cobra.Command{
 		flagString := strings.Join(flags, " ")
 		argString := strings.Join(args, " ")
 		if err := kubeseal(flagString + argString); err != nil {
-			os.Remove(privateKeyFile)
 			log.Fatalf("failed to run kubeseal: %v", err)
 		}
-		os.Remove(privateKeyFile)
 	},
 }
 

@@ -63,21 +63,17 @@ var Seal = &cobra.Command{
 		p := getPlatform(cmd)
 		flags := []string{
 			getFlagString("format", cmd),
-			getFlagFilePath("sealed-secret-file", cmd),
-			getFlagBool("fetch-cert", cmd),
-			getFlagBool("allow-empty-data", cmd),
-			getFlagBool("validate", cmd),
 			getFlagFilePath("merge-into", cmd),
-			getFlagBool("raw", cmd),
 			getFlagBool("re-encrypt", cmd),
 			getFlagString("name", cmd),
 			getFlagFilePathSlice("from-file", cmd),
 		}
 
 		if !p.SealedSecrets.Disabled && p.SealedSecrets.Certificate != nil {
-			if p.SealedSecrets.Certificate.Cert != "" {
-				flags = append(flags, "--cert", p.SealedSecrets.Certificate.Cert)
+			if p.SealedSecrets.Certificate.Cert == "" {
+				log.Fatalf("Sealed-secrets certificate not provided in config")
 			}
+			flags = append(flags, "--cert", p.SealedSecrets.Certificate.Cert)
 		}
 
 		kubeseal := p.GetBinary("kubeseal")
@@ -91,11 +87,7 @@ var Seal = &cobra.Command{
 
 func init() {
 	Seal.Flags().StringP("format", "o", "yaml", "Output format for sealed secret. Either json or yaml")
-	Seal.Flags().StringP("sealed-secret-file", "w", "", "Sealed-secret (output) file")
-	Seal.Flags().Bool("fetch-cert", false, "Write certificate to stdout. Useful for later use with --cert")
-	Seal.Flags().Bool("validate", false, "Validate that the sealed secret can be decrypted")
 	Seal.Flags().String("merge-into", "", "Merge items from secret into an existing sealed secret file, updating the file in-place instead of writing to stdout.")
-	Seal.Flags().Bool("raw", false, "Encrypt a raw value passed via the --from-* flags instead of the whole secret object")
 	Seal.Flags().Bool("re-encrypt", false, "Re-encrypt the given sealed secret to use the latest cluster key.")
 	Seal.Flags().String("name", "", "Name of the sealed secret (required with --raw and default (strict) scope)")
 	Seal.Flags().StringSlice("from-file", nil, "(only with --raw) Secret items can be sourced from files. Pro-tip: you can use /dev/stdin to read pipe input. This flag tries to follow the same syntax as in kubectl")
