@@ -535,7 +535,7 @@ type Monitoring struct {
 	NodeExporter       string        `yaml:"nodeExporter,omitempty" json:"nodeExporter,omitempty"`
 	AddonResizer       string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
 	PrometheusOperator string        `yaml:"prometheus_operator,omitempty" json:"prometheus_operator,omitempty"`
-	PushGateway        bool          `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
+	PushGateway        PushGateWay   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
@@ -624,6 +624,11 @@ type Prometheus struct {
 	Version     string      `yaml:"version,omitempty" json:"version,omitempty"`
 	Disabled    bool        `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	Persistence Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
+}
+
+type PushGateWay struct {
+	Version  string `yaml:"version,omitempty" json:"version,omitempty"`
+	Disabled bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 }
 
 type AlertManager struct {
