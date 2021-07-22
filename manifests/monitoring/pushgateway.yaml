@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
         - name: pushgateway
-          image: prom/pushgateway:latest
+          image: "prom/pushgateway:{{.monitoring.pushGateway.version}}"
           ports:
             - name: web
               containerPort: 9091
@@ -64,3 +64,23 @@ spec:
     - secretName: pushgateway-tls
       hosts:
         - pushgateway.{{.domain}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pushgateway
+  namespace: monitoring
+  labels:
+    app: pushgateway
+spec:
+  endpoints:
+  - port: http
+    interval: 30s
+    scrapeTimeout: 5s
+    path: /metrics
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      k8s-app: pushgateway

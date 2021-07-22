@@ -6,6 +6,7 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -70,12 +71,17 @@ func Install(p *platform.Platform) error {
 	if len(p.Monitoring.Karma.AlertManagers) == 0 {
 		p.Monitoring.Karma.AlertManagers["alertmanager-main"] = "http://alertmanager-main:9093"
 	}
+
 	if p.Monitoring.Prometheus.Version == "" {
 		p.Monitoring.Prometheus.Version = "v2.19.0"
 	}
 
 	if p.Monitoring.AlertManager.Version == "" {
 		p.Monitoring.AlertManager.Version = "v0.20.0"
+	}
+
+	if p.Monitoring.PushGateway.Version == "" {
+		p.Monitoring.PushGateway.Version = "v1.4.1"
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, monitoringNamespaceLabels, nil); err != nil {
@@ -122,6 +128,12 @@ func Install(p *platform.Platform) error {
 		err = deployDashboards(p, "monitoring/dashboards/unmanaged")
 		if err != nil {
 			return err
+		}
+	}
+
+	if !p.Monitoring.PushGateway.Disabled {
+		if err := p.ApplySpecs(Namespace, "monitoring/pushgateway.yaml"); err != nil {
+			return errors.Wrap(err, "install: failed to deploy push gateway")
 		}
 	}
 
