@@ -1,5 +1,6 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/template-operator/v0.1.20/config/base/deploy.yml
+  - https://raw.githubusercontent.com/flanksource/template-operator/v0.4.0/config/base/deploy.yml
+namespace: platform-system
 images:
   - name: flanksource/template-operator
     newName: docker.io/flanksource/template-operator
@@ -10,7 +11,7 @@ patchesStrategicMerge:
     kind: Deployment
     metadata:
       name: template-operator-controller-manager
-      namespace: platform-system
+      namespace: template-operator
     spec:
       template:
         spec:
