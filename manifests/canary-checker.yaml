@@ -163,7 +163,8 @@ spec:
         env:
         - name: DOCKER_API_VERSION
           value: "1.39"
-        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.21.3" }}
+
+        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.21.7" }}
         name: canary-checker
         ports:
         - containerPort: 8080
@@ -229,12 +230,13 @@ spec:
   - host: canaries.{{.domain}}
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
           service:
             name: canary-checker
             port:
               number: 8080
-        pathType: ImplementationSpecific
   tls:
   - hosts:
     - canaries.{{.domain}}
