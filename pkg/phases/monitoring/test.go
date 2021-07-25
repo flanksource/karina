@@ -36,7 +36,7 @@ func Test(p *platform.Platform, test *console.TestResults) {
 
 func TestThanos(p *platform.Platform, test *console.TestResults) {
 	testName := "thanos"
-	if p.Thanos == nil || p.Thanos.IsDisabled() {
+	if p.Thanos.IsDisabled() {
 		return
 	}
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
