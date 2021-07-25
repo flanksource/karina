@@ -17,7 +17,7 @@ const (
 var manifests = []string{"core", "portal", "registry", "exporter", "redis", "jobservice", "chartmuseum", "trivy"}
 
 func Deploy(p *platform.Platform) error {
-	if p.Harbor == nil || p.Harbor.Disabled {
+	if p.Harbor.IsDisabled() {
 		for _, spec := range manifests {
 			if err := p.DeleteSpecs("", fmt.Sprintf("harbor/%s.yaml", spec)); err != nil {
 				p.Warnf("failed to delete specs: %v", err)

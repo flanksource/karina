@@ -42,7 +42,7 @@ type PlatformConfig struct {
 	Gatekeeper    Gatekeeper     `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
 	GitOperator   GitOperator    `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`
 	GitOps        []GitOps       `yaml:"gitops,omitempty" json:"gitops,omitempty"`
-	Harbor        *Harbor        `yaml:"harbor,omitempty" json:"harbor,omitempty"`
+	Harbor        Harbor         `yaml:"harbor,omitempty" json:"harbor,omitempty"`
 	// A prefix to be added to VM hostnames.
 	HostPrefix string `yaml:"hostPrefix" json:"hostPrefix,omitempty"`
 	// Deprecated, use configFrom instead
@@ -99,7 +99,7 @@ type PlatformConfig struct {
 	// If true, terminate operations will return an error. Used to  protect stateful clusters
 	TerminationProtection bool              `yaml:"terminationProtection,omitempty" json:"terminationProtection,omitempty"`
 	Test                  Test              `yaml:"test,omitempty" json:"test,omitempty"`
-	Thanos                *Thanos           `yaml:"thanos,omitempty" json:"thanos,omitempty"`
+	Thanos                Thanos            `yaml:"thanos,omitempty" json:"thanos,omitempty"`
 	TrustedCA             string            `yaml:"trustedCA,omitempty" json:"trustedCA,omitempty"`
 	Vault                 *Vault            `yaml:"vault,omitempty" json:"vault,omitempty"`
 	Velero                Velero            `yaml:"velero,omitempty" json:"velero,omitempty"`
