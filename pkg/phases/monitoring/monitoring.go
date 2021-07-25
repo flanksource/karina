@@ -3,18 +3,19 @@ package monitoring
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path"
 	"strings"
 
 	prometheusv1 "github.com/flanksource/karina/pkg/api/prometheus/v1"
-	v1 "github.com/flanksource/karina/pkg/api/prometheus/v1"
 	"github.com/flanksource/karina/pkg/platform"
-	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
 	"github.com/pkg/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-const (
+var (
 	Namespace        = "monitoring"
 	Prometheus       = "prometheus-k8s"
 	Thanos           = "thanos"
@@ -22,30 +23,31 @@ const (
 	alertRulesSuffix = "-rules.yaml.raw"
 )
 
+const (
+	ThanosObservabilityMode = "observability"
+	ThanosClientMode        = "client"
+)
+
 var specs = []string{
+	"prometheus-operator.yaml",
 	"karma.yaml",
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",
 	"prometheus-adapter.yaml",
 	"kube-state-metrics.yaml",
+	"pushgateway.yaml",
+	"unmanaged/alertmanager-rules.yaml.raw",
+	"unmanaged/service-monitors.yaml",
 	"node-exporter.yaml",
 	"alertmanager-rules.yaml.raw",
 	"alertmanager-configs.yaml",
 	"service-monitors.yaml",
 	"namespace-rules.yaml.raw",
+	"thanos/compactor.yaml",
+	"thanos/querier.yaml",
+	"thanos/store.yaml",
+	"thanos/base.yaml",
 	"kubernetes-rules.yaml.raw",
-}
-
-var unmanagedSpecs = []string{
-	"alertmanager-rules.yaml.raw",
-	"service-monitors.yaml",
-}
-
-var cleanup = []string{
-	"observability/thanos-compactor.yaml",
-	"observability/thanos-querier.yaml",
-	"observability/thanos-store.yaml",
-	"thanos-config.yaml",
 }
 
 var monitoringNamespaceLabels = map[string]string{
@@ -56,9 +58,7 @@ func Install(p *platform.Platform) error {
 	if p.Monitoring.IsDisabled() {
 		// setup default values so that all resources are rendered
 		// so that we know what to try and delete
-		p.Thanos = &types.Thanos{Mode: "observability"}
-		p.Thanos.Version = "deleted"
-		for _, spec := range append(specs, cleanup...) {
+		for _, spec := range specs {
 			if err := p.DeleteSpecs(Namespace, "monitoring/"+spec); err != nil {
 				p.Warnf("failed to delete specs: %v", err)
 			}
@@ -107,85 +107,77 @@ func Install(p *platform.Platform) error {
 		return fmt.Errorf("install: failed to create secret with CA certificate: %v", err)
 	}
 
-	if err := p.ApplySpecs("", "monitoring/prometheus-operator.yaml"); err != nil {
-		p.Warnf("Failed to deploy prometheus operator %v", err)
-	}
-
+	cs := conditionalSpecs(p)
 	for _, spec := range specs {
 		if strings.HasSuffix(spec, alertRulesSuffix) {
 			if err := deployAlertRules(p, "monitoring/"+spec); err != nil {
-				return fmt.Errorf("install: failed to deploy alert rules %s: %v", spec, err)
+				return err
 			}
 		} else {
+			fn, found := cs[spec]
+			if found && fn() {
+				if err := p.DeleteSpecs(v1.NamespaceAll, "monitoring/"+spec); err != nil {
+					p.Errorf("failed to delete conditional spec %s: %v", spec, err)
+				}
+				continue
+			}
 			if err := p.ApplySpecs("", "monitoring/"+spec); err != nil {
-				return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
+				return err
 			}
 		}
 	}
 
-	if !p.Kubernetes.Managed {
-		for _, spec := range unmanagedSpecs {
-			if strings.HasSuffix(spec, alertRulesSuffix) {
-				if err := deployAlertRules(p, "monitoring/unmanaged/"+spec); err != nil {
-					return fmt.Errorf("install: failed to deploy alert rules %s: %v", spec, err)
-				}
-			} else {
-				if err := p.ApplySpecs("", "monitoring/unmanaged/"+spec); err != nil {
-					return fmt.Errorf("install: failed to apply monitoring specs: %v", err)
-				}
-			}
-		}
-	}
-
-	err := deployDashboards(p, "monitoring/dashboards")
-	if err != nil {
-		return err
-	}
-
-	if !p.Kubernetes.Managed {
-		err = deployDashboards(p, "monitoring/dashboards/unmanaged")
-		if err != nil {
-			return err
-		}
-	}
-
-	if !p.Monitoring.PushGateway.Disabled {
-		if err := p.ApplySpecs(Namespace, "monitoring/pushgateway.yaml"); err != nil {
-			return errors.Wrap(err, "install: failed to deploy push gateway")
-		}
-	}
-
-	return deployThanos(p)
-}
-
-func deployDashboards(p *platform.Platform, rootPath string) error {
+	cd := conditionalDashboards(p)
+	rootPath := "monitoring/dashboards"
 	dashboards, err := p.GetResourcesByDir(rootPath, "manifests")
 	if err != nil {
 		return fmt.Errorf("unable to find dashboards: %v", err)
 	}
-	cd := conditionalDashboards(p)
 	for name := range dashboards {
 		fn, found := cd[name]
 		if found && fn() {
-			p.Debugf("Deleting deployment of Grafana Dashboard %s", name)
 			if err := p.DeleteByKind("GrafanaDashboard", Namespace, name); err != nil {
-				p.Errorf("failed to delete GrafanaDashboard %s", name)
+				p.Errorf("failed to delete dashboard %s: %v", name, err)
 			}
 			continue
 		}
-		if err := DeployDashboard(p, name, rootPath+"/"+name); err != nil {
+
+		contents, err := p.Template(rootPath+"/"+name, "manifests")
+		if err != nil {
+			return errors.Wrapf(err, "failed to template: %v", name)
+		}
+
+		if err := DeployDashboard(p, "Built-In", rootPath+"/"+name, contents); err != nil {
+			return err
+		}
+	}
+
+	for _, dashboard := range p.Monitoring.Grafana.CustomDashboards {
+		contents, err := ioutil.ReadFile(dashboard)
+
+		if err != nil {
+			return errors.Wrapf(err, "failed to read %s", dashboard)
+		}
+
+		if err := DeployDashboard(p, "Custom", kommons.GetDNS1192Name(path.Base(dashboard)), string(contents)); err != nil {
+			return errors.Wrapf(err, "failed to deploy %s", dashboard)
+		}
+	}
+
+	if !p.Thanos.IsDisabled() {
+		if p.Thanos.Mode != ThanosClientMode && p.Thanos.Mode != ThanosObservabilityMode {
+			return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
+		}
+
+		if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func DeployDashboard(p *platform.Platform, name, file string) error {
-	contents, err := p.Template(file, "manifests")
-	if err != nil {
-		return fmt.Errorf("failed to template the dashboard: %v ", err)
-	}
-	if err := p.ApplyCRD("monitoring", kommons.CRD{
+func DeployDashboard(p *platform.Platform, folder, name, contents string) error {
+	return p.ApplyCRD("monitoring", kommons.CRD{
 		APIVersion: "integreatly.org/v1alpha1",
 		Kind:       "GrafanaDashboard",
 		Metadata: kommons.Metadata{
@@ -196,14 +188,11 @@ func DeployDashboard(p *platform.Platform, name, file string) error {
 			},
 		},
 		Spec: map[string]interface{}{
-			"name": name,
-			"json": contents,
+			"customFolderName": folder,
+			"name":             name,
+			"json":             contents,
 		},
-	}); err != nil {
-		return fmt.Errorf("install: failed to apply CRD: %v", err)
-	}
-
-	return nil
+	})
 }
 
 func deployAlertRules(p *platform.Platform, spec string) error {
@@ -220,7 +209,7 @@ func deployAlertRules(p *platform.Platform, spec string) error {
 	for _, item := range items {
 		obj := item
 
-		if item.GetKind() == "PrometheusRule" {
+		if len(p.Monitoring.ExcludeAlerts) > 0 && item.GetKind() == "PrometheusRule" {
 			jsonObj := kommons.ToJson(item)
 			prometheusRule := &prometheusv1.PrometheusRule{}
 			if err := json.Unmarshal([]byte(jsonObj), prometheusRule); err != nil {
@@ -254,7 +243,7 @@ func filterPrometheusRules(p *platform.Platform, rule *prometheusv1.PrometheusRu
 	ruleGroups := []prometheusv1.RuleGroup{}
 
 	for _, group := range newRule.Spec.Groups {
-		rules := []v1.Rule{}
+		rules := []prometheusv1.Rule{}
 		for _, rule := range group.Rules {
 			if rule.Alert != "" {
 				_, found := excludedRules[rule.Alert]
@@ -278,47 +267,29 @@ func filterPrometheusRules(p *platform.Platform, rule *prometheusv1.PrometheusRu
 	return newRule
 }
 
-func deployThanos(p *platform.Platform) error {
-	if p.Thanos == nil || p.Thanos.IsDisabled() {
-		return nil
-	}
-
-	if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
-		return err
-	}
-
-	if err := p.ApplySpecs("", "monitoring/thanos-config.yaml"); err != nil {
-		return err
-	}
-
-	if p.Thanos.Mode == "client" {
-		//Thanos in client mode is enabled. Sidecar will be deployed within prometheus pod
-	} else if p.Thanos.Mode == "observability" {
-		// Thanos in observability mode is enabled. Compactor, Querier and Store will be deployed
-		thanosSpecs := []string{"thanos-querier.yaml", "thanos-store.yaml"}
-		for _, spec := range thanosSpecs {
-			if err := p.ApplySpecs("", "monitoring/observability/"+spec); err != nil {
-				return err
-			}
-		}
-		if p.Thanos.EnableCompactor {
-			if err := p.ApplySpecs("", "monitoring/observability/thanos-compactor.yaml"); err != nil {
-				return err
-			}
-		}
-	} else {
-		return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
-	}
-
-	return nil
-}
-
 func conditionalDashboards(p *platform.Platform) map[string]func() bool {
 	var cd = map[string]func() bool{
-		"canary-checker.json.raw":               p.CanaryChecker.IsDisabled,
-		"grafana-dashboard-log-counts.json.raw": p.LogsExporter.IsDisabled,
-		"harbor-exporter.json.raw":              func() bool { return p.Harbor.Disabled },
-		"patroni.json.raw":                      p.PostgresOperator.IsDisabled,
+		"canary-checker.json.raw":                             p.CanaryChecker.IsDisabled,
+		"grafana-dashboard-log-counts.json.raw":               p.LogsExporter.IsDisabled,
+		"harbor-exporter.json.raw":                            p.Harbor.IsDisabled,
+		"patroni.json.raw":                                    p.PostgresOperator.IsDisabled,
+		"unmanaged/etcd.json":                                 p.Kubernetes.IsManaged,
+		"unmanaged/grafana-dashboard-apiserver.json":          p.Kubernetes.IsManaged,
+		"unmanaged/grafana-dashboard-controller-manager.json": p.Kubernetes.IsManaged,
+		"unmanaged/grafana-dashboard-scheduler.json":          p.Kubernetes.IsManaged,
+	}
+	return cd
+}
+
+func conditionalSpecs(p *platform.Platform) map[string]func() bool {
+	var cd = map[string]func() bool{
+		"thanos/compactor.yaml":                 func() bool { return p.Thanos.IsDisabled() || !p.Thanos.EnableCompactor },
+		"thanos/querier.yaml":                   func() bool { return p.Thanos.IsDisabled() || p.Thanos.Mode != ThanosObservabilityMode },
+		"thanos/store.yaml":                     func() bool { return p.Thanos.IsDisabled() || p.Thanos.Mode != ThanosObservabilityMode },
+		"thanos/base.yaml":                      p.Thanos.IsDisabled,
+		"pushgateway.yaml":                      p.Monitoring.PushGateway.IsDisabled,
+		"unmanaged/alertmanager-rules.yaml.raw": p.Kubernetes.IsManaged,
+		"unmanaged/service-monitors.yaml":       p.Kubernetes.IsManaged,
 	}
 	return cd
 }
