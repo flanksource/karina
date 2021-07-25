@@ -163,7 +163,7 @@ spec:
         env:
         - name: DOCKER_API_VERSION
           value: "1.39"
-        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.19.0" }}
+        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.21.3" }}
         name: canary-checker
         ports:
         - containerPort: 8080
