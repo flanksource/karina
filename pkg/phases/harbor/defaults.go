@@ -14,7 +14,7 @@ const Namespace = "harbor"
 
 func Defaults(p *types.PlatformConfig) {
 	harbor := p.Harbor
-	if harbor == nil {
+	if harbor.IsDisabled() {
 		return
 	}
 	if harbor.LogLevel == "" {

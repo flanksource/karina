@@ -1,9 +1,8 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.21.3/config/deploy/base.yaml
+  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.21.7/config/deploy/base.yaml
 images:
-  - name: flanksource/canary-checker
-    newName: docker.io/flanksource/canary-checker
-    newTag: '{{.canaryChecker.version | default "v0.21.3" }}'
+  - name: docker.io/flanksource/canary-checker:latest
+    newTag: '{{.canaryChecker.version | default "v0.21.7" }}'
 patchesStrategicMerge:
   - |-
     apiVersion: apps/v1

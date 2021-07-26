@@ -171,6 +171,10 @@ type Harbor struct {
 	Bucket string `yaml:"bucket" json:"bucket"`
 }
 
+func (h Harbor) IsDisabled() bool {
+	return h.Disabled || h.Version == ""
+}
+
 type HarborSettings struct {
 	AuthMode                     string `json:"auth_mode,omitempty" yaml:"auth_mode,omitempty"`
 	EmailFrom                    string `json:"email_from,omitempty" yaml:"email_from,omitempty"`
@@ -391,6 +395,10 @@ type Kubernetes struct {
 	Managed bool `yaml:"managed,omitempty" json:"managed,omitempty"`
 }
 
+func (c *Kubernetes) IsManaged() bool {
+	return c.Managed
+}
+
 type Kind struct {
 	// Skip attempting to mount local files into the docker daemon
 	RemoteDocker bool             `yaml:"remoteDocker" json:"remoteDocker"`
@@ -535,7 +543,8 @@ type Monitoring struct {
 	NodeExporter       string        `yaml:"nodeExporter,omitempty" json:"nodeExporter,omitempty"`
 	AddonResizer       string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
 	PrometheusOperator string        `yaml:"prometheus_operator,omitempty" json:"prometheus_operator,omitempty"`
-	PushGateway        PushGateWay   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
+	ExcludeAlerts      []string      `yaml:"excludeAlerts,omitempty" json:"excludeAlerts,omitempty"`
+	PushGateway        PushGateway   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
@@ -626,9 +635,8 @@ type Prometheus struct {
 	Persistence Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
 }
 
-type PushGateWay struct {
-	Version  string `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+type PushGateway struct {
+	XDisabled `yaml:",inline" json:",inline"`
 }
 
 type AlertManager struct {
@@ -653,8 +661,9 @@ type Memory struct {
 }
 
 type Grafana struct {
-	Version  string `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	Version          string   `yaml:"version,omitempty" json:"version,omitempty"`
+	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	CustomDashboards []string `yaml:"customDashboards,omitempty" json:"customDashboards,omitempty"`
 }
 
 type Brand struct {

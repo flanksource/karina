@@ -188,7 +188,7 @@ func NewInitConfig(cfg *platform.Platform) api.InitConfiguration {
 }
 
 func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
-	token, err := GetOrCreateBootstrapToken(cfg)
+	token, err := GetOrCreateBootstrapToken(cfg, 24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
 	}
@@ -224,7 +224,7 @@ func NewControlPlaneJoinConfiguration(cfg *platform.Platform) ([]byte, error) {
 }
 
 func NewJoinConfiguration(cfg *platform.Platform, node types.VM) ([]byte, error) {
-	token, err := GetOrCreateBootstrapToken(cfg)
+	token, err := GetOrCreateBootstrapToken(cfg, 24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get/create bootstrap token: %v", err)
 	}
@@ -257,7 +257,7 @@ func NewJoinConfiguration(cfg *platform.Platform, node types.VM) ([]byte, error)
 }
 
 // createBootstrapToken is extracted from https://github.com/kubernetes-sigs/cluster-api-bootstrap-provider-kubeadm/blob/master/controllers/token.go
-func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
+func CreateBootstrapToken(client corev1.SecretInterface, expiry time.Duration) (string, error) {
 	// createToken attempts to create a token with the given ID.
 	token, err := bootstraputil.GenerateBootstrapToken()
 	if err != nil {
@@ -281,7 +281,7 @@ func CreateBootstrapToken(client corev1.SecretInterface) (string, error) {
 		Data: map[string][]byte{
 			bootstrapapi.BootstrapTokenIDKey:               []byte(tokenID),
 			bootstrapapi.BootstrapTokenSecretKey:           []byte(tokenSecret),
-			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().Add(24 * time.Hour).Format(time.RFC3339)),
+			bootstrapapi.BootstrapTokenExpirationKey:       []byte(time.Now().Add(expiry).Format(time.RFC3339)),
 			bootstrapapi.BootstrapTokenUsageSigningKey:     []byte("true"),
 			bootstrapapi.BootstrapTokenUsageAuthentication: []byte("true"),
 			bootstrapapi.BootstrapTokenExtraGroupsKey:      []byte("system:bootstrappers:kubeadm:default-node-token"),
@@ -357,7 +357,7 @@ func UploadControlPlaneCerts(platform *platform.Platform) (string, error) {
 	return "", err
 }
 
-func GetOrCreateBootstrapToken(platform *platform.Platform) (string, error) {
+func GetOrCreateBootstrapToken(platform *platform.Platform, expiry time.Duration) (string, error) {
 	if platform.BootstrapToken != "" {
 		return platform.BootstrapToken, nil
 	}
@@ -365,7 +365,7 @@ func GetOrCreateBootstrapToken(platform *platform.Platform) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	token, err := CreateBootstrapToken(client.CoreV1().Secrets("kube-system"))
+	token, err := CreateBootstrapToken(client.CoreV1().Secrets("kube-system"), expiry)
 	if err != nil {
 		return "", err
 	}

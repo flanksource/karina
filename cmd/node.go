@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/flanksource/commons/logger"
 	"github.com/flanksource/karina/pkg/constants"
@@ -90,6 +91,8 @@ func init() {
 	var master bool
 	var install bool
 	var cloudInit bool
+	var nodeGroup string
+	var tokenExpiry time.Duration
 	generateJoinCommand := &cobra.Command{
 		Use:   "generate-join-commands",
 		Short: "Generate a new node token",
@@ -104,7 +107,7 @@ func init() {
 			if master {
 				config, err = phases.CreateSecondaryMaster(platform)
 			} else {
-				config, err = phases.CreateWorker("", platform)
+				config, err = phases.CreateWorker(nodeGroup, platform)
 			}
 			if err != nil {
 				logger.Fatalf("Cannot generate worker config: %v", err)
@@ -136,7 +139,7 @@ func init() {
 		Short: "Generate a new node token",
 		Run: func(cmd *cobra.Command, args []string) {
 			platform := getPlatform(cmd)
-			token, err := kubeadm.GetOrCreateBootstrapToken(platform)
+			token, err := kubeadm.GetOrCreateBootstrapToken(platform, tokenExpiry)
 			if err != nil {
 				logger.Fatalf("Error creating join token: %v", err)
 			}
@@ -146,6 +149,8 @@ func init() {
 
 	generateJoinCommand.Flags().BoolVar(&master, "master", false, "Create a new secondary master")
 	generateJoinCommand.Flags().BoolVar(&install, "install", false, "Install kubernetes dependencies on boot")
+	generateJoinCommand.Flags().StringVar(&nodeGroup, "node-group", "default", "")
+	generateToken.Flags().DurationVar(&tokenExpiry, "token-expiry", 24*time.Hour, "")
 	generateJoinCommand.Flags().BoolVar(&cloudInit, "cloud-init", true, "Generate cloud-init ")
 	Node.AddCommand(annotate, ips, generateJoinCommand, generateToken)
 }

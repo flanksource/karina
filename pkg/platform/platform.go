@@ -620,8 +620,16 @@ func (platform *Platform) ApplyCRD(namespace string, specs ...kommons.CRD) error
 }
 
 func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
-	if platform.TerminationProtection || !platform.Prune {
+	if platform.TerminationProtection {
+		platform.Warnf("Skipping deletion with termination protection enabled: %v", specs)
 		return nil
+	}
+	if !platform.Prune {
+		platform.Debugf("Skipping prune of ", specs)
+		return nil
+	}
+	if len(specs) == 0 {
+		return errors.Errorf("no specs passed, did you pass a spec as the namespace name?")
 	}
 	for _, spec := range specs {
 		template, err := platform.Template(spec, "manifests")
@@ -632,12 +640,17 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		if err != nil {
 			return err
 		}
+		if len(objects) == 0 {
+			return errors.Errorf("No objects found in %v", spec)
+		}
 		// reverse the order of the objects so that they can be deleted in reverse-order
 		for i, j := 0, len(objects)-1; i < j; i, j = i+1, j-1 {
 			objects[i], objects[j] = objects[j], objects[i]
 		}
 
+		// First check if any of the object already listed have been deleted
 		for _, object := range objects {
+			// Only check core types to prevent waiting for CRD's that will never be created
 			if platform.IsCoreType(object) {
 				if err := platform.Get(object.GetNamespace(), object.GetName(), object); err != nil {
 					platform.Debugf("%s (deleted, skipping)", console.Redf("%s", spec))
@@ -647,8 +660,9 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		}
 
 		for _, object := range objects {
+			platform.Debugf("Deleting %v", kommons.GetName(object))
 			if err := platform.DeleteUnstructured(namespace, object); err != nil {
-				return err
+				return errors.Wrapf(err, "error deleting %v", kommons.GetName(object))
 			}
 		}
 	}

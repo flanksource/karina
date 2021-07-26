@@ -259,8 +259,9 @@ func fieldRequired(field *ast.Field) bool {
 	return false
 }
 
+// nolint: gosimple
 func fieldType(typ ast.Expr) string {
-	switch typ.(type) { // nolint: gosimple
+	switch typ.(type) {
 	case *ast.Ident:
 		return toLink(typ.(*ast.Ident).Name)
 	case *ast.StarExpr:
@@ -283,7 +284,7 @@ func fieldType(typ ast.Expr) string {
 func fieldInlineType(typ ast.Expr) string {
 	switch typ.(type) { // nolint: gosimple
 	case *ast.Ident:
-		return typ.(*ast.Ident).Name
+		return typ.(*ast.Ident).Name // nolint: gosimple
 	case *ast.SelectorExpr:
 		e := typ.(*ast.SelectorExpr)
 		pkg := e.X.(*ast.Ident)

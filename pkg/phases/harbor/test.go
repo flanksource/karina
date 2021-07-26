@@ -7,7 +7,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.Harbor == nil || p.Harbor.Disabled {
+	if p.Harbor.IsDisabled() {
 		return
 	}
 	client, _ := p.GetClientset()
