@@ -44,6 +44,13 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - pods/exec
+  - pods/logs
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
   - nodes
   verbs:
   - get
@@ -163,8 +170,7 @@ spec:
         env:
         - name: DOCKER_API_VERSION
           value: "1.39"
-
-        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.21.7" }}
+        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.33.4" }}
         name: canary-checker
         ports:
         - containerPort: 8080
@@ -187,6 +193,8 @@ spec:
           name: dockersock
         - mountPath: /run/containerd/containerd.sock
           name: containerdsock
+        - mountPath: /etc/podinfo
+          name: podinfo
       serviceAccountName: canary-checker-sa
       terminationGracePeriodSeconds: 10
       volumes:
@@ -198,6 +206,12 @@ spec:
           path: /run/containerd/containerd.sock
           type: ""
         name: containerdsock
+      - downwardAPI:
+          items:
+          - fieldRef:
+              fieldPath: metadata.labels
+            path: labels
+        name: podinfo
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -230,13 +244,13 @@ spec:
   - host: canaries.{{.domain}}
     http:
       paths:
-      - path: /
-        pathType: ImplementationSpecific
-        backend:
+      - backend:
           service:
             name: canary-checker
             port:
               number: 8080
+        path: /
+        pathType: ImplementationSpecific
   tls:
   - hosts:
     - canaries.{{.domain}}

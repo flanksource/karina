@@ -212,68 +212,68 @@ jobs:
           if-no-files-found: ignore
           name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
           path: artifacts/kind-logs
-  selfhosted:
-    runs-on: [self-hosted]
-    if: ${{ (!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e') && needs.gates.outputs.fileChangesToCoreArtifacts == 'true')}}
-    needs:
-      - binary
-      - gates
-    strategy:
-      fail-fast: false
-      matrix:
-        k8s:
-          - v1.19.11
-        suite:
-          - minimal
-          # - minimal-antrea
-          - monitoring
-          - harbor2
-          # - postgres
-          # - elastic
-          # - security
-          - platform
-          # - nosql
-          # - cicd
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: actions/download-artifact@v2
-        with:
-          name: karina
-          path: ./.bin
-      - name: Run e2e testing script
-        id: e2e
-        env:
-          CACHE_DIR: /runner/_work
-          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
-          SUITE: ${{ matrix.suite }}
-          KUBERNETES_VERSION: ${{matrix.k8s}}
-          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
-          KIND_IMAGE: harbor.lab.flanksource/docker.io/kindest/node
-          ADDITIONAL_CONFIG: -c test/vsphere-harbor.yaml
-        run: ./test/test.sh
-      - name: Upload test results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          if-no-files-found: ignore
-          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
-          path: test-results/
-      - name: Upload snapshots
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          if-no-files-found: ignore
-          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
-          path: artifacts/snapshot.zip
-      - name: Generate Kind logs
-        if: failure()
-        run: .bin/kind export logs --name $(.bin/kind cluster get) artifacts/kind-logs
-      - name: Upload Kind logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          if-no-files-found: ignore
-          name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
-          path: artifacts/kind-logs
+  # selfhosted:
+  #   runs-on: [self-hosted]
+  #   if: ${{ (!contains(toJSON(needs.gates.outputs.commitmsg), 'skip-e2e') && needs.gates.outputs.fileChangesToCoreArtifacts == 'true')}}
+  #   needs:
+  #     - binary
+  #     - gates
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       k8s:
+  #         - v1.19.11
+  #       suite:
+  #         - minimal
+  #         # - minimal-antrea
+  #         - monitoring
+  #         - harbor2
+  #         # - postgres
+  #         # - elastic
+  #         # - security
+  #         - platform
+  #         # - nosql
+  #         # - cicd
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: karina
+  #         path: ./.bin
+  #     - name: Run e2e testing script
+  #       id: e2e
+  #       env:
+  #         CACHE_DIR: /runner/_work
+  #         GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+  #         SUITE: ${{ matrix.suite }}
+  #         KUBERNETES_VERSION: ${{matrix.k8s}}
+  #         BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+  #         KIND_IMAGE: harbor.lab.flanksource/docker.io/kindest/node
+  #         ADDITIONAL_CONFIG: -c test/vsphere-harbor.yaml
+  #       run: ./test/test.sh
+  #     - name: Upload test results
+  #       if: ${{ always() }}
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         if-no-files-found: ignore
+  #         name: test-results-${{matrix.k8s}}-${{matrix.suite}}
+  #         path: test-results/
+  #     - name: Upload snapshots
+  #       if: ${{ always() }}
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         if-no-files-found: ignore
+  #         name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
+  #         path: artifacts/snapshot.zip
+  #     - name: Generate Kind logs
+  #       if: failure()
+  #       run: .bin/kind export logs --name $(.bin/kind cluster get) artifacts/kind-logs
+  #     - name: Upload Kind logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         if-no-files-found: ignore
+  #         name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
+  #         path: artifacts/kind-logs

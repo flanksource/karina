@@ -107,9 +107,9 @@ metadata:
   name: grafana-operator
   namespace: monitoring
 subjects:
-- kind: ServiceAccount
-  name: grafana-operator
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: grafana-operator
+    namespace: monitoring
 roleRef:
   kind: Role
   name: grafana-operator
@@ -213,16 +213,16 @@ rules:
   - apiGroups:
       - networking.k8s.io
     resources:
-        - ingresses
+      - ingresses
     verbs:
-       - get
-       - list
-       - create
-       - update
-       - delete
-       - deletecollection
-       - watch
-       - create
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - deletecollection
+      - watch
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -238,54 +238,53 @@ subjects:
     namespace: monitoring
 ---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1 
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: aggregate-grafana-view
   labels:
-    rbac.authorization.k8s.io/aggregate-to-view: "true" 
-    rbac.authorization.k8s.io/aggregate-to-cluster-reader: "true" 
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+    rbac.authorization.k8s.io/aggregate-to-cluster-reader: "true"
 rules:
-- apiGroups:
-  - "integreatly.org"
-  resources:
-  - grafanas
-  - grafanas/status
-  - grafanas/finalizers
-  - grafanadashboards
-  - grafanadatasources
-  - grafanadatasources/status
-  verbs:
-  - "get"
-  - "list"
-  - "watch"
----
+  - apiGroups:
+      - "integreatly.org"
+    resources:
+      - grafanas
+      - grafanas/status
+      - grafanas/finalizers
+      - grafanadashboards
+      - grafanadatasources
+      - grafanadatasources/status
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
 ---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1 
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: aggregate-grafana-admin-edit 
+  name: aggregate-grafana-admin-edit
   labels:
-    rbac.authorization.k8s.io/aggregate-to-admin: "true" 
-    rbac.authorization.k8s.io/aggregate-to-edit: "true" 
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
 rules:
-- apiGroups:
-  - "integreatly.org"
-  resources:
-  - grafanas
-  - grafanas/status
-  - grafanas/finalizers
-  - grafanadashboards
-  - grafanadatasources
-  - grafanadatasources/status
-  verbs:
-  - "get"
-  - "list"
-  - "watch"
-  - "create"
-  - "update"
-  - "patch"
-  - "delete"
-  - "deletecollection"
+  - apiGroups:
+      - "integreatly.org"
+    resources:
+      - grafanas
+      - grafanas/status
+      - grafanas/finalizers
+      - grafanadashboards
+      - grafanadatasources
+      - grafanadatasources/status
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
+      - "create"
+      - "update"
+      - "patch"
+      - "delete"
+      - "deletecollection"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -328,7 +327,7 @@ spec:
             - grafana-operator
           args:
             - "--grafana-image=docker.io/grafana/grafana"
-            - "--grafana-image-tag=8.0.5"
+            - '--grafana-image-tag={{.monitoring.grafana.version | default "8.1.1" }}'
           imagePullPolicy: Always
           ## Currently not working on latest grafana-operator release
           # readinessProbe:

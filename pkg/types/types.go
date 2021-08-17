@@ -663,6 +663,7 @@ type Memory struct {
 type Grafana struct {
 	Version          string   `yaml:"version,omitempty" json:"version,omitempty"`
 	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	SkipDashboards   bool     `yaml:"skipDashboards,omitempty" json:"skipDashboards,omitempty" `
 	CustomDashboards []string `yaml:"customDashboards,omitempty" json:"customDashboards,omitempty"`
 }
 

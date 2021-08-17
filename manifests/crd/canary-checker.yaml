@@ -56,18 +56,91 @@ spec:
               containerd:
                 items:
                   properties:
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     description:
+                      description: Description for the check
                       type: string
                     expectedDigest:
                       type: string
                     expectedSize:
                       format: int64
                       type: integer
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
                     image:
                       type: string
-                    password:
-                      type: string
-                    username:
+                    name:
+                      description: Name of the check
                       type: string
                   type: object
                 type: array
@@ -75,8 +148,15 @@ spec:
                 items:
                   properties:
                     description:
+                      description: Description for the check
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
                       type: string
                     image:
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     password:
                       type: string
@@ -88,13 +168,20 @@ spec:
                 items:
                   properties:
                     description:
+                      description: Description for the check
                       type: string
                     exactreply:
                       items:
                         type: string
                       type: array
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
                     minrecords:
                       type: integer
+                    name:
+                      description: Name of the check
+                      type: string
                     port:
                       type: integer
                     query:
@@ -112,32 +199,288 @@ spec:
               docker:
                 items:
                   properties:
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     description:
+                      description: Description for the check
                       type: string
                     expectedDigest:
                       type: string
                     expectedSize:
                       format: int64
                       type: integer
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
                     image:
                       type: string
-                    password:
-                      type: string
-                    username:
+                    name:
+                      description: Name of the check
                       type: string
                   type: object
                 type: array
               dockerPush:
                 items:
                   properties:
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     description:
+                      description: Description for the check
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
                       type: string
                     image:
                       type: string
-                    password:
+                    name:
+                      description: Name of the check
                       type: string
-                    username:
+                  required:
+                  - auth
+                  type: object
+                type: array
+              ec2:
+                items:
+                  properties:
+                    accessKeyID:
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            secretKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                          type: object
+                      type: object
+                    ami:
                       type: string
+                    canaryRef:
+                      items:
+                        description: LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                            type: string
+                        type: object
+                      type: array
+                    description:
+                      description: Description for the check
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    keepAlive:
+                      type: boolean
+                    name:
+                      description: Name of the check
+                      type: string
+                    region:
+                      type: string
+                    secretKey:
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            secretKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                          type: object
+                      type: object
+                    securityGroup:
+                      type: string
+                    skipTLSVerify:
+                      description: Skip TLS verify when connecting to aws
+                      type: boolean
+                    timeOut:
+                      type: integer
+                    userData:
+                      type: string
+                    waitTime:
+                      type: integer
+                  required:
+                  - accessKeyID
+                  - region
+                  - secretKey
                   type: object
                 type: array
               env:
@@ -193,17 +536,90 @@ spec:
               helm:
                 items:
                   properties:
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     cafile:
                       type: string
                     chartmuseum:
                       type: string
                     description:
+                      description: Description for the check
                       type: string
-                    password:
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     project:
-                      type: string
-                    username:
                       type: string
                   type: object
                 type: array
@@ -244,8 +660,6 @@ spec:
                                   - key
                                   type: object
                               type: object
-                          required:
-                          - name
                           type: object
                         username:
                           properties:
@@ -278,8 +692,6 @@ spec:
                                   - key
                                   type: object
                               type: object
-                          required:
-                          - name
                           type: object
                       required:
                       - password
@@ -289,9 +701,10 @@ spec:
                       description: HTTP request body contents
                       type: string
                     description:
+                      description: Description for the check
                       type: string
                     displayTemplate:
-                      description: DisplayTemplate defines the output format. When set the result of the canary will be displayed in the text format. Example 'Response Codes [[.code]]'
+                      description: 'DisplayTemplate displays server response in text (overrides default bar format for UI). Example: ''Response Code: [[.code]]'''
                       type: string
                     endpoint:
                       description: HTTP endpoint to check.  Mutually exclusive with Namespace
@@ -329,15 +742,19 @@ spec:
                                 - key
                                 type: object
                             type: object
-                        required:
-                        - name
                         type: object
                       type: array
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
                     maxSSLExpiry:
                       description: Maximum number of days until the SSL Certificate expires.
                       type: integer
                     method:
                       description: HTTP method to call - defaults to GET
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     namespace:
                       description: Namespace to crawl for TLS endpoints.  Mutually exclusive with Endpoint
@@ -373,8 +790,15 @@ spec:
                 items:
                   properties:
                     description:
+                      description: Description for the check
                       type: string
                     endpoint:
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     packetCount:
                       type: integer
@@ -386,17 +810,23 @@ spec:
                       type: integer
                   type: object
                 type: array
+              icon:
+                type: string
               interval:
+                description: interval (in seconds) to run checks on Deprecated in favor of Schedule
                 format: int64
                 type: integer
               jmeter:
                 items:
                   properties:
                     description:
-                      description: Description of the canary
+                      description: Description for the check
                       type: string
                     host:
                       description: Host is the server against which test plan needs to be executed
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
                       type: string
                     jmx:
                       description: Jmx defines tge ConfigMap or Secret reference to get the JMX test plan
@@ -430,9 +860,10 @@ spec:
                               - key
                               type: object
                           type: object
-                      required:
-                      - name
                       type: object
+                    name:
+                      description: Name of the check
+                      type: string
                     port:
                       description: Port on which the server is running
                       format: int32
@@ -458,9 +889,16 @@ spec:
                 items:
                   properties:
                     description:
+                      description: Description for the check
                       type: string
                     displayTemplate:
-                      description: 'DisplayTemplate represents the output format for the results. Example: ''Passed: [[.passed]] Failed: [[.failed]] Skipped: [[.skipped]] Error: [[.error]]''. Defaults to ''Passed: {{.passed}}, Failed: {{.failed}}'''
+                      description: 'DisplayTemplate displays testResults results in text Default: ''Passed: [[.passed]], Failed: [[.failed]]'''
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     spec:
                       description: PodSpec is a description of a pod.
@@ -4198,6 +4636,9 @@ spec:
                       type: object
                     testResults:
                       type: string
+                    timeout:
+                      description: timeout in minutes to wait for specified container to finish its job. Defaults to 5 minutes
+                      type: integer
                   required:
                   - spec
                   - testResults
@@ -4206,19 +4647,92 @@ spec:
               ldap:
                 items:
                   properties:
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     bindDN:
                       type: string
                     description:
+                      description: Description for the check
                       type: string
                     host:
                       type: string
-                    password:
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     skipTLSVerify:
                       type: boolean
                     userSearch:
-                      type: string
-                    username:
                       type: string
                   type: object
                 type: array
@@ -4228,11 +4742,16 @@ spec:
                     connection:
                       type: string
                     description:
+                      description: Description for the check
                       type: string
                     displayTemplate:
-                      description: 'DisplayTemplate represents the output format for the results. Example ''[[ .results 0 ]]'' Note: When DisplayTemplate is defined the dashboard will show the text-based results, instead of traditional pass/fail bar resulys'
+                      description: 'DisplayTemplate displays query results in text (overrides default bar format for UI) Example: ''[[index .results 0]]'''
                       type: string
-                    driver:
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     query:
                       type: string
@@ -4240,7 +4759,7 @@ spec:
                       description: Number rows to check for
                       type: integer
                     resultsFunction:
-                      description: 'ResultsFunction defines the results that needs to be checked. Example: ''[[ if index .results 0 "surname" | eq "khandelwal" ]]true[[else]]false[[end]]'' Note: The test will fail on when the template returns false'
+                      description: 'ResultsFunction tests query output for pass/fail (must return boolean) Example: ''[[ if index .results 0 "surname" | eq "khandelwal" ]]true[[else]]false[[end]]'''
                       type: string
                   type: object
                 type: array
@@ -4256,6 +4775,7 @@ spec:
                       format: int64
                       type: integer
                     description:
+                      description: Description for the check
                       type: string
                     expectedContent:
                       type: string
@@ -4270,6 +4790,9 @@ spec:
                     httpTimeout:
                       format: int64
                       type: integer
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
                     ingressHost:
                       type: string
                     ingressName:
@@ -4277,6 +4800,9 @@ spec:
                     ingressTimeout:
                       format: int64
                       type: integer
+                    name:
+                      description: Name of the check
+                      type: string
                     namespaceAnnotations:
                       additionalProperties:
                         type: string
@@ -4316,6 +4842,7 @@ spec:
                       format: int64
                       type: integer
                     description:
+                      description: Description for the check
                       type: string
                     expectedContent:
                       type: string
@@ -4329,6 +4856,9 @@ spec:
                     httpTimeout:
                       format: int64
                       type: integer
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
                     ingressHost:
                       type: string
                     ingressName:
@@ -4337,6 +4867,7 @@ spec:
                       format: int64
                       type: integer
                     name:
+                      description: Name of the check
                       type: string
                     namespace:
                       type: string
@@ -4363,11 +4894,16 @@ spec:
                     connection:
                       type: string
                     description:
+                      description: Description for the check
                       type: string
                     displayTemplate:
-                      description: 'DisplayTemplate represents the output format for the results. Example ''[[ .results 0 ]]'' Note: When DisplayTemplate is defined the dashboard will show the text-based results, instead of traditional pass/fail bar resulys'
+                      description: 'DisplayTemplate displays query results in text (overrides default bar format for UI) Example: ''[[index .results 0]]'''
                       type: string
-                    driver:
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     query:
                       type: string
@@ -4375,7 +4911,7 @@ spec:
                       description: Number rows to check for
                       type: integer
                     resultsFunction:
-                      description: 'ResultsFunction defines the results that needs to be checked. Example: ''[[ if index .results 0 "surname" | eq "khandelwal" ]]true[[else]]false[[end]]'' Note: The test will fail on when the template returns false'
+                      description: 'ResultsFunction tests query output for pass/fail (must return boolean) Example: ''[[ if index .results 0 "surname" | eq "khandelwal" ]]true[[else]]false[[end]]'''
                       type: string
                   type: object
                 type: array
@@ -4384,13 +4920,86 @@ spec:
                   properties:
                     addr:
                       type: string
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     db:
                       type: integer
                     description:
+                      description: Description for the check
                       type: string
-                    password:
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
                       type: string
-                    username:
+                    name:
+                      description: Name of the check
                       type: string
                   required:
                   - addr
@@ -4402,7 +5011,37 @@ spec:
                   properties:
                     accessKey:
                       description: AccessKey access key id for connection with aws s3, minio, wasabi, alibaba oss
-                      type: string
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            secretKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                          type: object
+                      type: object
                     caCert:
                       description: CaCert path to the root cert. In case of self-signed certificates
                       type: string
@@ -4410,20 +5049,86 @@ spec:
                       description: CheckIntegrity when enabled will check the Integrity and consistency of the restic reposiotry
                       type: boolean
                     description:
-                      description: Description about the current restic canary check
+                      description: Description for the check
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
                       type: string
                     maxAge:
                       description: MaxAge for backup freshness
                       type: string
+                    name:
+                      description: Name of the check
+                      type: string
                     password:
                       description: Password for the restic repository
-                      type: string
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            secretKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                          type: object
+                      type: object
                     repository:
                       description: 'Repository The restic repository path eg: rest:https://user:pass@host:8000/ or rest:https://host:8000/ or s3:s3.amazonaws.com/bucket_name'
                       type: string
                     secretKey:
                       description: SecretKey secret access key for connection with aws s3, minio, wasabi, alibaba oss
-                      type: string
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            secretKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                          type: object
+                      type: object
                   required:
                   - maxAge
                   - password
@@ -4445,6 +5150,13 @@ spec:
                           type: string
                       type: object
                     description:
+                      description: Description for the check
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     objectPath:
                       type: string
@@ -4463,11 +5175,15 @@ spec:
                     bucket:
                       type: string
                     description:
+                      description: Description for the check
                       type: string
                     displayTemplate:
-                      description: 'DisplayTemplate represents the output format for the test results. Example: ''Size: [[.size]]; Age: [[.maxAge]]; Count: [[.count]]; TotalSize: [[.totalSize]]'''
+                      description: 'DisplayTemplate displays testResults results in text. Default: ''Size: [[.size]]; Age: [[.maxAge]]; Count: [[.count]]; TotalSize: [[.totalSize]]'''
                       type: string
                     endpoint:
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
                       type: string
                     maxAge:
                       description: maximum allowed age of matched objects in seconds
@@ -4477,6 +5193,9 @@ spec:
                       description: min size of of most recent matched object in bytes
                       format: int64
                       type: integer
+                    name:
+                      description: Name of the check
+                      type: string
                     objectPath:
                       description: glob path to restrict matches to a subset
                       type: string
@@ -4494,55 +5213,141 @@ spec:
                       type: boolean
                   type: object
                 type: array
+              schedule:
+                description: 'Schedule to run checks on. Supports all cron expression, example: ''30 3-6,20-23 * * *''. For more info about cron expression syntax see https://en.wikipedia.org/wiki/Cron Also supports golang duration, can be set as ''@every 1m30s'' which runs the check every 1 minute and 30 seconds.'
+                type: string
               severity:
                 type: string
               smb:
                 items:
                   properties:
+                    auth:
+                      properties:
+                        password:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                        username:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                            valueFrom:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                secretKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                              type: object
+                          type: object
+                      required:
+                      - password
+                      - username
+                      type: object
                     description:
+                      description: Description for the check
                       type: string
                     displayTemplate:
+                      description: 'DisplayTemplate displays check output in text Default: ''File Age: [[.age]]; File count: [[.count]]'''
                       type: string
                     domain:
                       description: Domain...
                       type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    maxAge:
+                      description: MaxAge the latest object should be younger than defined age
+                      type: string
                     minAge:
-                      description: MinAge
+                      description: MinAge the latest object should be older than defined age
                       type: string
                     minCount:
+                      description: MinCount the minimum number of files inside the searchPath
                       type: integer
-                    password:
-                      description: Password to authenticate against given smb server
+                    name:
+                      description: Name of the check
                       type: string
                     port:
                       description: Port on which smb server is running. Defaults to 445
                       type: integer
+                    searchPath:
+                      description: SearchPath sub-path inside the mount location
+                      type: string
                     server:
-                      description: Server location of smb server
+                      description: Server location of smb server. Can be hostname/ip or in '\\server\e$\a\b\c' syntax Where server is the hostname e$ is the sharename and a/b/c is the searchPath location
                       type: string
                     sharename:
                       description: Sharename to mount from the samba server
-                      type: string
-                    username:
-                      description: Username to authenticate against given smb server
                       type: string
                     workstation:
                       description: Workstation...
                       type: string
                   required:
-                  - minAge
-                  - password
+                  - auth
                   - server
-                  - sharename
-                  - username
                   type: object
                 type: array
               tcp:
                 items:
                   properties:
                     description:
+                      description: Description for the check
                       type: string
                     endpoint:
+                      type: string
+                    icon:
+                      description: Icon for overwriting default icon on the dashboard
+                      type: string
+                    name:
+                      description: Name of the check
                       type: string
                     thresholdMillis:
                       format: int64
@@ -4553,6 +5358,8 @@ spec:
           status:
             description: CanaryStatus defines the observed state of Canary
             properties:
+              errorMessage:
+                type: string
               lastCheck:
                 format: date-time
                 type: string
