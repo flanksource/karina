@@ -127,6 +127,28 @@ func Install(p *platform.Platform) error {
 		}
 	}
 
+	if !p.Thanos.IsDisabled() {
+		if p.Thanos.Mode != ThanosClientMode && p.Thanos.Mode != ThanosObservabilityMode {
+			return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
+		}
+
+		if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
+			return err
+		}
+	}
+
+	if err := deployDashboards(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deployDashboards(p *platform.Platform) error {
+	if p.Monitoring.Grafana.SkipDashboards {
+		p.Debugf("Skipping grafana dashboard deployment")
+		return nil
+	}
 	cd := conditionalDashboards(p)
 	rootPath := "monitoring/dashboards"
 	dashboards, err := p.GetResourcesByDir(rootPath, "manifests")
@@ -161,16 +183,6 @@ func Install(p *platform.Platform) error {
 
 		if err := DeployDashboard(p, "Custom", kommons.GetDNS1192Name(path.Base(dashboard)), string(contents)); err != nil {
 			return errors.Wrapf(err, "failed to deploy %s", dashboard)
-		}
-	}
-
-	if !p.Thanos.IsDisabled() {
-		if p.Thanos.Mode != ThanosClientMode && p.Thanos.Mode != ThanosObservabilityMode {
-			return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
-		}
-
-		if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
-			return err
 		}
 	}
 	return nil
