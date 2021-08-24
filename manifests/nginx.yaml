@@ -171,12 +171,28 @@ spec:
         com.flanksource.infra.logs/processors.10.drop_event.when.contains.message: Error obtaining X.509 certificate
         com.flanksource.infra.logs/processors.11.drop_event.when.contains.message: Using default certificate
         com.flanksource.infra.logs/processors.12.drop_event.when.contains.message: does not have any active Endpoint
+        com.flanksource.infra.logs/processors.13.drop_event.when.contains.message: INFO
     spec:
       serviceAccountName: nginx-ingress-serviceaccount
       volumes:
         - name: scripts
           configMap:
             name: lua-scripts
+        {{ if index .nginx "modsecurity" }}
+        {{ if not .nginx.modsecurity.disabled }}
+        - name: logs
+          emptyDir: {}
+        - name: filebeat-config
+          secret:
+            secretName: modsecurity-filebeat
+            items:
+              - key: filebeat.yml
+                path: filebeat.yml
+        - name: modsecurity-config
+          configMap:
+            name: modsecurity-configuration
+        {{ end }}
+        {{ end }}
       {{ if not (.nginx.disableHostNetwork) }}
       hostNetwork: true
       {{ end }}
@@ -189,6 +205,12 @@ spec:
       {{ if not (eq ( conv.ToInt64 .kind.workerCount ) 0) }}
         - key: "node-role.kubernetes.io/master"
           effect: "NoSchedule"
+      {{ end }}
+      {{ end }}
+      {{ if index .nginx "modsecurity" }}
+      {{ if not .nginx.modsecurity.disabled }}
+      securityContext:
+        fsGroup: 101
       {{ end }}
       {{ end }}
       containers:
@@ -264,7 +286,37 @@ spec:
           volumeMounts:
             - name: scripts
               mountPath: /usr/local/share/lua/5.1/flanksource
-
+            {{ if index .nginx "modsecurity" }}
+            {{ if not .nginx.modsecurity.disabled }}
+            - name: logs
+              mountPath: /var/log/modsecurity
+            - name: modsecurity-config
+              mountPath: /etc/nginx/modsecurity/
+              readOnly: true
+              optional: false
+            {{ end }}
+            {{ end }}
+        {{ if index .nginx "modsecurity" }}
+        {{ if not .nginx.modsecurity.disabled }}
+        - name: modsecurity-logging
+          image: docker.elastic.co/beats/filebeat:{{ .nginx.modsecurity.filebeatVersion }}
+          command: ["filebeat"]
+          args:
+            - "-c"
+            - "/etc/filebeat/filebeat.yml"
+            - "-e"
+          envFrom:
+            - secretRef:
+                name: elastic-modsecurity
+          volumeMounts:
+            - name: filebeat-config
+              mountPath: /etc/filebeat/
+              readOnly: true
+              optional: false
+            - name: logs
+              mountPath: /var/log/modsecurity
+        {{ end }}
+        {{ end }}
 # ---
 # apiVersion: apps/v1
 # kind: Deployment
