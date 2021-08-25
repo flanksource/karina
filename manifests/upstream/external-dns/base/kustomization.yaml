@@ -1,0 +1,19 @@
+namespace: platform-system
+bases:
+  - github.com/kubernetes-sigs/external-dns/kustomize?ref=v0.9.0
+images:
+  - name: k8s.gcr.io/external-dns/external-dns
+    newTag: '{{.externalDns.version | default "na" }}'
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: external-dns
+    spec:
+        template:
+          spec:
+            containers:
+              - name: external-dns
+                args:
+                  - TEMPLATE_MARK
