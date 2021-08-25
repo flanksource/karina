@@ -75,6 +75,13 @@ platform-operator.yaml:
 canary-checker.yaml:
 	$(call BUILD_BASE,canary-checker)
 	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$server := .canaryChecker.aggregateServers }}\n        - --aggregateServers\n        - {{$$server}}\n        {{- end }}/' canary-checker.yaml
+.PHONY: canary-checker.yaml
+
+.PHONY: external-dns.yaml
+external-dns.yaml:
+	$(call BUILD_BASE,external-dns)
+	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$k, $$v := .externalDns.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' external-dns.yaml
+
 
 .SECONDEXPANSION:
 crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
