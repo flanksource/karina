@@ -10,8 +10,15 @@ stringData:
     config:
       bucket: {{.thanos.bucket}}
       endpoint: {{.s3.endpoint | strings.TrimPrefix "http://" | strings.TrimPrefix "https://" }}
+      {{- if .s3.endpoint | strings.HasPrefix "http://" }}
       insecure: true
-      access_key: {{.s3.access_key}}
-      secret_key: {{.s3.secret_key}}
       http_config:
         insecure_skip_verify: true
+      {{- end}}
+      {{- if .s3.region }}
+      region: {{.s3.region}}
+      {{- end }}
+      {{- if .s3.access_key }}
+      access_key: {{.s3.access_key}}
+      secret_key: {{.s3.secret_key}}
+      {{- end}}
