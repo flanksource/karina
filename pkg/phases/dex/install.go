@@ -42,14 +42,23 @@ func Install(platform *platform.Platform) error {
 			"GOOGLE_CLIENT_ID":     []byte(platform.Dex.Google.ClientID),
 			"GOOGLE_CLIENT_SECRET": []byte(platform.Dex.Google.ClientSecret),
 		}); err != nil {
-			return fmt.Errorf("install: failed to create/update secret: %v", err)
+			return fmt.Errorf("install: failed to create/update google secret: %v", err)
 		}
-	} else {
+	}
+	if platform.Dex.Github.ClientID != "" {
+		if err := platform.CreateOrUpdateSecret("github-account", Namespace, map[string][]byte{
+			"GITHUB_CLIENT_ID":     []byte(platform.Dex.Github.ClientID),
+			"GITHUB_CLIENT_SECRET": []byte(platform.Dex.Github.ClientSecret),
+		}); err != nil {
+			return fmt.Errorf("install: failed to create/update github secret: %v", err)
+		}
+    }
+	if !platform.Ldap.Disabled {
 		if err := platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
 			"AD_PASSWORD": []byte(platform.Ldap.Password),
 			"AD_USERNAME": []byte(platform.Ldap.Username),
 		}); err != nil {
-			return fmt.Errorf("install: failed to create/update secret: %v", err)
+			return fmt.Errorf("install: failed to create/update ldap secret: %v", err)
 		}
 	}
 

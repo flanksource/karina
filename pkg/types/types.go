@@ -446,6 +446,18 @@ type Dashboard struct {
 type Dex struct {
 	XDisabled `yaml:",inline" json:",inline"`
 	Google    GoogleOIDC `yaml:"google,omitempty" json:"google,omitempty"`
+	Github    GithubOIDC  `yaml:"github,omitempty" json:"github,omitempty"`
+}
+
+type GithubOIDC struct {
+	ClientID      string   `yaml:"clientID,omitempty" json:"clientID,omitempty"`
+	ClientSecret  string   `yaml:"clientSecret,omitempty" json:"clientSecret,omitempty"`
+	Organizations	[]GithubOrg `yaml:"orgs,omitempty" json:"orgs,omitempty"`
+}
+
+type GithubOrg struct {
+	Name   	string	`yaml:"name" json:"name"`
+	Teams 	[]string	`yaml:"teams,omitempty" json:"teams,omitempty"`
 }
 
 type GoogleOIDC struct {
