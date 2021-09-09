@@ -19,7 +19,7 @@ const (
 	configFile = "test/linter.yaml"
 )
 
-var allowedDuplicateKeys = []string{"CustomResourceDefinition-servicemonitors.monitoring.coreos.com"}
+var allowedDuplicateKeys = []string{"CustomResourceDefinition-servicemonitors.monitoring.coreos.com", "Namespace-platform-system"}
 var ignoreManifestsSubPaths = []string{"manifests/upstream/(.*)"}
 var (
 	config = &Config{}
@@ -86,7 +86,7 @@ func generateUniqueKeys(manifest string) error {
 	}
 	manifestData, err := kommons.GetUnstructuredObjects(yamlFile)
 	if err != nil {
-		log.Warnf("error parsing the yaml %v", manifest)
+		log.Warnf("error parsing the yaml %v: %v", manifest, err)
 	}
 	for i := range manifestData {
 		if manifestData[i].Object["metadata"].(map[string]interface{})["namespace"] != nil {
