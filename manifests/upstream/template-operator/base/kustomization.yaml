@@ -1,5 +1,5 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/template-operator/v0.4.0/config/base/deploy.yml
+  - https://raw.githubusercontent.com/flanksource/template-operator/v0.6.0/config/base/deploy.yml
 namespace: platform-system
 images:
   - name: flanksource/template-operator
