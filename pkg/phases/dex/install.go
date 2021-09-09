@@ -52,7 +52,7 @@ func Install(platform *platform.Platform) error {
 		}); err != nil {
 			return fmt.Errorf("install: failed to create/update github secret: %v", err)
 		}
-    }
+	}
 	if !platform.Ldap.Disabled {
 		if err := platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
 			"AD_PASSWORD": []byte(platform.Ldap.Password),
