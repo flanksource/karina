@@ -624,8 +624,9 @@ func (platform *Platform) DeleteSpecs(namespace string, specs ...string) error {
 		platform.Warnf("Skipping deletion with termination protection enabled: %v", specs)
 		return nil
 	}
+
 	if !platform.Prune {
-		platform.Debugf("Skipping prune of ", specs)
+		platform.Tracef("Skipping prune of %v ", specs)
 		return nil
 	}
 	if len(specs) == 0 {
