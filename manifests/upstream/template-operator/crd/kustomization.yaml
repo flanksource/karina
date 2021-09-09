@@ -1,2 +1,2 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/template-operator/v0.4.0/config/deploy/crd.yml
+  - https://raw.githubusercontent.com/flanksource/template-operator/v0.6.0/config/deploy/crd.yml
