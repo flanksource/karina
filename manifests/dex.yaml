@@ -43,6 +43,9 @@ spec:
                 name: google-account
                 optional: true
             - secretRef:
+                name: github-account
+                optional: true
+            - secretRef:
                 name: ldap-account
                 optional: true
       volumes:
