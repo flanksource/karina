@@ -127,10 +127,10 @@ spec:
         resources:
           limits:
             cpu: 150m
-            memory: 200Mi
+            memory: 2Gi
           requests:
             cpu: 100m
-            memory: 150Mi
+            memory: 1Gi
       - args:
         - --secure-listen-address=0.0.0.0:8443
         - --upstream=http://127.0.0.1:8080/
