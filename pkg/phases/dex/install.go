@@ -29,7 +29,10 @@ func Install(platform *platform.Platform) error {
 		return err
 	}
 
-	cfg, _ := platform.Template("dex.cfg", "manifests")
+	cfg, err := platform.Template("dex.cfg", "manifests")
+	if err != nil {
+		return fmt.Errorf("install: failed to template configmap: %v", err)
+	}
 
 	if err := platform.CreateOrUpdateConfigMap(ConfigMapName, Namespace, map[string]string{
 		ConfigName: cfg,
