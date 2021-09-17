@@ -109,8 +109,10 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
-	if err := createIngressCA(p); err != nil {
-		return err
+	if !p.CertManager.ExternalCA {
+		if err := createIngressCA(p); err != nil {
+			return err
+		}
 	}
 
 	ca, err := p.CreateOrGetWebhookCertificate(Namespace, WebhookService)

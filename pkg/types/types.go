@@ -35,6 +35,8 @@ type CertManager struct {
 	// Details of a Letsencrypt issuer to use for signing ingress certificates
 	Letsencrypt     *LetsencryptIssuer `yaml:"letsencrypt,omitempty" json:"letsencrypt,omitempty"`
 	DefaultIssuerCA string             `yaml:"-" json:"-"`
+	// Set to true if ingress CA will be configured via kustomise or similar
+	ExternalCA 		bool			   `yaml:"externalCA,omitempty" json:"externalCA,omitempty"`
 }
 
 type VaultClient struct {
