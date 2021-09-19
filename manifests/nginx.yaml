@@ -454,6 +454,7 @@ spec:
     app: ingress-nginx
 
 ---
+{{- if not .monitoring.disabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -483,3 +484,4 @@ spec:
   selector:
     matchLabels:
       app: ingress-nginx
+{{- end }}
