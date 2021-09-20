@@ -27,7 +27,7 @@ var (
 )
 
 func Install(platform *platform.Platform) error {
-	if platform.SealedSecrets == nil || platform.SealedSecrets.Disabled {
+	if platform.SealedSecrets.IsDisabled() {
 		if err := platform.DeleteSpecs(Namespace, "sealed-secrets.yaml"); err != nil {
 			platform.Warnf("failed to delete specs: %v", err)
 		}

@@ -96,8 +96,6 @@ spec:
                                     - key
                                     type: object
                                 type: object
-                            required:
-                            - name
                             type: object
                           port:
                             type: string
@@ -422,6 +420,26 @@ spec:
                     properties:
                       disabled:
                         type: boolean
+                      github:
+                        properties:
+                          clientID:
+                            type: string
+                          clientSecret:
+                            type: string
+                          orgs:
+                            items:
+                              properties:
+                                name:
+                                  type: string
+                                teams:
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - name
+                              type: object
+                            type: array
+                        type: object
                       google:
                         properties:
                           clientID:
@@ -575,8 +593,6 @@ spec:
                                       - key
                                       type: object
                                   type: object
-                              required:
-                              - name
                               type: object
                             port:
                               type: string
@@ -626,8 +642,6 @@ spec:
                                       - key
                                       type: object
                                   type: object
-                              required:
-                              - name
                               type: object
                             port:
                               type: string
@@ -675,8 +689,6 @@ spec:
                                       - key
                                       type: object
                                   type: object
-                              required:
-                              - name
                               type: object
                             port:
                               type: string
@@ -1060,8 +1072,6 @@ spec:
                                     - key
                                     type: object
                                 type: object
-                            required:
-                            - name
                             type: object
                           port:
                             type: string
@@ -1503,9 +1513,19 @@ spec:
                               critical, warning, info
                             type: string
                         type: object
+                      excludeAlerts:
+                        items:
+                          type: string
+                        type: array
                       grafana:
                         properties:
+                          customDashboards:
+                            items:
+                              type: string
+                            type: array
                           disabled:
+                            type: boolean
+                          skipDashboards:
                             type: boolean
                           version:
                             type: string
@@ -1554,6 +1574,13 @@ spec:
                         type: object
                       prometheus_operator:
                         type: string
+                      pushGateway:
+                        properties:
+                          disabled:
+                            type: boolean
+                          version:
+                            type: string
+                        type: object
                       version:
                         type: string
                     type: object
@@ -2232,8 +2259,6 @@ spec:
                                     - key
                                     type: object
                                 type: object
-                            required:
-                            - name
                             type: object
                           port:
                             type: string
@@ -2281,8 +2306,6 @@ spec:
                                     - key
                                     type: object
                                 type: object
-                            required:
-                            - name
                             type: object
                           port:
                             type: string

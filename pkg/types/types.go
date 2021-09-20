@@ -434,10 +434,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Canary-checker allows for the deployment and configuration of the canary-checker
 type CanaryChecker struct {
-	XEnabled `yaml:",inline" json:",inline"`
-	// +optional
-	Version string `yaml:"version" json:"version,"`
-	// +optional
+	XDisabled        `yaml:",inline" json:",inline"`
 	AggregateServers []string `yaml:"aggregateServers" json:"aggregateServers"`
 }
 
@@ -942,9 +939,8 @@ type NodeLocalDNS struct {
 }
 
 type SealedSecrets struct {
-	XEnabled    `yaml:",inline" json:",inline"`
-	Version     string `yaml:"version,omitempty" json:"version,omitempty"`
-	Certificate *CA    `yaml:"certificate,omitempty" json:"certificate,omitempty"`
+	XDisabled   `yaml:",inline" json:",inline"`
+	Certificate *CA `yaml:"certificate,omitempty" json:"certificate,omitempty"`
 }
 
 type S3UploadCleaner struct {
