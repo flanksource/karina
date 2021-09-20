@@ -3,16 +3,16 @@
 
 === "Linux"
     ```bash
-    wget -nv -nc -O karina \
-      https://github.com/flanksource/karina/releases/latest/download/karina && \
+    wget -nv -O karina \
+      https://github.com/flanksource/karina/releases/latest/download/karina_linux-amd64 && \
       chmod +x karina && \
       mv karina /usr/local/bin/karina
     ```
 
 === "MacOSX"
     ```zsh
-    wget -nv -nc -O karina \
-      https://github.com/flanksource/karina/releases/latest/download/karina_osx && \
+    wget -nv -O karina \
+      https://github.com/flanksource/karina/releases/latest/download/karina_darwin-amd64 && \
       chmod +x karina && \
       mv karina /usr/local/bin/karina
     ```
