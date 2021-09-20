@@ -17,7 +17,7 @@ type PlatformConfig struct {
 	Brand             Brand             `yaml:"brand,omitempty" json:"brand,omitempty"`
 	CA                *CA               `yaml:"ca" json:"ca,omitempty"`
 	Calico            Calico            `yaml:"calico,omitempty" json:"calico,omitempty"`
-	CanaryChecker     *CanaryChecker    `yaml:"canaryChecker,omitempty" json:"canaryChecker,omitempty"`
+	CanaryChecker     CanaryChecker     `yaml:"canaryChecker,omitempty" json:"canaryChecker,omitempty"`
 	CertManager       CertManager       `yaml:"certmanager,omitempty" json:"certmanager,omitempty"`
 	ConfigFrom        []ConfigDirective `yaml:"configFrom,omitempty" json:"configFrom,omitempty"`
 	ConfigMapReloader ConfigMapReloader `yaml:"configmapReloader,omitempty" json:"configmapReloader,omitempty"`
@@ -89,7 +89,7 @@ type PlatformConfig struct {
 	Resources           map[string]string    `yaml:"resources,omitempty" json:"resources,omitempty"`
 	S3                  S3                   `yaml:"s3,omitempty" json:"s3,omitempty"`
 	S3UploadCleaner     *S3UploadCleaner     `yaml:"s3uploadCleaner,omitempty" json:"s3UploadCleaner,omitempty"`
-	SealedSecrets       *SealedSecrets       `yaml:"sealedSecrets,omitempty" json:"sealedSecrets,omitempty"`
+	SealedSecrets       SealedSecrets        `yaml:"sealedSecrets,omitempty" json:"sealedSecrets,omitempty"`
 	ServiceSubnet       string               `yaml:"serviceSubnet" json:"serviceSubnet,omitempty"`
 	SMTP                SMTP                 `yaml:"smtp,omitempty" json:"smtp,omitempty"`
 	Specs               []string             `yaml:"specs,omitempty" json:"specs,omitempty"`

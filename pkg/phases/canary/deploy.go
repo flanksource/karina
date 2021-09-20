@@ -9,7 +9,7 @@ var specs = []string{"canary-checker.yaml", "canary-checker-monitoring.yaml.raw"
 
 // Deploy deploys the canary-checker into the monitoring namespace
 func Deploy(p *platform.Platform) error {
-	if p.CanaryChecker == nil || p.CanaryChecker.Disabled {
+	if p.CanaryChecker.IsDisabled() {
 		if err := p.DeleteSpecs(v1.NamespaceAll, specs...); err != nil {
 			p.Errorf("failed to delete specs: %v", err)
 		}

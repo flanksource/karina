@@ -16,7 +16,7 @@ import (
 )
 
 func Test(p *platform.Platform, test *console.TestResults) {
-	if p.SealedSecrets == nil || p.SealedSecrets.Disabled {
+	if p.SealedSecrets.IsDisabled() {
 		return
 	}
 	client, _ := p.GetClientset()

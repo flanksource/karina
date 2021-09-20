@@ -10,7 +10,7 @@ import (
 const testName = "canary-checker"
 
 func TestCanary(p *platform.Platform, test *console.TestResults) {
-	if p.CanaryChecker == nil || p.CanaryChecker.Disabled {
+	if p.CanaryChecker.IsDisabled() {
 		return
 	}
 
