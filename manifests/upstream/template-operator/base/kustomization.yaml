@@ -23,8 +23,8 @@ patchesStrategicMerge:
                 - "--sync-period={{ .templateOperator.syncPeriod | default \"5m\" }}"
               resources:
                 limits:
-                  cpu: 150m
-                  memory: 200Mi
+                  cpu: 500m
+                  memory: 1Gi
                 requests:
                   cpu: 100m
-                  memory: 150Mi
+                  memory: 200Mi
