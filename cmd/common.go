@@ -94,7 +94,6 @@ func getConfig(cmd *cobra.Command) types.PlatformConfig {
 		InClusterConfig: inCluster,
 		Prune:           prune,
 	}
-
 	return NewConfigFromBase(base, paths, extras)
 }
 
@@ -125,6 +124,11 @@ func NewConfigFromBase(base types.PlatformConfig, paths []string, extras []strin
 	}
 
 	defaultConfig := types.DefaultPlatformConfig()
+	if defaultConfig.Kubernetes.Managed {
+		defaultConfig.Dex.Disabled = true
+		defaultConfig.LocalPath.Disabled = true
+		defaultConfig.Calico.Disabled = true
+	}
 	if err := mergo.Merge(&base, defaultConfig); err != nil {
 		log.Fatalf("Failed to merge default config, %v", err)
 	}
@@ -195,10 +199,8 @@ func mergeConfigBytes(base *types.PlatformConfig, data []byte, path string) erro
 	if cfg.CA != nil {
 		pathList = append(pathList, &cfg.CA.Cert, &cfg.CA.PrivateKey)
 	}
-	if cfg.SealedSecrets != nil {
-		if cfg.SealedSecrets.Certificate != nil {
-			pathList = append(pathList, &cfg.SealedSecrets.Certificate.Cert, &cfg.SealedSecrets.Certificate.PrivateKey)
-		}
+	if cfg.SealedSecrets.Certificate != nil {
+		pathList = append(pathList, &cfg.SealedSecrets.Certificate.Cert, &cfg.SealedSecrets.Certificate.PrivateKey)
 	}
 
 	for _, field := range pathList {
