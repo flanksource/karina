@@ -251,3 +251,23 @@ spec:
       targetPort: 9443
   selector:
     control-plane: elastic-operator
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    cert-manager.io/allow-direct-injection: "true"
+  name: elastic-webhook-server
+  namespace: elastic-system
+spec:
+  dnsNames:
+    - elastic-webhook-server
+    - elastic-webhook-server.elastic-system.svc
+    - elastic-webhook-server.elastic-system.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: default-issuer
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  secretName: elastic-webhook-server-cert
