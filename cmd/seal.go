@@ -23,7 +23,7 @@ func getFlagFilePath(name string, cmd *cobra.Command) string {
 		return ""
 	}
 	filePath, err := filepath.Abs(value)
-	if err == nil {
+	if err != nil {
 		log.Warningf("Unable to get absolute path for %s: %v", value, err)
 		return ""
 	}
@@ -38,7 +38,7 @@ func getFlagFilePathSlice(name string, cmd *cobra.Command) string {
 	result := ""
 	for _, value := range argList {
 		filePath, err := filepath.Abs(value)
-		if err == nil {
+		if err != nil {
 			log.Warningf("Unable to get absolute path for %s: %v", value, err)
 		} else {
 			result = fmt.Sprintf("%s --%s %s", result, name, filePath)
