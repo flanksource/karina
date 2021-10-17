@@ -44,9 +44,9 @@ karina leverages a number of other standalone operators built by flanksource:
 * **Escape Hatches** for when the defaults don't work for you, easily use kustomize patches to configure resource limits, labels, annotations and anything else on any object managed by karina.
 * **Integrated, but independent** - karina works best when used to provision a Kubernetes cluster and then deploy and test a production runtime, but each function can also be used independently, i.e you can run karina e2e tests in an environment that wasn't provisioned or deployed by karina.
 
-### Comparison
+### Comparisons
 
-To see how karina compares to other tools in the ecosystem see [comparison](./docs/comparison.md)
+To see how karina compares to other tools in the ecosystem see [comparisons](./docs/comparisons.md)
 
 ### Contributing
 
