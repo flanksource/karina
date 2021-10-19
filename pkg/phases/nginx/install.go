@@ -3,6 +3,7 @@ package nginx
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/flanksource/commons/utils"
 	"github.com/flanksource/karina/pkg/platform"
@@ -50,6 +51,46 @@ func Install(platform *platform.Platform) error {
 	for k, v := range Defaults {
 		if _, ok := platform.Nginx.Config[k]; !ok {
 			platform.Nginx.Config[k] = v
+		}
+	}
+
+	if platform.Nginx.Modsecurity != nil && !platform.Nginx.Modsecurity.Disabled {
+		platform.Nginx.Config["enable-modsecurity"] = "true"
+		elasticHost := platform.Nginx.Modsecurity.Elasticsearch.Scheme + "://" + platform.Nginx.Modsecurity.Elasticsearch.URL + ":" + platform.Nginx.Modsecurity.Elasticsearch.Port
+		elasticUser := platform.Nginx.Modsecurity.Elasticsearch.User
+		_, elasticPassword, err := platform.GetEnvValue(platform.Nginx.Modsecurity.Elasticsearch.Password, "eck")
+		if err != nil {
+			return err
+		}
+		sslMode := "full"
+		if platform.Nginx.Modsecurity.Elasticsearch.Verify == "false" {
+			sslMode = "none"
+		}
+
+		secretName := "elastic-modsecurity"
+		err = platform.GetOrCreateSecret(secretName, Namespace, map[string][]byte{
+			"ELASTIC_URL":      []byte(elasticHost),
+			"ELASTIC_USERNAME": []byte(elasticUser),
+			"ELASTIC_PASSWORD": []byte(elasticPassword),
+		})
+		if err != nil {
+			return err
+		}
+
+		config, err := platform.GetResourceByName("modsecurity-filebeat.yaml", "manifests")
+		if err != nil {
+			return err
+		}
+		config = strings.ReplaceAll(config, "{{ sslMode }}", sslMode)
+		filebeatConfig := map[string][]byte{
+			"filebeat.yml": []byte(config),
+		}
+		if err := platform.CreateOrUpdateSecret("modsecurity-filebeat", Namespace, filebeatConfig); err != nil {
+			return err
+		}
+
+		if err := platform.ApplySpecs(Namespace, "modsecurity-configuration.yaml"); err != nil {
+			return err
 		}
 	}
 

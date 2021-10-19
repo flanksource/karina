@@ -326,7 +326,14 @@ type Nginx struct {
 	DisableHostNetwork bool   `yaml:"disableHostNetwork" json:"disableHostNetwork"`
 
 	// Configurations to apply to Nginx, see [configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) for a full list of options
-	Config map[string]string `yaml:"config,omitempty" json:"config,omitempty"`
+	Config      map[string]string `yaml:"config,omitempty" json:"config,omitempty"`
+	Modsecurity *Modsecurity      `yaml:"modsecurity,omitempty" json:"modsecurity,omitempty"`
+}
+
+type Modsecurity struct {
+	Disabled        bool        `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	FilebeatVersion string      `yaml:"filebeatVersion,omitempty" json:"filebeatVersion,omitempty"`
+	Elasticsearch   *Connection `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
 }
 
 type OAuth2Proxy struct {
