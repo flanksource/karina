@@ -99,11 +99,11 @@ echo "::endgroup::"
 
 echo "::group::Waiting for Base"
 # wait for the base deployment with stubs to come up healthy
-$BIN test phases --bootstrap --stubs   --wait 120 --progress=false --fail-on-error=false $CONFIG_FILES
+$BIN test phases --bootstrap --stubs --wait 120 --progress=false --fail-on-error=false $CONFIG_FILES
 echo "::endgroup::"
 
 echo "::group::Deploy All"
-$BIN deploy all --exclude crds  --prune=false -v $CONFIG_FILES || (echo "::error::Error while deploying" && exit 1)
+$BIN deploy all --exclude crds --prune=false -v $CONFIG_FILES || (echo "::error::Error while deploying" && exit 1)
 echo "::endgroup::"
 
 echo "::group::Test Dry Run"
