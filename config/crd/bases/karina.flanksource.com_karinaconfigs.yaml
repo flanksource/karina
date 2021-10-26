@@ -2671,6 +2671,8 @@ spec:
                   thanos:
                     properties:
                       autoCreateBucket:
+                        description: Whether to automatically create an S3 bucket
+                          that doesn't exist or get one that does. Defaults to 'true'
                         type: boolean
                       bucket:
                         description: Bucket to store metrics. Must be the same across

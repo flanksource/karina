@@ -811,9 +811,10 @@ type Thanos struct {
 	// Only for observability mode. List of client sidecars in `<hostname>:<port>`` format
 	ClientSidecars []string `yaml:"clientSidecars,omitempty" json:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
-	EnableCompactor  bool      `yaml:"enableCompactor,omitempty" json:"enableCompactor,omitempty"`
-	E2E              ThanosE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
-	AutoCreateBucket bool      `yaml:"autoCreateBucket,omitempty" json:"autoCreateBucket,omitempty"`
+	EnableCompactor bool      `yaml:"enableCompactor,omitempty" json:"enableCompactor,omitempty"`
+	E2E             ThanosE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+	// Whether to automatically create an S3 bucket that doesn't exist or get one that does. Defaults to 'true'
+	AutoCreateBucket bool `yaml:"autoCreateBucket,omitempty" json:"autoCreateBucket,omitempty"`
 }
 
 type ThanosE2E struct {

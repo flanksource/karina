@@ -21,6 +21,9 @@ func DefaultPlatformConfig() PlatformConfig {
 			ContainerRuntime:    "docker",
 			Managed:             false,
 		},
+		Thanos: Thanos{
+			AutoCreateBucket: true,
+		},
 	}
 	return config
 }
