@@ -150,7 +150,7 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
-        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+        run: kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
         uses: actions/upload-artifact@v2
@@ -204,7 +204,7 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: failure()
-        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+        run: kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
         if: failure()
         uses: actions/upload-artifact@v2
