@@ -1,0 +1,10 @@
+gitRepositoryType: AZDO
+ciCdOrchestratorType: AZDO
+gitOpsOperatorType: FLUX
+azdoGitOpsRepoName: manifest-repo
+azdoOrgUrl: https://dev.azure.com/MyOrg/MyProject
+azdoPrRepoName: hld-repo
+gitOpsAppURL: https://github.com/microsoft/spektate
+orchestratorPAT: <PAT>
+subscribers:
+  spektate: 'http://spektate-server:5000/api/flux'

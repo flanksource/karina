@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flanksource/karina/pkg/phases/gitopsconnector"
 	"github.com/flanksource/karina/pkg/phases/konfigmanager"
 
 	"github.com/flanksource/karina/pkg/phases/mongodboperator"
@@ -190,6 +191,7 @@ func init() {
 		"encryption":           kubeadm.TestEncryption,
 		"externaldns":          externaldns.Test,
 		"git-operator":         gitoperator.Test,
+		"gitops-connector":     gitopsconnector.Test,
 		"gitops":               flux.Test,
 		"harbor":               harbor.Test,
 		"istio-operator":       istiooperator.Test,

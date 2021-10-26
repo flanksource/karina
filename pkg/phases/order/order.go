@@ -24,6 +24,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/filebeat"
 	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
+	"github.com/flanksource/karina/pkg/phases/gitopsconnector"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/ingress"
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
@@ -75,6 +76,7 @@ var Phases = map[string]DeployFn{
 	"filebeat":             filebeat.Deploy,
 	"flux":                 flux.InstallV2,
 	"git-operator":         gitoperator.Install,
+	"gitops-connector":     gitopsconnector.Install,
 	"gitops":               flux.Install,
 	"harbor":               harbor.Deploy,
 	"istio-operator":       istiooperator.Install,

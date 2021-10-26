@@ -778,6 +778,23 @@ type GitOps struct {
 	Args map[string]string `yaml:"args,omitempty" json:"args,omitempty"`
 }
 
+type GitOpsConnector struct {
+	XDisabled            `yaml:",inline" json:",inline"`
+	GitOpsOperatorType   string            `yaml:"gitOpsOperatorType,omitempty" json:"gitopsOperatorType,omitempty"`
+	GitRepositoryType    string            `yaml:"gitRepositoryType,omitempty" json:"gitRepositoryType,omitempty"`
+	CICDOrchestratorType string            `yaml:"ciCdOrchestratorType,omitempty" json:"ciCdOrchestratorType,omitempty"`
+	GitOpsAppURL         string            `yaml:"gitOpsAppUrl,omitempty" json:"gitopsAppUrl,omitempty"`
+	GitRepository        GitRepository     `yaml:"gitRepository,omitempty" json:"gitRepository,omitempty"`
+	Subscribers          map[string]string `yaml:"subscribers,omitempty" json:"subscribers,omitempty"`
+	PersonalAccessToken  kommons.EnvVar    `yaml:"personalAccessToken,omitempty" json:"personalAccessToken,omitempty"`
+}
+
+type GitRepository struct {
+	ManifestsRepo   string `yaml:"manifestsRepo,omitempty" json:"manifestsRepo,omitempty"`
+	OrgURL          string `yaml:"orgUrl,omitempty" json:"orgUrl,omitempty"`
+	PullRequestRepo string `yaml:"pullRequestRepo,omitempty" json:"pullRequestRepo,omitempty"`
+}
+
 type Flux struct {
 	Enabled                        bool   `yaml:"enabled" json:"enabled"`
 	SourceControllerVersion        string `yaml:"sourceControllerVersion,omitempty" json:"sourceControllerVersion,omitempty"`

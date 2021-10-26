@@ -27,9 +27,9 @@ define BUILD_HELM_CHART
 		cd upstream/$*/helm && \
 		$(HELM) template $$($(YQ) r chart.yaml chart_name) --values values.yaml --output-dir ./generated_templates -n $$($(YQ) r chart.yaml namespace) --version $$($(YQ) r chart.yaml version) --repo=$$($(YQ) r chart.yaml repo) --include-crds && \
 		generated_yaml_files=$$(find generated_templates -iname '*.yaml') && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/managed-by"' && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/instance"' && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."helm.sh/chart"'; \
+		echo $(generated_yaml_files) | xargs -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/managed-by"' && \
+		echo $(generated_yaml_files) | xargs -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/instance"' && \
+		echo $(generated_yaml_files) | xargs -I % $(YQ) d -d'*' -i % '**."helm.sh/chart"'; \
 	fi
 endef
 
@@ -92,7 +92,7 @@ template/%.yaml.raw: $$(wildcard upstream/$$*/template/*) bin/kustomize
 	$(call BUILD_TEMPLATE,$*)
 
 .SECONDEXPANSION:
-%.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/*.yaml) bin/kustomize
+%.yaml: $$(wildcard upstream/$$*/base/*) $$(wildcard upstream/$$*/helm/*.yaml) bin/kustomize bin/helm bin/yq
 	$(call BUILD_HELM_CHART,$*)
 	$(call BUILD_BASE,$*)
 	$(call BUILD_RESOURCE,$*)

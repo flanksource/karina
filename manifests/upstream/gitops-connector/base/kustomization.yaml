@@ -1,0 +1,49 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gitops-connector
+images:
+  - name: kaizentm/gitops-connector
+    newName: docker.io/kaizentm/gitops-connector
+    newTag: "{{ .gitOpsConnector.version }}"
+
+resources:
+  - ../helm/generated_templates/gitops-connector/templates/deployment.yaml
+  - ../helm/generated_templates/gitops-connector/templates/secret.yaml
+  - ../helm/generated_templates/gitops-connector/templates/service.yaml
+  - ../helm/generated_templates/gitops-connector/templates/subscribers.yaml
+
+patchesStrategicMerge:
+  - |-
+    $patch: delete
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: gitops-connector-cm
+  - |-
+    $patch: delete
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: gitops-connector-subscribers-config
+  - |-
+    $patch: delete
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: gitops-connector-secret
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: gitops-connector
+    spec:
+      template:
+        spec:
+          containers:
+            - name: connector
+              env:
+                - name: PAT
+                  valueFrom:
+                    secretKeyRef:
+                      name: "{{ .gitOpsConnector.personalAccessToken.valueFrom.secretKeyRef.name }}"
+                      key: "{{ .gitOpsConnector.personalAccessToken.valueFrom.secretKeyRef.key }}"

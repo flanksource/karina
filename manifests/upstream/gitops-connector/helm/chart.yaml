@@ -1,0 +1,4 @@
+repo: https://azure.github.io/gitops-connector/
+chart_name: gitops-connector
+version: 1.0.0
+namespace: gitops-connector 

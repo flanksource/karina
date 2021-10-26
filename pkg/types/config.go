@@ -31,18 +31,19 @@ type PlatformConfig struct {
 	DNS            DynamicDNS                 `yaml:"dns,omitempty" json:"dns,omitempty"`
 	DockerRegistry string                     `yaml:"dockerRegistry,omitempty" json:"dockerRegistry,omitempty"`
 	// The wildcard domain that cluster will be available at
-	Domain        string         `yaml:"domain" json:"domain,omitempty"`
-	ECK           ECK            `yaml:"eck,omitempty" json:"eck,omitempty"`
-	Elasticsearch *Elasticsearch `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
-	EventRouter   EventRouter    `yaml:"eventrouter,omitempty" json:"eventrouter,omitempty"`
-	ExternalDNS   ExternalDNS    `yaml:"externalDns,omitempty" json:"externalDns,omitempty"`
-	Filebeat      []Filebeat     `yaml:"filebeat,omitempty" json:"filebeat,omitempty"`
-	Flux          Flux           `yaml:"flux,omitempty" json:"flux,omitempty"`
-	GCP           GCP            `yaml:"gcp,omitempty" json:"gcp:omitempty"`
-	Gatekeeper    Gatekeeper     `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
-	GitOperator   GitOperator    `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`
-	GitOps        []GitOps       `yaml:"gitops,omitempty" json:"gitops,omitempty"`
-	Harbor        Harbor         `yaml:"harbor,omitempty" json:"harbor,omitempty"`
+	Domain          string          `yaml:"domain" json:"domain,omitempty"`
+	ECK             ECK             `yaml:"eck,omitempty" json:"eck,omitempty"`
+	Elasticsearch   *Elasticsearch  `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
+	EventRouter     EventRouter     `yaml:"eventrouter,omitempty" json:"eventrouter,omitempty"`
+	ExternalDNS     ExternalDNS     `yaml:"externalDns,omitempty" json:"externalDns,omitempty"`
+	Filebeat        []Filebeat      `yaml:"filebeat,omitempty" json:"filebeat,omitempty"`
+	Flux            Flux            `yaml:"flux,omitempty" json:"flux,omitempty"`
+	GCP             GCP             `yaml:"gcp,omitempty" json:"gcp:omitempty"`
+	Gatekeeper      Gatekeeper      `yaml:"gatekeeper,omitempty" json:"gatekeeper,omitempty"`
+	GitOperator     GitOperator     `yaml:"gitOperator,omitempty" json:"gitOperator,omitempty"`
+	GitOps          []GitOps        `yaml:"gitops,omitempty" json:"gitops,omitempty"`
+	GitOpsConnector GitOpsConnector `yaml:"gitOpsConnector,omitempty" json:"gitOpsConnector,omitempty"`
+	Harbor          Harbor          `yaml:"harbor,omitempty" json:"harbor,omitempty"`
 	// A prefix to be added to VM hostnames.
 	HostPrefix string `yaml:"hostPrefix" json:"hostPrefix,omitempty"`
 	// Deprecated, use configFrom instead
