@@ -319,10 +319,6 @@ spec:
                     description: Canary-checker allows for the deployment and configuration
                       of the canary-checker
                     properties:
-                      aggregateServers:
-                        items:
-                          type: string
-                        type: array
                       disabled:
                         type: boolean
                       version:
@@ -330,6 +326,10 @@ spec:
                     type: object
                   certmanager:
                     properties:
+                      externalCA:
+                        description: Set to true if ingress CA will be configured
+                          via kustomise or similar
+                        type: boolean
                       letsencrypt:
                         description: Details of a Letsencrypt issuer to use for signing
                           ingress certificates
@@ -1617,6 +1617,60 @@ spec:
                         type: boolean
                       disabled:
                         type: boolean
+                      modsecurity:
+                        properties:
+                          disabled:
+                            type: boolean
+                          elasticsearch:
+                            properties:
+                              password:
+                                properties:
+                                  name:
+                                    type: string
+                                  value:
+                                    type: string
+                                  valueFrom:
+                                    properties:
+                                      configMapKeyRef:
+                                        properties:
+                                          key:
+                                            type: string
+                                          name:
+                                            type: string
+                                          optional:
+                                            type: boolean
+                                        required:
+                                        - key
+                                        type: object
+                                      secretKeyRef:
+                                        properties:
+                                          key:
+                                            type: string
+                                          name:
+                                            type: string
+                                          optional:
+                                            type: boolean
+                                        required:
+                                        - key
+                                        type: object
+                                    type: object
+                                type: object
+                              port:
+                                type: string
+                              scheme:
+                                type: string
+                              url:
+                                type: string
+                              user:
+                                type: string
+                              verify:
+                                type: string
+                            required:
+                            - url
+                            type: object
+                          filebeatVersion:
+                            type: string
+                        type: object
                       version:
                         description: 'The version of the nginx controller to deploy
                           (default: `0.25.1.flanksource.1`)'
