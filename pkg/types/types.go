@@ -441,7 +441,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Canary-checker allows for the deployment and configuration of the canary-checker
 type CanaryChecker struct {
-	XDisabled        `yaml:",inline" json:",inline"`
+	XDisabled `yaml:",inline" json:",inline"`
 }
 
 type Dashboard struct {
@@ -811,8 +811,9 @@ type Thanos struct {
 	// Only for observability mode. List of client sidecars in `<hostname>:<port>`` format
 	ClientSidecars []string `yaml:"clientSidecars,omitempty" json:"clientSidecars,omitempty"`
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
-	EnableCompactor bool      `yaml:"enableCompactor,omitempty" json:"enableCompactor,omitempty"`
-	E2E             ThanosE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+	EnableCompactor  bool      `yaml:"enableCompactor,omitempty" json:"enableCompactor,omitempty"`
+	E2E              ThanosE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+	AutoCreateBucket bool      `yaml:"autoCreateBucket,omitempty" json:"autoCreateBucket,omitempty"`
 }
 
 type ThanosE2E struct {

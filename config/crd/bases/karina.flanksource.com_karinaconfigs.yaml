@@ -2670,6 +2670,8 @@ spec:
                     type: object
                   thanos:
                     properties:
+                      autoCreateBucket:
+                        type: boolean
                       bucket:
                         description: Bucket to store metrics. Must be the same across
                           all environments
