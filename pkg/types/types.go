@@ -813,8 +813,8 @@ type Thanos struct {
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
 	EnableCompactor bool      `yaml:"enableCompactor,omitempty" json:"enableCompactor,omitempty"`
 	E2E             ThanosE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
-	// Whether to automatically create an S3 bucket that doesn't exist or get one that does. Defaults to 'true'
-	AutoCreateBucket bool `yaml:"autoCreateBucket,omitempty" json:"autoCreateBucket,omitempty"`
+	// Whether to automatically skip creating an S3 bucket that doesn't exist or getting one that does. Defaults to 'false'
+	SkipCreateBucket bool `yaml:"skipCreateBucket,omitempty" json:"skipCreateBucket,omitempty"`
 }
 
 type ThanosE2E struct {

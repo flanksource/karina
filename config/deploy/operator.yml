@@ -2668,10 +2668,6 @@ spec:
                     type: object
                   thanos:
                     properties:
-                      autoCreateBucket:
-                        description: Whether to automatically create an S3 bucket
-                          that doesn't exist or get one that does. Defaults to 'true'
-                        type: boolean
                       bucket:
                         description: Bucket to store metrics. Must be the same across
                           all environments
@@ -2699,6 +2695,11 @@ spec:
                       retention:
                         description: Retention of long-term storage, defaults to 180d
                         type: string
+                      skipCreateBucket:
+                        description: Whether to automatically skip creating an S3
+                          bucket that doesn't exist or getting one that does. Defaults
+                          to 'false'
+                        type: boolean
                       version:
                         type: string
                     type: object
