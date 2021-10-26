@@ -441,8 +441,7 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Canary-checker allows for the deployment and configuration of the canary-checker
 type CanaryChecker struct {
-	XDisabled        `yaml:",inline" json:",inline"`
-	AggregateServers []string `yaml:"aggregateServers" json:"aggregateServers"`
+	XDisabled `yaml:",inline" json:",inline"`
 }
 
 type Dashboard struct {
@@ -814,6 +813,8 @@ type Thanos struct {
 	// Only for observability mode. Disable compactor singleton if there are multiple observability clusters
 	EnableCompactor bool      `yaml:"enableCompactor,omitempty" json:"enableCompactor,omitempty"`
 	E2E             ThanosE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+	// Whether to automatically skip creating an S3 bucket that doesn't exist or getting one that does. Defaults to 'false'
+	SkipCreateBucket bool `yaml:"skipCreateBucket,omitempty" json:"skipCreateBucket,omitempty"`
 }
 
 type ThanosE2E struct {

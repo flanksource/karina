@@ -131,9 +131,10 @@ func Install(p *platform.Platform) error {
 		if p.Thanos.Mode != ThanosClientMode && p.Thanos.Mode != ThanosObservabilityMode {
 			return fmt.Errorf("invalid thanos mode '%s',  valid options are  'client' or 'observability'", p.Thanos.Mode)
 		}
-
-		if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
-			return err
+		if !p.Thanos.SkipCreateBucket {
+			if err := p.GetOrCreateBucket(p.Thanos.Bucket); err != nil {
+				return err
+			}
 		}
 	}
 
