@@ -3,16 +3,13 @@ filebeat:
     - type: log
       paths:
         - /var/log/modsecurity/modsec_audit.log
+      json.keys_under_root: true
   config:
     modules:
       path: /usr/share/filebeat/modules.d/*.yml
       reload:
         enabled: true
-  processors:
-    - dissect:
-        tokenizer: "%{message}"
-        target_prefix: ""
-        ignore_failure: true
+
 output.elasticsearch:
   hosts: ['${ELASTIC_URL}']
   username: '${ELASTIC_USERNAME}'
