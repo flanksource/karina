@@ -333,6 +333,7 @@ type Nginx struct {
 type Modsecurity struct {
 	Disabled        bool        `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	FilebeatVersion string      `yaml:"filebeatVersion,omitempty" json:"filebeatVersion,omitempty"`
+	Index           string      `yaml:"index" json:"index"`
 	Elasticsearch   *Connection `yaml:"elasticsearch,omitempty" json:"elasticsearch,omitempty"`
 }
 

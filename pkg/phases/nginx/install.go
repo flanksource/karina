@@ -77,11 +77,11 @@ func Install(platform *platform.Platform) error {
 			return err
 		}
 
-		config, err := platform.GetResourceByName("modsecurity-filebeat.yaml", "manifests")
+		config, err := platform.Template("modsecurity-filebeat.yaml", "manifests")
 		if err != nil {
 			return err
 		}
-		config = strings.ReplaceAll(config, "{{ sslMode }}", sslMode)
+		config = strings.ReplaceAll(config, "$sslMode$", sslMode)
 		filebeatConfig := map[string][]byte{
 			"filebeat.yml": []byte(config),
 		}

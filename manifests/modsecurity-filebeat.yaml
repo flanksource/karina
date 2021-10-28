@@ -16,4 +16,14 @@ output.elasticsearch:
   password: '${ELASTIC_PASSWORD}'
   ssl:
     supported_protocols: ['TLSv1.2', 'TLSv1.3']
-    verification_mode: {{ sslMode }}
+    verification_mode: '$sslMode$'
+{{- if ne .nginx.modsecurity.index "" }}
+  index: '{{.nginx.modsecurity.index }}-%{[agent.version]}-%{+yyyy.MM.dd}'
+setup:
+  template:
+    name: '{{.nginx.modsecurity.index }}'
+    pattern: '{{.nginx.modsecurity.index }}-*'
+    enabled: false
+  ilm:
+    rollover_alias: '{{.nginx.modsecurity.index }}-%{[agent.version]}'
+{{ end }}
