@@ -170,7 +170,7 @@ func deployDashboards(p *platform.Platform) error {
 			return errors.Wrapf(err, "failed to template: %v", name)
 		}
 
-		if err := DeployDashboard(p, "Built-In", kommons.GetDNS1192Name(rootPath+"/"+name), contents); err != nil {
+		if err := DeployDashboard(p, "Built-In", kommons.GetDNS1192Name(name), contents); err != nil {
 			return err
 		}
 	}
