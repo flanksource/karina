@@ -46,6 +46,9 @@ spec:
                 name: github-account
                 optional: true
             - secretRef:
+                name: gitlab-account
+                optional: true
+            - secretRef:
                 name: ldap-account
                 optional: true
       volumes:

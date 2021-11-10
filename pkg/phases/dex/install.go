@@ -56,6 +56,14 @@ func Install(platform *platform.Platform) error {
 			return fmt.Errorf("install: failed to create/update github secret: %v", err)
 		}
 	}
+	if platform.Dex.Gitlab.ApplicationID != "" {
+		if err := platform.CreateOrUpdateSecret("gitlab-account", Namespace, map[string][]byte{
+			"GITLAB_APPLICATION_ID": []byte(platform.Dex.Gitlab.ApplicationID),
+			"GITLAB_CLIENT_SECRET":  []byte(platform.Dex.Gitlab.ClientSecret),
+		}); err != nil {
+			return fmt.Errorf("install: failed to create/update gitlab secret: %v", err)
+		}
+	}
 	if !platform.Ldap.Disabled {
 		if err := platform.CreateOrUpdateSecret("ldap-account", Namespace, map[string][]byte{
 			"AD_PASSWORD": []byte(platform.Ldap.Password),

@@ -452,6 +452,13 @@ type Dex struct {
 	XDisabled `yaml:",inline" json:",inline"`
 	Google    GoogleOIDC `yaml:"google,omitempty" json:"google,omitempty"`
 	Github    GithubOIDC `yaml:"github,omitempty" json:"github,omitempty"`
+	Gitlab    GitlabOIDC `yaml:"gitlab,omitempty" json:"gitlab,omitempty"`
+}
+
+type GitlabOIDC struct {
+	ApplicationID string   `yaml:"applicationID,omitempty" json:"applicationID,omitempty"`
+	ClientSecret  string   `yaml:"clientSecret,omitempty" json:"clientSecret,omitempty"`
+	Groups        []string `yaml:"groups,omitempty" json:"groups,omitempty"`
 }
 
 type GithubOIDC struct {
