@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "prometheus",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.2.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "singlestat",
-      "name": "Singlestat",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -44,32 +8,65 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
+  "description": "Cluster level overview of workloads deployed, based on prometheus metrics exposed by kubelet, node-exporter, nginx ingress controller",
   "editable": true,
+  "gnetId": 7249,
   "graphTooltip": 0,
-  "id": null,
+  "id": 4,
+  "iteration": 1636638176033,
   "links": [],
   "panels": [
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(50, 172, 45, 0.97)",
-        "rgba(248, 112, 0, 0.89)",
-        "rgba(245, 54, 54, 0.9)"
-      ],
       "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 3000,
-        "minValue": 0,
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "max": 3000,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": null
+              },
+              {
+                "color": "rgba(248, 112, 0, 0.89)",
+                "value": 2000
+              },
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": 2500
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -80,38 +77,21 @@
       "id": 13,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(0, 192, 255)",
-        "show": true
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
           "expr": "sum(nginx_connections_total{type=\"active\"})",
@@ -123,37 +103,51 @@
           "step": 40
         }
       ],
-      "thresholds": "2000,2500",
       "title": "Current Connections",
-      "type": "singlestat",
-      "valueFontSize": "120%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "current"
+      "type": "gauge"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
       "datasource": "$datasource",
-      "decimals": 2,
-      "format": "percentunit",
-      "gauge": {
-        "maxValue": 1,
-        "minValue": 0,
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 0.1
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 0.2
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -164,79 +158,78 @@
       "id": 4,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": true
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
+          "exemplar": true,
           "expr": "sort_desc(min(avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) by (instance)))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "",
           "refId": "A",
           "step": 40
         }
       ],
-      "thresholds": "0.1,0.2",
       "title": "Least CPU Idle",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "gauge"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
       "datasource": "$datasource",
       "description": "",
-      "format": "percentunit",
-      "gauge": {
-        "maxValue": 1,
-        "minValue": 0,
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 0.075
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 0.2
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -247,77 +240,77 @@
       "id": 2,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": true
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "min(node_filesystem_avail_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}/node_filesystem_size_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}",
+          "exemplar": true,
+          "expr": "min(node_filesystem_avail_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"}/node_filesystem_size_bytes{fstype!~\"squashfs|nsfs|tmpfs|vfat\"})",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
+          "legendFormat": "",
           "refId": "A",
           "step": 40
         }
       ],
-      "thresholds": "0.075,0.2",
       "title": "Min Space",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "avg"
+      "type": "gauge"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
       "datasource": "$datasource",
-      "format": "percentunit",
-      "gauge": {
-        "maxValue": 1,
-        "minValue": 0,
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 0.05
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 0.15
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -328,38 +321,21 @@
       "id": 9,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": true
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
           "expr": "min(node_memory_MemAvailable_bytes/node_memory_MemTotal_bytes)",
@@ -371,36 +347,50 @@
           "step": 40
         }
       ],
-      "thresholds": "0.05,0.15",
       "title": "Min Mem",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "avg"
+      "type": "gauge"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(50, 172, 45, 0.97)",
-        "rgba(248, 112, 0, 0.89)",
-        "rgba(245, 54, 54, 0.9)"
-      ],
       "datasource": "$datasource",
-      "format": "s",
-      "gauge": {
-        "maxValue": 10,
-        "minValue": 0,
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "max": 10,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": null
+              },
+              {
+                "color": "rgba(248, 112, 0, 0.89)",
+                "value": 2
+              },
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -411,42 +401,27 @@
       "id": 15,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(0, 192, 255)",
-        "show": true
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "avg(irate(http_request_duration_seconds_count{status=\"200\", method=\"GET\"}[10m]))",
+          "exemplar": true,
+          "expr": "avg(irate(kubelet_http_requests_duration_seconds_count{method=\"GET\"}[10m]))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "",
           "metric": "node_memory_MemTotal",
@@ -454,37 +429,59 @@
           "step": 40
         }
       ],
-      "thresholds": "2,5",
       "title": "Request Time",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "avg"
+      "type": "gauge"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(50, 172, 45, 0.97)",
-        "rgba(248, 112, 0, 0.89)",
-        "rgba(245, 54, 54, 0.9)"
-      ],
       "datasource": "$datasource",
       "description": "",
-      "format": "none",
-      "gauge": {
-        "maxValue": 10,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "N/A": {
+                  "color": "rgba(50, 172, 45, 0.97)",
+                  "text": "0"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "color": "rgba(50, 172, 45, 0.97)",
+                  "text": "0"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": null
+              },
+              {
+                "color": "rgba(248, 112, 0, 0.89)",
+                "value": 1
+              },
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -495,67 +492,37 @@
       "id": 14,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": true,
-        "lineColor": "rgb(0, 192, 255)",
-        "show": true
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
           "expr": "count(sum by (pod)(delta(kube_pod_container_status_restarts_total[15m]) > 0))",
           "format": "time_series",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{pod}}"`}},
+          "legendFormat": "{{pod}}",
           "metric": "node_memory_MemTotal",
           "refId": "A",
           "step": 40
         }
       ],
-      "thresholds": "1,10",
       "timeFrom": null,
       "title": "Pod Restarts",
-      "type": "singlestat",
-      "valueFontSize": "120%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "0",
-          "value": "null"
-        },
-        {
-          "op": "=",
-          "text": "0",
-          "value": "N/A"
-        }
-      ],
-      "valueName": "current"
+      "type": "stat"
     },
     {
       "aliasColors": {},
@@ -564,6 +531,7 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -571,6 +539,7 @@
         "y": 0
       },
       "height": "",
+      "hiddenSeries": false,
       "id": 16,
       "legend": {
         "alignAsTable": true,
@@ -586,7 +555,11 @@
       "linewidth": 0,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -599,13 +572,14 @@
           "expr": "sum by (pod)(delta(kube_pod_container_status_restarts_total[15m]) > 0)",
           "format": "time_series",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{pod}}"`}},
+          "legendFormat": "{{pod}}",
           "refId": "A",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Pods Restarted",
       "tooltip": {
@@ -653,12 +627,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 3,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 18,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 5,
       "legend": {
         "alignAsTable": true,
@@ -674,7 +650,11 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null as zero",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -689,7 +669,7 @@
           "hide": false,
           "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{ phase }}"`}},
+          "legendFormat": "{{ phase }}",
           "metric": "kube_pod_status_phase",
           "refId": "A",
           "step": 10
@@ -698,13 +678,14 @@
           "expr": "kubelet_running_pod_count{kubernetes_io_role =~ \".*node.*\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{ instance }}"`}},
+          "legendFormat": "{{ instance }}",
           "refId": "B",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Pods Running Count",
       "tooltip": {
@@ -750,12 +731,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 0,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "avg": false,
@@ -770,7 +753,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -783,7 +770,7 @@
           "expr": "node_load1",
           "format": "time_series",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "metric": "node_load1",
           "refId": "A",
           "step": 10
@@ -791,6 +778,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Load 1m",
       "tooltip": {
@@ -836,12 +824,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 6,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 7,
       "legend": {
         "alignAsTable": true,
@@ -857,7 +847,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -870,7 +864,7 @@
           "expr": "node_memory_MemFree_bytes + node_memory_Buffers_bytes + node_memory_Cached_bytes",
           "format": "time_series",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "metric": "node_memory_MemAvailable",
           "refId": "A",
           "step": 10
@@ -878,6 +872,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Memory",
       "tooltip": {
@@ -923,6 +918,7 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 6,
@@ -930,6 +926,7 @@
         "y": 7
       },
       "height": "230px",
+      "hiddenSeries": false,
       "id": 3,
       "legend": {
         "avg": false,
@@ -944,7 +941,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -958,13 +959,14 @@
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{ instance }}"`}},
+          "legendFormat": "{{ instance }}",
           "refId": "A",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "CPU Idle Avg",
       "tooltip": {
@@ -1010,6 +1012,7 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 4,
@@ -1017,6 +1020,7 @@
         "y": 8
       },
       "height": "",
+      "hiddenSeries": false,
       "id": 1,
       "legend": {
         "alignAsTable": true,
@@ -1032,7 +1036,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1046,13 +1054,14 @@
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Node Storage",
       "tooltip": {
@@ -1098,12 +1107,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 0,
         "y": 13
       },
+      "hiddenSeries": false,
       "id": 17,
       "legend": {
         "avg": false,
@@ -1118,7 +1129,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1133,13 +1148,14 @@
           "hide": false,
           "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{device}}"`}},
+          "legendFormat": "{{instance}} {{device}}",
           "refId": "A",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Disk IO s",
       "tooltip": {
@@ -1185,6 +1201,7 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
@@ -1192,6 +1209,7 @@
         "y": 13
       },
       "height": "300px",
+      "hiddenSeries": false,
       "id": 10,
       "legend": {
         "alignAsTable": true,
@@ -1207,7 +1225,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1220,13 +1242,14 @@
           "expr": "topk(5,sum(container_memory_usage_bytes{image!=\"\"}) by (pod_name))",
           "format": "time_series",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{pod_name}}"`}},
+          "legendFormat": "{{pod_name}}",
           "refId": "A",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Top 5 Memory Intense Pods",
       "tooltip": {
@@ -1272,6 +1295,7 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -1279,6 +1303,7 @@
         "y": 14
       },
       "height": "230px",
+      "hiddenSeries": false,
       "id": 6,
       "legend": {
         "alignAsTable": true,
@@ -1295,7 +1320,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1309,7 +1338,7 @@
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{ container_name }} in {{ pod_name }}"`}},
+          "legendFormat": "{{ container_name }} in {{ pod_name }}",
           "metric": "container_cpu_usage_seconds_total",
           "refId": "A",
           "step": 4
@@ -1317,6 +1346,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "TOP CPU Containers",
       "tooltip": {
@@ -1357,12 +1387,19 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 16,
+  "schemaVersion": 30,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "prometheus",
+          "value": "prometheus"
+        },
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": null,
@@ -1377,6 +1414,8 @@
       },
       {
         "datasource": "$datasource",
+        "description": null,
+        "error": null,
         "filters": [],
         "hide": 0,
         "label": "Filter",
@@ -1418,7 +1457,5 @@
   "timezone": "",
   "title": "Kubernetes Cluster",
   "uid": "os6Bh8Omk",
-  "version": 25,
-  "gnetId": 7249,
-  "description": "Cluster level overview of workloads deployed, based on prometheus metrics exposed by kubelet, node-exporter, nginx ingress controller"
+  "version": 1
 }
