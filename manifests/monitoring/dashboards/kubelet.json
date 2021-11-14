@@ -8,6 +8,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -15,27 +21,45 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 21,
-  "iteration": 1577085700340,
+  "id": 35,
+  "iteration": 1636638030784,
   "links": [],
   "panels": [
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
       "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -46,39 +70,23 @@
       "id": 2,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
           "expr": "sum(up{job=\"kubelet\"})",
@@ -88,39 +96,44 @@
           "refId": "A"
         }
       ],
-      "thresholds": "",
       "title": "Up",
-      "tooltip": {
-        "shared": false
-      },
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "stat"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
       "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -131,81 +144,72 @@
       "id": 3,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "sum(kubelet_running_pod_count{job=\"kubelet\", instance=~\"$instance\"})",
+          "exemplar": true,
+          "expr": "sum(kubelet_running_pods{job=\"kubelet\", node=~\"$node\"})",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "thresholds": "",
       "title": "Running Pods",
-      "tooltip": {
-        "shared": false
-      },
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "stat"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
       "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -216,81 +220,72 @@
       "id": 4,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "sum(kubelet_running_container_count{job=\"kubelet\", instance=~\"$instance\"})",
+          "exemplar": true,
+          "expr": "sum(kubelet_running_containers{job=\"kubelet\", node=~\"$node\"})",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "thresholds": "",
       "title": "Running Container",
-      "tooltip": {
-        "shared": false
-      },
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "stat"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
       "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -301,81 +296,72 @@
       "id": 5,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "sum(volume_manager_total_volumes{job=\"kubelet\", instance=~\"$instance\", state=\"actual_state_of_world\"})",
+          "exemplar": true,
+          "expr": "sum(volume_manager_total_volumes{job=\"kubelet\", node=~\"$node\", state=\"actual_state_of_world\"})",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "thresholds": "",
       "title": "Actual Volume Count",
-      "tooltip": {
-        "shared": false
-      },
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "stat"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
       "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -386,81 +372,72 @@
       "id": 6,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "sum(volume_manager_total_volumes{job=\"kubelet\", instance=~\"$instance\",state=\"desired_state_of_world\"})",
+          "exemplar": true,
+          "expr": "sum(volume_manager_total_volumes{job=\"kubelet\", node=~\"$node\",state=\"desired_state_of_world\"})",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "thresholds": "",
       "title": "Desired Volume Count",
-      "tooltip": {
-        "shared": false
-      },
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "stat"
     },
     {
       "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
-      "datasource": "$datasource",
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "datasource": "${datasource}",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -471,63 +448,36 @@
       "id": 7,
       "interval": null,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.1.1",
       "targets": [
         {
-          "expr": "sum(rate(kubelet_node_config_error{job=\"kubelet\", instance=~\"$instance\"}[5m]))",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_node_config_error{job=\"kubelet\", node=~\"$node\"}[5m]))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "thresholds": "",
       "title": "Config Error Count",
-      "tooltip": {
-        "shared": false
-      },
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "min"
+      "type": "stat"
     },
     {
       "aliasColors": {},
@@ -535,6 +485,12 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -543,6 +499,7 @@
         "x": 0,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "alignAsTable": true,
@@ -560,9 +517,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -573,10 +531,12 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(kubelet_runtime_operations_total{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (operation_type, instance)",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_runtime_operations_total{job=\"kubelet\",node=~\"$node\"}[5m])) by (operation_type, node)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_type}}"`}},
+          "legendFormat": "{{node}} {{operation_type}}",
           "refId": "A"
         }
       ],
@@ -627,6 +587,12 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -635,6 +601,7 @@
         "x": 12,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 9,
       "legend": {
         "alignAsTable": true,
@@ -652,9 +619,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -665,10 +633,12 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(kubelet_runtime_operations_errors_total{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, operation_type)",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_runtime_operations_errors_total{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, operation_type)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_type}}"`}},
+          "legendFormat": "{{node}} {{operation_type}}",
           "refId": "A"
         }
       ],
@@ -719,6 +689,12 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -727,6 +703,7 @@
         "x": 0,
         "y": 14
       },
+      "hiddenSeries": false,
       "id": 10,
       "legend": {
         "alignAsTable": true,
@@ -744,9 +721,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -757,10 +735,12 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(kubelet_runtime_operations_duration_seconds_bucket{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, operation_type, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(kubelet_runtime_operations_duration_seconds_bucket{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, operation_type, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_type}}"`}},
+          "legendFormat": "{{node}} {{operation_type}}",
           "refId": "A"
         }
       ],
@@ -811,6 +791,12 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -819,6 +805,7 @@
         "x": 0,
         "y": 21
       },
+      "hiddenSeries": false,
       "id": 11,
       "legend": {
         "alignAsTable": true,
@@ -836,9 +823,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -849,17 +837,22 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(kubelet_pod_start_duration_seconds_count{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance)",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_pod_start_duration_seconds_count{job=\"kubelet\",node=~\"$node\"}[5m])) by (node)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} pod"`}},
+          "legendFormat": "{{node}} pod",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(kubelet_pod_worker_duration_seconds_count{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance)",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_pod_worker_duration_seconds_count{job=\"kubelet\",node=~\"$node\"}[5m])) by (node)",
           "format": "time_series",
+          "instant": false,
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} worker"`}},
+          "legendFormat": "{{node}} worker",
           "refId": "B"
         }
       ],
@@ -910,6 +903,12 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -918,6 +917,7 @@
         "x": 12,
         "y": 21
       },
+      "hiddenSeries": false,
       "id": 12,
       "legend": {
         "alignAsTable": true,
@@ -935,9 +935,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -948,17 +949,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pod_start_duration_seconds_count{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pod_start_duration_seconds_count{job=\"kubelet\",node=~\"$instance\"}[5m])) by (node, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} pod"`}},
+          "legendFormat": "{{node}} pod",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pod_worker_duration_seconds_bucket{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pod_worker_duration_seconds_bucket{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} worker"`}},
+          "legendFormat": "{{instance}} worker",
           "refId": "B"
         }
       ],
@@ -1010,12 +1015,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
         "y": 28
       },
+      "hiddenSeries": false,
       "id": 13,
       "legend": {
         "alignAsTable": true,
@@ -1034,8 +1041,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1046,15 +1056,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(storage_operation_duration_seconds_count{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, operation_name, volume_plugin)",
+          "exemplar": true,
+          "expr": "sum(rate(storage_operation_duration_seconds_count{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, operation_name, volume_plugin)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_name}} {{volume_plugin}}"`}},
+          "legendFormat": "{{node}} {{operation_name}} {{volume_plugin}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Storage Operation Rate",
       "tooltip": {
@@ -1087,7 +1100,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1096,12 +1113,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
         "y": 28
       },
+      "hiddenSeries": false,
       "id": 14,
       "legend": {
         "alignAsTable": true,
@@ -1120,8 +1139,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1132,15 +1154,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(storage_operation_errors_total{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, operation_name, volume_plugin)",
+          "exemplar": true,
+          "expr": "sum(rate(storage_operation_errors_total{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, operation_name, volume_plugin)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_name}} {{volume_plugin}}"`}},
+          "legendFormat": "{{node}} {{operation_name}} {{volume_plugin}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Storage Operation Error Rate",
       "tooltip": {
@@ -1173,7 +1198,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1182,12 +1211,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
         "y": 35
       },
+      "hiddenSeries": false,
       "id": 15,
       "legend": {
         "alignAsTable": true,
@@ -1206,8 +1237,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1218,15 +1252,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(storage_operation_duration_seconds_bucket{job=\"kubelet\", instance=~\"$instance\"}[5m])) by (instance, operation_name, volume_plugin, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(storage_operation_duration_seconds_bucket{job=\"kubelet\", node=~\"$node\"}[5m])) by (node, operation_name, volume_plugin, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_name}} {{volume_plugin}}"`}},
+          "legendFormat": "{{node}} {{operation_name}} {{volume_plugin}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Storage Operation Duration 99th quantile",
       "tooltip": {
@@ -1259,7 +1296,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1268,12 +1309,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
         "y": 42
       },
+      "hiddenSeries": false,
       "id": 16,
       "legend": {
         "alignAsTable": true,
@@ -1290,8 +1333,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1302,15 +1348,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(kubelet_cgroup_manager_duration_seconds_count{job=\"kubelet\", instance=~\"$instance\"}[5m])) by (instance, operation_type)",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_cgroup_manager_duration_seconds_count{job=\"kubelet\", node=~\"$node\"}[5m])) by (node, operation_type)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{operation_type}}"`}},
+          "legendFormat": "{{node}} {{operation_type}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Cgroup manager operation rate",
       "tooltip": {
@@ -1343,7 +1392,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1352,12 +1405,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
         "y": 42
       },
+      "hiddenSeries": false,
       "id": 17,
       "legend": {
         "alignAsTable": true,
@@ -1374,8 +1429,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1386,15 +1444,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(kubelet_cgroup_manager_duration_seconds_bucket{job=\"kubelet\", instance=~\"$instance\"}[5m])) by (instance, operation_type, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(kubelet_cgroup_manager_duration_seconds_bucket{job=\"kubelet\", node=~\"$node\"}[5m])) by (node, operation_type, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{operation_type}}"`}},
+          "legendFormat": "{{node}} {{operation_type}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Cgroup manager 99th quantile",
       "tooltip": {
@@ -1427,7 +1488,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1437,12 +1502,14 @@
       "datasource": "$datasource",
       "description": "Pod lifecycle event generator",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
         "y": 49
       },
+      "hiddenSeries": false,
       "id": 18,
       "legend": {
         "alignAsTable": true,
@@ -1459,8 +1526,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1471,15 +1541,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(kubelet_pleg_relist_duration_seconds_count{job=\"kubelet\", instance=~\"$instance\"}[5m])) by (instance)",
+          "exemplar": true,
+          "expr": "sum(rate(kubelet_pleg_relist_duration_seconds_count{job=\"kubelet\", node=~\"$node\"}[5m])) by (instance)",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "PLEG relist rate",
       "tooltip": {
@@ -1512,7 +1585,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1521,12 +1598,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
         "y": 49
       },
+      "hiddenSeries": false,
       "id": 19,
       "legend": {
         "alignAsTable": true,
@@ -1543,8 +1622,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1555,15 +1637,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_interval_seconds_bucket{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_interval_seconds_bucket{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "PLEG relist interval",
       "tooltip": {
@@ -1596,7 +1681,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1605,12 +1694,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
         "y": 56
       },
+      "hiddenSeries": false,
       "id": 20,
       "legend": {
         "alignAsTable": true,
@@ -1627,8 +1718,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1639,15 +1733,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_duration_seconds_bucket{job=\"kubelet\",instance=~\"$instance\"}[5m])) by (instance, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_duration_seconds_bucket{job=\"kubelet\",node=~\"$node\"}[5m])) by (node, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "PLEG relist duration",
       "tooltip": {
@@ -1680,7 +1777,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1689,12 +1790,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
         "y": 63
       },
+      "hiddenSeries": false,
       "id": 21,
       "legend": {
         "alignAsTable": false,
@@ -1711,8 +1814,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1723,29 +1829,37 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", instance=~\"$instance\",code=~\"2..\"}[5m]))",
+          "exemplar": true,
+          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", node=~\"$node\",code=~\"2..\"}[5m]))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "2xx",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", instance=~\"$instance\",code=~\"3..\"}[5m]))",
+          "exemplar": true,
+          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", node=~\"$node\",code=~\"3..\"}[5m]))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "3xx",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", instance=~\"$instance\",code=~\"4..\"}[5m]))",
+          "exemplar": true,
+          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", node=~\"$node\",code=~\"4..\"}[5m]))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "4xx",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", instance=~\"$instance\",code=~\"5..\"}[5m]))",
+          "exemplar": true,
+          "expr": "sum(rate(rest_client_requests_total{job=\"kubelet\", node=~\"$node\",code=~\"5..\"}[5m]))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "5xx",
           "refId": "D"
@@ -1753,6 +1867,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "RPC Rate",
       "tooltip": {
@@ -1785,7 +1900,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1794,12 +1913,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
         "y": 70
       },
+      "hiddenSeries": false,
       "id": 22,
       "legend": {
         "alignAsTable": true,
@@ -1816,8 +1937,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1828,15 +1952,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_latency_seconds_bucket{job=\"kubelet\", instance=~\"$instance\"}[5m])) by (instance, verb, url, le))",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_latency_seconds_bucket{job=\"kubelet\", node=~\"$node\"}[5m])) by (node, verb, url, le))",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{`"legendFormat": "{{instance}} {{verb}} {{url}}"`}},
+          "legendFormat": "{{node}} {{verb}} {{url}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Request duration 99th quantile",
       "tooltip": {
@@ -1869,7 +1996,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1878,12 +2009,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 0,
         "y": 77
       },
+      "hiddenSeries": false,
       "id": 23,
       "legend": {
         "alignAsTable": false,
@@ -1900,8 +2033,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1912,15 +2048,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "process_resident_memory_bytes{job=\"kubelet\",instance=~\"$instance\"}",
+          "exemplar": true,
+          "expr": "process_resident_memory_bytes{job=\"kubelet\",node=~\"$node\"}",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Memory",
       "tooltip": {
@@ -1953,21 +2092,27 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "$datasource",
+      "datasource": "${datasource}",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 8,
         "y": 77
       },
+      "hiddenSeries": false,
       "id": 24,
       "legend": {
         "alignAsTable": false,
@@ -1984,8 +2129,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1996,15 +2144,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total{job=\"kubelet\",instance=~\"$instance\"}[5m])",
+          "exemplar": true,
+          "expr": "rate(process_cpu_seconds_total{job=\"kubelet\",node=~\"$node\"}[5m])",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "CPU usage",
       "tooltip": {
@@ -2037,7 +2188,11 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -2046,12 +2201,14 @@
       "dashes": false,
       "datasource": "$datasource",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 16,
         "y": 77
       },
+      "hiddenSeries": false,
       "id": 25,
       "legend": {
         "alignAsTable": false,
@@ -2068,8 +2225,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.1.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2080,15 +2240,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "go_goroutines{job=\"kubelet\",instance=~\"$instance\"}",
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"kubelet\",node=~\"$node\"}",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
-          {{ `"legendFormat": "{{instance}}"`}},
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Goroutines",
       "tooltip": {
@@ -2121,11 +2284,15 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "",
-  "schemaVersion": 20,
+  "schemaVersion": 30,
   "style": "dark",
   "tags": [
     "kubernetes-mixin"
@@ -2133,6 +2300,13 @@
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "prometheus",
+          "value": "prometheus"
+        },
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": null,
@@ -2140,6 +2314,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -2149,24 +2324,29 @@
         "allValue": null,
         "current": {
           "isNone": true,
+          "selected": true,
           "text": "None",
           "value": ""
         },
         "datasource": "$datasource",
         "definition": "",
+        "description": null,
+        "error": null,
         "hide": 2,
         "includeAll": false,
         "label": "cluster",
         "multi": false,
         "name": "cluster",
         "options": [],
-        "query": "label_values(kube_pod_info, cluster)",
+        "query": {
+          "query": "label_values(kube_pod_info, cluster)",
+          "refId": "prometheus-cluster-Variable-Query"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -2174,30 +2354,37 @@
       {
         "allValue": null,
         "current": {
+          "selected": true,
           "text": "All",
           "value": "$__all"
         },
         "datasource": "$datasource",
         "definition": "",
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": true,
         "label": null,
         "multi": false,
-        "name": "instance",
+        "name": "node",
         "options": [],
-        "query": "label_values(kubelet_runtime_operations{job=\"kubelet\"}, instance)",
+        "query": {
+          "query": "label_values(kubelet_runtime_operations_total{job=\"kubelet\"}, node)",
+          "refId": "prometheus-instance-Variable-Query"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
         "datasource": "$datasource",
+        "description": null,
+        "error": null,
         "filters": [],
         "hide": 0,
         "label": "Filter",
