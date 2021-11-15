@@ -1,7 +1,7 @@
 #!/bin/bash
 : ${FETCH_REF:=1}
 mkdir -p .bin .ref
-REFERENCE_VERSION=${REFERENCE_VERSION:-v0.24.1}
+REFERENCE_VERSION=${REFERENCE_VERSION:-v0.51.0}
 KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.19.11}
 SUITE=${SUITE:-minimal}
 if test -f ./.bin/karina; then
