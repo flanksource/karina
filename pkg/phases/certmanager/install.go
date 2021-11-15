@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/blang/semver/v4"
 	"github.com/flanksource/commons/certs"
@@ -101,12 +102,20 @@ func Install(p *platform.Platform) error {
 	//remove old mutating webhooks
 	_ = p.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
 
-	if err := p.ApplySpecs("", "cert-manager-deploy.yaml", "cert-manager-monitor.yaml.raw"); err != nil {
+	if err := p.ApplySpecs("", "cert-manager.yaml", "cert-manager-monitor.yaml.raw"); err != nil {
 		return fmt.Errorf("failed to deploy cert-manager: %v", err)
 	}
 
 	if p.DryRun {
 		return nil
+	}
+
+	if err := p.WaitForDeployment(Namespace, "cert-manager-webhook", 2*time.Minute); err != nil {
+		return err
+	}
+
+	if err := p.ApplySpecs("", "cert-manager-clusterissuer.yaml"); err != nil {
+		return fmt.Errorf("failed to deploy default ClusterIssuer: %v", err)
 	}
 
 	if !p.CertManager.ExternalCA {
@@ -118,10 +127,6 @@ func Install(p *platform.Platform) error {
 	ca, err := p.CreateOrGetWebhookCertificate(Namespace, WebhookService)
 	if err != nil {
 		return err
-	}
-
-	if err := p.ApplySpecs("", "cert-manager-webhook.yaml"); err != nil {
-		return fmt.Errorf("failed to deploy cert-manager webhook: %v", err)
 	}
 
 	webhooks, err := p.CreateWebhookBuilder(Namespace, WebhookService, ca)

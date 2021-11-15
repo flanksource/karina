@@ -150,7 +150,7 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
-        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+        run: kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
         uses: actions/upload-artifact@v2
@@ -186,7 +186,7 @@ jobs:
           SUITE: ${{ matrix.suite }}
           KUBERNETES_VERSION: ${{matrix.k8s}}
           BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
-          REFERENCE_VERSION: v0.24.1
+          REFERENCE_VERSION: v0.51.0
         run: ./test/upgrade.sh
       - name: Upload test results
         if: ${{ always() }}
@@ -204,7 +204,7 @@ jobs:
           path: artifacts/snapshot.zip
       - name: Generate Kind logs
         if: failure()
-        run: .bin/kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+        run: kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
       - name: Upload Kind logs
         if: failure()
         uses: actions/upload-artifact@v2

@@ -3,7 +3,7 @@ package types
 func DefaultPlatformConfig() PlatformConfig {
 	config := PlatformConfig{
 		CertManager: CertManager{
-			Version: "v1.0.3",
+			Version: "v1.5.4",
 		},
 		TemplateOperator: TemplateOperator{
 			XDisabled: XDisabled{Version: "v0.1.9"},
