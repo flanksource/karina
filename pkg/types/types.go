@@ -457,7 +457,7 @@ type Dex struct {
 }
 
 type GitlabOIDC struct {
-	URL 		  string   `yaml:"url,omitempty" json:"url,omitempty"`
+	URL           string   `yaml:"url,omitempty" json:"url,omitempty"`
 	ApplicationID string   `yaml:"applicationID,omitempty" json:"applicationID,omitempty"`
 	ClientSecret  string   `yaml:"clientSecret,omitempty" json:"clientSecret,omitempty"`
 	Groups        []string `yaml:"groups,omitempty" json:"groups,omitempty"`
