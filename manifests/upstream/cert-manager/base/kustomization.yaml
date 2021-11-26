@@ -6,7 +6,7 @@ images:
   - name: quay.io/jetstack/cert-manager-webhook
     newTag: "{{.certmanager.version}}"
 resources:
-  - https://github.com/jetstack/cert-manager/releases/download/v1.5.4/cert-manager.yaml
+  - https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
 
 patchesStrategicMerge:
   - |-
