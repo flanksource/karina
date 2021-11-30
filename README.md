@@ -1,5 +1,4 @@
 
-
 <h1 align="center"><img src="https://github.com/flanksource/karina/raw/master/docs/img/logo.png"></i></h1>
   <p align="center">Kubernetes Platform Toolkit</p>
 <p align="center">
@@ -17,7 +16,7 @@
 * **Integrated Production Runtime** for monitoring, logging, multi-tenancy, auth, policy, secrets, DBaaS and CICD.
   * **Docker Registry** ([Harbor](http://goharbor.io/))
   * **Authentication** ([Dex](https://github.com/dexidp/dex), [Oauth Proxy](https://github.com/oauth2-proxy/oauth2-proxy))
-  * **Authorization & Policy Enforcement** ([Open Policy Agent ](https://www.openpolicyagent.org/) and [Gatekeeper](https://github.com/open-policy-agent/gatekeeper))
+  * **Authorization & Policy Enforcement** ([Open Policy Agent](https://www.openpolicyagent.org/) and [Gatekeeper](https://github.com/open-policy-agent/gatekeeper))
   * **Certificate Management** ([cert-manager](https://cert-manager.io/))
   * **Secret Management** [(Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets), [Vault](https://www.vaultproject.io/))
   * **CI/CD** ([Tekton](https://tekton.dev/), [ArgoCD](https://argoproj.github.io/argo-cd/), [Flux](https://fluxcd.io), [kpack](https://github.com/pivotal/kpack), [keptn](https://github.com/keptn/keptn))
@@ -48,8 +47,12 @@ karina leverages a number of other standalone operators built by flanksource:
 
 To see how karina compares to other tools in the ecosystem see [comparisons](./docs/comparisons.md)
 
+### Community & FAQs
+
+Please join the [flanksource Slack workspace](https://join.slack.com/t/flanksource/shared_invite/zt-dvh61tg5-w8XOfrGWtCetGXYk48RKnw).
+
 ### Contributing
 
 Please follow the guideline below when contributing to this project
 
-- [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
+* [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
