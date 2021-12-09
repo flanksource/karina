@@ -1,6 +1,6 @@
 namespace: platform-system
 bases:
-  - github.com/kubernetes-sigs/external-dns/kustomize?ref=v0.9.0
+  - github.com/kubernetes-sigs/external-dns/kustomize?ref=v0.10.1
 images:
   - name: k8s.gcr.io/external-dns/external-dns
     newTag: '{{.externalDns.version | default "na" }}'
