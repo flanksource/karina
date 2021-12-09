@@ -1,2 +1,2 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.38.30/config/deploy/crd.yaml
+  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.38.63/config/deploy/crd.yaml
