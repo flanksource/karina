@@ -1,15 +1,16 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.38.30/config/deploy/base.yaml
+  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.38.67/config/deploy/base.yaml
 images:
   - name: docker.io/flanksource/canary-checker:latest
-    newTag: '{{.canaryChecker.version | default "v0.38.30" }}'
+    newTag: '{{.canaryChecker.version | default "v0.38.67" }}'
+namespace: platform-system
 patchesStrategicMerge:
   - |-
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       name: canary-checker
-      namespace: platform-system
+      namespace: canary-checker
     spec:
       template:
         metadata:
@@ -58,8 +59,30 @@ patchesStrategicMerge:
     kind: ServiceMonitor
     metadata:
       name: canary-checker-monitor
-      namespace: platform-system
+      namespace: canary-checker
     spec:
       endpoints:
       - interval: 30s
         targetPort: 8080
+  - |-
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: canary-checker
+      namespace: canary-checker
+    spec:
+      rules:
+        - host: canaries.{{.domain}}
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: canary-checker
+                    port:
+                      number: 8080
+                path: /
+                pathType: ImplementationSpecific
+      tls:
+        - hosts:
+          - canaries.{{.domain}}
+          secretName: canary-tls
