@@ -301,8 +301,8 @@ func conditionalSpecs(p *platform.Platform) map[string]func() bool {
 		"thanos/store.yaml":                     func() bool { return p.Thanos.IsDisabled() || p.Thanos.Mode != ThanosObservabilityMode },
 		"thanos/base.yaml":                      p.Thanos.IsDisabled,
 		"pushgateway.yaml":                      p.Monitoring.PushGateway.IsDisabled,
-		"unmanaged/alertmanager-rules.yaml.raw": func() bool { return !p.Kubernetes.IsManaged()},
-		"unmanaged/service-monitors.yaml":       func() bool { return !p.Kubernetes.IsManaged()},
+		"unmanaged/alertmanager-rules.yaml.raw": func() bool { return !p.Kubernetes.IsManaged() },
+		"unmanaged/service-monitors.yaml":       func() bool { return !p.Kubernetes.IsManaged() },
 	}
 	return cd
 }
