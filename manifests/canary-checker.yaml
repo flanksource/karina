@@ -45,7 +45,7 @@ rules:
   - ""
   resources:
   - pods/exec
-  - pods/logs
+  - pods/log
   verbs:
   - '*'
 - apiGroups:
@@ -170,7 +170,7 @@ spec:
         env:
         - name: DOCKER_API_VERSION
           value: "1.39"
-        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.38.30" }}
+        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.38.67" }}
         name: canary-checker
         ports:
         - containerPort: 8080
@@ -225,9 +225,6 @@ spec:
   - interval: 30s
     targetPort: 8080
   jobLabel: canary-checker
-  namespaceSelector:
-    matchNames:
-    - platform-system
   selector:
     matchLabels:
       control-plane: canary-checker
