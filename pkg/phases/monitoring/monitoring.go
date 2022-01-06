@@ -109,12 +109,15 @@ func Install(p *platform.Platform) error {
 
 	cs := conditionalSpecs(p)
 	for _, spec := range specs {
+		fn, found := cs[spec]
 		if strings.HasSuffix(spec, alertRulesSuffix) {
+			if found && fn() {
+				continue
+			}
 			if err := deployAlertRules(p, "monitoring/"+spec); err != nil {
 				return err
 			}
 		} else {
-			fn, found := cs[spec]
 			if found && fn() {
 				if err := p.DeleteSpecs(v1.NamespaceAll, "monitoring/"+spec); err != nil {
 					p.Errorf("failed to delete conditional spec %s: %v", spec, err)
