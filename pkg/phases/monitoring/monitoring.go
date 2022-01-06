@@ -286,10 +286,10 @@ func conditionalDashboards(p *platform.Platform) map[string]func() bool {
 		"grafana-dashboard-log-counts.json.raw":               p.LogsExporter.IsDisabled,
 		"harbor-exporter.json.raw":                            p.Harbor.IsDisabled,
 		"patroni.json.raw":                                    p.PostgresOperator.IsDisabled,
-		"unmanaged/etcd.json":                                 p.Kubernetes.IsManaged,
-		"unmanaged/grafana-dashboard-apiserver.json":          p.Kubernetes.IsManaged,
-		"unmanaged/grafana-dashboard-controller-manager.json": p.Kubernetes.IsManaged,
-		"unmanaged/grafana-dashboard-scheduler.json":          p.Kubernetes.IsManaged,
+		"unmanaged/etcd.json":                                 func() bool { return !p.Kubernetes.IsManaged() },
+		"unmanaged/grafana-dashboard-apiserver.json":          func() bool { return !p.Kubernetes.IsManaged() },
+		"unmanaged/grafana-dashboard-controller-manager.json": func() bool { return !p.Kubernetes.IsManaged() },
+		"unmanaged/grafana-dashboard-scheduler.json":          func() bool { return !p.Kubernetes.IsManaged() },
 	}
 	return cd
 }
