@@ -283,20 +283,22 @@ func filterPrometheusRules(p *platform.Platform, rule *prometheusv1.PrometheusRu
 	return newRule
 }
 
+// When the function is true, the dashboard will not be included
 func conditionalDashboards(p *platform.Platform) map[string]func() bool {
 	var cd = map[string]func() bool{
 		"canary-checker.json.raw":                             p.CanaryChecker.IsDisabled,
 		"grafana-dashboard-log-counts.json.raw":               p.LogsExporter.IsDisabled,
 		"harbor-exporter.json.raw":                            p.Harbor.IsDisabled,
 		"patroni.json.raw":                                    p.PostgresOperator.IsDisabled,
-		"unmanaged/etcd.json":                                 func() bool { return !p.Kubernetes.IsManaged() },
-		"unmanaged/grafana-dashboard-apiserver.json":          func() bool { return !p.Kubernetes.IsManaged() },
-		"unmanaged/grafana-dashboard-controller-manager.json": func() bool { return !p.Kubernetes.IsManaged() },
-		"unmanaged/grafana-dashboard-scheduler.json":          func() bool { return !p.Kubernetes.IsManaged() },
+		"unmanaged/etcd.json":                                 p.Kubernetes.IsManaged,
+		"unmanaged/grafana-dashboard-apiserver.json":          p.Kubernetes.IsManaged,
+		"unmanaged/grafana-dashboard-controller-manager.json": p.Kubernetes.IsManaged,
+		"unmanaged/grafana-dashboard-scheduler.json":          p.Kubernetes.IsManaged,
 	}
 	return cd
 }
 
+// When the function is true, the spec will not be included
 func conditionalSpecs(p *platform.Platform) map[string]func() bool {
 	var cd = map[string]func() bool{
 		"thanos/compactor.yaml":                 func() bool { return p.Thanos.IsDisabled() || !p.Thanos.EnableCompactor },
@@ -304,8 +306,8 @@ func conditionalSpecs(p *platform.Platform) map[string]func() bool {
 		"thanos/store.yaml":                     func() bool { return p.Thanos.IsDisabled() || p.Thanos.Mode != ThanosObservabilityMode },
 		"thanos/base.yaml":                      p.Thanos.IsDisabled,
 		"pushgateway.yaml":                      p.Monitoring.PushGateway.IsDisabled,
-		"unmanaged/alertmanager-rules.yaml.raw": func() bool { return !p.Kubernetes.IsManaged() },
-		"unmanaged/service-monitors.yaml":       func() bool { return !p.Kubernetes.IsManaged() },
+		"unmanaged/alertmanager-rules.yaml.raw": p.Kubernetes.IsManaged,
+		"unmanaged/service-monitors.yaml":       p.Kubernetes.IsManaged,
 	}
 	return cd
 }
