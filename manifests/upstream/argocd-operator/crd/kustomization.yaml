@@ -1,0 +1,2 @@
+bases:
+  - github.com/argoproj-labs/argocd-operator/config/crd?ref=v0.1.0
