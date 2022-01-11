@@ -1,0 +1,2 @@
+resources:
+  - https://raw.githubusercontent.com/istio/istio/1.12.1/manifests/charts/base/crds/crd-operator.yaml
