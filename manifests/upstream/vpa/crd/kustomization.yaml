@@ -1,0 +1,2 @@
+resources:
+  - https://raw.githubusercontent.com/kubernetes/autoscaler/c4bd38b17a92b7039bbd3a2de67e53cf102b6936/vertical-pod-autoscaler/deploy/vpa-v1-crd-gen.yaml
