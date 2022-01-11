@@ -1,2 +1,2 @@
-bases:
-  - https://download.elastic.co/downloads/eck/1.9.1/crds.yaml
+resources:
+  - https://raw.githubusercontent.com/elastic/cloud-on-k8s/1.9.1/config/crds/v1/all-crds.yaml
