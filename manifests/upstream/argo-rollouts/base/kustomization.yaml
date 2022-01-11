@@ -1,19 +1,19 @@
 namespace: platform-system
 bases:
-  - github.com/argoproj/argo-rollouts/manifests/base?ref=v0.10.2
-  - github.com/argoproj/argo-rollouts/manifests/role?ref=v0.10.2
+  - github.com/argoproj/argo-rollouts/manifests/base?ref=v1.1.1
+  - github.com/argoproj/argo-rollouts/manifests/role?ref=v1.1.1
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-rollouts/v0.10.2/manifests/cluster-install/argo-rollouts-clusterrolebinding.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.1.1/manifests/cluster-install/argo-rollouts-clusterrolebinding.yaml
 images:
-  - name: argoproj/argo-rollouts
-    newName: docker.io/argoproj/argo-rollouts
+  - name: quay.io/argoproj/argo-rollouts
+    newName: quay.io/argoproj/argo-rollouts
     newTag: "{{.argoRollouts.version}}"
 patchesStrategicMerge:
   - |-
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
-      name: argo-rollouts-clusterrolebinding
+      name: argo-rollouts
     subjects:
       - kind: ServiceAccount
         name: argo-rollouts
