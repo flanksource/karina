@@ -1,0 +1,2 @@
+resources:
+  - https://raw.githubusercontent.com/spotahome/redis-operator/db1e3162b2e8a4dd8320d921a403e2c1dbe556e3/manifests/databases.spotahome.com_redisfailovers.yaml
