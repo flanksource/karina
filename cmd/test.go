@@ -47,7 +47,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nginx"
-	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
@@ -167,7 +166,7 @@ func init() {
 
 	aliases := map[string][]string{
 		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "quack", "minio", "template-operator", "postgres-operator"},
-		"cni":       []string{"calico", "antrea", "nsx"},
+		"cni":       []string{"calico", "antrea"},
 		"csi":       []string{"s3", "nfs", "local-path"},
 		"cloud":     []string{"vsphere"},
 		"stubs":     []string{"apacheds", "minio"},
@@ -206,7 +205,6 @@ func init() {
 		"monitoring":           monitoring.Test,
 		"nfs":                  nfs.Test,
 		"nginx":                nginx.Test,
-		"nsx":                  nsx.Test,
 		"opa":                  opa.Test,
 		"platform-operator":    platformoperator.Test,
 		"postgres-operator":    postgresoperator.Test,
