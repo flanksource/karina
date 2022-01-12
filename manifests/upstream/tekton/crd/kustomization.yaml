@@ -1,0 +1,8 @@
+resources:
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-clustertask.yaml
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-condition.yaml
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-pipeline.yaml
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-pipelinerun.yaml
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-resource.yaml
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-run.yaml
+  - https://raw.githubusercontent.com/tektoncd/pipeline/v0.31.0/config/300-task.yaml
