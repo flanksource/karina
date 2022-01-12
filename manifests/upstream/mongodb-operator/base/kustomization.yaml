@@ -1,7 +1,7 @@
 namespace: "platform-system"
 
 resources:
-  - https://raw.githubusercontent.com/percona/percona-server-mongodb-operator/v1.6.0/deploy/operator.yaml
+  - https://raw.githubusercontent.com/percona/percona-server-mongodb-operator/v1.11.0/deploy/operator.yaml
   - rbac.yaml
 
 patchesStrategicMerge:
