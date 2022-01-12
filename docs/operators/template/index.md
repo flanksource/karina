@@ -46,7 +46,7 @@ NamespaceRequest --> ResouceQuota["<img src='/overrides/icons/k8s/quota.svg'; wi
 `namespace-request-crd.yml`
 
 ```yaml
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: namespacerequests.acmp.corp
