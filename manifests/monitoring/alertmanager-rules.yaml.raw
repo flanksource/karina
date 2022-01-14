@@ -424,7 +424,7 @@ spec:
           annotations:
             description: Node {{$labels.node}} CPU limits oversubscribed more than 2x
           expr: |
-            sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 2
+            sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 2 and sum(label_replace((instance:node_cpu_utilisation:rate1m{instance!=""}), "node", "$1", "instance", "(.+)")) by (node) > 0.6
           for: 1m
           labels:
             severity: warning
@@ -432,7 +432,7 @@ spec:
           annotations:
             description: Node {{$labels.node}} CPU limits oversubscribed more than 3x
           expr: |
-            sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 3
+            sum by (node) (kube_pod_container_resource_limits_cpu_cores{node!=""} ) / on(node) group_left() kube_node_status_allocatable_cpu_cores > 3 and sum(label_replace((instance:node_cpu_utilisation:rate1m{instance!=""}), "node", "$1", "instance", "(.+)")) by (node) > 0.6
           for: 1m
           labels:
             severity: critical
@@ -440,7 +440,7 @@ spec:
           annotations:
             description: Node {{$labels.node}} Memory limits oversubscribed more than 2x
           expr: |
-            sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 2
+            sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 2 and sum(label_replace((instance:node_memory_utilisation:ratio{instance!=""}), "node", "$1", "instance", "(.+)")) by (node) > 0.6
           for: 1m
           labels:
             severity: warning
@@ -448,7 +448,7 @@ spec:
           annotations:
             description: Node {{$labels.node}} Memory limits oversubscribed more than 3x
           expr: |
-            sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 3
+            sum by (node) (kube_pod_container_resource_limits_memory_bytes{node!=""} ) / on(node) group_left() kube_node_status_allocatable_memory_bytes > 3 and sum(label_replace((instance:node_memory_utilisation:ratio{instance!=""}), "node", "$1", "instance", "(.+)")) by (node) > 0.6
           for: 1m
           labels:
             severity: critical
