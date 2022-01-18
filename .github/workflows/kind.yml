@@ -110,10 +110,7 @@ jobs:
           - gatekeeper
           - managed
           - nosql
-          - cicd
-          - kpack
           - konfig-manager
-          - quarantine
     steps:
       - uses: actions/checkout@v2
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
