@@ -96,8 +96,8 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.19.11
           - v1.20.7
+          - v1.22.4
         suite:
           - minimal
           - minimal-antrea
