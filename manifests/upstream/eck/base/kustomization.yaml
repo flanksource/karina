@@ -1,3 +1,6 @@
 namespace: elastic-system
 bases:
   - https://download.elastic.co/downloads/eck/1.9.1/operator.yaml
+images:
+  - name: docker.elastic.co/eck/eck-operator
+    newTag: "{{.eck.version}}"

@@ -446,7 +446,7 @@ spec:
               fieldPath: status.podIP
         - name: WEBHOOK_SECRET
           value: elastic-webhook-server-cert
-        image: docker.elastic.co/eck/eck-operator:1.9.1
+        image: docker.elastic.co/eck/eck-operator:{{.eck.version}}
         imagePullPolicy: IfNotPresent
         name: manager
         ports:
