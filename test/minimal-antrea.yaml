@@ -33,6 +33,7 @@ versions:
   sonobuoy: 0.16.4
   ketall: v1.3.0
   apacheds: 0.7.0
+  kind: 0.11.1
 nginx:
   disableHostNetwork: true
 podSubnet: 100.200.0.0/16
