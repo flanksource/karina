@@ -66,6 +66,8 @@ ingressCA:
   cert: ../.certs/ingress-ca.crt
   privateKey: ../.certs/ingress-ca.key
   password: foobar
+quack:
+  disabled: true
 test:
   exclude:
     - configmap-reloader
@@ -75,3 +77,4 @@ test:
     - encryption
     - platform-operator
     - gitops
+    - template-operator

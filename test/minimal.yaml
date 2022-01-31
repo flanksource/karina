@@ -60,6 +60,8 @@ ingressCA:
   password: foobar
 monitoring:
   disabled: true
+quack:
+  disabled: true
 test:
   exclude:
     - configmap-reloader
@@ -69,3 +71,4 @@ test:
     - encryption
     - platform-operator
     - gitops
+    - template-operator
