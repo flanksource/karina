@@ -23,6 +23,7 @@ spec:
       reload/all: "true"
       com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: level=debug
       com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: component=cluster
+      "cluster-autoscaler.kubernetes.io/safe-to-evict": "true"
   alertmanagerConfigSelector:
     matchLabels:
       alertmanagerConfig: main
