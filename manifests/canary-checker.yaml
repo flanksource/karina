@@ -152,6 +152,7 @@ spec:
         com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: '[pod/canary] request completed with 503, expected [200 201 202], retrying'
         com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
         com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: Successfully Reconciled
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
       labels:
         control-plane: canary-checker
     spec:
