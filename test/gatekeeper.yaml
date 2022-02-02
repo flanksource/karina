@@ -1,7 +1,7 @@
 importConfigs:
   - minimal.yaml
 gatekeeper:
-  version: "v3.3.0"
+  version: "v3.7.0"
   constraints: opa/constraints
   auditInterval: 10
   e2e:
