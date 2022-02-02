@@ -1,2 +1,4 @@
 resources:
   - https://raw.githubusercontent.com/zalando/postgres-operator/v1.7.1/manifests/postgresql.crd.yaml
+  - https://raw.githubusercontent.com/zalando/postgres-operator/v1.7.1/manifests/operatorconfiguration.crd.yaml
+  - https://raw.githubusercontent.com/zalando/postgres-operator/v1.7.1/manifests/postgresteam.crd.yaml
