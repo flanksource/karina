@@ -17,7 +17,7 @@ s3:
   skipTLSVerify: true
   usePathStyle: true
 postgresOperator:
-  version: v1.6.2
+  version: v1.7.1
   defaultBackupBucket: cicd-pg-backup
   backupPassword: password123456
   defaultBackupRetention:
