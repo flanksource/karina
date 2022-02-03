@@ -39,6 +39,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: v${{ needs.semantic-release.outputs.release-version }}
           gzip: false
+          allow_override: true
           files: >
             ./.bin/karina
             ./.bin/karina_darwin-amd64
