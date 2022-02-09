@@ -13,7 +13,7 @@ kubernetes:
   encryption:
     encryptionProviderConfigFile: ./fixtures/encryption-config.yaml
   apiServerExtraArgs:
-    "audit-log-path": /var/log/audit/cluster-audit.log
+    "audit-log-path": /var/log/cluster-audit.log
     "audit-log-maxsize": 1024
     "audit-log-maxage": 2
     "audit-log-maxbackup": 3
