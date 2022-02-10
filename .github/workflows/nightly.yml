@@ -59,9 +59,11 @@ jobs:
           - v1.22.0
         suite:
           - minimal
+          - minimal-antrea
           - cicd
           - kpack
           - quarantine
+          - gatekeeper
     steps:
       - uses: actions/checkout@v2
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}

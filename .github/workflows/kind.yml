@@ -100,14 +100,12 @@ jobs:
           - v1.22.0
         suite:
           - minimal
-          - minimal-antrea
           - monitoring
           - harbor2
           - postgres
           - elastic
           - security
           - platform
-          - gatekeeper
           - managed
           - nosql
           - konfig-manager
