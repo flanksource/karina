@@ -1,7 +1,8 @@
-name: Nightly
+name: Nightly Tests
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "0 10 * * *"
+    - cron: "0 0 * * *"
 
 jobs:
   binary:
