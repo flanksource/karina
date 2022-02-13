@@ -3,7 +3,7 @@ module github.com/flanksource/karina
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.34.30
+	github.com/aws/aws-sdk-go v1.37.18
 	github.com/blang/semver/v4 v4.0.0
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
@@ -35,7 +35,7 @@ require (
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.21.0
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
-	go.mozilla.org/sops/v3 v3.6.1
+	go.mozilla.org/sops/v3 v3.7.1
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
