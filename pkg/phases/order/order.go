@@ -40,7 +40,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/mongodboperator"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nodelocaldns"
-	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/opa"
 	"github.com/flanksource/karina/pkg/phases/packetbeat"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
@@ -107,7 +106,7 @@ var Bootstrap = compose(pre.Install, crds.Install, CNI, CSI, base.Install, Cloud
 var Minimal = compose(pre.Install, crds.Install, base.Install, certmanager.Install, ingress.Install, quack.Install)
 var BootstrapPhases = []string{"pre", "crds", "cni", "csi", "base", "cloud-controller", "cert-manager", "ingress", "quack", "minio", "template-operator", "postgres-operator", "dex"}
 var CSI = compose(localpath.Install, s3.Install, nfs.Install)
-var CNI = compose(calico.Install, antrea.Install, nsx.Install, nodelocaldns.Install)
+var CNI = compose(calico.Install, antrea.Install, nodelocaldns.Install)
 var Cloud = compose(vsphere.Install)
 var Platform = compose(platformoperator.Install, kiosk.Deploy, configmapreloader.Deploy)
 var Stubs = compose(minio.Install, apacheds.Install)
@@ -140,7 +139,6 @@ var PhasesExtra = map[string]DeployFn{
 	"minimal":            Minimal,
 	"minio":              minio.Install,
 	"node-local-dns":     nodelocaldns.Install,
-	"nsx":                nsx.Install,
 	"postgres-operator":  postgresoperator.Deploy,
 	"platform-operator":  platformoperator.Install,
 	"pre":                pre.Install,

@@ -1,0 +1,111 @@
+name: Nightly Tests
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  binary:
+    runs-on: ubuntu-20.04
+    needs: gates
+    container:
+      image: flanksource/build-tools:v0.12.0
+    env:
+      FILE_CHANGES_TO_CORE_ARTIFACTS: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
+    steps:
+      # Get values for cache paths to be used in later steps
+      - id: go-cache-paths
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+      # Cache go build cache, used to speedup go test
+      - name: Go Build Cache
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      # Cache go mod cache, used to speedup builds
+      - name: Go Mod Cache
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Make linux
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        run: make linux
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        with:
+          name: karina
+          path: ./.bin/karina
+  e2e:
+    runs-on: ubuntu-20.04
+    needs:
+      - binary
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+          - v1.20.7
+          - v1.22.0
+        suite:
+          - minimal
+          - minimal-antrea
+          - cicd
+          - kpack
+          - quarantine
+          - gatekeeper
+    steps:
+      - uses: actions/checkout@v2
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v2
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        with:
+          name: karina
+          path: ./.bin
+      - name: Run e2e testing script
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
+        id: e2e
+        env:
+          GIT_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+          SUITE: ${{ matrix.suite }}
+          KUBERNETES_VERSION: ${{matrix.k8s}}
+          BUILD: test (${{matrix.k8s}}, ${{ matrix.suite }})
+          ADDITIONAL_CONFIG: -c test/hosted-tests.yaml
+        run: ./test/test.sh
+      - name: Upload test results
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          if-no-files-found: ignore
+          name: test-results-${{matrix.k8s}}-${{matrix.suite}}
+          path: test-results/
+      - name: Upload snapshots
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          if-no-files-found: ignore
+          name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/snapshot.zip
+      - name: Generate Kind logs
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
+        run: kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
+      - name: Upload Kind logs
+        if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          if-no-files-found: ignore
+          name: kind-logs-${{matrix.k8s}}-${{matrix.suite}}
+          path: artifacts/kind-logs

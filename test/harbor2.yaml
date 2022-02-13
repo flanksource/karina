@@ -9,7 +9,7 @@ harbor:
     secret_key: minio123
     endpoint: http://minio.minio.svc:9000
 postgresOperator:
-  version: v1.3.4.flanksource.1
+  version: v1.7.1
 test:
   exclude:
     - postgres-operator

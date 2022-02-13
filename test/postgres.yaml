@@ -1,7 +1,7 @@
 importConfigs:
   - minimal.yaml
 templateOperator:
-  version: v0.1.14
+  version: v0.7.0
   syncPeriod: 15s
 canaryChecker:
   version: v0.20.0
@@ -17,7 +17,7 @@ s3:
   skipTLSVerify: true
   usePathStyle: true
 postgresOperator:
-  version: v1.6.2
+  version: v1.7.1
   defaultBackupBucket: cicd-pg-backup
   backupPassword: password123456
   defaultBackupRetention:

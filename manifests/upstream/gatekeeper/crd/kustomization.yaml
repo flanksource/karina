@@ -1,0 +1,2 @@
+bases:
+  - github.com/open-policy-agent/gatekeeper/config/crd?ref=v3.7.0&timeout=180

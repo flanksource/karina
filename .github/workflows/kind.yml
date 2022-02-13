@@ -1,4 +1,4 @@
-name: E2E
+name: E2E Tests
 on:
   push:
     branches:
@@ -96,24 +96,19 @@ jobs:
       fail-fast: false
       matrix:
         k8s:
-          - v1.19.11
           - v1.20.7
+          - v1.22.0
         suite:
           - minimal
-          - minimal-antrea
           - monitoring
           - harbor2
           - postgres
           - elastic
           - security
           - platform
-          - gatekeeper
           - managed
           - nosql
-          - cicd
-          - kpack
           - konfig-manager
-          - quarantine
     steps:
       - uses: actions/checkout@v2
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}

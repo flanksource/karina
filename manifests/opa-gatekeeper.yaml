@@ -25,6 +25,10 @@ spec:
       - group: "networking.k8s.io"
         version: "v1beta1"
         kind: "Ingress"
+      - group: "networking.k8s.io"
+        version: "v1"
+        kind: "Ingress"
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -252,6 +256,7 @@ spec:
     metadata:
       annotations:
         container.seccomp.security.alpha.kubernetes.io/manager: runtime/default
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
       labels:
         control-plane: gatekeeper
         gatekeeper.sh/operation: audit
@@ -310,10 +315,16 @@ spec:
           runAsGroup: 999
           runAsNonRoot: true
           runAsUser: 1000
+        volumeMounts:
+          - mountPath: /tmp/audit
+            name: tmp-volume
       nodeSelector:
         kubernetes.io/os: linux
       serviceAccountName: gatekeeper-admin
       terminationGracePeriodSeconds: 60
+      volumes:
+        - name: tmp-volume
+          emptyDir: { }
 ---
 apiVersion: apps/v1
 kind: Deployment

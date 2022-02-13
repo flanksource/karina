@@ -1,0 +1,20 @@
+# Using gcp provided manifests as project calico only provides a single unversioned manifest via their document portal
+bases:
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/bgpconfigurations-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/bgppeers-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/blockaffinity-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/clusterinformations-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/felixconfigurations-crd.yaml
+# Upstream objects are not to spec, remove for the time being
+#  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/globalbgpconfig-crd.yaml
+#  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/globalfelixconfig-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/globalnetworkpolicy-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/globalnetworksets-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/hostendpoints-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/ipamblock-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/ipamconfig-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/ipamhandle-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/ippool-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/kubecontrollersconfigurations-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/networkpolicies-crd.yaml
+  - https://raw.githubusercontent.com/kubernetes/cloud-provider-gcp/release-1.22/cluster/addons/calico-policy-controller/networkset-crd.yaml

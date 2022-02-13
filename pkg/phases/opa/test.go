@@ -123,7 +123,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 	errs := make([]error, 0)
 	for _, rejectedFixture := range rejectedFixtureFiles {
 		filename := rejectedFixturesPath + "/" + rejectedFixture.Name()
-		if err := kubectl("apply -f %s --kubeconfig %s &> /dev/null", filename, kubeconfig); err != nil {
+		if err := kubectl("apply -f %s --kubeconfig %s", filename, kubeconfig); err != nil {
 			errs = append(errs, errors.Wrap(err, fmt.Sprintf("%s rejected by admission controller",
 				rejectedFixture.Name())))
 			continue
@@ -171,6 +171,7 @@ func testE2EGatekeeper(p *platform.Platform, test *console.TestResults) {
 			failMessage += err.Error() + ". "
 		}
 		test.Failf(testName, failMessage)
+		return
 	}
 	test.Passf(testName, "All fixtures accepted or rejected as expected")
 }

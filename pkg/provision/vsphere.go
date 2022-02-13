@@ -15,7 +15,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/antrea"
 	"github.com/flanksource/karina/pkg/phases/calico"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
-	"github.com/flanksource/karina/pkg/phases/nsx"
 	"github.com/flanksource/karina/pkg/phases/vsphere"
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/provision/vmware"
@@ -127,10 +126,6 @@ func VsphereCluster(platform *platform.Platform, burninPeriod time.Duration) err
 		}
 
 		if err := antrea.Install(platform); err != nil {
-			return err
-		}
-
-		if err := nsx.Install(platform); err != nil {
 			return err
 		}
 

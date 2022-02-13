@@ -1,0 +1,12 @@
+resources:
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_backups.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_backupstoragelocations.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_deletebackuprequests.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_downloadrequests.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_podvolumebackups.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_podvolumerestores.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_resticrepositories.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_restores.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_schedules.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_serverstatusrequests.yaml
+  - https://raw.githubusercontent.com/vmware-tanzu/velero/v1.7.1/config/crd/v1/bases/velero.io_volumesnapshotlocations.yaml

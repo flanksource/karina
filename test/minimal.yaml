@@ -29,7 +29,7 @@ versions:
   sonobuoy: 0.16.4
   ketall: v1.3.0
   apacheds: 0.7.0
-  kind: 0.9.0
+  kind: 0.11.1
 templateOperator:
   version: v0.1.11
 podSubnet: 10.200.0.0/16
@@ -60,6 +60,8 @@ ingressCA:
   password: foobar
 monitoring:
   disabled: true
+quack:
+  disabled: true
 test:
   exclude:
     - configmap-reloader
@@ -69,3 +71,4 @@ test:
     - encryption
     - platform-operator
     - gitops
+    - template-operator
