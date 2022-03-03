@@ -7,8 +7,8 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
-	github.com/flanksource/commons v1.5.7
-	github.com/flanksource/kommons v0.25.2
+	github.com/flanksource/commons v1.5.13
+	github.com/flanksource/kommons v0.29.0
 	github.com/flanksource/konfigadm v0.11.0
 	github.com/flanksource/template-operator-library v0.1.6
 	github.com/go-logr/logr v0.3.0
@@ -16,7 +16,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/vault/api v1.0.4
-	github.com/imdario/mergo v0.3.11
+	github.com/imdario/mergo v0.3.12
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/jetstack/cert-manager v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a

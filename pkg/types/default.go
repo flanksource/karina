@@ -21,6 +21,10 @@ func DefaultPlatformConfig() PlatformConfig {
 			ContainerRuntime:    "docker",
 			Managed:             false,
 		},
+		Nginx: &Nginx{
+			Default: true,
+			Version: "v1.1.1",
+		},
 	}
 	return config
 }

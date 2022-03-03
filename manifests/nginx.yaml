@@ -215,7 +215,7 @@ spec:
       {{ end }}
       containers:
         - name: nginx-ingress-controller
-          image: k8s.gcr.io/ingress-nginx/controller:{{.nginx.version | default "v0.48.1"}}
+          image: k8s.gcr.io/ingress-nginx/controller:{{.nginx.version | default "v1.1.1"}}
           lifecycle:
             preStop:
               exec:
@@ -231,6 +231,19 @@ spec:
             - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
             - --publish-service=$(POD_NAMESPACE)/ingress-nginx
             - --annotations-prefix=nginx.ingress.kubernetes.io
+            {{- if (semverCompare ">=1.0.0" .nginx.version) }}
+            - --controller-class=k8s.io/ingress-nginx-secondary
+            {{- if .nginx.default }}
+            - --controller-class=k8s.io/ingress-nginx
+            - --watch-ingress-without-class=true
+            {{- end }}
+            {{- else }}
+            {{- if .nginx.default }}
+            - --ingress-class=nginx
+            {{- else }}
+            - --ingress-class=nginx-ingress
+            {{- end }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: true
             capabilities:
@@ -317,6 +330,26 @@ spec:
               mountPath: /var/log/modsecurity
         {{ end }}
         {{ end }}
+---
+{{ if (semverCompare ">=1.0.0" .nginx.version) }}
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+  name: nginx
+  {{ if .nginx.default }}
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+  {{ end }}
+spec:
+  {{ if .nginx.default }}
+  controller: k8s.io/ingress-nginx
+  {{ else }}
+  controller: k8s.io/ingress-nginx-secondary
+  {{ end  }}
+{{ end }}
+
 # ---
 # apiVersion: apps/v1
 # kind: Deployment
