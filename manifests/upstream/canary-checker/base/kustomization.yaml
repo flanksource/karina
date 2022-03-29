@@ -1,16 +1,25 @@
 resources:
-  - https://raw.githubusercontent.com/flanksource/canary-checker/v0.38.67/config/deploy/base.yaml
+  - ../helm/generated_templates/canary-checker/templates/serviceaccount.yaml
+  - ../helm/generated_templates/canary-checker/templates/clusterrole.yaml
+  - ../helm/generated_templates/canary-checker/templates/clusterrolebinding.yaml
+  - ../helm/generated_templates/canary-checker/templates/service.yaml
+  - ../helm/generated_templates/canary-checker/templates/deployment.yaml
+  - ../helm/generated_templates/canary-checker/templates/ingress.yaml
+  - ../helm/generated_templates/canary-checker/templates/priorityclass.yaml
+  - servicemonitor.yaml
+
+namespace: platform-system
+
 images:
   - name: docker.io/flanksource/canary-checker:latest
-    newTag: '{{.canaryChecker.version | default "v0.38.67" }}'
-namespace: platform-system
+    newTag: '{{.canaryChecker.version | default "v0.38.87" }}'
+
 patchesStrategicMerge:
   - |-
     apiVersion: apps/v1
-    kind: Deployment
+    kind: StatefulSet
     metadata:
       name: canary-checker
-      namespace: canary-checker
     spec:
       template:
         metadata:
@@ -19,6 +28,9 @@ patchesStrategicMerge:
             com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: "[pod/canary] request completed with 503, expected [200 201 202], retrying"
             com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
             com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: Successfully Reconciled
+            {{ if not (eq .canaryChecker.persistence.storageClassName "local-path") }}
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+            {{ end }}
         spec:
           containers:
             - name: canary-checker
@@ -33,56 +45,12 @@ patchesStrategicMerge:
               ports:
                 - name: metrics
                   containerPort: 8080
-              volumeMounts:
-                - mountPath: /var/run/docker.sock
-                  name: dockersock
-                - mountPath: /run/containerd/containerd.sock
-                  name: containerdsock
-          volumes:
-            - hostPath:
-                path: /var/run/docker.sock
-                type: ""
-              name: dockersock
-            - name: containerdsock
-              hostPath:
-                path: /run/containerd/containerd.sock
-                type: ""
-    #           resources:
-    #             limits:
-    #               cpu: 150m
-    #               memory: 200Mi
-    #             requests:
-    #               cpu: 100m
-    #               memory: 150Mi
-  - |-
-    apiVersion: monitoring.coreos.com/v1
-    kind: ServiceMonitor
-    metadata:
-      name: canary-checker-monitor
-      namespace: canary-checker
-    spec:
-      endpoints:
-      - interval: 30s
-        targetPort: 8080
-  - |-
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: canary-checker
-      namespace: canary-checker
-    spec:
-      rules:
-        - host: canaries.{{.domain}}
-          http:
-            paths:
-              - backend:
-                  service:
-                    name: canary-checker
-                    port:
-                      number: 8080
-                path: /
-                pathType: ImplementationSpecific
-      tls:
-        - hosts:
-          - canaries.{{.domain}}
-          secretName: canary-tls
+      volumeClaimTemplates:
+      - metadata:
+          name: canarychecker-database
+        spec:
+          accessModes: ['ReadWriteOnce']
+          resources:
+            requests:
+              storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
+          storageClassName: '{{ .canaryChecker.persistence.storageClassName | default "local-path" }}'

@@ -24,12 +24,13 @@ endif
 define BUILD_HELM_CHART
 	@if [ -d "upstream/$(1)/helm" ]; then \
 		echo "Generate templates for helm chart defined in upstream/$(1)/helm..." && \
-		cd upstream/$*/helm && \
-		$(HELM) template $$($(YQ) r chart.yaml chart_name) --values values.yaml --output-dir ./generated_templates -n $$($(YQ) r chart.yaml namespace) --version $$($(YQ) r chart.yaml version) --repo=$$($(YQ) r chart.yaml repo) --include-crds && \
+		cd upstream/$(1)/helm && \
+		$(HELM) template $$($(YQ) '.chart_name' chart.yaml) --values values.yaml --output-dir ./generated_templates -n $$($(YQ) '.namespace' chart.yaml) --version $$($(YQ) '.version' chart.yaml) --repo=$$($(YQ) '.repo' chart.yaml) --include-crds && \
 		generated_yaml_files=$$(find generated_templates -iname '*.yaml') && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/managed-by"' && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."app.kubernetes.io/instance"' && \
-		echo $$generated_yaml_files | xargs -n1 -I % $(YQ) d -d'*' -i % '**."helm.sh/chart"'; \
+		echo $$generated_yaml_files | xargs -n1 $(YQ) -i 'del(.. | select(has("app.kubernetes.io/managed-by"))."app.kubernetes.io/managed-by")' && \
+		echo $$generated_yaml_files | xargs -n1 $(YQ) -i 'del(.. | select(has("app.kubernetes.io/instance"))."app.kubernetes.io/instance")' && \
+		echo $$generated_yaml_files | xargs -n1 $(YQ) -i 'del(.. | select(has("app.kubernetes.io/version"))."app.kubernetes.io/version")' && \
+		echo $$generated_yaml_files | xargs -n1 $(YQ) -i 'del(.. | select(has("helm.sh/chart"))."helm.sh/chart")'; \
 	fi
 endef
 
@@ -73,15 +74,19 @@ platform-operator.yaml:
 
 .PHONY: canary-checker.yaml
 canary-checker.yaml:
+	$(call BUILD_HELM_CHART,canary-checker)
 	$(call BUILD_BASE,canary-checker)
 	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$server := .canaryChecker.aggregateServers }}\n        - --aggregateServers\n        - {{$$server}}\n        {{- end }}/' canary-checker.yaml
-.PHONY: canary-checker.yaml
 
 .PHONY: external-dns.yaml
 external-dns.yaml:
 	$(call BUILD_BASE,external-dns)
-	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$k, $$v := .externalDns.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' external-dns.yaml
+	$(SED) -i 's/.*- TEMPLATE_MARK.*/        {{- range $$k, $$v := .externalDns.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' external-dns.yaml
 
+.PHONY: crd/canary-checker.yaml
+crd/canary-checker.yaml:
+	$(call BUILD_HELM_CHART,canary-checker)
+	$(call BUILD_CRD,canary-checker)
 
 .SECONDEXPANSION:
 crd/%.yaml: $$(wildcard upstream/$$*/crd/*) bin/kustomize
@@ -98,7 +103,7 @@ template/%.yaml.raw: $$(wildcard upstream/$$*/template/*) bin/kustomize
 	$(call BUILD_RESOURCE,$*)
 
 .SECONDEXPANSION:
-%.yaml:  bin/kustomize
+%.yaml:  bin/kustomize bin/helm bin/yq
 	$(call BUILD_RESOURCE,$*)
 
 .SECONDEXPANSION:
@@ -116,7 +121,7 @@ bin/kustomize:
 
 bin/yq:
 	@mkdir -p bin
-	@curl -sSLo bin/yq https://github.com/mikefarah/yq/releases/download/3.4.1/yq_$(OS)_$(ARCH) && chmod +x bin/yq
+	@curl -sSLo bin/yq https://github.com/mikefarah/yq/releases/download/v4.24.2/yq_$(OS)_$(ARCH) && chmod +x bin/yq
 
 bin/helm:
 	@mkdir -p bin

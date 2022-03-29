@@ -205,7 +205,7 @@ spec:
               cpu: 10m
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   # Disable reload/all in tests
   annotations: null

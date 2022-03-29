@@ -443,7 +443,8 @@ func (c *Kubernetes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Canary-checker allows for the deployment and configuration of the canary-checker
 type CanaryChecker struct {
-	XDisabled `yaml:",inline" json:",inline"`
+	XDisabled   `yaml:",inline" json:",inline"`
+	Persistence Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
 }
 
 type Dashboard struct {

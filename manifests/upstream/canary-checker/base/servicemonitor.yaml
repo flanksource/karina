@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: canary-checker-monitor
+spec:
+  jobLabel: canary-checker
+  endpoints:
+    - targetPort: 8080
+      interval: 30s
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: canary-checker
+      app.kubernetes.io/instance: canary-checker
+      control-plane: canary-checker
+
