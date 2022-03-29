@@ -537,7 +537,6 @@ spec:
       protocol: TCP
   selector:
     app: ingress-nginx
-
 ---
 {{- if not .monitoring.disabled }}
 apiVersion: monitoring.coreos.com/v1
