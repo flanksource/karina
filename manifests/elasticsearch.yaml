@@ -18,6 +18,11 @@ spec:
         xpack.security.authc.anonymous.roles: fluentd
       podTemplate:
         spec:
+          {{- if (eq .elasticsearch.persistence.enabled true) }}
+          metadata:
+            annotations:
+              cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+          {{- end}}
           containers:
             - name: elasticsearch
               env:
