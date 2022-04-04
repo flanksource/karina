@@ -133,6 +133,12 @@ func Install(platform *platform.Platform) error {
 	if err := platform.ApplySpecs(v1.NamespaceAll, "nginx.yaml"); err != nil {
 		return err
 	}
+	// nginx alerts live in a separate manifest as alert syntax often cannot be templated
+	if !platform.Monitoring.IsDisabled() {
+		if err := platform.ApplySpecs("monitoring/nginx-alerts.yaml.raw"); err != nil {
+			return err
+		}
+	}
 	return nil
 	// wait for the webhook to come up ready as otherwise subsequent ingress
 	// creations will fail due to the validating webhook

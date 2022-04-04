@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-nginx-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: nginx-alert.rules
+      rules:
+        - alert: NginxIngressConfigError
+          annotations:
+            message: Nginx Ingress controller has encountered errors parsing config
+          expr: |
+            sum(rate(nginx_ingress_controller_errors[1m])) > 0
+          for: 1m
+          labels:
+            severity: critical
