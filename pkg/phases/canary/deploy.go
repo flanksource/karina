@@ -18,7 +18,7 @@ func Deploy(p *platform.Platform) error {
 	}
 
 	if p.CanaryChecker.Version == "" {
-		p.CanaryChecker.Version = "v0.11.2"
+		p.CanaryChecker.Version = "v0.38.87"
 	}
 	return p.ApplySpecs(v1.NamespaceAll, specs...)
 }

@@ -1,0 +1,17 @@
+image:
+  tag: 'latest'
+fullnameOverride: 'canary-checker'
+containerdSocket: true
+db:
+  embedded:
+    storage: 1Gi
+    storageClass: local-path
+ingress:
+  enabled: true
+  host: canaries.{{.domain}}
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  tls:
+    - hosts:
+      - canaries.{{.domain}}
+      secretName: canary-tls

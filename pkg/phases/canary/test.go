@@ -20,5 +20,5 @@ func TestCanary(p *platform.Platform, test *console.TestResults) {
 		return
 	}
 
-	kommons.TestDeploy(client, constants.PlatformSystem, "canary-checker", test)
+	kommons.TestStatefulSet(client, constants.PlatformSystem, "canary-checker", test)
 }

@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
+    app.kubernetes.io/name: canary-checker
     control-plane: canary-checker
   name: canary-checker-sa
   namespace: platform-system
@@ -10,7 +11,6 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: canary-checker-role
 rules:
 - apiGroups:
@@ -114,6 +114,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kubernetes.io/name: canary-checker
     control-plane: canary-checker
   name: canary-checker
   namespace: platform-system
@@ -123,6 +124,7 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
+    app.kubernetes.io/name: canary-checker
     control-plane: canary-checker
 ---
 apiVersion: scheduling.k8s.io/v1
@@ -134,9 +136,10 @@ metadata:
 value: -1
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
+    app.kubernetes.io/name: canary-checker
     control-plane: canary-checker
   name: canary-checker
   namespace: platform-system
@@ -144,16 +147,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
+      app.kubernetes.io/name: canary-checker
       control-plane: canary-checker
   template:
     metadata:
       annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: patching
         com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: '[pod/canary] request completed with 503, expected [200 201 202], retrying'
         com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
         com.flanksource.infra.logs/processors.3.drop_event.when.contains.message: Successfully Reconciled
-        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
       labels:
+        app.kubernetes.io/name: canary-checker
         control-plane: canary-checker
     spec:
       containers:
@@ -171,7 +176,9 @@ spec:
         env:
         - name: DOCKER_API_VERSION
           value: "1.39"
-        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.38.67" }}
+        - name: DB_URL
+          value: embedded:///opt/database/
+        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.38.87" }}
         name: canary-checker
         ports:
         - containerPort: 8080
@@ -194,18 +201,17 @@ spec:
           name: dockersock
         - mountPath: /run/containerd/containerd.sock
           name: containerdsock
+        - mountPath: /opt/database
+          name: canarychecker-database
         - mountPath: /etc/podinfo
           name: podinfo
       serviceAccountName: canary-checker-sa
-      terminationGracePeriodSeconds: 10
       volumes:
       - hostPath:
           path: /var/run/docker.sock
-          type: ""
         name: dockersock
       - hostPath:
           path: /run/containerd/containerd.sock
-          type: ""
         name: containerdsock
       - downwardAPI:
           items:
@@ -213,12 +219,20 @@ spec:
               fieldPath: metadata.labels
             path: labels
         name: podinfo
+  volumeClaimTemplates:
+  - metadata:
+      name: canarychecker-database
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
+      storageClassName: '{{ .canaryChecker.persistence.storageClassName | default "local-path" }}'
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  labels:
-    control-plane: canary-checker
   name: canary-checker-monitor
   namespace: platform-system
 spec:
@@ -228,6 +242,8 @@ spec:
   jobLabel: canary-checker
   selector:
     matchLabels:
+      app.kubernetes.io/instance: canary-checker
+      app.kubernetes.io/name: canary-checker
       control-plane: canary-checker
 ---
 apiVersion: networking.k8s.io/v1
@@ -235,6 +251,9 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/tls-acme: "true"
+  labels:
+    app.kubernetes.io/name: canary-checker
+    control-plane: canary-checker
   name: canary-checker
   namespace: platform-system
 spec:

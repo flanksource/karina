@@ -8,7 +8,7 @@ require (
 	github.com/coreos/prometheus-operator v0.37.0
 	github.com/dghubble/sling v1.3.0
 	github.com/flanksource/commons v1.5.14
-	github.com/flanksource/kommons v0.29.0
+	github.com/flanksource/kommons v0.30.0
 	github.com/flanksource/konfigadm v0.11.0
 	github.com/flanksource/template-operator-library v0.1.6
 	github.com/go-logr/logr v0.3.0
