@@ -152,7 +152,11 @@ spec:
   template:
     metadata:
       annotations:
+        {{ if .canaryChecker.persistence.storageClass }}
+        {{ if not (eq .canaryChecker.persistence.storageClass "local-path") }}
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        {{- end }}
+        {{- end }}
         com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: patching
         com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: '[pod/canary] request completed with 503, expected [200 201 202], retrying'
         com.flanksource.infra.logs/processors.2.drop_event.when.contains.message: Requeue reconciliation
@@ -228,7 +232,7 @@ spec:
       resources:
         requests:
           storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
-      storageClassName: '{{ .canaryChecker.persistence.storageClassName | default "local-path" }}'
+      storageClassName: '{{ .canaryChecker.persistence.storageClass | default "local-path" }}'
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
