@@ -47,7 +47,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: grafana-role
+  name: manager-role
 rules:
   - apiGroups:
       - ""
@@ -276,7 +276,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: grafana-operator
   name: grafana-operator-metrics-service
   namespace: monitoring
 spec:
@@ -286,7 +286,7 @@ spec:
       protocol: TCP
       targetPort: https
   selector:
-    control-plane: controller-manager
+    control-plane: grafana-operator
 ---
 # https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.1.1/deployment.yaml
 apiVersion: v1
@@ -305,15 +305,15 @@ data:
       resourceName: 2c0156f0.integreatly.org
 kind: ConfigMap
 metadata:
-  name: grafana-operator-config
+  name: manager-config
   namespace: monitoring
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    control-plane: controller-manager
-  name: grafana-controller
+    control-plane: grafana-operator
+  name: grafana-operator
   namespace: monitoring
   annotations:
     com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: SUCCESS
@@ -324,13 +324,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: grafana-operator
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        control-plane: grafana-operator
     spec:
       containers:
         - args:
