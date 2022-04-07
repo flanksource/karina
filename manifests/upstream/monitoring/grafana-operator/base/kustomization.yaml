@@ -1,0 +1,28 @@
+resources:
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.1.1/rbac.yaml
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.1.1/deployment.yaml
+namespace: monitoring
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: controller-manager
+      namespace: system
+    spec:
+      template:
+        metadata:
+          annotations:
+            com.flanksource.infra.logs/processors.0.drop_event.when.contains.message: SUCCESS
+            com.flanksource.infra.logs/processors.1.drop_event.when.contains.message: running periodic dashboard resync
+            com.flanksource.infra.logs/processors.2.decode_json_fields.fields: message
+            com.flanksource.infra.logs/processors.2.decode_json_fields.target: ""
+        spec:
+          containers:
+            - name: manager
+              args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --zap-log-level=error
+                - "--grafana-image=docker.io/grafana/grafana"
+                - '--grafana-image-tag={{.monitoring.grafana.version | default "8.1.1" }}'
