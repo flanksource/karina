@@ -75,7 +75,7 @@ func (query Query) ToQuery() elastic.Query {
 }
 
 func ExportLogs(p *platform.Platform, filebeatName string, query Query) error {
-	var filebeat *types.Filebeat = nil
+	var filebeat *types.Filebeat
 
 	for _, f := range p.Filebeat {
 		if f.Name == filebeatName {

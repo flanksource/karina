@@ -74,7 +74,7 @@ func (vm *vm) UUID() string {
 	return vm.vm.UUID(context.Background())
 }
 
-// nolint: golint, stylecheck
+// nolint: revive, stylecheck
 func (vm *vm) GetVmID() string {
 	return vm.vm.Reference().Value
 }

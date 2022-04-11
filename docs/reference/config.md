@@ -1191,7 +1191,7 @@ VM captures the specifications of a virtual machine
 | disabled |  | bool |  |
 | accessKey |  | string |  |
 | secretKey |  | string |  |
-| kmsKeyId | The AWS KMS ARN Id to use to unseal vault | string |  |
+| kmsKeyId | The AWS KMS ARN ID to use to unseal vault | string |  |
 | region |  | string |  |
 | consul |  | [Consul](#consul) |  |
 

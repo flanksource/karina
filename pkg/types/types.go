@@ -892,7 +892,7 @@ type Vault struct {
 	Disabled      bool                   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	AccessKey     string                 `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
 	SecretKey     string                 `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
-	// The AWS KMS ARN Id to use to unseal vault
+	// The AWS KMS ARN ID to use to unseal vault
 	KmsKeyID string `yaml:"kmsKeyId,omitempty" json:"kmsKeyId,omitempty"`
 	Region   string `yaml:"region,omitempty" json:"region,omitempty"`
 	Consul   Consul `yaml:"consul,omitempty" json:"consul,omitempty"`
