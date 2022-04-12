@@ -5,6 +5,8 @@ templateOperator:
   syncPeriod: 15s
 canaryChecker:
   version: v0.38.87
+  persistence:
+    capacity: 1Gi
 minio:
   version: RELEASE.2020-09-02T18-19-50Z
   access_key: minio
