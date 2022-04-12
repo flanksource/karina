@@ -149,6 +149,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: canary-checker
       control-plane: canary-checker
+  serviceName: canary-checker
   template:
     metadata:
       annotations:
@@ -181,8 +182,9 @@ spec:
         - name: DOCKER_API_VERSION
           value: "1.39"
         - name: DB_URL
-          value: embedded:///opt/database/
-        image: docker.io/flanksource/canary-checker:{{.canaryChecker.version | default "v0.38.87" }}
+          value: embedded:///opt/database/data/
+        image: docker.io/flanksource/canary-checker:{{ .canaryChecker.version | default "v0.38.98" }}
+        imagePullPolicy: IfNotPresent
         name: canary-checker
         ports:
         - containerPort: 8080
@@ -198,8 +200,6 @@ spec:
           capabilities:
             add:
             - CAP_NET_RAW
-          privileged: true
-          runAsUser: 0
         volumeMounts:
         - mountPath: /var/run/docker.sock
           name: dockersock
@@ -209,6 +209,8 @@ spec:
           name: canarychecker-database
         - mountPath: /etc/podinfo
           name: podinfo
+      securityContext:
+        fsGroup: 1000
       serviceAccountName: canary-checker-sa
       volumes:
       - hostPath:
