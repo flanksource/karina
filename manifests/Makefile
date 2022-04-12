@@ -72,6 +72,12 @@ platform-operator.yaml:
 	$(call BUILD_BASE,platform-operator)
 	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$k, $$v := .platformOperator.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' platform-operator.yaml
 
+.PHONY: monitoring/grafana-operator.yaml
+monitoring/grafana-operator.yaml:
+	$(call BUILD_BASE,monitoring/grafana-operator)
+	$(SED) -i 's/controller-manager/grafana-operator/' monitoring/grafana-operator.yaml
+	$(SED) -i 's/manager-role/grafana-operator-role/' monitoring/grafana-operator.yaml
+
 .PHONY: canary-checker.yaml
 canary-checker.yaml:
 	$(call BUILD_HELM_CHART,canary-checker)

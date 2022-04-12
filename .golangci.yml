@@ -22,14 +22,13 @@ linters:
     - goconst
     - gofmt
     - goimports
-    - golint
     - goprintffuncname
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - misspell
     - nakedret
+    - revive
     - rowserrcheck
     - staticcheck
     - structcheck

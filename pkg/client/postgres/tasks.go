@@ -30,7 +30,7 @@ import (
 
 const Namespace = "postgres-operator"
 
-// nolint: golint
+// nolint: revive
 type PostgresDB struct {
 	Name         string
 	Namespace    string

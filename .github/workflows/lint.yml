@@ -51,6 +51,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.36
+          version: v1.45.2
       - name: filename and manifests check
         run: go run test/linter/main.go

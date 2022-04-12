@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// nolint: golint
+// nolint: revive
 type NSXClient struct {
 	api *nsxt.APIClient
 	cfg *nsxt.Configuration
@@ -233,13 +233,13 @@ func (c *NSXClient) TagLogicalPort(ctx context.Context, id string, tags map[stri
 type LoadBalancer struct {
 	client *NSXClient
 	name   string
-	Id     string
+	ID     string
 }
 
 // nolint: golint, stylecheck
 type NSGroup struct {
 	client   *NSXClient
-	Name, Id string
+	Name, ID string
 }
 
 func (group *NSGroup) Add(ips ...string) error {
@@ -280,7 +280,7 @@ func (c *NSXClient) CreateOrUpdateNSGroup(name string, id string, targetType str
 		return &NSGroup{
 			client: c,
 			Name:   group.DisplayName,
-			Id:     group.Id,
+			ID:     group.Id,
 		}, nil
 	}
 	c.Logger.Infof("Updating NSGroup id=%s name=%s", group.Id, group.DisplayName)
@@ -294,7 +294,7 @@ func (c *NSXClient) CreateOrUpdateNSGroup(name string, id string, targetType str
 	return &NSGroup{
 		client: c,
 		Name:   group.DisplayName,
-		Id:     group.Id,
+		ID:     group.Id,
 	}, nil
 }
 
@@ -468,7 +468,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		MemberGroup: &loadbalancer.PoolMemberGroup{
 			GroupingObject: &common.ResourceReference{
 				TargetType: "NSGroup",
-				TargetId:   group.Id,
+				TargetId:   group.ID,
 			},
 		},
 	})
@@ -581,9 +581,9 @@ func (c *NSXClient) updateLoadBalancerPool(lb *loadbalancer.LbVirtualServer, opt
 		changed = true
 		pool.ActiveMonitorIds = []string{monitorID}
 	}
-	if group.Id != pool.MemberGroup.GroupingObject.TargetId {
+	if group.ID != pool.MemberGroup.GroupingObject.TargetId {
 		changed = true
-		pool.MemberGroup.GroupingObject.TargetId = group.Id
+		pool.MemberGroup.GroupingObject.TargetId = group.ID
 	}
 
 	if changed {
@@ -716,7 +716,7 @@ func (c *NSXClient) CreateOrUpdateTCPHealthCheck(id string, opts MonitorPort) (s
 		// }
 
 		// if !changed {
-		// 	return monitor.Id, nil
+		// 	return monitor.ID, nil
 		// }
 
 		// c.Logger.Tracef("Updating TCP monitor %s: %+v", id, monitor)

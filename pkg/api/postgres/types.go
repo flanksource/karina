@@ -102,7 +102,7 @@ func (in Postgresql) GetObjectKind() schema.ObjectKind {
 }
 
 // PostgresSpec defines the specification for the PostgreSQL TPR.
-// nolint: golint
+// nolint: revive
 type PostgresSpec struct {
 	PostgresqlParam `json:"postgresql"`
 	Volume          `json:"volume,omitempty"`
@@ -271,7 +271,7 @@ type Sidecar struct {
 type UserFlags []string
 
 // PostgresStatus contains status of the PostgreSQL cluster (running, creation failed etc.)
-// nolint: golint
+// nolint: revive
 type PostgresStatus struct {
 	PostgresClusterStatus string `json:"PostgresClusterStatus"`
 }
@@ -321,7 +321,7 @@ type OperatorConfigurationList struct {
 }
 
 // PostgresUsersConfiguration defines the system users of Postgres.
-// nolint: golint
+// nolint: revive
 type PostgresUsersConfiguration struct {
 	SuperUsername       string `json:"super_username,omitempty"`
 	ReplicationUsername string `json:"replication_username,omitempty"`
@@ -360,7 +360,7 @@ type KubernetesMetaConfiguration struct {
 }
 
 // PostgresPodResourcesDefaults defines the spec of default resources
-// nolint: golint
+// nolint: revive
 type PostgresPodResourcesDefaults struct {
 	DefaultCPURequest    string `json:"default_cpu_request,omitempty"`
 	DefaultMemoryRequest string `json:"default_memory_request,omitempty"`

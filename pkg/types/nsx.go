@@ -368,7 +368,7 @@ type NsxK8s struct {
 	ResourceWatcherThreadPoolSize *int `structs:"resource_watcher_thread_pool_size,omitempty" yaml:"resource_watcher_thread_pool_size,omitempty" json:"resource_watcher_thread_pool_size,omitempty"`
 
 	// User specified IP address for HTTP and HTTPS ingresses
-	// nolint: golint, stylecheck
+	// nolint: revive, stylecheck
 	HttpAndHttpsIngressIp string `structs:"http_and_https_ingress_ip,omitempty" yaml:"http_and_https_ingress_ip,omitempty" json:"http_and_https_ingress_ip,omitempty"`
 
 	// Set this to True to enable NCP to create segment port for VM through
