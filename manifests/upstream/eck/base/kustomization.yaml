@@ -1,6 +1,9 @@
 namespace: elastic-system
-bases:
+resources:
   - https://download.elastic.co/downloads/eck/1.9.1/operator.yaml
+  - certificate.yaml
 images:
   - name: docker.elastic.co/eck/eck-operator
     newTag: "{{.eck.version}}"
+patchesStrategicMerge:
+  - delete-secret.yaml
