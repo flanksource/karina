@@ -232,10 +232,11 @@ spec:
             - --publish-service=$(POD_NAMESPACE)/ingress-nginx
             - --annotations-prefix=nginx.ingress.kubernetes.io
             {{- if (semverCompare ">=1.0.0" .nginx.version) }}
-            - --controller-class=k8s.io/ingress-nginx-secondary
             {{- if .nginx.default }}
             - --controller-class=k8s.io/ingress-nginx
             - --watch-ingress-without-class=true
+            {{ else }}
+            - --controller-class=k8s.io/ingress-nginx-secondary
             {{- end }}
             {{- else }}
             {{- if .nginx.default }}
