@@ -10,6 +10,5 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: canary-checker
-      app.kubernetes.io/instance: canary-checker
       control-plane: canary-checker
 

@@ -248,7 +248,6 @@ spec:
   jobLabel: canary-checker
   selector:
     matchLabels:
-      app.kubernetes.io/instance: canary-checker
       app.kubernetes.io/name: canary-checker
       control-plane: canary-checker
 ---

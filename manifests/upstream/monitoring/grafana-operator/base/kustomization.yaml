@@ -1,6 +1,6 @@
 resources:
-  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.1.1/rbac.yaml
-  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.1.1/deployment.yaml
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.2.0/rbac.yaml
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.2.0/deployment.yaml
 namespace: monitoring
 patchesStrategicMerge:
   - |-
