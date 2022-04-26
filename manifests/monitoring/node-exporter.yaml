@@ -86,7 +86,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
-          image: quay.io/coreos/kube-rbac-proxy:v0.4.1
+          image: bitname/kube-rbac-proxy:v0.12.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
