@@ -142,6 +142,8 @@ spec:
       creationTimestamp: null
       labels:
         name: prometheus-adapter
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
     spec:
       containers:
         - args:
