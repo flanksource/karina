@@ -211,6 +211,9 @@ spec:
   podMetadata:
     annotations:
       reload/all: "true"
+      {{- if (index .monitoring.prometheus "persistence") }}
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      {{- end }}
   externalLabels:
     cluster: {{.name}}
   version: {{.monitoring.prometheus.version}}
