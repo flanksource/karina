@@ -86,7 +86,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
-          image: bitname/kube-rbac-proxy:v0.12.0
+          image: quay.io/brancz/kube-rbac-proxy:v0.11.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
