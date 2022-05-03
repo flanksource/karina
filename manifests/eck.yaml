@@ -10,7 +10,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-operator
   namespace: elastic-system
@@ -19,7 +19,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-operator
 rules:
@@ -191,12 +191,20 @@ rules:
   - update
   - patch
   - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
@@ -277,7 +285,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
@@ -345,7 +353,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-operator
 roleRef:
@@ -368,7 +376,8 @@ data:
     ca-cert-rotate-before: 24h
     cert-validity: 8760h
     cert-rotate-before: 24h
-    set-default-security-context: true
+    exposed-node-labels: [topology.kubernetes.io/.*,failure-domain.beta.kubernetes.io/.*]
+    set-default-security-context: auto-detect
     kube-client-timeout: 60s
     elasticsearch-client-timeout: 180s
     disable-telemetry: false
@@ -379,7 +388,7 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-operator
   namespace: elastic-system
@@ -388,7 +397,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-webhook-server
   namespace: elastic-system
@@ -404,7 +413,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-operator
   namespace: elastic-system
@@ -417,7 +426,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 239de074c87fe1f7254f5c93ff9f4a0949c8f111ba15696c460d786d6279e4d6
+        checksum/config: 06e29365c8508fbeda738005ba0e857e543fcac6580e97f081656c96b5944bff
         co.elastic.logs/raw: '[{"type":"container","json.keys_under_root":true,"paths":["/var/log/containers/*${data.kubernetes.container.id}.log"],"processors":[{"convert":{"mode":"rename","ignore_missing":true,"fields":[{"from":"error","to":"_error"}]}},{"convert":{"mode":"rename","ignore_missing":true,"fields":[{"from":"_error","to":"error.message"}]}},{"convert":{"mode":"rename","ignore_missing":true,"fields":[{"from":"source","to":"_source"}]}},{"convert":{"mode":"rename","ignore_missing":true,"fields":[{"from":"_source","to":"event.source"}]}}]}]'
       labels:
         control-plane: elastic-operator
@@ -447,7 +456,7 @@ spec:
         resources:
           limits:
             cpu: 1
-            memory: 512Mi
+            memory: 1Gi
           requests:
             cpu: 100m
             memory: 150Mi
@@ -495,7 +504,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   labels:
-    app.kubernetes.io/version: 1.9.1
+    app.kubernetes.io/version: 2.1.0
     control-plane: elastic-operator
   name: elastic-webhook.k8s.elastic.co
 webhooks:

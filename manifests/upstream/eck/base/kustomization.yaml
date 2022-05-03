@@ -1,6 +1,6 @@
 namespace: elastic-system
 resources:
-  - https://download.elastic.co/downloads/eck/1.9.1/operator.yaml
+  - https://download.elastic.co/downloads/eck/2.1.0/operator.yaml
   - certificate.yaml
 images:
   - name: docker.elastic.co/eck/eck-operator
