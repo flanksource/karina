@@ -1,4 +1,4 @@
 repo: https://flanksource.github.io/charts
 chart_name: canary-checker
-version: 0.38.103
+version: 0.38.108
 namespace: platform-system

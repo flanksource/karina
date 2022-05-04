@@ -17,6 +17,7 @@ rules:
   - canaries.flanksource.com
   resources:
   - canaries
+  - systemtemplates
   verbs:
   - create
   - delete
@@ -29,6 +30,7 @@ rules:
   - canaries.flanksource.com
   resources:
   - canaries/status
+  - systemtemplates/status
   verbs:
   - get
   - patch
