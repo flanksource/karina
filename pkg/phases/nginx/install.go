@@ -135,7 +135,7 @@ func Install(platform *platform.Platform) error {
 	}
 	// nginx alerts live in a separate manifest as alert syntax often cannot be templated
 	if !platform.Monitoring.IsDisabled() {
-		if err := platform.ApplySpecs("monitoring/nginx-alerts.yaml.raw"); err != nil {
+		if err := platform.ApplySpecs(v1.NamespaceAll, "monitoring/nginx-alerts.yaml.raw"); err != nil {
 			return err
 		}
 	}
