@@ -108,6 +108,12 @@ echo "::group::Deploy All"
 $BIN deploy all --exclude crds --prune=false -v $CONFIG_FILES || (echo "::error::Error while deploying" && exit 1)
 echo "::endgroup::"
 
+if [[ -f "test/manifests/$SUITE/kustomization.yaml" ]]; then
+    echo "::group::Deploying suite specific manifests"
+    kubectl apply -k test/manifests/$SUITE
+    echo "::endgroup::"
+fi
+
 echo "::group::Test Dry Run"
 # wait for up to 8 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
@@ -119,3 +125,9 @@ echo "::group::Final Test Run"
 # its own wait. e2e tests should always pass once the non e2e have passed
 $BIN test all --e2e --progress=false -v --junit-path test-results/results.xml $CONFIG_FILES
 echo "::endgroup::"
+
+if [[ -f "test/manifests/$SUITE/eval.sh" ]]; then
+    echo "::group::Suite Specific Test"
+    ./test/manifests/$SUITE/eval.sh
+    echo "::endgroup::"
+fi
