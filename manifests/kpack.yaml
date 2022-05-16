@@ -415,7 +415,7 @@ spec:
         kubernetes.io/os: linux
       serviceAccountName: webhook
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: defaults.webhook.kpack.io
@@ -430,7 +430,7 @@ webhooks:
   name: defaults.webhook.kpack.io
   sideEffects: None
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: validation.webhook.kpack.io

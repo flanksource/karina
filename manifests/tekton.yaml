@@ -384,7 +384,7 @@ metadata:
     pipeline.tekton.dev/release: devel
 # The data is populated at install time.
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: validation.webhook.pipeline.tekton.dev
@@ -402,7 +402,7 @@ webhooks:
     sideEffects: None
     name: validation.webhook.pipeline.tekton.dev
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: webhook.pipeline.tekton.dev
@@ -420,7 +420,7 @@ webhooks:
     sideEffects: None
     name: webhook.pipeline.tekton.dev
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: config.webhook.pipeline.tekton.dev
