@@ -335,6 +335,8 @@ spec:
     - matchExpressions:
         - { key: app, operator: In, values: [grafana] }
   deployment:
+    annotations:
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
     envFrom:
       - secretRef:
           name: grafana-env
