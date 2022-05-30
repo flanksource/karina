@@ -44,12 +44,13 @@ function report() {
     fi
     echo "::group::Uploading test results"
     set +e
-    KREW=./krew-"${OS}_${ARCH}"
+    KREW_FILE=krew-"${OS}_${ARCH}"
+    KREW=./$KREW_FILE
     export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
     if ! kubectl krew version 2&1>/dev/null; then
         cd "$(mktemp -d)"
-        curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz"
-        tar zxvf krew.tar.gz
+        curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/$KREW_FILE.tar.gz"
+        tar zxvf $KREW_FILE.tar.gz
         "$KREW" install krew
     fi
     if ! kubectl resource-snapshot -v 2&1>/dev/null; then
