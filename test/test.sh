@@ -52,6 +52,7 @@ function report() {
         curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/$KREW_FILE.tar.gz"
         tar zxvf $KREW_FILE.tar.gz
         "$KREW" install krew
+        cd -
     fi
     if ! kubectl resource-snapshot -v 2&1>/dev/null; then
         kubectl krew install resource-snapshot
