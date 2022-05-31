@@ -70,6 +70,8 @@ function report() {
     if $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $CONFIG_FILES ; then
         zip -r artifacts/snapshot.zip snapshot/*
     fi
+    echo "ls -l .bin/"
+    ls -l .bin/
 
     echo "::endgroup::"
 }
