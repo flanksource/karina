@@ -335,6 +335,8 @@ github.com/flanksource/commons v1.4.3/go.mod h1:cGrz4qFi4NrP04vjMxv6DQk0SD0u6nnY
 github.com/flanksource/commons v1.5.1/go.mod h1:v76CUuAsGNgF6MYxQ1XJNwQ4N+WSJbsQ+fTILbP4YP0=
 github.com/flanksource/commons v1.5.14 h1:XXyLQWmGTJ9re8lBEuETI5txbLItWZWepIEGJn9U/0k=
 github.com/flanksource/commons v1.5.14/go.mod h1:TEIeK5ak2VNYgmrYHNSFoX4UjHqQuSXOYvH4waLL5os=
+github.com/flanksource/commons v1.5.15 h1:gx4IOIi9yZytumWTVNkQGCRQtMV8ZWi+q9zoyqRkJHI=
+github.com/flanksource/commons v1.5.15/go.mod h1:TEIeK5ak2VNYgmrYHNSFoX4UjHqQuSXOYvH4waLL5os=
 github.com/flanksource/kommons v0.10.0/go.mod h1:7tDF0fPqJeRB1dAUI71Mxmdhd0MYaF3YYHdp4XPgIzM=
 github.com/flanksource/kommons v0.30.0 h1:Lvth13vWU/XljAklK7h+gXADH5JNm/3DYf6pKJZWrDg=
 github.com/flanksource/kommons v0.30.0/go.mod h1:MdRCes4kbzPmIo4Uc+0wiTH/eT/YnORUNOEwAWSev7U=
