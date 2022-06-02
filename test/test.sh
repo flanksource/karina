@@ -67,11 +67,9 @@ function report() {
         ./build-tools junit gh-workflow-commands test-results/results.xml
     fi
     mkdir -p artifacts
-    if $BIN snapshot --output-dir snapshot -v --include-specs=true --include-logs=true --include-events=true $CONFIG_FILES ; then
+    if $BIN snapshot --output-dir ../snapshot -v --include-specs=true --include-logs=true --include-events=true $CONFIG_FILES ; then
         zip -r artifacts/snapshot.zip snapshot/*
     fi
-    echo "ls -l .bin/"
-    ls -l .bin/
 
     echo "::endgroup::"
 }
