@@ -142,7 +142,7 @@ jobs:
         with:
           if-no-files-found: ignore
           name: snapshot-${{matrix.k8s}}-${{matrix.suite}}
-          path: artifacts/snapshot.zip
+          path: artifacts/snapshot
       - name: Generate Kind logs
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' && failure() }}
         run: kind export logs --name=kind-${{matrix.suite}}-${{matrix.k8s}} artifacts/kind-logs
