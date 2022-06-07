@@ -59,7 +59,7 @@ packetbeat:
 eventrouter:
   version: v0.3
 eck:
-  version: 1.0.0
+  version: 2.1.0
 test:
   exclude:
     - dex
