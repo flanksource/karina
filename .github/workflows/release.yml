@@ -18,7 +18,7 @@ jobs:
     needs: semantic-release
     runs-on: ubuntu-latest
     container:
-      image: flanksource/build-tools:v0.13.6
+      image: flanksource/build-tools:v0.15.1
     steps:
       - uses: actions/checkout@v2
       - run: make build
@@ -29,7 +29,7 @@ jobs:
     env:
       VERSION: v${{ needs.semantic-release.outputs.release-version }}
     container:
-      image: flanksource/build-tools:v0.13.6
+      image: flanksource/build-tools:v0.15.1
     steps:
       - uses: actions/checkout@v2
       - run: make release

@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: gates
     container:
-      image: flanksource/build-tools:v0.12.0
+      image: flanksource/build-tools:v0.15.1
     env:
       FILE_CHANGES_TO_CORE_ARTIFACTS: ${{ needs.gates.outputs.fileChangesToCoreArtifacts == 'true' }}
     steps:
