@@ -32,6 +32,7 @@ jobs:
       image: flanksource/build-tools:v0.15.1
     steps:
       - uses: actions/checkout@v2
+      - run: git config --global --add safe.directory $PWD
       - run: make release
       - name: Upload binaries to release
         uses: meeDamian/github-release@2.0

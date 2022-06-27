@@ -60,6 +60,7 @@ jobs:
           fetch-depth: 0
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
       # Cache go build cache, used to speedup go test
+      - run: git config --global --add safe.directory $PWD
       - name: Go Build Cache
         if: ${{ env.FILE_CHANGES_TO_CORE_ARTIFACTS == 'true' }}
         uses: actions/cache@v2
