@@ -689,10 +689,22 @@ type Memory struct {
 }
 
 type Grafana struct {
-	Version          string   `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	SkipDashboards   bool     `yaml:"skipDashboards,omitempty" json:"skipDashboards,omitempty" `
-	CustomDashboards []string `yaml:"customDashboards,omitempty" json:"customDashboards,omitempty"`
+	Version          string              `yaml:"version,omitempty" json:"version,omitempty"`
+	Disabled         bool                `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	SkipDashboards   bool                `yaml:"skipDashboards,omitempty" json:"skipDashboards,omitempty" `
+	CustomDashboards []string            `yaml:"customDashboards,omitempty" json:"customDashboards,omitempty"`
+	OAuth            GrafanaGenericOAuth `yaml:"oauth,omitempty" json:"oauth,omitempty"`
+}
+
+type GrafanaGenericOAuth struct {
+	Name         string `yaml:"name,omitempty" json:"name,omitempty"`
+	Icon         string `yaml:"icon,omitempty" json:"icon,omitempty"`
+	ClientID     string `yaml:"client_id,omitempty" json:"client_id"`
+	ClientSecret string `yaml:"client_secret,omitempty" json:"client_secret"`
+	Scopes       string `yaml:"scopes,omitempty" json:"scopes,omitempty"`
+	TokenUrl     string `yaml:"token_url,omitempty" json:"token_url,omitempty"`
+	AuthUrl      string `yaml:"auth_url,omitempty" json:"auth_url,omitempty"`
+	ApiUrl       string `yaml:"api_url,omitempty" json:"api_url,omitempty"`
 }
 
 type Brand struct {

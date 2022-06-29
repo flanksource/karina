@@ -331,6 +331,17 @@ spec:
       enabled: True
     auth.anonymous:
       enabled: True
+    {{- if index .monitoring.grafana "oauth" }}
+    auth.generic_oauth:
+      name: "{{ .monitoring.grafana.oauth.name }}"
+      icon: "{{ .monitoring.grafana.oauth.icon }}"
+      client_id: "{{ .monitoring.grafana.oauth.client_id }}"
+      client_secret: "{{ .monitoring.grafana.oauth.client_secret }}"
+      scopes: "{{ .monitoring.grafana.oauth.scopes }}"
+      token_url: "{{ .monitoring.grafana.oauth.token_url }}"
+      auth_url: "{{ .monitoring.grafana.oauth.auth_url }}"
+      api_url: "{{ .monitoring.grafana.oauth.api_url }}"
+    {{- end }}
   dashboardLabelSelector:
     - matchExpressions:
         - { key: app, operator: In, values: [grafana] }
