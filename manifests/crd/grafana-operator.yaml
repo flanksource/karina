@@ -156,8 +156,15 @@ spec:
                       description: GrafanaDataSourceJsonData contains the most common json options See https://grafana.com/docs/administration/provisioning/#datasources
                       properties:
                         addCorsHeader:
-                          description: ' Useful fields for clickhouse datasource  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44'
+                          description: Useful fields for clickhouse datasource See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
                           type: boolean
+                        alertmanagerUid:
+                          description: AlertManagerUID if null use the internal grafana alertmanager
+                          type: string
+                        allowInfraExplore:
+                          type: boolean
+                        apiToken:
+                          type: string
                         appInsightsAppId:
                           description: Fields for Azure data sources
                           type: string
@@ -209,6 +216,19 @@ spec:
                           type: string
                         esVersion:
                           type: string
+                        exemplarTraceIdDestinations:
+                          items:
+                            properties:
+                              datasourceUid:
+                                type: string
+                              name:
+                                type: string
+                              url:
+                                type: string
+                              urlDisplayLabel:
+                                type: string
+                            type: object
+                          type: array
                         githubUrl:
                           description: Fields for Github data sources
                           type: string
@@ -255,6 +275,9 @@ spec:
                           type: string
                         logMessageField:
                           type: string
+                        manageAlerts:
+                          description: ManageAlerts turns on alert management from UI
+                          type: boolean
                         maxIdleConns:
                           type: integer
                         maxLines:
@@ -262,12 +285,34 @@ spec:
                           type: integer
                         maxOpenConns:
                           type: integer
+                        nodeGraph:
+                          properties:
+                            enabled:
+                              type: boolean
+                          type: object
                         oauthPassThru:
                           type: boolean
                         organization:
                           type: string
+                        port:
+                          type: integer
                         postgresVersion:
                           type: integer
+                        search:
+                          properties:
+                            hide:
+                              type: boolean
+                          type: object
+                        server:
+                          description: Fields for Grafana Clickhouse data sources
+                          type: string
+                        serviceMap:
+                          properties:
+                            datasourceUid:
+                              type: string
+                          type: object
+                        showOffline:
+                          type: boolean
                         sigV4AssumeRoleArn:
                           type: string
                         sigV4Auth:
@@ -293,6 +338,9 @@ spec:
                           type: string
                         timescaledb:
                           type: boolean
+                        timezone:
+                          description: Extra field for MySQL data source
+                          type: string
                         tlsAuth:
                           type: boolean
                         tlsAuthWithCACert:
@@ -307,6 +355,12 @@ spec:
                           properties:
                             datasourceUid:
                               type: string
+                            filterBySpanID:
+                              type: boolean
+                            filterByTraceID:
+                              type: boolean
+                            lokiSearch:
+                              type: boolean
                             spanEndTimeShift:
                               type: string
                             spanStartTimeShift:
@@ -320,10 +374,17 @@ spec:
                           type: string
                         tsdbVersion:
                           type: string
+                        url:
+                          description: Fields for Instana data sources See https://github.com/instana/instana-grafana-datasource/blob/main/provisioning/datasources/datasource.yml
+                          type: string
                         usePOST:
+                          type: boolean
+                        useProxy:
                           type: boolean
                         useYandexCloudAuthorization:
                           type: boolean
+                        username:
+                          type: string
                         version:
                           type: string
                         xHeaderKey:
@@ -3545,6 +3606,8 @@ spec:
                     properties:
                       enabled:
                         type: boolean
+                      secureUrl:
+                        type: string
                       url:
                         type: string
                     required:
