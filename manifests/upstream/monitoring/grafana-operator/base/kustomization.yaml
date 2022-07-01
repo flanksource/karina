@@ -1,6 +1,6 @@
 resources:
-  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.2.0/rbac.yaml
-  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.2.0/deployment.yaml
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.4.1/rbac.yaml
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.4.1/deployment.yaml
 namespace: monitoring
 patchesStrategicMerge:
   - |-
@@ -25,4 +25,4 @@ patchesStrategicMerge:
                 - --metrics-bind-address=127.0.0.1:8080
                 - --zap-log-level=error
                 - "--grafana-image=docker.io/grafana/grafana"
-                - '--grafana-image-tag={{.monitoring.grafana.version | default "8.1.1" }}'
+                - '--grafana-image-tag={{.monitoring.grafana.version | default "8.5.5" }}'

@@ -1,2 +1,2 @@
 resources:
-  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.1.1/crds.yaml
+  - https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/manifests/v4.4.1/crds.yaml
