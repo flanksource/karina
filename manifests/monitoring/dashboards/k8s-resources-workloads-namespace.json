@@ -338,7 +338,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n  kube_pod_container_resource_requests_cpu_cores{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n  kube_pod_container_resource_requests{resource=\"cpu\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -347,7 +347,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n  node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_requests_cpu_cores{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n  node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_requests{resource=\"cpu\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -356,7 +356,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n  kube_pod_container_resource_limits_cpu_cores{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n  kube_pod_container_resource_limits{resource=\"cpu\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -365,7 +365,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n  node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_limits_cpu_cores{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n  node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_limits{resource=\"cpu\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -748,7 +748,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n  kube_pod_container_resource_requests_memory_bytes{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n  kube_pod_container_resource_requests{resource=\"memory\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -757,7 +757,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n    container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_requests_memory_bytes{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n    container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_requests{resource=\"memory\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -766,7 +766,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n  kube_pod_container_resource_limits_memory_bytes{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n  kube_pod_container_resource_limits{resource=\"memory\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -775,7 +775,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(\n    container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_limits_memory_bytes{namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
+                            "expr": "sum(\n    container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n/sum(\n  kube_pod_container_resource_limits{resource=\"memory\", namespace=\"$namespace\"}\n* on(namespace,pod)\n  group_left(workload, workload_type) mixin_pod_workload{namespace=\"$namespace\", workload_type=\"$type\"}\n) by (workload, workload_type)\n",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,

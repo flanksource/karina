@@ -140,7 +140,7 @@
                     "steppedLine": false,
                     "targets": [
                         {
-                            "expr": "sum(kube_pod_container_resource_requests_cpu_cores) / sum(kube_node_status_allocatable_cpu_cores)",
+                            "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\"}) / sum(kube_node_status_allocatable{resource=\"cpu\"})",
                             "format": "time_series",
                             "instant": true,
                             "intervalFactor": 2,
@@ -224,7 +224,7 @@
                     "steppedLine": false,
                     "targets": [
                         {
-                            "expr": "sum(kube_pod_container_resource_limits_cpu_cores) / sum(kube_node_status_allocatable_cpu_cores)",
+                            "expr": "sum(kube_pod_container_resource_limits{resource=\"cpu\"}) / sum(kube_node_status_allocatable{resource=\"cpu\"})",
                             "format": "time_series",
                             "instant": true,
                             "intervalFactor": 2,
@@ -308,7 +308,7 @@
                     "steppedLine": false,
                     "targets": [
                         {
-                            "expr": "1 - sum(:node_memory_MemAvailable_bytes:sum) / sum(kube_node_status_allocatable_memory_bytes)",
+                            "expr": "1 - sum(:node_memory_MemAvailable_bytes:sum) / sum(kube_node_status_allocatable{resource=\"memory\"})",
                             "format": "time_series",
                             "instant": true,
                             "intervalFactor": 2,
@@ -392,7 +392,7 @@
                     "steppedLine": false,
                     "targets": [
                         {
-                            "expr": "sum(kube_pod_container_resource_requests_memory_bytes) / sum(kube_node_status_allocatable_memory_bytes)",
+                            "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\"}) / sum(kube_node_status_allocatable{resource=\"memory\"})",
                             "format": "time_series",
                             "instant": true,
                             "intervalFactor": 2,
@@ -476,7 +476,7 @@
                     "steppedLine": false,
                     "targets": [
                         {
-                            "expr": "sum(kube_pod_container_resource_limits_memory_bytes) / sum(kube_node_status_allocatable_memory_bytes)",
+                            "expr": "sum(kube_pod_container_resource_limits{resource=\"memory\"}) / sum(kube_node_status_allocatable{resource=\"memory\"})",
                             "format": "time_series",
                             "instant": true,
                             "intervalFactor": 2,
@@ -863,7 +863,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)",
+                            "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -872,7 +872,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)",
+                            "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_requests{resource=\"cpu\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -881,7 +881,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)",
+                            "expr": "sum(kube_pod_container_resource_limits{resource=\"cpu\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -890,7 +890,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)",
+                            "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits{resource=\"cpu\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -1282,7 +1282,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)",
+                            "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -1291,7 +1291,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(container_memory_rss{container!=\"\"}) by (namespace) / sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)",
+                            "expr": "sum(container_memory_rss{container!=\"\"}) by (namespace) / sum(kube_pod_container_resource_requests{resource=\"memory\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -1300,7 +1300,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
+                            "expr": "sum(kube_pod_container_resource_limits{resource=\"memory\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,
@@ -1309,7 +1309,7 @@
                             "step": 10
                         },
                         {
-                            "expr": "sum(container_memory_rss{container!=\"\"}) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)",
+                            "expr": "sum(container_memory_rss{container!=\"\"}) by (namespace) / sum(kube_pod_container_resource_limits{resource=\"memory\"}) by (namespace)",
                             "format": "table",
                             "instant": true,
                             "intervalFactor": 2,

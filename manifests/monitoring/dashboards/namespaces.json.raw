@@ -268,7 +268,7 @@
           "refId": "G"
         },
         {
-          "expr": "sum(kube_pod_container_resource_requests_memory_bytes) by (namespace)  ",
+          "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\"}) by (namespace)  ",
           "format": "table",
           "instant": true,
           "refId": "B"
@@ -281,20 +281,20 @@
           "refId": "F"
         },
         {
-          "expr": "sum(namespace:container_memory_usage_bytes:sum ) by (namespace) / sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)  ",
+          "expr": "sum(namespace:container_memory_usage_bytes:sum ) by (namespace) / sum(kube_pod_container_resource_limits{resource=\"memory\"}) by (namespace)  ",
           "format": "table",
           "instant": true,
           "refId": "H"
         },
         {
-          "expr": "sum(kube_pod_container_resource_limits_memory_bytes) by (namespace)  ",
+          "expr": "sum(kube_pod_container_resource_limits{resource=\"memory\"}) by (namespace)  ",
           "format": "table",
           "instant": true,
           "legendFormat": "",
           "refId": "C"
         },
         {
-          "expr": "sum(kube_pod_container_resource_requests_cpu_cores) by (namespace)  ",
+          "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\"}) by (namespace)  ",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -308,13 +308,13 @@
           "refId": "E"
         },
         {
-          "expr": "sum(namespace:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)  ",
+          "expr": "sum(namespace:container_cpu_usage_seconds_total:sum_rate) by (namespace) / sum(kube_pod_container_resource_limits{resource=\"cpu\"}) by (namespace)  ",
           "format": "table",
           "instant": true,
           "refId": "I"
         },
         {
-          "expr": "sum(kube_pod_container_resource_limits_cpu_cores) by (namespace)  ",
+          "expr": "sum(kube_pod_container_resource_limits{resource=\"cpu\"}) by (namespace)  ",
           "format": "table",
           "instant": true,
           "legendFormat": "",

@@ -189,7 +189,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_node_status_capacity_memory_bytes)",
+          "expr": "sum(kube_node_status_capacity{resource=\"memory\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -602,7 +602,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_limits_memory_bytes) / sum(:node_memory_MemAvailable_bytes:sum)  ",
+          "expr": "sum(kube_pod_container_resource_limits{resource=\"memory\"}) / sum(:node_memory_MemAvailable_bytes:sum)  ",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -1161,7 +1161,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_requests_cpu_cores) / sum(node:node_num_cpu:sum)",
+          "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\"}) / sum(node:node_num_cpu:sum)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -1251,7 +1251,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_limits_cpu_cores) / sum(node:node_num_cpu:sum)",
+          "expr": "sum(kube_pod_container_resource_limits{resource=\"cpu\"}) / sum(node:node_num_cpu:sum)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
