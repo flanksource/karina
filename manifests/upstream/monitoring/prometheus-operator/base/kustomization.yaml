@@ -1,0 +1,27 @@
+images:
+  - name: quay.io/prometheus-operator/prometheus-operator
+    newTag: '{{.prometheus.operatorVersion | default "v0.57.0"}}'
+resources:
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-clusterRole.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-clusterRoleBinding.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-deployment.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-networkPolicy.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-service.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-serviceAccount.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-serviceMonitor.yaml
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: prometheus-operator
+      namespace: monitoring
+    spec:
+      template:
+        spec:
+          containers:
+            - name: prometheus-operator
+              args:
+                - --kubelet-service=kube-system/kubelet
+                - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:{{.prometheus.operatorVersion | default "v0.57.0"}}
