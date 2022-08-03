@@ -29,6 +29,9 @@ jobs:
     container:
       image: flanksource/build-tools:v0.15.1
     strategy:
+      # Github release times out trying to upload all the binaries in a single action
+      # so we split each binary in its own build, and run them serially to prevent dupe releases
+      max-parallel: 1
       fail-fast: false
       matrix:
         target:
