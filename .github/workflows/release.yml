@@ -26,14 +26,25 @@ jobs:
   binary:
     needs: semantic-release
     runs-on: ubuntu-latest
-    env:
-      VERSION: v${{ needs.semantic-release.outputs.release-version }}
     container:
       image: flanksource/build-tools:v0.15.1
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - ./.bin/karina.exe
+          - ./.bin/karina
+          - ./.bin/karina_darwin-amd64
+          - ./.bin/karina_darwin-arm64
+          - ./.bin/karina_linux-amd64
+          - ./.bin/karina_linux-arm64
+    env:
+      VERSION: v${{ needs.semantic-release.outputs.release-version }}
+      TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@v2
       - run: git config --global --add safe.directory $PWD
-      - run: make release
+      - run: make $TARGET compress
       - name: Upload binaries to release
         uses: meeDamian/github-release@2.0
         with:
@@ -42,12 +53,7 @@ jobs:
           gzip: false
           allow_override: true
           files: >
-            ./.bin/karina
-            ./.bin/karina_darwin-amd64
-            ./.bin/karina_darwin-arm64
-            ./.bin/karina_linux-amd64
-            ./.bin/karina_linux-arm64
-
+            ${{ matrix.target }}
   docker:
     needs: semantic-release
     # Only build/push new docker images when there is new version released

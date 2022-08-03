@@ -31,21 +31,32 @@ release: linux darwin compress
 build:
 	go build -o ./.bin/$(NAME) -ldflags "-X \"main.version=$(VERSION_TAG)\""  main.go
 
-
 .PHONY: linux
-linux:
+linux: .bin/$(NAME)_linux-arm64 .bin/$(NAME)_linux-amd64 .bin/$(NAME)
+
+.bin/$(NAME)_linux-amd64:
 	GOOS=linux GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)_linux-amd64
-	cp .bin/$(NAME)_linux-amd64 .bin/$(NAME)
+
+.bin/$(NAME):
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)
+
+.bin/$(NAME)_darwin-amd64:
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\""  -o .bin/$(NAME)_darwin-amd64
+
+.bin/$(NAME)_linux-arm64:
 	GOOS=linux GOARCH=arm64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)_linux-arm64
 
-.PHONY: darwin
-darwin:
-	GOOS=darwin GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\""  -o .bin/$(NAME)_darwin-amd64
+.bin/$(NAME)_darwin-arm64:
 	GOOS=darwin GOARCH=arm64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\"" -o .bin/$(NAME)_darwin-arm64
 
+.bin/$(NAME).exe:
+		GOOS=windows GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\""  -o .bin/$(NAME).exe
+
+.PHONY: darwin
+darwin: .bin/$(NAME)_darwin-amd64 .bin/$(NAME)_linux-arm64 .bin/$(NAME)_darwin-amd64
+
 .PHONY: windows
-windows:
-	GOOS=windows GOARCH=amd64 go build -ldflags "-X \"main.version=$(VERSION_TAG)\""  -o .bin/$(NAME).exe
+windows: .bin/$(NAME).exe
 
 .PHONY: compress
 compress:
