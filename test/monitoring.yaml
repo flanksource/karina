@@ -15,3 +15,5 @@ monitoring:
       capacity: 10Gi
 quack:
   disabled: false
+platformOperator:
+  disabled: true
