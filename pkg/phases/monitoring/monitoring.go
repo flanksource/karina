@@ -30,6 +30,7 @@ const (
 
 var specs = []string{
 	"prometheus-operator.yaml",
+	"prometheus-operator-rules.yaml.raw",
 	"karma.yaml",
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",

@@ -79,6 +79,10 @@ monitoring/grafana-operator.yaml:
 	$(SED) -i 's/controller-manager/grafana-operator/' monitoring/grafana-operator.yaml
 	$(SED) -i 's/manager-role/grafana-operator-role/' monitoring/grafana-operator.yaml
 
+.PHONY: monitoring/prometheus-operator-rules.yaml.raw
+monitoring/prometheus-operator-rules.yaml.raw:
+	$(call BUILD_BASE,monitoring/prometheus-operator-rules)
+
 .PHONY: canary-checker.yaml
 canary-checker.yaml:
 	$(call BUILD_HELM_CHART,canary-checker)
