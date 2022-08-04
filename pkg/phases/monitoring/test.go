@@ -32,6 +32,8 @@ func Test(p *platform.Platform, test *console.TestResults) {
 	}
 	_ = p.WaitForNamespace("monitoring", 180*time.Second)
 	kommons.TestNamespace(client, "monitoring", test)
+	TestPrometheus(p, test)
+	TestThanos(p, test)
 }
 
 func TestThanos(p *platform.Platform, test *console.TestResults) {
