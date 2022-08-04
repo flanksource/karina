@@ -27,13 +27,13 @@ func Install(p *platform.Platform) error {
 		p.KubeWebView.Disabled = true
 	}
 
-	if p.DryRun && !p.KubeWebView.Disabled {
+	if p.DryRun && !p.KubeWebView.IsDisabled() {
 		return p.ApplySpecs(Namespace, "kube-web-view.yaml")
 	} else if p.DryRun {
 		return nil
 	}
 
-	if p.KubeWebView.Disabled {
+	if p.KubeWebView.IsDisabled() {
 		// remove the secret containing access information to external clusters
 		cs, err := p.GetClientset()
 		if err != nil {

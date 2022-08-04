@@ -152,8 +152,7 @@ type GatekeeperE2E struct {
 }
 
 type Harbor struct {
-	Disabled        bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	Version         string `yaml:"version,omitempty" json:"version,omitempty"`
+	XDisabled       `yaml:",inline" json:",inline"`
 	RegistryPVC     string `yaml:"registryPVC,omitempty" json:"registryPVC,omitempty"`
 	ChartPVC        string `yaml:"chartPVC,omitempty" json:"chartPVC,omitempty"`
 	ChartVersion    string `yaml:"chartVersion,omitempty" json:"chartVersion,omitempty"`
@@ -171,10 +170,6 @@ type Harbor struct {
 	S3DisableRedirect bool                     `yaml:"s3DisableRedirect" json:"s3DisableRedirect,omitempty"`
 	// S3 bucket for the docker registry to use
 	Bucket string `yaml:"bucket" json:"bucket"`
-}
-
-func (h Harbor) IsDisabled() bool {
-	return h.Disabled || h.Version == ""
 }
 
 type HarborSettings struct {
@@ -559,9 +554,8 @@ func (dns DynamicDNS) IsEnabled() bool {
 }
 
 type Monitoring struct {
-	Disabled           Boolean       `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	XDisabled          `yaml:",inline" json:",inline"`
 	AlertEmail         string        `yaml:"alert_email,omitempty" json:"alert_email,omitempty"`
-	Version            string        `yaml:"version,omitempty" json:"version,omitempty"`
 	Prometheus         Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
 	Karma              Karma         `yaml:"karma,omitempty" json:"karma,omitempty"`
 	Grafana            Grafana       `yaml:"grafana,omitempty" json:"grafana,omitempty"`
@@ -574,10 +568,6 @@ type Monitoring struct {
 	ExcludeAlerts      []string      `yaml:"excludeAlerts,omitempty" json:"excludeAlerts,omitempty"`
 	PushGateway        PushGateway   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
-}
-
-func (m Monitoring) IsDisabled() bool {
-	return bool(m.Disabled)
 }
 
 // ExternalClusters is a map of clusterName: clusterApiEndpoints
@@ -596,10 +586,9 @@ func (ec *ExternalClusters) AddSelf(name string) {
 
 // Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
 type KubeWebView struct {
-	Disabled       bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	Version        string `yaml:"version,omitempty" json:"version,omitempty"`
-	LogsEnabled    bool   `yaml:"viewLogs,omitempty" json:"viewLogs,omitempty"`
-	SecretsEnabled bool   `yaml:"viewSecrets,omitempty" json:"viewSecrets,omitempty"`
+	XDisabled      `yaml:",inline" json:",inline"`
+	LogsEnabled    bool `yaml:"viewLogs,omitempty" json:"viewLogs,omitempty"`
+	SecretsEnabled bool `yaml:"viewSecrets,omitempty" json:"viewSecrets,omitempty"`
 	// a map of extra clusters that kube-resource report will report on.
 	// in the form:
 	// clusterName: cluster API endpoint
@@ -619,10 +608,7 @@ type Karma struct {
 
 // Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
 type KubeResourceReport struct {
-	// Disable kube-resource-report
-	Disabled bool `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	// Specify version to use (see [releases](https://github.com/hjacobs/kube-resource-report/releases))
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
+	XDisabled `yaml:",inline" json:",inline"`
 	// update interval in minutes
 	UpdateInterval int `yaml:"updateInterval,omitempty" json:"updateInterval,omitempty"`
 	// add a fixed extra cost per cluster
@@ -658,8 +644,7 @@ type MonitoringE2E struct {
 }
 
 type Prometheus struct {
-	Version     string      `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled    bool        `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	XDisabled   `yaml:",inline" json:",inline"`
 	Persistence Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
 }
 
@@ -668,8 +653,7 @@ type PushGateway struct {
 }
 
 type AlertManager struct {
-	Version          string   `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	XDisabled        `yaml:",inline" json:",inline"`
 	ConfigNamespaces []string `yaml:"configNamespaces" json:"configNamespaces"`
 	AlertRelabeling  string   `yaml:"alertRelabelingConfig" json:"alertRelabelingConfig"`
 }
@@ -689,8 +673,7 @@ type Memory struct {
 }
 
 type Grafana struct {
-	Version          string   `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	XDisabled        `yaml:",inline" json:",inline"`
 	SkipDashboards   bool     `yaml:"skipDashboards,omitempty" json:"skipDashboards,omitempty" `
 	CustomDashboards []string `yaml:"customDashboards,omitempty" json:"customDashboards,omitempty"`
 }
@@ -877,20 +860,18 @@ type RabbitmqOperator struct {
 }
 
 type Consul struct {
-	Version        string `yaml:"version" json:"version"`
-	Disabled       bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	XDisabled      `yaml:",inline" json:",inline"`
 	Bucket         string `yaml:"bucket,omitempty" json:"bucket,omitempty"`
 	BackupSchedule string `yaml:"backupSchedule,omitempty" json:"backupSchedule,omitempty"`
 	BackupImage    string `yaml:"backupImage,omitempty" json:"backupImage,omitempty"`
 }
 
 type Vault struct {
-	Version string `yaml:"version" json:"version"`
+	XDisabled `yaml:",inline" json:",inline"`
 	// A VAULT_TOKEN to use when authenticating with Vault
 	Token         string                 `yaml:"token,omitempty" json:"token,omitempty"`
 	Policies      map[string]VaultPolicy `yaml:"policies,omitempty" json:"policies,omitempty"`
 	GroupMappings map[string][]string    `yaml:"groupMappings,omitempty" json:"groupMappings,omitempty"`
-	Disabled      bool                   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	AccessKey     string                 `yaml:"accessKey,omitempty" json:"accessKey,omitempty"`
 	SecretKey     string                 `yaml:"secretKey,omitempty" json:"secretKey,omitempty"`
 	// The AWS KMS ARN ID to use to unseal vault
