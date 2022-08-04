@@ -4,3 +4,5 @@ rabbitmqOperator:
   version: 0.48.0
 redisOperator:
   version: v1.0.0
+monitoring:
+  disabled: true

@@ -20,3 +20,5 @@ test:
     - audit
     - encryption
     - gitops
+monitoring:
+  disabled: true

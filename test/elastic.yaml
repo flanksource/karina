@@ -10,10 +10,10 @@ filebeat:
       user: elastic
       password:
         value: elastic
-#        valueFrom:
-#          secretKeyRef:
-#            name: logs-es-elastic-user
-#            key: elastic
+      #        valueFrom:
+      #          secretKeyRef:
+      #            name: logs-es-elastic-user
+      #            key: elastic
       port: 9200
       scheme: https
 # Commented out until single-pass elastic is implemented, else filebeat will crashloop due to missing kibana instance
@@ -80,3 +80,5 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
+monitoring:
+  disabled: true

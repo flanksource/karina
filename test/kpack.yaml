@@ -10,3 +10,5 @@ kpack:
     completionWindows: "b66.20210421.182327"
     controller: "b3.20210421.182338"
     webhook: "b3.20210421.182328"
+monitoring:
+  disabled: true

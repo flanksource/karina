@@ -13,3 +13,5 @@ monitoring:
   prometheus:
     persistence:
       capacity: 10Gi
+quack:
+  disabled: false

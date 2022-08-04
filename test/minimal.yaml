@@ -58,8 +58,6 @@ ingressCA:
   cert: ../.certs/ingress-ca.crt
   privateKey: ../.certs/ingress-ca.key
   password: foobar
-monitoring:
-  disabled: true
 quack:
   disabled: true
 test:

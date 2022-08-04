@@ -28,3 +28,5 @@ test:
     - audit
     - encryption
     - platform-operator
+monitoring:
+  disabled: true

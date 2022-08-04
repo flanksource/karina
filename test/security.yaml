@@ -53,3 +53,5 @@ vault:
   secretKey: !!env AWS_SECRET_ACCESS_KEY
   consul:
     bucket: "karina-consul-backups"
+monitoring:
+  disabled: true
