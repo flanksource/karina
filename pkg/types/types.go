@@ -554,7 +554,7 @@ func (dns DynamicDNS) IsEnabled() bool {
 }
 
 type Monitoring struct {
-	XDisabled          `yaml:",inline" json:",inline"`
+	Disabled           Boolean       `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	AlertEmail         string        `yaml:"alert_email,omitempty" json:"alert_email,omitempty"`
 	Prometheus         Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
 	Karma              Karma         `yaml:"karma,omitempty" json:"karma,omitempty"`
@@ -568,6 +568,10 @@ type Monitoring struct {
 	ExcludeAlerts      []string      `yaml:"excludeAlerts,omitempty" json:"excludeAlerts,omitempty"`
 	PushGateway        PushGateway   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
 	E2E                MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+}
+
+func (m Monitoring) IsDisabled() bool {
+	return bool(m.Disabled)
 }
 
 // ExternalClusters is a map of clusterName: clusterApiEndpoints

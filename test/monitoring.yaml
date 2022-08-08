@@ -9,10 +9,14 @@ canaryChecker:
   persistence:
     capacity: 1Gi
 monitoring:
-  disabled: false
   prometheus:
+    version: v2.31.1
     persistence:
       capacity: 10Gi
+  grafana:
+    version: 8.5.5
+  alertmanager:
+    version: v0.24.0
 quack:
   disabled: false
 platformOperator:
