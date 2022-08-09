@@ -68,6 +68,10 @@ type Platform struct {
 	Terminating bool
 }
 
+func (platform *Platform) IsMonitoringEnabled() bool {
+	return platform.Monitoring != nil && !platform.Monitoring.IsDisabled()
+}
+
 func (platform *Platform) Init() error {
 	if platform.Client.GetKubeConfigBytes == nil {
 		platform.Client.GetKubeConfigBytes = platform.GetKubeConfigBytes

@@ -151,7 +151,7 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 			},
 			PlatformConfig: platformWithMonitoringDisabled,
 			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
-				if !p.Monitoring.Disabled {
+				if p.IsMonitoringEnabled() {
 					test.Failf("base", "Expected monitoring to be disabled got %t", p.Monitoring.Disabled)
 					return false
 				}
@@ -170,7 +170,7 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 			},
 			PlatformConfig: platformWithMonitoringEnabled,
 			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
-				if p.Monitoring.Disabled {
+				if !p.IsMonitoringEnabled() {
 					test.Failf("base", "Expected monitoring to not be disabled got %t", p.Monitoring.Disabled)
 					return false
 				}
@@ -307,7 +307,7 @@ func testImportSecrets(p *platform.Platform, pp *types.PlatformConfig, test *con
 
 func newPlatformWithMonitoring(p *platform.Platform, disabled bool) *types.PlatformConfig {
 	newP, _ := clonePlatform(p)
-	newP.Monitoring.Disabled = types.Boolean(disabled)
+	newP.Monitoring = nil
 	return newP
 }
 
