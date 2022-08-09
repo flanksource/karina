@@ -1,8 +1,0 @@
-resources:
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/build.yaml
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/builder.yaml
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/clusterbuilder.yaml
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/clusterstore.yaml
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/image.yaml
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/sourceresolver.yaml
-  - https://raw.githubusercontent.com/pivotal/kpack/master/config/stack.yaml

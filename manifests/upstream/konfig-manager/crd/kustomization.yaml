@@ -1,4 +1,0 @@
-resources:
-  - https://raw.githubusercontent.com/flanksource/konfig-manager/main/config/crd/bases/konfigmanager.flanksource.com_konfigs.yaml
-configurations:
-  - https://raw.githubusercontent.com/flanksource/konfig-manager/main/config/crd/kustomizeconfig.yaml
