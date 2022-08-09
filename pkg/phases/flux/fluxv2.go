@@ -9,7 +9,7 @@ import (
 const Namespace = "flux-system"
 
 func InstallV2(p *platform.Platform) error {
-	if p.Flux != nil || !p.Flux.Enabled {
+	if p.Flux == nil || !p.Flux.Enabled {
 		return p.DeleteSpecs(Namespace, "flux.yaml")
 	}
 

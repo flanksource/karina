@@ -27,7 +27,7 @@ const (
 
 func Test(p *platform.Platform, test *console.TestResults) {
 	client, _ := p.GetClientset()
-	if p.Monitoring.IsDisabled() {
+	if p.Monitoring == nil || p.Monitoring.IsDisabled() {
 		return
 	}
 	_ = p.WaitForNamespace("monitoring", 180*time.Second)

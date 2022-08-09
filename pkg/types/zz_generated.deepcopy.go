@@ -1710,7 +1710,11 @@ func (in *PlatformConfig) DeepCopyInto(out *PlatformConfig) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.Flux = in.Flux
+	if in.Flux != nil {
+		in, out := &in.Flux, &out.Flux
+		*out = new(Flux)
+		**out = **in
+	}
 	out.GCP = in.GCP
 	in.Gatekeeper.DeepCopyInto(&out.Gatekeeper)
 	out.GitOperator = in.GitOperator
@@ -1745,7 +1749,11 @@ func (in *PlatformConfig) DeepCopyInto(out *PlatformConfig) {
 	in.Master.DeepCopyInto(&out.Master)
 	out.Minio = in.Minio
 	out.MongodbOperator = in.MongodbOperator
-	in.Monitoring.DeepCopyInto(&out.Monitoring)
+	if in.Monitoring != nil {
+		in, out := &in.Monitoring, &out.Monitoring
+		*out = new(Monitoring)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.NFS != nil {
 		in, out := &in.NFS, &out.NFS
 		*out = new(NFS)

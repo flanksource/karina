@@ -56,7 +56,7 @@ var monitoringNamespaceLabels = map[string]string{
 }
 
 func Install(p *platform.Platform) error {
-	if p.Monitoring.IsDisabled() {
+	if p.Monitoring == nil || p.Monitoring.IsDisabled() {
 		// setup default values so that all resources are rendered
 		// so that we know what to try and delete
 		for _, spec := range specs {

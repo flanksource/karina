@@ -1,5 +1,6 @@
 importConfigs:
   - minimal.yaml
+  - _monitoring.yaml
 thanos:
   version: v0.13.0
   mode: client
@@ -8,10 +9,6 @@ canaryChecker:
   version: v0.38.87
   persistence:
     capacity: 1Gi
-monitoring:
-  prometheus:
-    persistence:
-      capacity: 10Gi
 kubernetes:
   version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:

@@ -59,7 +59,7 @@ type PlatformConfig struct {
 	Master          VM                   `yaml:"master,omitempty" json:"master,omitempty"`
 	Minio           Minio                `yaml:"minio,omitempty" json:"minio,omitempty"`
 	MongodbOperator MongodbOperator      `yaml:"mongodbOperator,omitempty" json:"mongodbOperator,omitempty"`
-	Monitoring      Monitoring           `yaml:"monitoring,omitempty" json:"monitoring,omitempty"`
+	Monitoring      *Monitoring          `yaml:"monitoring,omitempty" json:"monitoring,omitempty"`
 	Name            string               `yaml:"name" json:"name,omitempty"`
 	NFS             *NFS                 `yaml:"nfs,omitempty" json:"nfs,omitempty"`
 	Nginx           *Nginx               `yaml:"nginx,omitempty" json:"nginx,omitempty"`

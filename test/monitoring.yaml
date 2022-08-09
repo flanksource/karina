@@ -1,6 +1,6 @@
 importConfigs:
   - minimal.yaml
-  _ monitoring.yaml
+  - _monitoring.yaml
 thanos:
   version: v0.13.0
   mode: client
