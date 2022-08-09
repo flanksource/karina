@@ -1,0 +1,9 @@
+monitoring:
+  prometheus:
+    version: v2.31.1
+    persistence:
+      capacity: 10Gi
+  grafana:
+    version: 8.5.5
+  alertmanager:
+    version: v0.24.0

@@ -10,10 +10,10 @@ filebeat:
       user: elastic
       password:
         value: elastic
-#        valueFrom:
-#          secretKeyRef:
-#            name: logs-es-elastic-user
-#            key: elastic
+      #        valueFrom:
+      #          secretKeyRef:
+      #            name: logs-es-elastic-user
+      #            key: elastic
       port: 9200
       scheme: https
 # Commented out until single-pass elastic is implemented, else filebeat will crashloop due to missing kibana instance
@@ -65,12 +65,10 @@ test:
     - dex
     - audit
     - encryption
-    - kiosk
     - configmap-reloader
     - registry-creds
     - platform-operator
     - opa
-    - gitops
 platformOperator:
   version: v0.6.14
   whitelistedPodAnnotations:

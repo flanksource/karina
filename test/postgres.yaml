@@ -1,5 +1,7 @@
 importConfigs:
   - minimal.yaml
+  - _minio.yaml
+  - _monitoring.yaml
 templateOperator:
   version: v0.7.0
   syncPeriod: 15s
@@ -7,17 +9,6 @@ canaryChecker:
   version: v0.38.87
   persistence:
     capacity: 1Gi
-minio:
-  version: RELEASE.2020-09-02T18-19-50Z
-  access_key: minio
-  secret_key: minio123
-  replicas: 1
-s3:
-  access_key: minio
-  secret_key: minio123
-  endpoint: http://minio.minio.svc:9000
-  skipTLSVerify: true
-  usePathStyle: true
 postgresOperator:
   version: v1.7.1
   defaultBackupBucket: cicd-pg-backup
@@ -26,8 +17,3 @@ postgresOperator:
     keepLast: 5
     keepHourly: 2
     keepDaily: 1
-monitoring:
-  disabled: false
-  prometheus:
-    persistence:
-      capacity: 10Gi

@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flanksource/karina/pkg/phases/konfigmanager"
-
 	"github.com/flanksource/karina/pkg/phases/mongodboperator"
 
 	"github.com/flanksource/commons/console"
@@ -33,17 +31,11 @@ import (
 	"github.com/flanksource/karina/pkg/phases/eck"
 	"github.com/flanksource/karina/pkg/phases/elasticsearch"
 	"github.com/flanksource/karina/pkg/phases/externaldns"
-	"github.com/flanksource/karina/pkg/phases/flux"
 	"github.com/flanksource/karina/pkg/phases/gitoperator"
 	"github.com/flanksource/karina/pkg/phases/harbor"
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/karinaoperator"
-	"github.com/flanksource/karina/pkg/phases/keptn"
-	"github.com/flanksource/karina/pkg/phases/kiosk"
-	"github.com/flanksource/karina/pkg/phases/kpack"
 	"github.com/flanksource/karina/pkg/phases/kubeadm"
-	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
-	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/monitoring"
 	"github.com/flanksource/karina/pkg/phases/nginx"
@@ -172,54 +164,47 @@ func init() {
 		"stubs":     []string{"apacheds", "minio"},
 	}
 	tests := map[string]TestFn{
-		"antrea":               antrea.Test,
-		"apacheds":             apacheds.Test,
-		"argo-rollouts":        argorollouts.Test,
-		"argocd-operator":      argocdoperator.Test,
-		"audit":                kubeadm.TestAudit,
-		"base":                 base.Test,
-		"calico":               calico.Test,
-		"canary":               canary.TestCanary,
-		"cert-manager":         certmanager.Test,
-		"configmap-reloader":   configmapreloader.Test,
-		"consul":               consul.Test,
-		"dex":                  dex.Test,
-		"eck":                  eck.Test,
-		"elasticsearch":        elasticsearch.Test,
-		"encryption":           kubeadm.TestEncryption,
-		"externaldns":          externaldns.Test,
-		"git-operator":         gitoperator.Test,
-		"gitops":               flux.Test,
-		"harbor":               harbor.Test,
-		"istio-operator":       istiooperator.Test,
-		"keptn":                keptn.Test,
-		"karina-operator":      karinaoperator.Test,
-		"kiosk":                kiosk.Test,
-		"konfig-manager":       konfigmanager.Test,
-		"kpack":                kpack.Test,
-		"kube-resource-report": kuberesourcereport.TestKubeResourceReport,
-		"kube-web-view":        kubewebview.TestKubeWebView,
-		"local-path":           localpath.Test,
-		"minio":                minio.Test,
-		"mongodb-operator":     mongodboperator.Test,
-		"monitoring":           monitoring.Test,
-		"nfs":                  nfs.Test,
-		"nginx":                nginx.Test,
-		"opa":                  opa.Test,
-		"platform-operator":    platformoperator.Test,
-		"postgres-operator":    postgresoperator.Test,
-		"prometheus":           monitoring.TestPrometheus,
-		"quack":                quack.Test,
-		"rabbitmq-operator":    rabbitmqoperator.Test,
-		"redis-operator":       redisoperator.Test,
-		"registry-creds":       registrycreds.Test,
-		"s3":                   s3.Test,
-		"sealed-secrets":       sealedsecrets.Test,
-		"template-operator":    templateoperator.Test,
-		"thanos":               monitoring.TestThanos,
-		"vault":                vault.Test,
-		"velero":               velero.Test,
-		"vsphere":              vsphere.Test,
+		"antrea":             antrea.Test,
+		"apacheds":           apacheds.Test,
+		"argo-rollouts":      argorollouts.Test,
+		"argocd-operator":    argocdoperator.Test,
+		"audit":              kubeadm.TestAudit,
+		"base":               base.Test,
+		"calico":             calico.Test,
+		"canary":             canary.TestCanary,
+		"cert-manager":       certmanager.Test,
+		"configmap-reloader": configmapreloader.Test,
+		"consul":             consul.Test,
+		"dex":                dex.Test,
+		"eck":                eck.Test,
+		"elasticsearch":      elasticsearch.Test,
+		"encryption":         kubeadm.TestEncryption,
+		"externaldns":        externaldns.Test,
+		"git-operator":       gitoperator.Test,
+		"harbor":             harbor.Test,
+		"istio-operator":     istiooperator.Test,
+		"karina-operator":    karinaoperator.Test,
+		"local-path":         localpath.Test,
+		"minio":              minio.Test,
+		"mongodb-operator":   mongodboperator.Test,
+		"monitoring":         monitoring.Test,
+		"nfs":                nfs.Test,
+		"nginx":              nginx.Test,
+		"opa":                opa.Test,
+		"platform-operator":  platformoperator.Test,
+		"postgres-operator":  postgresoperator.Test,
+		"prometheus":         monitoring.TestPrometheus,
+		"quack":              quack.Test,
+		"rabbitmq-operator":  rabbitmqoperator.Test,
+		"redis-operator":     redisoperator.Test,
+		"registry-creds":     registrycreds.Test,
+		"s3":                 s3.Test,
+		"sealed-secrets":     sealedsecrets.Test,
+		"template-operator":  templateoperator.Test,
+		"thanos":             monitoring.TestThanos,
+		"vault":              vault.Test,
+		"velero":             velero.Test,
+		"vsphere":            vsphere.Test,
 	}
 
 	var exec func(name string)

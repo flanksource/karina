@@ -1,23 +1,10 @@
 importConfigs:
   - minimal.yaml
-keptn:
-  version: v0.7.3
 templateOperator:
   version: v0.1.19
   syncPeriod: 15s
 mongodbOperator:
   version: v1.6.0
-gitops:
-  - name: karina
-    helmOperatorVersion: 1.2.0
-    namespace: gitops-e2e-test
-    gitUrl: https://github.com/flanksource/gitops-test.git
-    gitBranch: master
-    gitPath: .
-    gitPollInterval: 30s
-    syncInterval: 30s
-minio:
-  disabled: true
 configmapReloader:
   disabled: true
 flux:

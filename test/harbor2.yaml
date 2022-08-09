@@ -1,5 +1,6 @@
 importConfigs:
   - minimal.yaml
+  - _minio.yaml
 harbor:
   replicas: 1
   bucket: karina-harbor-e2e

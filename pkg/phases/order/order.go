@@ -29,12 +29,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/istiooperator"
 	"github.com/flanksource/karina/pkg/phases/journalbeat"
 	"github.com/flanksource/karina/pkg/phases/karinaoperator"
-	"github.com/flanksource/karina/pkg/phases/keptn"
-	"github.com/flanksource/karina/pkg/phases/kiosk"
-	"github.com/flanksource/karina/pkg/phases/konfigmanager"
-	"github.com/flanksource/karina/pkg/phases/kpack"
-	"github.com/flanksource/karina/pkg/phases/kuberesourcereport"
-	"github.com/flanksource/karina/pkg/phases/kubewebview"
 	"github.com/flanksource/karina/pkg/phases/logsexporter"
 	"github.com/flanksource/karina/pkg/phases/minio"
 	"github.com/flanksource/karina/pkg/phases/mongodboperator"
@@ -49,9 +43,7 @@ import (
 	"github.com/flanksource/karina/pkg/phases/rabbitmqoperator"
 	"github.com/flanksource/karina/pkg/phases/redisoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
-	"github.com/flanksource/karina/pkg/phases/s3uploadcleaner"
 	"github.com/flanksource/karina/pkg/phases/sealedsecrets"
-	"github.com/flanksource/karina/pkg/phases/tekton"
 	"github.com/flanksource/karina/pkg/phases/templateoperator"
 	"github.com/flanksource/karina/pkg/phases/vault"
 	"github.com/flanksource/karina/pkg/phases/velero"
@@ -62,43 +54,34 @@ import (
 type DeployFn func(p *platform.Platform) error
 
 var Phases = map[string]DeployFn{
-	"argo-rollouts":        argorollouts.Deploy,
-	"argocd-operator":      argocdoperator.Deploy,
-	"auditbeat":            auditbeat.Deploy,
-	"canary":               canary.Deploy,
-	"eck":                  eck.Deploy,
-	"elasticsearch":        elasticsearch.Deploy,
-	"eventrouter":          eventrouter.Deploy,
-	"externaldns":          externaldns.Install,
-	"dashboard":            dashboard.Install,
-	"filebeat":             filebeat.Deploy,
-	"flux":                 flux.InstallV2,
-	"git-operator":         gitoperator.Install,
-	"gitops":               flux.Install,
-	"harbor":               harbor.Deploy,
-	"istio-operator":       istiooperator.Install,
-	"journalbeat":          journalbeat.Deploy,
-	"keptn":                keptn.Deploy,
-	"kiosk":                kiosk.Deploy,
-	"konfig-manager":       konfigmanager.Deploy,
-	"karina-operator":      karinaoperator.Install,
-	"kpack":                kpack.Deploy,
-	"platform":             Platform,
-	"kube-resource-report": kuberesourcereport.Install,
-	"kube-web-view":        kubewebview.Install,
-	"logs-exporter":        logsexporter.Install,
-	"mongodb-operator":     mongodboperator.Deploy,
-	"monitoring":           monitoring.Install,
-	"opa":                  opa.Install,
-	"packetbeat":           packetbeat.Deploy,
-	"rabbitmq-operator":    rabbitmqoperator.Install,
-	"redis-operator":       redisoperator.Install,
-	"registry-creds":       registrycreds.Install,
-	"s3-upload-cleaner":    s3uploadcleaner.Deploy,
-	"sealed-secrets":       sealedsecrets.Install,
-	"tekton":               tekton.Install,
-	"velero":               velero.Install,
-	"vault":                vault.Deploy,
+	"argo-rollouts":     argorollouts.Deploy,
+	"argocd-operator":   argocdoperator.Deploy,
+	"auditbeat":         auditbeat.Deploy,
+	"canary":            canary.Deploy,
+	"eck":               eck.Deploy,
+	"elasticsearch":     elasticsearch.Deploy,
+	"eventrouter":       eventrouter.Deploy,
+	"externaldns":       externaldns.Install,
+	"dashboard":         dashboard.Install,
+	"filebeat":          filebeat.Deploy,
+	"flux":              flux.InstallV2,
+	"git-operator":      gitoperator.Install,
+	"harbor":            harbor.Deploy,
+	"istio-operator":    istiooperator.Install,
+	"journalbeat":       journalbeat.Deploy,
+	"karina-operator":   karinaoperator.Install,
+	"platform":          Platform,
+	"logs-exporter":     logsexporter.Install,
+	"mongodb-operator":  mongodboperator.Deploy,
+	"monitoring":        monitoring.Install,
+	"opa":               opa.Install,
+	"packetbeat":        packetbeat.Deploy,
+	"rabbitmq-operator": rabbitmqoperator.Install,
+	"redis-operator":    redisoperator.Install,
+	"registry-creds":    registrycreds.Install,
+	"sealed-secrets":    sealedsecrets.Install,
+	"velero":            velero.Install,
+	"vault":             vault.Deploy,
 }
 
 var PhaseOrder = []string{"bootstrap", "crds", "cni", "csi", "cloud", "platform"}
@@ -108,7 +91,7 @@ var BootstrapPhases = []string{"pre", "crds", "cni", "csi", "base", "cloud-contr
 var CSI = compose(localpath.Install, s3.Install, nfs.Install)
 var CNI = compose(calico.Install, antrea.Install, nodelocaldns.Install)
 var Cloud = compose(vsphere.Install)
-var Platform = compose(platformoperator.Install, kiosk.Deploy, configmapreloader.Deploy)
+var Platform = compose(platformoperator.Install, configmapreloader.Deploy)
 var Stubs = compose(minio.Install, apacheds.Install)
 
 func compose(fns ...DeployFn) DeployFn {
@@ -135,7 +118,6 @@ var PhasesExtra = map[string]DeployFn{
 	"csi":                CSI,
 	"dex":                dex.Install,
 	"ingress":            ingress.Install,
-	"kiosk":              kiosk.Deploy,
 	"minimal":            Minimal,
 	"minio":              minio.Install,
 	"node-local-dns":     nodelocaldns.Install,

@@ -263,10 +263,6 @@ type ArgoRollouts struct {
 	XDisabled `yaml:",inline" json:",inline"`
 }
 
-type Keptn struct {
-	XDisabled `yaml:",inline" json:",inline"`
-}
-
 type SMTP struct {
 	Server   string `yaml:"server,omitempty" json:"server,omitempty"`
 	Username string `yaml:"username,omitempty" json:"username,omitempty"`
@@ -482,56 +478,6 @@ type GoogleOIDC struct {
 	HostedDomains []string `yaml:"hostedDomains,omitempty" json:"hostedDomains,omitempty"`
 }
 
-type Kpack struct {
-	Disabled bool  `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	Image    Image `yaml:"image,omitempty" json:"image,omitempty"`
-}
-
-type Image struct {
-	BuildInit         string `yaml:"buildInit,omitempty" json:"buildInit,omitempty"`
-	BuildInitWindows  string `yaml:"buildInitWindows,omitempty" json:"buildInitWindows,omitempty"`
-	Rebase            string `yaml:"rebase,omitempty" json:"rebase,omitempty"`
-	Lifecycle         string `yaml:"lifecycle,omitempty" json:"lifecycle,omitempty"`
-	Completion        string `yaml:"completion,omitempty" json:"completion,omitempty"`
-	CompletionWindows string `yaml:"completionWindows,omitempty" json:"completionWindows,omitempty"`
-	Controller        string `yaml:"controller,omitempty" json:"controller,omitempty"`
-	Webhook           string `yaml:"webhook,omitempty" json:"webhook,omitempty"`
-}
-
-func (k Kpack) IsDisabled() bool {
-	if k.Disabled {
-		return true
-	}
-	return k.Image == Image{}
-}
-
-func (k Kpack) SetDefaultImageValues() {
-	if k.Image.BuildInit == "" {
-		k.Image.BuildInit = "na"
-	}
-	if k.Image.BuildInitWindows == "" {
-		k.Image.BuildInitWindows = "na"
-	}
-	if k.Image.Completion == "" {
-		k.Image.Completion = "na"
-	}
-	if k.Image.CompletionWindows == "" {
-		k.Image.CompletionWindows = "na"
-	}
-	if k.Image.Rebase == "" {
-		k.Image.Rebase = "na"
-	}
-	if k.Image.Lifecycle == "" {
-		k.Image.Lifecycle = "na"
-	}
-	if k.Image.Controller == "" {
-		k.Image.Controller = "na"
-	}
-	if k.Image.Webhook == "" {
-		k.Image.Webhook = "na"
-	}
-}
-
 type DynamicDNS struct {
 	Disabled bool `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	// Set to true if you want DNS records added to k8s-api and "*" for every new
@@ -594,23 +540,6 @@ func (ec *ExternalClusters) AddSelf(name string) {
 	(*ec)[name] = "https://kubernetes.default"
 }
 
-// Configuration for [KubeWebView](https://github.com/hjacobs/kube-web-view) resource viewer
-type KubeWebView struct {
-	Disabled       bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	Version        string `yaml:"version,omitempty" json:"version,omitempty"`
-	LogsEnabled    bool   `yaml:"viewLogs,omitempty" json:"viewLogs,omitempty"`
-	SecretsEnabled bool   `yaml:"viewSecrets,omitempty" json:"viewSecrets,omitempty"`
-	// a map of extra clusters that kube-resource report will report on.
-	// in the form:
-	// clusterName: cluster API endpoint
-	// e.g.:
-	//  extraClusters:
-	//    k8s-reports2: "https://10.100.2.69:6443"
-	// the CA for the current cluster needs to be trusted by
-	// the given external cluster.
-	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty" json:"extraClusters,omitempty"`
-}
-
 // Configuration for [Karma](https://github.com/prymitive/karma/releases) Alert Dashboard
 type Karma struct {
 	Version       string            `yaml:"version,omitempty" json:"version,omitempty"`
@@ -618,38 +547,6 @@ type Karma struct {
 }
 
 // Configuration for [KubeResourceReport](https://github.com/hjacobs/kube-resource-report)
-type KubeResourceReport struct {
-	// Disable kube-resource-report
-	Disabled bool `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	// Specify version to use (see [releases](https://github.com/hjacobs/kube-resource-report/releases))
-	Version string `yaml:"version,omitempty" json:"version,omitempty"`
-	// update interval in minutes
-	UpdateInterval int `yaml:"updateInterval,omitempty" json:"updateInterval,omitempty"`
-	// add a fixed extra cost per cluster
-	AdditionalClusterCost int32 `yaml:"additionalClusterCost,omitempty" json:"additionalClusterCost,omitempty"`
-	// specify costs inline
-	Costs map[string]int32 `yaml:"costs,omitempty" json:"costs,omitempty"`
-	// specify a CSV file with custom costs for nodes with rows in the form:
-	// columns: region,instance-type,monthly-price-usd
-	// to apply this add labels to cluster nodes:
-	// region is defined via the node label "failure-domain.beta.kubernetes.io/region"
-	// instance-type is defined via the node label "beta.kubernetes.io/instance-type"
-	CostsFile string `yaml:"costsfile,omitempty" json:"costsFile,omitempty"`
-	// a map of extra clusters that kube-resource report will report on.
-	// in the form:
-	// clusterName: cluster API endpoint
-	// e.g.:
-	//  extraClusters:
-	//    k8s-reports2: "https://10.100.2.69:6443"
-	// the CA for the current cluster needs to be trusted by
-	// the given external cluster.
-	ExternalClusters ExternalClusters `yaml:"extraClusters,omitempty" json:"extraClusters,omitempty"`
-	// A comma separated list of labels applied to k8s objects
-	// to identify team ownership. These are reported on in the *Teams* tab of the report.
-	// Multiple labels may be specified.
-	// Default value is "team,owner".
-	TeamLabels string `yaml:"teamlabels,omitempty" json:"teamLabels,omitempty"`
-}
 
 type MonitoringE2E struct {
 	// MinAlertLevel is the minimum alert level for which E2E tests should fail. can be
@@ -701,10 +598,6 @@ type Brand struct {
 	Logo string `yaml:"logo,omitempty" json:"logo,omitempty"`
 }
 
-type Kiosk struct {
-	XDisabled `yaml:",inline" json:",inline"`
-}
-
 type GitOperator struct {
 	XDisabled `yaml:",inline" json:",inline"`
 }
@@ -715,11 +608,6 @@ type ExternalDNS struct {
 }
 
 type TemplateOperator struct {
-	XDisabled  `yaml:",inline" json:",inline"`
-	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
-}
-
-type KonfigManager struct {
 	XDisabled  `yaml:",inline" json:",inline"`
 	SyncPeriod string `yaml:"syncPeriod,omitempty" json:"syncPeriod,omitempty"`
 }
@@ -737,56 +625,8 @@ type LocalPath struct {
 	XEnabled `yaml:",inline" json:",inline"`
 }
 
-type NamespaceConfigurator struct {
-	XEnabled `yaml:",inline" json:",inline"`
-}
-
 type Quack struct {
 	XEnabled `yaml:",inline" json:",inline"`
-}
-
-type GitOps struct {
-	// The name of the gitops deployment, defaults to namespace name
-	Name string `yaml:"name,omitempty" json:"name,omitempty"`
-
-	// Do not scan container image registries to fill in the registry cache, implies `--git-read-only` (default: true)
-	DisableScanning *bool `yaml:"disableScanning,omitempty" json:"disableScanning,omitempty"`
-
-	// The namespace to deploy the GitOps operator into, if empty then it will be deployed cluster-wide into kube-system
-	Namespace string `yaml:"namespace,omitempty" json:"namespace,omitempty"`
-
-	// The URL to git repository to clone
-	GitURL string `yaml:"gitUrl" json:"gitUrl,omitempty"`
-
-	// The git branch to use (default: `master`)
-	GitBranch string `yaml:"gitBranch,omitempty" json:"gitBranch,omitempty"`
-
-	// The path with in the git repository to look for YAML in (default: `.`)
-	GitPath string `yaml:"gitPath,omitempty" json:"gitPath,omitempty"`
-
-	// The frequency with which to fetch the git repository (default: `5m0s`)
-	GitPollInterval string `yaml:"gitPollInterval,omitempty" json:"gitPollInterval,omitempty"`
-
-	// The frequency with which to sync the manifests in the repository to the cluster (default: `5m0s`)
-	SyncInterval string `yaml:"syncInterval,omitempty" json:"syncInterval,omitempty"`
-
-	// The Kubernetes secret to use for cloning, if it does not exist it will be generated (default: `flux-$name-git-deploy`)
-	GitKey string `yaml:"gitKey,omitempty" json:"gitKey,omitempty"`
-
-	// The contents of the known_hosts file to mount into Flux and helm-operator
-	KnownHosts string `yaml:"knownHosts,omitempty" json:"knownHosts,omitempty"`
-
-	// The contents of the ~/.ssh/config file to mount into Flux and helm-operator
-	SSHConfig string `yaml:"sshConfig,omitempty" json:"sshConfig,omitempty"`
-
-	// The version to use for flux (default: 1.20.0 )
-	FluxVersion string `yaml:"fluxVersion,omitempty" json:"fluxVersion,omitempty"`
-
-	// The version to use for helm operator (default: 1.20.0 )
-	HelmOperatorVersion string `yaml:"helmOperatorVersion,omitempty" json:"helmOperatorVersion,omitempty"`
-
-	// a map of args to pass to flux without -- prepended. See [fluxd](https://docs.fluxcd.io/en/1.19.0/references/daemon/) for a full list
-	Args map[string]string `yaml:"args,omitempty" json:"args,omitempty"`
 }
 
 type Flux struct {
@@ -962,14 +802,6 @@ type SealedSecrets struct {
 	Certificate *CA `yaml:"certificate,omitempty" json:"certificate,omitempty"`
 }
 
-type S3UploadCleaner struct {
-	XEnabled `yaml:",inline" json:",inline"`
-	Version  string `yaml:"version" json:"version"`
-	Endpoint string `yaml:"endpoint" json:"endpoint"`
-	Bucket   string `yaml:"bucket" json:"bucket"`
-	Schedule string `yaml:"schedule" json:"schedule"`
-}
-
 type RegistryCredentials struct {
 	Disabled              bool                   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	Version               string                 `yaml:"version,omitempty" json:"version,omitempty"`
@@ -1090,15 +922,6 @@ type Elasticsearch struct {
 	Persistence *Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
 	Disabled    bool         `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 }
-
-type Tekton struct {
-	XDisabled        `yaml:",inline" json:",inline"`
-	DashboardVersion string            `yaml:"dashboardVersion,omitempty" json:"dashboardVersion,omitempty"`
-	EventsVersion    string            `yaml:"eventsVersion,omitempty" json:"eventsVersion,omitempty"`
-	Persistence      Persistence       `yaml:"persistence,omitempty" json:"persistence,omitempty"`
-	FeatureFlags     map[string]string `yaml:"featureFlags,omitempty" json:"featureFlags,omitempty"`
-}
-
 type VPA struct {
 	XDisabled `yaml:",inline" json:",inline"`
 }

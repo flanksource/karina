@@ -11,10 +11,6 @@ const (
 )
 
 func Install(p *platform.Platform) error {
-	err := installNamespaceConfigurator(p)
-	if err != nil {
-		p.Warnf("Could not modify namespaceconfigurator: %v", err)
-	}
 	if p.TemplateOperator.IsDisabled() {
 		return p.DeleteSpecs(Namespace, "template-operator.yaml")
 	}
@@ -24,11 +20,4 @@ func Install(p *platform.Platform) error {
 	}
 
 	return p.ApplySpecs(Namespace, "template-operator.yaml")
-}
-
-func installNamespaceConfigurator(platform *platform.Platform) error {
-	if platform.NamespaceConfigurator == nil || platform.NamespaceConfigurator.Disabled {
-		return platform.DeleteSpecs("", "namespace-configurator.yaml")
-	}
-	return platform.ApplySpecs("", "namespace-configurator.yaml")
 }

@@ -1,5 +1,6 @@
 importConfigs:
   - minimal.yaml
+  _ monitoring.yaml
 thanos:
   version: v0.13.0
   mode: client
@@ -8,8 +9,5 @@ canaryChecker:
   version: v0.38.87
   persistence:
     capacity: 1Gi
-monitoring:
+quack:
   disabled: false
-  prometheus:
-    persistence:
-      capacity: 10Gi

@@ -9,7 +9,6 @@ canaryChecker:
   persistence:
     capacity: 1Gi
 monitoring:
-  disabled: false
   prometheus:
     persistence:
       capacity: 10Gi
