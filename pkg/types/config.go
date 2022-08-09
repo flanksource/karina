@@ -50,10 +50,8 @@ type PlatformConfig struct {
 	IngressCA       *CA                  `yaml:"ingressCA" json:"ingressCA,omitempty"`
 	IstioOperator   IstioOperator        `yaml:"istioOperator,omitempty" json:"istioOperator,omitempty"`
 	Journalbeat     Journalbeat          `yaml:"journalbeat,omitempty" json:"journalbeat,omitempty"`
-	Keptn           Keptn                `yaml:"keptn,omitempty" json:"keptn,omitempty"`
 	KarinaOperator  KarinaOperator       `yaml:"karinaOperator,omitempty" json:"karinaOperator,omitempty"`
 	Kind            Kind                 `yaml:"kind,omitempty" json:"kind,omitempty"`
-	Kpack           Kpack                `yaml:"kpack,omitempty" json:"kpack,omitempty"`
 	Kubernetes      Kubernetes           `yaml:"kubernetes" json:"kubernetes,omitempty"`
 	Ldap            *Ldap                `yaml:"ldap,omitempty" json:"ldap,omitempty"`
 	LocalPath       LocalPath            `yaml:"localPath" json:"localPath"`
