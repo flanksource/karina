@@ -45,7 +45,7 @@ spec:
       targetPort: web
   selector:
     alertmanager: main
-    app: alertmanager
+    app.kubernetes.io/name: alertmanager
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -298,7 +298,7 @@ spec:
       port: 9090
       targetPort: web
   selector:
-    app: prometheus
+    app.kubernetes.io/name: prometheus
     prometheus: k8s
 ---
 apiVersion: v1
