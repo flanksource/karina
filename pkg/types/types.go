@@ -630,11 +630,13 @@ type Quack struct {
 }
 
 type Flux struct {
-	Enabled                        bool   `yaml:"enabled" json:"enabled"`
-	SourceControllerVersion        string `yaml:"sourceControllerVersion,omitempty" json:"sourceControllerVersion,omitempty"`
-	NotificationsControllerVersion string `yaml:"notificationsControllerVersion,omitempty" json:"notificationsControllerVersion,omitempty"`
-	KustomizeControllerVersion     string `yaml:"kustomizeControllerVersion,omitempty" json:"kustomizeControllerVersion,omitempty"`
-	HelmControllerVersion          string `yaml:"helmControllerVersion,omitempty" json:"helmControllerVersion,omitempty"`
+	Enabled                          bool   `yaml:"enabled" json:"enabled"`
+	SourceControllerVersion          string `yaml:"sourceControllerVersion,omitempty" json:"sourceControllerVersion,omitempty"`
+	NotificationsControllerVersion   string `yaml:"notificationsControllerVersion,omitempty" json:"notificationsControllerVersion,omitempty"`
+	KustomizeControllerVersion       string `yaml:"kustomizeControllerVersion,omitempty" json:"kustomizeControllerVersion,omitempty"`
+	HelmControllerVersion            string `yaml:"helmControllerVersion,omitempty" json:"helmControllerVersion,omitempty"`
+	ImageAutomationControllerVersion string `yaml:"imageAutomationControllerVersion,omitempty" json:"imageAutomationControllerVersion,omitempty"`
+	ImageReflectorContollerVersion   string `yaml:"imageReflectorContollerVersion,omitempty" json:"imageReflectorContollerVersion,omitempty"`
 }
 
 type Velero struct {

@@ -1,0 +1,23 @@
+resources:
+  - https://github.com/fluxcd/flux2/releases/download/v0.31.5/install.yaml
+commonAnnotations:
+  cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+images:
+  - name: fluxcd/helm-controller
+    newTag: '{{.flux.helmControllerVersion | default "v0.22.2" }}'
+    newName: ghcr.io/fluxcd/helm-controller
+  - name: fluxcd/image-automation-controller
+    newTag: '{{.flux.imageAutomationControllerVersion | default "v0.23.5" }}'
+    newName: ghcr.io/fluxcd/image-automation-controller
+  - name: fluxcd/image-reflector-controller
+    newTag: '{{.flux.imageReflectorControllerVersion | default "v0.19.4" }}'
+    newName: ghcr.io/fluxcd/image-reflector-controller
+  - name: fluxcd/kustomize-controller
+    newTag: '{{.flux.kustomizeControllerVersion | default "v0.26.3" }}'
+    newName: ghcr.io/fluxcd/kustomize-controller
+  - name: fluxcd/notification-controller
+    newTag: '{{.flux.notificationControllerVersion | default "v0.24.1" }}'
+    newName: ghcr.io/fluxcd/notification-controller
+  - name: fluxcd/source-controller
+    newTag: '{{.flux.sourceControllerVersion | default "v0.25.11" }}'
+    newName: ghcr.io/fluxcd/source-controller

@@ -73,6 +73,12 @@ platform-operator.yaml:
 	$(call BUILD_BASE,platform-operator)
 	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$k, $$v := .platformOperator.args }}\n        - --{{$$k}}={{$$v}}\n        {{- end }}/' platform-operator.yaml
 
+
+.PHONY: flux.yaml
+flux.yaml:
+	$(call BUILD_BASE,flux)
+	yq -i ' select(.kind != "CustomResourceDefinition")' flux.yaml
+
 .PHONY: monitoring/grafana-operator.yaml
 monitoring/grafana-operator.yaml:
 	$(call BUILD_BASE,monitoring/grafana-operator)
