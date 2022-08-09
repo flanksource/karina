@@ -108,7 +108,7 @@ func GetPrometheusClient(p *platform.Platform, service string) (v1.API, error) {
 
 func TestPrometheus(p *platform.Platform, test *console.TestResults) {
 	testName := "prometheus"
-	if p.Monitoring.IsDisabled() {
+	if !p.IsMonitoringEnabled() {
 		return
 	}
 
