@@ -140,44 +140,6 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 			},
 		},
 		{
-			Name: "TestDisabledOnMonitoring",
-			Secrets: []testSecret{
-				{
-					Name: "config-tmonitoring-1",
-					Data: map[string]string{
-						"monitoring.disabled": "false",
-					},
-				},
-			},
-			PlatformConfig: platformWithMonitoringDisabled,
-			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
-				if p.IsMonitoringEnabled() {
-					test.Failf("base", "Expected monitoring to be disabled got %t", p.Monitoring.Disabled)
-					return false
-				}
-				return true
-			},
-		},
-		{
-			Name: "TestDisabledOnMonitoringFalse",
-			Secrets: []testSecret{
-				{
-					Name: "config-tmonitoring-2",
-					Data: map[string]string{
-						"monitoring.disabled": "true",
-					},
-				},
-			},
-			PlatformConfig: platformWithMonitoringEnabled,
-			ValidateFn: func(test *console.TestResults, p *platform.Platform) bool {
-				if !p.IsMonitoringEnabled() {
-					test.Failf("base", "Expected monitoring to not be disabled got %t", p.Monitoring.Disabled)
-					return false
-				}
-				return true
-			},
-		},
-		{
 			Name: "TestMinio",
 			Secrets: []testSecret{
 				{
