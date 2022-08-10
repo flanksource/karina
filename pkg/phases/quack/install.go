@@ -16,7 +16,7 @@ const WebhookService = "quack"
 const Certs = "quack-certs"
 
 func Install(platform *platform.Platform) error {
-	if platform.Quack != nil && platform.Quack.Disabled {
+	if platform.Quack.IsDisabled() {
 		if err := platform.DeleteMutatingWebhook(Namespace, WebhookService); err != nil {
 			return err
 		}

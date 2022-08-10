@@ -626,7 +626,7 @@ type LocalPath struct {
 }
 
 type Quack struct {
-	XEnabled `yaml:",inline" json:",inline"`
+	XDisabled `yaml:",inline" json:",inline"`
 }
 
 type Flux struct {

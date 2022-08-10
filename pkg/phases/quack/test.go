@@ -13,7 +13,7 @@ import (
 )
 
 func Test(platform *platform.Platform, test *console.TestResults) {
-	if platform.Quack != nil && platform.Quack.Disabled {
+	if platform.Quack.IsDisabled() {
 		return
 	}
 

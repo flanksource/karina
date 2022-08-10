@@ -74,7 +74,7 @@ type PlatformConfig struct {
 	PodSubnet           string               `yaml:"podSubnet" json:"podSubnet,omitempty"`
 	Policies            []string             `yaml:"policies,omitempty" json:"policies,omitempty"`
 	PostgresOperator    PostgresOperator     `yaml:"postgresOperator,omitempty" json:"postgresOperator,omitempty"`
-	Quack               *Quack               `yaml:"quack,omitempty" json:"quack,omitempty"`
+	Quack               Quack                `yaml:"quack,omitempty" json:"quack,omitempty"`
 	RabbitmqOperator    RabbitmqOperator     `yaml:"rabbitmqOperator,omitempty" json:"rabbitmqOperator,omitempty"`
 	RedisOperator       RedisOperator        `yaml:"redisOperator,omitempty" json:"redisOperator,omitempty"`
 	RegistryCredentials *RegistryCredentials `yaml:"registryCredentials,omitempty" json:"registryCredentials,omitempty"`
