@@ -7,7 +7,8 @@ resources:
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-configMap.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-deployment.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-networkPolicy.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-podDisruptionBudget.yaml
+  # depends on https://github.com/flanksource/kommons/issues/86
+  # - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-podDisruptionBudget.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-roleBindingAuthReader.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-service.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-serviceAccount.yaml

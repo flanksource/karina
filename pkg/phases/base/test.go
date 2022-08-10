@@ -68,6 +68,8 @@ func TestImportSecrets(p *platform.Platform, test *console.TestResults) {
 	}()
 
 	templateOperatorVersion := p.TemplateOperator.Version
+	platformWithMonitoringEnabled := newPlatformWithMonitoring(p, false)
+	platformWithMonitoringDisabled := newPlatformWithMonitoring(p, true)
 
 	fixtures := []testSecretsFixture{
 		{
