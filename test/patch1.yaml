@@ -60,7 +60,7 @@ spec:
   template:
     spec:
       containers:
-        - name: grafana-operator
+        - name: manager
           resources:
             requests:
               memory: 10Mi
