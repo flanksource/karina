@@ -1,5 +1,6 @@
 importConfigs:
   - minimal.yaml
+  - _minio.yaml
 test:
   exclude:
     - configmap-reloader
