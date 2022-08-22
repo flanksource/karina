@@ -1,6 +1,6 @@
 images:
   - name: quay.io/prometheus-operator/prometheus-operator
-    newTag: '{{.prometheus.operatorVersion | default "v0.57.0"}}'
+    newTag: '{{.monitoring.prometheus_operator | default "v0.57.0"}}'
 resources:
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-clusterRole.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-clusterRoleBinding.yaml
