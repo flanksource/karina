@@ -112,6 +112,28 @@ if [[ -f "test/manifests/$SUITE/kustomization.yaml" ]]; then
     echo "::endgroup::"
 fi
 
+# Wait for prometheus to be ready if deployed
+set +e
+echo "::group::Wait for Prometheus"
+if [[ $(uname -s) == "Darwin" ]]; then
+    END_TIME=$(date -v +1M +%s)
+else
+    TIMEOUT="1 minute"
+    END_TIME=$(date -ud "$TIMEOUT" +%s)
+fi
+
+while [[ $(date -u +%s) -le $END_TIME ]]
+do
+    echo "Waiting for prometheus to become available..."
+    if curl -IL --insecure --silent https://prometheus.127.0.0.1.nip.io | grep -E "HTTP.* (200)|(404)"; then
+        echo "Prometheus up successfully (if deployed)"
+        break
+    fi
+    sleep 5
+done
+echo "::endgroup::"
+set -e
+
 echo "::group::Test Dry Run"
 # wait for up to 8 minutes, rerunning tests if they fail
 # this allows for all resources to reconcile and images to finish downloading etc..
