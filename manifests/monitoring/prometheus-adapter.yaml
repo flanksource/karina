@@ -27,6 +27,7 @@ rules:
       - pods
       - services
       - subjectaccessreviews
+      - tokenreviews
     verbs:
       - get
       - list
