@@ -26,6 +26,7 @@ rules:
       - namespaces
       - pods
       - services
+      - subjectaccessreviews
     verbs:
       - get
       - list

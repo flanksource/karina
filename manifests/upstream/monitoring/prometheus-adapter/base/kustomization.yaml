@@ -12,3 +12,12 @@ resources:
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-service.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-serviceAccount.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-serviceMonitor.yaml
+
+patches:
+  - target:
+      kind: ClusterRole
+      name: prometheus-adapter
+    patch: |-
+      - op: add
+        path: /rules/0/resources/-
+        value: subjectaccessreviews
