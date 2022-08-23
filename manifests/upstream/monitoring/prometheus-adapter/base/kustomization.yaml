@@ -18,6 +18,12 @@ patches:
       kind: ClusterRole
       name: prometheus-adapter
     patch: |-
+      - op: replace
+        path: /rules/0/apiGroups/0
+        value: "*"
       - op: add
         path: /rules/0/resources/-
         value: subjectaccessreviews
+      - op: add
+        path: /rules/0/verbs/-
+        value: create
