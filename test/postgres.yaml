@@ -1,7 +1,6 @@
 importConfigs:
   - minimal.yaml
   - _minio.yaml
-  - _monitoring.yaml
 templateOperator:
   version: v0.7.0
   syncPeriod: 15s
