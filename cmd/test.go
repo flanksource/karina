@@ -42,7 +42,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/opa"
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
-	"github.com/flanksource/karina/pkg/phases/quack"
 	"github.com/flanksource/karina/pkg/phases/rabbitmqoperator"
 	"github.com/flanksource/karina/pkg/phases/redisoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
@@ -157,7 +156,7 @@ func init() {
 	}
 
 	aliases := map[string][]string{
-		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "quack", "minio", "template-operator", "postgres-operator"},
+		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "minio", "template-operator", "postgres-operator"},
 		"cni":       []string{"calico", "antrea"},
 		"csi":       []string{"s3", "nfs", "local-path"},
 		"cloud":     []string{"vsphere"},
@@ -194,7 +193,6 @@ func init() {
 		"platform-operator":  platformoperator.Test,
 		"postgres-operator":  postgresoperator.Test,
 		"prometheus":         monitoring.TestPrometheus,
-		"quack":              quack.Test,
 		"rabbitmq-operator":  rabbitmqoperator.Test,
 		"redis-operator":     redisoperator.Test,
 		"registry-creds":     registrycreds.Test,

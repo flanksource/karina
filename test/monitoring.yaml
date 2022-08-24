@@ -9,5 +9,3 @@ canaryChecker:
   version: v0.38.87
   persistence:
     capacity: 1Gi
-quack:
-  disabled: false

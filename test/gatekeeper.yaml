@@ -13,5 +13,4 @@ test:
     - encryption
     - platform-operator
     - gitops
-    - quack
     - configmap-reloader

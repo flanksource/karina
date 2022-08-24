@@ -202,29 +202,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   # Disable reload/all in tests
-  annotations:
-    $patch: delete
-  name: quack
-  namespace: quack
-spec:
-  replicas: 1
-  template:
-    metadata:
-      annotations:
-        $patch: delete
-    spec:
-      containers:
-        - name: quack
-          resources:
-            requests:
-              cpu: 10m
-              memory: 10Mi
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  # Disable reload/all in tests
   annotations: null
   name: platform-operator
   namespace: platform-system

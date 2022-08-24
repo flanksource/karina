@@ -19,8 +19,6 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: eck
-  labels:
-    quack.pusher.com/enabled: "true"
 ---
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch

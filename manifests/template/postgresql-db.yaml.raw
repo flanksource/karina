@@ -359,9 +359,6 @@ spec:
   - apiVersion: canaries.flanksource.com/v1
     kind: Canary
     metadata:
-      annotations:
-        quack.pusher.com/left-delim: '[['
-        quack.pusher.com/right-delim: ']]'
       name: postgres-connection-{{.metadata.name}}
       namespace: postgres-operator
     spec:

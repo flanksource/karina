@@ -22,9 +22,5 @@ func Install(platform *platform.Platform) error {
 		platform.Errorf("Error deploying base monitoring labels/annotations: %s", err)
 	}
 
-	if err := platform.CreateOrUpdateNamespace(constants.PlatformSystem, map[string]string{"quack.pusher.com/enabled": "true"}, nil); err != nil {
-		platform.Errorf("Error deploying base platform-system labels/annotations: %s", err)
-	}
-
 	return nil
 }

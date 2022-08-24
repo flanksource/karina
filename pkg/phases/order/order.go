@@ -39,7 +39,6 @@ import (
 	"github.com/flanksource/karina/pkg/phases/platformoperator"
 	"github.com/flanksource/karina/pkg/phases/postgresoperator"
 	"github.com/flanksource/karina/pkg/phases/pre"
-	"github.com/flanksource/karina/pkg/phases/quack"
 	"github.com/flanksource/karina/pkg/phases/rabbitmqoperator"
 	"github.com/flanksource/karina/pkg/phases/redisoperator"
 	"github.com/flanksource/karina/pkg/phases/registrycreds"
@@ -85,7 +84,7 @@ var Phases = map[string]DeployFn{
 }
 
 var PhaseOrder = []string{"bootstrap", "crds", "cni", "csi", "cloud", "platform"}
-var Bootstrap = compose(pre.Install, crds.Install, CNI, CSI, base.Install, Cloud, certmanager.Install, ingress.Install, quack.Install, minio.Install, templateoperator.Install, postgresoperator.Deploy, dex.Install)
+var Bootstrap = compose(pre.Install, crds.Install, CNI, CSI, base.Install, Cloud, certmanager.Install, ingress.Install, minio.Install, templateoperator.Install, postgresoperator.Deploy, dex.Install)
 var Minimal = compose(pre.Install, crds.Install, base.Install, certmanager.Install, ingress.Install)
 var BootstrapPhases = []string{"pre", "crds", "cni", "csi", "base", "cloud-controller", "cert-manager", "ingress", "minio", "template-operator", "postgres-operator", "dex"}
 var CSI = compose(localpath.Install, s3.Install, nfs.Install)
@@ -124,7 +123,6 @@ var PhasesExtra = map[string]DeployFn{
 	"postgres-operator":  postgresoperator.Deploy,
 	"platform-operator":  platformoperator.Install,
 	"pre":                pre.Install,
-	"quack":              quack.Install,
 	"template-operator":  templateoperator.Install,
 	"vsphere":            vsphere.Install,
 	"cloud-controller":   Cloud,

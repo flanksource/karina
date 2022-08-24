@@ -62,7 +62,6 @@ spec:
     test:
       exclude:
         - configmap-reloader
-        - quack
         - dex
         - audit
         - encryption

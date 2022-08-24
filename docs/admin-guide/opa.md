@@ -97,7 +97,6 @@ By default, karina excludes the following namespaces from Gatekeeper policing:
  - opa
  - platform-system
  - postgres-operator
- - quack
  - sealed-secrets
  - tekton
  - vault
