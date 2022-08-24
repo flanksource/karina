@@ -16,9 +16,13 @@ jobs:
     container:
       image: flanksource/build-tools:v0.15.1
     steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-go@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
       - uses: actions/setup-node@v2
       - run: make build-api-docs build-docs
   golangci:
@@ -27,8 +31,10 @@ jobs:
     container:
       image: flanksource/build-tools:v0.15.1
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
         # Get values for cache paths to be used in later steps
       - id: go-cache-paths
         run: |
