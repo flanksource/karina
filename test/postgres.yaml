@@ -4,10 +4,6 @@ importConfigs:
 templateOperator:
   version: v0.7.0
   syncPeriod: 15s
-canaryChecker:
-  version: v0.38.87
-  persistence:
-    capacity: 1Gi
 postgresOperator:
   version: v1.7.1
   defaultBackupBucket: cicd-pg-backup
