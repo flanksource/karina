@@ -15,7 +15,6 @@ test:
   exclude:
     - postgres-operator
     - platform-operator
-    - quack
     - configmap-reloader
     - dex
     - audit

@@ -1,14 +1,32 @@
 resources:
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-apiService.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-clusterRole.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-clusterRoleAggregatedMetricsReader.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-clusterRoleBinding.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-clusterRoleServerResources.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-configMap.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-deployment.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-networkPolicy.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-podDisruptionBudget.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-roleBindingAuthReader.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-service.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-serviceAccount.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusAdapter-serviceMonitor.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-apiService.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-clusterRole.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-clusterRoleAggregatedMetricsReader.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-clusterRoleBinding.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-clusterRoleServerResources.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-configMap.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-deployment.yaml
+  # depends on https://github.com/flanksource/kommons/issues/86
+  # - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-podDisruptionBudget.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-roleBindingAuthReader.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-service.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-serviceAccount.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusAdapter-serviceMonitor.yaml
+
+patches:
+  - target:
+      kind: ClusterRole
+      name: prometheus-adapter
+    patch: |-
+      - op: replace
+        path: /rules/0/apiGroups/0
+        value: "*"
+      - op: add
+        path: /rules/0/resources/-
+        value: subjectaccessreviews
+      - op: add
+        path: /rules/0/resources/-
+        value: tokenreviews
+      - op: add
+        path: /rules/0/verbs/-
+        value: create

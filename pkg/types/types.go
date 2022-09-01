@@ -625,10 +625,6 @@ type LocalPath struct {
 	XEnabled `yaml:",inline" json:",inline"`
 }
 
-type Quack struct {
-	XEnabled `yaml:",inline" json:",inline"`
-}
-
 type Flux struct {
 	Enabled                          bool   `yaml:"enabled" json:"enabled"`
 	SourceControllerVersion          string `yaml:"sourceControllerVersion,omitempty" json:"sourceControllerVersion,omitempty"`

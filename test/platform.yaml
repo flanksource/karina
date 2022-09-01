@@ -31,10 +31,6 @@ platformOperator:
     # used in e2e tests
     - foo.flanksource.com/bar
     - foo.flanksource.com/baz
-canaryChecker:
-  version: v0.38.87
-  persistence:
-    capacity: 1Gi
 test:
   exclude:
     - dex

@@ -5,10 +5,6 @@ thanos:
   version: v0.13.0
   mode: client
   bucket: thanos
-canaryChecker:
-  version: v0.38.87
-  persistence:
-    capacity: 1Gi
 kubernetes:
   version: !!env KUBERNETES_VERSION
   kubeletExtraArgs:

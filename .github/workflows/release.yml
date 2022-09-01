@@ -8,7 +8,7 @@ jobs:
       release-version: ${{ steps.semantic.outputs.release-version }}
       new-release-published: ${{ steps.semantic.outputs.new-release-published }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: codfish/semantic-release-action@v1
         id: semantic
         env:
@@ -20,7 +20,7 @@ jobs:
     container:
       image: flanksource/build-tools:v0.15.1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: make build
 
   binary:
@@ -45,7 +45,7 @@ jobs:
       VERSION: v${{ needs.semantic-release.outputs.release-version }}
       TARGET: ${{ matrix.target }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: git config --global --add safe.directory $PWD
       - run: make $TARGET compress
       - name: Upload binaries to release
@@ -63,7 +63,7 @@ jobs:
     if: needs.semantic-release.outputs.new-release-published == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
@@ -78,7 +78,7 @@ jobs:
     container:
       image: flanksource/build-tools:v0.12.0
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: make build-api-docs build-docs deploy-docs
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

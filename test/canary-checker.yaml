@@ -1,0 +1,7 @@
+importConfigs:
+  - minimal.yaml
+canaryChecker:
+  version: v0.38.154
+  persistence:
+    capacity: 1Gi
+

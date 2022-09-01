@@ -45,8 +45,26 @@ spec:
   resources:
     requests:
       memory: 100Mi
-      cpu: 10m
+      cpu: 100m
   retention: 10h
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: grafana-operator
+  name: grafana-operator
+  namespace: monitoring
+spec:
+  template:
+    spec:
+      containers:
+        - name: manager
+          resources:
+            requests:
+              memory: 10Mi
+              cpu: 10m
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Alertmanager
@@ -65,10 +83,29 @@ metadata:
   name: grafana
   namespace: monitoring
 spec:
+  initResources:
+    requests:
+      cpu: 1m
   resources:
     requests:
       cpu: 10m
 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-adapter
+  namespace: monitoring
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: prometheus-adapter
+          resources:
+            requests:
+              cpu: 10m
+              memory: 10Mi
 ---
 kind: DaemonSet
 apiVersion: apps/v1
@@ -155,29 +192,6 @@ spec:
     spec:
       containers:
         - name: manager
-          resources:
-            requests:
-              cpu: 10m
-              memory: 10Mi
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  # Disable reload/all in tests
-  annotations:
-    $patch: delete
-  name: quack
-  namespace: quack
-spec:
-  replicas: 1
-  template:
-    metadata:
-      annotations:
-        $patch: delete
-    spec:
-      containers:
-        - name: quack
           resources:
             requests:
               cpu: 10m

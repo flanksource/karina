@@ -265,12 +265,6 @@ func testImportSecrets(p *platform.Platform, pp *types.PlatformConfig, test *con
 	}
 }
 
-func newPlatformWithMonitoring(p *platform.Platform, disabled bool) *types.PlatformConfig {
-	newP, _ := clonePlatform(p)
-	newP.Monitoring = nil
-	return newP
-}
-
 func clonePlatform(platform *platform.Platform) (*types.PlatformConfig, error) {
 	yml := platform.String()
 	p := &types.PlatformConfig{}

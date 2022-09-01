@@ -14,10 +14,6 @@ const NodeGroupTaint = "node.kubernetes.io/group"
 const ManagedBy = "apps.kubernetes.io/managed-by"
 const Karina = "karina"
 
-var QuackEnabled = map[string]string{
-	"quack.pusher.com/enabled": "true",
-}
-
 var PlatformNamespaces = []string{
 	"cert-manager",
 	"dex",
@@ -34,7 +30,6 @@ var PlatformNamespaces = []string{
 	"opa",
 	"platform-system",
 	"postgres-operator",
-	"quack",
 	"sealed-secrets",
 	"tekton",
 	"vault",
