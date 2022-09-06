@@ -12,7 +12,7 @@ namespace: platform-system
 
 images:
   - name: docker.io/flanksource/canary-checker:latest
-    newTag: '{{ .canaryChecker.version | default "v0.38.98" }}'
+    newTag: '{{ .canaryChecker.version | default "v0.38.155" }}'
 
 patchesStrategicMerge:
   - |-
