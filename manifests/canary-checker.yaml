@@ -13,91 +13,98 @@ kind: ClusterRole
 metadata:
   name: canary-checker-role
 rules:
-- apiGroups:
-  - canaries.flanksource.com
-  resources:
-  - canaries
-  - systemtemplates
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - canaries.flanksource.com
-  resources:
-  - canaries/status
-  - systemtemplates/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - namespaces
-  - services
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
-  - pods/exec
-  - pods/log
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  - configmaps
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - configmaps/status
-  verbs:
-  - get
-  - update
-  - patch
+  - apiGroups:
+      - canaries.flanksource.com
+    resources:
+      - canaries
+      - systemtemplates
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - canaries.flanksource.com
+    resources:
+      - canaries/status
+      - systemtemplates/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - namespaces
+      - services
+    verbs:
+      - '*'
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+      - nodes
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - pods/exec
+      - pods/log
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - configmaps
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps/status
+    verbs:
+      - get
+      - update
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -108,9 +115,9 @@ roleRef:
   kind: ClusterRole
   name: canary-checker-role
 subjects:
-- kind: ServiceAccount
-  name: canary-checker-sa
-  namespace: platform-system
+  - kind: ServiceAccount
+    name: canary-checker-sa
+    namespace: platform-system
 ---
 apiVersion: v1
 kind: Service
@@ -122,9 +129,9 @@ metadata:
   namespace: platform-system
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app.kubernetes.io/name: canary-checker
     control-plane: canary-checker
@@ -169,74 +176,74 @@ spec:
         control-plane: canary-checker
     spec:
       containers:
-      - args:
-        - operator
-        - -v
-        - --httpPort
-        - "8080"
+        - args:
+            - operator
+            - -v
+            - --httpPort
+            - "8080"
         {{- range $server := .canaryChecker.aggregateServers }}
         - --aggregateServers
         - {{$server}}
         {{- end }}
-        command:
-        - /app/canary-checker
-        env:
-        - name: DOCKER_API_VERSION
-          value: "1.39"
-        - name: DB_URL
-          value: embedded:///opt/database/data/
-        image: docker.io/flanksource/canary-checker:{{ .canaryChecker.version | default "v0.38.98" }}
-        imagePullPolicy: IfNotPresent
-        name: canary-checker
-        ports:
-        - containerPort: 8080
-          name: metrics
-        resources:
-          limits:
-            memory: 512Mi
-          requests:
-            cpu: 200m
-            memory: 200Mi
-        securityContext:
-          allowPrivilegeEscalation: true
-          capabilities:
-            add:
-            - CAP_NET_RAW
-        volumeMounts:
-        - mountPath: /var/run/docker.sock
-          name: dockersock
-        - mountPath: /run/containerd/containerd.sock
-          name: containerdsock
-        - mountPath: /opt/database
-          name: canarychecker-database
-        - mountPath: /etc/podinfo
-          name: podinfo
+          command:
+            - /app/canary-checker
+          env:
+            - name: DOCKER_API_VERSION
+              value: "1.39"
+            - name: DB_URL
+              value: embedded:///opt/database/data/
+          image: docker.io/flanksource/canary-checker:{{ .canaryChecker.version | default "v0.38.98" }}
+          imagePullPolicy: IfNotPresent
+          name: canary-checker
+          ports:
+            - containerPort: 8080
+              name: metrics
+          resources:
+            limits:
+              memory: 1512Mi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - CAP_NET_RAW
+          volumeMounts:
+            - mountPath: /var/run/docker.sock
+              name: dockersock
+            - mountPath: /run/containerd/containerd.sock
+              name: containerdsock
+            - mountPath: /opt/database
+              name: canarychecker-database
+            - mountPath: /etc/podinfo
+              name: podinfo
       securityContext:
         fsGroup: 1000
       serviceAccountName: canary-checker-sa
       volumes:
-      - hostPath:
-          path: /var/run/docker.sock
-        name: dockersock
-      - hostPath:
-          path: /run/containerd/containerd.sock
-        name: containerdsock
-      - downwardAPI:
-          items:
-          - fieldRef:
-              fieldPath: metadata.labels
-            path: labels
-        name: podinfo
+        - hostPath:
+            path: /var/run/docker.sock
+          name: dockersock
+        - hostPath:
+            path: /run/containerd/containerd.sock
+          name: containerdsock
+        - downwardAPI:
+            items:
+              - fieldRef:
+                  fieldPath: metadata.labels
+                path: labels
+          name: podinfo
   volumeClaimTemplates:
-  - metadata:
-      name: canarychecker-database
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
-      storageClassName: '{{ .canaryChecker.persistence.storageClass | default "local-path" }}'
+    - metadata:
+        name: canarychecker-database
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
+        storageClassName: '{{ .canaryChecker.persistence.storageClass | default "local-path" }}'
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -245,8 +252,8 @@ metadata:
   namespace: platform-system
 spec:
   endpoints:
-  - interval: 30s
-    targetPort: 8080
+    - interval: 30s
+      targetPort: 8080
   jobLabel: canary-checker
   selector:
     matchLabels:
@@ -265,17 +272,17 @@ metadata:
   namespace: platform-system
 spec:
   rules:
-  - host: canaries.{{.domain}}
-    http:
-      paths:
-      - backend:
-          service:
-            name: canary-checker
-            port:
-              number: 8080
-        path: /
-        pathType: ImplementationSpecific
+    - host: canaries.{{.domain}}
+      http:
+        paths:
+          - backend:
+              service:
+                name: canary-checker
+                port:
+                  number: 8080
+            path: /
+            pathType: ImplementationSpecific
   tls:
-  - hosts:
-    - canaries.{{.domain}}
-    secretName: canary-tls
+    - hosts:
+        - canaries.{{.domain}}
+      secretName: canary-tls
