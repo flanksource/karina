@@ -30,6 +30,19 @@ spec:
   alertmanagerConfigNamespaceSelector:
     matchLabels:
       apps.kubernetes.io/managed-by: karina
+  {{- if .monitoring.alertmanager.persistence.capacity }}
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        name: alertmanager-main-db
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: '{{ .monitoring.alertmanager.persistence.capacity }}'
+        storageClassName: '{{ .monitoring.alertmanager.persistence.storageClass | default "local-path" }}'
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service

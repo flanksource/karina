@@ -565,10 +565,11 @@ type PushGateway struct {
 }
 
 type AlertManager struct {
-	Version          string   `yaml:"version,omitempty" json:"version,omitempty"`
-	Disabled         bool     `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	ConfigNamespaces []string `yaml:"configNamespaces" json:"configNamespaces"`
-	AlertRelabeling  string   `yaml:"alertRelabelingConfig" json:"alertRelabelingConfig"`
+	Version          string      `yaml:"version,omitempty" json:"version,omitempty"`
+	Disabled         bool        `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	ConfigNamespaces []string    `yaml:"configNamespaces" json:"configNamespaces"`
+	AlertRelabeling  string      `yaml:"alertRelabelingConfig" json:"alertRelabelingConfig"`
+	Persistence      Persistence `yaml:"persistence,omitempty" json:"persistence,omitempty"`
 }
 
 type Persistence struct {
