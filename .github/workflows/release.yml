@@ -49,14 +49,13 @@ jobs:
       - run: git config --global --add safe.directory $PWD
       - run: make $TARGET compress
       - name: Upload binaries to release
-        uses: meeDamian/github-release@2.0
+        uses: svenstaro/upload-release-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ matrix.target }}
           tag: v${{ needs.semantic-release.outputs.release-version }}
-          gzip: false
-          allow_override: true
-          files: >
-            ${{ matrix.target }}
+          overwrite: true
+          file_glob: true
   docker:
     needs: semantic-release
     # Only build/push new docker images when there is new version released
