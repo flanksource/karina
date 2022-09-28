@@ -40,10 +40,12 @@ var specs = []string{
 	"unmanaged/alertmanager-rules.yaml.raw",
 	"unmanaged/service-monitors.yaml",
 	"node-exporter.yaml",
+	"kube-prometheus-rules.yaml.raw",
 	"alertmanager-rules.yaml.raw",
 	"alertmanager-configs.yaml",
 	"service-monitors.yaml",
 	"namespace-rules.yaml.raw",
+	"unmanaged/control-plane-rules.yaml.raw",
 	"thanos/compactor.yaml",
 	"thanos/querier.yaml",
 	"thanos/store.yaml",
@@ -308,6 +310,7 @@ func conditionalSpecs(p *platform.Platform) map[string]func() bool {
 		"thanos/base.yaml":                      p.Thanos.IsDisabled,
 		"pushgateway.yaml":                      p.Monitoring.PushGateway.IsDisabled,
 		"unmanaged/alertmanager-rules.yaml.raw": p.Kubernetes.IsManaged,
+		"unmanaged/control-plan-rules.yaml.raw": p.Kubernetes.IsManaged,
 		"unmanaged/service-monitors.yaml":       p.Kubernetes.IsManaged,
 	}
 	return cd

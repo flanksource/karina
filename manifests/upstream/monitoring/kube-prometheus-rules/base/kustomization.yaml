@@ -1,0 +1,7 @@
+resources:
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/alertmanager-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/kubePrometheus-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/kubeStateMetrics-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/nodeExporter-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/prometheus-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/prometheusOperator-prometheusRule.yaml

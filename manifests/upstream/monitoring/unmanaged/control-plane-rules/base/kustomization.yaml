@@ -1,0 +1,31 @@
+resources:
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/kubernetesControlPlane-prometheusRule.yaml
+patches:
+  # kubernetes-apps
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-resources
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-storage
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-system
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules

@@ -89,6 +89,14 @@ monitoring/grafana-operator.yaml:
 monitoring/prometheus-operator-rules.yaml.raw:
 	$(call BUILD_BASE,monitoring/prometheus-operator-rules)
 
+.PHONY: monitoring/kube-prometheus-rules.yaml.raw
+monitoring/kube-prometheus-rules.yaml.raw:
+	$(call BUILD_BASE,monitoring/kube-prometheus-rules)
+
+.PHONY: monitoring/unmanaged/control-plane-rules.yaml.raw
+monitoring/unmanaged/control-plane-rules.yaml.raw:
+	$(call BUILD_BASE,monitoring/unmanaged/control-plane-rules)
+
 .PHONY: canary-checker.yaml
 canary-checker.yaml:
 	$(call BUILD_HELM_CHART,canary-checker)
