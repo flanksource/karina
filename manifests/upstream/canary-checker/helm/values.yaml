@@ -6,12 +6,16 @@ db:
   embedded:
     storage: 1Gi
     storageClass: local-path
-ingress:
+flanksource-ui:
   enabled: true
-  host: canaries.{{.domain}}
-  annotations:
-    kubernetes.io/tls-acme: "true"
-  tls:
-    - hosts:
-      - canaries.{{.domain}}
-      secretName: canary-tls
+  ingress:
+    enabled: true
+    host: canaries.{{.domain}}
+    annotations:
+      kubernetes.io/tls-acme: "true"
+    tls:
+      - hosts:
+          - canaries.{{.domain}}
+        secretName: canary-tls
+ingress:
+  enabled: false
