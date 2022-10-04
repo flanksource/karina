@@ -52,6 +52,6 @@ spec:
           summary: Associated service not issued a valid certificate.
         expr: |
           (certmanager_certificate_expiration_timestamp_seconds - timestamp(certmanager_certificate_expiration_timestamp_seconds)) / (60 * 60 * 24) < 29
-        for: 1m
+        for: 10m
         labels:
           severity: warning
