@@ -25,7 +25,7 @@
   * **Monitoring** ([Grafana](https://github.com/integr8ly/grafana-operator), [Prometheus](https://github.com/coreos/prometheus-operator), [Thanos](https://thanos.io/), [Karma](https://github.com/prymitive/karma), [Canary Checker](https://github.com/flanksource/canary-checker))
   * **Multi-Tenancy** ([Namespace Configurator](https://github.com/redhat-cop/namespace-configuration-operator) Cluster Quotas, [Kiosk](https://github.com/kiosk-sh/kiosk))
 * **Cluster Provisioning** framework for [Kind](https://karina.docs.flanksource.com/admin-guide/provisioning/kind/), [vSphere](https://karina.docs.flanksource.com/admin-guide/provisioning/vsphere/) and Cluster API (Coming Soon)
-* **Operations focused CLI** for health checks, etcd maintenance, backup and restore, rolling updates, logging, etc..
+* **Operations focused CLI** for health checks, backup and restore, rolling updates, logging, etc..
 
 karina leverages a number of other standalone operators built by flanksource:
 

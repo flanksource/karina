@@ -94,7 +94,6 @@ func Status(p *platform.Platform) error {
 		fmt.Fprintf(w, "%s\t", kommons.GetNodeStatus(node))
 		if kommons.IsMasterNode(node) {
 			fmt.Fprintf(w, "%s\t", kubeadm.GetNodeVersion(p, nodeMachine.Node))
-			fmt.Fprintf(w, "%s\t", cluster.GetHealth(node))
 		} else {
 			fmt.Fprintf(w, "\t\t")
 		}

@@ -9,7 +9,6 @@ import (
 	"github.com/flanksource/karina/pkg/platform"
 	"github.com/flanksource/karina/pkg/types"
 	"github.com/flanksource/kommons"
-	"github.com/flanksource/kommons/etcd"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -59,7 +58,7 @@ func TerminateNodes(platform *platform.Platform, nodes []string) error {
 	return nil
 }
 
-func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) {
+func terminate(platform *platform.Platform, vm types.Machine) {
 	if err := platform.ProvisionHook.BeforeTerminate(platform, vm); err != nil {
 		platform.Warnf("[%s] failed to call before terminate: %v", vm, err)
 		return
@@ -79,11 +78,11 @@ func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) 
 		if err != nil {
 			// we always attempt to terminate a node as a master if we don't know
 			// to ensure it is always removed from etcd
-			if err := terminateMaster(platform, etcd, vm.Name()); err != nil {
+			if err := terminateMaster(platform, vm.Name()); err != nil {
 				platform.Warnf("Failed to terminate master %v", err)
 			}
 		} else if kommons.IsMasterNode(*node) {
-			if err := terminateMaster(platform, etcd, node.Name); err != nil {
+			if err := terminateMaster(platform, node.Name); err != nil {
 				platform.Warnf("Failed to terminate master %v", err)
 			}
 		}
@@ -103,52 +102,6 @@ func terminate(platform *platform.Platform, etcd *EtcdClient, vm types.Machine) 
 	}
 }
 
-func terminateEtcd(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
-	ctx := context.TODO()
-	// we always interact via the etcd leader, as a previous node may have become unavailable
-	leaderClient, err := etcdClient.GetEtcdLeader()
-	if err != nil {
-		return err
-	}
-	platform.Infof("etcd leader is: %s", leaderClient.Name)
-
-	members, err := leaderClient.Members(ctx)
-	if err != nil {
-		return err
-	}
-	var etcdMember *etcd.Member
-	var candidateLeader *etcd.Member
-	for _, member := range members {
-		if member.Name == name {
-			// find the etcd member for the node
-			etcdMember = member
-		}
-		if member.Name != leaderClient.Name {
-			// choose a potential candidate to move the etcd leader
-			candidateLeader = member
-		}
-	}
-	if etcdMember == nil {
-		platform.Warnf("%s has already been removed from etcd cluster", name)
-	} else if candidateLeader == nil {
-		platform.Warnf("%s is the only member left of the etcd cluster", name)
-	} else {
-		if etcdMember.ID == leaderClient.MemberID {
-			platform.Infof("Moving etcd leader from %s to %s", name, candidateLeader.Name)
-			if err := leaderClient.MoveLeader(ctx, candidateLeader.ID); err != nil {
-				return fmt.Errorf("failed to move leader: %v", err)
-			}
-		}
-
-		platform.Infof("Removing etcd member %s", name)
-		if err := leaderClient.RemoveMember(ctx, etcdMember.ID); err != nil {
-			return fmt.Errorf("failed to remove member: %v", err)
-		}
-	}
-
-	return nil
-}
-
 func terminateConsul(platform *platform.Platform, name string) error {
 	if platform.Consul != "" {
 		// proactively remove server from consul so that we can get a new connection to k8s
@@ -159,15 +112,7 @@ func terminateConsul(platform *platform.Platform, name string) error {
 	return nil
 }
 
-func terminateMaster(platform *platform.Platform, etcdClient *EtcdClient, name string) error {
-	// if we are terminating the cluster then we don't need to worry about etcd
-	if !platform.Terminating {
-		if err := backoff(func() error {
-			return terminateEtcd(platform, etcdClient, name)
-		}, platform.Logger, nil); err != nil {
-			return err
-		}
-	}
+func terminateMaster(platform *platform.Platform, name string) error {
 	if err := backoff(func() error {
 		return terminateConsul(platform, name)
 	}, platform.Logger, nil); err != nil {
