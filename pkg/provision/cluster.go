@@ -69,7 +69,6 @@ type Cluster struct {
 	Nodes      NodeMachines
 	Orphans    []types.Machine
 	Kubernetes kubernetes.Interface
-	Etcd       *EtcdClient
 }
 
 func GetCluster(platform *platform.Platform) (*Cluster, error) {
@@ -117,19 +116,14 @@ func GetCluster(platform *platform.Platform) (*Cluster, error) {
 		Nodes:      nodes,
 		Orphans:    orphans,
 		Kubernetes: client,
-		Etcd:       GetEtcdClient(platform, client, ""),
 	}
 	cluster.Platform = platform
 	return cluster, nil
 }
 
 func (cluster *Cluster) Terminate(node types.Machine) error {
-	terminate(cluster.Platform, cluster.Etcd, node)
+	terminate(cluster.Platform, node)
 	return nil
-}
-
-func (cluster *Cluster) GetHealth(node v1.Node) string {
-	return cluster.Etcd.GetHealth(node)
 }
 
 func (cluster *Cluster) Cordon(node v1.Node) error {
