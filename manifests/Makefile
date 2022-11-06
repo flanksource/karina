@@ -77,7 +77,7 @@ platform-operator.yaml:
 .PHONY: flux.yaml
 flux.yaml:
 	$(call BUILD_BASE,flux)
-	yq -i ' select(.kind != "CustomResourceDefinition")' flux.yaml
+	$(YQ) -i ' select(.kind != "CustomResourceDefinition")' flux.yaml
 
 .PHONY: monitoring/grafana-operator.yaml
 monitoring/grafana-operator.yaml:

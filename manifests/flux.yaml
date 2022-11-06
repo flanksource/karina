@@ -17,6 +17,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: helm-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
   name: helm-controller
@@ -28,6 +29,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: image-automation-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
   name: image-automation-controller
@@ -39,6 +41,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: image-reflector-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
   name: image-reflector-controller
@@ -50,6 +53,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: kustomize-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
   name: kustomize-controller
@@ -61,6 +65,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: notification-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
   name: notification-controller
@@ -72,6 +77,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: source-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
   name: source-controller
@@ -228,6 +234,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: notification-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -249,6 +256,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: source-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -270,6 +278,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: notification-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -291,6 +300,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: helm-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -322,7 +332,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: ghcr.io/fluxcd/helm-controller:{{.flux.helmControllerVersion | default "v0.22.2" }}
+          image: ghcr.io/fluxcd/helm-controller:{{.flux.helmControllerVersion | default "v0.26.0" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -373,6 +383,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: image-automation-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -404,7 +415,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: ghcr.io/fluxcd/image-automation-controller:{{.flux.imageAutomationControllerVersion | default "v0.23.5" }}
+          image: ghcr.io/fluxcd/image-automation-controller:{{.flux.imageAutomationControllerVersion | default "v0.26.1" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -455,6 +466,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: image-reflector-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -486,7 +498,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: ghcr.io/fluxcd/image-reflector-controller:{{.flux.imageReflectorControllerVersion | default "v0.19.4" }}
+          image: ghcr.io/fluxcd/image-reflector-controller:{{.flux.imageReflectorControllerVersion | default "v0.22.1" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -541,6 +553,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: kustomize-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -572,7 +585,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: ghcr.io/fluxcd/kustomize-controller:{{.flux.kustomizeControllerVersion | default "v0.26.3" }}
+          image: ghcr.io/fluxcd/kustomize-controller:{{.flux.kustomizeControllerVersion | default "v0.30.0" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -623,6 +636,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: notification-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -653,7 +667,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: ghcr.io/fluxcd/notification-controller:{{.flux.notificationControllerVersion | default "v0.24.1" }}
+          image: ghcr.io/fluxcd/notification-controller:{{.flux.notificationControllerVersion | default "v0.28.0" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -710,6 +724,7 @@ metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
   labels:
+    app.kubernetes.io/component: source-controller
     app.kubernetes.io/instance: flux-system
     app.kubernetes.io/part-of: flux
     control-plane: controller
@@ -745,7 +760,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: ghcr.io/fluxcd/source-controller:{{.flux.sourceControllerVersion | default "v0.25.11" }}
+            - name: TUF_ROOT
+              value: /tmp/.sigstore
+          image: ghcr.io/fluxcd/source-controller:{{.flux.sourceControllerVersion | default "v0.31.0" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
