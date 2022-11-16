@@ -98,7 +98,7 @@ jobs:
       matrix:
         k8s:
           - v1.20.7
-          - v1.22.0
+          - v1.22.15
         suite:
           - minimal
           - monitoring
