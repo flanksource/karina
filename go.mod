@@ -33,7 +33,6 @@ require (
 	github.com/vbauerster/mpb/v5 v5.0.3
 	github.com/vmware/go-vmware-nsxt v0.0.0-20190201205556-16aa0443042d
 	github.com/vmware/govmomi v0.21.0
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
 	go.mozilla.org/sops/v3 v3.7.3
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
@@ -44,7 +43,6 @@ require (
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.17.2
-	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
 	sigs.k8s.io/controller-runtime v0.8.3
 	sigs.k8s.io/kind v0.10.0
 	sigs.k8s.io/yaml v1.2.0
@@ -195,6 +193,7 @@ require (
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/zealic/xignore v0.3.3 // indirect
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489 // indirect
 	go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
@@ -228,6 +227,7 @@ require (
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.4.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd // indirect
+	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009 // indirect
 	sigs.k8s.io/kustomize v2.0.3+incompatible // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.0.2 // indirect
 )
@@ -242,5 +242,6 @@ replace (
 	google.golang.org/api => google.golang.org/api v0.20.0
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 	gopkg.in/hairyhenderson/yaml.v2 => github.com/maxaudron/yaml v0.0.0-20190411130442-27c13492fe3c
+	k8s.io/api v0.25.3 => k8s.io/api v0.20.4
 	k8s.io/client-go => k8s.io/client-go v0.20.4
 )
