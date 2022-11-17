@@ -100,7 +100,6 @@ metadata:
   namespace: monitoring
 spec:
   type: ClusterIP
-  clusterIP: None
   ports:
     - port: 10901
       targetPort: grpc
