@@ -147,8 +147,7 @@ spec:
     - protocol: TCP
       port: 10901
       targetPort: 10901
-      nodePort: 31901
-  type: NodePort
+  type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -255,13 +254,12 @@ spec:
     - args:
       - sidecar
       - --prometheus.url=http://localhost:9090/
-      - --tsdb.path=/prometheus/prometheus-db
+      - --tsdb.path=/prometheus
       - --grpc-address=[$(POD_IP)]:10901
       - --http-address=[$(POD_IP)]:10902
       - --objstore.config=$(OBJSTORE_CONFIG)
       - --grpc-server-tls-cert=/ssl/client/tls.crt
       - --grpc-server-tls-key=/ssl/client/tls.key
-      - --grpc-server-tls-client-ca=/ssl/ca/ca.crt
       env:
       - name: POD_IP
         valueFrom:

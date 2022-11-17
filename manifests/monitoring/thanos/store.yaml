@@ -19,6 +19,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "10902"
     spec:
+      serviceAccountName: prometheus-k8s
       containers:
         - name: thanos-store
           image: docker.io/thanosio/thanos:{{.thanos.version}}
@@ -29,7 +30,7 @@ spec:
             - "--objstore.config-file=/config/thanos.yaml"
             - --grpc-server-tls-cert=/ssl/client/tls.crt
             - --grpc-server-tls-key=/ssl/client/tls.key
-            - --grpc-server-tls-client-ca=/ssl/ca/ca.crt
+            - --ignore-deletion-marks-delay=24h
           ports:
             - name: http
               containerPort: 10902
@@ -45,6 +46,22 @@ spec:
               mountPath: /ssl/client
             - name: thanos-ca-cert
               mountPath: /ssl/ca
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+            timeoutSeconds: 3
+
       volumes:
         - name: data
           emptyDir: {}

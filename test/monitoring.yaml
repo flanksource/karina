@@ -2,6 +2,7 @@ importConfigs:
   - minimal.yaml
   - _monitoring.yaml
 thanos:
-  version: v0.13.0
-  mode: client
-  bucket: thanos
+  version: v0.29.0
+  enableCompactor: true
+  mode: observability
+  retention: 10d

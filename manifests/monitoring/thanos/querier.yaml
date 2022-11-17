@@ -31,11 +31,25 @@ spec:
             - --query.replica-label=prometheus_replica
             - --grpc-server-tls-cert=/ssl/client/tls.crt
             - --grpc-server-tls-key=/ssl/client/tls.key
-            - --grpc-server-tls-client-ca=/ssl/ca/ca.crt
             - --grpc-client-tls-secure
             - --grpc-client-tls-cert=/ssl/client/tls.crt
             - --grpc-client-tls-key=/ssl/client/tls.key
-            - --grpc-client-tls-ca=/ssl/ca/ca.crt
+            - --grpc-client-tls-skip-verify
+            - --query.auto-downsampling
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
           ports:
             - name: http
               containerPort: 10902
@@ -133,7 +147,7 @@ spec:
             backend:
               service:
                 name:  thanos-query
-                port: 
+                port:
                   number: 9090
   tls:
     - secretName: thanos-tls

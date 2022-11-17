@@ -20,6 +20,7 @@ spec:
       labels:
         app: thanos-compactor
     spec:
+      serviceAccountName: prometheus-k8s
       containers:
         - name: thanos-compactor
           image: docker.io/thanosio/thanos:{{.thanos.version}}
@@ -27,6 +28,7 @@ spec:
             - "compact"
             - "--log.level=debug"
             - "--data-dir=/var/thanos/store"
+            - --debug.accept-malformed-index
             - "--retention.resolution-5m={{.thanos.retention | default "180d" }}"
             - "--retention.resolution-1h={{.thanos.retention | default "180d" }}"
             - "--retention.resolution-raw={{.thanos.retention | default "180d" }}"
