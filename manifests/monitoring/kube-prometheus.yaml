@@ -148,6 +148,7 @@ spec:
       port: 10901
       targetPort: 10901
   type: ClusterIP
+  clusterIP: None
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
