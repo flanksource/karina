@@ -1,13 +1,13 @@
 images:
   - name: quay.io/prometheus-operator/prometheus-operator
-    newTag: '{{.monitoring.prometheus_operator | default "v0.57.0"}}'
+    newTag: '{{.monitoring.prometheus.operatorVersion | default "v0.60.1"}}'
 resources:
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-clusterRole.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-clusterRoleBinding.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-deployment.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-service.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-serviceAccount.yaml
-  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.10.0/manifests/prometheusOperator-serviceMonitor.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-clusterRole.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-clusterRoleBinding.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-deployment.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-service.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-serviceAccount.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.11.0/manifests/prometheusOperator-serviceMonitor.yaml
 patchesStrategicMerge:
   - |-
     apiVersion: apps/v1
@@ -22,4 +22,4 @@ patchesStrategicMerge:
             - name: prometheus-operator
               args:
                 - --kubelet-service=kube-system/kubelet
-                - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:{{.prometheus.operatorVersion | default "v0.57.0"}}
+                - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:{{.monitoring.prometheus.operatorVersion | default "v0.60.1"}}
