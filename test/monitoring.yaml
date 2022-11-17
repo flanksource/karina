@@ -6,3 +6,4 @@ thanos:
   enableCompactor: true
   mode: observability
   retention: 10d
+  bucket: thanos
