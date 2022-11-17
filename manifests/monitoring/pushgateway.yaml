@@ -3,16 +3,13 @@ kind: Service
 metadata:
   name: pushgateway
   namespace: monitoring
-  annotations:
-    prometheus.io/scrape: "true"
   labels:
     k8s-app: pushgateway
 spec:
   selector:
     k8s-app: pushgateway
-  type: NodePort
   ports:
-    - name: pushgateway
+    - name: http
       protocol: TCP
       port: 9091
 
@@ -70,17 +67,12 @@ kind: ServiceMonitor
 metadata:
   name: pushgateway
   namespace: monitoring
-  labels:
-    app: pushgateway
 spec:
   endpoints:
-  - port: http
-    interval: 30s
-    scrapeTimeout: 5s
-    path: /metrics
-  namespaceSelector:
-    matchNames:
-      - monitoring
+    - port: http
+      interval: 30s
+      scrapeTimeout: 5s
+      path: /metrics
   selector:
     matchLabels:
       k8s-app: pushgateway
