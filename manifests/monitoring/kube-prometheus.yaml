@@ -142,7 +142,7 @@ metadata:
   namespace: monitoring
 spec:
   selector:
-    app: prometheus
+    prometheus: k8s
   ports:
     - protocol: TCP
       port: 10901
@@ -255,8 +255,8 @@ spec:
       - sidecar
       - --prometheus.url=http://localhost:9090/
       - --tsdb.path=/prometheus
-      - --grpc-address=[$(POD_IP)]:10901
-      - --http-address=[$(POD_IP)]:10902
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
       - --objstore.config=$(OBJSTORE_CONFIG)
       - --grpc-server-tls-cert=/ssl/client/tls.crt
       - --grpc-server-tls-key=/ssl/client/tls.key
@@ -287,6 +287,7 @@ spec:
       volumeMounts:
       - mountPath: /prometheus
         name: prometheus-k8s-db
+        subPath: prometheus-db
       - mountPath: /ssl/client
         name: secret-thanos-sidecar
         readOnly: true
