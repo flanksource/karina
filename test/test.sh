@@ -16,7 +16,7 @@ GITHUB_OWNER=${GITHUB_OWNER##*:}
 MASTER_HEAD=$(curl -s https://api.github.com/repos/$GITHUB_OWNER/$REPO/commits/master | jq -r '.sha')
 OS="$(uname | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.19.11}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-v1.22.15}
 export SUITE=${SUITE:-minimal}
 if [[ "$1" != "" ]]; then
     export SUITE=$1
@@ -84,6 +84,7 @@ if [[ "$(kubectl config current-context)" != "kind-$CLUSTER_NAME" ]] ; then
         $BIN ca generate --name sealed-secrets --cert-path .certs/sealed-secrets-crt.pem --private-key-path .certs/sealed-secrets-key.pem --password foobar  --expiry 1 $CONFIG_FILES
     fi
     if $BIN provision kind-cluster --trace -vv $CONFIG_FILES ; then
+        kubectl patch --patch-file test/coredns.yaml Deployment coredns -n kube-system
         echo "::endgroup::"
     else
         echo "::endgroup::"
