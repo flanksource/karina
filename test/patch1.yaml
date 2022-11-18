@@ -124,6 +124,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: calico-kube-controllers
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: calico-kube-controllers
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: kube-state-metrics
   namespace: monitoring
 spec:
@@ -354,6 +368,21 @@ spec:
     spec:
       containers:
         - name: redis
+          resources:
+            requests:
+              cpu: 10m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coredns
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: coredns
           resources:
             requests:
               cpu: 10m

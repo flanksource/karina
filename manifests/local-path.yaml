@@ -65,7 +65,7 @@ spec:
             - docker.io/library/busybox:latest
           resources:
             requests:
-              cpu: 100m
+              cpu: 10m
               memory: 20Mi
             limits:
               cpu: 500m
