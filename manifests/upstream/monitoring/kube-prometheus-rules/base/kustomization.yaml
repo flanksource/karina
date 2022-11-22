@@ -5,3 +5,96 @@ resources:
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/nodeExporter-prometheusRule.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/prometheus-prometheusRule.yaml
   - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/prometheusOperator-prometheusRule.yaml
+  - https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.10/manifests/kubernetesControlPlane-prometheusRule.yaml
+patches:
+  # kubernetes-apps
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-resources
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-storage
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-system
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kube-apiserver-slos
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kube-system-apiserver
+  - patch: |-
+      - op: remove
+        path: /spec/groups/0
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-system-scheduler
+  - patch: |-
+      - op: remove
+        path: /spec/groups/1
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kubernetes-system-controller-manager
+  - patch: |-
+      - op: remove
+        path: /spec/groups/1
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kube-apiserver-burnrate.rules
+  - patch: |-
+      - op: remove
+        path: /spec/groups/1
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kube-apiserver-histogram.rules
+  - patch: |-
+      - op: remove
+        path: /spec/groups/1
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kube-apiserver-availablity.rules
+  - patch: |-
+      - op: remove
+        path: /spec/groups/1
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # kube-scheduler.rules
+  - patch: |-
+      - op: remove
+        path: /spec/groups/2
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
+  # node.rules
+  - patch: |-
+      - op: remove
+        path: /spec/groups/2
+    target:
+      kind: PrometheusRule
+      name: kubernetes-monitoring-rules
