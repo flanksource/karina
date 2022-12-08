@@ -1444,6 +1444,9 @@ spec:
               folder:
                 items:
                   properties:
+                    availableSize:
+                      description: AvailableSize present on the filesystem
+                      type: string
                     awsConnection:
                       properties:
                         accessKey:
@@ -1620,6 +1623,87 @@ spec:
                     path:
                       description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                       type: string
+                    sftpConnection:
+                      properties:
+                        auth:
+                          properties:
+                            password:
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              type: object
+                            username:
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                                valueFrom:
+                                  properties:
+                                    configMapKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                    secretKeyRef:
+                                      properties:
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                        optional:
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                  type: object
+                              type: object
+                          required:
+                          - password
+                          - username
+                          type: object
+                        host:
+                          type: string
+                        port:
+                          description: Port for the SSH server. Defaults to 22
+                          type: integer
+                      required:
+                      - auth
+                      - host
+                      type: object
                     smbConnection:
                       properties:
                         auth:
@@ -1721,6 +1805,9 @@ spec:
                         template:
                           type: string
                       type: object
+                    totalSize:
+                      description: TotalSize present on the filesystem
+                      type: string
                     transform:
                       properties:
                         expr:
@@ -2098,6 +2185,9 @@ spec:
                       - path
                       - value
                       type: object
+                    templateBody:
+                      description: Template the request body
+                      type: boolean
                     test:
                       properties:
                         expr:
@@ -3505,6 +3595,11 @@ spec:
                       description: Availibility over a rolling 1h period
                       type: string
                   type: object
+                type: object
+              checks:
+                additionalProperties:
+                  type: string
+                description: contains the name and id of the checks associated with the canary
                 type: object
               errorMessage:
                 type: string
@@ -4964,6 +5059,9 @@ spec:
                         folder:
                           items:
                             properties:
+                              availableSize:
+                                description: AvailableSize present on the filesystem
+                                type: string
                               awsConnection:
                                 properties:
                                   accessKey:
@@ -5140,6 +5238,87 @@ spec:
                               path:
                                 description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                                 type: string
+                              sftpConnection:
+                                properties:
+                                  auth:
+                                    properties:
+                                      password:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                      username:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                    required:
+                                    - password
+                                    - username
+                                    type: object
+                                  host:
+                                    type: string
+                                  port:
+                                    description: Port for the SSH server. Defaults to 22
+                                    type: integer
+                                required:
+                                - auth
+                                - host
+                                type: object
                               smbConnection:
                                 properties:
                                   auth:
@@ -5241,6 +5420,9 @@ spec:
                                   template:
                                     type: string
                                 type: object
+                              totalSize:
+                                description: TotalSize present on the filesystem
+                                type: string
                               transform:
                                 properties:
                                   expr:
@@ -5618,6 +5800,9 @@ spec:
                                 - path
                                 - value
                                 type: object
+                              templateBody:
+                                description: Template the request body
+                                type: boolean
                               test:
                                 properties:
                                   expr:
@@ -7018,6 +7203,21 @@ spec:
                   description: RawMessage is a raw encoded JSON value. It implements Marshaler and Unmarshaler and can be used to delay JSON decoding or precompute a JSON encoding.
                   format: byte
                   type: string
+                type: array
+              configs:
+                items:
+                  properties:
+                    id:
+                      items:
+                        type: string
+                      type: array
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    type:
+                      type: string
+                  type: object
                 type: array
               icon:
                 type: string
@@ -8424,6 +8624,9 @@ spec:
                   folder:
                     items:
                       properties:
+                        availableSize:
+                          description: AvailableSize present on the filesystem
+                          type: string
                         awsConnection:
                           properties:
                             accessKey:
@@ -8600,6 +8803,87 @@ spec:
                         path:
                           description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                           type: string
+                        sftpConnection:
+                          properties:
+                            auth:
+                              properties:
+                                password:
+                                  properties:
+                                    name:
+                                      type: string
+                                    value:
+                                      type: string
+                                    valueFrom:
+                                      properties:
+                                        configMapKeyRef:
+                                          properties:
+                                            key:
+                                              type: string
+                                            name:
+                                              type: string
+                                            optional:
+                                              type: boolean
+                                          required:
+                                          - key
+                                          type: object
+                                        secretKeyRef:
+                                          properties:
+                                            key:
+                                              type: string
+                                            name:
+                                              type: string
+                                            optional:
+                                              type: boolean
+                                          required:
+                                          - key
+                                          type: object
+                                      type: object
+                                  type: object
+                                username:
+                                  properties:
+                                    name:
+                                      type: string
+                                    value:
+                                      type: string
+                                    valueFrom:
+                                      properties:
+                                        configMapKeyRef:
+                                          properties:
+                                            key:
+                                              type: string
+                                            name:
+                                              type: string
+                                            optional:
+                                              type: boolean
+                                          required:
+                                          - key
+                                          type: object
+                                        secretKeyRef:
+                                          properties:
+                                            key:
+                                              type: string
+                                            name:
+                                              type: string
+                                            optional:
+                                              type: boolean
+                                          required:
+                                          - key
+                                          type: object
+                                      type: object
+                                  type: object
+                              required:
+                              - password
+                              - username
+                              type: object
+                            host:
+                              type: string
+                            port:
+                              description: Port for the SSH server. Defaults to 22
+                              type: integer
+                          required:
+                          - auth
+                          - host
+                          type: object
                         smbConnection:
                           properties:
                             auth:
@@ -8701,6 +8985,9 @@ spec:
                             template:
                               type: string
                           type: object
+                        totalSize:
+                          description: TotalSize present on the filesystem
+                          type: string
                         transform:
                           properties:
                             expr:
@@ -9078,6 +9365,9 @@ spec:
                           - path
                           - value
                           type: object
+                        templateBody:
+                          description: Template the request body
+                          type: boolean
                         test:
                           properties:
                             expr:
@@ -10464,6 +10754,8 @@ spec:
                 type: object
               name:
                 type: string
+              order:
+                type: integer
               owner:
                 type: string
               properties:
@@ -10471,6 +10763,39 @@ spec:
                   properties:
                     color:
                       type: string
+                    configLookup:
+                      properties:
+                        config:
+                          properties:
+                            id:
+                              items:
+                                type: string
+                              type: array
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                            type:
+                              type: string
+                          type: object
+                        display:
+                          properties:
+                            expr:
+                              type: string
+                            javascript:
+                              type: string
+                            jsonPath:
+                              type: string
+                            template:
+                              type: string
+                          type: object
+                        field:
+                          type: string
+                        id:
+                          type: string
+                      required:
+                      - id
+                      type: object
                     headline:
                       type: boolean
                     icon:
@@ -11886,6 +12211,9 @@ spec:
                         folder:
                           items:
                             properties:
+                              availableSize:
+                                description: AvailableSize present on the filesystem
+                                type: string
                               awsConnection:
                                 properties:
                                   accessKey:
@@ -12062,6 +12390,87 @@ spec:
                               path:
                                 description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                                 type: string
+                              sftpConnection:
+                                properties:
+                                  auth:
+                                    properties:
+                                      password:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                      username:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                    required:
+                                    - password
+                                    - username
+                                    type: object
+                                  host:
+                                    type: string
+                                  port:
+                                    description: Port for the SSH server. Defaults to 22
+                                    type: integer
+                                required:
+                                - auth
+                                - host
+                                type: object
                               smbConnection:
                                 properties:
                                   auth:
@@ -12163,6 +12572,9 @@ spec:
                                   template:
                                     type: string
                                 type: object
+                              totalSize:
+                                description: TotalSize present on the filesystem
+                                type: string
                               transform:
                                 properties:
                                   expr:
@@ -12540,6 +12952,9 @@ spec:
                                 - path
                                 - value
                                 type: object
+                              templateBody:
+                                description: Template the request body
+                                type: boolean
                               test:
                                 properties:
                                   expr:
@@ -13932,6 +14347,8 @@ spec:
                       type: integer
                     name:
                       type: string
+                    order:
+                      type: integer
                     status:
                       type: string
                     summary:
@@ -15437,6 +15854,9 @@ spec:
                               folder:
                                 items:
                                   properties:
+                                    availableSize:
+                                      description: AvailableSize present on the filesystem
+                                      type: string
                                     awsConnection:
                                       properties:
                                         accessKey:
@@ -15613,6 +16033,87 @@ spec:
                                     path:
                                       description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                                       type: string
+                                    sftpConnection:
+                                      properties:
+                                        auth:
+                                          properties:
+                                            password:
+                                              properties:
+                                                name:
+                                                  type: string
+                                                value:
+                                                  type: string
+                                                valueFrom:
+                                                  properties:
+                                                    configMapKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                    secretKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                  type: object
+                                              type: object
+                                            username:
+                                              properties:
+                                                name:
+                                                  type: string
+                                                value:
+                                                  type: string
+                                                valueFrom:
+                                                  properties:
+                                                    configMapKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                    secretKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                  type: object
+                                              type: object
+                                          required:
+                                          - password
+                                          - username
+                                          type: object
+                                        host:
+                                          type: string
+                                        port:
+                                          description: Port for the SSH server. Defaults to 22
+                                          type: integer
+                                      required:
+                                      - auth
+                                      - host
+                                      type: object
                                     smbConnection:
                                       properties:
                                         auth:
@@ -15714,6 +16215,9 @@ spec:
                                         template:
                                           type: string
                                       type: object
+                                    totalSize:
+                                      description: TotalSize present on the filesystem
+                                      type: string
                                     transform:
                                       properties:
                                         expr:
@@ -16091,6 +16595,9 @@ spec:
                                       - path
                                       - value
                                       type: object
+                                    templateBody:
+                                      description: Template the request body
+                                      type: boolean
                                     test:
                                       properties:
                                         expr:
@@ -17491,6 +17998,21 @@ spec:
                         description: RawMessage is a raw encoded JSON value. It implements Marshaler and Unmarshaler and can be used to delay JSON decoding or precompute a JSON encoding.
                         format: byte
                         type: string
+                      type: array
+                    configs:
+                      items:
+                        properties:
+                          id:
+                            items:
+                              type: string
+                            type: array
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                          type:
+                            type: string
+                        type: object
                       type: array
                     icon:
                       type: string
@@ -18897,6 +19419,9 @@ spec:
                         folder:
                           items:
                             properties:
+                              availableSize:
+                                description: AvailableSize present on the filesystem
+                                type: string
                               awsConnection:
                                 properties:
                                   accessKey:
@@ -19073,6 +19598,87 @@ spec:
                               path:
                                 description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                                 type: string
+                              sftpConnection:
+                                properties:
+                                  auth:
+                                    properties:
+                                      password:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                      username:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                    required:
+                                    - password
+                                    - username
+                                    type: object
+                                  host:
+                                    type: string
+                                  port:
+                                    description: Port for the SSH server. Defaults to 22
+                                    type: integer
+                                required:
+                                - auth
+                                - host
+                                type: object
                               smbConnection:
                                 properties:
                                   auth:
@@ -19174,6 +19780,9 @@ spec:
                                   template:
                                     type: string
                                 type: object
+                              totalSize:
+                                description: TotalSize present on the filesystem
+                                type: string
                               transform:
                                 properties:
                                   expr:
@@ -19551,6 +20160,9 @@ spec:
                                 - path
                                 - value
                                 type: object
+                              templateBody:
+                                description: Template the request body
+                                type: boolean
                               test:
                                 properties:
                                   expr:
@@ -20937,6 +21549,8 @@ spec:
                       type: object
                     name:
                       type: string
+                    order:
+                      type: integer
                     owner:
                       type: string
                     properties:
@@ -20944,6 +21558,39 @@ spec:
                         properties:
                           color:
                             type: string
+                          configLookup:
+                            properties:
+                              config:
+                                properties:
+                                  id:
+                                    items:
+                                      type: string
+                                    type: array
+                                  name:
+                                    type: string
+                                  namespace:
+                                    type: string
+                                  type:
+                                    type: string
+                                type: object
+                              display:
+                                properties:
+                                  expr:
+                                    type: string
+                                  javascript:
+                                    type: string
+                                  jsonPath:
+                                    type: string
+                                  template:
+                                    type: string
+                                type: object
+                              field:
+                                type: string
+                              id:
+                                type: string
+                            required:
+                            - id
+                            type: object
                           headline:
                             type: boolean
                           icon:
@@ -22359,6 +23006,9 @@ spec:
                               folder:
                                 items:
                                   properties:
+                                    availableSize:
+                                      description: AvailableSize present on the filesystem
+                                      type: string
                                     awsConnection:
                                       properties:
                                         accessKey:
@@ -22535,6 +23185,87 @@ spec:
                                     path:
                                       description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                                       type: string
+                                    sftpConnection:
+                                      properties:
+                                        auth:
+                                          properties:
+                                            password:
+                                              properties:
+                                                name:
+                                                  type: string
+                                                value:
+                                                  type: string
+                                                valueFrom:
+                                                  properties:
+                                                    configMapKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                    secretKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                  type: object
+                                              type: object
+                                            username:
+                                              properties:
+                                                name:
+                                                  type: string
+                                                value:
+                                                  type: string
+                                                valueFrom:
+                                                  properties:
+                                                    configMapKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                    secretKeyRef:
+                                                      properties:
+                                                        key:
+                                                          type: string
+                                                        name:
+                                                          type: string
+                                                        optional:
+                                                          type: boolean
+                                                      required:
+                                                      - key
+                                                      type: object
+                                                  type: object
+                                              type: object
+                                          required:
+                                          - password
+                                          - username
+                                          type: object
+                                        host:
+                                          type: string
+                                        port:
+                                          description: Port for the SSH server. Defaults to 22
+                                          type: integer
+                                      required:
+                                      - auth
+                                      - host
+                                      type: object
                                     smbConnection:
                                       properties:
                                         auth:
@@ -22636,6 +23367,9 @@ spec:
                                         template:
                                           type: string
                                       type: object
+                                    totalSize:
+                                      description: TotalSize present on the filesystem
+                                      type: string
                                     transform:
                                       properties:
                                         expr:
@@ -23013,6 +23747,9 @@ spec:
                                       - path
                                       - value
                                       type: object
+                                    templateBody:
+                                      description: Template the request body
+                                      type: boolean
                                     test:
                                       properties:
                                         expr:
@@ -24405,6 +25142,8 @@ spec:
                             type: integer
                           name:
                             type: string
+                          order:
+                            type: integer
                           status:
                             type: string
                           summary:
@@ -24471,6 +25210,21 @@ spec:
                       type: string
                   type: object
                 type: array
+              configs:
+                items:
+                  properties:
+                    id:
+                      items:
+                        type: string
+                      type: array
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    type:
+                      type: string
+                  type: object
+                type: array
               icon:
                 type: string
               id:
@@ -24493,6 +25247,39 @@ spec:
                   properties:
                     color:
                       type: string
+                    configLookup:
+                      properties:
+                        config:
+                          properties:
+                            id:
+                              items:
+                                type: string
+                              type: array
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                            type:
+                              type: string
+                          type: object
+                        display:
+                          properties:
+                            expr:
+                              type: string
+                            javascript:
+                              type: string
+                            jsonPath:
+                              type: string
+                            template:
+                              type: string
+                          type: object
+                        field:
+                          type: string
+                        id:
+                          type: string
+                      required:
+                      - id
+                      type: object
                     headline:
                       type: boolean
                     icon:
@@ -25908,6 +26695,9 @@ spec:
                         folder:
                           items:
                             properties:
+                              availableSize:
+                                description: AvailableSize present on the filesystem
+                                type: string
                               awsConnection:
                                 properties:
                                   accessKey:
@@ -26084,6 +26874,87 @@ spec:
                               path:
                                 description: Path  to folder or object storage, e.g. `s3://<bucket-name>`,  `gcs://<bucket-name>`, `/path/tp/folder`
                                 type: string
+                              sftpConnection:
+                                properties:
+                                  auth:
+                                    properties:
+                                      password:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                      username:
+                                        properties:
+                                          name:
+                                            type: string
+                                          value:
+                                            type: string
+                                          valueFrom:
+                                            properties:
+                                              configMapKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                              secretKeyRef:
+                                                properties:
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                  optional:
+                                                    type: boolean
+                                                required:
+                                                - key
+                                                type: object
+                                            type: object
+                                        type: object
+                                    required:
+                                    - password
+                                    - username
+                                    type: object
+                                  host:
+                                    type: string
+                                  port:
+                                    description: Port for the SSH server. Defaults to 22
+                                    type: integer
+                                required:
+                                - auth
+                                - host
+                                type: object
                               smbConnection:
                                 properties:
                                   auth:
@@ -26185,6 +27056,9 @@ spec:
                                   template:
                                     type: string
                                 type: object
+                              totalSize:
+                                description: TotalSize present on the filesystem
+                                type: string
                               transform:
                                 properties:
                                   expr:
@@ -26562,6 +27436,9 @@ spec:
                                 - path
                                 - value
                                 type: object
+                              templateBody:
+                                description: Template the request body
+                                type: boolean
                               test:
                                 properties:
                                   expr:
@@ -27954,6 +28831,8 @@ spec:
                       type: integer
                     name:
                       type: string
+                    order:
+                      type: integer
                     status:
                       type: string
                     summary:

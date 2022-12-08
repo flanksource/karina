@@ -1,10 +1,13 @@
 resources:
+  - ../helm/generated_templates/canary-checker/charts/flanksource-ui/templates/serviceaccount.yaml
   - ../helm/generated_templates/canary-checker/templates/serviceaccount.yaml
   - ../helm/generated_templates/canary-checker/templates/clusterrole.yaml
   - ../helm/generated_templates/canary-checker/templates/clusterrolebinding.yaml
+  - ../helm/generated_templates/canary-checker/charts/flanksource-ui/templates/service.yaml
   - ../helm/generated_templates/canary-checker/templates/service.yaml
+  - ../helm/generated_templates/canary-checker/charts/flanksource-ui/templates/deployment.yaml
   - ../helm/generated_templates/canary-checker/templates/deployment.yaml
-  - ../helm/generated_templates/canary-checker/templates/ingress.yaml
+  - ../helm/generated_templates/canary-checker/charts/flanksource-ui/templates/ingress.yaml
   - ../helm/generated_templates/canary-checker/templates/priorityclass.yaml
   - servicemonitor.yaml
 
@@ -12,7 +15,9 @@ namespace: platform-system
 
 images:
   - name: docker.io/flanksource/canary-checker:latest
-    newTag: '{{ .canaryChecker.version | default "v0.38.155" }}'
+    newTag: '{{ .canaryChecker.version | default "v0.38.183" }}'
+  - name: docker.io/flanksource/canary-checker-ui:v1.0.143
+    newTag: '{{ .canaryChecker.uiVersion | default "v1.0.143" }}'
 
 patchesStrategicMerge:
   - |-

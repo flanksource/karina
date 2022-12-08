@@ -8,6 +8,14 @@ metadata:
   name: canary-checker-sa
   namespace: platform-system
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: canary-checker-ui
+  name: canary-checker-ui
+  namespace: platform-system
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -64,6 +72,12 @@ rules:
     verbs:
       - get
       - list
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - '*'
   - apiGroups:
       - extensions
     resources:
@@ -136,6 +150,23 @@ spec:
     app.kubernetes.io/name: canary-checker
     control-plane: canary-checker
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: canary-checker-ui
+  name: canary-checker-ui
+  namespace: platform-system
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: canary-checker-ui
+  type: ClusterIP
+---
 apiVersion: scheduling.k8s.io/v1
 description: This priority class should be used for canary pods only.
 globalDefault: false
@@ -143,6 +174,49 @@ kind: PriorityClass
 metadata:
   name: canary-checker-priority
 value: -1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: canary-checker-ui
+  name: canary-checker-ui
+  namespace: platform-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: canary-checker-ui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: canary-checker-ui
+    spec:
+      containers:
+        - env:
+            - name: ORY_KRATOS_URL
+              value: null
+            - name: BACKEND_URL
+              value: ""
+          image: docker.io/flanksource/canary-checker-ui:{{ .canaryChecker.uiVersion | default "v1.0.143" }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          name: flanksource-ui
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources: {}
+          securityContext: {}
+      securityContext: {}
+      serviceAccountName: canary-checker-ui
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -192,7 +266,7 @@ spec:
               value: "1.39"
             - name: DB_URL
               value: embedded:///opt/database/data/
-          image: docker.io/flanksource/canary-checker:{{ .canaryChecker.version | default "v0.38.98" }}
+          image: docker.io/flanksource/canary-checker:{{ .canaryChecker.version | default "v0.38.183" }}
           imagePullPolicy: IfNotPresent
           name: canary-checker
           ports:
@@ -266,9 +340,8 @@ metadata:
   annotations:
     kubernetes.io/tls-acme: "true"
   labels:
-    app.kubernetes.io/name: canary-checker
-    control-plane: canary-checker
-  name: canary-checker
+    app.kubernetes.io/name: canary-checker-ui
+  name: canary-checker-ui
   namespace: platform-system
 spec:
   rules:
@@ -277,9 +350,9 @@ spec:
         paths:
           - backend:
               service:
-                name: canary-checker
+                name: canary-checker-ui
                 port:
-                  number: 8080
+                  number: 80
             path: /
             pathType: ImplementationSpecific
   tls:
