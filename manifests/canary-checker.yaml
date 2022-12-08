@@ -198,7 +198,7 @@ spec:
               value: null
             - name: BACKEND_URL
               value: ""
-          image: docker.io/flanksource/canary-checker-ui:v1.0.143
+          image: docker.io/flanksource/canary-checker-ui:{{ .canaryChecker.uiVersion | default "v1.0.143" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
