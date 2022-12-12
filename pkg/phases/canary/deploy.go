@@ -17,5 +17,10 @@ func Deploy(p *platform.Platform) error {
 		return nil
 	}
 
+	err := p.DeleteByKind("Ingress", "platform-system", "canary-checker")
+	if err != nil {
+		p.Warnf("failed to delete old ingress: ", err)
+	}
+
 	return p.ApplySpecs(v1.NamespaceAll, specs...)
 }
