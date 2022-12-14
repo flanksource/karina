@@ -8,6 +8,7 @@ db:
     storageClass: local-path
 flanksource-ui:
   enabled: true
+  backendURL: 'http://canary-checker.platform-system.svc.cluster.local:8080/'
   ingress:
     enabled: true
     host: canaries.{{.domain}}

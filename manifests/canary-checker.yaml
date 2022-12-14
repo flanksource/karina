@@ -197,8 +197,8 @@ spec:
             - name: ORY_KRATOS_URL
               value: null
             - name: BACKEND_URL
-              value: ""
-          image: docker.io/flanksource/canary-checker-ui:{{ .canaryChecker.uiVersion | default "v1.0.143" }}
+              value: http://canary-checker.platform-system.svc.cluster.local:8080/
+          image: docker.io/flanksource/canary-checker-ui:{{ .canaryChecker.uiVersion | default "v1.0.198" }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
