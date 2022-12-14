@@ -17,7 +17,7 @@ images:
   - name: docker.io/flanksource/canary-checker:latest
     newTag: '{{ .canaryChecker.version | default "v0.38.183" }}'
   - name: docker.io/flanksource/canary-checker-ui:v1.0.143
-    newTag: '{{ .canaryChecker.uiVersion | default "v1.0.143" }}'
+    newTag: '{{ .canaryChecker.uiVersion | default "v1.0.198" }}'
 
 patchesStrategicMerge:
   - |-
