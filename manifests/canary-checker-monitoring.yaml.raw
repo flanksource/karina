@@ -12,7 +12,7 @@ spec:
       rules:
         - alert: PostgresHeartbeatDown
           annotations:
-            message: Postgres {{ $labels.exported_endpoint }} is down
+            message: Postgres {{ $labels.name }} is down
           expr: canary_check{type="postgres"} > 0
           for: 5m
           labels:
@@ -40,4 +40,4 @@ spec:
           labels:
             severity: critical
           annotations:
-            message: Canary {{ $labels.type }}/{{ $labels.exported_endpoint }} failing
+            message: Canary {{ $labels.type }}/{{ $labels.name }} failing
