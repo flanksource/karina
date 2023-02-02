@@ -94,7 +94,10 @@ canary-checker.yaml:
 	$(call BUILD_HELM_CHART,canary-checker)
 	$(call BUILD_BASE,canary-checker)
 	$(SED) -i 's/.*ANNOTATION_MARK.*/        {{ if .canaryChecker.persistence.storageClass }}\n        {{ if not (eq .canaryChecker.persistence.storageClass "local-path") }}\n        cluster-autoscaler.kubernetes.io\/safe-to-evict: "true"\n        {{- end }}\n        {{- end }}/' canary-checker.yaml
-	$(SED) -i 's/.*TEMPLATE_MARK.*/        {{- range $$server := .canaryChecker.aggregateServers }}\n        - --aggregateServers\n        - {{$$server}}\n        {{- end }}/' canary-checker.yaml
+	$(SED) -i 's/.*TEMPLATE_MARK.*/            {{- range $$server := .canaryChecker.aggregateServers }}\n            - --aggregateServers\n            - {{$$server}}\n            {{- end }}/' canary-checker.yaml
+	$(SED) -i 's/.*PERSISTENCE_ENABLED_MARK.*/    {{- if not .canaryChecker.persistence.disabled }}/' canary-checker.yaml
+	$(SED) -i 's/.*PERSISTENCE_END_MARK.*/    {{- end }}/' canary-checker.yaml
+	$(SED) -i 's/.*PERSISTENCE_DISABLED_MARK.*/    {{- if .canaryChecker.persistence.disabled }}/' canary-checker.yaml
 
 .PHONY: external-dns.yaml
 external-dns.yaml:

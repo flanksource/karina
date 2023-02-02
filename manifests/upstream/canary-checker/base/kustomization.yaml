@@ -48,7 +48,25 @@ patchesStrategicMerge:
               ports:
                 - name: metrics
                   containerPort: 8080
+          volumes:
+            - hostPath:
+                path: /var/run/docker.sock
+              name: dockersock
+            - hostPath:
+                path: /run/containerd/containerd.sock
+              name: containerdsock
+            - downwardAPI:
+                items:
+                  - fieldRef:
+                      fieldPath: metadata.labels
+                    path: labels
+              name: podinfo
+            - name: PERSISTENCE_DISABLED_MARK
+            - name: canarychecker-database
+              emptyDir: {}
+            - name: PERSISTENCE_END_MARK
       volumeClaimTemplates:
+      - PERSISTENCE_ENABLED_MARK: replace
       - metadata:
           name: canarychecker-database
         spec:
@@ -57,3 +75,4 @@ patchesStrategicMerge:
             requests:
               storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
           storageClassName: '{{ .canaryChecker.persistence.storageClass | default "local-path" }}'
+      - PERSISTENCE_END_MARK: end
