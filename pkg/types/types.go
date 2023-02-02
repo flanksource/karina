@@ -575,7 +575,7 @@ type AlertManager struct {
 
 type Persistence struct {
 	// Enable persistence for Prometheus
-	Enabled bool `yaml:"enabled" json:"enabled"`
+	XEnabled `yaml:",inline" json:",inline"`
 	// Storage class to use. If not set default one will be used
 	StorageClass string `yaml:"storageClass,omitempty" json:"storageClass,omitempty"`
 	// Capacity. Required if persistence is enabled

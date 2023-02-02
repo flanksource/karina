@@ -255,10 +255,10 @@ spec:
             - -v
             - --httpPort
             - "8080"
-        {{- range $server := .canaryChecker.aggregateServers }}
-        - --aggregateServers
-        - {{$server}}
-        {{- end }}
+            {{- range $server := .canaryChecker.aggregateServers }}
+            - --aggregateServers
+            - {{$server}}
+            {{- end }}
           command:
             - /app/canary-checker
           env:
@@ -308,7 +308,12 @@ spec:
                   fieldPath: metadata.labels
                 path: labels
           name: podinfo
+    {{- if .canaryChecker.persistence.disabled }}
+        - emptyDir: {}
+          name: canarychecker-database
+    {{- end }}
   volumeClaimTemplates:
+    {{- if not .canaryChecker.persistence.disabled }}
     - metadata:
         name: canarychecker-database
       spec:
@@ -318,6 +323,7 @@ spec:
           requests:
             storage: '{{ .canaryChecker.persistence.capacity | default "1Gi" }}'
         storageClassName: '{{ .canaryChecker.persistence.storageClass | default "local-path" }}'
+    {{- end }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
