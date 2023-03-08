@@ -6,7 +6,7 @@ images:
   - name: quay.io/jetstack/cert-manager-webhook
     newTag: "{{.certmanager.version}}"
 resources:
-  - https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
+  - https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
 patchesStrategicMerge:
   - |-
@@ -19,7 +19,7 @@ patchesStrategicMerge:
       template:
         spec:
           containers:
-            - name: cert-manager
+            - name: cert-manager-controller
               args:
                 - --v=2
                 - --cluster-resource-namespace=$(POD_NAMESPACE)
@@ -27,7 +27,26 @@ patchesStrategicMerge:
                 - --default-issuer-kind=ClusterIssuer
                 - --default-issuer-group=cert-manager.io
                 - --leader-election-namespace=kube-system
+                - --max-concurrent-challenges=60
 patches:
+  - patch: |-
+      - op: add
+        path: /rules/0
+        value:
+          apiGroups:
+            - ""
+          resources:
+            - configmaps
+          verbs:
+            - get
+            - update
+            - patch
+            - create
+    target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: Role
+      namespace: kube-system
   # Removes the CRD resources already present in manifests/crds/cert-manager.yaml
   # The name is required, but not used when matching
   - patch: |-
