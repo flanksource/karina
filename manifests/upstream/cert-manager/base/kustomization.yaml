@@ -29,6 +29,24 @@ patchesStrategicMerge:
                 - --leader-election-namespace=kube-system
                 - --max-concurrent-challenges=60
 patches:
+  - patch: |-
+      - op: add
+        path: /rules/0
+        value:
+          apiGroups:
+            - ""
+          resources:
+            - configmaps
+          verbs:
+            - get
+            - update
+            - patch
+            - create
+    target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: Role
+      namespace: kube-system
   # Removes the CRD resources already present in manifests/crds/cert-manager.yaml
   # The name is required, but not used when matching
   - patch: |-

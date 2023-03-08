@@ -81,6 +81,15 @@ metadata:
   namespace: kube-system
 rules:
   - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - update
+      - patch
+      - create
+  - apiGroups:
       - coordination.k8s.io
     resourceNames:
       - cert-manager-cainjector-leader-election
@@ -109,6 +118,15 @@ metadata:
   name: cert-manager:leaderelection
   namespace: kube-system
 rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - update
+      - patch
+      - create
   - apiGroups:
       - coordination.k8s.io
     resourceNames:
