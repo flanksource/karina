@@ -48,6 +48,12 @@ jobs:
       - uses: actions/checkout@v3
       - run: git config --global --add safe.directory $PWD
       - run: make $TARGET compress
+      - name: Upload binaries to action run
+        uses: actions/upload-artifact@v2
+        with:
+          if-no-files-found: ignore
+          name: ${{ matrix.target }}
+          path: ${{ matrix.target }}
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
