@@ -182,6 +182,7 @@ func errorString(resp *http.Response, err error) string {
 func (c *NSXClient) GetLogicalPorts(ctx context.Context, vm string) ([]manager.LogicalPort, error) {
 	var results []manager.LogicalPort
 	vms, resp, err := c.api.FabricApi.ListVirtualMachines(c.api.Context, map[string]interface{}{"displayName": vm})
+	defer resp.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get vifs for %s: %v", vm, errorString(resp, err))
 	}
@@ -190,17 +191,19 @@ func (c *NSXClient) GetLogicalPorts(ctx context.Context, vm string) ([]manager.L
 		return nil, fmt.Errorf("vm %s not found", vm)
 	}
 	vifs, resp, err := c.api.FabricApi.ListVifs(c.api.Context, map[string]interface{}{"ownerVmId": vms.Results[0].ExternalId})
+	defer resp.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get vifs for %s: %v", vm, errorString(resp, err))
 	}
 
 	for _, vif := range vifs.Results {
 		ports, resp, err := c.api.LogicalSwitchingApi.ListLogicalPorts(c.api.Context, map[string]interface{}{"attachmentId": vif.LportAttachmentId})
-
 		if err != nil {
+			resp.Body.Close()
 			return nil, fmt.Errorf("unable to get port %s: %s", vif.LportAttachmentId, errorString(resp, err))
 		}
 		results = append(results, ports.Results...)
+		resp.Body.Close()
 	}
 	if len(results) == 0 {
 		return nil, fmt.Errorf("no vifs/logical ports found for vm: %s, externalId: %s", vm, vms.Results[0].ExternalId)
@@ -210,6 +213,7 @@ func (c *NSXClient) GetLogicalPorts(ctx context.Context, vm string) ([]manager.L
 
 func (c *NSXClient) TagLogicalPort(ctx context.Context, id string, tags map[string]string) error {
 	port, resp, err := c.api.LogicalSwitchingApi.GetLogicalPort(ctx, id)
+	defer resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("unable to get port %s: %s", id, errorString(resp, err))
 	}
@@ -223,6 +227,7 @@ func (c *NSXClient) TagLogicalPort(ctx context.Context, id string, tags map[stri
 
 	c.Tracef("[%s/%s] tagging: %v", port.Id, port.Attachment.Id, port.Tags)
 	_, resp, err = c.api.LogicalSwitchingApi.UpdateLogicalPort(context.TODO(), port.Id, port)
+	defer resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("unable to update port %s: %s", port.Id, errorString(resp, err))
 	}
@@ -300,6 +305,7 @@ func (c *NSXClient) CreateOrUpdateNSGroup(name string, id string, targetType str
 
 func (c *NSXClient) AllocateIP(pool string) (string, error) {
 	addr, resp, err := c.api.PoolManagementApi.AllocateOrReleaseFromIpPool(c.api.Context, pool, manager.AllocationIpAddress{}, "ALLOCATE")
+	defer resp.Body.Close()
 	if err != nil {
 		return "", fmt.Errorf("unable to allocate IP from %s: %s", pool, errorString(resp, err))
 	}
@@ -398,6 +404,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 	}
 
 	t0, resp, err := routing.ReadLogicalRouter(ctx, opts.Tier0)
+	defer resp.Body.Close()
 	if err != nil {
 		return "", false, fmt.Errorf("failed to read T0 router %s: %s", opts.Tier0, errorString(resp, err))
 	}
@@ -406,6 +413,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		LogicalRouterId: t0.Id,
 		DisplayName:     "lb-" + opts.Name + "-T1",
 	})
+	defer resp.Body.Close()
 
 	if err != nil {
 		return "", false, fmt.Errorf("unable to create T0 Local router port %s: %s", opts.Name, errorString(resp, err))
@@ -416,6 +424,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		DisplayName:   "lb-" + opts.Name,
 		EdgeClusterId: t0.EdgeClusterId,
 	})
+	defer resp.Body.Close()
 	if err != nil {
 		return "", false, fmt.Errorf("unable to create T1 router %s: %s", opts.Name, errorString(resp, err))
 	}
@@ -425,6 +434,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		AdvertiseLbSnatIp: true,
 		Enabled:           true,
 	})
+	defer resp.Body.Close()
 	if err != nil {
 		return "", false, fmt.Errorf("unable to update advertisement config %s: %s", opts.Name, errorString(resp, err))
 	}
@@ -439,6 +449,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 			TargetId:   t0Port.Id,
 		},
 	})
+	defer resp.Body.Close()
 	if err != nil {
 		return "", false, fmt.Errorf("failed to link T1 (%s) to T0 (%s): %s", t1.Id, t0Port.Id, errorString(resp, err))
 	}
@@ -472,6 +483,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 			},
 		},
 	})
+	defer resp.Body.Close()
 	if err != nil {
 		return "", false, fmt.Errorf("unable to create load balancer pool %s: %s", opts.Name, errorString(resp, err))
 	}
@@ -489,6 +501,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 		Ports:      opts.Ports,
 		PoolId:     pool.Id,
 	})
+	defer resp.Body.Close()
 
 	if err != nil {
 		return "", false, fmt.Errorf("unable to create virtual server %s: %s", opts.Name, errorString(resp, err))
@@ -507,6 +520,7 @@ func (c *NSXClient) CreateLoadBalancer(opts LoadBalancerOptions) (string, bool, 
 	}
 
 	_, resp, err = api.CreateLoadBalancerService(c.api.Context, lb)
+	defer resp.Body.Close()
 	if err != nil {
 		return "", false, fmt.Errorf("unable to create load balancer %s: %s", opts.Name, errorString(resp, err))
 	}
@@ -535,6 +549,7 @@ func (c *NSXClient) UpdateLoadBalancer(lb *loadbalancer.LbVirtualServer, opts Lo
 	}
 
 	virtualServer, resp, err := api.UpdateLoadBalancerVirtualServer(ctx, lb.Id, *lb)
+	defer resp.Body.Close()
 	if err != nil {
 		c.Errorf("failed to update load virtual server: %s", errorString(resp, err))
 	}
@@ -555,6 +570,7 @@ func (c *NSXClient) updateLoadBalancerPool(lb *loadbalancer.LbVirtualServer, opt
 	}
 
 	group, err := c.CreateOrUpdateNSGroup(opts.Name, pool.MemberGroup.GroupingObject.TargetId, "LogicalPort", opts.MemberTags)
+	defer resp.Body.Close()
 	if err != nil {
 		return errors.Wrap(err, "failed to update NS Group")
 	}
