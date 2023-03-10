@@ -156,11 +156,11 @@ func init() {
 	}
 
 	aliases := map[string][]string{
-		"bootstrap": []string{"cni", "csi", "base", "cloud", "cert-manager", "nginx", "minio", "template-operator", "postgres-operator"},
-		"cni":       []string{"calico", "antrea"},
-		"csi":       []string{"s3", "nfs", "local-path"},
-		"cloud":     []string{"vsphere"},
-		"stubs":     []string{"apacheds", "minio"},
+		"bootstrap": {"cni", "csi", "base", "cloud", "cert-manager", "nginx", "minio", "template-operator", "postgres-operator"},
+		"cni":       {"calico", "antrea"},
+		"csi":       {"s3", "nfs", "local-path"},
+		"cloud":     {"vsphere"},
+		"stubs":     {"apacheds", "minio"},
 	}
 	tests := map[string]TestFn{
 		"antrea":             antrea.Test,

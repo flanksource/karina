@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// 	ClusterStatusUnknown etc : status of a Postgres cluster known to the operator
+// ClusterStatusUnknown etc : status of a Postgres cluster known to the operator
 const (
 	ClusterStatusUnknown      = ""
 	ClusterStatusCreating     = "Creating"
@@ -233,7 +233,7 @@ type Patroni struct {
 	SynchronousModeStrict bool                         `json:"synchronous_mode_strict"`
 }
 
-//StandbyCluster
+// StandbyCluster
 type StandbyDescription struct {
 	S3WalPath string `json:"s3_wal_path,omitempty"`
 }
@@ -495,5 +495,5 @@ type OperatorConfigurationData struct {
 	ConnectionPooler           ConnectionPoolerConfiguration      `json:"connection_pooler"`
 }
 
-//Duration shortens this frequently used name
+// Duration shortens this frequently used name
 type Duration time.Duration

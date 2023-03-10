@@ -107,7 +107,7 @@ func Deploy(p *platform.Platform) error {
 
 	if !p.ApplyDryRun {
 		chartSecret := map[string][]byte{
-			"CACHE_REDIS_PASSWORD": []byte{},
+			"CACHE_REDIS_PASSWORD": {},
 		}
 		if p.Harbor.ChartPVC == "" {
 			chartSecret["AWS_SECRET_ACCESS_KEY"] = []byte(p.Harbor.S3.SecretKey)
@@ -117,7 +117,7 @@ func Deploy(p *platform.Platform) error {
 		}
 
 		if err := p.CreateOrUpdateSecret("harbor-trivy", Namespace, map[string][]byte{
-			"gitHubToken": []byte{},
+			"gitHubToken": {},
 			"redisURL":    []byte("redis://harbor-redis:6379/4"),
 		}); err != nil {
 			return err
