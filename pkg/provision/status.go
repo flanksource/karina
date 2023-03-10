@@ -139,15 +139,15 @@ func gb(bytes int64) string {
 	return fmt.Sprintf("%d", bytes/1024/1024/1024)
 }
 
-func size(bytes int64) string {
-	if bytes > 1024*1024*1024 {
-		return fmt.Sprintf("%.00d gb", bytes/1024/1024/1024)
-	}
-	if bytes > 1024*1024 {
-		return fmt.Sprintf("%.00d mb", bytes/1024/1024)
-	}
-	if bytes > 1024 {
-		return fmt.Sprintf("%.00d kb", bytes/1024)
-	}
-	return fmt.Sprintf("%.00d bytes", bytes)
-}
+//func size(bytes int64) string {
+//	if bytes > 1024*1024*1024 {
+//		return fmt.Sprintf("%.00d gb", bytes/1024/1024/1024)
+//	}
+//	if bytes > 1024*1024 {
+//		return fmt.Sprintf("%.00d mb", bytes/1024/1024)
+//	}
+//	if bytes > 1024 {
+//		return fmt.Sprintf("%.00d kb", bytes/1024)
+//	}
+//	return fmt.Sprintf("%.00d bytes", bytes)
+//}
