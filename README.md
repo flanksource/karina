@@ -53,6 +53,6 @@ Please join the [flanksource Slack workspace](https://join.slack.com/t/flanksour
 
 ### Contributing
 
-Please follow the guideline below when contributing to this project
+Please follow the guideline below when contributing to this project.
 
 * [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
