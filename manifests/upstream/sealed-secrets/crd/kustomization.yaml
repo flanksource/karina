@@ -1,2 +1,8 @@
 resources:
   - https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/v0.17.1/helm/sealed-secrets/crds/sealedsecret-crd.yaml
+patches:
+- path: karina/manifests/upstream/sealed-secrets/crd/kustomization.yaml
+  kind: CustomResourceDefinition
+  patch: |-
+      - op: remove
+       path: karina/manifests/upstream/sealed-secrets/crd/kustomization.yaml  
