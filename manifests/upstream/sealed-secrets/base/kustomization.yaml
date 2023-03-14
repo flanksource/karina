@@ -2,6 +2,7 @@ resources:
 - https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.19.5/controller.yaml
 commonAnnotations:
   cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+namespace: sealed-secrets
 images:
   - name: docker.io/bitnami/sealed-secrets-controller
     newTag: '{{ .sealedSecrets.version | default "na" }}'
