@@ -1,3 +1,3 @@
 resources:
-  - https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/helm-v2.6.7/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
+  - https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/release/v0.19.5/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
 
