@@ -5,4 +5,6 @@ commonAnnotations:
 images:
   - name: docker.io/bitnami/sealed-secrets-controller
     newTag: '{{ .sealedSecrets.version | default "na" }}'
+patchesStrategicMerge:
+  - delete-crd.yaml
    
