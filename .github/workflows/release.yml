@@ -34,16 +34,16 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-        target:
-          - ./.bin/karina.exe
-          - ./.bin/karina
-          - ./.bin/karina_darwin-amd64
-          - ./.bin/karina_darwin-arm64
-          - ./.bin/karina_linux-amd64
-          - ./.bin/karina_linux-arm64
+        name:
+          - karina.exe
+          - karina
+          - karina_darwin-amd64
+          - karina_darwin-arm64
+          - karina_linux-amd64
+          - karina_linux-arm64
     env:
       VERSION: v${{ needs.semantic-release.outputs.release-version }}
-      TARGET: ${{ matrix.target }}
+      TARGET: ./.bin/${{ matrix.name }}
     steps:
       - uses: actions/checkout@v3
       - run: git config --global --add safe.directory $PWD
@@ -52,13 +52,13 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
-          name: ${{ matrix.target }}
-          path: ${{ matrix.target }}
+          name: ${{ (matrix.name }}
+          path: ./.bin/${{ matrix.name }}
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ matrix.target }}
+          file: ./.bin/${{ matrix.name }}
           tag: v${{ needs.semantic-release.outputs.release-version }}
           overwrite: true
           file_glob: true
