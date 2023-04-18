@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           if-no-files-found: ignore
-          name: ${{ (matrix.name }}
+          name: ${{ matrix.name }}
           path: ./.bin/${{ matrix.name }}
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
