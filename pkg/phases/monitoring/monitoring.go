@@ -33,6 +33,7 @@ var specs = []string{
 	"prometheus-operator-rules.yaml.raw",
 	"karma.yaml",
 	"grafana-operator.yaml",
+	"grafana.yaml",
 	"kube-prometheus.yaml",
 	"prometheus-adapter.yaml",
 	"kube-state-metrics.yaml",
@@ -150,7 +151,7 @@ func Install(p *platform.Platform) error {
 }
 
 func deployDashboards(p *platform.Platform) error {
-	if p.Monitoring.Grafana.SkipDashboards {
+	if p.Monitoring.Grafana.SkipDashboards || p.Monitoring.Grafana.Disabled {
 		p.Debugf("Skipping grafana dashboard deployment")
 		return nil
 	}
@@ -309,6 +310,8 @@ func conditionalSpecs(p *platform.Platform) map[string]func() bool {
 		"pushgateway.yaml":                      p.Monitoring.PushGateway.IsDisabled,
 		"unmanaged/alertmanager-rules.yaml.raw": p.Kubernetes.IsManaged,
 		"unmanaged/service-monitors.yaml":       p.Kubernetes.IsManaged,
+		"grafana-operator.yaml":                 func() bool { return p.Monitoring.Grafana.Disabled },
+		"grafana.yaml":                          func() bool { return p.Monitoring.Grafana.Disabled },
 	}
 	return cd
 }

@@ -1,0 +1,141 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.{{.domain}}
+  rules:
+    - host: grafana.{{.domain}}
+      http:
+        paths:
+          - backend:
+              service:
+                name: grafana-service
+                port:
+                  number: 3000
+            pathType: ImplementationSpecific
+---
+apiVersion: integreatly.org/v1alpha1
+kind: Grafana
+metadata:
+name: grafana
+namespace: monitoring
+spec:
+client:
+  preferService: True
+service:
+  enabled: True
+config:
+  log:
+    mode: "console"
+    level: "warn"
+  security:
+    admin_user: "root"
+    admin_password: "secret"
+  auth:
+    disable_login_form: False
+    disable_signout_menu: True
+  auth.basic:
+    enabled: True
+  auth.anonymous:
+    enabled: True
+dashboardLabelSelector:
+  - matchExpressions:
+      - { key: app, operator: In, values: [grafana] }
+deployment:
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+  envFrom:
+    - secretRef:
+        name: grafana-env
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  name: prometheus.yaml
+  datasources:
+    - name: prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus-k8s:9090
+      isDefault: false
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        timeInterval: "5s"
+    {{- if index . "thanos"}}
+    {{- if eq .thanos.mode "observability"}}
+    - name: thanos
+      type: prometheus
+      access: proxy
+      url: http://thanos-query:9090
+      isDefault: true
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        timeInterval: "5s"
+    {{ end }}
+    {{ end }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-env
+  namespace: monitoring
+stringData:
+  GF_INSTALL_PLUGINS: grafana-piechart-panel 1.6.1
+---
+{{- if index . "filebeat" }}
+{{- if index . "elasticsearch" }}
+{{- if not (index .elasticsearch "disabled") }}
+{{ range .filebeat}}
+{{- if index . "elasticsearch" }}
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: elasticsearch-{{.name}}
+  namespace: monitoring
+spec:
+  name: elasticsearch.yaml
+  datasources:
+    - name: elasticsearch
+      type: elasticsearch
+      access: proxy
+      basicAuth: true
+      url: "{{.elasticsearch.url}}"
+      basicAuthUser: {{.elasticsearch.user}}
+      secureJsonData:
+        basicAuthPassword: {{.elasticsearch.password}}
+      isDefault: false
+  {{- if ne .index "" }}
+      database: "{{ .index }}-{{.version}}-*"
+  {{- else }}
+      database: "filebeat-{{.version}}-*"
+  {{ end }}
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        timeInterval: "5s"
+        timeField: "@timestamp"
+        esVersion: 70
+        logMessageField: message
+        logLevelField: fields.level
+---
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
