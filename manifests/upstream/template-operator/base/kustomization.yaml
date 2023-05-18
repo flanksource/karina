@@ -5,26 +5,32 @@ images:
   - name: flanksource/template-operator
     newName: docker.io/flanksource/template-operator
     newTag: "{{.templateOperator.version}}"
-patchesStrategicMerge:
-  - |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: template-operator-controller-manager
-      namespace: template-operator
-    spec:
-      template:
-        spec:
-          containers:
-            - name: manager
-              args:
-                - --metrics-addr=0.0.0.0:8080
-                - --enable-leader-election
-                - "--sync-period={{ .templateOperator.syncPeriod | default \"5m\" }}"
-              resources:
-                limits:
-                  cpu: 500m
-                  memory: 1Gi
-                requests:
-                  cpu: 100m
-                  memory: 200Mi
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: template-operator-controller-manager
+        namespace: template-operator
+      spec:
+        template:
+          spec:
+            containers:
+              - name: manager
+                args:
+                  - --metrics-addr=0.0.0.0:8080
+                  - --enable-leader-election
+                  - "--sync-period={{ .templateOperator.syncPeriod | default \"5m\" }}"
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 1Gi
+                  requests:
+                    cpu: 100m
+                    memory: 200Mi
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: template-operator

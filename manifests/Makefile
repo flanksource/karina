@@ -138,7 +138,7 @@ ARCH = $(shell uname -m | sed 's/x86_64/amd64/')
 
 bin/kustomize:
 	@mkdir -p bin
-	@curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v4.0.3/kustomize_v4.0.3_$(OS)_$(ARCH).tar.gz | tar xzf - -C bin/ && chmod +x bin/kustomize
+	@curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.3/kustomize_v5.0.3_$(OS)_$(ARCH).tar.gz | tar xzf - -C bin/ && chmod +x bin/kustomize
 
 bin/yq:
 	@mkdir -p bin
