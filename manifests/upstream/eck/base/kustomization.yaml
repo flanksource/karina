@@ -5,5 +5,11 @@ resources:
 images:
   - name: docker.elastic.co/eck/eck-operator
     newTag: "{{.eck.version}}"
-patchesStrategicMerge:
-  - delete-secret.yaml
+patches:
+  - path: delete-secret.yaml
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: elastic-system
