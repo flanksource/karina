@@ -10,7 +10,7 @@ const Namespace = "flux-system"
 
 func InstallV2(p *platform.Platform) error {
 	if p.Flux == nil || !p.Flux.Enabled {
-		return p.DeleteSpecs(Namespace, "flux.yaml")
+		return nil
 	}
 
 	if err := p.CreateOrUpdateNamespace(Namespace, nil, nil); err != nil {
