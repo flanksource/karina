@@ -29,6 +29,9 @@ const (
 )
 
 func PreInstall(p *platform.Platform) error {
+	if p.CertManager.Disabled {
+		return nil
+	}
 	client, err := p.Client.GetClientset()
 	if err != nil {
 		return err
@@ -99,6 +102,9 @@ func PreInstall(p *platform.Platform) error {
 }
 
 func Install(p *platform.Platform) error {
+	if p.CertManager.Disabled {
+		return nil
+	}
 	//remove old mutating webhooks
 	_ = p.DeleteByKind(constants.MutatingWebhookConfiguration, v1.NamespaceAll, WebhookService)
 

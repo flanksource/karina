@@ -28,8 +28,8 @@ type GCP struct {
 }
 
 type CertManager struct {
-	Version string `yaml:"version" json:"version"`
-
+	Version  string `yaml:"version" json:"version"`
+	Disabled bool   `yaml:"disabled,omitempty" json:"disabled,omitempty"`
 	// Details of a vault server to use for signing ingress certificates
 	Vault *VaultClient `yaml:"vault,omitempty" json:"vault,omitempty"`
 	// Details of a Letsencrypt issuer to use for signing ingress certificates
