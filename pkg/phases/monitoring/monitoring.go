@@ -35,7 +35,6 @@ var specs = []string{
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",
 	"prometheus-adapter.yaml",
-	"kube-state-metrics.yaml",
 	"pushgateway.yaml",
 	"unmanaged/alertmanager-rules.yaml.raw",
 	"unmanaged/service-monitors.yaml",
