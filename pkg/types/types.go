@@ -506,19 +506,21 @@ func (dns DynamicDNS) IsEnabled() bool {
 }
 
 type Monitoring struct {
-	Disabled      Boolean       `yaml:"disabled,omitempty" json:"disabled,omitempty"`
-	AlertEmail    string        `yaml:"alert_email,omitempty" json:"alert_email,omitempty"`
-	Version       string        `yaml:"version,omitempty" json:"version,omitempty"`
-	Prometheus    Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
-	Karma         Karma         `yaml:"karma,omitempty" json:"karma,omitempty"`
-	Grafana       Grafana       `yaml:"grafana,omitempty" json:"grafana,omitempty"`
-	AlertManager  AlertManager  `yaml:"alertmanager,omitempty" json:"alertManager,omitempty"`
-	KubeRbacProxy string        `yaml:"kubeRbacProxy,omitempty" json:"kubeRbacProxy,omitempty"`
-	NodeExporter  string        `yaml:"nodeExporter,omitempty" json:"nodeExporter,omitempty"`
-	AddonResizer  string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
-	ExcludeAlerts []string      `yaml:"excludeAlerts,omitempty" json:"excludeAlerts,omitempty"`
-	PushGateway   PushGateway   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
-	E2E           MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
+	Disabled                Boolean       `yaml:"disabled,omitempty" json:"disabled,omitempty"`
+	AlertEmail              string        `yaml:"alert_email,omitempty" json:"alert_email,omitempty"`
+	Version                 string        `yaml:"version,omitempty" json:"version,omitempty"`
+	Prometheus              Prometheus    `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
+	Karma                   Karma         `yaml:"karma,omitempty" json:"karma,omitempty"`
+	Grafana                 Grafana       `yaml:"grafana,omitempty" json:"grafana,omitempty"`
+	AlertManager            AlertManager  `yaml:"alertmanager,omitempty" json:"alertManager,omitempty"`
+	KubeStateMetrics        string        `yaml:"kubeStateMetrics,omitempty" json:"kubeStateMetrics,omitempty"`
+	DisableKubeStateMetrics Boolean       `yaml:"disableKubeStateMetrics,omitempty" json:"disableKubeStateMetrics,omitempty"`
+	KubeRbacProxy           string        `yaml:"kubeRbacProxy,omitempty" json:"kubeRbacProxy,omitempty"`
+	NodeExporter            string        `yaml:"nodeExporter,omitempty" json:"nodeExporter,omitempty"`
+	AddonResizer            string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
+	ExcludeAlerts           []string      `yaml:"excludeAlerts,omitempty" json:"excludeAlerts,omitempty"`
+	PushGateway             PushGateway   `yaml:"pushGateway,omitempty" json:"pushGateway,omitempty"`
+	E2E                     MonitoringE2E `yaml:"e2e,omitempty" json:"e2e,omitempty"`
 }
 
 func (m Monitoring) IsDisabled() bool {

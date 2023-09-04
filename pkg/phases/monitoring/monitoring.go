@@ -35,6 +35,7 @@ var specs = []string{
 	"grafana-operator.yaml",
 	"kube-prometheus.yaml",
 	"prometheus-adapter.yaml",
+	"kube-state-metrics.yaml",
 	"pushgateway.yaml",
 	"unmanaged/alertmanager-rules.yaml.raw",
 	"unmanaged/service-monitors.yaml",
@@ -64,6 +65,15 @@ func Install(p *platform.Platform) error {
 			}
 		}
 		return nil
+	}
+
+	if p.Monitoring.DisableKubeStateMetrics {
+		for i, v := range specs {
+			if v == "kube-state-metrics.yaml" {
+				specs = append(specs[:i], specs[i+1:]...)
+				break
+			}
+		}
 	}
 
 	if p.Monitoring.Karma.Version == "" {
