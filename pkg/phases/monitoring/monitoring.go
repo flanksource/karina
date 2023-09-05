@@ -67,6 +67,15 @@ func Install(p *platform.Platform) error {
 		return nil
 	}
 
+	if p.Monitoring.DisableKubeStateMetrics {
+		for i, v := range specs {
+			if v == "kube-state-metrics.yaml" {
+				specs = append(specs[:i], specs[i+1:]...)
+				break
+			}
+		}
+	}
+
 	if p.Monitoring.Karma.Version == "" {
 		p.Monitoring.Karma.Version = "v0.63"
 	}
