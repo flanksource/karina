@@ -30,9 +30,6 @@ var Defaults = map[string]string{
 
 func Install(platform *platform.Platform) error {
 	if platform.Nginx != nil && platform.Nginx.Disabled {
-		if err := platform.DeleteSpecs(v1.NamespaceAll, "nginx.yaml", "nginx-oauth.yaml"); err != nil {
-			platform.Warnf("failed to delete specs: %v", err)
-		}
 		return nil
 	}
 
