@@ -9,7 +9,7 @@ import (
 func Install(p *platform.Platform) error {
 	f := func() bool { return false }
 	crds := map[string]func() bool{
-		"cert-manager":      func() bool { return !p.CertManager.Disabled },
+		"cert-manager":      func() bool { return p.CertManager.Disabled },
 		"service-monitor":   f,
 		"canary-checker":    p.CanaryChecker.IsDisabled,
 		"template-operator": p.TemplateOperator.IsDisabled,
