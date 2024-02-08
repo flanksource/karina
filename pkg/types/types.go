@@ -515,6 +515,7 @@ type Monitoring struct {
 	AlertManager            AlertManager  `yaml:"alertmanager,omitempty" json:"alertManager,omitempty"`
 	KubeStateMetrics        string        `yaml:"kubeStateMetrics,omitempty" json:"kubeStateMetrics,omitempty"`
 	DisableKubeStateMetrics Boolean       `yaml:"disableKubeStateMetrics,omitempty" json:"disableKubeStateMetrics,omitempty"`
+	DisableGrafana          Boolean       `yaml:"disableGrafana,omitempty" json:"disableGrafana,omitempty"`
 	KubeRbacProxy           string        `yaml:"kubeRbacProxy,omitempty" json:"kubeRbacProxy,omitempty"`
 	NodeExporter            string        `yaml:"nodeExporter,omitempty" json:"nodeExporter,omitempty"`
 	AddonResizer            string        `yaml:"addonResizer,omitempty" json:"addonResizer,omitempty"`
