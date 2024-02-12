@@ -75,6 +75,14 @@ func Install(p *platform.Platform) error {
 			}
 		}
 	}
+	if p.Monitoring.DisableGrafana {
+		for i, v := range specs {
+			if v == "grafana-operator.yaml" {
+				specs = append(specs[:i], specs[i+1:]...)
+				break
+			}
+		}
+	}
 
 	if p.Monitoring.Karma.Version == "" {
 		p.Monitoring.Karma.Version = "v0.63"
